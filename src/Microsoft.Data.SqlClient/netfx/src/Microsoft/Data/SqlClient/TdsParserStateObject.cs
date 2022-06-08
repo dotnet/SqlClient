@@ -890,7 +890,7 @@ namespace Microsoft.Data.SqlClient
 
             _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout),
                 out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
-                ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate, databaseName, applicationIntent);
+                ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate);
         }
 
         internal bool Deactivate()

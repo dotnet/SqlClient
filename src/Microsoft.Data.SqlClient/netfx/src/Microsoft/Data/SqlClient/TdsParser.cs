@@ -1203,7 +1203,7 @@ namespace Microsoft.Data.SqlClient
                     authInfo.clientCertificateCallback = _clientCertificateCallback;
                 }
             }
-
+            authInfo.tlsFirst = encrypt == SqlConnectionEncryptOption.Strict;
             error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, authInfo);
 
             if (error != TdsEnums.SNI_SUCCESS)

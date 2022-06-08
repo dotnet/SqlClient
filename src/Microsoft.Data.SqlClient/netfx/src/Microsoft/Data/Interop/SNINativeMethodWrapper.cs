@@ -170,14 +170,18 @@ namespace Microsoft.Data.SqlClient
             internal IntPtr key;
         }
 
-
+        [StructLayout(LayoutKind.Sequential)]
         internal struct AuthProviderInfo
         {
-            internal uint flags;
-            internal string certId;
-            internal bool certHash;
-            internal object clientCertificateCallbackContext;
-            internal SqlClientCertificateDelegate clientCertificateCallback;
+            public uint flags;
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool tlsFirst;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string certId;
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool certHash;
+            public object clientCertificateCallbackContext;
+            public SqlClientCertificateDelegate clientCertificateCallback;
         };
 
         internal struct CTAIPProviderInfo
@@ -810,10 +814,7 @@ namespace Microsoft.Data.SqlClient
             Boolean isAzureSqlServerEndpoint,
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDNSInfo,
-            bool tlsFirst,
-            string hostNameInCertificate,
-            string databaseName,
-            ApplicationIntent applicationIntent)
+            string hostNameInCertificate)
         {
             //TDS 8 TODO: Plumb new options into native SNI call
 
@@ -891,7 +892,6 @@ namespace Microsoft.Data.SqlClient
                 authInfo.clientCertificateCallbackContext = sniAuthInfoWrapper;
                 authInfo.clientCertificateCallback = SNIClientCertificateFallbackWrapper;
             }
-
             ret = SNIAddProviderWrapper(pConn, providerEnum, ref authInfo);
 
             if (ret == ERROR_SUCCESS)
