@@ -96,7 +96,6 @@ namespace Microsoft.Data.SqlClient.SNI
                 hostNameInCertificate);
             if (sessionHandle is not null)
             {
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.CreatePhysicalSNIHandle | Info | State Object Id {0}, Session Id {1}, ServerName {2}, Async = {3}", _objectID, _sessionHandle?.ConnectionId, serverName, async);
                 _sessionHandle = sessionHandle;
                 SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.CreatePhysicalSNIHandle | Info | State Object Id {0}, Session Id {1}, ServerName {2}, Async = {3}", _objectID, sessionHandle.ConnectionId, serverName, async);
                 if (async)

@@ -505,9 +505,7 @@ namespace Microsoft.Data.SqlClient
                               ClientCertificateRetrievalCallback clientCallback,
                               bool useOriginalAddressInfo,
                               bool disableTnir,
-                              string hostNameInCertificate,
-                              string databaseName,
-                              ApplicationIntent applicationIntent)
+                              string hostNameInCertificate)
         {
             if (_state != TdsParserState.Closed)
             {
