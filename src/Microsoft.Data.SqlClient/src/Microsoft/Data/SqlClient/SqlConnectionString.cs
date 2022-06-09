@@ -1132,20 +1132,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETFRAMEWORK
-        protected internal override PermissionSet CreatePermissionSet()
-        {
-            PermissionSet permissionSet = new(PermissionState.None);
-            permissionSet.AddPermission(new SqlClientPermission(this));
-            return permissionSet;
-        }
-
-        internal SqlConnectionEncryptOption ConvertValueToEncrypt()
-        {
-            SqlConnectionEncryptOption defaultEncryptValue = !Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : SqlConnectionEncryptOption.Mandatory;
-            return ConvertValueToSqlConnectionEncrypt();
-        }
-
         static internal Hashtable NetlibMapping()
         {
             const int NetLibCount = 8;
@@ -1196,6 +1182,21 @@ namespace Microsoft.Data.SqlClient
         }
 
         private static Hashtable s_netlibMapping;
+
+#if NETFRAMEWORK
+        protected internal override PermissionSet CreatePermissionSet()
+        {
+            PermissionSet permissionSet = new(PermissionState.None);
+            permissionSet.AddPermission(new SqlClientPermission(this));
+            return permissionSet;
+        }
+
+        internal SqlConnectionEncryptOption ConvertValueToEncrypt()
+        {
+            SqlConnectionEncryptOption defaultEncryptValue = !Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : SqlConnectionEncryptOption.Mandatory;
+            return ConvertValueToSqlConnectionEncrypt();
+        }
+
         private readonly bool _connectionReset;
         private readonly bool _contextConnection;
         private readonly bool _transparentNetworkIPResolution;

@@ -2309,9 +2309,7 @@ namespace Microsoft.Data.SqlClient
                             _clientCallback,
                             _originalNetworkAddressInfo != null,
                             disableTnir,
-                            ConnectionOptions.HostNameInCertificate,
-                            ConnectionOptions.InitialCatalog,
-                            ConnectionOptions.ApplicationIntent);
+                            ConnectionOptions.HostNameInCertificate);
 
             timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
