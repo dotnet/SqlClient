@@ -151,6 +151,7 @@ namespace Microsoft.Data.SqlClient
             int totalTimeout,
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDNSInfo,
+            bool tlsFirst,
             string hostNameInCertificate)
             : base(IntPtr.Zero, true)
         {
