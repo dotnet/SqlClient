@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(true, SqlConnectionIPAddressPreference.IPv4First)]
         [InlineData(true, SqlConnectionIPAddressPreference.IPv6First)]
         [InlineData(true, SqlConnectionIPAddressPreference.UsePlatformDefault)]
@@ -47,21 +47,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.MultiSubnetFailover = useMultiSubnetFailover;
             builder.IPAddressPreference = ipPreference;
 
-
-            Assert.True(ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
+            Assert.True(ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName), "Invalid data source.");
 
             if (IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName))
             {
                 builder.DataSource = hostname + "\\" + instanceName;
-                try
-                {
-                    using SqlConnection connection = new(builder.ConnectionString);
-                    connection.Open();
-                }
-                catch (Exception ex)
-                {
-                    Assert.True(false, "Unexpected connection failure: " + ex.Message);
-                }
+                
+                using SqlConnection connection = new(builder.ConnectionString);
+                connection.Open();
             }
 
             builder.ConnectTimeout = 2;
@@ -69,16 +62,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!IsValidInstance(hostname, instanceName))
             {
                 builder.DataSource = hostname + "\\" + instanceName;
-                try
-                {
-                    using SqlConnection connection = new(builder.ConnectionString);
-                    connection.Open();
-                    Assert.True(false, "Unexpected connection success against " + instanceName);
-                }
-                catch (Exception ex)
-                {
-                    Assert.Contains("Error Locating Server/Instance Specified", ex.Message);
-                }
+                
+                using SqlConnection connection = new(builder.ConnectionString);
+                SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
+                Assert.Contains("Error Locating Server/Instance Specified", ex.Message);
             }
         }
 

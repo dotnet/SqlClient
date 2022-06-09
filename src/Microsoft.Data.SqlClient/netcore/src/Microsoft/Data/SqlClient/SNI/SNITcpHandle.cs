@@ -854,14 +854,12 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Send a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
-        /// <param name="callback">Completion callback</param>
         /// <returns>SNI error code</returns>
-        public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
+        public override uint SendAsync(SNIPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SNITCPHandle)))
             {
-                SNIAsyncCallback cb = callback ?? _sendCallback;
-                packet.WriteToStreamAsync(_stream, cb, SNIProviders.TCP_PROV);
+                packet.WriteToStreamAsync(_stream, _sendCallback, SNIProviders.TCP_PROV);
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Data sent to stream asynchronously", args0: _connectionId);
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
@@ -876,10 +874,10 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             SNIPacket errorPacket;
             packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
-
+            packet.SetAsyncIOCompletionCallback(_receiveCallback);
             try
             {
-                packet.ReadFromStreamAsync(_stream, _receiveCallback);
+                packet.ReadFromStreamAsync(_stream);
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Data received from stream asynchronously", args0: _connectionId);
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }

@@ -1403,7 +1403,7 @@ namespace Microsoft.Data.SqlClient
         // bytes from the in buffer.
         public bool TryReadByteArray(Span<byte> buff, int len)
         {
-            return TryReadByteArray(buff, len, out int _);
+            return TryReadByteArray(buff, len, out _);
         }
 
         // NOTE: This method must be retriable WITHOUT replaying a snapshot
@@ -2030,7 +2030,9 @@ namespace Microsoft.Data.SqlClient
             bool result = TryReadByteArray(buff.AsSpan(start: offset), bytesToRead, out value);
             _longlenleft -= (ulong)bytesToRead;
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return value;
         }
 
@@ -2151,7 +2153,7 @@ namespace Microsoft.Data.SqlClient
             while (num > 0)
             {
                 cbSkip = (int)Math.Min((long)Int32.MaxValue, num);
-                if (!TryReadByteArray(null, cbSkip))
+                if (!TryReadByteArray(Span<byte>.Empty, cbSkip))
                 {
                     return false;
                 }
@@ -2165,7 +2167,7 @@ namespace Microsoft.Data.SqlClient
         internal bool TrySkipBytes(int num)
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
-            return TryReadByteArray(null, num);
+            return TryReadByteArray(Span<byte>.Empty, num);
         }
 
         /////////////////////////////////////////

@@ -391,6 +391,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnums.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnums.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnvChange.cs">
+      <Link>Microsoft\Data\SqlClient\SqlEnvChange.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlError.cs">
       <Link>Microsoft\Data\SqlClient\SqlError.cs</Link>
     </Compile>
@@ -429,6 +432,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlObjectPool.cs">
       <Link>Microsoft\Data\SqlClient\SqlObjectPool.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlParameter.cs">
+      <Link>Microsoft\Data\SqlClient\SqlParameter.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlParameterCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlParameterCollection.cs</Link>
@@ -502,6 +508,9 @@
     <Compile Include="..\..\src\Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\System\Diagnostics\CodeAnalysis.cs">
+      <Link>Common\System\Diagnostics\CodeAnalysis.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
@@ -565,7 +574,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.ValueTask.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />    
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
@@ -617,7 +626,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNILoadHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsQueuedPacket.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNINpHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPhysicalHandle.cs" />
@@ -643,7 +651,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />

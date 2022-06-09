@@ -61,6 +61,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Connection timed out while retrieving an access token using &apos;{0}&apos; authentication method. Last error: {1}: {2}.
+        /// </summary>
+        internal static string AAD_Token_Retrieving_Timeout {
+            get {
+                return ResourceManager.GetString("AAD_Token_Retrieving_Timeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specified parameter name &apos;{0}&apos; is not valid..
         /// </summary>
         internal static string ADP_BadParameterName {
@@ -941,7 +950,7 @@ namespace System {
                 return ResourceManager.GetString("Data_InvalidOffsetLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services..
         /// </summary>
@@ -1902,6 +1911,15 @@ namespace System {
         internal static string SNI_ERROR_9 {
             get {
                 return ResourceManager.GetString("SNI_ERROR_9", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Incorrect physicalConnection type.
+        /// </summary>
+        internal static string SNI_IncorrectPhysicalConnectionType {
+            get {
+                return ResourceManager.GetString("SNI_IncorrectPhysicalConnectionType", resourceCulture);
             }
         }
         
