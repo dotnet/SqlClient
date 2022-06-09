@@ -812,7 +812,7 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract void FreeGcHandle(int remaining, bool release);
 
-        internal abstract uint EnableSsl(ref uint info);
+        internal abstract uint EnableSsl(ref uint info, bool tlsFirst);
 
         internal abstract uint WaitForSSLHandShakeToComplete(out int protocolVersion);
 

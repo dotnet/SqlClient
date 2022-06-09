@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle, spnBuffer, instanceName, flushCache,
-                    fSync, timeout, fParallel, ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate);
+                    fSync, timeout, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
             }
         }
 

@@ -19,6 +19,8 @@ namespace Microsoft.Data.SqlClient
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         internal delegate void SqlAsyncCallbackDelegate(IntPtr m_ConsKey, IntPtr pPacket, uint dwError);
 
+        internal delegate IntPtr SqlClientCertificateDelegate(IntPtr pCallbackContext);
+
         internal const int SniIP6AddrStringBufferLength = 48; // from SNI layer
 
         internal static int SniMaxComposedSpnLength
@@ -42,6 +44,21 @@ namespace Microsoft.Data.SqlClient
             internal SqlAsyncCallbackDelegate writeDelegate;
             internal IntPtr key;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct AuthProviderInfo
+        {
+            public uint flags;
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool tlsFirst;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string certId;
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool certHash;
+            public object clientCertificateCallbackContext;
+            public SqlClientCertificateDelegate clientCertificateCallback;
+        };
+
 
         internal enum ConsumerNumber
         {
@@ -148,6 +165,8 @@ namespace Microsoft.Data.SqlClient
             public Sni_Consumer_Info ConsumerInfo;
             [MarshalAs(UnmanagedType.LPWStr)]
             public string wszConnectionString;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string HostNameInCertificate;
             public PrefixEnum networkLibrary;
             public byte* szSPN;
             public uint cchSPN;
@@ -201,6 +220,9 @@ namespace Microsoft.Data.SqlClient
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIAddProviderWrapper")]
         internal static extern uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref uint pInfo);
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIAddProviderWrapper")]
+        internal static extern uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref AuthProviderInfo pInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNICheckConnectionWrapper")]
         internal static extern uint SNICheckConnection([In] SNIHandle pConn);
@@ -381,10 +403,8 @@ namespace Microsoft.Data.SqlClient
             bool fParallel,
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDNSInfo,
-            bool tlsFirst,
             string hostNameInCertificate)
         {
-            //TDS 8 TODO: Plumb new options into native SNI call
 
             fixed (byte* pin_instanceName = &instanceName[0])
             {
@@ -394,8 +414,8 @@ namespace Microsoft.Data.SqlClient
                 MarshalConsumerInfo(consumerInfo, ref clientConsumerInfo.ConsumerInfo);
 
                 clientConsumerInfo.wszConnectionString = constring;
+                clientConsumerInfo.HostNameInCertificate = hostNameInCertificate;
                 clientConsumerInfo.networkLibrary = PrefixEnum.UNKNOWN_PREFIX;
-
                 clientConsumerInfo.szInstanceName = pin_instanceName;
                 clientConsumerInfo.cchInstanceName = (uint)instanceName.Length;
                 clientConsumerInfo.fOverrideLastConnectCache = fOverrideCache;

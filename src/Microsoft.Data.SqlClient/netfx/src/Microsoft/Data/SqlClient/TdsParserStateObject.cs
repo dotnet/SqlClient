@@ -322,7 +322,7 @@ namespace Microsoft.Data.SqlClient
 
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
             SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, physicalConnection, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
             if (_sessionHandle.Status != TdsEnums.SNI_SUCCESS)
@@ -858,9 +858,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionIPAddressPreference ipPreference,
             string cachedFQDN,
             bool tlsFirst = false,
-            string hostNameInCertificate = "",
-            string databaseName = "",
-            ApplicationIntent applicationIntent = ApplicationIntent.ReadWrite)
+            string hostNameInCertificate = "")
         {
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
 

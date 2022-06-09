@@ -818,8 +818,6 @@ namespace Microsoft.Data.SqlClient
             SQLDNSInfo cachedDNSInfo,
             string hostNameInCertificate)
         {
-            //TDS 8 TODO: Plumb new options into native SNI call
-
             fixed (byte* pin_instanceName = &instanceName[0])
             {
                 SNI_CLIENT_CONSUMER_INFO clientConsumerInfo = new SNI_CLIENT_CONSUMER_INFO();
@@ -894,6 +892,7 @@ namespace Microsoft.Data.SqlClient
                 authInfo.clientCertificateCallbackContext = sniAuthInfoWrapper;
                 authInfo.clientCertificateCallback = SNIClientCertificateFallbackWrapper;
             }
+
             ret = SNIAddProviderWrapper(pConn, providerEnum, ref authInfo);
 
             if (ret == ERROR_SUCCESS)

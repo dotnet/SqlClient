@@ -696,38 +696,6 @@ namespace Microsoft.Data.Common
             }
         }
 
-        internal static bool TryToConvertToSqlConnectionEncryptOption(string value, out SqlConnectionEncryptOption result)
-        {
-
-            // SqlConnectionEncryptOption has length of 3
-            Debug.Assert(Enum.GetNames(typeof(SqlConnectionEncryptOption)).Length == 3, "SqlConnectionEncryption enum has changed, update needed. Accepted values are:" +
-                "Optional, false, no, Mandatory, true, yes and Strict");
-            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionEncryptOption.Optional))
-                || StringComparer.InvariantCultureIgnoreCase.Equals(value, "false")
-                || StringComparer.InvariantCultureIgnoreCase.Equals(value, "no"))
-            {
-                result = SqlConnectionEncryptOption.Optional;
-                return true;
-            }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionEncryptOption.Mandatory))
-                           || StringComparer.InvariantCultureIgnoreCase.Equals(value, "true")
-                           || StringComparer.InvariantCultureIgnoreCase.Equals(value, "yes"))
-            {
-                result = SqlConnectionEncryptOption.Mandatory;
-                return true;
-            }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionEncryptOption.Strict)))
-            {
-                result = SqlConnectionEncryptOption.Strict;
-                return true;
-            }
-            else
-            {
-                result = DbConnectionStringDefaults.Encrypt;
-                return false;
-            }
-        }
-
         #region <<AttestationProtocol Utility>>
         /// <summary>
         ///  Convert a string value to the corresponding SqlConnectionAttestationProtocol
