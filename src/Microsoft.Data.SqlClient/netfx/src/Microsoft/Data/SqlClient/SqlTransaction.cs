@@ -3,139 +3,21 @@
 // See the LICENSE file in the project root for more information.
 
 using System.ComponentModel;
-using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
-
 
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
-    public sealed class SqlTransaction : DbTransaction
+    public sealed partial class SqlTransaction : DbTransaction
     {
-        private static int _objectTypeCount; // EventSource Counter
-        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
-        internal readonly IsolationLevel _isolationLevel = IsolationLevel.ReadCommitted;
-
-        private SqlInternalTransaction _internalTransaction;
-        private SqlConnection _connection;
-
-        private bool _isFromAPI;
-
-        internal SqlTransaction(SqlInternalConnection internalConnection, SqlConnection con,
-                                IsolationLevel iso, SqlInternalTransaction internalTransaction)
-        {
-            SqlConnection.VerifyExecutePermission();
-
-            _isolationLevel = iso;
-            _connection = con;
-
-            if (internalTransaction == null)
-            {
-                _internalTransaction = new SqlInternalTransaction(internalConnection, TransactionType.LocalFromAPI, this);
-            }
-            else
-            {
-                Debug.Assert(internalConnection.CurrentTransaction == internalTransaction, "Unexpected Parser.CurrentTransaction state!");
-                _internalTransaction = internalTransaction;
-                _internalTransaction.InitParent(this);
-            }
-        }
-
-        ////////////////////////////////////////////////////////////////////////////////////////
-        // PROPERTIES
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Connection/*' />
-        new public SqlConnection Connection
-        { // MDAC 66655
-            get
-            {
-                if (IsZombied)
-                {
-                    return null;
-                }
-                else
-                {
-                    return _connection;
-                }
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*' />
-        override protected DbConnection DbConnection
-        {
-            get
-            {
-                return Connection;
-            }
-        }
-
-        internal SqlInternalTransaction InternalTransaction
-        {
-            get
-            {
-                return _internalTransaction;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/IsolationLevel/*' />
-        override public IsolationLevel IsolationLevel
-        {
-            get
-            {
-                ZombieCheck();
-                return _isolationLevel;
-            }
-        }
-
-        private bool Is2005PartialZombie
-        {
-            get
-            {
-                return (null != _internalTransaction && _internalTransaction.IsCompleted);
-            }
-        }
-
-        internal bool IsZombied
-        {
-            get
-            {
-                return (null == _internalTransaction || _internalTransaction.IsCompleted);
-            }
-        }
-
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectID;
-            }
-        }
-
-        internal SqlStatistics Statistics
-        {
-            get
-            {
-                if (null != _connection)
-                {
-                    if (_connection.StatisticsEnabled)
-                    {
-                        return _connection.Statistics;
-                    }
-                }
-                return null;
-            }
-        }
-
         ////////////////////////////////////////////////////////////////////////////////////////
         // PUBLIC METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
-        override public void Commit()
+        public override void Commit()
         {
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
 
@@ -151,14 +33,14 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
 #if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    TdsParser.ReliabilitySection tdsReliabilitySection = new();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
                         tdsReliabilitySection.Start();
 #else
-                {
+                    {
 #endif //DEBUG
                         bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
                         statistics = SqlStatistics.StartTimer(Statistics);
@@ -195,8 +77,7 @@ namespace Microsoft.Data.SqlClient
                     // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request, 
                     // this connection may not be in reusable state.
                     // We will abort this connection and make sure it does not go back to the pool.
-                    var innerException = e.InnerException as Win32Exception;
-                    if (innerException != null && innerException.NativeErrorCode == TdsEnums.SNI_WAIT_TIMEOUT)
+                    if (e.InnerException is Win32Exception innerException && innerException.NativeErrorCode == TdsEnums.SNI_WAIT_TIMEOUT)
                     {
                         _connection.Abort(e);
                     }
@@ -221,7 +102,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
 #if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    TdsParser.ReliabilitySection tdsReliabilitySection = new();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
@@ -264,7 +145,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
-        override public void Rollback()
+        public override void Rollback()
         {
             if (Is2005PartialZombie)
             {
@@ -287,14 +168,14 @@ namespace Microsoft.Data.SqlClient
                     try
                     {
 #if DEBUG
-                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                        TdsParser.ReliabilitySection tdsReliabilitySection = new();
 
                         RuntimeHelpers.PrepareConstrainedRegions();
                         try
                         {
                             tdsReliabilitySection.Start();
 #else
-                    {
+                        {
 #endif //DEBUG
                             bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
                             statistics = SqlStatistics.StartTimer(Statistics);
@@ -351,14 +232,14 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
 #if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    TdsParser.ReliabilitySection tdsReliabilitySection = new();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
                         tdsReliabilitySection.Start();
 #else
-                {
+                    {
 #endif //DEBUG
                         bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
                         statistics = SqlStatistics.StartTimer(Statistics);
@@ -415,14 +296,14 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
 #if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    TdsParser.ReliabilitySection tdsReliabilitySection = new();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
                         tdsReliabilitySection.Start();
 #else
-                {
+                    {
 #endif //DEBUG
                         bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
                         statistics = SqlStatistics.StartTimer(Statistics);
@@ -458,49 +339,5 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-
-        ////////////////////////////////////////////////////////////////////////////////////////
-        // INTERNAL METHODS
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        internal void Zombie()
-        {
-            // SQLBUDT #402544 For 2005, we have to defer "zombification" until
-            //                 we get past the users' next rollback, else we'll
-            //                 throw an exception there that is a breaking change.
-            //                 Of course, if the connection is aready closed, 
-            //                 then we're free to zombify...
-            SqlInternalConnection internalConnection = (_connection.InnerConnection as SqlInternalConnection);
-
-            if (null != internalConnection && internalConnection.Is2005OrNewer && !_isFromAPI)
-            {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlTransaction.Zombie|ADV> {0} 2005 deferred zombie", ObjectID);
-            }
-            else
-            {
-                _internalTransaction = null; // pre-2005 zombification
-            }
-
-        }
-
-        ////////////////////////////////////////////////////////////////////////////////////////
-        // PRIVATE METHODS
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        private void ZombieCheck()
-        {
-            // If this transaction has been completed, throw exception since it is unusable.
-            if (IsZombied)
-            {
-
-                if (Is2005PartialZombie)
-                {
-                    _internalTransaction = null; // 2005 zombification
-                }
-
-                throw ADP.TransactionZombied(this);
-            }
-        }
     }
 }
-

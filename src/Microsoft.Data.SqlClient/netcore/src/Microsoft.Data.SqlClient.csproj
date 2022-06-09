@@ -256,6 +256,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlTransaction.Common.cs">
+      <Link>Microsoft\Data\SqlClient\SqlTransaction.Common.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs</Link>
     </Compile>
