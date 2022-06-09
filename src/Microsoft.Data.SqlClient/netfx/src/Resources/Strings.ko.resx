@@ -4617,4 +4617,7 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>부모 명령에서 EnableOptimizedParameterBinding을 사용하는 경우 매개 변수 '{0}'에는 Direction Output 또는 InputOutput을 사용할 수 없습니다.</value>
   </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+  </data>
 </root>

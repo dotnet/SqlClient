@@ -433,6 +433,8 @@ namespace Microsoft.Data.SqlClient
         public static readonly string AllColumns;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ColumnSetColumns/*'/>
         public static readonly string ColumnSetColumns;
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/StructuredTypeMembers/*' />
+        public static readonly string StructuredTypeMembers;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/SqlClientPermission/*'/>
     public sealed partial class SqlClientPermission : System.Data.Common.DBDataPermission

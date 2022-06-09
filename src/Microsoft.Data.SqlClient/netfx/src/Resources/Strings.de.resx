@@ -4617,4 +4617,7 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Der Parameter "{0}" kann keine Ausgaberichtung oder InputOutput aufweisen, wenn EnableOptimizedParameterBinding für den übergeordneten Befehl aktiviert ist.</value>
   </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+  </data>
 </root>
