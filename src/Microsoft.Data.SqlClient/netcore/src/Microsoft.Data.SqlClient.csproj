@@ -172,7 +172,7 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\RowsCopiedEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\RowsCopiedEventHandler.cs</Link>
     </Compile>
-     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialTextReader.cs">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialTextReader.cs">
       <Link>Microsoft\Data\SqlClient\SqlSequentialTextReader.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs">
@@ -481,6 +481,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParameterSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
     </Compile>
@@ -656,10 +659,12 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserSessionPool.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStaticMethods.cs" />
   </ItemGroup>
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
+    <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.Windows.cs">
+      <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs</Link>
     </Compile>
@@ -672,6 +677,9 @@
   </ItemGroup>
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
+    <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.Unix.cs">
+      <Link>Microsoft\Data\Common\AdapterUtil.Unix.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Unix.cs" />
