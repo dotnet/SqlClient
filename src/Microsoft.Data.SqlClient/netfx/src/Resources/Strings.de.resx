@@ -4618,6 +4618,6 @@
     <value>Der Parameter "{0}" kann keine Ausgaberichtung oder InputOutput aufweisen, wenn EnableOptimizedParameterBinding für den übergeordneten Befehl aktiviert ist.</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
-    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+    <value>Timeout bei der Verbindung beim Abrufen eines Zugriffstokens mithilfe der Authentifizierungsmethode "{0}". Letzter Fehler: {1}: {2}</value>
   </data>
 </root>

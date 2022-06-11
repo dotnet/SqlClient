@@ -4618,6 +4618,6 @@
     <value>O parâmetro '{0}' não pode ter a saída de direção ou InputOutput quando EnableOptimizedParameterBinding está habilitado no comando pai.</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
-    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+    <value>A conexão expirou ao recuperar um token de acesso usando o método de autenticação '{0}'. Último erro: {1}: {2}</value>
   </data>
 </root>

@@ -4618,6 +4618,6 @@
     <value>El parámetro “{0}” no puede tener la Dirección de salida ni InputOutput cuando EnableOptimizedParameterBinding está habilitado en el comando primario.</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
-    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+    <value>Se agotó el tiempo de espera de la conexión al recuperar un token de acceso mediante el método de autenticación "{0}". Último error: {1}: {2}</value>
   </data>
 </root>

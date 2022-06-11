@@ -4618,6 +4618,6 @@
     <value>在父命令上啟用 EnableOptimizedParameterBinding 時，參數 '{0}' 不能具有方向輸出或 InputOutput。</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
-    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+    <value>使用 '{0}' 驗證方法擷取存取權杖時已逾時。上次錯誤: {1}: {2}</value>
   </data>
 </root>
