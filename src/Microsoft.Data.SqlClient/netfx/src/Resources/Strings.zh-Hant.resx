@@ -4620,4 +4620,10 @@
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>使用 '{0}' 驗證方法擷取存取權杖時已逾時。上次錯誤: {1}: {2}</value>
   </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>The service principal name (SPN) of the failover partner.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>The service principal name (SPN) of the server.</value>
+  </data>
 </root>

@@ -4620,4 +4620,10 @@
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>A conexão expirou ao recuperar um token de acesso usando o método de autenticação '{0}'. Último erro: {1}: {2}</value>
   </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>The service principal name (SPN) of the failover partner.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>The service principal name (SPN) of the server.</value>
+  </data>
 </root>
