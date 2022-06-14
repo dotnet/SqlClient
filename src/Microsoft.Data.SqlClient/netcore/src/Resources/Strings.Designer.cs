@@ -3247,6 +3247,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Encrypt=Strict is not supported when targeting .NET Standard 2.0. Use .NET Standard 2.1, .NET Framework, or .NET..
+        /// </summary>
+        internal static string SQL_TDS8_NotSupported_Netstandard2_0 {
+            get {
+                return ResourceManager.GetString("SQL_TDS8_NotSupported_Netstandard2.0", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Processing of results from SQL Server failed because of an invalid multipart name.
         /// </summary>
         internal static string SQL_TDSParserTableName {

@@ -5704,6 +5704,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The service principal name (SPN) of the failover partner..
+        /// </summary>
+        internal static string DbConnectionString_FailoverPartnerSPN {
+            get {
+                return ResourceManager.GetString("DbConnectionString_FailoverPartnerSPN", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The UDL file to use when connecting to the Data Source..
         /// </summary>
         internal static string DbConnectionString_FileName {
@@ -5853,6 +5862,15 @@ namespace System {
         internal static string DbConnectionString_Replication {
             get {
                 return ResourceManager.GetString("DbConnectionString_Replication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The service principal name (SPN) of the server..
+        /// </summary>
+        internal static string DbConnectionString_ServerSPN {
+            get {
+                return ResourceManager.GetString("DbConnectionString_ServerSPN", resourceCulture);
             }
         }
         
