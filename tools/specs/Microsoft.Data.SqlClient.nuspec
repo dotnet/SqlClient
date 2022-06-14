@@ -47,6 +47,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.Identity.Client" version="4.43.2" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.8.0" />
+        <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
         <dependency id="System.Buffers" version="4.5.1" />
         <dependency id="System.Configuration.ConfigurationManager" version="5.0.0" exclude="Compile" />
@@ -65,6 +66,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.Identity.Client" version="4.43.2" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.8.0" />
+        <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
         <dependency id="System.Buffers" version="4.5.1" />
         <dependency id="System.Configuration.ConfigurationManager" version="5.0.0" exclude="Compile" />
@@ -83,6 +85,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.Identity.Client" version="4.43.2" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.8.0" />
+        <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
         <dependency id="System.Buffers" version="4.5.1" />
         <dependency id="System.Configuration.ConfigurationManager" version="5.0.0" exclude="Compile" />
