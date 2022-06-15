@@ -120,6 +120,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", 
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionColumnEncryptionSetting.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionColumnEncryptionSetting.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionEncryptOption.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionEncryptOption.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml

@@ -810,6 +810,20 @@ namespace Microsoft.Data.Common
             }
         }
 
+        internal static SqlConnectionEncryptOption ConvertToSqlConnectionEncryptOption(string keyword, object value)
+        {
+            if (value is null)
+            {
+                return DbConnectionStringDefaults.Encrypt;
+            }
+            else if (value is string sValue)
+            {
+                return SqlConnectionEncryptOption.Parse(sValue);
+            }
+
+            throw ADP.InvalidConnectionOptionValue(keyword);
+        }
+
         #endregion
 
         #region <<IPAddressPreference Utility>>
@@ -947,7 +961,8 @@ namespace Microsoft.Data.Common
 #endif
         internal const string CurrentLanguage = "";
         internal const string DataSource = "";
-        internal const bool Encrypt = true;
+        internal static readonly SqlConnectionEncryptOption Encrypt = SqlConnectionEncryptOption.Mandatory;
+        internal const string HostNameInCertificate = "";
         internal const bool Enlist = true;
         internal const string FailoverPartner = "";
         internal const string InitialCatalog = "";
@@ -1010,6 +1025,7 @@ namespace Microsoft.Data.Common
         internal const string ContextConnection = "Context Connection";
         internal const string CurrentLanguage = "Current Language";
         internal const string Encrypt = "Encrypt";
+        internal const string HostNameInCertificate = "Host Name In Certificate";
         internal const string FailoverPartner = "Failover Partner";
         internal const string InitialCatalog = "Initial Catalog";
         internal const string MultipleActiveResultSets = "Multiple Active Result Sets";
@@ -1064,6 +1080,9 @@ namespace Microsoft.Data.Common
         //internal const string AttachDBFilename       = EXTENDEDPROPERTIES+","+INITIALFILENAME;
         internal const string EXTENDEDPROPERTIES = "extended properties";
         internal const string INITIALFILENAME = "initial file name";
+
+        // internal const string HostNameInCertificate        = HOSTNAMEINCERTIFICATE;
+        internal const string HOSTNAMEINCERTIFICATE = "hostnameincertificate";
 
         //internal const string ConnectTimeout         = CONNECTIONTIMEOUT+","+TIMEOUT;
         internal const string CONNECTIONTIMEOUT = "connection timeout";

@@ -991,7 +991,7 @@ namespace Microsoft.Data.SqlClient
                 tdsReliabilitySection.Start();
 #endif //DEBUG
 
-            isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
+                isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
 
 #if DEBUG
             }
@@ -2308,7 +2308,8 @@ namespace Microsoft.Data.SqlClient
                             _serverCallback,
                             _clientCallback,
                             _originalNetworkAddressInfo != null,
-                            disableTnir);
+                            disableTnir,
+                            ConnectionOptions.HostNameInCertificate);
 
             timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
@@ -2386,18 +2387,18 @@ namespace Microsoft.Data.SqlClient
                     {
                         tdsReliabilitySection.Start();
 #endif //DEBUG
-                    Task reconnectTask = parent.ValidateAndReconnect(() =>
-                    {
-                        ThreadHasParserLockForClose = false;
-                        _parserLock.Release();
-                        releaseConnectionLock = false;
-                    }, timeout);
-                    if (reconnectTask != null)
-                    {
-                        AsyncHelper.WaitForCompletion(reconnectTask, timeout);
-                        return true;
-                    }
-                    return false;
+                        Task reconnectTask = parent.ValidateAndReconnect(() =>
+                        {
+                            ThreadHasParserLockForClose = false;
+                            _parserLock.Release();
+                            releaseConnectionLock = false;
+                        }, timeout);
+                        if (reconnectTask != null)
+                        {
+                            AsyncHelper.WaitForCompletion(reconnectTask, timeout);
+                            return true;
+                        }
+                        return false;
 #if DEBUG
                     }
                     finally

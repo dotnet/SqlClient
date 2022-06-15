@@ -142,9 +142,24 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="ipPreference">IP address preference</param>
         /// <param name="cachedFQDN">Used for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
+        /// <param name="tlsFirst"></param>
+        /// <param name="hostNameInCertificate"></param>
         /// <returns>SNI handle</returns>
-        internal static SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer,
-                                        bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        internal static SNIHandle CreateConnectionHandle(
+            string fullServerName,
+            bool ignoreSniOpenTimeout,
+            long timerExpire,
+            out byte[] instanceName,
+            ref byte[][] spnBuffer,
+            bool flushCache,
+            bool async,
+            bool parallel,
+            bool isIntegratedSecurity,
+            SqlConnectionIPAddressPreference ipPreference,
+            string cachedFQDN,
+            ref SQLDNSInfo pendingDNSInfo,
+            bool tlsFirst,
+            string hostNameInCertificate)
         {
             instanceName = new byte[1];
 
@@ -155,7 +170,6 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 return null;
             }
-
             // If a localDB Data source is available, we need to use it.
             fullServerName = localDBDataSource ?? fullServerName;
 
@@ -171,10 +185,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.Admin:
                 case DataSource.Protocol.None: // default to using tcp if no protocol is provided
                 case DataSource.Protocol.TCP:
-                    sniHandle = CreateTcpHandle(details, timerExpire, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo);
+                    sniHandle = CreateTcpHandle(details, timerExpire, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
+                        tlsFirst, hostNameInCertificate);
                     break;
                 case DataSource.Protocol.NP:
-                    sniHandle = CreateNpHandle(details, timerExpire, parallel);
+                    sniHandle = CreateNpHandle(details, timerExpire, parallel, tlsFirst);
                     break;
                 default:
                     Debug.Fail($"Unexpected connection protocol: {details._connectionProtocol}");
@@ -264,8 +279,18 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="ipPreference">IP address preference</param>
         /// <param name="cachedFQDN">Key for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
+        /// <param name="tlsFirst"></param>
+        /// <param name="hostNameInCertificate"></param>
         /// <returns>SNITCPHandle</returns>
-        private static SNITCPHandle CreateTcpHandle(DataSource details, long timerExpire, bool parallel, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        private static SNITCPHandle CreateTcpHandle(
+            DataSource details,
+            long timerExpire,
+            bool parallel,
+            SqlConnectionIPAddressPreference ipPreference,
+            string cachedFQDN,
+            ref SQLDNSInfo pendingDNSInfo,
+            bool tlsFirst,
+            string hostNameInCertificate)
         {
             // TCP Format:
             // tcp:<host name>\<instance name>
@@ -303,7 +328,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 port = isAdminConnection ? DefaultSqlServerDacPort : DefaultSqlServerPort;
             }
 
-            return new SNITCPHandle(hostName, port, timerExpire, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo);
+            return new SNITCPHandle(hostName, port, timerExpire, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
+                tlsFirst, hostNameInCertificate);
         }
 
         /// <summary>
@@ -312,8 +338,9 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="details">Data source</param>
         /// <param name="timerExpire">Timer expiration</param>
         /// <param name="parallel">Should MultiSubnetFailover be used. Only returns an error for named pipes.</param>
+        /// <param name="tlsFirst"></param>
         /// <returns>SNINpHandle</returns>
-        private static SNINpHandle CreateNpHandle(DataSource details, long timerExpire, bool parallel)
+        private static SNINpHandle CreateNpHandle(DataSource details, long timerExpire, bool parallel, bool tlsFirst)
         {
             if (parallel)
             {
@@ -321,7 +348,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
-            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire);
+            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire, tlsFirst);
         }
 
         /// <summary>

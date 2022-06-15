@@ -46,6 +46,7 @@ namespace Microsoft.Data.SqlClient
             Replication,
             ConnectTimeout,
             Encrypt,
+            HostNameInCertificate,
             TrustServerCertificate,
             LoadBalanceTimeout,
             PacketSize,
@@ -105,7 +106,8 @@ namespace Microsoft.Data.SqlClient
         private int _packetSize = DbConnectionStringDefaults.PacketSize;
         private int _connectRetryCount = DbConnectionStringDefaults.ConnectRetryCount;
         private int _connectRetryInterval = DbConnectionStringDefaults.ConnectRetryInterval;
-        private bool _encrypt = DbConnectionStringDefaults.Encrypt;
+        private SqlConnectionEncryptOption _encrypt = DbConnectionStringDefaults.Encrypt;
+        private string _hostNameInCertificate = DbConnectionStringDefaults.HostNameInCertificate;
         private bool _trustServerCertificate = DbConnectionStringDefaults.TrustServerCertificate;
         private bool _enlist = DbConnectionStringDefaults.Enlist;
         private bool _integratedSecurity = DbConnectionStringDefaults.IntegratedSecurity;
@@ -149,6 +151,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.CurrentLanguage] = DbConnectionStringKeywords.CurrentLanguage;
             validKeywords[(int)Keywords.DataSource] = DbConnectionStringKeywords.DataSource;
             validKeywords[(int)Keywords.Encrypt] = DbConnectionStringKeywords.Encrypt;
+            validKeywords[(int)Keywords.HostNameInCertificate] = DbConnectionStringKeywords.HostNameInCertificate;
             validKeywords[(int)Keywords.Enlist] = DbConnectionStringKeywords.Enlist;
             validKeywords[(int)Keywords.FailoverPartner] = DbConnectionStringKeywords.FailoverPartner;
             validKeywords[(int)Keywords.InitialCatalog] = DbConnectionStringKeywords.InitialCatalog;
@@ -203,6 +206,7 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringKeywords.Encrypt, Keywords.Encrypt },
                 { DbConnectionStringKeywords.Enlist, Keywords.Enlist },
                 { DbConnectionStringKeywords.FailoverPartner, Keywords.FailoverPartner },
+                { DbConnectionStringKeywords.HostNameInCertificate, Keywords.HostNameInCertificate },
                 { DbConnectionStringKeywords.InitialCatalog, Keywords.InitialCatalog },
                 { DbConnectionStringKeywords.IntegratedSecurity, Keywords.IntegratedSecurity },
                 { DbConnectionStringKeywords.LoadBalanceTimeout, Keywords.LoadBalanceTimeout },
@@ -245,6 +249,7 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringSynonyms.APP, Keywords.ApplicationName },
                 { DbConnectionStringSynonyms.APPLICATIONINTENT, Keywords.ApplicationIntent },
                 { DbConnectionStringSynonyms.EXTENDEDPROPERTIES, Keywords.AttachDBFilename },
+                { DbConnectionStringSynonyms.HOSTNAMEINCERTIFICATE, Keywords.HostNameInCertificate },
                 { DbConnectionStringSynonyms.INITIALFILENAME, Keywords.AttachDBFilename },
                 { DbConnectionStringSynonyms.CONNECTIONTIMEOUT, Keywords.ConnectTimeout },
                 { DbConnectionStringSynonyms.CONNECTRETRYCOUNT, Keywords.ConnectRetryCount },
@@ -290,6 +295,10 @@ namespace Microsoft.Data.SqlClient
         private static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
             => DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(keyword, value);
 
+        private static SqlConnectionEncryptOption ConvertToSqlConnectionEncryptOption(string keyword, object value)
+           => DbConnectionStringBuilderUtil.ConvertToSqlConnectionEncryptOption(keyword, value);
+
+
         private static SqlConnectionIPAddressPreference ConvertToIPAddressPreference(string keyword, object value)
             => DbConnectionStringBuilderUtil.ConvertToIPAddressPreference(keyword, value);
 
@@ -318,6 +327,8 @@ namespace Microsoft.Data.SqlClient
                     return DataSource;
                 case Keywords.Encrypt:
                     return Encrypt;
+                case Keywords.HostNameInCertificate:
+                    return HostNameInCertificate;
                 case Keywords.Enlist:
                     return Enlist;
                 case Keywords.FailoverPartner:
@@ -439,6 +450,9 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case Keywords.Encrypt:
                     _encrypt = DbConnectionStringDefaults.Encrypt;
+                    break;
+                case Keywords.HostNameInCertificate:
+                    _hostNameInCertificate = DbConnectionStringDefaults.HostNameInCertificate;
                     break;
                 case Keywords.Enlist:
                     _enlist = DbConnectionStringDefaults.Enlist;
@@ -569,6 +583,11 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value), "Invalid value for SqlConnectionAttestationProtocol");
             base[DbConnectionStringKeywords.AttestationProtocol] = DbConnectionStringBuilderUtil.AttestationProtocolToString(value);
+        }
+
+        private void SetSqlConnectionEncryptionValue(SqlConnectionEncryptOption value)
+        {
+            base[DbConnectionStringKeywords.Encrypt] = value.ToString();
         }
 
         private void SetIPAddressPreferenceValue(SqlConnectionIPAddressPreference value)
@@ -978,7 +997,10 @@ namespace Microsoft.Data.SqlClient
                             PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value);
                             break;
                         case Keywords.Encrypt:
-                            Encrypt = ConvertToBoolean(value);
+                            Encrypt = ConvertToSqlConnectionEncryptOption(keyword, value);
+                            break;
+                        case Keywords.HostNameInCertificate:
+                            HostNameInCertificate = ConvertToString(value);
                             break;
                         case Keywords.TrustServerCertificate:
                             TrustServerCertificate = ConvertToBoolean(value);
@@ -1170,13 +1192,28 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Encrypt)]
         [RefreshProperties(RefreshProperties.All)]
-        public bool Encrypt
+        public SqlConnectionEncryptOption Encrypt
         {
             get => _encrypt;
             set
             {
-                SetValue(DbConnectionStringKeywords.Encrypt, value);
+                SetSqlConnectionEncryptionValue(value);
                 _encrypt = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/HostNameInCertificate/*' />
+        [DisplayName(DbConnectionStringKeywords.HostNameInCertificate)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Encrypt)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string HostNameInCertificate
+        {
+            get => _hostNameInCertificate;
+            set
+            {
+                SetValue(DbConnectionStringKeywords.HostNameInCertificate, value);
+                _hostNameInCertificate = value;
             }
         }
 
