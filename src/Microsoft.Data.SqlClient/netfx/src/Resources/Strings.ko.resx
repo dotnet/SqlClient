@@ -4618,6 +4618,12 @@
     <value>부모 명령에서 EnableOptimizedParameterBinding을 사용하는 경우 매개 변수 '{0}'에는 Direction Output 또는 InputOutput을 사용할 수 없습니다.</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
-    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+    <value>'{0}' 인증 방법을 사용하여 액세스 토큰을 검색하는 동안 연결 시간이 초과되었습니다. 마지막 오류: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>The service principal name (SPN) of the failover partner.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>The service principal name (SPN) of the server.</value>
   </data>
 </root>

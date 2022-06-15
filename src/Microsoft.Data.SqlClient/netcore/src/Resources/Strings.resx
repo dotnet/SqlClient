@@ -1938,6 +1938,7 @@
   <data name="SNI_IncorrectPhysicalConnectionType" xml:space="preserve">
     <value>Incorrect physicalConnection type.</value>
   </data>
+
   <data name="SQL_TDS8_NotSupported_Netstandard2.0" xml:space="preserve">
     <value>Encrypt=Strict is not supported when targeting .NET Standard 2.0. Use .NET Standard 2.1, .NET Framework, or .NET.</value>
   </data>

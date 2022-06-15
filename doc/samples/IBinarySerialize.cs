@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Data;
 using System.Data.SqlTypes;
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 using System.Text;
 
 namespace test
@@ -45,7 +45,7 @@ namespace test
         //    Bytes 0 - 19: string text, padded to the right with null characters
         //    Bytes 20+: Double value
 
-        // using Microsoft.Data.SqlClient.Server;
+        // using Microsoft.SqlServer.Server;
         public void Read(System.IO.BinaryReader r)
         {
 
@@ -84,7 +84,7 @@ namespace test
         //    Bytes 0 - 19: string text, padded to the right with null characters
         //    Bytes 20+: Double value
 
-        // using Microsoft.Data.SqlClient.Server;
+        // using Microsoft.SqlServer.Server;
         public void Write(System.IO.BinaryWriter w)
         {
             int maxStringSize = 20;

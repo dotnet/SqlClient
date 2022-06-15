@@ -9452,7 +9452,7 @@ namespace Microsoft.Data.SqlClient
 
                     int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
                     byte[] udtVal = null;
-                    Format format = Format.Native;
+                    SqlServer.Server.Format format = SqlServer.Server.Format.Native;
 
                     if (string.IsNullOrEmpty(param.UdtTypeName))
                     {

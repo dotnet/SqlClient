@@ -11,9 +11,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
+
 using System.Security;
 using System.Security.Permissions;
 using System.Text;
@@ -21,15 +19,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.SqlClient;
-using Microsoft.Win32;
 using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
+using Microsoft.SqlServer.Server;
 
 #if NETFRAMEWORK
-using Microsoft.SqlServer.Server;
+using Microsoft.Win32;
 using System.Reflection;
-#else
-using Microsoft.Data.SqlClient.Server;
+using System.Runtime.ConstrainedExecution;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 #endif
 
 namespace Microsoft.Data.Common
