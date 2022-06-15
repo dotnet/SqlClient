@@ -4621,9 +4621,9 @@
     <value>認証方法 '{0}' によるアクセス トークンの取得中に接続がタイムアウトしました。前回のエラー: {1}: {2}</value>
   </data>
   <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the failover partner.</value>
+    <value>フェールオーバー パートナーのサービス プリンシパル名 (SPN)。</value>
   </data>
   <data name="DbConnectionString_ServerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the server.</value>
+    <value>サーバーのサービス プリンシパル名 (SPN)。</value>
   </data>
 </root>

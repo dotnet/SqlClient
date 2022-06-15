@@ -4621,9 +4621,9 @@
     <value>Истекло время ожидания подключения при получении маркера доступа с помощью метода проверки подлинности "{0}". Последняя ошибка: {1}: {2}</value>
   </data>
   <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the failover partner.</value>
+    <value>Имя субъекта-службы (SPN) партнера по обеспечению отработки отказа.</value>
   </data>
   <data name="DbConnectionString_ServerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the server.</value>
+    <value>Имя субъекта-службы (SPN) сервера.</value>
   </data>
 </root>
