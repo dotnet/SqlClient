@@ -12,6 +12,7 @@ namespace Microsoft.Data.SqlClient.SNI
     internal abstract class SNIPhysicalHandle : SNIHandle
     {
         protected const int DefaultPoolSize = 4;
+
 #if DEBUG
         private static int s_packetId;
 #endif
@@ -84,7 +85,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             return string.Join(Environment.NewLine,
                 Environment.StackTrace
-                .Split(new string[] { Environment.NewLine },StringSplitOptions.None)
+                .Split(new string[] { Environment.NewLine }, StringSplitOptions.None)
                 .Skip(3) // trims off the common parts at the top of the stack so you can see what the actual caller was
                 .Take(7) // trims off most of the bottom of the stack because when running under xunit there's a lot of spam
             );

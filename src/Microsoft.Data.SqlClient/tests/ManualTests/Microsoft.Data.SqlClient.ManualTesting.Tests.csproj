@@ -272,6 +272,7 @@
     <Compile Include="SQL\Common\SystemDataInternals\DataReaderHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
@@ -301,6 +302,7 @@
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="$(ReferenceType.Contains('NetStandard'))" Include="$(TestsPath)NSLibrary\Microsoft.Data.SqlClient.NSLibrary.csproj" />
+    <ProjectReference Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
     <PackageReference Condition="$(ReferenceType)=='Package'" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
     <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic\CustomRetryLogicProvider.csproj" />
   </ItemGroup>
@@ -319,7 +321,6 @@
     <PackageReference Include="System.Net.Sockets" Version="$(SystemNetSocketsVersion)" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="$(SystemIdentityModelTokensJwtVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
-    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(OS)=='Unix'" Include="Microsoft.Windows.Compatibility" Version="$(MicrosoftWindowsCompatibilityVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotnetRemoteExecutorVersion)" /> 
     <PackageReference Condition="'$(TargetGroup)'!='netfx'" Include="System.ServiceProcess.ServiceController" Version="$(SystemServiceProcessServiceControllerVersion)" />
   </ItemGroup>

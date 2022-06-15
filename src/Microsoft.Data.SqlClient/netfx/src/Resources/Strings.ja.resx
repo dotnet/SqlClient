@@ -4617,4 +4617,13 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>親コマンドで EnableOptimizedParameterBinding が有効になっている場合、パラメーター '{0}' に Direction 出力または InputOutput は指定できません。</value>
   </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>認証方法 '{0}' によるアクセス トークンの取得中に接続がタイムアウトしました。前回のエラー: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>フェールオーバー パートナーのサービス プリンシパル名 (SPN)。</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>サーバーのサービス プリンシパル名 (SPN)。</value>
+  </data>
 </root>

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
@@ -295,7 +296,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool isTcpProtocol { get; set; }
 
-        internal string FQDNforDNSCahce { get; set; }
+        internal string FQDNforDNSCache { get; set; }
 
         /// <summary>
         /// Get if data classification is enabled by the server.
@@ -493,7 +494,7 @@ namespace Microsoft.Data.SqlClient
                               SqlInternalConnectionTds connHandler,
                               bool ignoreSniOpenTimeout,
                               long timerExpire,
-                              bool encrypt,
+                              SqlConnectionEncryptOption encrypt,
                               bool trustServerCert,
                               bool integratedSecurity,
                               bool withFailover,
@@ -503,7 +504,8 @@ namespace Microsoft.Data.SqlClient
                               ServerCertificateValidationCallback serverCallback,
                               ClientCertificateRetrievalCallback clientCallback,
                               bool useOriginalAddressInfo,
-                              bool disableTnir)
+                              bool disableTnir,
+                              string hostNameInCertificate)
         {
             if (_state != TdsParserState.Closed)
             {
@@ -530,10 +532,10 @@ namespace Microsoft.Data.SqlClient
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
                 LocalDBAPI.CreateLocalDBInstance(connHandler.ConnectionOptions.LocalDBInstance);
-                if (encrypt)
+                if (encrypt == SqlConnectionEncryptOption.Mandatory)
                 {
                     // Encryption is not supported on SQL Local DB - disable it for current session.
-                    encrypt = false;
+                    encrypt = SqlConnectionEncryptOption.Optional;
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
                 }
             }
@@ -584,6 +586,12 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
+            // if Strict encryption is chosen trust server certificate should always be false.
+            if (encrypt == SqlConnectionEncryptOption.Strict)
+            {
+                trustServerCert = false;
+            }
+
             byte[] instanceName = null;
 
             Debug.Assert(_connHandler != null, "SqlConnectionInternalTds handler can not be null at this point.");
@@ -605,16 +613,17 @@ namespace Microsoft.Data.SqlClient
 
             int totalTimeout = _connHandler.ConnectionOptions.ConnectTimeout;
 
-            FQDNforDNSCahce = serverInfo.ResolvedServerName;
+            FQDNforDNSCache = serverInfo.ResolvedServerName;
 
-            int commaPos = FQDNforDNSCahce.IndexOf(",");
+            int commaPos = FQDNforDNSCache.IndexOf(",");
             if (commaPos != -1)
             {
-                FQDNforDNSCahce = FQDNforDNSCahce.Substring(0, commaPos);
+                FQDNforDNSCache = FQDNforDNSCache.Substring(0, commaPos);
             }
 
-            _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire,
-                        out instanceName, _sniSpnBuffer, false, true, fParallel, transparentNetworkResolutionState, totalTimeout, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCahce);
+            _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, _sniSpnBuffer,
+                false, true, fParallel, transparentNetworkResolutionState, totalTimeout, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache,
+                encrypt == SqlConnectionEncryptOption.Strict, hostNameInCertificate);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -655,12 +664,12 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
 
             // for DNS Caching phase 1
-            AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce);
+            AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache);
 
             if (!ClientOSEncryptionSupport)
             {
                 //If encryption is required, an error will be thrown.
-                if (encrypt)
+                if (encrypt == SqlConnectionEncryptOption.Mandatory)
                 {
                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                     _physicalStateObj.Dispose();
@@ -671,7 +680,8 @@ namespace Microsoft.Data.SqlClient
 
             // UNDONE - send "" for instance now, need to fix later
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
-            SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
+            SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, !string.IsNullOrEmpty(certificate),
+                useOriginalAddressInfo, serverCallback, clientCallback);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
@@ -679,8 +689,8 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.SniContext = SniContext.Snix_PreLogin;
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Consuming prelogin handshake");
 
-            PreLoginHandshakeStatus status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback,
-                                                                      out marsCapable, out _connHandler._fedAuthRequired);
+            PreLoginHandshakeStatus status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback,
+                clientCallback, out marsCapable, out _connHandler._fedAuthRequired, encrypt == SqlConnectionEncryptOption.Strict);
 
             if (status == PreLoginHandshakeStatus.InstanceFailure)
             {
@@ -689,8 +699,9 @@ namespace Microsoft.Data.SqlClient
 
                 // On Instance failure re-connect and flush SNI named instance cache.
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
-                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire,
-                            out instanceName, _sniSpnBuffer, true, true, fParallel, transparentNetworkResolutionState, totalTimeout, _connHandler.ConnectionOptions.IPAddressPreference, serverInfo.ResolvedServerName);
+                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName,
+                    _sniSpnBuffer, true, true, fParallel, transparentNetworkResolutionState, totalTimeout, _connHandler.ConnectionOptions.IPAddressPreference,
+                    serverInfo.ResolvedServerName, encrypt == SqlConnectionEncryptOption.Strict, hostNameInCertificate);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {
@@ -705,11 +716,12 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
 
                 // for DNS Caching phase 1
-                AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce);
+                AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache);
 
-                SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
+                SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, !string.IsNullOrEmpty(certificate),
+                    useOriginalAddressInfo, serverCallback, clientCallback);
                 status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback,
-                                                  out marsCapable, out _connHandler._fedAuthRequired);
+                    out marsCapable, out _connHandler._fedAuthRequired, encrypt == SqlConnectionEncryptOption.Strict);
 
                 // Don't need to check for 7.0 failure, since we've already consumed
                 // one pre-login packet and know we are connecting to 2000.
@@ -952,8 +964,27 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void SendPreLoginHandshake(byte[] instanceName, bool encrypt, bool clientCertificate, bool useCtaip)
+        private void SendPreLoginHandshake(
+            byte[] instanceName,
+            SqlConnectionEncryptOption encrypt,
+            bool integratedSecurity,
+            bool clientCertificate,
+            bool useCtaip,
+            ServerCertificateValidationCallback serverCallback,
+            ClientCertificateRetrievalCallback clientCallback)
         {
+            if (encrypt == SqlConnectionEncryptOption.Strict)
+            {
+                //Always validate the certificate when in strict encryption mode
+                uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
+
+                EnableSsl(info, encrypt, integratedSecurity, serverCallback, clientCallback);
+
+                // Since encryption has already been negotiated, we need to set encryption not supported in
+                // prelogin so that we don't try to negotiate encryption again during ConsumePreLoginHandshake.
+                _encryptionOption = EncryptionOptions.NOT_SUP;
+            }
+
             // PreLoginHandshake buffer consists of:
             // 1) Standard header, with type = MT_PRELOGIN
             // 2) Consecutive 5 bytes for each option, (1 byte length, 2 byte offset, 2 byte payload length)
@@ -1014,7 +1045,7 @@ namespace Microsoft.Data.SqlClient
                         else
                         {
                             // Else, inform server of user request.
-                            if (encrypt)
+                            if (encrypt == SqlConnectionEncryptOption.Mandatory)
                             {
                                 payload[payloadLength] = (byte)EncryptionOptions.ON;
                                 _encryptionOption = EncryptionOptions.ON;
@@ -1129,10 +1160,118 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
         }
 
-        private PreLoginHandshakeStatus ConsumePreLoginHandshake(SqlAuthenticationMethod authType, bool encrypt, bool trustServerCert, bool integratedSecurity, ServerCertificateValidationCallback serverCallback,
-                              ClientCertificateRetrievalCallback clientCallback, out bool marsCapable, out bool fedAuthRequired)
+        private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, ServerCertificateValidationCallback serverCallback, ClientCertificateRetrievalCallback clientCallback)
         {
+            uint error = 0;
 
+            if (encrypt && !integratedSecurity)
+            {
+                // optimization: in case of SQL Authentication and encryption in TDS, set SNI_SSL_IGNORE_CHANNEL_BINDINGS
+                // to let SNI know that it does not need to allocate/retrieve the Channel Bindings from the SSL context.
+                // This applies to Native SNI
+                info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
+            }
+
+            // Add SSL (Encryption) SNI provider.
+            SNINativeMethodWrapper.AuthProviderInfo authInfo = new SNINativeMethodWrapper.AuthProviderInfo();
+            authInfo.flags = info;
+            authInfo.tlsFirst = encrypt == SqlConnectionEncryptOption.Strict;
+            authInfo.certId = null;
+            authInfo.certHash = false;
+            authInfo.clientCertificateCallbackContext = IntPtr.Zero;
+            authInfo.clientCertificateCallback = null;
+
+            if ((_encryptionOption & EncryptionOptions.CLIENT_CERT) != 0)
+            {
+
+                string certificate = _connHandler.ConnectionOptions.Certificate;
+
+                if (certificate.StartsWith("subject:", StringComparison.OrdinalIgnoreCase))
+                {
+                    authInfo.certId = certificate.Substring(8);
+                }
+                else if (certificate.StartsWith("sha1:", StringComparison.OrdinalIgnoreCase))
+                {
+                    authInfo.certId = certificate.Substring(5);
+                    authInfo.certHash = true;
+                }
+
+                if (clientCallback != null)
+                {
+                    authInfo.clientCertificateCallbackContext = clientCallback;
+                    authInfo.clientCertificateCallback = _clientCertificateCallback;
+                }
+            }
+
+            error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, authInfo);
+
+            if (error != TdsEnums.SNI_SUCCESS)
+            {
+                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                ThrowExceptionAndWarning(_physicalStateObj);
+            }
+
+            // in the case where an async connection is made, encryption is used and Windows Authentication is used,
+            // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
+            // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
+            // before calling SNISecGenClientContext).
+            error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
+
+            if (error != TdsEnums.SNI_SUCCESS)
+            {
+                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                ThrowExceptionAndWarning(_physicalStateObj);
+            }
+
+            string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
+            if (!string.IsNullOrEmpty(warningMessage))
+            {
+                if (!encrypt && LocalAppContextSwitches.SuppressInsecureTLSWarning)
+                {
+                    // Skip console warning
+                    SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}", nameof(TdsParser), nameof(EnableSsl), SqlClientLogger.LogLevel.Warning, warningMessage);
+                }
+                else
+                {
+                    // This logs console warning of insecure protocol in use.
+                    _logger.LogWarning(nameof(TdsParser), nameof(EnableSsl), warningMessage);
+                }
+            }
+
+            // Validate server certificate
+            if (serverCallback != null)
+            {
+                X509Certificate2 serverCert = null;
+
+                error = SNINativeMethodWrapper.SNISecGetServerCertificate(_physicalStateObj.Handle, ref serverCert);
+                if (error != TdsEnums.SNI_SUCCESS)
+                {
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+
+                bool valid = serverCallback(serverCert);
+                if (!valid)
+                {
+                    throw SQL.InvalidServerCertificate();
+                }
+            }
+
+            // create a new packet encryption changes the internal packet size Bug# 228403
+            _physicalStateObj.ClearAllWritePackets();
+        }
+
+        private PreLoginHandshakeStatus ConsumePreLoginHandshake(
+            SqlAuthenticationMethod authType,
+            SqlConnectionEncryptOption encrypt,
+            bool trustServerCert,
+            bool integratedSecurity,
+            ServerCertificateValidationCallback serverCallback,
+            ClientCertificateRetrievalCallback clientCallback,
+            out bool marsCapable,
+            out bool fedAuthRequired,
+            bool tlsFirst)
+        {
             // Assign default values
             marsCapable = _fMARS;
             fedAuthRequired = false;
@@ -1238,7 +1377,7 @@ namespace Microsoft.Data.SqlClient
                                 break;
 
                             case (EncryptionOptions.NOT_SUP):
-                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.REQ)
+                                if (!tlsFirst && (serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.REQ)
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                                     _physicalStateObj.Dispose();
@@ -1271,112 +1410,13 @@ namespace Microsoft.Data.SqlClient
                                 trustServerCert = true;
                             }
 
-                            UInt32 error = 0;
-
                             // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
                             bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || ((authType != SqlAuthenticationMethod.NotSpecified || _connHandler._accessTokenInBytes != null) && !trustServerCert);
 
                             UInt32 info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                                 | (is2005OrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
 
-                            if (encrypt && !integratedSecurity)
-                            {
-                                // optimization: in case of SQL Authentication and encryption, set SNI_SSL_IGNORE_CHANNEL_BINDINGS to let SNI
-                                // know that it does not need to allocate/retrieve the Channel Bindings from the SSL context.
-                                info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
-                            }
-
-                            // Add SSL (Encryption) SNI provider.
-                            SNINativeMethodWrapper.AuthProviderInfo authInfo = new SNINativeMethodWrapper.AuthProviderInfo();
-                            authInfo.flags = info;
-                            authInfo.certId = null;
-                            authInfo.certHash = false;
-                            authInfo.clientCertificateCallbackContext = IntPtr.Zero;
-                            authInfo.clientCertificateCallback = null;
-
-                            if ((_encryptionOption & EncryptionOptions.CLIENT_CERT) != 0)
-                            {
-
-                                string certificate = _connHandler.ConnectionOptions.Certificate;
-
-                                if (certificate.StartsWith("subject:", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    authInfo.certId = certificate.Substring(8);
-                                }
-                                else if (certificate.StartsWith("sha1:", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    authInfo.certId = certificate.Substring(5);
-                                    authInfo.certHash = true;
-                                }
-
-                                if (clientCallback != null)
-                                {
-                                    authInfo.clientCertificateCallbackContext = clientCallback;
-                                    authInfo.clientCertificateCallback = _clientCertificateCallback;
-                                }
-                            }
-
-                            error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, authInfo);
-
-                            if (error != TdsEnums.SNI_SUCCESS)
-                            {
-                                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                                ThrowExceptionAndWarning(_physicalStateObj);
-                            }
-
-                            // in the case where an async connection is made, encryption is used and Windows Authentication is used,
-                            // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
-                            // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
-                            // before calling SNISecGenClientContext).
-                            error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
-
-                            if (error != TdsEnums.SNI_SUCCESS)
-                            {
-                                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                                ThrowExceptionAndWarning(_physicalStateObj);
-                            }
-
-                            string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
-                            if (!string.IsNullOrEmpty(warningMessage))
-                            {
-                                if (!encrypt && LocalAppContextSwitches.SuppressInsecureTLSWarning)
-                                {
-                                    // Skip console warning
-                                    SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}", nameof(TdsParser), nameof(ConsumePreLoginHandshake), SqlClientLogger.LogLevel.Warning, warningMessage);
-                                }
-                                else
-                                {
-                                    // This logs console warning of insecure protocol in use.
-                                    _logger.LogWarning(nameof(TdsParser), nameof(ConsumePreLoginHandshake), warningMessage);
-                                }
-                            }
-
-                            // Validate server certificate
-                            if (serverCallback != null)
-                            {
-                                X509Certificate2 serverCert = null;
-
-                                error = SNINativeMethodWrapper.SNISecGetServerCertificate(_physicalStateObj.Handle, ref serverCert);
-                                if (error != TdsEnums.SNI_SUCCESS)
-                                {
-                                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                                    ThrowExceptionAndWarning(_physicalStateObj);
-                                }
-
-                                bool valid = serverCallback(serverCert);
-                                if (!valid)
-                                {
-                                    throw SQL.InvalidServerCertificate();
-                                }
-                            }
-
-                            // create a new packet encryption changes the internal packet size Bug# 228403
-                            try
-                            { } // EmptyTry/Finally to avoid FXCop violation
-                            finally
-                            {
-                                _physicalStateObj.ClearAllWritePackets();
-                            }
+                            EnableSsl(info, encrypt == SqlConnectionEncryptOption.Mandatory, integratedSecurity, serverCallback, clientCallback);
                         }
 
                         break;
@@ -2574,17 +2614,17 @@ namespace Microsoft.Data.SqlClient
                             // ENVCHANGE must be processed synchronously (since it can modify the state of many objects)
                             stateObj._syncOverAsync = true;
 
-                            SqlEnvChange[] env;
+                            SqlEnvChange env;
                             if (!TryProcessEnvChange(tokenLength, stateObj, out env))
                             {
                                 return false;
                             }
 
-                            for (int ii = 0; ii < env.Length; ii++)
+                            while (env != null)
                             {
-                                if (env[ii] != null && !this.Connection.IgnoreEnvChange)
+                                if (!Connection.IgnoreEnvChange)
                                 {
-                                    switch (env[ii].type)
+                                    switch (env._type)
                                     {
                                         case TdsEnums.ENV_BEGINTRAN:
                                         case TdsEnums.ENV_ENLISTDTC:
@@ -2599,12 +2639,12 @@ namespace Microsoft.Data.SqlClient
 
                                             if (null != _currentTransaction)
                                             {
-                                                _currentTransaction.TransactionId = env[ii].newLongValue;   // this is defined as a ULongLong in the server and in the TDS Spec.
+                                                _currentTransaction.TransactionId = env._newLongValue;   // this is defined as a ULongLong in the server and in the TDS Spec.
                                             }
                                             else
                                             {
-                                                TransactionType transactionType = (TdsEnums.ENV_BEGINTRAN == env[ii].type) ? TransactionType.LocalFromTSQL : TransactionType.Distributed;
-                                                _currentTransaction = new SqlInternalTransaction(_connHandler, transactionType, null, env[ii].newLongValue);
+                                                TransactionType transactionType = (TdsEnums.ENV_BEGINTRAN == env._type) ? TransactionType.LocalFromTSQL : TransactionType.Distributed;
+                                                _currentTransaction = new SqlInternalTransaction(_connHandler, transactionType, null, env._newLongValue);
                                             }
                                             if (null != _statistics && !_statisticsIsInTransaction)
                                             {
@@ -2630,22 +2670,22 @@ namespace Microsoft.Data.SqlClient
                                                 // Check null for case where Begin and Rollback obtained in the same message.
                                                 if (SqlInternalTransaction.NullTransactionId != _currentTransaction.TransactionId)
                                                 {
-                                                    Debug.Assert(_currentTransaction.TransactionId != env[ii].newLongValue, "transaction id's are not equal!");
+                                                    Debug.Assert(_currentTransaction.TransactionId != env._newLongValue, "transaction id's are not equal!");
                                                 }
 #endif
 
-                                                if (TdsEnums.ENV_COMMITTRAN == env[ii].type)
+                                                if (TdsEnums.ENV_COMMITTRAN == env._type)
                                                 {
                                                     _currentTransaction.Completed(TransactionState.Committed);
                                                 }
-                                                else if (TdsEnums.ENV_ROLLBACKTRAN == env[ii].type)
+                                                else if (TdsEnums.ENV_ROLLBACKTRAN == env._type)
                                                 {
                                                     //  Hold onto transaction id if distributed tran is rolled back.  This must
                                                     //  be sent to the server on subsequent executions even though the transaction
                                                     //  is considered to be rolled back.
                                                     if (_currentTransaction.IsDistributed && _currentTransaction.IsActive)
                                                     {
-                                                        _retainedTransactionId = env[ii].oldLongValue;
+                                                        _retainedTransactionId = env._oldLongValue;
                                                     }
                                                     _currentTransaction.Completed(TransactionState.Aborted);
                                                 }
@@ -2659,10 +2699,15 @@ namespace Microsoft.Data.SqlClient
                                             _statisticsIsInTransaction = false;
                                             break;
                                         default:
-                                            _connHandler.OnEnvChange(env[ii]);
+                                            _connHandler.OnEnvChange(env);
                                             break;
                                     }
                                 }
+
+                                SqlEnvChange head = env;
+                                env = env._next;
+                                head.Clear();
+                                head = null;
                             }
                             break;
                         }
@@ -2948,41 +2993,36 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        private bool TryProcessEnvChange(int tokenLength, TdsParserStateObject stateObj, out SqlEnvChange[] sqlEnvChange)
+        private bool TryProcessEnvChange(int tokenLength, TdsParserStateObject stateObj, out SqlEnvChange sqlEnvChange)
         {
             // There could be multiple environment change messages following this token.
             byte byteLength;
             int processedLength = 0;
-            int nvalues = 0;
-            SqlEnvChange[] envarray = new SqlEnvChange[3];  // Why is this hardcoded to 3?
+            SqlEnvChange head = null;
+            SqlEnvChange tail = null;
 
             sqlEnvChange = null;
 
             while (tokenLength > processedLength)
             {
-
-                if (nvalues >= envarray.Length)
-                {
-                    // This is a rare path. Most of the time we will have 1 or 2 envchange data streams.
-                    SqlEnvChange[] newenvarray = new SqlEnvChange[envarray.Length + 3];
-
-                    for (int ii = 0; ii < envarray.Length; ii++)
-                        newenvarray[ii] = envarray[ii];
-
-                    envarray = newenvarray;
-                }
-
-                SqlEnvChange env = new SqlEnvChange();
-
-                if (!stateObj.TryReadByte(out env.type))
+                var env = new SqlEnvChange();
+                if (!stateObj.TryReadByte(out env._type))
                 {
                     return false;
                 }
 
-                envarray[nvalues] = env;
-                nvalues++;
+                if (head is null)
+                {
+                    head = env;
+                    tail = env;
+                }
+                else
+                {
+                    tail._next = env;
+                    tail = env;
+                }
 
-                switch (env.type)
+                switch (env._type)
                 {
                     case TdsEnums.ENV_DATABASE:
                     case TdsEnums.ENV_LANG:
@@ -3000,18 +3040,18 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        if (env.newValue == TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_STRING)
+                        if (env._newValue == TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_STRING)
                         {
                             _defaultCodePage = TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_VALUE;
                             _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
                         }
                         else
                         {
-                            Debug.Assert(env.newValue.Length > TdsEnums.CHARSET_CODE_PAGE_OFFSET, "TdsParser.ProcessEnvChange(): charset value received with length <=10");
+                            Debug.Assert(env._newValue.Length > TdsEnums.CHARSET_CODE_PAGE_OFFSET, "TdsParser.ProcessEnvChange(): charset value received with length <=10");
 
-                            string stringCodePage = env.newValue.Substring(TdsEnums.CHARSET_CODE_PAGE_OFFSET);
+                            string stringCodePage = env._newValue.Substring(TdsEnums.CHARSET_CODE_PAGE_OFFSET);
 
-                            _defaultCodePage = Int32.Parse(stringCodePage, NumberStyles.Integer, CultureInfo.InvariantCulture);
+                            _defaultCodePage = int.Parse(stringCodePage, NumberStyles.Integer, CultureInfo.InvariantCulture);
                             _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
                         }
 
@@ -3028,7 +3068,7 @@ namespace Microsoft.Data.SqlClient
 
                         // Only set on physical state object - this should only occur on LoginAck prior
                         // to MARS initialization!
-                        Int32 packetSize = Int32.Parse(env.newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
+                        int packetSize = int.Parse(env._newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
 
                         if (_physicalStateObj.SetPacketSize(packetSize))
                         {
@@ -3037,8 +3077,8 @@ namespace Microsoft.Data.SqlClient
                             _physicalStateObj.ClearAllWritePackets();
 
                             // Update SNI ConsumerInfo value to be resulting packet size
-                            UInt32 unsignedPacketSize = (UInt32)packetSize;
-                            UInt32 result = SNINativeMethodWrapper.SNISetInfo(_physicalStateObj.Handle, SNINativeMethodWrapper.QTypes.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
+                            uint unsignedPacketSize = (uint)packetSize;
+                            uint result = SNINativeMethodWrapper.SNISetInfo(_physicalStateObj.Handle, SNINativeMethodWrapper.QTypes.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
                             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SNISetInfo");
                         }
@@ -3052,7 +3092,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        _defaultLCID = Int32.Parse(env.newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
+                        _defaultLCID = int.Parse(env._newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
                         break;
 
                     case TdsEnums.ENV_COMPFLAGS:
@@ -3063,27 +3103,28 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case TdsEnums.ENV_COLLATION:
-                        Debug.Assert(env.newLength == 5 || env.newLength == 0, "Improper length in new collation!");
+                        Debug.Assert(env._newLength == 5 || env._newLength == 0, "Improper length in new collation!");
                         if (!stateObj.TryReadByte(out byteLength))
                         {
                             return false;
                         }
-                        env.newLength = byteLength;
-                        if (env.newLength == 5)
+                        env._newLength = byteLength;
+                        if (env._newLength == 5)
                         {
-                            if (!TryProcessCollation(stateObj, out env.newCollation))
+                            if (!TryProcessCollation(stateObj, out env._newCollation))
                             {
                                 return false;
                             }
 
                             // give the parser the new collation values in case parameters don't specify one
-                            _defaultCollation = env.newCollation;
-                            _defaultLCID = env.newCollation.LCID;
+                            _defaultCollation = env._newCollation;
+                            _defaultLCID = env._newCollation.LCID;
 
-                            int newCodePage = GetCodePage(env.newCollation, stateObj);
+                            int newCodePage = GetCodePage(env._newCollation, stateObj);
 
-                            if (env.newCollation.IsUTF8)
-                            { // UTF8 collation
+                            // UTF8 collation
+                            if (env._newCollation.IsUTF8)
+                            {
                                 _defaultEncoding = Encoding.UTF8;
 
                                 if (newCodePage != _defaultCodePage)
@@ -3106,17 +3147,17 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        env.oldLength = byteLength;
-                        Debug.Assert(env.oldLength == 5 || env.oldLength == 0, "Improper length in old collation!");
-                        if (env.oldLength == 5)
+                        env._oldLength = byteLength;
+                        Debug.Assert(env._oldLength == 5 || env._oldLength == 0, "Improper length in old collation!");
+                        if (env._oldLength == 5)
                         {
-                            if (!TryProcessCollation(stateObj, out env.oldCollation))
+                            if (!TryProcessCollation(stateObj, out env._oldCollation))
                             {
                                 return false;
                             }
                         }
 
-                        env.length = 3 + env.newLength + env.oldLength;
+                        env._length = 3 + env._newLength + env._oldLength;
                         break;
 
                     case TdsEnums.ENV_BEGINTRAN:
@@ -3131,44 +3172,44 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        env.newLength = byteLength;
-                        Debug.Assert(env.newLength == 0 || env.newLength == 8, "Improper length for new transaction id!");
+                        env._newLength = byteLength;
+                        Debug.Assert(env._newLength == 0 || env._newLength == 8, "Improper length for new transaction id!");
 
-                        if (env.newLength > 0)
+                        if (env._newLength > 0)
                         {
-                            if (!stateObj.TryReadInt64(out env.newLongValue))
+                            if (!stateObj.TryReadInt64(out env._newLongValue))
                             {
                                 return false;
                             }
-                            Debug.Assert(env.newLongValue != SqlInternalTransaction.NullTransactionId, "New transaction id is null?"); // the server guarantees that zero is an invalid transaction id.
+                            Debug.Assert(env._newLongValue != SqlInternalTransaction.NullTransactionId, "New transaction id is null?"); // the server guarantees that zero is an invalid transaction id.
                         }
                         else
                         {
-                            env.newLongValue = SqlInternalTransaction.NullTransactionId; // the server guarantees that zero is an invalid transaction id.
+                            env._newLongValue = SqlInternalTransaction.NullTransactionId; // the server guarantees that zero is an invalid transaction id.
                         }
 
                         if (!stateObj.TryReadByte(out byteLength))
                         {
                             return false;
                         }
-                        env.oldLength = byteLength;
-                        Debug.Assert(env.oldLength == 0 || env.oldLength == 8, "Improper length for old transaction id!");
+                        env._oldLength = byteLength;
+                        Debug.Assert(env._oldLength == 0 || env._oldLength == 8, "Improper length for old transaction id!");
 
-                        if (env.oldLength > 0)
+                        if (env._oldLength > 0)
                         {
-                            if (!stateObj.TryReadInt64(out env.oldLongValue))
+                            if (!stateObj.TryReadInt64(out env._oldLongValue))
                             {
                                 return false;
                             }
-                            Debug.Assert(env.oldLongValue != SqlInternalTransaction.NullTransactionId, "Old transaction id is null?"); // the server guarantees that zero is an invalid transaction id.
+                            Debug.Assert(env._oldLongValue != SqlInternalTransaction.NullTransactionId, "Old transaction id is null?"); // the server guarantees that zero is an invalid transaction id.
                         }
                         else
                         {
-                            env.oldLongValue = SqlInternalTransaction.NullTransactionId; // the server guarantees that zero is an invalid transaction id.
+                            env._oldLongValue = SqlInternalTransaction.NullTransactionId; // the server guarantees that zero is an invalid transaction id.
                         }
 
                         // env.length includes 1 byte type token
-                        env.length = 3 + env.newLength + env.oldLength;
+                        env._length = 3 + env._newLength + env._oldLength;
                         break;
 
                     case TdsEnums.ENV_LOGSHIPNODE:
@@ -3183,12 +3224,12 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.ENV_PROMOTETRANSACTION:
                         Debug.Assert(_is2005, "Received new ENVCHANGE tokens on pre 9.0 server!");
 
-                        if (!stateObj.TryReadInt32(out env.newLength))
+                        if (!stateObj.TryReadInt32(out env._newLength))
                         { // new value has 4 byte length
                             return false;
                         }
-                        env.newBinValue = new byte[env.newLength];
-                        if (!stateObj.TryReadByteArray(env.newBinValue, env.newLength))
+                        env._newBinValue = new byte[env._newLength];
+                        if (!stateObj.TryReadByteArray(env._newBinValue, env._newLength))
                         { // read new value with 4 byte length
                             return false;
                         }
@@ -3197,11 +3238,11 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        env.oldLength = byteLength;
-                        Debug.Assert(0 == env.oldLength, "old length should be zero");
+                        env._oldLength = byteLength;
+                        Debug.Assert(0 == env._oldLength, "old length should be zero");
 
                         // env.length includes 1 byte for type token
-                        env.length = 5 + env.newLength;
+                        env._length = 5 + env._newLength;
                         break;
 
                     case TdsEnums.ENV_TRANSACTIONMANAGERADDRESS:
@@ -3228,7 +3269,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        env.newLength = newLength;
+                        env._newLength = newLength;
                         byte protocol;
                         if (!stateObj.TryReadByte(out protocol))
                         {
@@ -3249,7 +3290,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        env.newRoutingInfo = new RoutingInfo(protocol, port, serverName);
+                        env._newRoutingInfo = new RoutingInfo(protocol, port, serverName);
                         UInt16 oldLength;
                         if (!stateObj.TryReadUInt16(out oldLength))
                         {
@@ -3259,17 +3300,17 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        env.length = env.newLength + oldLength + 5; // 5=2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
+                        env._length = env._newLength + oldLength + 5; // 5=2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
                         break;
 
                     default:
-                        Debug.Fail("Unknown environment change token: " + env.type);
+                        Debug.Fail("Unknown environment change token: " + env._type);
                         break;
                 }
-                processedLength += env.length;
+                processedLength += env._length;
             }
 
-            sqlEnvChange = envarray;
+            sqlEnvChange = head;
             return true;
         }
 
@@ -3281,9 +3322,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return false;
             }
-            env.newLength = byteLength;
-            env.newBinValue = new byte[env.newLength];
-            if (!stateObj.TryReadByteArray(env.newBinValue, env.newLength))
+            env._newLength = byteLength;
+            env._newBinValue = ArrayPool<byte>.Shared.Rent(env._newLength);
+            env._newBinRented = true;
+            if (!stateObj.TryReadByteArray(env._newBinValue, env._newLength))
             {
                 return false;
             }
@@ -3291,15 +3333,16 @@ namespace Microsoft.Data.SqlClient
             {
                 return false;
             }
-            env.oldLength = byteLength;
-            env.oldBinValue = new byte[env.oldLength];
-            if (!stateObj.TryReadByteArray(env.oldBinValue, env.oldLength))
+            env._oldLength = byteLength;
+            env._oldBinValue = ArrayPool<byte>.Shared.Rent(env._oldLength);
+            env._oldBinRented = true;
+            if (!stateObj.TryReadByteArray(env._oldBinValue, env._oldLength))
             {
                 return false;
             }
 
             // env.length includes 1 byte type token
-            env.length = 3 + env.newLength + env.oldLength;
+            env._length = 3 + env._newLength + env._oldLength;
             return true;
         }
 
@@ -3325,13 +3368,13 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
-            env.newLength = newLength;
-            env.newValue = newValue;
-            env.oldLength = oldLength;
-            env.oldValue = oldValue;
+            env._newLength = newLength;
+            env._newValue = newValue;
+            env._oldLength = oldLength;
+            env._oldValue = oldValue;
 
             // env.length includes 1 byte type token
-            env.length = 3 + env.newLength * 2 + env.oldLength * 2;
+            env._length = 3 + env._newLength * 2 + env._oldLength * 2;
             return true;
         }
 
@@ -3606,7 +3649,7 @@ namespace Microsoft.Data.SqlClient
             bool ret = false;
             if (_connHandler._cleanSQLDNSCaching)
             {
-                ret = SQLFallbackDNSCache.Instance.DeleteDNSInfo(FQDNforDNSCahce);
+                ret = SQLFallbackDNSCache.Instance.DeleteDNSInfo(FQDNforDNSCache);
             }
 
             if (_connHandler.IsSQLDNSCachingSupported && _connHandler.pendingSQLDNSObject != null
@@ -6835,6 +6878,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return false;
             }
+
             ReadOnlySpan<byte> dateTimeData = datetimeBuffer.Slice(0, length);
             switch (tdsType)
             {

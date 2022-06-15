@@ -4617,4 +4617,13 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>У параметра "{0}" не может быть направления вывода или InputOutput, если EnableOptimizedParameterBinding включен в родительской команде.</value>
   </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Истекло время ожидания подключения при получении маркера доступа с помощью метода проверки подлинности "{0}". Последняя ошибка: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>Имя субъекта-службы (SPN) партнера по обеспечению отработки отказа.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>Имя субъекта-службы (SPN) сервера.</value>
+  </data>
 </root>

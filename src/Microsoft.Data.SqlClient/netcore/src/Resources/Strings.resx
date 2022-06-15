@@ -1932,4 +1932,13 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
   </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+  </data>
+  <data name="SNI_IncorrectPhysicalConnectionType" xml:space="preserve">
+    <value>Incorrect physicalConnection type.</value>
+  </data>
+  <data name="SQL_TDS8_NotSupported_Netstandard2.0" xml:space="preserve">
+    <value>Encrypt=Strict is not supported when targeting .NET Standard 2.0. Use .NET Standard 2.1, .NET Framework, or .NET.</value>
+  </data>
 </root>

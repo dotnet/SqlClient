@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder();
             csb.DataSource = "localhost,12345";
             csb.Pooling = false;
-            csb.Encrypt = false;
+            csb.Encrypt = SqlConnectionEncryptOption.Optional;
             csb.ConnectTimeout = 65534;
             csb.UserID = "prodUser1@FedAuthAzureSqlDb.onmicrosoft.com";
             csb.ColumnEncryptionSetting = columnEncryptionSetting;

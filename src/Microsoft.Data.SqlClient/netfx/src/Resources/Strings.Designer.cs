@@ -19,7 +19,7 @@ namespace System {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Strings {
@@ -57,6 +57,15 @@ namespace System {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Connection timed out while retrieving an access token using &apos;{0}&apos; authentication method. Last error: {1}: {2}.
+        /// </summary>
+        internal static string AAD_Token_Retrieving_Timeout {
+            get {
+                return ResourceManager.GetString("AAD_Token_Retrieving_Timeout", resourceCulture);
             }
         }
         
@@ -5695,6 +5704,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The service principal name (SPN) of the failover partner..
+        /// </summary>
+        internal static string DbConnectionString_FailoverPartnerSPN {
+            get {
+                return ResourceManager.GetString("DbConnectionString_FailoverPartnerSPN", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The UDL file to use when connecting to the Data Source..
         /// </summary>
         internal static string DbConnectionString_FileName {
@@ -5844,6 +5862,15 @@ namespace System {
         internal static string DbConnectionString_Replication {
             get {
                 return ResourceManager.GetString("DbConnectionString_Replication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The service principal name (SPN) of the server..
+        /// </summary>
+        internal static string DbConnectionString_ServerSPN {
+            get {
+                return ResourceManager.GetString("DbConnectionString_ServerSPN", resourceCulture);
             }
         }
         

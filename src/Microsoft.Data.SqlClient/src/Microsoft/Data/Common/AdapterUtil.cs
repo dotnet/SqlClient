@@ -11,9 +11,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
+
 using System.Security;
 using System.Security.Permissions;
 using System.Text;
@@ -21,14 +19,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.SqlClient;
-using Microsoft.Win32;
 using IsolationLevel = System.Data.IsolationLevel;
+using Microsoft.Identity.Client;
+using Microsoft.SqlServer.Server;
 
 #if NETFRAMEWORK
-using Microsoft.SqlServer.Server;
+using Microsoft.Win32;
 using System.Reflection;
-#else
-using Microsoft.Data.SqlClient.Server;
+using System.Runtime.ConstrainedExecution;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 #endif
 
 namespace Microsoft.Data.Common
@@ -42,7 +42,7 @@ namespace Microsoft.Data.Common
     /// This class is used so that there will be compile time checking of error messages.
     /// The resource Framework.txt will ensure proper string text based on the appropriate locale.
     /// </summary>
-    internal static class ADP
+    internal static partial class ADP
     {
         // NOTE: Initializing a Task in SQL CLR requires the "UNSAFE" permission set (http://msdn.microsoft.com/en-us/library/ms172338.aspx)
         // Therefore we are lazily initializing these Tasks to avoid forcing customers to use the "UNSAFE" set when they are actually using no Async features
@@ -214,9 +214,9 @@ namespace Microsoft.Data.Common
             return e;
         }
 
-        internal static TimeoutException TimeoutException(string error)
+        internal static TimeoutException TimeoutException(string error, Exception inner = null)
         {
-            TimeoutException e = new(error);
+            TimeoutException e = new(error, inner);
             TraceExceptionAsReturnValue(e);
             return e;
         }
@@ -416,6 +416,33 @@ namespace Microsoft.Data.Common
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidArgumentLength, argumentName, limit));
 
         internal static ArgumentException MustBeReadOnly(string argumentName) => Argument(StringsHelper.GetString(Strings.ADP_MustBeReadOnly, argumentName));
+
+        internal static Exception CreateSqlException(MsalException msalException, SqlConnectionString connectionOptions, SqlInternalConnectionTds sender, string username)
+        {
+            // Error[0]
+            SqlErrorCollection sqlErs = new();
+
+            sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
+                                    connectionOptions.DataSource,
+                                    StringsHelper.GetString(Strings.SQL_MSALFailure, username, connectionOptions.Authentication.ToString("G")),
+                                    ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+
+            // Error[1]
+            string errorMessage1 = StringsHelper.GetString(Strings.SQL_MSALInnerException, msalException.ErrorCode);
+            sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
+                                    connectionOptions.DataSource, errorMessage1, 
+                                    ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+
+            // Error[2]
+            if (!string.IsNullOrEmpty(msalException.Message))
+            {
+                sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
+                                        connectionOptions.DataSource, msalException.Message,
+                                        ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+            }
+            return SqlException.CreateException(sqlErs, "", sender);
+        }
+
 #endregion
 
 #region CommandBuilder, Command, BulkCopy
@@ -686,13 +713,26 @@ namespace Microsoft.Data.Common
         }
 
 
+        private const string ONDEMAND_PREFIX = "-ondemand";
+        private const string AZURE_SYNAPSE = "-ondemand.sql.azuresynapse.";
+
+        internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
+        {
+            return IsEndpoint(dataSource, ONDEMAND_PREFIX) || dataSource.Contains(AZURE_SYNAPSE);
+        }
+
         internal static readonly string[] s_azureSqlServerEndpoints = { StringsHelper.GetString(Strings.AZURESQL_GenericEndpoint),
                                                                         StringsHelper.GetString(Strings.AZURESQL_GermanEndpoint),
                                                                         StringsHelper.GetString(Strings.AZURESQL_UsGovEndpoint),
                                                                         StringsHelper.GetString(Strings.AZURESQL_ChinaEndpoint)};
 
-        // This method assumes dataSource parameter is in TCP connection string format.
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
+        {
+            return IsEndpoint(dataSource, null);
+        }
+
+        // This method assumes dataSource parameter is in TCP connection string format.
+        private static bool IsEndpoint(string dataSource, string prefix)
         {
             int length = dataSource.Length;
             // remove server port
@@ -715,10 +755,10 @@ namespace Microsoft.Data.Common
                 length -= 1;
             }
 
-            // check if servername end with any azure endpoints
+            // check if servername ends with any endpoints
             for (int index = 0; index < s_azureSqlServerEndpoints.Length; index++)
             {
-                string endpoint = s_azureSqlServerEndpoints[index];
+                string endpoint = string.IsNullOrEmpty(prefix) ? s_azureSqlServerEndpoints[index] : prefix + s_azureSqlServerEndpoints[index];
                 if (length > endpoint.Length)
                 {
                     if (string.Compare(dataSource, length - endpoint.Length, endpoint, 0, endpoint.Length, StringComparison.OrdinalIgnoreCase) == 0)
@@ -1437,31 +1477,6 @@ namespace Microsoft.Data.Common
             return value;
         }
 
-        [ResourceExposure(ResourceScope.Machine)]
-        [ResourceConsumption(ResourceScope.Machine)]
-        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
-        { // MDAC 77697
-            (new RegistryPermission(RegistryPermissionAccess.Read, "HKEY_LOCAL_MACHINE\\" + subkey)).Assert(); // MDAC 62028
-            try
-            {
-                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(subkey, false))
-                {
-                    return key?.GetValue(queryvalue);
-                }
-            }
-            catch (SecurityException e)
-            {
-                // Even though we assert permission - it's possible there are
-                // ACL's on registry that cause SecurityException to be thrown.
-                ADP.TraceExceptionWithoutRethrow(e);
-                return null;
-            }
-            finally
-            {
-                RegistryPermission.RevertAssert();
-            }
-        }
-
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         internal static IntPtr IntPtrOffset(IntPtr pbase, int offset)
         {
@@ -1523,6 +1538,9 @@ namespace Microsoft.Data.Common
 #endif
             return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
         }
+
+        // ConnectionUtil
+        internal static Exception IncorrectPhysicalConnectionType() => new ArgumentException(StringsHelper.GetString(StringsHelper.SNI_IncorrectPhysicalConnectionType));
 
         // IDataParameter.Direction
         internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
