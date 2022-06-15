@@ -75,11 +75,27 @@ namespace Microsoft.Data.SqlClient.SNI
             return TdsEnums.SNI_SUCCESS;
         }
 
-        internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool parallel, 
-                                           SqlConnectionIPAddressPreference iPAddressPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, string serverSPN, bool isIntegratedSecurity)
+        internal override void CreatePhysicalSNIHandle(
+            string serverName,
+            bool ignoreSniOpenTimeout,
+            long timerExpire,
+            out byte[] instanceName,
+            ref byte[][] spnBuffer,
+            bool flushCache,
+            bool async,
+            bool parallel,
+            SqlConnectionIPAddressPreference iPAddressPreference,
+            string cachedFQDN,
+            ref SQLDNSInfo pendingDNSInfo,
+            string serverSPN,
+            bool isIntegratedSecurity,
+            bool tlsFirst,
+            string hostNameInCertificate)
         {
-            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, serverSPN, flushCache, async, parallel, isIntegratedSecurity, 
-                                                        iPAddressPreference, cachedFQDN, ref pendingDNSInfo);
+            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, serverSPN,
+                flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
+                hostNameInCertificate);
+
             if (sessionHandle is not null)
             {
                 _sessionHandle = sessionHandle;
@@ -200,7 +216,7 @@ namespace Microsoft.Data.SqlClient.SNI
             SNIHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
 
             error = sessionHandle.Receive(out SNIPacket packet, timeoutRemaining);
-            
+
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadSyncOverAsync | Info | State Object Id {0}, Session Id {1}", _objectID, sessionHandle.ConnectionId);
 #if DEBUG
             SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReadSyncOverAsync | TRC | State Object Id {0}, Session Id {1}, Packet {2} received, Packet owner Id {3}, Packet dataLeft {4}", _objectID, sessionHandle.ConnectionId, packet?._id, packet?._owner.ConnectionId, packet?.DataLeft);
@@ -278,7 +294,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 result = sessionHandle.SendAsync(packet);
             }
-            
+
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.WritePacket | Info | Session Id {0}, SendAsync Result {1}", sessionHandle.ConnectionId, result);
             return result;
         }
@@ -346,7 +362,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return TdsEnums.SNI_ERROR;
         }
 
-        internal override uint EnableSsl(ref uint info)
+        internal override uint EnableSsl(ref uint info, bool tlsFirst)
         {
             SNIHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
             try
