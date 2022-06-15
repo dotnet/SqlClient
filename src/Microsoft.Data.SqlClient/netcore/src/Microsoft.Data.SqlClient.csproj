@@ -172,17 +172,11 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\RowsCopiedEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\RowsCopiedEventHandler.cs</Link>
     </Compile>
-     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialTextReader.cs">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialTextReader.cs">
       <Link>Microsoft\Data\SqlClient\SqlSequentialTextReader.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs">
       <Link>Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\IBinarySerialize.cs">
-      <Link>Microsoft\Data\SqlClient\Server\IBinarySerialize.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\InvalidUdtException.cs">
-      <Link>Microsoft\Data\SqlClient\Server\InvalidUdtException.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ITypedGetters.cs">
       <Link>Microsoft\Data\SqlClient\Server\ITypedGetters.cs</Link>
@@ -238,17 +232,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlFacetAttribute.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlFacetAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlFunctionAttribute.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlFunctionAttribute.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlMetaData.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlMethodAttribute.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlMethodAttribute.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlNormalizer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlNormalizer.cs</Link>
@@ -256,11 +241,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlTransaction.Common.cs">
+      <Link>Microsoft\Data\SqlClient\SqlTransaction.Common.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
@@ -481,6 +463,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParameterSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
     </Compile>
@@ -656,10 +641,12 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserSessionPool.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStaticMethods.cs" />
   </ItemGroup>
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
+    <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.Windows.cs">
+      <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs</Link>
     </Compile>
@@ -672,6 +659,9 @@
   </ItemGroup>
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
+    <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.Unix.cs">
+      <Link>Microsoft\Data\Common\AdapterUtil.Unix.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Unix.cs" />
@@ -948,6 +938,9 @@
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SqlServerSourceCode)\Microsoft.SqlServer.Server.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'" Include="Microsoft.Win32.Registry" Version="$(MicrosoftWin32RegistryVersion)" />

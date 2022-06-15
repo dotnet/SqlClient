@@ -1856,11 +1856,36 @@ namespace Microsoft.Data.SqlClient
                 string host = serverInfo.UserServerName;
                 string protocol = serverInfo.UserProtocol;
 
-                //TODO: fix local host enforcement with datadirectory and failover
-                if (options.EnforceLocalHost)
-                {
-                    // verify LocalHost for |DataDirectory| usage
-                    SqlConnectionString.VerifyLocalHostAndFixup(ref host, true, true /*fix-up to "."*/);
+                if (aliasLookup)
+                { // We skip this for UserInstances...
+                  // Perform registry lookup to see if host is an alias.  It will appropriately set host and protocol, if an Alias.
+                  // Check if it was already resolved, during CR reconnection _currentSessionData values will be copied from
+                  // _reconnectSessonData of the previous connection
+                    if (_currentSessionData != null && !string.IsNullOrEmpty(host))
+                    {
+                        Tuple<string, string> hostPortPair;
+                        if (_currentSessionData._resolvedAliases.TryGetValue(host, out hostPortPair))
+                        {
+                            host = hostPortPair.Item1;
+                            protocol = hostPortPair.Item2;
+                        }
+                        else
+                        {
+                            TdsParserStaticMethods.AliasRegistryLookup(ref host, ref protocol);
+                            _currentSessionData._resolvedAliases.Add(serverInfo.UserServerName, new Tuple<string, string>(host, protocol));
+                        }
+                    }
+                    else
+                    {
+                        TdsParserStaticMethods.AliasRegistryLookup(ref host, ref protocol);
+                    }
+
+                    //TODO: fix local host enforcement with datadirectory and failover
+                    if (options.EnforceLocalHost)
+                    {
+                        // verify LocalHost for |DataDirectory| usage
+                        SqlConnectionString.VerifyLocalHostAndFixup(ref host, true, true /*fix-up to "."*/);
+                    }
                 }
 
                 serverInfo.SetDerivedNames(protocol, host);

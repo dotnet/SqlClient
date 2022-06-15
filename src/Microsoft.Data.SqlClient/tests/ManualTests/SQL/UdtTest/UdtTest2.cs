@@ -6,12 +6,8 @@ using System;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Text;
-#if NETFRAMEWORK
-using Microsoft.SqlServer.Server;
-#else
-using Microsoft.Data.SqlClient.Server;
-#endif
 using Xunit;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -574,7 +570,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void TestSqlUserDefinedAggregateAttributeMaxByteSize()
         {
             Func<int, SqlUserDefinedAggregateAttribute> create
-                    = (size) => new SqlUserDefinedAggregateAttribute(Format.UserDefined) { MaxByteSize = size };
+                    = (size) => new(Format.UserDefined) { MaxByteSize = size };
 
             SqlUserDefinedAggregateAttribute attribute1 = create(-1);
             SqlUserDefinedAggregateAttribute attribute2 = create(0);

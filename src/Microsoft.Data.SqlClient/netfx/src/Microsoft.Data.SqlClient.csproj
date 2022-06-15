@@ -95,6 +95,9 @@
     <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.Windows.cs">
+      <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Common\DbConnectionStringCommon.cs">
       <Link>Microsoft\Data\Common\DbConnectionStringCommon.cs</Link>
     </Compile>
@@ -319,6 +322,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlTransaction.Common.cs">
+      <Link>Microsoft\Data\SqlClient\SqlTransaction.Common.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
@@ -545,6 +551,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParameterSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
     </Compile>
@@ -639,7 +648,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserSafeHandles.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserSessionPool.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStaticMethods.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
