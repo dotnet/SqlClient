@@ -359,13 +359,15 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnectionTds connHandler,
             bool ignoreSniOpenTimeout,
             long timerExpire,
-            SqlConnectionEncryptOption encrypt,
-            bool trustServerCert,
-            bool integratedSecurity,
-            bool withFailover,
-            SqlAuthenticationMethod authType,
-            string hostNameInCertificate)
+            SqlConnectionString connectionOptions,
+            bool withFailover)
         {
+            SqlConnectionEncryptOption encrypt = connectionOptions.Encrypt;
+            bool trustServerCert = connectionOptions.TrustServerCertificate;
+            bool integratedSecurity = connectionOptions.IntegratedSecurity;
+            SqlAuthenticationMethod authType = connectionOptions.Authentication;
+            string hostNameInCertificate = connectionOptions.HostNameInCertificate;
+
             if (_state != TdsParserState.Closed)
             {
                 Debug.Fail("TdsParser.Connect called on non-closed connection!");
@@ -436,7 +438,7 @@ namespace Microsoft.Data.SqlClient
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer,
-                false, true, fParallel, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject,
+                false, true, fParallel, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject, serverInfo.ServerSPN ,
                 integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated, encrypt == SqlConnectionEncryptOption.Strict,
                 hostNameInCertificate);
 
@@ -516,7 +518,7 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
 
                 _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer, true, true, fParallel,
-                                                _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject, integratedSecurity);
+                                                _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject, serverInfo.ServerSPN, integratedSecurity);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {

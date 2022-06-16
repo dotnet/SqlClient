@@ -9,7 +9,6 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -69,7 +68,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string[] serverSPNs = new string[serverName.Length];
             for (int i = 0; i < serverName.Length; i++)
             {
-                serverSPNs[i] = Encoding.UTF8.GetString(serverName[i]);
+                serverSPNs[i] = Encoding.Unicode.GetString(serverName[i]);
             }
             SecurityStatusPal statusCode = NegotiateStreamPal.InitializeSecurityContext(
                        credentialsHandle,
@@ -135,6 +134,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="timerExpire">Timer expiration</param>
         /// <param name="instanceName">Instance name</param>
         /// <param name="spnBuffer">SPN</param>
+        /// <param name="serverSPN">pre-defined SPN</param>
         /// <param name="flushCache">Flush packet cache</param>
         /// <param name="async">Asynchronous connection</param>
         /// <param name="parallel">Attempt parallel connects</param>
@@ -151,6 +151,7 @@ namespace Microsoft.Data.SqlClient.SNI
             long timerExpire,
             out byte[] instanceName,
             ref byte[][] spnBuffer,
+            string serverSPN,
             bool flushCache,
             bool async,
             bool parallel,
@@ -200,7 +201,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 try
                 {
-                    spnBuffer = GetSqlServerSPNs(details);
+                    spnBuffer = GetSqlServerSPNs(details, serverSPN);
                 }
                 catch (Exception e)
                 {
@@ -212,9 +213,13 @@ namespace Microsoft.Data.SqlClient.SNI
             return sniHandle;
         }
 
-        private static byte[][] GetSqlServerSPNs(DataSource dataSource)
+        private static byte[][] GetSqlServerSPNs(DataSource dataSource, string serverSPN)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(dataSource.ServerName));
+            if (!string.IsNullOrWhiteSpace(serverSPN))
+            {
+                return new byte[1][] { Encoding.Unicode.GetBytes(serverSPN) };
+            }
 
             string hostName = dataSource.ServerName;
             string postfix = null;
@@ -262,12 +267,12 @@ namespace Microsoft.Data.SqlClient.SNI
                 string serverSpnWithDefaultPort = serverSpn + $":{DefaultSqlServerPort}";
                 // Set both SPNs with and without Port as Port is optional for default instance
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerSPNs {0} and {1}", serverSpn, serverSpnWithDefaultPort);
-                return new byte[][] { Encoding.UTF8.GetBytes(serverSpn), Encoding.UTF8.GetBytes(serverSpnWithDefaultPort) };
+                return new byte[][] { Encoding.Unicode.GetBytes(serverSpn), Encoding.Unicode.GetBytes(serverSpnWithDefaultPort) };
             }
             // else Named Pipes do not need to valid port
 
             SqlClientEventSource.Log.TryAdvancedTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerSPN {0}", serverSpn);
-            return new byte[][] { Encoding.UTF8.GetBytes(serverSpn) };
+            return new byte[][] { Encoding.Unicode.GetBytes(serverSpn) };
         }
 
         /// <summary>

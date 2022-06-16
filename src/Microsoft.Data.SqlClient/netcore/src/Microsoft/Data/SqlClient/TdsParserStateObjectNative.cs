@@ -10,6 +10,7 @@ using System.Security.Authentication;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using System.Net;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -149,6 +150,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionIPAddressPreference ipPreference,
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
+            string serverSPN,
             bool isIntegratedSecurity,
             bool tlsFirst,
             string hostNameInCertificate)
@@ -158,7 +160,18 @@ namespace Microsoft.Data.SqlClient
             if (isIntegratedSecurity)
             {
                 // now allocate proper length of buffer
-                spnBuffer[0] = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
+                if (!string.IsNullOrEmpty(serverSPN))
+                {
+                    // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
+                    byte[] srvSPN = Encoding.Unicode.GetBytes(serverSPN);
+                    Trace.Assert(srvSPN.Length <= SNINativeMethodWrapper.SniMaxComposedSpnLength, "Length of the provided SPN exceeded the buffer size.");
+                    spnBuffer[0] = srvSPN;
+                    SqlClientEventSource.Log.TryTraceEvent("<{0}.{1}|SEC> Server SPN `{2}` from the connection string is used.",nameof(TdsParserStateObjectNative), nameof(CreatePhysicalSNIHandle), serverSPN);
+                }
+                else
+                {
+                    spnBuffer[0] = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
+                }
             }
 
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);

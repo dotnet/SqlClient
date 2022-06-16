@@ -66,6 +66,8 @@ namespace Microsoft.Data.SqlClient
             AttestationProtocol,
             CommandTimeout,
             IPAddressPreference,
+            ServerSPN,
+            FailoverPartnerSPN,
 #if NETFRAMEWORK
             ConnectionReset,
             NetworkLibrary,
@@ -124,6 +126,8 @@ namespace Microsoft.Data.SqlClient
         private string _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
         private SqlConnectionAttestationProtocol _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
         private SqlConnectionIPAddressPreference _ipAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
+        private string _serverSPN = DbConnectionStringDefaults.ServerSPN;
+        private string _failoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSPN;
 
 #if NETFRAMEWORK
         private bool _connectionReset = DbConnectionStringDefaults.ConnectionReset;
@@ -179,11 +183,13 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
             validKeywords[(int)Keywords.AttestationProtocol] = DbConnectionStringKeywords.AttestationProtocol;
             validKeywords[(int)Keywords.IPAddressPreference] = DbConnectionStringKeywords.IPAddressPreference;
+            validKeywords[(int)Keywords.ServerSPN] = DbConnectionStringKeywords.ServerSPN;
+            validKeywords[(int)Keywords.FailoverPartnerSPN] = DbConnectionStringKeywords.FailoverPartnerSPN;
 #if NETFRAMEWORK
             validKeywords[(int)Keywords.ConnectionReset] = DbConnectionStringKeywords.ConnectionReset;
+            validKeywords[(int)Keywords.NetworkLibrary] = DbConnectionStringKeywords.NetworkLibrary;
             validKeywords[(int)Keywords.ContextConnection] = DbConnectionStringKeywords.ContextConnection;
             validKeywords[(int)Keywords.TransparentNetworkIPResolution] = DbConnectionStringKeywords.TransparentNetworkIPResolution;
-            validKeywords[(int)Keywords.NetworkLibrary] = DbConnectionStringKeywords.NetworkLibrary;
 #if ADONET_CERT_AUTH
             validKeywords[(int)Keywords.Certificate] = DbConnectionStringKeywords.Certificate;
 #endif
@@ -232,6 +238,8 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl },
                 { DbConnectionStringKeywords.AttestationProtocol, Keywords.AttestationProtocol },
                 { DbConnectionStringKeywords.IPAddressPreference, Keywords.IPAddressPreference },
+                { DbConnectionStringKeywords.ServerSPN, Keywords.ServerSPN },
+                { DbConnectionStringKeywords.FailoverPartnerSPN, Keywords.FailoverPartnerSPN },
 
 #if NETFRAMEWORK
                 { DbConnectionStringKeywords.ConnectionReset, Keywords.ConnectionReset },
@@ -271,7 +279,9 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringSynonyms.PERSISTSECURITYINFO, Keywords.PersistSecurityInfo },
                 { DbConnectionStringSynonyms.UID, Keywords.UserID },
                 { DbConnectionStringSynonyms.User, Keywords.UserID },
-                { DbConnectionStringSynonyms.WSID, Keywords.WorkstationID }
+                { DbConnectionStringSynonyms.WSID, Keywords.WorkstationID },
+                { DbConnectionStringSynonyms.ServerSPN, Keywords.ServerSPN },
+                { DbConnectionStringSynonyms.FailoverPartnerSPN, Keywords.FailoverPartnerSPN },
             };
             Debug.Assert((KeywordsCount + SqlConnectionString.SynonymCount) == pairs.Count, "initial expected size is incorrect");
             return pairs;
@@ -384,7 +394,10 @@ namespace Microsoft.Data.SqlClient
                     return AttestationProtocol;
                 case Keywords.IPAddressPreference:
                     return IPAddressPreference;
-
+                case Keywords.ServerSPN:
+                    return ServerSPN;
+                case Keywords.FailoverPartnerSPN:
+                    return FailoverPartnerSPN;
 #if NETFRAMEWORK
 #pragma warning disable 618 // Obsolete properties
                 case Keywords.ConnectionReset:
@@ -531,6 +544,12 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case Keywords.IPAddressPreference:
                     _ipAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
+                    break;
+                case Keywords.ServerSPN:
+                    _serverSPN = DbConnectionStringDefaults.ServerSPN;
+                    break;
+                case Keywords.FailoverPartnerSPN:
+                    _failoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSPN;
                     break;
 #if NETFRAMEWORK
                 case Keywords.ConnectionReset:
@@ -1032,6 +1051,12 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.ConnectRetryInterval:
                             ConnectRetryInterval = ConvertToInt32(value);
                             break;
+                        case Keywords.ServerSPN:
+                            ServerSPN = ConvertToString(value);
+                            break;
+                        case Keywords.FailoverPartnerSPN:
+                            FailoverPartnerSPN = ConvertToString(value);
+                            break;
 #if NETFRAMEWORK
 #pragma warning disable 618 // Obsolete properties
                         case Keywords.ConnectionReset:
@@ -1187,6 +1212,21 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ServerSPN/*' />
+        [DisplayName(DbConnectionStringKeywords.ServerSPN)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ServerSPN)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string ServerSPN
+        {
+            get => _serverSPN;
+            set
+            {
+                SetValue(DbConnectionStringKeywords.ServerSPN, value);
+                _serverSPN = value;
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Encrypt/*' />
         [DisplayName(DbConnectionStringKeywords.Encrypt)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
@@ -1337,6 +1377,21 @@ namespace Microsoft.Data.SqlClient
             {
                 SetValue(DbConnectionStringKeywords.FailoverPartner, value);
                 _failoverPartner = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/FailoverPartnerSPN/*' />
+        [DisplayName(DbConnectionStringKeywords.FailoverPartnerSPN)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_FailoverPartnerSPN)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string FailoverPartnerSPN
+        {
+            get => _failoverPartnerSPN;
+            set
+            {
+                SetValue(DbConnectionStringKeywords.FailoverPartnerSPN, value);
+                _failoverPartnerSPN = value;
             }
         }
 
