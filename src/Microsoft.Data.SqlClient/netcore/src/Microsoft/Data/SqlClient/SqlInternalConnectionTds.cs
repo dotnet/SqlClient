@@ -1911,8 +1911,7 @@ namespace Microsoft.Data.SqlClient
                             ignoreSniOpenTimeout,
                             timeout.LegacyTimerExpire,
                             ConnectionOptions,
-                            withFailover,
-                            ConnectionOptions.HostNameInCertificate);
+                            withFailover);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);

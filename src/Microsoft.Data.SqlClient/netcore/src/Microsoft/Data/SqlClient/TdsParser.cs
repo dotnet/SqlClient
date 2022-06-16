@@ -360,13 +360,13 @@ namespace Microsoft.Data.SqlClient
             bool ignoreSniOpenTimeout,
             long timerExpire,
             SqlConnectionString connectionOptions,
-            bool withFailover,
-            string hostNameInCertificate)
+            bool withFailover)
         {
             SqlConnectionEncryptOption encrypt = connectionOptions.Encrypt;
             bool trustServerCert = connectionOptions.TrustServerCertificate;
             bool integratedSecurity = connectionOptions.IntegratedSecurity;
             SqlAuthenticationMethod authType = connectionOptions.Authentication;
+            string hostNameInCertificate = connectionOptions.HostNameInCertificate;
 
             if (_state != TdsParserState.Closed)
             {

@@ -500,14 +500,14 @@ namespace Microsoft.Data.SqlClient
                               ServerCertificateValidationCallback serverCallback,
                               ClientCertificateRetrievalCallback clientCallback,
                               bool useOriginalAddressInfo,
-                              bool disableTnir,
-                              string hostNameInCertificate)
+                              bool disableTnir)
         {
             SqlConnectionEncryptOption encrypt = connectionOptions.Encrypt;
             bool trustServerCert = connectionOptions.TrustServerCertificate;
             bool integratedSecurity = connectionOptions.IntegratedSecurity;
             SqlAuthenticationMethod authType = connectionOptions.Authentication;
             string certificate = connectionOptions.Certificate;
+            string hostNameInCertificate = connectionOptions.HostNameInCertificate;
 
             if (_state != TdsParserState.Closed)
             {

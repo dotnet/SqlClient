@@ -2304,8 +2304,7 @@ namespace Microsoft.Data.SqlClient
                             _serverCallback,
                             _clientCallback,
                             _originalNetworkAddressInfo != null,
-                            disableTnir,
-                            ConnectionOptions.HostNameInCertificate);
+                            disableTnir);
 
             timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
