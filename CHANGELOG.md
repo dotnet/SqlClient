@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 5.0.0-preview3] - 2022-06-15
+## [Preview Release 5.0.0-preview3.22168.1] - 2022-06-16
 
 This update brings the below changes over the previous release:
 
@@ -19,15 +19,15 @@ This update brings the below changes over the previous release:
 - Fixed NullReferenceException during Azure Active Directory authentication. [#1625] (https://github.com/dotnet/SqlClient/pull/1625)
 - Added CommandText length validation when using stored procedure command types. [#1484](https://github.com/dotnet/SqlClient/pull/1484)
 - Fixed `GetSchema("StructuredTypeMembers")` to return correct schema information. [#1500] (https://github.com/dotnet/SqlClient/pull/1500), [#1639](https://github.com/dotnet/SqlClient/pull/1639)
-- Fixed **Null Reference Exception** when using `SqlDependency.Start` against an Azure SQL Database.[#1294] (https://github.com/dotnet/SqlClient/pull/1294)
+- Fixed NullReferenceException when using `SqlDependency.Start` against an Azure SQL Database.[#1294] (https://github.com/dotnet/SqlClient/pull/1294)
 - Send the correct retained transaction descriptor in the MARS TDS Header when there is no current transaction on .NET 5+ and .NET Core. [#1624] (https://github.com/dotnet/SqlClient/pull/1624)
 - Parallelize SSRP requests (instance name resolution) on Linux and macOS when MultiSubNetFailover is specified. [#1578] (https://github.com/dotnet/SqlClient/pull/1578)
 
 ### Changed
 
-- Replace the Microsoft.Data.SqlClient.Server namespace with references to the Microsoft.SqlServer.Server package.
+- Dropped the `Microsoft.Data.SqlClient.Server` namespace and replaced it with supported types from the [Microsoft.SqlServer.Server](https://github.com/dotnet/SqlClient/tree/main/src/Microsoft.SqlServer.Server) package.[#1585](https://github.com/dotnet/SqlClient/pull/1585)
 - Code health improvements [#1353](https://github.com/dotnet/SqlClient/pull/1353) [#1354](https://github.com/dotnet/SqlClient/pull/1354) [#1525](https://github.com/dotnet/SqlClient/pull/1525) [#1186](https://github.com/dotnet/SqlClient/pull/1186)
-- Update Azure Identity from 1.5.0 to 1.6.0
+- Update Azure Identity dependency from 1.5.0 to 1.6.0.[#1611](https://github.com/dotnet/SqlClient/pull/1611)
 
 
 ## [Preview Release 5.0.0-preview2.22096.2] - 2022-04-06
