@@ -53,6 +53,11 @@
   <PropertyGroup>
     <SystemRuntimeLoaderVersion>4.3.0</SystemRuntimeLoaderVersion>
   </PropertyGroup>
+  <!-- NetStandard 2.0 specific project dependencies -->
+  <PropertyGroup>
+    <SystemReflectionEmitILGenerationVersion>4.7.0</SystemReflectionEmitILGenerationVersion>
+    <SystemReflectionEmitLightweightVersion>4.7.0</SystemReflectionEmitLightweightVersion>
+  </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
     <AzureCoreVersion>[1.24.0,2.0.0)</AzureCoreVersion>

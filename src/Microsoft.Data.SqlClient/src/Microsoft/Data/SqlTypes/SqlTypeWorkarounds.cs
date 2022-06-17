@@ -7,6 +7,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Xml;
@@ -23,9 +24,9 @@ namespace Microsoft.Data.SqlTypes
     internal static class SqlTypeWorkarounds
     {
         #region Work around inability to access SqlXml.CreateSqlXmlReader
-        private static readonly XmlReaderSettings s_defaultXmlReaderSettings = new XmlReaderSettings() { ConformanceLevel = ConformanceLevel.Fragment };
-        private static readonly XmlReaderSettings s_defaultXmlReaderSettingsCloseInput = new XmlReaderSettings() { ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true };
-        private static readonly XmlReaderSettings s_defaultXmlReaderSettingsAsyncCloseInput = new XmlReaderSettings() { Async = true, ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true };
+        private static readonly XmlReaderSettings s_defaultXmlReaderSettings = new() { ConformanceLevel = ConformanceLevel.Fragment };
+        private static readonly XmlReaderSettings s_defaultXmlReaderSettingsCloseInput = new() { ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true };
+        private static readonly XmlReaderSettings s_defaultXmlReaderSettingsAsyncCloseInput = new() { Async = true, ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true };
 
         internal const SqlCompareOptions SqlStringValidSqlCompareOptionMask =
             SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreWidth |
@@ -118,31 +119,30 @@ namespace Microsoft.Data.SqlTypes
 
         internal static long SqlMoneyToSqlInternalRepresentation(SqlMoney money)
         {
-            return SqlMoneyHelper.GetSqlMoneyToLong(money);
+            return SqlMoneyHelper.s_sqlMoneyToLong(ref money);
         }
 
-        internal static class SqlMoneyHelper
+        private static class SqlMoneyHelper
         {
-            private static readonly MethodInfo s_toSqlInternalRepresentation = GetFastSqlMoneyToLong();
+            internal delegate long SqlMoneyToLongDelegate(ref SqlMoney @this);
+            internal static readonly SqlMoneyToLongDelegate s_sqlMoneyToLong = GetSqlMoneyToLong();
 
-            internal static long GetSqlMoneyToLong(SqlMoney money)
+            internal static SqlMoneyToLongDelegate GetSqlMoneyToLong()
             {
-                if (s_toSqlInternalRepresentation is not null)
-                {
+                SqlMoneyToLongDelegate del = null;
                     try
                     {
-                        return (long)s_toSqlInternalRepresentation.Invoke(money, null);
+                        del = GetFastSqlMoneyToLong();
                     }
                     catch
                     {
                         // If an exception occurs for any reason, swallow & use the fallback code path.
                     }
-                }
 
-                return FallbackSqlMoneyToLong(money);
+                return del ?? FallbackSqlMoneyToLong;
             }
 
-            private static MethodInfo GetFastSqlMoneyToLong()
+            private static SqlMoneyToLongDelegate GetFastSqlMoneyToLong()
             {
                 MethodInfo toSqlInternalRepresentation = typeof(SqlMoney).GetMethod("ToSqlInternalRepresentation",
                     BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.ExactBinding,
@@ -150,7 +150,21 @@ namespace Microsoft.Data.SqlTypes
 
                 if (toSqlInternalRepresentation is not null && toSqlInternalRepresentation.ReturnType == typeof(long))
                 {
-                    return toSqlInternalRepresentation;
+                    // On Full Framework, invoking the MethodInfo first before wrapping
+                    // a delegate around it will produce better codegen. We don't need
+                    // to inspect the return value; we just need to call the method.
+
+                    _ = toSqlInternalRepresentation.Invoke(new SqlMoney(0), new object[0]);
+
+                    // Now create the delegate. This is an open delegate, meaning the
+                    // "this" parameter will be provided as arg0 on each call.
+
+                    var del = (SqlMoneyToLongDelegate)toSqlInternalRepresentation.CreateDelegate(typeof(SqlMoneyToLongDelegate), target: null);
+
+                    // Now we can cache the delegate and invoke it over and over again.
+                    // Note: the first parameter to the delegate is provided *byref*.
+
+                    return del;
                 }
 
                 SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.GetFastSqlMoneyToLong | Info | SqlMoney.ToSqlInternalRepresentation() not found. Less efficient fallback method will be used.");
@@ -158,7 +172,7 @@ namespace Microsoft.Data.SqlTypes
             }
 
             // Used in case we can't use a [Serializable]-like mechanism.
-            private static long FallbackSqlMoneyToLong(SqlMoney value)
+            private static long FallbackSqlMoneyToLong(ref SqlMoney value)
             {
                 if (value.IsNull)
                 {
@@ -176,39 +190,30 @@ namespace Microsoft.Data.SqlTypes
         #region Work around inability to access SqlDecimal._data1/2/3/4
         internal static void SqlDecimalExtractData(SqlDecimal d, out uint data1, out uint data2, out uint data3, out uint data4)
         {
-            SqlDecimalHelper.Decompose(d, out data1, out data2, out data3, out data4);
+            SqlDecimalHelper.s_decompose(d, out data1, out data2, out data3, out data4);
         }
 
         private static class SqlDecimalHelper
         {
-            private static readonly bool s_canUseFastPath = GetFastDecomposers(ref s_fiData1, ref s_fiData2, ref s_fiData3, ref s_fiData4);
-            private static FieldInfo s_fiData1;
-            private static FieldInfo s_fiData2;
-            private static FieldInfo s_fiData3;
-            private static FieldInfo s_fiData4;
+            internal delegate void Decomposer(SqlDecimal value, out uint data1, out uint data2, out uint data3, out uint data4);
+            internal static readonly Decomposer s_decompose = GetDecomposer();
 
-            internal static void Decompose(SqlDecimal value, out uint data1, out uint data2, out uint data3, out uint data4)
+            private static Decomposer GetDecomposer()
             {
-                if (s_canUseFastPath)
+                Decomposer decomposer = null;
+                try
                 {
-                    try
-                    {
-                        data1 = (uint)s_fiData1.GetValue(value);
-                        data2 = (uint)s_fiData2.GetValue(value);
-                        data3 = (uint)s_fiData3.GetValue(value);
-                        data4 = (uint)s_fiData4.GetValue(value);
-                        return;
-                    }
-                    catch
-                    {
-                        // If an exception occurs for any reason, swallow & use the fallback code path.
-                    }
+                    decomposer = GetFastDecomposer();
+                }
+                catch
+                {
+                    // If an exception occurs for any reason, swallow & use the fallback code path.
                 }
 
-                FallbackDecomposer(value, out data1, out data2, out data3, out data4);
+                return decomposer ?? FallbackDecomposer;
             }
 
-            private static bool GetFastDecomposers(ref FieldInfo fiData1, ref FieldInfo fiData2, ref FieldInfo fiData3, ref FieldInfo fiData4)
+            private static Decomposer GetFastDecomposer()
             {
                 // This takes advantage of the fact that for [Serializable] types, the member fields are implicitly
                 // part of the type's serialization contract. This includes the fields' names and types. By default,
@@ -225,57 +230,76 @@ namespace Microsoft.Data.SqlTypes
 
                 if (!typeof(SqlDecimal).IsSerializable)
                 {
-                    SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposers | Info | SqlDecimal isn't Serializable. Less efficient fallback method will be used.");
-                    return false; // type is not serializable - cannot use fast path assumptions
+                    SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposer | Info | SqlDecimal isn't Serializable. Less efficient fallback method will be used.");
+                    return null; // type is not serializable - cannot use fast path assumptions
                 }
 
                 if (typeof(ISerializable).IsAssignableFrom(typeof(SqlDecimal)))
                 {
-                    SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposers | Info | SqlDecimal is ISerializable. Less efficient fallback method will be used.");
-                    return false; // type contains custom logic - cannot use fast path assumptions
+                    SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposer | Info | SqlDecimal is ISerializable. Less efficient fallback method will be used.");
+                    return null; // type contains custom logic - cannot use fast path assumptions
                 }
 
-                foreach (var method in typeof(SqlDecimal).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                foreach (MethodInfo method in typeof(SqlDecimal).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
                 {
                     if (method.IsDefined(typeof(OnDeserializingAttribute)) || method.IsDefined(typeof(OnDeserializedAttribute)))
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposers | Info | SqlDecimal contains custom serialization logic. Less efficient fallback method will be used.");
-                        return false; // type contains custom logic - cannot use fast path assumptions
+                        SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposer | Info | SqlDecimal contains custom serialization logic. Less efficient fallback method will be used.");
+                        return null; // type contains custom logic - cannot use fast path assumptions
                     }
                 }
 
                 // GetSerializableMembers filters out [NonSerialized] fields for us automatically.
 
-                foreach (var candidate in FormatterServices.GetSerializableMembers(typeof(SqlDecimal)))
+                FieldInfo fiData1 = null, fiData2 = null, fiData3 = null, fiData4 = null;
+                foreach (MemberInfo candidate in FormatterServices.GetSerializableMembers(typeof(SqlDecimal)))
                 {
                     if (candidate is FieldInfo fi && fi.FieldType == typeof(uint))
                     {
                         if (fi.Name == "m_data1")
-                        {
-                            fiData1 = fi;
-                        }
+                        { fiData1 = fi; }
                         else if (fi.Name == "m_data2")
-                        {
-                            fiData2 = fi;
-                        }
+                        { fiData2 = fi; }
                         else if (fi.Name == "m_data3")
-                        {
-                            fiData3 = fi;
-                        }
+                        { fiData3 = fi; }
                         else if (fi.Name == "m_data4")
-                        {
-                            fiData4 = fi;
-                        }
+                        { fiData4 = fi; }
                     }
                 }
 
                 if (fiData1 is null || fiData2 is null || fiData3 is null || fiData4 is null)
                 {
-                    SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposers | Info | Expected SqlDecimal fields are missing. Less efficient fallback method will be used.");
-                    return false; // missing one of the expected member fields - cannot use fast path assumptions
+                    SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposer | Info | Expected SqlDecimal fields are missing. Less efficient fallback method will be used.");
+                    return null; // missing one of the expected member fields - cannot use fast path assumptions
                 }
 
-                return true;
+                Type refToUInt32 = typeof(uint).MakeByRefType();
+                DynamicMethod dm = new(
+                    name: "sqldecimal-decomposer",
+                    returnType: typeof(void),
+                    parameterTypes: new[] { typeof(SqlDecimal), refToUInt32, refToUInt32, refToUInt32, refToUInt32 },
+                    restrictedSkipVisibility: true); // perf: JITs method at delegate creation time
+
+                ILGenerator ilGen = dm.GetILGenerator();
+                ilGen.Emit(OpCodes.Ldarg_1); // eval stack := [UInt32&]
+                ilGen.Emit(OpCodes.Ldarg_0); // eval stack := [UInt32&] [SqlDecimal]
+                ilGen.Emit(OpCodes.Ldfld, fiData1); // eval stack := [UInt32&] [UInt32]
+                ilGen.Emit(OpCodes.Stind_I4); // eval stack := <empty>
+                ilGen.Emit(OpCodes.Ldarg_2); // eval stack := [UInt32&]
+                ilGen.Emit(OpCodes.Ldarg_0); // eval stack := [UInt32&] [SqlDecimal]
+                ilGen.Emit(OpCodes.Ldfld, fiData2); // eval stack := [UInt32&] [UInt32]
+                ilGen.Emit(OpCodes.Stind_I4); // eval stack := <empty>
+                ilGen.Emit(OpCodes.Ldarg_3); // eval stack := [UInt32&]
+                ilGen.Emit(OpCodes.Ldarg_0); // eval stack := [UInt32&] [SqlDecimal]
+                ilGen.Emit(OpCodes.Ldfld, fiData3); // eval stack := [UInt32&] [UInt32]
+                ilGen.Emit(OpCodes.Stind_I4); // eval stack := <empty>
+                ilGen.Emit(OpCodes.Ldarg_S, (byte)4); // eval stack := [UInt32&]
+                ilGen.Emit(OpCodes.Ldarg_0); // eval stack := [UInt32&] [SqlDecimal]
+                ilGen.Emit(OpCodes.Ldfld, fiData4); // eval stack := [UInt32&] [UInt32]
+                ilGen.Emit(OpCodes.Stind_I4); // eval stack := <empty>
+                ilGen.Emit(OpCodes.Ret);
+
+                return (Decomposer)dm.CreateDelegate(typeof(Decomposer), null /* target */);
             }
 
             // Used in case we can't use a [Serializable]-like mechanism.
