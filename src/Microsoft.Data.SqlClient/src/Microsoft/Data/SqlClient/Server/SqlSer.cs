@@ -7,9 +7,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
-#if NETFRAMEWORK
 using Microsoft.SqlServer.Server;
-#endif
 
 namespace Microsoft.Data.SqlClient.Server
 {
