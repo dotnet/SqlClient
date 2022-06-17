@@ -41,7 +41,6 @@ This update brings the below changes over the previous release:
 
 ### Changed
 
-- Dropped the `Microsoft.Data.SqlClient.Server` namespace and replaced it with supported types from the [Microsoft.SqlServer.Server](https://github.com/dotnet/SqlClient/tree/main/src/Microsoft.SqlServer.Server) package.[#1585](https://github.com/dotnet/SqlClient/pull/1585)
 - Code health improvements [#1353](https://github.com/dotnet/SqlClient/pull/1353) [#1354](https://github.com/dotnet/SqlClient/pull/1354) [#1525](https://github.com/dotnet/SqlClient/pull/1525) [#1186](https://github.com/dotnet/SqlClient/pull/1186)
 - Update Azure Identity dependency from 1.5.0 to 1.6.0.[#1611](https://github.com/dotnet/SqlClient/pull/1611)
 - Improved Regex for SqlCommandSet [#1548] (https://github.com/dotnet/SqlClient/pull/1548)
