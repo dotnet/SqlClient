@@ -22,7 +22,7 @@ This update brings the below changes over the previous release:
 - Fixed NullReferenceException when using `SqlDependency.Start` against an Azure SQL Database.[#1294] (https://github.com/dotnet/SqlClient/pull/1294)
 - Send the correct retained transaction descriptor in the MARS TDS Header when there is no current transaction on .NET 5+ and .NET Core. [#1624] (https://github.com/dotnet/SqlClient/pull/1624)
 - Parallelize SSRP requests (instance name resolution) on Linux and macOS when MultiSubNetFailover is specified. [#1578] (https://github.com/dotnet/SqlClient/pull/1578)
-- Adjust the default ConnectRetryCount against OnDemand endpoints [#1626] (https://github.com/dotnet/SqlClient/pull/1626)
+- Adjust the default ConnectRetryCount against Azure Synapse OnDemand endpoints [#1626] (https://github.com/dotnet/SqlClient/pull/1626)
 
 
 ### Changed
@@ -31,7 +31,7 @@ This update brings the below changes over the previous release:
 - Code health improvements [#1353](https://github.com/dotnet/SqlClient/pull/1353) [#1354](https://github.com/dotnet/SqlClient/pull/1354) [#1525](https://github.com/dotnet/SqlClient/pull/1525) [#1186](https://github.com/dotnet/SqlClient/pull/1186)
 - Update Azure Identity dependency from 1.5.0 to 1.6.0.[#1611](https://github.com/dotnet/SqlClient/pull/1611)
 - Improved Regex for SqlCommandSet [#1548] (https://github.com/dotnet/SqlClient/pull/1548)
-- Improved TdsParserStateObjectManaged to address null reference exception by adding nullable annotations. [#1555] (https://github.com/dotnet/SqlClient/pull/1555)
+- Improved TdsParserStateObjectManaged to address NullReferenceException by adding nullable annotations. [#1555] (https://github.com/dotnet/SqlClient/pull/1555)
 
 ## [Preview Release 5.0.0-preview2.22096.2] - 2022-04-06
 
