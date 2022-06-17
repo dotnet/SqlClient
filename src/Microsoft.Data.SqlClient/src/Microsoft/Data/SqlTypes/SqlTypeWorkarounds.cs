@@ -6,8 +6,9 @@ using System;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Xml;
 using Microsoft.Data.SqlClient;
 
@@ -93,6 +94,8 @@ namespace Microsoft.Data.SqlTypes
         #endregion
 
         #region Work around inability to access SqlMoney.ctor(long, int) and SqlMoney.ToSqlInternalRepresentation
+        private static readonly Func<long, SqlMoney> s_sqlMoneyfactory = CtorHelper.CreateFactory<SqlMoney, long, int>(); // binds to SqlMoney..ctor(long, int) if it exists
+
         /// <summary>
         /// Constructs a SqlMoney from a long value without scaling. The ignored parameter exists
         /// only to distinguish this constructor from the constructor that takes a long.
@@ -100,130 +103,291 @@ namespace Microsoft.Data.SqlTypes
         /// </summary>
         internal static SqlMoney SqlMoneyCtor(long value, int ignored)
         {
-            var c = default(SqlMoneyCaster);
+            SqlMoney val;
+            if (s_sqlMoneyfactory is not null)
+            {
+                val = s_sqlMoneyfactory(value);
+            }
+            else
+            {
+                val = new SqlMoney(((decimal)value) / 10000);
+            }
 
-            // Same behavior as the internal SqlMoney.ctor(long, bool) overload
-            c.Fake._fNotNull = true;
-            c.Fake._value = value;
-
-            return c.Real;
+            return val;
         }
 
         internal static long SqlMoneyToSqlInternalRepresentation(SqlMoney money)
         {
-            var c = default(SqlMoneyCaster);
-            c.Real = money;
+            return SqlMoneyHelper.GetSqlMoneyToLong(money);
+        }
 
-            // Same implementation as the internal SqlMoney.ToSqlInternalRepresentation implementation
-            if (money.IsNull)
+        internal static class SqlMoneyHelper
+        {
+            private static readonly MethodInfo s_toSqlInternalRepresentation = GetFastSqlMoneyToLong();
+
+            internal static long GetSqlMoneyToLong(SqlMoney money)
             {
-                throw new SqlNullValueException();
+                if (s_toSqlInternalRepresentation is not null)
+                {
+                    try
+                    {
+                        return (long)s_toSqlInternalRepresentation.Invoke(money, null);
+                    }
+                    catch
+                    {
+                        // If an exception occurs for any reason, swallow & use the fallback code path.
+                    }
+                }
+
+                return FallbackSqlMoneyToLong(money);
             }
-            return c.Fake._value;
-        }
 
-        [StructLayout(LayoutKind.Sequential)]
-        private struct SqlMoneyLookalike // exact same shape as SqlMoney, but with accessible fields
-        {
-            internal bool _fNotNull;
-            internal long _value;
-        }
+            private static MethodInfo GetFastSqlMoneyToLong()
+            {
+                MethodInfo toSqlInternalRepresentation = typeof(SqlMoney).GetMethod("ToSqlInternalRepresentation",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.ExactBinding,
+                    null, CallingConventions.Any, new Type[] { }, null);
 
-        [StructLayout(LayoutKind.Explicit)]
-        private struct SqlMoneyCaster
-        {
-            [FieldOffset(0)]
-            internal SqlMoney Real;
-            [FieldOffset(0)]
-            internal SqlMoneyLookalike Fake;
+                if (toSqlInternalRepresentation is not null && toSqlInternalRepresentation.ReturnType == typeof(long))
+                {
+                    return toSqlInternalRepresentation;
+                }
+
+                SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.GetFastSqlMoneyToLong | Info | SqlMoney.ToSqlInternalRepresentation() not found. Less efficient fallback method will be used.");
+                return null; // missing the expected method - cannot use fast path
+            }
+
+            // Used in case we can't use a [Serializable]-like mechanism.
+            private static long FallbackSqlMoneyToLong(SqlMoney value)
+            {
+                if (value.IsNull)
+                {
+                    return default;
+                }
+                else
+                {
+                    decimal data = value.ToDecimal();
+                    return (long)(data * 10000);
+                }
+            }
         }
         #endregion
 
         #region Work around inability to access SqlDecimal._data1/2/3/4
         internal static void SqlDecimalExtractData(SqlDecimal d, out uint data1, out uint data2, out uint data3, out uint data4)
         {
-            // Extract the four data elements from SqlDecimal.
-            var c = default(SqlDecimalCaster);
-            c.Real = d;
-            data1 = c.Fake._data1;
-            data2 = c.Fake._data2;
-            data3 = c.Fake._data3;
-            data4 = c.Fake._data4;
+            SqlDecimalHelper.Decompose(d, out data1, out data2, out data3, out data4);
         }
 
-        [StructLayout(LayoutKind.Sequential)]
-        private struct SqlDecimalLookalike // exact same shape as SqlDecimal, but with accessible fields
+        private static class SqlDecimalHelper
         {
-            internal byte _bStatus;
-            internal byte _bLen;
-            internal byte _bPrec;
-            internal byte _bScale;
-            internal uint _data1;
-            internal uint _data2;
-            internal uint _data3;
-            internal uint _data4;
-        }
+            private static readonly bool s_canUseFastPath = GetFastDecomposers(ref s_fiData1, ref s_fiData2, ref s_fiData3, ref s_fiData4);
+            private static FieldInfo s_fiData1;
+            private static FieldInfo s_fiData2;
+            private static FieldInfo s_fiData3;
+            private static FieldInfo s_fiData4;
 
-        [StructLayout(LayoutKind.Explicit)]
-        private struct SqlDecimalCaster
-        {
-            [FieldOffset(0)]
-            internal SqlDecimal Real;
-            [FieldOffset(0)]
-            internal SqlDecimalLookalike Fake;
+            internal static void Decompose(SqlDecimal value, out uint data1, out uint data2, out uint data3, out uint data4)
+            {
+                if (s_canUseFastPath)
+                {
+                    try
+                    {
+                        data1 = (uint)s_fiData1.GetValue(value);
+                        data2 = (uint)s_fiData2.GetValue(value);
+                        data3 = (uint)s_fiData3.GetValue(value);
+                        data4 = (uint)s_fiData4.GetValue(value);
+                        return;
+                    }
+                    catch
+                    {
+                        // If an exception occurs for any reason, swallow & use the fallback code path.
+                    }
+                }
+
+                FallbackDecomposer(value, out data1, out data2, out data3, out data4);
+            }
+
+            private static bool GetFastDecomposers(ref FieldInfo fiData1, ref FieldInfo fiData2, ref FieldInfo fiData3, ref FieldInfo fiData4)
+            {
+                // This takes advantage of the fact that for [Serializable] types, the member fields are implicitly
+                // part of the type's serialization contract. This includes the fields' names and types. By default,
+                // [Serializable]-compliant serializers will read all the member fields and shove the data into a
+                // SerializationInfo dictionary. We mimic this behavior in a manner consistent with the [Serializable]
+                // pattern, but much more efficiently.
+                //
+                // In order to make sure we're staying compliant, we need to gate our checks to fulfill some core
+                // assumptions. Importantly, the type must be [Serializable] but cannot be ISerializable, as the
+                // presence of the interface means that the type wants to be responsible for its own serialization,
+                // and that member fields are not guaranteed to be part of the serialization contract. Additionally,
+                // we need to check for [OnSerializing] and [OnDeserializing] methods, because we cannot account
+                // for any logic which might be present within them.
+
+                if (!typeof(SqlDecimal).IsSerializable)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposers | Info | SqlDecimal isn't Serializable. Less efficient fallback method will be used.");
+                    return false; // type is not serializable - cannot use fast path assumptions
+                }
+
+                if (typeof(ISerializable).IsAssignableFrom(typeof(SqlDecimal)))
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposers | Info | SqlDecimal is ISerializable. Less efficient fallback method will be used.");
+                    return false; // type contains custom logic - cannot use fast path assumptions
+                }
+
+                foreach (var method in typeof(SqlDecimal).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                {
+                    if (method.IsDefined(typeof(OnDeserializingAttribute)) || method.IsDefined(typeof(OnDeserializedAttribute)))
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposers | Info | SqlDecimal contains custom serialization logic. Less efficient fallback method will be used.");
+                        return false; // type contains custom logic - cannot use fast path assumptions
+                    }
+                }
+
+                // GetSerializableMembers filters out [NonSerialized] fields for us automatically.
+
+                foreach (var candidate in FormatterServices.GetSerializableMembers(typeof(SqlDecimal)))
+                {
+                    if (candidate is FieldInfo fi && fi.FieldType == typeof(uint))
+                    {
+                        if (fi.Name == "m_data1")
+                        {
+                            fiData1 = fi;
+                        }
+                        else if (fi.Name == "m_data2")
+                        {
+                            fiData2 = fi;
+                        }
+                        else if (fi.Name == "m_data3")
+                        {
+                            fiData3 = fi;
+                        }
+                        else if (fi.Name == "m_data4")
+                        {
+                            fiData4 = fi;
+                        }
+                    }
+                }
+
+                if (fiData1 is null || fiData2 is null || fiData3 is null || fiData4 is null)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.SqlDecimalHelper.GetFastDecomposers | Info | Expected SqlDecimal fields are missing. Less efficient fallback method will be used.");
+                    return false; // missing one of the expected member fields - cannot use fast path assumptions
+                }
+
+                return true;
+            }
+
+            // Used in case we can't use a [Serializable]-like mechanism.
+            private static void FallbackDecomposer(SqlDecimal value, out uint data1, out uint data2, out uint data3, out uint data4)
+            {
+                if (value.IsNull)
+                {
+                    data1 = default;
+                    data2 = default;
+                    data3 = default;
+                    data4 = default;
+                }
+                else
+                {
+                    int[] data = value.Data; // allocation
+                    data4 = (uint)data[3]; // write in reverse to avoid multiple bounds checks
+                    data3 = (uint)data[2];
+                    data2 = (uint)data[1];
+                    data1 = (uint)data[0];
+                }
+            }
         }
         #endregion
 
         #region Work around inability to access SqlBinary.ctor(byte[], bool)
+        private static readonly Func<byte[], SqlBinary> s_sqlBinaryfactory = CtorHelper.CreateFactory<SqlBinary, byte[], bool>(); // binds to SqlBinary..ctor(byte[], bool) if it exists
+
         internal static SqlBinary SqlBinaryCtor(byte[] value, bool ignored)
         {
-            // Construct a SqlBinary without allocating/copying the byte[].  This provides
-            // the same behavior as SqlBinary.ctor(byte[], bool).
-            var c = default(SqlBinaryCaster);
-            c.Fake._value = value;
-            return c.Real;
-        }
+            SqlBinary val;
+            if (s_sqlBinaryfactory is not null)
+            {
+                val = s_sqlBinaryfactory(value);
+            }
+            else
+            {
+                val = new SqlBinary(value);
+            }
 
-        [StructLayout(LayoutKind.Sequential)]
-        private struct SqlBinaryLookalike
-        {
-            internal byte[] _value;
-        }
-
-        [StructLayout(LayoutKind.Explicit)]
-        private struct SqlBinaryCaster
-        {
-            [FieldOffset(0)]
-            internal SqlBinary Real;
-            [FieldOffset(0)]
-            internal SqlBinaryLookalike Fake;
+            return val;
         }
         #endregion
 
         #region Work around inability to access SqlGuid.ctor(byte[], bool)
+        private static readonly Func<byte[], SqlGuid> s_sqlGuidfactory = CtorHelper.CreateFactory<SqlGuid, byte[], bool>(); // binds to SqlGuid..ctor(byte[], bool) if it exists
+
         internal static SqlGuid SqlGuidCtor(byte[] value, bool ignored)
         {
-            // Construct a SqlGuid without allocating/copying the byte[].  This provides
-            // the same behavior as SqlGuid.ctor(byte[], bool).
-            var c = default(SqlGuidCaster);
-            c.Fake._value = value;
-            return c.Real;
-        }
+            SqlGuid val;
+            if (s_sqlBinaryfactory is not null)
+            {
+                val = s_sqlGuidfactory(value);
+            }
+            else
+            {
+                val = new SqlGuid(value);
+            }
 
-        [StructLayout(LayoutKind.Sequential)]
-        private struct SqlGuidLookalike
-        {
-            internal byte[] _value;
-        }
-
-        [StructLayout(LayoutKind.Explicit)]
-        private struct SqlGuidCaster
-        {
-            [FieldOffset(0)]
-            internal SqlGuid Real;
-            [FieldOffset(0)]
-            internal SqlGuidLookalike Fake;
+            return val;
         }
         #endregion
+
+        private static class CtorHelper
+        {
+            // Returns null if .ctor(TValue, TIgnored) cannot be found.
+            // Caller should have fallback logic in place in case the API doesn't exist.
+            internal unsafe static Func<TValue, TInstance> CreateFactory<TInstance, TValue, TIgnored>() where TInstance : struct
+            {
+                try
+                {
+                    ConstructorInfo fullCtor = typeof(TInstance).GetConstructor(
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.ExactBinding,
+                        null, new[] { typeof(TValue), typeof(TIgnored) }, null);
+                    if (fullCtor is not null)
+                    {
+                        // Need to use fnptr rather than delegate since MulticastDelegate expects to point to a MethodInfo,
+                        // not a ConstructorInfo. The convention for invoking struct ctors is that the caller zeros memory,
+                        // then passes a ref to the zeroed memory as the implicit arg0 "this". We don't need to worry
+                        // about keeping this pointer alive; the fact that we're instantiated over TInstance will do it
+                        // for us.
+                        //
+                        // On Full Framework, creating a delegate to InvocationHelper before invoking it for the first time
+                        // will cause the delegate to point to the pre-JIT stub, which has an expensive preamble. Instead,
+                        // we invoke InvocationHelper manually with a captured no-op fnptr. We'll then replace it with the
+                        // real fnptr before creating a new delegate (pointing to the real codegen, not the stub) and
+                        // returning that new delegate to our caller.
+
+                        static void DummyNoOp(ref TInstance @this, TValue value, TIgnored ignored)
+                        { }
+
+                        IntPtr fnPtr;
+                        TInstance InvocationHelper(TValue value)
+                        {
+                            TInstance retVal = default; // ensure zero-inited
+                            ((delegate* managed<ref TInstance, TValue, TIgnored, void>)fnPtr)(ref retVal, value, default);
+                            return retVal;
+                        }
+
+                        fnPtr = (IntPtr)(delegate* managed<ref TInstance, TValue, TIgnored, void>)(&DummyNoOp);
+                        InvocationHelper(default); // no-op to trigger JIT
+
+                        fnPtr = fullCtor.MethodHandle.GetFunctionPointer(); // replace before returning to caller
+                        return InvocationHelper;
+                    }
+                }
+                catch
+                {
+                }
+
+                SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.CtorHelper.CreateFactory | Info | {0}..ctor({1}, {2}) not found. Less efficient fallback method will be used.", typeof(TInstance).Name, typeof(TValue).Name, typeof(TIgnored).Name);
+                return null; // factory not found or an exception occurred
+            }
+        }
     }
 }
