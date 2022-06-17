@@ -31,7 +31,7 @@ This update brings the below changes over the previous release:
 - Code health improvements [#1353](https://github.com/dotnet/SqlClient/pull/1353) [#1354](https://github.com/dotnet/SqlClient/pull/1354) [#1525](https://github.com/dotnet/SqlClient/pull/1525) [#1186](https://github.com/dotnet/SqlClient/pull/1186)
 - Update Azure Identity dependency from 1.5.0 to 1.6.0.[#1611](https://github.com/dotnet/SqlClient/pull/1611)
 - Improved Regex for SqlCommandSet [#1548] (https://github.com/dotnet/SqlClient/pull/1548)
-- Improved TdsParserStateObjectManaged to address NullReferenceException by adding nullable annotations. [#1555] (https://github.com/dotnet/SqlClient/pull/1555)
+- Rework on `TdsParserStateObjectManaged` with nullable annotations. [#1555] (https://github.com/dotnet/SqlClient/pull/1555)
 
 ## [Preview Release 5.0.0-preview2.22096.2] - 2022-04-06
 
