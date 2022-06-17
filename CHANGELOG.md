@@ -10,25 +10,23 @@ This update brings the below changes over the previous release:
 
 ### Added
 - Added support for `TDS 8`. To use TDS 8, users should specify Encrypt=Strict in the connection string. Strict mode disables TrustServerCertificate (always treated as False in Strict mode). HostNameInCertificate has been added to help some Strict mode scenarios. [#1608](https://github.com/dotnet/SqlClient/pull/1608)
-- Added support to skip the driver-generated Server Prinicipal Name when using SPN and Failover Partner SPN options in a connection string.
-- Added support for aliases for NetCore on Windows. [#1588](https://github.com/dotnet/SqlClient/pull/1588)
+- Added support for specifying Server SPN and Failover Server SPN on the connection. [#1607](https://github.com/dotnet/SqlClient/pull/1607)
+- Added support for aliases when targeting .NET Core on Windows. [#1588](https://github.com/dotnet/SqlClient/pull/1588)
 
 ### Fixed
 
-- Fixed naming, order and formatting for dignostics. [#1637] (https://github.com/dotnet/SqlClient/pull/1637)
-- Handle NRE on Azure federated authentication. [#1625] (https://github.com/dotnet/SqlClient/pull/1625)
-- Fixed CommandText Length for Stored Procedures. [#1484](https://github.com/dotnet/SqlClient/pull/1484)
-- Fxied TYPE_SCHEME members in StructuredTypeMembers. [#1500] (https://github.com/dotnet/SqlClient/pull/1500)
-- Fixed issue SqlDependency.Start throws NRE against Azure SQL Database.[#1294] (https://github.com/dotnet/SqlClient/pull/1294)
-- Fixed retained Transaction descriptor in MARDS TDS Header for .Net 5+ and . NetCore. [#1624] (https://github.com/dotnet/SqlClient/pull/1624)
-- Fixed Parallel SSRP Requests for Linux and Mac OS when MultiSubNetFailover is specified. [#1578] (https://github.com/dotnet/SqlClient/pull/1578)
-
+- Fixed naming, order, and formatting for `SqlDiagnosticsListener` on .NET Core and .NET. [#1637] (https://github.com/dotnet/SqlClient/pull/1637)
+- Fixed NullReferenceException during Azure Active Directory authentication. [#1625] (https://github.com/dotnet/SqlClient/pull/1625)
+- Added CommandText length validation when using stored procedure command types. [#1484](https://github.com/dotnet/SqlClient/pull/1484)
+- Fixed `GetSchema("StructuredTypeMembers")` to return correct schema information. [#1500] (https://github.com/dotnet/SqlClient/pull/1500), [#1639](https://github.com/dotnet/SqlClient/pull/1639)
+- Fixed **Null Reference Exception** when using `SqlDependency.Start` against an Azure SQL Database.[#1294] (https://github.com/dotnet/SqlClient/pull/1294)
+- Send the correct retained transaction descriptor in the MARS TDS Header when there is no current transaction on .NET 5+ and .NET Core. [#1624] (https://github.com/dotnet/SqlClient/pull/1624)
+- Parallelize SSRP requests (instance name resolution) on Linux and macOS when MultiSubNetFailover is specified. [#1578] (https://github.com/dotnet/SqlClient/pull/1578)
 
 ### Changed
 
-- Dropping the Microsoft.Data.SqlClient.Server namespace for supported types by Microsoft.SqlServer.Server package.
+- Replace the Microsoft.Data.SqlClient.Server namespace with references to the Microsoft.SqlServer.Server package.
 - Code health improvements [#1353](https://github.com/dotnet/SqlClient/pull/1353) [#1354](https://github.com/dotnet/SqlClient/pull/1354) [#1525](https://github.com/dotnet/SqlClient/pull/1525) [#1186](https://github.com/dotnet/SqlClient/pull/1186)
-- Improve error reporting from SqlDBManager. [#1617] (https://github.com/dotnet/SqlClient/pull/1617)
 - Update Azure Identity from 1.5.0 to 1.6.0
 
 
