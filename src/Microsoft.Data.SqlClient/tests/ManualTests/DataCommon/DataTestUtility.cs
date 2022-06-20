@@ -15,9 +15,11 @@ using System.Net.Sockets;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Identity.Client;
 using Microsoft.Data.SqlClient.TestUtilities;
+using Microsoft.Identity.Client;
 using Xunit;
+using System.Net.NetworkInformation;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -294,6 +296,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool AreConnStringsSetup()
         {
             return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
+        }
+
+        public static bool IsTCPConnStringSetup()
+        {
+            return !string.IsNullOrEmpty(TCPConnectionString);
         }
 
         // Synapse: Always Encrypted is not supported with Azure Synapse.
@@ -828,6 +835,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return res;
         }
 
+        public static bool ParseDataSource(string dataSource, out string hostname, out int port, out string instanceName)
+        {
+            hostname = string.Empty;
+            port = -1;
+            instanceName = string.Empty;
+
+            if (dataSource.Contains(",") && dataSource.Contains("\\"))
+                return false;
+
+            if (dataSource.Contains(":"))
+            {
+                dataSource = dataSource.Substring(dataSource.IndexOf(":") + 1);
+            }
+
+            if (dataSource.Contains(","))
+            {
+                if (!Int32.TryParse(dataSource.Substring(dataSource.LastIndexOf(",") + 1), out port))
+                {
+                    return false;
+                }
+                dataSource = dataSource.Substring(0, dataSource.IndexOf(",") - 1);
+            }
+
+            if (dataSource.Contains("\\"))
+            {
+                instanceName = dataSource.Substring(dataSource.LastIndexOf("\\") + 1);
+                dataSource = dataSource.Substring(0, dataSource.LastIndexOf("\\"));
+            }
+
+            hostname = dataSource;
+
+            return hostname.Length > 0 && hostname.IndexOfAny(new char[] { '\\', ':', ',' }) == -1;
+        }
+
         public class AKVEventListener : BaseEventListener
         {
             public override string Name => AKVEventSourceName;
@@ -866,6 +907,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     EventData.Add(eventData);
                 }
             }
+        }
+
+        /// <summary>
+        /// Resolves the machine's fully qualified domain name if it is applicable.
+        /// </summary>
+        /// <returns>Returns FQDN if the client was domain joined otherwise the machine name.</returns>
+        public static string GetMachineFQDN()
+        {
+            IPGlobalProperties machineInfo = IPGlobalProperties.GetIPGlobalProperties();
+            StringBuilder fqdn = new();
+            fqdn.Append(machineInfo.HostName);
+            if (!string.IsNullOrEmpty(machineInfo.DomainName))
+            {
+                fqdn.Append(".");
+                fqdn.Append(machineInfo.DomainName);
+            }
+            return fqdn.ToString();
         }
     }
 }

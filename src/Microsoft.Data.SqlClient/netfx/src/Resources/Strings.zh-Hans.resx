@@ -4617,4 +4617,13 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>当在父命令上启用 EnableOptimizedParameterBinding 时，参数“{0}”不能具有 Direction Output 或 InputOutput。</value>
   </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>使用“{0}”身份验证方法检索访问令牌时连接超时。最后一个错误: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>故障转移合作伙伴的服务主体名称(SPN)。</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>服务器的服务主体名称(SPN)。</value>
+  </data>
 </root>

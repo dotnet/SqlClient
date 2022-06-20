@@ -71,7 +71,7 @@
   <Target Name="BuildAll" DependsOnTargets="BuildSqlServerLib;BuildNetFx;BuildNetCore" />
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
-  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
+  <Target Name="BuildTestsNetCore" DependsOnTargets="BuildSqlServerLib;RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
   <Target Name="BuildTestsNetFx" DependsOnTargets="BuildSqlServerLib;RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
   <Target Name="BuildTests" DependsOnTargets="BuildTestsNetCore;BuildTestsNetFx"/>
 
@@ -113,7 +113,9 @@
   </Target>
 
   <Target Name="BuildSqlServerLib" DependsOnTargets="RestoreSqlServerLib">
+    <!-- Only build platform specific builds for Package reference types -->
     <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=AnyCPU;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
   </Target>
 
   <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore">

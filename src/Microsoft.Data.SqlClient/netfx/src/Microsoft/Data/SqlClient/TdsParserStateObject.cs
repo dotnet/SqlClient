@@ -88,7 +88,6 @@ namespace Microsoft.Data.SqlClient
         internal int _inBytesUsed = 0;                   // number of bytes used in internal read buffer
         internal int _inBytesRead = 0;                   // number of bytes read into internal read buffer
         internal int _inBytesPacket = 0;                   // number of bytes left in packet
-        
         internal int _spid;                                 // SPID of the current connection
 
         // Packet state variables
@@ -322,9 +321,8 @@ namespace Microsoft.Data.SqlClient
             SetPacketSize(_parser._physicalStateObj._outBuff.Length);
 
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
-            
             SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, physicalConnection, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
             if (_sessionHandle.Status != TdsEnums.SNI_SUCCESS)
@@ -846,8 +844,21 @@ namespace Microsoft.Data.SqlClient
             return myInfo;
         }
 
-        internal void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, byte[] spnBuffer, bool flushCache, 
-                bool async, bool fParallel, TransparentNetworkResolutionState transparentNetworkResolutionState, int totalTimeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN)
+        internal void CreatePhysicalSNIHandle(
+            string serverName,
+            bool ignoreSniOpenTimeout,
+            long timerExpire,
+            out byte[] instanceName,
+            byte[] spnBuffer,
+            bool flushCache,
+            bool async,
+            bool fParallel,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+            SqlConnectionIPAddressPreference ipPreference,
+            string cachedFQDN,
+            bool tlsFirst = false,
+            string hostNameInCertificate = "")
         {
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
 
@@ -872,11 +883,12 @@ namespace Microsoft.Data.SqlClient
 
             // serverName : serverInfo.ExtendedServerName
             // may not use this serverName as key
-            SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), 
-                    out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout, ipPreference, cachedDNSInfo);
+            _ = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
+
+            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout),
+                out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
+                ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate);
         }
 
         internal bool Deactivate()
@@ -2625,7 +2637,7 @@ namespace Microsoft.Data.SqlClient
                     ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
                 }
                 else if (msecsRemaining == 0)
-                { 
+                {
                     // Got IO Pending, but we have no time left to wait
                     // disable the timer and set the error state by calling OnTimeoutSync
                     ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
