@@ -117,6 +117,8 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2012 = false;
 
+        private bool _is2022 = false;
+
         private byte[][] _sniSpnBuffer = null;
 
         // SqlStatistics
@@ -3639,10 +3641,17 @@ namespace Microsoft.Data.SqlClient
                     }
                     _is2012 = true;
                     break;
+                case (uint)TdsEnums.SQL2022_MAJOR << 24 | TdsEnums.SQL2022_MINOR:
+                    if (increment != TdsEnums.SQL2022_INCREMENT)
+                    {
+                        throw SQL.InvalidTDSVersion();
+                    }
+                    _is2022 = true;
+                    break;
                 default:
                     throw SQL.InvalidTDSVersion();
             }
-
+            _is2012 |= _is2022;
             _is2008 |= _is2012;
             _is2005 |= _is2008;
 
@@ -8112,7 +8121,7 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(length, _physicalStateObj);
                 if (recoverySessionData == null)
                 {
-                    WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
+                    WriteInt((TdsEnums.SQL2022_MAJOR << 24) | (TdsEnums.SQL2022_INCREMENT << 16) | TdsEnums.SQL2022_MINOR, _physicalStateObj);
                 }
                 else
                 {
