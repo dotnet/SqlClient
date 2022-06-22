@@ -349,7 +349,7 @@ namespace Microsoft.Data.SqlTypes
         internal static SqlGuid SqlGuidCtor(byte[] value, bool ignored)
         {
             SqlGuid val;
-            if (s_sqlBinaryfactory is not null)
+            if (s_sqlGuidfactory is not null)
             {
                 val = s_sqlGuidfactory(value);
             }
