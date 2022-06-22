@@ -461,7 +461,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return (_is2022 && SqlClientEventSource.Log.IsEnabled());
+                return (_is2012 && SqlClientEventSource.Log.IsEnabled());
             }
         }
 
