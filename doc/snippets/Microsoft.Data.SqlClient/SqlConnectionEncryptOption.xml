@@ -2,10 +2,14 @@
 <docs>
   <members name="SqlConnectionEncryptOption">
     <SqlConnectionEncryptOption>
-      <summary>
-        These options are used to control encryption behavior of the communication between the server and the client.
-      </summary>
-      <remarks>Implicit conversions have been added to maintain backwards compatibility with boolean behahavior for the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property. When converting from a boolean, a value of <see langword="true" /> converts to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> and a value of <see langword="false" /> converts to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional" />. When converting to a boolean, <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> convert to <see langword="true" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional" /> converts <see langword="false" />.
+      <summary>These options are used to control encryption behavior of the communication between the server and the client.</summary>
+      <remarks>
+      <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+Implicit conversions have been added to maintain backwards compatibility with boolean behahavior for the <xref=Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt%2A> property. When converting from a boolean, a value of `true` converts to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> and a value of `false` converts to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional%2A>. When converting to a boolean, <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> and <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> convert to `true` and <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional%2A> converts `false`.
+
+ ]]></format>
       </remarks>
     </SqlConnectionEncryptOption>
     <Optional>
