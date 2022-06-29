@@ -8799,7 +8799,8 @@ namespace Microsoft.Data.SqlClient
                                TdsEnums.FeatureExtension requestedFeatures,
                                SessionData recoverySessionData,
                                FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
-                               SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo)
+                               SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo, 
+                               SqlConnectionEncryptOption encrypt)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
 
@@ -8997,7 +8998,14 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(length, _physicalStateObj);
                 if (recoverySessionData == null)
                 {
-                    WriteInt((TdsEnums.SQL2022_MAJOR << 24) | (TdsEnums.SQL2022_INCREMENT << 16) | TdsEnums.SQL2022_MINOR, _physicalStateObj);
+                    if (encrypt == SqlConnectionEncryptOption.Strict)
+                    {
+                        WriteInt((TdsEnums.SQL2022_MAJOR << 24) | (TdsEnums.SQL2022_INCREMENT << 16) | TdsEnums.SQL2022_MINOR, _physicalStateObj);
+                    }
+                    else
+                    {
+                        WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
+                    }
                 }
                 else
                 {

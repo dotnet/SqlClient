@@ -440,7 +440,7 @@ namespace Microsoft.Data.SqlClient
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer,
-                false, true, fParallel, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject, serverInfo.ServerSPN ,
+                false, true, fParallel, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject, serverInfo.ServerSPN,
                 integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated, encrypt == SqlConnectionEncryptOption.Strict,
                 hostNameInCertificate);
 
@@ -501,7 +501,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
-            SendPreLoginHandshake(instanceName, encrypt,integratedSecurity);
+            SendPreLoginHandshake(instanceName, encrypt, integratedSecurity);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
@@ -7951,7 +7951,7 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
-        internal void TdsLogin(SqlLogin rec, TdsEnums.FeatureExtension requestedFeatures, SessionData recoverySessionData, FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData)
+        internal void TdsLogin(SqlLogin rec, TdsEnums.FeatureExtension requestedFeatures, SessionData recoverySessionData, FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData, SqlConnectionEncryptOption encrypt)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
 
@@ -8121,7 +8121,14 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(length, _physicalStateObj);
                 if (recoverySessionData == null)
                 {
-                    WriteInt((TdsEnums.SQL2022_MAJOR << 24) | (TdsEnums.SQL2022_INCREMENT << 16) | TdsEnums.SQL2022_MINOR, _physicalStateObj);
+                    if (encrypt == SqlConnectionEncryptOption.Strict)
+                    {
+                        WriteInt((TdsEnums.SQL2022_MAJOR << 24) | (TdsEnums.SQL2022_INCREMENT << 16) | TdsEnums.SQL2022_MINOR, _physicalStateObj);
+                    }
+                    else
+                    {
+                        WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
+                    }
                 }
                 else
                 {
