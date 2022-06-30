@@ -6,10 +6,7 @@ using System;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using System.Xml;
 using Microsoft.Data.SqlClient;
 
