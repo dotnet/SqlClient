@@ -108,6 +108,7 @@ namespace Microsoft.Data.SqlClient.SNI
         internal const int ConnTimeoutError = 11;
         internal const int ConnNotUsableError = 19;
         internal const int InvalidConnStringError = 25;
+        internal const int ErrorLocatingServerInstance = 26;
         internal const int HandshakeFailureError = 31;
         internal const int InternalExceptionError = 35;
         internal const int ConnOpenFailedError = 40;

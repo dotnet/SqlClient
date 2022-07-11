@@ -15,9 +15,11 @@ using System.Net.Sockets;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Identity.Client;
 using Microsoft.Data.SqlClient.TestUtilities;
+using Microsoft.Identity.Client;
 using Xunit;
+using System.Net.NetworkInformation;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -296,6 +298,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
         }
 
+        public static bool IsTCPConnStringSetup()
+        {
+            return !string.IsNullOrEmpty(TCPConnectionString);
+        }
+
         // Synapse: Always Encrypted is not supported with Azure Synapse.
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool AreConnStringSetupForAE()
@@ -430,6 +437,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void DropTable(SqlConnection sqlConnection, string tableName)
         {
+            ResurrectConnection(sqlConnection);
             using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), sqlConnection))
             {
                 cmd.ExecuteNonQuery();
@@ -438,6 +446,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void DropUserDefinedType(SqlConnection sqlConnection, string typeName)
         {
+            ResurrectConnection(sqlConnection);
             using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
             {
                 cmd.ExecuteNonQuery();
@@ -446,9 +455,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void DropStoredProcedure(SqlConnection sqlConnection, string spName)
         {
+            ResurrectConnection(sqlConnection);
             using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP PROCEDURE {0}", spName), sqlConnection))
             {
                 cmd.ExecuteNonQuery();
+            }
+        }
+
+        private static void ResurrectConnection(SqlConnection sqlConnection, int counter = 2)
+        {
+            if (sqlConnection.State == ConnectionState.Closed)
+            {
+                sqlConnection.Open();
+            }
+            while (counter-- > 0 && sqlConnection.State == ConnectionState.Connecting)
+            {
+                Thread.Sleep(80);
             }
         }
 
@@ -459,6 +481,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <param name="dbName">Database name without brackets.</param>
         public static void DropDatabase(SqlConnection sqlConnection, string dbName)
         {
+            ResurrectConnection(sqlConnection);
             using SqlCommand cmd = new(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection);
             cmd.ExecuteNonQuery();
         }
@@ -828,6 +851,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return res;
         }
 
+        public static bool ParseDataSource(string dataSource, out string hostname, out int port, out string instanceName)
+        {
+            hostname = string.Empty;
+            port = -1;
+            instanceName = string.Empty;
+
+            if (dataSource.Contains(",") && dataSource.Contains("\\"))
+                return false;
+
+            if (dataSource.Contains(":"))
+            {
+                dataSource = dataSource.Substring(dataSource.IndexOf(":") + 1);
+            }
+
+            if (dataSource.Contains(","))
+            {
+                if (!Int32.TryParse(dataSource.Substring(dataSource.LastIndexOf(",") + 1), out port))
+                {
+                    return false;
+                }
+                dataSource = dataSource.Substring(0, dataSource.IndexOf(",") - 1);
+            }
+
+            if (dataSource.Contains("\\"))
+            {
+                instanceName = dataSource.Substring(dataSource.LastIndexOf("\\") + 1);
+                dataSource = dataSource.Substring(0, dataSource.LastIndexOf("\\"));
+            }
+
+            hostname = dataSource;
+
+            return hostname.Length > 0 && hostname.IndexOfAny(new char[] { '\\', ':', ',' }) == -1;
+        }
+
         public class AKVEventListener : BaseEventListener
         {
             public override string Name => AKVEventSourceName;
@@ -866,6 +923,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     EventData.Add(eventData);
                 }
             }
+        }
+
+        /// <summary>
+        /// Resolves the machine's fully qualified domain name if it is applicable.
+        /// </summary>
+        /// <returns>Returns FQDN if the client was domain joined otherwise the machine name.</returns>
+        public static string GetMachineFQDN()
+        {
+            IPGlobalProperties machineInfo = IPGlobalProperties.GetIPGlobalProperties();
+            StringBuilder fqdn = new();
+            fqdn.Append(machineInfo.HostName);
+            if (!string.IsNullOrEmpty(machineInfo.DomainName))
+            {
+                fqdn.Append(".");
+                fqdn.Append(machineInfo.DomainName);
+            }
+            return fqdn.ToString();
         }
     }
 }

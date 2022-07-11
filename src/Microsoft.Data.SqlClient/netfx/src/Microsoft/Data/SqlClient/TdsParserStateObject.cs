@@ -88,7 +88,6 @@ namespace Microsoft.Data.SqlClient
         internal int _inBytesUsed = 0;                   // number of bytes used in internal read buffer
         internal int _inBytesRead = 0;                   // number of bytes read into internal read buffer
         internal int _inBytesPacket = 0;                   // number of bytes left in packet
-        
         internal int _spid;                                 // SPID of the current connection
 
         // Packet state variables
@@ -322,9 +321,8 @@ namespace Microsoft.Data.SqlClient
             SetPacketSize(_parser._physicalStateObj._outBuff.Length);
 
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
-            
             SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, physicalConnection, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
             if (_sessionHandle.Status != TdsEnums.SNI_SUCCESS)
@@ -846,8 +844,21 @@ namespace Microsoft.Data.SqlClient
             return myInfo;
         }
 
-        internal void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, byte[] spnBuffer, bool flushCache, 
-                bool async, bool fParallel, TransparentNetworkResolutionState transparentNetworkResolutionState, int totalTimeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN)
+        internal void CreatePhysicalSNIHandle(
+            string serverName,
+            bool ignoreSniOpenTimeout,
+            long timerExpire,
+            out byte[] instanceName,
+            byte[] spnBuffer,
+            bool flushCache,
+            bool async,
+            bool fParallel,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+            SqlConnectionIPAddressPreference ipPreference,
+            string cachedFQDN,
+            bool tlsFirst = false,
+            string hostNameInCertificate = "")
         {
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
 
@@ -872,11 +883,12 @@ namespace Microsoft.Data.SqlClient
 
             // serverName : serverInfo.ExtendedServerName
             // may not use this serverName as key
-            SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), 
-                    out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout, ipPreference, cachedDNSInfo);
+            _ = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
+
+            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout),
+                out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
+                ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate);
         }
 
         internal bool Deactivate()
@@ -1391,7 +1403,7 @@ namespace Microsoft.Data.SqlClient
         // bytes from the in buffer.
         public bool TryReadByteArray(Span<byte> buff, int len)
         {
-            return TryReadByteArray(buff, len, out int _);
+            return TryReadByteArray(buff, len, out _);
         }
 
         // NOTE: This method must be retriable WITHOUT replaying a snapshot
@@ -2018,7 +2030,9 @@ namespace Microsoft.Data.SqlClient
             bool result = TryReadByteArray(buff.AsSpan(start: offset), bytesToRead, out value);
             _longlenleft -= (ulong)bytesToRead;
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return value;
         }
 
@@ -2139,7 +2153,7 @@ namespace Microsoft.Data.SqlClient
             while (num > 0)
             {
                 cbSkip = (int)Math.Min((long)Int32.MaxValue, num);
-                if (!TryReadByteArray(null, cbSkip))
+                if (!TryReadByteArray(Span<byte>.Empty, cbSkip))
                 {
                     return false;
                 }
@@ -2153,7 +2167,7 @@ namespace Microsoft.Data.SqlClient
         internal bool TrySkipBytes(int num)
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
-            return TryReadByteArray(null, num);
+            return TryReadByteArray(Span<byte>.Empty, num);
         }
 
         /////////////////////////////////////////
@@ -2623,7 +2637,7 @@ namespace Microsoft.Data.SqlClient
                     ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
                 }
                 else if (msecsRemaining == 0)
-                { 
+                {
                     // Got IO Pending, but we have no time left to wait
                     // disable the timer and set the error state by calling OnTimeoutSync
                     ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);

@@ -106,6 +106,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 _con.Open();
 
                 _cachedServer = _con.DataSource;
+                bool? dbId = null;
 
 #if NETFRAMEWORK
                 if (hashHelper.Identity != null)
@@ -125,7 +126,16 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     CommandText = "select is_broker_enabled from sys.databases where database_id=db_id()"
                 };
 
-                if (!(bool)_com.ExecuteScalar())
+                // db_id() returns the database ID of the current database hence it will always be one line result
+                using (SqlDataReader reader = _com.ExecuteReader(CommandBehavior.SingleRow))
+                {
+                    if (reader.Read() && reader[0] is not null)
+                    {
+                        dbId = reader.GetBoolean(0);
+                    }
+                }
+
+                if (dbId is null || !dbId.Value)
                 {
                     throw SQL.SqlDependencyDatabaseBrokerDisabled();
                 }

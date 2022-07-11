@@ -21,7 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -412,9 +412,15 @@ namespace Microsoft.Data.SqlClient
             if (connString != null)
             {
                 _connectRetryCount = connString.ConnectRetryCount;
+                // For Azure Synapse ondemand connections, set _connectRetryCount to 5 instead of 1 to greatly improve recovery
+                //  success rate. Note: Synapse should be detected first as it could be detected as a regular Azure SQL DB endpoint.
+                if (_connectRetryCount == 1 && ADP.IsAzureSynapseOnDemandEndpoint(connString.DataSource))
+                {
+                    _connectRetryCount = 5;
+                }
                 // For Azure SQL connection, set _connectRetryCount to 2 instead of 1 will greatly improve recovery
-                //   success rate
-                if (_connectRetryCount == 1 && ADP.IsAzureSqlServerEndpoint(connString.DataSource))
+                //  success rate
+                else if (_connectRetryCount == 1 && ADP.IsAzureSqlServerEndpoint(connString.DataSource))
                 {
                     _connectRetryCount = 2;
                 }
@@ -2341,7 +2347,7 @@ namespace Microsoft.Data.SqlClient
 
                 MemoryStream stm = new MemoryStream((byte[])value);
 
-                o = SerializationHelperSql9.Deserialize(stm, metaData.udt?.Type);
+                o = Server.SerializationHelperSql9.Deserialize(stm, metaData.udt?.Type);
 
                 Debug.Assert(o != null, "object could NOT be created");
                 return o;
@@ -2369,7 +2375,7 @@ namespace Microsoft.Data.SqlClient
 
             using (MemoryStream stm = new MemoryStream(maxSize < 0 ? 0 : maxSize))
             {
-                SerializationHelperSql9.Serialize(stm, o);
+                Server.SerializationHelperSql9.Serialize(stm, o);
                 retval = stm.ToArray();
             }
             return retval;

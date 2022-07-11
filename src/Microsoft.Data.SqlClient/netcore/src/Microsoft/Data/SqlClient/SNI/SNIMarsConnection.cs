@@ -112,16 +112,15 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Send a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
-        /// <param name="callback">Completion callback</param>
         /// <returns>SNI error code</returns>
-        public uint SendAsync(SNIPacket packet, SNIAsyncCallback callback)
+        public uint SendAsync(SNIPacket packet)
         {
             long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 lock (this)
                 {
-                    return _lowerHandle.SendAsync(packet, callback);
+                    return _lowerHandle.SendAsync(packet);
                 }
             }
             finally
@@ -192,7 +191,7 @@ namespace Microsoft.Data.SqlClient.SNI
             Debug.Assert(Monitor.IsEntered(this), "HandleReceiveError was called without being locked.");
             foreach (SNIMarsHandle handle in _sessions.Values)
             {
-                if (packet.HasCompletionCallback)
+                if (packet.HasAsyncIOCompletionCallback)
                 {
                     handle.HandleReceiveError(packet);
 #if DEBUG
@@ -215,7 +214,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sniErrorCode">SNI error code</param>
         public void HandleSendComplete(SNIPacket packet, uint sniErrorCode)
         {
-            packet.InvokeCompletionCallback(sniErrorCode);
+            packet.InvokeAsyncIOCompletionCallback(sniErrorCode);
         }
 
         /// <summary>

@@ -10,6 +10,7 @@ using System.Security.Authentication;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using System.Net;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -64,7 +65,7 @@ namespace Microsoft.Data.SqlClient
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
 
             SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, nativeSNIObject.Handle, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
         }
@@ -137,15 +138,40 @@ namespace Microsoft.Data.SqlClient
             return myInfo;
         }
 
-        internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel,
-                         SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
+        internal override void CreatePhysicalSNIHandle(
+            string serverName,
+            bool ignoreSniOpenTimeout,
+            long timerExpire,
+            out byte[] instanceName,
+            ref byte[][] spnBuffer,
+            bool flushCache,
+            bool async,
+            bool fParallel,
+            SqlConnectionIPAddressPreference ipPreference,
+            string cachedFQDN,
+            ref SQLDNSInfo pendingDNSInfo,
+            string serverSPN,
+            bool isIntegratedSecurity,
+            bool tlsFirst,
+            string hostNameInCertificate)
         {
             // We assume that the loadSSPILibrary has been called already. now allocate proper length of buffer
             spnBuffer = new byte[1][];
             if (isIntegratedSecurity)
             {
                 // now allocate proper length of buffer
-                spnBuffer[0] = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
+                if (!string.IsNullOrEmpty(serverSPN))
+                {
+                    // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
+                    byte[] srvSPN = Encoding.Unicode.GetBytes(serverSPN);
+                    Trace.Assert(srvSPN.Length <= SNINativeMethodWrapper.SniMaxComposedSpnLength, "Length of the provided SPN exceeded the buffer size.");
+                    spnBuffer[0] = srvSPN;
+                    SqlClientEventSource.Log.TryTraceEvent("<{0}.{1}|SEC> Server SPN `{2}` from the connection string is used.",nameof(TdsParserStateObjectNative), nameof(CreatePhysicalSNIHandle), serverSPN);
+                }
+                else
+                {
+                    spnBuffer[0] = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
+                }
             }
 
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
@@ -172,7 +198,8 @@ namespace Microsoft.Data.SqlClient
             SQLDNSInfo cachedDNSInfo;
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer[0], ignoreSniOpenTimeout, checked((int)timeout), out instanceName, flushCache, !async, fParallel, ipPreference, cachedDNSInfo);
+            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer[0], ignoreSniOpenTimeout, checked((int)timeout), out instanceName,
+                flushCache, !async, fParallel, ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate);
         }
 
         protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
@@ -376,10 +403,14 @@ namespace Microsoft.Data.SqlClient
         internal override uint EnableMars(ref uint info)
             => SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SMUX_PROV, ref info);
 
-        internal override uint EnableSsl(ref uint info)
+        internal override uint EnableSsl(ref uint info, bool tlsFirst)
         {
+            SNINativeMethodWrapper.AuthProviderInfo authInfo = new SNINativeMethodWrapper.AuthProviderInfo();
+            authInfo.flags = info;
+            authInfo.tlsFirst = tlsFirst;
+
             // Add SSL (Encryption) SNI provider.
-            return SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, ref info);
+            return SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, ref authInfo);
         }
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)

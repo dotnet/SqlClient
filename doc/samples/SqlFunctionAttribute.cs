@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Collections;
 //<Snippet1>
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 
 public class Class1
 {

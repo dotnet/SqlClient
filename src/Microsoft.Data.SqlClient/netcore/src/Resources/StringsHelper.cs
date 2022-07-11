@@ -76,6 +76,7 @@ namespace Microsoft.Data
         {
             internal const string DataCategory_Data = @"Data";
             internal const string DataCategory_Update = @"Update";
+            internal const string DataCategory_Xml = @"XML";
             internal const string DbCommand_CommandTimeout = @"Time to wait for command to execute.";
             internal const string DbConnection_State = @"The ConnectionState indicating whether the connection is open or closed.";
             internal const string DataCategory_Fill = @"Fill";
@@ -103,8 +104,9 @@ namespace Microsoft.Data
             internal const string DbConnectionString_DataSource = @"Indicates the name of the data source to connect to.";
             internal const string DbConnectionString_Encrypt = @"When true, SQL Server uses SSL encryption for all data sent between the client and server if the server has a certificate installed.";
             internal const string DbConnectionString_Enlist = @"Sessions in a Component Services (or MTS, if you are using Microsoft Windows NT) environment should automatically be enlisted in a global transaction where required.";
-            internal const string DbConnectionString_InitialCatalog = @"The name of the initial catalog or database in the data source.";
             internal const string DbConnectionString_FailoverPartner = @"The name or network address of the instance of SQL Server that acts as a failover partner.";
+            internal const string DbConnectionString_FailoverPartnerSPN = @"The service principal name (SPN) of the failover partner.";
+            internal const string DbConnectionString_InitialCatalog = @"The name of the initial catalog or database in the data source.";
             internal const string DbConnectionString_IntegratedSecurity = @"Whether the connection is to be a secure connection or not.";
             internal const string DbConnectionString_LoadBalanceTimeout = @"The minimum amount of time (in seconds) for this connection to live in the pool before being destroyed.";
             internal const string DbConnectionString_MaxPoolSize = @"The maximum number of connections allowed in the pool.";
@@ -116,6 +118,7 @@ namespace Microsoft.Data
             internal const string DbConnectionString_PersistSecurityInfo = @"When false, security-sensitive information, such as the password, is not returned as part of the connection if the connection is open or has ever been in an open state.";
             internal const string DbConnectionString_Pooling = @"When true, the connection object is drawn from the appropriate pool, or if necessary, is created and added to the appropriate pool.";
             internal const string DbConnectionString_Replication = @"Used by SQL Server in Replication.";
+            internal const string DbConnectionString_ServerSPN = @"The service principal name (SPN) of the server.";
             internal const string DbConnectionString_TransactionBinding = @"Indicates binding behavior of connection to a System.Transactions Transaction when enlisted.";
             internal const string DbConnectionString_TrustServerCertificate = @"When true (and encrypt=true), SQL Server uses SSL encryption for all data sent between the client and server without validating the server certificate.";
             internal const string DbConnectionString_TypeSystemVersion = @"Indicates which server type system the provider will expose through the DataReader.";
