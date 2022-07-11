@@ -510,6 +510,10 @@ namespace Microsoft.Data.SqlClient
             return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_DeviceFlow_Authentication);
         }
 
+        internal static Exception ActiveDirectoryTokenRetrievingTimeout(string authenticaton, string errorCode, Exception exception)
+        {
+            return ADP.TimeoutException(StringsHelper.GetString(Strings.AAD_Token_Retrieving_Timeout, authenticaton, errorCode, exception?.Message), exception);
+        }
 
         //
         // SQL.DataCommand

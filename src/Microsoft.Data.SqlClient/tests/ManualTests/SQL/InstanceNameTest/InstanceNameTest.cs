@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.MultiSubnetFailover = useMultiSubnetFailover;
             builder.IPAddressPreference = ipPreference;
 
-            Assert.True(ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName), "Invalid data source.");
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
 
             if (IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName))
             {
@@ -67,40 +67,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
                 Assert.Contains("Error Locating Server/Instance Specified", ex.Message);
             }
-        }
-
-        private static bool ParseDataSource(string dataSource, out string hostname, out int port, out string instanceName)
-        {
-            hostname = string.Empty;
-            port = -1;
-            instanceName = string.Empty;
-
-            if (dataSource.Contains(",") && dataSource.Contains("\\"))
-                return false;
-
-            if (dataSource.Contains(":"))
-            {
-                dataSource = dataSource.Substring(dataSource.IndexOf(":") + 1);
-            }
-
-            if (dataSource.Contains(","))
-            {
-                if (!int.TryParse(dataSource.Substring(dataSource.LastIndexOf(",") + 1), out port))
-                {
-                    return false;
-                }
-                dataSource = dataSource.Substring(0, dataSource.IndexOf(",") - 1);
-            }
-
-            if (dataSource.Contains("\\"))
-            {
-                instanceName = dataSource.Substring(dataSource.LastIndexOf("\\") + 1);
-                dataSource = dataSource.Substring(0, dataSource.LastIndexOf("\\"));
-            }
-
-            hostname = dataSource;
-
-            return hostname.Length > 0 && hostname.IndexOfAny(new char[] { '\\', ':', ',' }) == -1;
         }
 
         private static bool IsBrowserAlive(string browserHostname)

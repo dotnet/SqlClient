@@ -708,7 +708,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains("OptimizedParameterBinding", exception.Message);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         private static void EnableOptimizedParameterBinding_ReturnSucceeds()
         {
             int firstInput = 12;
