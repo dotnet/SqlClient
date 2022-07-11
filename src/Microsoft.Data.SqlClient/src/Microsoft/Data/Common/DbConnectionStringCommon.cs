@@ -991,6 +991,8 @@ namespace Microsoft.Data.Common
         internal const SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
         internal const SqlConnectionIPAddressPreference IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
         internal const PoolBlockingPeriod PoolBlockingPeriod = SqlClient.PoolBlockingPeriod.Auto;
+        internal const string ServerSPN = "";
+        internal const string FailoverPartnerSPN = "";
     }
 
     internal static class DbConnectionStringKeywords
@@ -1045,6 +1047,8 @@ namespace Microsoft.Data.Common
         internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
         internal const string AttestationProtocol = "Attestation Protocol";
         internal const string IPAddressPreference = "IP Address Preference";
+        internal const string ServerSPN = "Server SPN";
+        internal const string FailoverPartnerSPN = "Failover Partner SPN";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";
@@ -1141,5 +1145,9 @@ namespace Microsoft.Data.Common
 
         //internal const string WorkstationID          = WSID;
         internal const string WSID = "wsid";
+
+        //internal const string server SPNs
+        internal const string ServerSPN = "ServerSPN";
+        internal const string FailoverPartnerSPN = "FailoverPartnerSPN";
     }
 }

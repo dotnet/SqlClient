@@ -87,6 +87,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("WSID = myworkstation")]
         [InlineData("Host Name In Certificate = tds.test.com")]
         [InlineData("HostNameInCertificate = tds.test.com")]
+        [InlineData("Server SPN = server1")]
+        [InlineData("ServerSPN = server2")]
+        [InlineData("Failover Partner SPN = server3")]
+        [InlineData("FailoverPartnerSPN = server4")]
         public void ConnectionStringTests(string connectionString)
         {
             ExecuteConnectionStringTests(connectionString);

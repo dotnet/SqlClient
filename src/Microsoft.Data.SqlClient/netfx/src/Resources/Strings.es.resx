@@ -4621,9 +4621,9 @@
     <value>Se agotó el tiempo de espera de la conexión al recuperar un token de acceso mediante el método de autenticación "{0}". Último error: {1}: {2}</value>
   </data>
   <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the failover partner.</value>
+    <value>Nombre de entidad de seguridad de servicio (SPN) del asociado de conmutación por error.</value>
   </data>
   <data name="DbConnectionString_ServerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the server.</value>
+    <value>Nombre de entidad de seguridad de servicio (SPN) del servidor.</value>
   </data>
 </root>

@@ -60,6 +60,8 @@ namespace Microsoft.Data.SqlClient
             internal static readonly SqlAuthenticationMethod Authentication = DbConnectionStringDefaults.Authentication;
             internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
             internal static readonly SqlConnectionIPAddressPreference IpAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
+            internal const string ServerSPN = DbConnectionStringDefaults.ServerSPN;
+            internal const string FailoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSPN;
 #if NETFRAMEWORK
             internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
             internal const bool Connection_Reset = DbConnectionStringDefaults.ConnectionReset;
@@ -115,6 +117,8 @@ namespace Microsoft.Data.SqlClient
             internal const string Connect_Retry_Count = DbConnectionStringKeywords.ConnectRetryCount;
             internal const string Connect_Retry_Interval = DbConnectionStringKeywords.ConnectRetryInterval;
             internal const string Authentication = DbConnectionStringKeywords.Authentication;
+            internal const string Server_SPN = DbConnectionStringKeywords.ServerSPN;
+            internal const string Failover_Partner_SPN = DbConnectionStringKeywords.FailoverPartnerSPN;
 #if NETFRAMEWORK
             internal const string TransparentNetworkIPResolution = DbConnectionStringKeywords.TransparentNetworkIPResolution;
 #if ADONET_CERT_AUTH
@@ -177,6 +181,9 @@ namespace Microsoft.Data.SqlClient
             internal const string User = DbConnectionStringSynonyms.User;
             // workstation id
             internal const string WSID = DbConnectionStringSynonyms.WSID;
+            // server SPNs
+            internal const string ServerSPN = DbConnectionStringSynonyms.ServerSPN;
+            internal const string FailoverPartnerSPN = DbConnectionStringSynonyms.FailoverPartnerSPN;
 
 #if NETFRAMEWORK
             internal const string TRANSPARENTNETWORKIPRESOLUTION = DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION;
@@ -216,9 +223,9 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
-        internal const int SynonymCount = 30;
+        internal const int SynonymCount = 32;
 #else
-        internal const int SynonymCount = 27;
+        internal const int SynonymCount = 29;
         internal const int DeprecatedSynonymCount = 2;
 #endif // NETFRAMEWORK
 
@@ -262,6 +269,8 @@ namespace Microsoft.Data.SqlClient
         private readonly string _password;
         private readonly string _userID;
         private readonly string _hostNameInCertificate;
+        private readonly string _serverSPN;
+        private readonly string _failoverPartnerSPN;
 
         private readonly string _workstationId;
 
@@ -328,6 +337,8 @@ namespace Microsoft.Data.SqlClient
             _attestationProtocol = ConvertValueToAttestationProtocol();
             _ipAddressPreference = ConvertValueToIPAddressPreference();
             _hostNameInCertificate = ConvertValueToString(KEY.HostNameInCertificate, DEFAULT.HostNameInCertificate);
+            _serverSPN = ConvertValueToString(KEY.Server_SPN, DEFAULT.ServerSPN);
+            _failoverPartnerSPN = ConvertValueToString(KEY.Failover_Partner_SPN, DEFAULT.FailoverPartnerSPN);
 
             // Temporary string - this value is stored internally as an enum.
             string typeSystemVersionString = ConvertValueToString(KEY.Type_System_Version, null);
@@ -681,6 +692,8 @@ namespace Microsoft.Data.SqlClient
             _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
             _attestationProtocol = connectionOptions._attestationProtocol;
+            _serverSPN = connectionOptions._serverSPN;
+            _failoverPartnerSPN = connectionOptions._failoverPartnerSPN;
 #if NETFRAMEWORK
             _connectionReset = connectionOptions._connectionReset;
             _contextConnection = connectionOptions._contextConnection;
@@ -739,7 +752,8 @@ namespace Microsoft.Data.SqlClient
         internal string UserID => _userID;
         internal string WorkstationId => _workstationId;
         internal PoolBlockingPeriod PoolBlockingPeriod => _poolBlockingPeriod;
-
+        internal string ServerSPN => _serverSPN;
+        internal string FailoverPartnerSPN => _failoverPartnerSPN;
 
         internal TypeSystem TypeSystemVersion => _typeSystemVersion;
         internal Version TypeSystemAssemblyVersion => _typeSystemAssemblyVersion;
@@ -851,6 +865,8 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval },
                     { KEY.Authentication, KEY.Authentication },
                     { KEY.IPAddressPreference, KEY.IPAddressPreference },
+                    { KEY.Server_SPN, KEY.Server_SPN },
+                    { KEY.Failover_Partner_SPN, KEY.Failover_Partner_SPN },
 
                     { SYNONYM.APP, KEY.Application_Name },
                     { SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent },
@@ -880,6 +896,8 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.UID, KEY.User_ID },
                     { SYNONYM.User, KEY.User_ID },
                     { SYNONYM.WSID, KEY.Workstation_Id },
+                    { SYNONYM.ServerSPN, KEY.Server_SPN },
+                    { SYNONYM.FailoverPartnerSPN, KEY.Failover_Partner_SPN },
 #if NETFRAMEWORK
 #if ADONET_CERT_AUTH
                     { KEY.Certificate, KEY.Certificate },

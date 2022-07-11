@@ -87,13 +87,15 @@ namespace Microsoft.Data.SqlClient.SNI
             SqlConnectionIPAddressPreference iPAddressPreference,
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
+            string serverSPN,
             bool isIntegratedSecurity,
             bool tlsFirst,
             string hostNameInCertificate)
         {
-            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer,
+            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, serverSPN,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                 hostNameInCertificate);
+
             if (sessionHandle is not null)
             {
                 _sessionHandle = sessionHandle;

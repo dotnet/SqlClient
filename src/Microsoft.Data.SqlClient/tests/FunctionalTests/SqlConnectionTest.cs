@@ -1040,6 +1040,16 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(ex.ParamName);
         }
 
+        [Theory]
+        [InlineData("Server SPN = server1")]
+        [InlineData("ServerSPN = server2")]
+        [InlineData("Failover Partner SPN = server3")]
+        [InlineData("FailoverPartnerSPN = server4")]
+        public void ConnectionString_ServerSPN_FailoverPartnerSPN(string value)
+        {
+            SqlConnection _ = new(value);
+        }
+
         [Fact]
         public void ConnectionRetryForNonAzureEndpoints()
         {
