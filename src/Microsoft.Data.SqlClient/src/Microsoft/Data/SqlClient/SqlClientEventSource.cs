@@ -984,9 +984,9 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNIScopeEnabled())
             {
-                StringBuilder sb = new StringBuilder(className);
-                sb.Append(".").Append(memberName).Append(" | SNI | INFO | SCOPE | Entering Scope {0}");
-                return SNIScopeEnter(sb.ToString());
+                long scopeId = Interlocked.Increment(ref s_nextSNIScopeId);
+                WriteEvent(SNIScopeEnterId, $"{className}.{memberName}  | SNI | INFO | SCOPE | Entering Scope {scopeId}");
+                return scopeId;
             }
             return 0;
         }
@@ -1017,7 +1017,6 @@ namespace Microsoft.Data.SqlClient
         [Event(EndExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
         internal void EndExecute(int objectId, int compositestate, int sqlExceptionNumber, string message)
         {
-
             WriteEvent(EndExecuteEventId, objectId, compositestate, sqlExceptionNumber, message);
         }
 
@@ -1130,10 +1129,17 @@ namespace Microsoft.Data.SqlClient
         private readonly long _scopeId;
 
         public TrySNIEventScope(long scopeID) => _scopeId = scopeID;
-        public void Dispose() =>
-            SqlClientEventSource.Log.SNIScopeLeave(string.Format("Exit SNI Scope {0}", _scopeId));
+        public void Dispose()
+        {
+            if (_scopeId == 0)
+            {
+                return;
+            }
+            SqlClientEventSource.Log.TrySNIScopeLeaveEvent(_scopeId);
+        }
 
-        public static TrySNIEventScope Create(string message) => new TrySNIEventScope(SqlClientEventSource.Log.SNIScopeEnter(message));
+        public static TrySNIEventScope Create(string className, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+            => new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(className, memberName));
     }
 
     internal readonly ref struct TryEventScope //: IDisposable

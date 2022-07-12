@@ -15,10 +15,7 @@ using System.Globalization;
 using System.IO;
 using System.Xml;
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient.Server;
-#if NETFRAMEWORK
 using Microsoft.SqlServer.Server;
-#endif
 
 namespace Microsoft.Data.SqlClient
 {

@@ -19,7 +19,7 @@ namespace System {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Strings {
@@ -57,6 +57,15 @@ namespace System {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Connection timed out while retrieving an access token using &apos;{0}&apos; authentication method. Last error: {1}: {2}.
+        /// </summary>
+        internal static string AAD_Token_Retrieving_Timeout {
+            get {
+                return ResourceManager.GetString("AAD_Token_Retrieving_Timeout", resourceCulture);
             }
         }
         
@@ -941,7 +950,7 @@ namespace System {
                 return ResourceManager.GetString("Data_InvalidOffsetLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services..
         /// </summary>
@@ -1902,6 +1911,15 @@ namespace System {
         internal static string SNI_ERROR_9 {
             get {
                 return ResourceManager.GetString("SNI_ERROR_9", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Incorrect physicalConnection type.
+        /// </summary>
+        internal static string SNI_IncorrectPhysicalConnectionType {
+            get {
+                return ResourceManager.GetString("SNI_IncorrectPhysicalConnectionType", resourceCulture);
             }
         }
         
@@ -3225,6 +3243,15 @@ namespace System {
         internal static string SQL_StreamWriteNotSupported {
             get {
                 return ResourceManager.GetString("SQL_StreamWriteNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Encrypt=Strict is not supported when targeting .NET Standard 2.0. Use .NET Standard 2.1, .NET Framework, or .NET..
+        /// </summary>
+        internal static string SQL_TDS8_NotSupported_Netstandard2_0 {
+            get {
+                return ResourceManager.GetString("SQL_TDS8_NotSupported_Netstandard2.0", resourceCulture);
             }
         }
         

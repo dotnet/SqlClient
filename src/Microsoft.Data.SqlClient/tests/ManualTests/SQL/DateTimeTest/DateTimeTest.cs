@@ -592,7 +592,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData(true)]
         [InlineData(false)]
         public static void BulkCopyTest(bool useReader)

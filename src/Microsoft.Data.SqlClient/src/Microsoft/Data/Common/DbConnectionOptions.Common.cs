@@ -25,6 +25,7 @@ namespace Microsoft.Data.Common
             internal const string Password = DbConnectionStringKeywords.Password;
             internal const string Persist_Security_Info = DbConnectionStringKeywords.PersistSecurityInfo;
             internal const string User_ID = DbConnectionStringKeywords.UserID;
+            internal const string Encrypt = DbConnectionStringKeywords.Encrypt;
         }
 
         // known connection string common synonyms
@@ -238,7 +239,7 @@ namespace Microsoft.Data.Common
             }
         }
 
-        private static bool CompareInsensitiveInvariant(string strvalue, string strconst) 
+        private static bool CompareInsensitiveInvariant(string strvalue, string strconst)
             => (0 == StringComparer.OrdinalIgnoreCase.Compare(strvalue, strconst));
 
         [System.Diagnostics.Conditional("DEBUG")]
@@ -725,7 +726,7 @@ namespace Microsoft.Data.Common
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
             for (NameValuePair current = _keyChain; null != current; current = current.Next)
             {
-                if(!string.Equals(KEY.Password, current.Name, StringComparison.InvariantCultureIgnoreCase) &&
+                if (!string.Equals(KEY.Password, current.Name, StringComparison.InvariantCultureIgnoreCase) &&
                    !string.Equals(SYNONYM.Pwd, current.Name, StringComparison.InvariantCultureIgnoreCase))
                 {
                     builder.Append(_usersConnectionString, copyPosition, current.Length);
