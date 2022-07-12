@@ -178,9 +178,4 @@ namespace Microsoft.Data.SqlClient
         [System.ObsoleteAttribute("Add(String parameterName, Object value) has been deprecated.  Use AddWithValue(String parameterName, Object value).  http://go.microsoft.com/fwlink/?linkid=14202", false)]
         public Microsoft.Data.SqlClient.SqlParameter Add(string parameterName, object value) { throw null; }
     }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/InvalidUdtException/*'/>
-    public sealed partial class InvalidUdtException : System.SystemException
-    {
-        private InvalidUdtException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
-    }
 }
