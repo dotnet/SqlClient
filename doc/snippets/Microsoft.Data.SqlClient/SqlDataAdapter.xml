@@ -212,7 +212,114 @@
             <returns>To be added.</returns>
             <remarks>To be added.</remarks>
         </ExecuteBatch>
-        <GetBatchedParameter>
+      <Fill1>
+        <param name="dataSet">A <see cref="T:System.Data.DataSet"/> to fill with records and, if necessary, schema.</param>
+        <summary>
+          Adds or refreshes rows in the DataSet to match those in the data source.
+        </summary>
+        <returns>The number of rows successfully added to or refreshed in the DataSet. This does not include rows affected by statements that do not return rows.</returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+
+## Remarks  
+The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.Fill%2A> method retrieves rows from the data source using the SELECT statement specified by an associated <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> property. The connection object associated with the SELECT statement must be valid, but it does not need to be open. If the connection is closed before <xref:Microsoft.Data.SqlClient.SqlDataAdapter.Fill%2A> is called, it is opened to retrieve data, then closed. If the connection is open before <xref:Microsoft.Data.SqlClient.SqlDataAdapter.Fill%2A> is called, it remains open.
+
+The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.Fill%2A> operation then adds the rows to destination <see cref="T:System.Data.DataTable"/> objects in the <see cref="T:System.Data.DataSet"/>, creating the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DataTable%2A> objects if they do not already exist. When creating <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DataTable%2A> objects, the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.Fill%2A> operation normally creates only column name metadata. However, if the <see cref="T:System.Data.MissingSchemaAction"/> property is set to `AddWithKey`, appropriate primary keys and constraints are also created.
+
+If the `SelectCommand` returns the results of an OUTER JOIN, the <xref:Microsoft.Data.SqlClient.SqlDataAdapter%2A> does not set a PrimaryKey value for the resulting <see cref="T:System.Data.DataTable"/>. You must explicitly define the primary key to ensure that duplicate rows are resolved correctly. For more information, see Defining Primary Keys.
+
+If the data adapter encounters duplicate columns while populating a <see cref="T:System.Data.DataTable"/>, it generates names for the subsequent columns, using the pattern "columnname1", "columnname2", "columnname3", and so on. If the incoming data contains unnamed columns, they are placed in the <see cref="T:System.Data.DataSet"/> according to the pattern "Column1", "Column2", and so on. When multiple result sets are added to the DataSet each result set is placed in a separate table. Additional result sets are named by appending integral values to the specified table name (for example, "Table", "Table1", "Table2", and so on). Applications using column and table names should ensure that conflicts with these naming patterns does not occur.
+
+When the SELECT statement used to populate the <see cref="T:System.Data.DataSet"/> returns multiple results, such as a batch SQL statements, if one of the results contains an error, all subsequent results are skipped and not added to the <see cref="T:System.Data.DataSet"/>.
+
+You can use the Fill method multiple times on the same <see cref="T:System.Data.DataTable"/>. If a primary key exists, incoming rows are merged with matching rows that already exist. If no primary key exists, incoming rows are appended to the <see cref="T:System.Data.DataTable"/>.
+
+
+> [!NOTE]
+>  When handling batch SQL statements that return multiple results, the implementation of <xref:System.Data.Common.DbAataAdapter.FillSchema%2A> for the .NET Framework Data Provider for OLE DB retrieves schema information for only the first result. To retrieve schema information for multiple results, use <xref:Microsoft.Data.SqlClient.SqlDataAdapter.Fill%2A> with the <see cref="T:System.Data.MissingSchemaAction"/> set to `AddWithKey`.  
+
+]]>
+          </format>
+        </remarks>
+      </Fill1>
+      <Fill2>
+        <param name="dataSet">A <see cref="T:System.Data.DataSet"/> to fill with records.</param>
+        <param name="srcTable">A string indicating the name of the source table.</param>
+        <summary>
+          Adds or refreshes rows in a specified range in the <see cref="T:System.Data.DataSet"/> to match those in the data source using the <see cref="T:System.Data.DataSet"/> and <see cref="T:System.Data.DataTable"/> names.
+        </summary>
+        <returns>The number of rows successfully added to or refreshed in the <see cref="T:System.Data.DataSet"/>. This does not include rows affected by statements that do not return rows.</returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+
+## Remarks  
+See the remarks for <xref:Microsoft.Data.SqlClient.SqlDataAdapter.Fill%2A> for additional information.
+
+]]>
+          </format>
+        </remarks>
+      </Fill2>
+      <Fill3>
+        <param name="dataSet">A <see cref="T:System.Data.DataSet"/> to fill with records.</param>
+        <param name="startRecord">The zero-based index of the starting record.</param>
+        <param name="maxRecord">An integer indicating the maximum number of records.</param>
+        <param name="srcTable">A string indicating the name of the source table.</param>
+        <summary>
+          Adds or refreshes rows in a specified range in the <see cref="T:System.Data.DataSet"/> to match those in the data source using the <see cref="T:System.Data.DataSet"/> and <see cref="T:System.Data.DataTable"/> names.
+        </summary>
+        <returns>The number of rows successfully added to or refreshed in the <see cref="T:System.Data.DataSet"/>. This does not include rows affected by statements that do not return rows.</returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+
+## Remarks  
+See the remarks for <xref:Microsoft.Data.SqlClient.SqlDataAdapter.Fill%2A> for additional information.
+
+]]>
+          </format>
+        </remarks>
+      </Fill3>
+      <Fill4>
+        <param name="dataTable">
+          The number of rows successfully added to or refreshed in the <see cref="T:System.Data.DataTable"/>. This does not include rows affected by statements that do not return rows.</param>
+        <summary>
+          Adds or refreshes rows in the <see cref="T:System.Data.DataTable"/> to match those in the data source using the DataTable name
+        </summary>
+        <returns>The number of rows successfully added to or refreshed in the <see cref="T:System.Data.DataTable"/>. This does not include rows affected by statements that do not return rows.</returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+
+## Remarks  
+See the remarks for <xref:Microsoft.Data.SqlClient.SqlDataAdapter.Fill%2A> for additional information.
+
+
+]]>
+          </format>
+        </remarks>
+      </Fill4>
+      <Fill5>
+        <param name="startRecord">The zero-based index of the starting record.</param>
+        <param name="maxRecord">An integer indicating the maximum number of records.</param>
+        <param name="dataTables">A collection of <see cref="T:System.Data.DataTable"/> objects to fill with records.</param>
+        <summary>
+          Adds or refreshes rows in a specified range in the collection of <see cref="T:System.Data.DataTable"/> objects to match those in the data source.
+        </summary>
+        <returns>The number of rows successfully added to or refreshed in the <see cref="T:System.Data.DataTable"/>. This does not include rows affected by statements that do not return rows.</returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+
+## Remarks  
+See the remarks for <xref:Microsoft.Data.SqlClient.SqlDataAdapter.Fill%2A> for additional information.
+
+]]>
+          </format>
+        </remarks>
+      </Fill5>
+      <GetBatchedParameter>
             <param name="commandIdentifier">To be added.</param>
             <param name="parameterIndex">To be added.</param>
             <summary>To be added.</summary>

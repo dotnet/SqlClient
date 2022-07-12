@@ -1123,6 +1123,16 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/DeleteCommand/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public new Microsoft.Data.SqlClient.SqlCommand DeleteCommand { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill1/*' />
+        public new int Fill(System.Data.DataSet dataSet) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill2/*' />
+        public new int Fill(System.Data.DataSet dataSet, string srcTable) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill3/*' />
+        public new int Fill(System.Data.DataSet dataSet, int startRecord, int maxRecord, string srcTable) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill4/*' />
+        public new int Fill(System.Data.DataTable dataTable) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill5/*' />
+        public new int Fill(int startRecord, int maxRecord, params System.Data.DataTable[] dataTables) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InsertCommand/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public new Microsoft.Data.SqlClient.SqlCommand InsertCommand { get { throw null; } set { } }
@@ -1133,16 +1143,6 @@ namespace Microsoft.Data.SqlClient
         System.Data.IDbCommand System.Data.IDbDataAdapter.InsertCommand { get { throw null; } set { } }
         System.Data.IDbCommand System.Data.IDbDataAdapter.SelectCommand { get { throw null; } set { } }
         System.Data.IDbCommand System.Data.IDbDataAdapter.UpdateCommand { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
-        new public int Fill(System.Data.DataSet dataSet) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
-        new public int Fill(System.Data.DataSet dataSet, string srcTable) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
-        new public int Fill(System.Data.DataSet dataSet, int startRecord, int maxRecord, string srcTable) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
-        new public int Fill(System.Data.DataTable dataTable) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
-        new public int Fill(int startRecord, int maxRecord, params System.Data.DataTable[] dataTables) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateBatchSize/*'/>
         public override int UpdateBatchSize { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateCommand/*'/>
