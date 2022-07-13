@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient
 
             using (SqlDataReader reader = SelectCommand.ExecuteReader())
             {
-                rows = Fill(dataSet, srcTable, SelectCommand.ExecuteReader(), startRecord, maxRecord);
+                rows = Fill(dataSet, srcTable, reader, startRecord, maxRecord);
             }
 
             return rows;
