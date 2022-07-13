@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalData, outputData);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async Task GetFieldValueAsync_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalData, outputData);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetFieldValue_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
         {
@@ -290,7 +290,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalData, outputData);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
@@ -358,7 +358,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalText, outputText);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehaviourAndAccessorTypes))]
         public static void NullStreamProperties(CommandBehavior behavior, AccessorType accessorType)
         {
@@ -443,7 +443,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehaviourAndAccessorTypes))]
         public static void InvalidCastExceptionStream(CommandBehavior behavior, AccessorType accessorType)
         {
