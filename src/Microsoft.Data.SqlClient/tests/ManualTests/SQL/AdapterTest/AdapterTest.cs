@@ -83,6 +83,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 employeesSet.Tables["Employees"].Columns.Remove("FirstName");
                 employeesSet.Tables["Employees"].Columns.Remove("Title");
                 DataTestUtility.AssertEqualsWithDescription(6, employeesSet.Tables["Employees"].Columns.Count, "Unexpected columns count after column removal.");
+
+                DataSet dataSet = new DataSet();
+                adapter.Fill(dataSet);
+                DataTestUtility.AssertEqualsWithDescription(1, dataSet.Tables.Count, "Unexpected tables count after fill.");
+                DataTestUtility.AssertEqualsWithDescription(9, dataSet.Tables[0].Columns.Count, "Unexpected column after fill.");
+
+                DataSet dataSet2 = new DataSet();
+                adapter.Fill(dataSet2, 0, 2, "Employees");
+                DataTestUtility.AssertEqualsWithDescription(1, dataSet2.Tables.Count, failMessage: "Unexpected tables count after fill.");
+                DataTestUtility.AssertEqualsWithDescription(2, dataSet2.Tables[0].Rows.Count, "Unexpected row count after fill.");
+                DataTestUtility.AssertEqualsWithDescription(9, dataSet2.Tables[0].Columns.Count, "Unexpected column after fill.");
+
+                DataTable table = new DataTable();
+                adapter.Fill(table);
+                DataTestUtility.AssertEqualsWithDescription(9, table.Columns.Count, "Unexpected columns count.");
+
+                DataTable table2 = new DataTable();
+                adapter.Fill(0, 2, table2);
+                DataTestUtility.AssertEqualsWithDescription(9, table2.Columns.Count, "Unexpected columns count.");
+                DataTestUtility.AssertEqualsWithDescription(2, table2.Rows.Count, "Unexpected rows count.");
             }
         }
 
