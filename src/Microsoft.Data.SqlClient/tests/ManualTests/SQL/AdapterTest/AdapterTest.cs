@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
+using Microsoft.Data.SqlClient.Tests;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -103,6 +104,61 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 adapter.Fill(0, 2, table2);
                 DataTestUtility.AssertEqualsWithDescription(9, table2.Columns.Count, "Unexpected columns count.");
                 DataTestUtility.AssertEqualsWithDescription(2, table2.Rows.Count, "Unexpected rows count.");
+            }
+        }
+
+        // TODO Synapse: Remove Northwind dependency by creating required tables in setup.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void FillShouldAllowRetryLogicProviderToBeInvoked()
+        {
+            int maxRetries = 3;
+            int expectedAttempts = maxRetries -1;
+            int retryCount = 0;
+
+            // CustomRetryLogicProvider provider = new(maxRetries);
+
+            SqlRetryLogicOption options = new SqlRetryLogicOption()
+            {
+                NumberOfTries = maxRetries,
+                DeltaTime = TimeSpan.FromMilliseconds(100),
+                MaxTimeInterval = TimeSpan.FromMilliseconds(500),
+                TransientErrors = new int[] { 26, 4060, 233, -1, 17142, -2, 2812 }
+            };
+            SqlRetryLogicBaseProvider provider = SqlConfigurableRetryFactory.CreateFixedRetryProvider(options);
+
+            string query = "WAITFOR DELAY '00:00:02';SELECT * From Employees";
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            builder.ConnectTimeout= 1;
+
+            using (var connection = new SqlConnection(builder.ConnectionString))
+            {
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    command.CommandTimeout = 1;
+                    command.RetryLogicProvider = provider;
+                    command.RetryLogicProvider.Retrying += (object sender, SqlRetryingEventArgs e) =>
+                    {
+                        retryCount = e.RetryCount;
+                        Assert.Equal(e.RetryCount, e.Exceptions.Count);
+                        Assert.NotEqual(TimeSpan.Zero, e.Delay);
+                    };
+
+                    connection.Open();
+
+                    AggregateException exception = Assert.Throws<AggregateException>(() =>
+                    {
+                        DataTable dt = new DataTable();
+                        using (SqlDataAdapter adapter = new SqlDataAdapter(command))
+                        {
+                            adapter.Fill(dt);
+                        }
+                    });
+
+                    Assert.NotNull(exception);
+                    Assert.NotEmpty(exception.Message);
+                    Assert.Contains($"The number of retries has exceeded the maximum of {maxRetries} attempt(s)", exception.Message);
+                    Assert.Equal(expectedAttempts, retryCount);
+                }
             }
         }
 
