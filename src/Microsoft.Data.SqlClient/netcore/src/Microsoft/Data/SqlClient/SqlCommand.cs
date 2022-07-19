@@ -34,6 +34,7 @@ namespace Microsoft.Data.SqlClient
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
         private static int _objectTypeCount; // EventSource Counter
+        private const int MaxRPCNameLength = 1046;
         internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount); private string _commandText;
 
         private static readonly Func<AsyncCallback, object, IAsyncResult> s_beginExecuteReaderAsync = BeginExecuteReaderAsyncCallback;
@@ -113,7 +114,7 @@ namespace Microsoft.Data.SqlClient
         private static bool _forceInternalEndQuery = false;
 #endif
 
-        private static readonly SqlDiagnosticListener _diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
         private bool _parentOperationStarted = false;
 
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
@@ -553,7 +554,7 @@ namespace Microsoft.Data.SqlClient
                 if (null != _activeConnection)
                 {
                     if (_activeConnection.StatisticsEnabled ||
-                        _diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand))
+                        s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand))
                     {
                         return _activeConnection.Statistics;
                     }
@@ -1081,7 +1082,7 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            using (DiagnosticScope diagnosticScope = _diagnosticListener.CreateCommandScope(this, _transaction))
+            using (DiagnosticScope diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction))
             using (TryEventScope.Create("SqlCommand.ExecuteScalar | API | ObjectId {0}", ObjectID))
             {
                 SqlStatistics statistics = null;
@@ -1161,7 +1162,7 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            using (var diagnosticScope = _diagnosticListener.CreateCommandScope(this, _transaction))
+            using (var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction))
             using (TryEventScope.Create("SqlCommand.ExecuteNonQuery | API | Object Id {0}", ObjectID))
             {
                 SqlStatistics statistics = null;
@@ -1669,7 +1670,7 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            using (DiagnosticScope diagnosticScope = _diagnosticListener.CreateCommandScope(this, _transaction))
+            using (DiagnosticScope diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction))
             using (TryEventScope.Create("SqlCommand.ExecuteXmlReader | API | Object Id {0}", ObjectID))
             {
                 SqlStatistics statistics = null;
@@ -2001,7 +2002,7 @@ namespace Microsoft.Data.SqlClient
             bool success = false;
             int? sqlExceptionNumber = null;
             Exception e = null;
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
+            Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
 
             using (TryEventScope.Create("SqlCommand.ExecuteReader | API | Object Id {0}", ObjectID))
             {
@@ -2029,11 +2030,11 @@ namespace Microsoft.Data.SqlClient
                     WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
                     if (e != null)
                     {
-                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                        s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                     }
                     else
                     {
-                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                        s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                     }
                 }
             }
@@ -2128,12 +2129,16 @@ namespace Microsoft.Data.SqlClient
                 Exception e = task.Exception.InnerException;
                 if (!_parentOperationStarted)
                 {
-                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
                 source.SetException(e);
             }
             else
             {
+                if (!_parentOperationStarted)
+                {
+                    s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                }
                 if (task.IsCanceled)
                 {
                     source.SetCanceled();
@@ -2141,10 +2146,6 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     source.SetResult(task.Result);
-                }
-                if (!_parentOperationStarted)
-                {
-                    _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                 }
             }
         }
@@ -2523,7 +2524,7 @@ namespace Microsoft.Data.SqlClient
         private Task<int> InternalExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
+            Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
 
             TaskCompletionSource<int> source = new TaskCompletionSource<int>();
 
@@ -2543,32 +2544,35 @@ namespace Microsoft.Data.SqlClient
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
-                Task<int>.Factory.FromAsync(BeginExecuteNonQueryAsync, EndExecuteNonQueryAsync, null).ContinueWith((t) =>
-                {
-                    registration.Dispose();
-                    if (t.IsFaulted)
+                Task<int>.Factory.FromAsync(BeginExecuteNonQueryAsync, EndExecuteNonQueryAsync, null)
+                    .ContinueWith((Task<int> task) =>
                     {
-                        Exception e = t.Exception.InnerException;
-                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                        source.SetException(e);
-                    }
-                    else
-                    {
-                        if (t.IsCanceled)
+                        registration.Dispose();
+                        if (task.IsFaulted)
                         {
-                            source.SetCanceled();
+                            Exception e = task.Exception.InnerException;
+                            s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                            source.SetException(e);
                         }
                         else
                         {
-                            source.SetResult(t.Result);
+                            s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                            if (task.IsCanceled)
+                            {
+                                source.SetCanceled();
+                            }
+                            else
+                            {
+                                source.SetResult(task.Result);
+                            }
                         }
-                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                    }
-                }, TaskScheduler.Default);
+                    }, 
+                    TaskScheduler.Default
+                );
             }
             catch (Exception e)
             {
-                _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 source.SetException(e);
             }
 
@@ -2627,7 +2631,7 @@ namespace Microsoft.Data.SqlClient
             Guid operationId = default(Guid);
             if (!_parentOperationStarted)
             {
-                operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
+                operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
             }
 
             TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>();
@@ -2672,7 +2676,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!_parentOperationStarted)
                 {
-                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
 
                 source.SetException(e);
@@ -2699,7 +2703,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteScalarAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteScalarAsync | API> {0}, Client Connection Id {1}, Command Text = '{2}'", ObjectID, Connection?.ClientConnectionId, CommandText);
             _parentOperationStarted = true;
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
+            Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
 
             return ExecuteReaderAsync(cancellationToken).ContinueWith((executeTask) =>
             {
@@ -2710,68 +2714,71 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (executeTask.IsFaulted)
                 {
-                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, executeTask.Exception.InnerException);
+                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, executeTask.Exception.InnerException);
                     source.SetException(executeTask.Exception.InnerException);
                 }
                 else
                 {
                     SqlDataReader reader = executeTask.Result;
-                    reader.ReadAsync(cancellationToken).ContinueWith((readTask) =>
-                    {
-                        try
+                    reader.ReadAsync(cancellationToken)
+                        .ContinueWith((Task<bool> readTask) =>
                         {
-                            if (readTask.IsCanceled)
+                            try
                             {
-                                reader.Dispose();
-                                source.SetCanceled();
-                            }
-                            else if (readTask.IsFaulted)
-                            {
-                                reader.Dispose();
-                                _diagnosticListener.WriteCommandError(operationId, this, _transaction, readTask.Exception.InnerException);
-                                source.SetException(readTask.Exception.InnerException);
-                            }
-                            else
-                            {
-                                Exception exception = null;
-                                object result = null;
-                                try
-                                {
-                                    bool more = readTask.Result;
-                                    if (more && reader.FieldCount > 0)
-                                    {
-                                        try
-                                        {
-                                            result = reader.GetValue(0);
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            exception = e;
-                                        }
-                                    }
-                                }
-                                finally
+                                if (readTask.IsCanceled)
                                 {
                                     reader.Dispose();
+                                    source.SetCanceled();
                                 }
-                                if (exception != null)
+                                else if (readTask.IsFaulted)
                                 {
-                                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
-                                    source.SetException(exception);
+                                    reader.Dispose();
+                                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, readTask.Exception.InnerException);
+                                    source.SetException(readTask.Exception.InnerException);
                                 }
                                 else
                                 {
-                                    _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                                    source.SetResult(result);
+                                    Exception exception = null;
+                                    object result = null;
+                                    try
+                                    {
+                                        bool more = readTask.Result;
+                                        if (more && reader.FieldCount > 0)
+                                        {
+                                            try
+                                            {
+                                                result = reader.GetValue(0);
+                                            }
+                                            catch (Exception e)
+                                            {
+                                                exception = e;
+                                            }
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        reader.Dispose();
+                                    }
+                                    if (exception != null)
+                                    {
+                                        s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                                        source.SetException(exception);
+                                    }
+                                    else
+                                    {
+                                        s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                                        source.SetResult(result);
+                                    }
                                 }
                             }
-                        }
-                        catch (Exception e)
-                        {
-                            // exception thrown by Dispose...
-                            source.SetException(e);
-                        }
-                    }, TaskScheduler.Default);
+                            catch (Exception e)
+                            {
+                                // exception thrown by Dispose...
+                                source.SetException(e);
+                            }
+                        }, 
+                        TaskScheduler.Default
+                    );
                 }
                 _parentOperationStarted = false;
                 return source.Task;
@@ -2796,7 +2803,7 @@ namespace Microsoft.Data.SqlClient
         private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
+            Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
 
             TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();
 
@@ -2816,32 +2823,36 @@ namespace Microsoft.Data.SqlClient
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
-                Task<XmlReader>.Factory.FromAsync(BeginExecuteXmlReaderAsync, EndExecuteXmlReaderAsync, null).ContinueWith((t) =>
-                {
-                    registration.Dispose();
-                    if (t.IsFaulted)
+                Task<XmlReader>.Factory.FromAsync(BeginExecuteXmlReaderAsync, EndExecuteXmlReaderAsync, null)
+                    .ContinueWith((Task<XmlReader> task) =>
                     {
-                        Exception e = t.Exception.InnerException;
-                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                        source.SetException(e);
-                    }
-                    else
-                    {
-                        if (t.IsCanceled)
+                        registration.Dispose();
+                        if (task.IsFaulted)
                         {
-                            source.SetCanceled();
+                            Exception e = task.Exception.InnerException;
+                            s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                            source.SetException(e);
                         }
                         else
                         {
-                            source.SetResult(t.Result);
+                            s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                            if (task.IsCanceled)
+                            {
+                                source.SetCanceled();
+                            }
+                            else
+                            {
+                                source.SetResult(task.Result);
+                            }
+ 
                         }
-                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                    }
-                }, TaskScheduler.Default);
+                    }, 
+                    TaskScheduler.Default
+                );
             }
             catch (Exception e)
             {
-                _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 source.SetException(e);
             }
 
@@ -5803,7 +5814,20 @@ namespace Microsoft.Data.SqlClient
             GetRPCObject(0, userParameterCount, ref rpc);
 
             rpc.ProcID = 0;
-            rpc.rpcName = this.CommandText; // just get the raw command text
+
+            // TDS Protocol allows rpc name with maximum length of 1046 bytes for ProcName
+            // 4-part name 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 = 523
+            // each char takes 2 bytes. 523 * 2 = 1046
+            int commandTextLength = ADP.CharSize * CommandText.Length;
+
+            if (commandTextLength <= MaxRPCNameLength)
+            {
+                rpc.rpcName = CommandText; // just get the raw command text
+            }
+            else
+            {
+                throw ADP.InvalidArgumentLength(nameof(CommandText), MaxRPCNameLength);
+            }
 
             SetUpRPCParameters(rpc, inSchema, parameters);
         }

@@ -3,10 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Microsoft.Data.Common;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Security.Permissions;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -88,12 +88,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Encrypt password to be sent to SQL Server
+        // Obfuscate password to be sent to SQL Server
+        // Blurb from the TDS spec at https://msdn.microsoft.com/en-us/library/dd304523.aspx
+        // "Before submitting a password from the client to the server, for every byte in the password buffer 
+        // starting with the position pointed to by IbPassword, the client SHOULD first swap the four high bits 
+        // with the four low bits and then do a bit-XOR with 0xA5 (10100101). After reading a submitted password, 
+        // for every byte in the password buffer starting with the position pointed to by IbPassword, the server SHOULD 
+        // first do a bit-XOR with 0xA5 (10100101) and then swap the four high bits with the four low bits."
+        // The password exchange during Login phase happens over a secure channel i.e. SSL/TLS 
         // Note: The same logic is used in SNIPacketSetData (SniManagedWrapper) to encrypt passwords stored in SecureString
         //       If this logic changed, SNIPacketSetData needs to be changed as well
         internal static byte[] ObfuscatePassword(string password)
         {
-            byte[] bEnc = new byte[password.Length << 1];
+            byte[] bObfuscated = new byte[password.Length << 1];
             int s;
             byte bLo;
             byte bHi;
@@ -103,62 +110,92 @@ namespace Microsoft.Data.SqlClient
                 s = (int)password[i];
                 bLo = (byte)(s & 0xff);
                 bHi = (byte)((s >> 8) & 0xff);
-                bEnc[i << 1] = (byte)((((bLo & 0x0f) << 4) | (bLo >> 4)) ^ 0xa5);
-                bEnc[(i << 1) + 1] = (byte)((((bHi & 0x0f) << 4) | (bHi >> 4)) ^ 0xa5);
+                bObfuscated[i << 1] = (byte)((((bLo & 0x0f) << 4) | (bLo >> 4)) ^ 0xa5);
+                bObfuscated[(i << 1) + 1] = (byte)((((bHi & 0x0f) << 4) | (bHi >> 4)) ^ 0xa5);
             }
-            return bEnc;
+            return bObfuscated;
         }
 
-        [ResourceExposure(ResourceScope.None)] // SxS: we use this method for TDS login only
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        static internal int GetCurrentProcessIdForTdsLoginOnly()
+        internal static byte[] ObfuscatePassword(byte[] password)
         {
-            return Common.SafeNativeMethods.GetCurrentProcessId();
+            byte bLo;
+            byte bHi;
+
+            for (int i = 0; i < password.Length; i++)
+            {
+                bLo = (byte)(password[i] & 0x0f);
+                bHi = (byte)(password[i] & 0xf0);
+                password[i] = (byte)(((bHi >> 4) | (bLo << 4)) ^ 0xa5);
+            }
+            return password;
         }
 
-
-        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.UnmanagedCode)]
-        [ResourceExposure(ResourceScope.None)] // SxS: we use this method for TDS login only
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        static internal Int32 GetCurrentThreadIdForTdsLoginOnly()
+        private const int NoProcessId = -1;
+        private static int s_currentProcessId = NoProcessId;
+        internal static int GetCurrentProcessIdForTdsLoginOnly()
         {
-#pragma warning disable 618
-            return AppDomain.GetCurrentThreadId(); // don't need this to be support fibres;
-#pragma warning restore 618
+            if (s_currentProcessId == NoProcessId)
+            {
+                // Pick up the process Id from the current process instead of randomly generating it.
+                // This would be helpful while tracing application related issues.
+                int processId;
+                using (System.Diagnostics.Process p = System.Diagnostics.Process.GetCurrentProcess())
+                {
+                    processId = p.Id;
+                }
+                System.Threading.Volatile.Write(ref s_currentProcessId, processId);
+            }
+            return s_currentProcessId;
         }
 
+
+        internal static int GetCurrentThreadIdForTdsLoginOnly()
+        {
+            return Environment.CurrentManagedThreadId;
+        }
+
+        private static byte[] s_nicAddress = null;
 
         [ResourceExposure(ResourceScope.None)] // SxS: we use MAC address for TDS login only
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         static internal byte[] GetNetworkPhysicalAddressForTdsLoginOnly()
         {
-            // NIC address is stored in NetworkAddress key.  However, if NetworkAddressLocal key
-            // has a value that is not zero, then we cannot use the NetworkAddress key and must
-            // instead generate a random one.  I do not fully understand why, this is simply what
-            // the native providers do.  As for generation, I use a random number generator, which
-            // means that different processes on the same machine will have different NIC address
-            // values on the server.  It is not ideal, but native does not have the same value for
-            // different processes either.
-
-            const string key = "NetworkAddress";
-            const string localKey = "NetworkAddressLocal";
-            const string folder = "SOFTWARE\\Description\\Microsoft\\Rpc\\UuidTemporaryData";
-
-            int result = 0;
-            byte[] nicAddress = null;
-
-            object temp = ADP.LocalMachineRegistryValue(folder, localKey);
-            if (temp is int)
+            if (s_nicAddress != null)
             {
-                result = (int)temp;
+                return s_nicAddress;
             }
 
-            if (result <= 0)
+            byte[] nicAddress = null;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                temp = ADP.LocalMachineRegistryValue(folder, key);
-                if (temp is byte[])
+                // NIC address is stored in NetworkAddress key.  However, if NetworkAddressLocal key
+                // has a value that is not zero, then we cannot use the NetworkAddress key and must
+                // instead generate a random one.  I do not fully understand why, this is simply what
+                // the native providers do.  As for generation, I use a random number generator, which
+                // means that different processes on the same machine will have different NIC address
+                // values on the server.  It is not ideal, but native does not have the same value for
+                // different processes either.
+
+                const string key = "NetworkAddress";
+                const string localKey = "NetworkAddressLocal";
+                const string folder = "SOFTWARE\\Description\\Microsoft\\Rpc\\UuidTemporaryData";
+
+                int result = 0;
+
+                object temp = ADP.LocalMachineRegistryValue(folder, localKey);
+                if (temp is int)
                 {
-                    nicAddress = (byte[])temp;
+                    result = (int)temp;
+                }
+
+                if (result <= 0)
+                {
+                    temp = ADP.LocalMachineRegistryValue(folder, key);
+                    if (temp is byte[])
+                    {
+                        nicAddress = (byte[])temp;
+                    }
                 }
             }
 
@@ -169,7 +206,9 @@ namespace Microsoft.Data.SqlClient
                 random.NextBytes(nicAddress);
             }
 
-            return nicAddress;
+            System.Threading.Interlocked.CompareExchange(ref s_nicAddress, nicAddress, null);
+
+            return s_nicAddress;
         }
 
         // translates remaining time in stateObj (from user specified timeout) to timeout value for SNI

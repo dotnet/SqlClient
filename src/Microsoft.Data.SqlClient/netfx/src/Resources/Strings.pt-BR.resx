@@ -4617,4 +4617,13 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>O parâmetro '{0}' não pode ter a saída de direção ou InputOutput quando EnableOptimizedParameterBinding está habilitado no comando pai.</value>
   </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>A conexão expirou ao recuperar um token de acesso usando o método de autenticação '{0}'. Último erro: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>O nome da entidade de serviço (SPN) do parceiro de failover.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>O nome da entidade de serviço (SPN) do servidor.</value>
+  </data>
 </root>
