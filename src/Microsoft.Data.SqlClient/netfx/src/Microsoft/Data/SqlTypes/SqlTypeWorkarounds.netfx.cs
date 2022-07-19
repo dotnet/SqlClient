@@ -36,6 +36,7 @@ namespace Microsoft.Data.SqlTypes
             }
             else
             {
+                // SqlMoney is a long internally. Dividing by 10,000 gives us the decimal representation
                 val = new SqlMoney(((decimal)value) / 10000);
             }
 
