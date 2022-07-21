@@ -3641,8 +3641,8 @@ namespace Microsoft.Data.SqlClient
                     }
                     _is2012 = true;
                     break;
-                case (uint)TdsEnums.SQL2022_MAJOR << 24 | TdsEnums.SQL2022_MINOR:
-                    if (increment != TdsEnums.SQL2022_INCREMENT)
+                case TdsEnums.TDS8_MAJOR << 24 | TdsEnums.TDS8_MINOR:
+                    if (increment != TdsEnums.TDS8_INCREMENT)
                     {
                         throw SQL.InvalidTDSVersion();
                     }
@@ -8123,7 +8123,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (encrypt == SqlConnectionEncryptOption.Strict)
                     {
-                        WriteInt((TdsEnums.SQL2022_MAJOR << 24) | (TdsEnums.SQL2022_INCREMENT << 16) | TdsEnums.SQL2022_MINOR, _physicalStateObj);
+                        WriteInt((TdsEnums.TDS8_MAJOR << 24) | (TdsEnums.TDS8_INCREMENT << 16) | TdsEnums.TDS8_MINOR, _physicalStateObj);
                     }
                     else
                     {
