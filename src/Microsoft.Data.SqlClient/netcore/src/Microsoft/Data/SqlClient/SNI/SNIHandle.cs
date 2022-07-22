@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 TargetHost = serverNameIndication,
                 ApplicationProtocols = s_tdsProtocols,
-                EnabledSslProtocols = s_supportedProtocols,
+                EnabledSslProtocols = SslProtocols.None,
                 ClientCertificates = certificate
             };
             await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
