@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.SNI
     internal abstract class SNIHandle
     {
         /// <summary>
-        /// Exclude TLS 1.3 (not fully supported).
+        /// Exclude TLS 1.3 in TLS-over-TDS modes (TDS 7.4 and below)
         /// </summary>
         protected static readonly SslProtocols s_supportedProtocols = LocalAppContextSwitches.UseSystemDefaultSecureProtocols ? SslProtocols.None : SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
         //protected readonly SslProtocols SupportedProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
@@ -36,7 +36,6 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 TargetHost = serverNameIndication,
                 ApplicationProtocols = s_tdsProtocols,
-                EnabledSslProtocols = SslProtocols.None,
                 ClientCertificates = certificate
             };
             await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
