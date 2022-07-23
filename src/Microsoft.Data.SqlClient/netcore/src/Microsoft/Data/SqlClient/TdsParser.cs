@@ -117,6 +117,8 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2012 = false;
 
+        private bool _is2022 = false;
+
         private byte[][] _sniSpnBuffer = null;
 
         // SqlStatistics
@@ -438,7 +440,7 @@ namespace Microsoft.Data.SqlClient
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer,
-                false, true, fParallel, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject, serverInfo.ServerSPN ,
+                false, true, fParallel, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject, serverInfo.ServerSPN,
                 integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated, encrypt == SqlConnectionEncryptOption.Strict,
                 hostNameInCertificate);
 
@@ -499,7 +501,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
-            SendPreLoginHandshake(instanceName, encrypt,integratedSecurity);
+            SendPreLoginHandshake(instanceName, encrypt, integratedSecurity);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
@@ -3639,10 +3641,17 @@ namespace Microsoft.Data.SqlClient
                     }
                     _is2012 = true;
                     break;
+                case TdsEnums.TDS8_MAJOR << 24 | TdsEnums.TDS8_MINOR:
+                    if (increment != TdsEnums.TDS8_INCREMENT)
+                    {
+                        throw SQL.InvalidTDSVersion();
+                    }
+                    _is2022 = true;
+                    break;
                 default:
                     throw SQL.InvalidTDSVersion();
             }
-
+            _is2012 |= _is2022;
             _is2008 |= _is2012;
             _is2005 |= _is2008;
 
@@ -7942,7 +7951,7 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
-        internal void TdsLogin(SqlLogin rec, TdsEnums.FeatureExtension requestedFeatures, SessionData recoverySessionData, FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData)
+        internal void TdsLogin(SqlLogin rec, TdsEnums.FeatureExtension requestedFeatures, SessionData recoverySessionData, FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData, SqlConnectionEncryptOption encrypt)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
 
@@ -8112,7 +8121,14 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(length, _physicalStateObj);
                 if (recoverySessionData == null)
                 {
-                    WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
+                    if (encrypt == SqlConnectionEncryptOption.Strict)
+                    {
+                        WriteInt((TdsEnums.TDS8_MAJOR << 24) | (TdsEnums.TDS8_INCREMENT << 16) | TdsEnums.TDS8_MINOR, _physicalStateObj);
+                    }
+                    else
+                    {
+                        WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
+                    }
                 }
                 else
                 {
