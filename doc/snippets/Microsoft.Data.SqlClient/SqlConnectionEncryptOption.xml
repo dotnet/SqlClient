@@ -7,7 +7,7 @@
       <format type="text/markdown"><![CDATA[  
 
 ## Remarks  
-Implicit conversions have been added to maintain backwards compatibility with boolean behahavior for the <xref=Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt%2A> property. When converting from a boolean, a value of `true` converts to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> and a value of `false` converts to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional%2A>. When converting to a boolean, <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> and <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> convert to `true` and <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional%2A> converts `false`.
+Implicit conversions have been added to maintain backwards compatibility with boolean behahavior for the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt%2A> property. When converting from a boolean, a value of `true` converts to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> and a value of `false` converts to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional%2A>. When converting to a boolean, <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> and <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> convert to `true` and <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional%2A> converts `false`.
 
  ]]></format>
       </remarks>

@@ -2904,6 +2904,9 @@ To apply the retry logic, do the following steps before executing the command:
 > [!NOTE]
 > The default retry logic provider is not enabled unless it is configured in an application configuration file. For more information, see [Configurable retry logic configuration file](/sql/connect/ado-net/configurable-retry-logic-config-file-sqlclient).
 
+> [!CAUTION]
+> A command with <xref:System.Data.CommandBehavior.CloseConnection?displayProperty=nameWithType> isn't compatible with the built-in retry logic. The underlying connection is immediately closed after the first execution attempt and is no longer available for subsequent retries.
+
 ## Example
 The following sample creates a database and establishes an active connection to it. While the database has an active connection, it tries to drop it with a new <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlCommand> that uses a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider>. You should kill the active connection through the database to unblock the second command before exceeding the number of retries.  
 The blocking connection simulates a situation like a command still running in the database and unlikely to finish.  
