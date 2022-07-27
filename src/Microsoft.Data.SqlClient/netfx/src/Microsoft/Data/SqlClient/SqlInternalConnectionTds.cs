@@ -1509,7 +1509,7 @@ namespace Microsoft.Data.SqlClient
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
         }
 
-        private void Login(ServerInfo server, TimeoutTimer timeout, string newPassword, SecureString newSecurePassword)
+        private void Login(ServerInfo server, TimeoutTimer timeout, string newPassword, SecureString newSecurePassword, SqlConnectionEncryptOption encrypt)
         {
             // create a new login record
             SqlLogin login = new SqlLogin();
@@ -1630,7 +1630,7 @@ namespace Microsoft.Data.SqlClient
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
-            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo);
+            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo, encrypt);
         }
 
         private void LoginFailure()
@@ -2310,7 +2310,7 @@ namespace Microsoft.Data.SqlClient
             timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
-            this.Login(serverInfo, timeout, newPassword, newSecurePassword);
+            this.Login(serverInfo, timeout, newPassword, newSecurePassword, ConnectionOptions.Encrypt);
 
             timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
             timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
