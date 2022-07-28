@@ -424,7 +424,7 @@ When `TrustServerCertificate` is false and `Encrypt` is <xref:Microsoft.Data.Sql
 > Starting from **version 4.0**, the default value of the property `Encrypt` is set to `true` while it is `false` for earlier versions.
 
 > [!NOTE]
-> Starting from **version 5.0**, the data type is updated to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption%2A>, and the default value of the `Encrypt` property is set to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A>.
+> Starting from **version 5.0**, the data type is updated to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption>, and the default value of the `Encrypt` property is set to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A>.
 
  ]]></format>
             </remarks>
