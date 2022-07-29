@@ -624,6 +624,10 @@ namespace Microsoft.Data.SqlClient
             {
                 if (StorageType.SqlBinary == _type)
                 {
+                    if (IsNull)
+                    {
+                        return SqlBinary.Null;
+                    }
                     return (SqlBinary)_object;
                 }
                 return (SqlBinary)SqlValue; // anything else we haven't thought of goes through boxing.
