@@ -3850,7 +3850,7 @@
     <value>Erreur lors de la localisation de Server/Instance spécifié</value>
   </data>
   <data name="SNI_ERROR_27" xml:space="preserve">
-    <value>Erreur d'obtention de la liste des protocoles activés à partir du Registre</value>
+    <value>Erreur d'obtention de la liste des protocoles activés à partir du registre</value>
   </data>
   <data name="SNI_ERROR_28" xml:space="preserve">
     <value>Le serveur ne prend pas en charge le protocole demandé</value>
