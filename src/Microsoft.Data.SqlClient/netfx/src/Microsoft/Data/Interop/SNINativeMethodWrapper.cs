@@ -182,6 +182,8 @@ namespace Microsoft.Data.SqlClient
             public bool certHash;
             public object clientCertificateCallbackContext;
             public SqlClientCertificateDelegate clientCertificateCallback;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string serverCertFileName;
         };
 
         internal struct CTAIPProviderInfo

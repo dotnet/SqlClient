@@ -1195,6 +1195,7 @@ namespace Microsoft.Data.SqlClient
             authInfo.certHash = false;
             authInfo.clientCertificateCallbackContext = IntPtr.Zero;
             authInfo.clientCertificateCallback = null;
+            authInfo.serverCertFileName = null;
 
             if ((_encryptionOption & EncryptionOptions.CLIENT_CERT) != 0)
             {
