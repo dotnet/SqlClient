@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## Microsoft.Data.SqlClient 5.0.0 released 29 July 2022
+## [Stable release 5.0.0] - 2022-08-05
 
 This update brings the below changes over the previous release:
 
@@ -15,6 +15,7 @@ This update brings the below changes over the previous release:
 
 ### Fixed
 
+- Fixed null SqlBinary as rowversion. [#1688](https://github.com/dotnet/SqlClient/pull/1688)
 - Fixed KeyNotFoundException for the FailoverPartner key on SQL servers with availability group configured. [#1614](https://github.com/dotnet/SqlClient/pull/1614)
 - Fixed small inconsistency between netcore and netfx for EncrpytionOptions. [#1672](https://github.com/dotnet/SqlClient/pull/1672)
 - Fixed `Microsoft.SqlServer.Server` netcore project package reference. [#1654](https://github.com/dotnet/SqlClient/pull/1654)
@@ -23,7 +24,7 @@ This update brings the below changes over the previous release:
 
 - Updated AuthProviderInfo struct to be match the changes in native SNI for `TDS 8` server certificate validation. [#1680](https://github.com/dotnet/SqlClient/pull/1680)
 - Change default system protocol to for `TDS 8` on managed code. [#1678](https://github.com/dotnet/SqlClient/pull/1678)
-- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.0.0`. [TBD](placeholder)
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.0.0`. [#1680](https://github.com/dotnet/SqlClient/pull/1680)
 - Changed encoding UTF-7 to ASCII for SSRP Broadcast. [#1671](https://github.com/dotnet/SqlClient/pull/1671)
 - Updated IdentityModel dependency from 6.8.0 to 6.21.0 and IdentityClient from 4.32.2 to 4.45.0. [#1646](https://github.com/dotnet/SqlClient/pull/1646)
 
