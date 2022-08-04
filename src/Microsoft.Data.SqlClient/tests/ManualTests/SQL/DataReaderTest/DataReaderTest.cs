@@ -282,6 +282,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.IsType<DBNull>(result);
                     Assert.Equal(result, reader.GetFieldValue<DBNull>(0));
                     Assert.Throws<SqlNullValueException>(() => reader.GetFieldValue<byte[]>(0));
+
+                    SqlBinary binary = reader.GetSqlBinary(0);
+                    Assert.True(binary.IsNull);
+
+                    SqlBytes bytes = reader.GetSqlBytes(0);
+                    Assert.True(bytes.IsNull);
+                    Assert.Null(bytes.Buffer);
+
                 }
                 finally
                 {
