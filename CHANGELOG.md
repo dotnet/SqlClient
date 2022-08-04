@@ -11,7 +11,7 @@ This update brings the below changes over the previous release:
 ### Added
 
 - Added `TDS 8` version for TDSLogin. [#1657](https://github.com/dotnet/SqlClient/pull/1657)
-- Added support for `TDS 8`. To use TDS 8, users should specify Encrypt=Strict in the connection string. [#1608](https://github.com/dotnet/SqlClient/pull/1608) [Read more](#tds-8-enhanced-security)
+- Added support for `TDS 8`. To use TDS 8, users should specify Encrypt=Strict in the connection string. [#1608](https://github.com/dotnet/SqlClient/pull/1608)
 
 ### Fixed
 
