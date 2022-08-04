@@ -10,7 +10,7 @@ This update brings the below changes over the previous release:
 
 ### Added
 
-- Added `TDS 8`  version for TDSLogin. [#1657](https://github.com/dotnet/SqlClient/pull/1657)
+- Added `TDS 8` version for TDSLogin. [#1657](https://github.com/dotnet/SqlClient/pull/1657)
 - Added support for `TDS 8`. To use TDS 8, users should specify Encrypt=Strict in the connection string. [#1608](https://github.com/dotnet/SqlClient/pull/1608) [Read more](#tds-8-enhanced-security)
 
 ### Fixed
@@ -27,6 +27,7 @@ This update brings the below changes over the previous release:
 - Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.0.0`. [#1680](https://github.com/dotnet/SqlClient/pull/1680)
 - Changed encoding UTF-7 to ASCII for SSRP Broadcast. [#1671](https://github.com/dotnet/SqlClient/pull/1671)
 - Updated IdentityModel dependency from 6.8.0 to 6.21.0 and IdentityClient from 4.32.2 to 4.45.0. [#1646](https://github.com/dotnet/SqlClient/pull/1646)
+- Changed from union overlay design to reflected interfaces for SqlTypes. [1647](https://github.com/dotnet/SqlClient/pull/1647)
 
 ## [Preview Release 5.0.0-preview3.22168.1] - 2022-06-16
 
