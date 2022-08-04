@@ -17,7 +17,7 @@ This update brings the below changes over the previous release:
 
 - Fixed null SqlBinary as rowversion. [#1688](https://github.com/dotnet/SqlClient/pull/1688)
 - Fixed KeyNotFoundException for the FailoverPartner key on SQL servers with availability group configured. [#1614](https://github.com/dotnet/SqlClient/pull/1614)
-- Fixed small inconsistency between netcore and netfx for EncrpytionOptions. [#1672](https://github.com/dotnet/SqlClient/pull/1672)
+- Fixed small inconsistency between netcore and netfx for EncryptionOptions. [#1672](https://github.com/dotnet/SqlClient/pull/1672)
 - Fixed `Microsoft.SqlServer.Server` netcore project package reference. [#1654](https://github.com/dotnet/SqlClient/pull/1654)
 
 ### Changed
