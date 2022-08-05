@@ -11,22 +11,21 @@ This update brings the below changes over the previous release:
 ### Added
 
 - Added `TDS 8` version for TDSLogin. [#1657](https://github.com/dotnet/SqlClient/pull/1657)
-- Added support for `TDS 8`. To use TDS 8, users should specify Encrypt=Strict in the connection string. [#1608](https://github.com/dotnet/SqlClient/pull/1608)
+- Added support for `TDS 8`. To use TDS 8, users should specify `Encrypt=Strict` in the connection string. [#1608](https://github.com/dotnet/SqlClient/pull/1608)
 
 ### Fixed
 
 - Fixed null SqlBinary as rowversion. [#1688](https://github.com/dotnet/SqlClient/pull/1688)
-- Fixed KeyNotFoundException for the FailoverPartner key on SQL servers with availability group configured. [#1614](https://github.com/dotnet/SqlClient/pull/1614)
-- Fixed small inconsistency between netcore and netfx for EncryptionOptions. [#1672](https://github.com/dotnet/SqlClient/pull/1672)
+- Fixed **KeyNotFoundException** for the `FailoverPartner` key on SQL servers with availability group configured. [#1614](https://github.com/dotnet/SqlClient/pull/1614)
+- Fixed small inconsistency between netcore and netfx for `EncryptionOptions`. [#1672](https://github.com/dotnet/SqlClient/pull/1672)
 - Fixed `Microsoft.SqlServer.Server` netcore project package reference. [#1654](https://github.com/dotnet/SqlClient/pull/1654)
 
 ### Changed
 
-- Updated AuthProviderInfo struct to be match the changes in native SNI for `TDS 8` server certificate validation. [#1680](https://github.com/dotnet/SqlClient/pull/1680)
-- Change default system protocol to for `TDS 8` on managed code. [#1678](https://github.com/dotnet/SqlClient/pull/1678)
+- Updated `AuthProviderInfo` struct to be matched the changes in native SNI for `TDS 8` server certificate validation. [#1680](https://github.com/dotnet/SqlClient/pull/1680)
+- Updated default system protocol for `TDS 8` on managed code. [#1678](https://github.com/dotnet/SqlClient/pull/1678)
 - Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.0.0`. [#1680](https://github.com/dotnet/SqlClient/pull/1680)
-- Changed encoding UTF-7 to ASCII for SSRP Broadcast. [#1671](https://github.com/dotnet/SqlClient/pull/1671)
-- Updated IdentityModel dependency from 6.8.0 to 6.21.0 and IdentityClient from 4.32.2 to 4.45.0. [#1646](https://github.com/dotnet/SqlClient/pull/1646)
+- Updated **IdentityModel** dependency from 6.8.0 to 6.21.0 and **IdentityClient** from 4.32.2 to 4.45.0. [#1646](https://github.com/dotnet/SqlClient/pull/1646)
 - Changed from union overlay design to reflected interfaces for SqlTypes. [1647](https://github.com/dotnet/SqlClient/pull/1647)
 
 ## [Preview Release 5.0.0-preview3.22168.1] - 2022-06-16
