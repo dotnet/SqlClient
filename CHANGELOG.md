@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable release 5.0.0] - 2022-08-05
+
+This update brings the below changes over the previous release:
+
+### Added
+
+- Added support for `TDS 8`. To use TDS 8, users should specify `Encrypt=Strict` in the connection string. [#1608](https://github.com/dotnet/SqlClient/pull/1608)
+- Added `TDS 8` version for TDSLogin. [#1657](https://github.com/dotnet/SqlClient/pull/1657)
+
+### Fixed
+
+- Fixed null SqlBinary as rowversion. [#1688](https://github.com/dotnet/SqlClient/pull/1688)
+- Fixed **KeyNotFoundException** for the `FailoverPartner` key on SQL servers with availability group configured. [#1614](https://github.com/dotnet/SqlClient/pull/1614)
+- Fixed small inconsistency between netcore and netfx for `EncryptionOptions`. [#1672](https://github.com/dotnet/SqlClient/pull/1672)
+- Fixed `Microsoft.SqlServer.Server` netcore project package reference. [#1654](https://github.com/dotnet/SqlClient/pull/1654)
+
+### Changed
+
+- Updated `AuthProviderInfo` struct to be matched the changes in native SNI for `TDS 8` server certificate validation. [#1680](https://github.com/dotnet/SqlClient/pull/1680)
+- Updated default system protocol for `TDS 8` on managed code. [#1678](https://github.com/dotnet/SqlClient/pull/1678)
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.0.0`. [#1680](https://github.com/dotnet/SqlClient/pull/1680)
+- Updated **IdentityModel** dependency from 6.8.0 to 6.21.0 and **IdentityClient** from 4.32.2 to 4.45.0. [#1646](https://github.com/dotnet/SqlClient/pull/1646)
+- Changed from union overlay design to reflected interfaces for SqlTypes. [1647](https://github.com/dotnet/SqlClient/pull/1647)
+
 ## [Preview Release 5.0.0-preview3.22168.1] - 2022-06-16
 
 This update brings the below changes over the previous release:
@@ -30,21 +54,21 @@ This update brings the below changes over the previous release:
 
 ### Fixed
 
-- Fixed naming, order, and formatting for `SqlDiagnosticsListener` on .NET Core and .NET. [#1637] (https://github.com/dotnet/SqlClient/pull/1637)
-- Fixed NullReferenceException during Azure Active Directory authentication. [#1625] (https://github.com/dotnet/SqlClient/pull/1625)
+- Fixed naming, order, and formatting for `SqlDiagnosticsListener` on .NET Core and .NET. [#1637](https://github.com/dotnet/SqlClient/pull/1637)
+- Fixed NullReferenceException during Azure Active Directory authentication. [#1625](https://github.com/dotnet/SqlClient/pull/1625)
 - Added CommandText length validation when using stored procedure command types. [#1484](https://github.com/dotnet/SqlClient/pull/1484)
-- Fixed `GetSchema("StructuredTypeMembers")` to return correct schema information. [#1500] (https://github.com/dotnet/SqlClient/pull/1500), [#1639](https://github.com/dotnet/SqlClient/pull/1639)
-- Fixed NullReferenceException when using `SqlDependency.Start` against an Azure SQL Database.[#1294] (https://github.com/dotnet/SqlClient/pull/1294)
-- Send the correct retained transaction descriptor in the MARS TDS Header when there is no current transaction on .NET 5+ and .NET Core. [#1624] (https://github.com/dotnet/SqlClient/pull/1624)
-- Parallelize SSRP requests (instance name resolution) on Linux and macOS when MultiSubNetFailover is specified. [#1578] (https://github.com/dotnet/SqlClient/pull/1578)
-- Adjust the default ConnectRetryCount against Azure Synapse OnDemand endpoints [#1626] (https://github.com/dotnet/SqlClient/pull/1626)
+- Fixed `GetSchema("StructuredTypeMembers")` to return correct schema information. [#1500](https://github.com/dotnet/SqlClient/pull/1500), [#1639](https://github.com/dotnet/SqlClient/pull/1639)
+- Fixed NullReferenceException when using `SqlDependency.Start` against an Azure SQL Database.[#1294](https://github.com/dotnet/SqlClient/pull/1294)
+- Send the correct retained transaction descriptor in the MARS TDS Header when there is no current transaction on .NET 5+ and .NET Core. [#1624](https://github.com/dotnet/SqlClient/pull/1624)
+- Parallelize SSRP requests (instance name resolution) on Linux and macOS when MultiSubNetFailover is specified. [#1578](https://github.com/dotnet/SqlClient/pull/1578)
+- Adjust the default ConnectRetryCount against Azure Synapse OnDemand endpoints [#1626](https://github.com/dotnet/SqlClient/pull/1626)
 
 ### Changed
 
 - Code health improvements [#1353](https://github.com/dotnet/SqlClient/pull/1353) [#1354](https://github.com/dotnet/SqlClient/pull/1354) [#1525](https://github.com/dotnet/SqlClient/pull/1525) [#1186](https://github.com/dotnet/SqlClient/pull/1186)
 - Update Azure Identity dependency from 1.5.0 to 1.6.0.[#1611](https://github.com/dotnet/SqlClient/pull/1611)
-- Improved Regex for SqlCommandSet [#1548] (https://github.com/dotnet/SqlClient/pull/1548)
-- Rework on `TdsParserStateObjectManaged` with nullable annotations. [#1555] (https://github.com/dotnet/SqlClient/pull/1555)
+- Improved Regex for SqlCommandSet [#1548](https://github.com/dotnet/SqlClient/pull/1548)
+- Rework on `TdsParserStateObjectManaged` with nullable annotations. [#1555](https://github.com/dotnet/SqlClient/pull/1555)
 
 ## [Preview Release 5.0.0-preview2.22096.2] - 2022-04-06
 
