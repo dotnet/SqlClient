@@ -1932,4 +1932,7 @@
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
     <value>'{0}' is not less than '{1}'; '{2}' cannot be greater than '{3}'.</value>
   </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+  </data>
 </root>

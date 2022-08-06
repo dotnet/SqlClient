@@ -4614,4 +4614,7 @@
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Número no negativo requerido.</value>
   </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Se agotó el tiempo de espera de la conexión al recuperar un token de acceso mediante el método de autenticación "{0}". Último error: {1}: {2}</value>
+  </data>
 </root>

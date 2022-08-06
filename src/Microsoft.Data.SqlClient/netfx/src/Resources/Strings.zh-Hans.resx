@@ -4614,4 +4614,7 @@
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>需要提供非负数。</value>
   </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>使用“{0}”身份验证方法检索访问令牌时连接超时。最后一个错误: {1}: {2}</value>
+  </data>
 </root>
