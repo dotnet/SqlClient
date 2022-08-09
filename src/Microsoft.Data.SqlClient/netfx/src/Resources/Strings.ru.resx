@@ -4614,4 +4614,7 @@
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Требуется неотрицательное число.</value>
   </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Истекло время ожидания подключения при получении маркера доступа с помощью метода проверки подлинности "{0}". Последняя ошибка: {1}: {2}</value>
+  </data>
 </root>
