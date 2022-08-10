@@ -505,6 +505,7 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStaticMethods.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStreamChars.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />
+    <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netfx.cs" />
     <Compile Include="Microsoft\Data\Common\NativeMethods.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
     <Compile Include="Microsoft\Data\Common\SQLResource.cs" />
