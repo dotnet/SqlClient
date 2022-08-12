@@ -234,6 +234,15 @@ This update brings the below changes over the previous release:
 
 ## [Stable release 3.1.0] - 2022-03-30
 
+### Fixed
+
+- Fixed null SqlBinary as rowversion. [#1700](https://github.com/dotnet/SqlClient/pull/1700)
+- Fixed Kerberos authentication failure when using .NET 6. [#1696](https://github.com/dotnet/SqlClient/pull/1696)
+- Fixed NullReferenceException during Azure Active Directory authentication. [#1695](https://github.com/dotnet/SqlClient/pull/1695)
+- Removed union overlay design and use reflection in `SqlTypeWorkarounds`. [#1699](https://github.com/dotnet/SqlClient/pull/1699)
+
+## [Stable release 3.1.0] - 2022-03-30
+
 ### Added
 
 - Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1539](https://github.com/dotnet/SqlClient/pull/1539)
