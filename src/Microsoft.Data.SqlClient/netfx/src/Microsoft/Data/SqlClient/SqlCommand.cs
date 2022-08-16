@@ -35,6 +35,7 @@ namespace Microsoft.Data.SqlClient
     public sealed class SqlCommand : DbCommand, ICloneable
     {
         private static int _objectTypeCount; // EventSource Counter
+        private const int MaxRPCNameLength = 1046;
         internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
         private string _commandText;
@@ -1053,7 +1054,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         tdsReliabilitySection.Start();
 #else
-                    {
+                        {
 #endif //DEBUG
                         InternalPrepare();
                     }
@@ -1239,7 +1240,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             tdsReliabilitySection.Start();
 #else
-                        {
+                            {
 #endif //DEBUG
                             bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
 
@@ -6570,7 +6571,19 @@ namespace Microsoft.Data.SqlClient
             int count = CountSendableParameters(parameters);
             GetRPCObject(count, ref rpc);
 
-            rpc.rpcName = this.CommandText; // just get the raw command text
+            // TDS Protocol allows rpc name with maximum length of 1046 bytes for ProcName
+            // 4-part name 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 = 523
+            // each char takes 2 bytes. 523 * 2 = 1046
+            int commandTextLength = ADP.CharSize * CommandText.Length;
+
+            if (commandTextLength <= MaxRPCNameLength)
+            {
+                rpc.rpcName = CommandText; // just get the raw command text
+            }
+            else
+            {
+                throw ADP.InvalidArgumentLength(nameof(CommandText), MaxRPCNameLength);
+            }
 
             SetUpRPCParameters(rpc, 0, inSchema, parameters);
         }
