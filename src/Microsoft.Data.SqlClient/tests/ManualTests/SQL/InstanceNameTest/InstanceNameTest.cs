@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class InstanceNameTest
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ConnectToSQLWithInstanceNameTest()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
@@ -33,12 +33,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
                 connection.Close();
 
-                // Exercise the IP address-specific code in SSRP
-                IPAddress[] addresses = Dns.GetHostAddresses(hostname);
-                builder.DataSource = builder.DataSource.Replace(hostname, addresses[0].ToString());
-                using SqlConnection connection2 = new(builder.ConnectionString);
-                connection2.Open();
-                connection2.Close();
+                if (builder.Encrypt != SqlConnectionEncryptOption.Strict)
+                {
+                    // Exercise the IP address-specific code in SSRP
+                    IPAddress[] addresses = Dns.GetHostAddresses(hostname);
+                    builder.DataSource = builder.DataSource.Replace(hostname, addresses[0].ToString());
+                    builder.TrustServerCertificate = true;
+                    using SqlConnection connection2 = new(builder.ConnectionString);
+                    connection2.Open();
+                    connection2.Close();
+                }
             }
         }
 
