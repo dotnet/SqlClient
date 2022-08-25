@@ -89,6 +89,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async void ConnectionTimeoutInfiniteTest()
+        {
+            // Exercise the special-case infinite connect timeout code path
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            {
+                ConnectTimeout = 0 // Infinite
+            };
+
+            using SqlConnection conn = new(builder.ConnectionString);
+            CancellationTokenSource cts = new(30000);
+            // Will throw TaskCanceledException and fail the test in the event of a hang
+            await conn.OpenAsync(cts.Token);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ConnectionTimeoutTestWithThread()
         {
             const int timeoutSec = 5;
