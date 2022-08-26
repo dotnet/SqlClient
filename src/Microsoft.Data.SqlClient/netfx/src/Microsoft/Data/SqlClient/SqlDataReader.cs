@@ -2199,7 +2199,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // Read data (not exceeding the total amount of data available)
                         int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
-                        bool result = _stateObj.TryReadByteArray(buffer, index, bytesToRead, out bytesRead);
+                        bool result = _stateObj.TryReadByteArray(buffer.AsSpan(start: index), bytesToRead, out bytesRead);
                         _columnDataBytesRead += bytesRead;
                         _sharedState._columnDataBytesRemaining -= bytesRead;
                         return result;

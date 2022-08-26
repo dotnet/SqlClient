@@ -47,7 +47,7 @@ namespace Transaction1CS
                 {
                     try
                     {
-                        transaction.Rollback();
+                        transaction.Rollback("SampleTransaction");
                     }
                     catch (SqlException ex)
                     {

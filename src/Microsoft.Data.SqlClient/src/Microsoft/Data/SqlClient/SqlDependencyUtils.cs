@@ -18,15 +18,14 @@ namespace Microsoft.Data.SqlClient
     {
         // Instance members
 
-        internal static readonly SqlDependencyPerAppDomainDispatcher
-                 SingletonInstance = new SqlDependencyPerAppDomainDispatcher(); // singleton object
+        internal static readonly SqlDependencyPerAppDomainDispatcher SingletonInstance = new(); // singleton object
 
-        internal object _instanceLock = new object();
+        internal object _instanceLock = new();
 
         // Dependency ID -> Dependency hashtable.  1 -> 1 mapping.
         // 1) Used for ASP.NET to map from ID to dependency.
         // 2) Used to enumerate dependencies to invalidate based on server.
-        private Dictionary<string, SqlDependency> _dependencyIdToDependencyHash;
+        private readonly Dictionary<string, SqlDependency> _dependencyIdToDependencyHash;
 
         // holds dependencies list per notification and the command hash from which this notification was generated
         // command hash is needed to remove its entry from _commandHashToNotificationId when the notification is removed
@@ -46,12 +45,12 @@ namespace Microsoft.Data.SqlClient
         // resource effect on SQL Server.  The Guid identifier is sent to the server during notification enlistment,
         // and returned during the notification event.  Dependencies look up existing Guids, if one exists, to ensure
         // they are re-using notification ids.
-        private Dictionary<string, DependencyList> _notificationIdToDependenciesHash;
+        private readonly Dictionary<string, DependencyList> _notificationIdToDependenciesHash;
 
         // CommandHash value -> notificationId associated with it:  1->1 mapping. This map is used to quickly find if we need to create
         // new notification or hookup into existing one.
         // CommandHash is built from connection string, command text and parameters
-        private Dictionary<string, string> _commandHashToNotificationId;
+        private readonly Dictionary<string, string> _commandHashToNotificationId;
 
         // TIMEOUT LOGIC DESCRIPTION
         //
@@ -73,10 +72,10 @@ namespace Microsoft.Data.SqlClient
         private DateTime _nextTimeout;
         // Timer to periodically check the dependencies in the table and see if anyone needs
         // a timeout.  We'll enable this only on demand.
-        private Timer _timeoutTimer;
+        private readonly Timer _timeoutTimer;
 
-        private static int _objectTypeCount; // EventSource counter
-        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource counter
+        internal int ObjectID { get; } = Interlocked.Increment(ref s_objectTypeCount);
 
         private SqlDependencyPerAppDomainDispatcher()
         {
@@ -86,7 +85,12 @@ namespace Microsoft.Data.SqlClient
                 _dependencyIdToDependencyHash = new Dictionary<string, SqlDependency>();
                 _notificationIdToDependenciesHash = new Dictionary<string, DependencyList>();
                 _commandHashToNotificationId = new Dictionary<string, string>();
+#if NETFRAMEWORK
+                _timeoutTimer = new Timer(new TimerCallback(TimeoutTimerCallback), null, Timeout.Infinite, Timeout.Infinite);
 
+                // If rude abort - we'll leak.  This is acceptable for now.  
+                AppDomain.CurrentDomain.DomainUnload += new EventHandler(UnloadEventHandler);
+#else
                 _timeoutTimer = ADP.UnsafeCreateTimer(
                     new TimerCallback(TimeoutTimerCallback),
                     null,
@@ -95,6 +99,7 @@ namespace Microsoft.Data.SqlClient
 
                 SubscribeToAppDomainUnload();
                 SubscribeToAssemblyLoadContextUnload();
+#endif // NETFRAMEWORK
             }
             finally
             {
@@ -102,10 +107,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if NETCOREAPP || NETSTANDARD
         partial void SubscribeToAppDomainUnload();
 
         partial void SubscribeToAssemblyLoadContextUnload();
-
+#endif
         private void UnloadEventHandler(object sender, EventArgs e)
         {
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("SqlDependencyPerAppDomainDispatcher.UnloadEventHandler | DEP | Object Id {0}", ObjectID);
@@ -115,7 +121,7 @@ namespace Microsoft.Data.SqlClient
                 // stopping of all start calls in this AppDomain.  For containers shared among various AppDomains,
                 // this will just be a ref-count subtract.  For non-shared containers, we will close the container
                 // and clean-up.
-                var dispatcher = SqlDependency.ProcessDispatcher;
+                SqlDependencyProcessDispatcher dispatcher = SqlDependency.ProcessDispatcher;
                 dispatcher?.QueueAppDomainUnloading(SqlDependency.AppDomainKey);
             }
             finally
@@ -171,8 +177,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             // we have one or more SqlDependency instances with same command hash
 
-                            DependencyList dependencyList = null;
-                            if (!_notificationIdToDependenciesHash.TryGetValue(notificationId, out dependencyList))
+                            if (!_notificationIdToDependenciesHash.TryGetValue(notificationId, out DependencyList dependencyList))
                             {
                                 // this should not happen since _commandHashToNotificationId and _notificationIdToDependenciesHash are always
                                 // updated together
@@ -203,7 +208,7 @@ namespace Microsoft.Data.SqlClient
                                 Guid.NewGuid().ToString("D", System.Globalization.CultureInfo.InvariantCulture)
                                 );
                             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.AddCommandEntry|DEP> Creating new Dependencies list for commandHash.");
-                            DependencyList dependencyList = new DependencyList(commandHash);
+                            DependencyList dependencyList = new(commandHash);
                             dependencyList.Add(dep);
 
                             // map command hash to notification we just created to reuse it for the next client
@@ -289,7 +294,7 @@ namespace Microsoft.Data.SqlClient
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.Invalidate|DEP> {0}, server: '{1}'", ObjectID, server);
             try
             {
-                List<SqlDependency> dependencies = new List<SqlDependency>();
+                List<SqlDependency> dependencies = new();
 
                 lock (_instanceLock)
                 { // Copy inside of lock, but invalidate outside of lock.
@@ -449,8 +454,8 @@ namespace Microsoft.Data.SqlClient
             {
                 lock (_instanceLock)
                 {
-                    List<string> notificationIdsToRemove = new List<string>();
-                    List<string> commandHashesToRemove = new List<string>();
+                    List<string> notificationIdsToRemove = new();
+                    List<string> commandHashesToRemove = new();
 
                     foreach (KeyValuePair<string, DependencyList> entry in _notificationIdToDependenciesHash)
                     {

@@ -2872,7 +2872,7 @@
     <value>Le transazioni globali non sono abilitate per questo database SQL di Azure. Per assistenza, contattare il supporto del database SQL di Azure.</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>Il file System.Transactions.dll attualmente caricato non supporta le transazioni globali. Effettuare l'aggiornamento a .NET Framework 4.6.1 o versioni successive.</value>
+    <value>Il file System.Transactions.dll attualmente caricato non supporta le transazioni globali. Eseguire l'aggiornamento a .NET Framework 4.6.2 o versione successiva.</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>L'esecuzione di batch di aggiornamenti non è supportata nella connessione contesto.</value>
@@ -4616,5 +4616,14 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Il parametro '{0}' non può includere Output o InputOutput come valore di Direction quando nel comando padre è abilitato EnableOptimizedParameterBinding.</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Timeout della connessione durante il recupero di un token di accesso tramite il metodo di autenticazione '{0}'. Ultimo errore: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>Nome principale dell'entità servizio (SPN) del partner di failover.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>Nome principale dell'entità servizio (SPN) del server.</value>
   </data>
 </root>

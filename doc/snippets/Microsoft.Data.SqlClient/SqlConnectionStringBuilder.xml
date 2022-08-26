@@ -410,18 +410,21 @@ If the value of the **Network** key is specified, the prefixes "tcp:" and "np:" 
             <value>The enclave attestation URL.</value>
         </EnclaveAttestationUrl>
         <Encrypt>
-            <summary>Gets or sets a Boolean value that indicates whether SQL Server uses SSL encryption for all data sent between the client and server if the server has a certificate installed.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property, or <see langword="true" /> if none has been supplied.</value>
+            <summary>Gets or sets a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> value since version 5.0 or a <see cref="T:System.Boolean" /> value for the earlier versions that indicates whether TLS encryption is required for all data sent between the client and server.</summary>
+            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property.</value>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
  This property corresponds to the "Encrypt" key within the connection string.  
   
-When `TrustServerCertificate` is false and `Encrypt` is true, the server name (or IP address) in a SQL Server SSL certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see [Enable encrypted connections to the Database Engine](/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements).  
+When `TrustServerCertificate` is false and `Encrypt` is <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A>, <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> or `true`, the server name (or IP address) in a server's TLS certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see [Enable encrypted connections to the Database Engine](/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements).  
 
 > [!NOTE]
-> Starting from **version 4.0**, the default value of the property `Encrypt` is set to `true`.
+> Starting from **version 4.0**, the default value of the property `Encrypt` is set to `true` while it is `false` for earlier versions.
+
+> [!NOTE]
+> Starting from **version 5.0**, the data type is updated to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption>, and the default value of the `Encrypt` property is set to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A>.
 
  ]]></format>
             </remarks>
@@ -459,6 +462,25 @@ If you specify a failover partner and the primary server is not configured for d
  ]]></format>
             </remarks>
         </FailoverPartner>
+        <FailoverPartnerSPN>
+          <summary>Gets or sets the service principal name (SPN) of the failover partner for the connection.</summary>
+          <value>
+            The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.FailoverPartnerSPN" /> property, or <see langword="String.Empty" /> if none has been supplied.
+          </value>
+          <remarks>
+            <format type="text/markdown">
+              <![CDATA[  
+
+## Remarks  
+This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN" keys within the connection string.  
+
+> [!NOTE]
+> This property only applies when using Integrated Security mode, otherwise it is ignored.
+
+ ]]>
+            </format>
+          </remarks>
+        </FailoverPartnerSPN>
         <GetProperties>
             <param name="propertyDescriptors">To be added.</param>
             <summary>To be added.</summary>
@@ -820,6 +842,25 @@ Database = AdventureWorks
  ]]></format>
             </remarks>
         </Replication>
+        <ServerSPN>
+            <summary>Gets or sets the service principal name (SPN) of the data source.</summary>
+            <value>
+              The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerSPN" /> property, or <see langword="String.Empty" /> if none has been supplied.
+            </value>
+            <remarks>
+              <format type="text/markdown">
+                <![CDATA[  
+
+## Remarks  
+This property corresponds to the "ServerSPN" and "Server SPN" keys within the connection string.  
+
+> [!NOTE]
+> This property only applies when using Integrated Security mode, otherwise it is ignored.
+
+ ]]>
+              </format>
+            </remarks>
+        </ServerSPN>
         <ShouldSerialize>
             <param name="keyword">The key to locate in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.</param>
             <summary>Indicates whether the specified key exists in this <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance.</summary>
@@ -898,7 +939,7 @@ Database = AdventureWorks
 ## Remarks  
  This property corresponds to the "Trust Server Certificate" and "TrustServerCertificate" keys within the connection string.  
 
- When `Trust Server Certificate` is set to `true`, the transport layer will use SSL to encrypt the channel and bypass walking the certificate chain to validate trust. If `Trust Server Certificate` is set to `true` and encryption is enforced by target server, the encryption level specified on the server will be used even if `Encrypt` is set to `false`. The connection will fail otherwise.
+ When `Trust Server Certificate` is set to `true`, the transport layer will use TLS to encrypt the channel and bypass walking the certificate chain to validate trust. If `Trust Server Certificate` is set to `true` and encryption is enforced by target server, the encryption level specified on the server will be used even if `Encrypt` is set to `false`. The connection will fail otherwise.
   
  For more information, see [Encryption Hierarchy](/sql/relational-databases/security/encryption/encryption-hierarchy) and [Using Encryption Without Validation](/sql/relational-databases/native-client/features/using-encryption-without-validation).
   

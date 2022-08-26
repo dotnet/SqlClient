@@ -2,7 +2,7 @@
 //<Snippet5>
 using System;
 using System.Data.SqlTypes;
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 
 [Serializable()]
 [SqlUserDefinedType(Format.Native)]
@@ -133,7 +133,7 @@ public struct Point : INullable
 
 //-----------------------------------------------------------------------------
 //<Snippet12>
-// using Microsoft.Data.SqlClient.Server;
+// using Microsoft.SqlServer.Server;
 
 [SqlUserDefinedType(Format.Native, MaxByteSize = 8000)]
 public class SampleType

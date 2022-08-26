@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -14,13 +14,13 @@ namespace Microsoft.Data.SqlClient
     sealed internal class SqlSequentialTextReader : System.IO.TextReader
     {
         private SqlDataReader _reader;  // The SqlDataReader that we are reading data from
-        private int _columnIndex;       // The index of out column in the table
-        private Encoding _encoding;     // Encoding for this character stream
-        private Decoder _decoder;       // Decoder based on the encoding (NOTE: Decoders are stateful as they are designed to process streams of data)
+        private readonly int _columnIndex;       // The index of out column in the table
+        private readonly Encoding _encoding;     // Encoding for this character stream
+        private readonly Decoder _decoder;       // Decoder based on the encoding (NOTE: Decoders are stateful as they are designed to process streams of data)
         private byte[] _leftOverBytes;  // Bytes leftover from the last Read() operation - this can be null if there were no bytes leftover (Possible optimization: re-use the same array?)
         private int _peekedChar;        // The last character that we peeked at (or -1 if we haven't peeked at anything)
         private Task _currentTask;      // The current async task
-        private CancellationTokenSource _disposalTokenSource;    // Used to indicate that a cancellation is requested due to disposal
+        private readonly CancellationTokenSource _disposalTokenSource;    // Used to indicate that a cancellation is requested due to disposal
 
         internal SqlSequentialTextReader(SqlDataReader reader, int columnIndex, Encoding encoding)
         {
@@ -38,10 +38,7 @@ namespace Microsoft.Data.SqlClient
             _disposalTokenSource = new CancellationTokenSource();
         }
 
-        internal int ColumnIndex
-        {
-            get { return _columnIndex; }
-        }
+        internal int ColumnIndex => _columnIndex;
 
         public override int Peek()
         {
@@ -122,7 +119,7 @@ namespace Microsoft.Data.SqlClient
                 _peekedChar = -1;
             }
 
-            // If we need more data and there is data avaiable, read
+            // If we need more data and there is data available, read
             charsRead += InternalRead(buffer, index + charsRead, charsNeeded);
 
             return charsRead;
@@ -131,7 +128,7 @@ namespace Microsoft.Data.SqlClient
         public override Task<int> ReadAsync(char[] buffer, int index, int count)
         {
             ValidateReadParameters(buffer, index, count);
-            TaskCompletionSource<int> completion = new TaskCompletionSource<int>();
+            TaskCompletionSource<int> completion = new();
 
             if (IsClosed)
             {
@@ -169,17 +166,15 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 
-                        int byteBufferUsed;
-                        byte[] byteBuffer = PrepareByteBuffer(charsNeeded, out byteBufferUsed);
+                        byte[] byteBuffer = PrepareByteBuffer(charsNeeded, out int byteBufferUsed);
 
                         // Permit a 0 byte read in order to advance the reader to the correct column
                         if ((byteBufferUsed < byteBuffer.Length) || (byteBuffer.Length == 0))
                         {
-                            int bytesRead;
-                            var reader = _reader;
+                            SqlDataReader reader = _reader;
                             if (reader != null)
                             {
-                                Task<int> getBytesTask = reader.GetBytesAsync(_columnIndex, byteBuffer, byteBufferUsed, byteBuffer.Length - byteBufferUsed, Timeout.Infinite, _disposalTokenSource.Token, out bytesRead);
+                                Task<int> getBytesTask = reader.GetBytesAsync(_columnIndex, byteBuffer, byteBufferUsed, byteBuffer.Length - byteBufferUsed, Timeout.Infinite, _disposalTokenSource.Token, out int bytesRead);
                                 if (getBytesTask == null)
                                 {
                                     byteBufferUsed += bytesRead;
@@ -295,7 +290,7 @@ namespace Microsoft.Data.SqlClient
             _peekedChar = -1;
 
             // Wait for pending task
-            var currentTask = _currentTask;
+            Task currentTask = _currentTask;
             if (currentTask != null)
             {
                 ((IAsyncResult)currentTask).AsyncWaitHandle.WaitOne();
@@ -318,8 +313,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                int byteBufferUsed;
-                byte[] byteBuffer = PrepareByteBuffer(count, out byteBufferUsed);
+                byte[] byteBuffer = PrepareByteBuffer(count, out int byteBufferUsed);
                 byteBufferUsed += _reader.GetBytesInternalSequential(_columnIndex, byteBuffer, byteBufferUsed, byteBuffer.Length - byteBufferUsed);
 
                 if (byteBufferUsed > 0)
@@ -353,7 +347,7 @@ namespace Microsoft.Data.SqlClient
 
             if (numberOfChars == 0)
             {
-                byteBuffer = new byte[0];
+                byteBuffer = Array.Empty<byte>();
                 byteBufferUsed = 0;
             }
             else
@@ -372,7 +366,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // Otherwise, copy over the leftover buffer
                         byteBuffer = new byte[byteBufferSize];
-                        Buffer.BlockCopy(_leftOverBytes, 0, byteBuffer, 0,_leftOverBytes.Length);
+                        Buffer.BlockCopy(_leftOverBytes, 0, byteBuffer, 0, _leftOverBytes.Length);
                         byteBufferUsed = _leftOverBytes.Length;
                     }
                 }
@@ -402,10 +396,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(outBuffer != null, "Null output buffer");
             Debug.Assert((outBufferOffset >= 0) && (outBufferCount > 0) && (outBufferOffset + outBufferCount <= outBuffer.Length), $"Bad outBufferCount: {outBufferCount} or outBufferOffset: {outBufferOffset}");
 
-            int charsRead;
-            int bytesUsed;
-            bool completed;
-            _decoder.Convert(inBuffer, 0, inBufferCount, outBuffer, outBufferOffset, outBufferCount, false, out bytesUsed, out charsRead, out completed);
+            _decoder.Convert(inBuffer, 0, inBufferCount, outBuffer, outBufferOffset, outBufferCount, false, out int bytesUsed, out int charsRead, out bool completed);
 
             // completed may be false and there is no spare bytes if the Decoder has stored bytes to use later
             if ((!completed) && (bytesUsed < inBufferCount))
@@ -435,15 +426,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// True if there is data left to read
-        /// </summary>
-        /// <returns></returns>
-        private bool IsDataLeft
-        {
-            get { return ((_leftOverBytes != null) || (_reader.ColumnDataBytesRemaining() > 0)); }
-        }
-
-        /// <summary>
         /// True if there is a peeked character available
         /// </summary>
         private bool HasPeekedChar
@@ -452,7 +434,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Checks the the parameters passed into a Read() method are valid
+        /// Checks the parameters passed into a Read() method are valid
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="index"></param>
@@ -488,7 +470,7 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class SqlUnicodeEncoding : UnicodeEncoding
     {
-        private static SqlUnicodeEncoding _singletonEncoding = new SqlUnicodeEncoding();
+        private static readonly SqlUnicodeEncoding s_singletonEncoding = new();
 
         private SqlUnicodeEncoding() : base(bigEndian: false, byteOrderMark: false, throwOnInvalidBytes: false)
         { }
@@ -506,7 +488,7 @@ namespace Microsoft.Data.SqlClient
 
         public static Encoding SqlUnicodeEncodingInstance
         {
-            get { return _singletonEncoding; }
+            get { return s_singletonEncoding; }
         }
 
         sealed private class SqlUnicodeDecoder : Decoder
@@ -520,10 +502,7 @@ namespace Microsoft.Data.SqlClient
             public override int GetChars(byte[] bytes, int byteIndex, int byteCount, char[] chars, int charIndex)
             {
                 // This method is required - simply call Convert()
-                int bytesUsed;
-                int charsUsed;
-                bool completed;
-                Convert(bytes, byteIndex, byteCount, chars, charIndex, chars.Length - charIndex, true, out bytesUsed, out charsUsed, out completed);
+                Convert(bytes, byteIndex, byteCount, chars, charIndex, chars.Length - charIndex, true, out int bytesUsed, out int charsUsed, out bool completed);
                 return charsUsed;
             }
 

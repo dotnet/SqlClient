@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (sqlEnclaveSession is null)
                     {
-                        throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
+                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
                     }
                 }
             }

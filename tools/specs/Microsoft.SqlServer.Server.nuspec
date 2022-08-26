@@ -36,7 +36,7 @@ Microsoft.SqlServer.Server.Format
   <files>
     <file src="..\icons\dotnet.png" target="" />
 
-    <!-- lib .NET Framework 4.6.1 -->
+    <!-- lib .NET Framework 4.6.2 -->
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.dll" target="lib\net46\" exclude="" />
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.pdb" target="lib\net46\" exclude="" />
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.xml" target="lib\net46\" exclude="" />

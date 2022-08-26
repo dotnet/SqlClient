@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
+                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
                     }
                 }
             }
@@ -213,7 +213,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception exception)
                 {
-                    throw new AlwaysEncryptedAttestationException(string.Format(Strings.FailToParseAttestationInfo, exception.Message));
+                    throw SQL.AttestationFailed(string.Format(Strings.FailToParseAttestationInfo, exception.Message));
                 }
             }
         }
@@ -275,7 +275,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
+                throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
             }
         }
 
@@ -311,7 +311,7 @@ namespace Microsoft.Data.SqlClient
 
             if (!isSignatureValid)
             {
-                throw new AlwaysEncryptedAttestationException(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+                throw SQL.AttestationFailed(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
             }
 
             // Validate claims in the token
@@ -347,7 +347,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception exception)
                 {
-                    throw new AlwaysEncryptedAttestationException(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
+                    throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
                 }
 
                 OpenIdConnectConfigurationCache.Add(url, openIdConnectConfig, DateTime.UtcNow.AddDays(1));
@@ -414,7 +414,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (SecurityTokenExpiredException securityException)
             {
-                throw new AlwaysEncryptedAttestationException(Strings.ExpiredAttestationToken, securityException);
+                throw SQL.AttestationFailed(Strings.ExpiredAttestationToken, securityException);
             }
             catch (SecurityTokenValidationException securityTokenException)
             {
@@ -426,7 +426,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception exception)
             {
-                throw new AlwaysEncryptedAttestationException(string.Format(Strings.InvalidAttestationToken, GetInnerMostExceptionMessage(exception)));
+                throw SQL.AttestationFailed(string.Format(Strings.InvalidAttestationToken, GetInnerMostExceptionMessage(exception)));
             }
 
             return isSignatureValid;
@@ -445,7 +445,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception argumentException)
             {
-                throw new AlwaysEncryptedAttestationException(Strings.InvalidArgumentToSHA256, argumentException);
+                throw SQL.AttestationFailed(Strings.InvalidArgumentToSHA256, argumentException);
             }
             return result;
         }
@@ -462,7 +462,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (ArgumentException argumentException)
             {
-                throw new AlwaysEncryptedAttestationException(string.Format(Strings.FailToParseAttestationToken, argumentException.Message));
+                throw SQL.AttestationFailed(string.Format(Strings.FailToParseAttestationToken, argumentException.Message));
             }
 
             // Get all the claims from the token
@@ -490,7 +490,7 @@ namespace Microsoft.Data.SqlClient
             bool hasClaim = claims.TryGetValue(claimName, out claimData);
             if (!hasClaim)
             {
-                throw new AlwaysEncryptedAttestationException(string.Format(Strings.MissingClaimInAttestationToken, claimName));
+                throw SQL.AttestationFailed(string.Format(Strings.MissingClaimInAttestationToken, claimName));
             }
 
             // Get the Base64Url of the actual data and compare it with claim
@@ -501,13 +501,13 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception)
             {
-                throw new AlwaysEncryptedAttestationException(Strings.InvalidArgumentToBase64UrlDecoder);
+                throw SQL.AttestationFailed(Strings.InvalidArgumentToBase64UrlDecoder);
             }
 
             bool hasValidClaim = string.Equals(encodedActualData, claimData, StringComparison.Ordinal);
             if (!hasValidClaim)
             {
-                throw new AlwaysEncryptedAttestationException(string.Format(Strings.InvalidClaimInAttestationToken, claimName, claimData));
+                throw SQL.AttestationFailed(string.Format(Strings.InvalidClaimInAttestationToken, claimName, claimData));
             }
         }
 

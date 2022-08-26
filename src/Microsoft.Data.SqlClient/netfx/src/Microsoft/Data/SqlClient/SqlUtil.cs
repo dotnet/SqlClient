@@ -130,13 +130,15 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
                                 RuntimeHelpers.PrepareConstrainedRegions();
-                                try {
+                                try
+                                {
                                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                                onSuccess();
+                                    onSuccess();
 #if DEBUG
                                 }
-                                finally {
+                                finally
+                                {
                                     tdsReliabilitySection.Stop();
                                 }
 #endif //DEBUG
@@ -322,7 +324,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                     }
-                }, 
+                },
                 state: state,
                 scheduler: TaskScheduler.Default
             );
@@ -676,6 +678,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_DeviceFlow_Authentication);
         }
 
+        internal static Exception ActiveDirectoryTokenRetrievingTimeout(string authenticaton, string errorCode, Exception exception)
+        {
+            return ADP.TimeoutException(StringsHelper.GetString(Strings.AAD_Token_Retrieving_Timeout, authenticaton, errorCode, exception?.Message), exception);
+        }
+
         //
         // SQL.DataCommand
         //
@@ -692,16 +699,17 @@ namespace Microsoft.Data.SqlClient
         static internal ArgumentOutOfRangeException NotSupportedCommandType(CommandType value)
         {
 #if DEBUG
-            switch(value) {
-            case CommandType.Text:
-            case CommandType.StoredProcedure:
-                Debug.Fail("valid CommandType " + value.ToString());
-                break;
-            case CommandType.TableDirect:
-                break;
-            default:
-                Debug.Fail("invalid CommandType " + value.ToString());
-                break;
+            switch (value)
+            {
+                case CommandType.Text:
+                case CommandType.StoredProcedure:
+                    Debug.Fail("valid CommandType " + value.ToString());
+                    break;
+                case CommandType.TableDirect:
+                    break;
+                default:
+                    Debug.Fail("invalid CommandType " + value.ToString());
+                    break;
             }
 #endif
             return NotSupportedEnumerationValue(typeof(CommandType), (int)value);
@@ -709,20 +717,21 @@ namespace Microsoft.Data.SqlClient
         static internal ArgumentOutOfRangeException NotSupportedIsolationLevel(IsolationLevel value)
         {
 #if DEBUG
-            switch(value) {
-            case IsolationLevel.Unspecified:
-            case IsolationLevel.ReadCommitted:
-            case IsolationLevel.ReadUncommitted:
-            case IsolationLevel.RepeatableRead:
-            case IsolationLevel.Serializable:
-            case IsolationLevel.Snapshot:
-                Debug.Fail("valid IsolationLevel " + value.ToString());
-                break;
-            case IsolationLevel.Chaos:
-                break;
-            default:
-                Debug.Fail("invalid IsolationLevel " + value.ToString());
-                break;
+            switch (value)
+            {
+                case IsolationLevel.Unspecified:
+                case IsolationLevel.ReadCommitted:
+                case IsolationLevel.ReadUncommitted:
+                case IsolationLevel.RepeatableRead:
+                case IsolationLevel.Serializable:
+                case IsolationLevel.Snapshot:
+                    Debug.Fail("valid IsolationLevel " + value.ToString());
+                    break;
+                case IsolationLevel.Chaos:
+                    break;
+                default:
+                    Debug.Fail("invalid IsolationLevel " + value.ToString());
+                    break;
             }
 #endif
             return NotSupportedEnumerationValue(typeof(IsolationLevel), (int)value);
@@ -1783,6 +1792,20 @@ namespace Microsoft.Data.SqlClient
         static internal Exception ColumnEncryptionKeysNotFound()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_ColumnEncryptionKeysNotFound));
+        }
+
+        internal static SqlException AttestationFailed(string errorMessage, Exception innerException = null)
+        {
+            SqlErrorCollection errors = new();
+            errors.Add(new SqlError(
+                infoNumber: 0,
+                errorState: 0,
+                errorClass: 0,
+                server: null,
+                errorMessage,
+                procedure: string.Empty,
+                lineNumber: 0));
+            return SqlException.CreateException(errors, serverVersion: string.Empty, Guid.Empty, innerException);
         }
 
         //

@@ -70,7 +70,7 @@ msbuild -t:BuildTestsNetCore
 
 ```bash
 msbuild -t:BuildTestsNetFx
-# Build the tests for the .NET Framework (NetFx) driver in 'Debug' Configuration. Default .NET Framework version is 4.6.1.
+# Build the tests for the .NET Framework (NetFx) driver in 'Debug' Configuration. Default .NET Framework version is 4.6.2.
 ```
 
 ```bash
@@ -281,7 +281,7 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 ```bash
 msbuild -t:BuildTestsNetFx -p:TargetNetFxVersion=net462
 # Build the tests for custom TargetFramework (.NET Framework)
-# Applicable values: net461 (Default) | net462 | net47 | net471  net472 | net48
+# Applicable values: net462 (Default) | net462 | net47 | net471  net472 | net48
 ```
 
 ```bash
@@ -295,7 +295,7 @@ msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=netcoreapp3.1
 ```bash
 dotnet test -p:TargetNetFxVersion=net462 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Framework)
-# Applicable values: net461 (Default) | net462 | net47 | net471  net472 | net48
+# Applicable values: net462 (Default) | net462 | net47 | net471  net472 | net48
 
 dotnet test -p:TargetNetCoreVersion=netcoreapp3.1 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)

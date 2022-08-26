@@ -5,7 +5,7 @@
 using System;
 using System.IO;
 using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -20,16 +20,16 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public static void SqlErrorSerializationTest()
         {
-            var formatter = new BinaryFormatter();
+            DataContractSerializer serializer = new DataContractSerializer(typeof(SqlError));
             SqlError expected = CreateError();
             SqlError actual = null;
             using (var stream = new MemoryStream())
             {
                 try
                 {
-                    formatter.Serialize(stream, expected);
+                    serializer.WriteObject(stream, expected);
                     stream.Position = 0;
-                    actual = (SqlError)formatter.Deserialize(stream);
+                    actual = (SqlError)serializer.ReadObject(stream);
                 }
                 catch (Exception ex)
                 {

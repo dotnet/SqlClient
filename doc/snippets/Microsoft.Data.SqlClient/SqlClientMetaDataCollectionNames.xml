@@ -60,5 +60,9 @@
             <summary>A constant for use with the **GetSchema** method that represents the **ColumnSetColumns** collection.</summary>
             <remarks>To be added.</remarks>
         </ColumnSetColumns>
+        <StructuredTypeMembers>
+            <summary>A constant for use with the **GetSchema** method that represents the **StructuredTypeMembers** collection.</summary>
+            <remarks>To be added.</remarks>
+        </StructuredTypeMembers>
     </members>
 </docs>

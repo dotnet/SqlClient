@@ -2872,7 +2872,7 @@
     <value>尚未为此 Azure SQL 数据库启用全局事务。若要获取帮助，请联系 Azure SQL 数据库支持人员。</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>当前加载的 System.Transactions.dll 不支持全局事务。请升级到 .NET Framework 4.6.1 或更高版本。</value>
+    <value>当前加载的 System.Transactions.dll 不支持全局事务。请升级到 .NET Framework 4.6.2 或更高版本。</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>在上下文连接上不支持批处理更新。</value>
@@ -4616,5 +4616,14 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>当在父命令上启用 EnableOptimizedParameterBinding 时，参数“{0}”不能具有 Direction Output 或 InputOutput。</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>使用“{0}”身份验证方法检索访问令牌时连接超时。最后一个错误: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>故障转移合作伙伴的服务主体名称(SPN)。</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>服务器的服务主体名称(SPN)。</value>
   </data>
 </root>
