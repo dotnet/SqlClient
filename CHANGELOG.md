@@ -278,7 +278,7 @@ This update brings the below changes over the previous release:
 ### Breaking Changes
 - Modified column encryption key store provider registrations to give built-in system providers precedence over providers registered on connection and command instances. [#1101](https://github.com/dotnet/SqlClient/pull/1101)
 
-## [Stable Release 2.1.5] - 2022-08-xx
+## [Stable Release 2.1.5] - 2022-08-30
 
 ### Fixed
 
