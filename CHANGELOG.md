@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 2.1.5] - 2022-08-30
+
+### Fixed
+
+- Added CommandText length validation when using stored procedure command types. [#1726](https://github.com/dotnet/SqlClient/pull/1726)
+- Fixed Kerberos authentication failure when using .NET 6. [#1727](https://github.com/dotnet/SqlClient/pull/1727)
+- Removed union overlay design and used reflection in `SqlTypeWorkarounds`. [#1729](https://github.com/dotnet/SqlClient/pull/1729)
+  
 ## [Stable Release 2.1.4] - 2021-09-20
 
 ### Fixed
