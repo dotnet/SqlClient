@@ -3,10 +3,13 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
@@ -21,8 +24,11 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="browserHostName">SQL Sever Browser hostname</param>
         /// <param name="instanceName">instance name to find port number</param>
+        /// <param name="timerExpire">Connection timer expiration</param>
+        /// <param name="allIPsInParallel">query all resolved IP addresses in parallel</param>
+        /// <param name="ipPreference">IP address preference</param>
         /// <returns>port number for given instance name</returns>
-        internal static int GetPortByInstanceName(string browserHostName, string instanceName)
+        internal static int GetPortByInstanceName(string browserHostName, string instanceName, long timerExpire, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(browserHostName), "browserHostName should not be null, empty, or whitespace");
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
@@ -32,7 +38,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 byte[] responsePacket = null;
                 try
                 {
-                    responsePacket = SendUDPRequest(browserHostName, SqlServerBrowserPort, instanceInfoRequest);
+                    responsePacket = SendUDPRequest(browserHostName, SqlServerBrowserPort, instanceInfoRequest, timerExpire, allIPsInParallel, ipPreference);
                 }
                 catch (SocketException se)
                 {
@@ -87,14 +93,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="browserHostName">SQL Sever Browser hostname</param>
         /// <param name="instanceName">instance name to lookup DAC port</param>
+        /// <param name="timerExpire">Connection timer expiration</param>
+        /// <param name="allIPsInParallel">query all resolved IP addresses in parallel</param>
+        /// <param name="ipPreference">IP address preference</param>
         /// <returns>DAC port for given instance name</returns>
-        internal static int GetDacPortByInstanceName(string browserHostName, string instanceName)
+        internal static int GetDacPortByInstanceName(string browserHostName, string instanceName, long timerExpire, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(browserHostName), "browserHostName should not be null, empty, or whitespace");
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
 
             byte[] dacPortInfoRequest = CreateDacPortInfoRequest(instanceName);
-            byte[] responsePacket = SendUDPRequest(browserHostName, SqlServerBrowserPort, dacPortInfoRequest);
+            byte[] responsePacket = SendUDPRequest(browserHostName, SqlServerBrowserPort, dacPortInfoRequest, timerExpire, allIPsInParallel, ipPreference);
 
             const byte SvrResp = 0x05;
             const byte ProtocolVersion = 0x01;
@@ -131,14 +140,23 @@ namespace Microsoft.Data.SqlClient.SNI
             return requestPacket;
         }
 
+        private class SsrpResult
+        {
+            public byte[] ResponsePacket;
+            public Exception Error;
+        }
+
         /// <summary>
         /// Sends request to server, and receives response from server by UDP.
         /// </summary>
         /// <param name="browserHostname">UDP server hostname</param>
         /// <param name="port">UDP server port</param>
         /// <param name="requestPacket">request packet</param>
+        /// <param name="timerExpire">Connection timer expiration</param>
+        /// <param name="allIPsInParallel">query all resolved IP addresses in parallel</param>
+        /// <param name="ipPreference">IP address preference</param>
         /// <returns>response packet from UDP server</returns>
-        private static byte[] SendUDPRequest(string browserHostname, int port, byte[] requestPacket)
+        private static byte[] SendUDPRequest(string browserHostname, int port, byte[] requestPacket, long timerExpire, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
         {
             using (TrySNIEventScope.Create(nameof(SSRP)))
             {
@@ -146,28 +164,174 @@ namespace Microsoft.Data.SqlClient.SNI
                 Debug.Assert(port >= 0 && port <= 65535, "Invalid port");
                 Debug.Assert(requestPacket != null && requestPacket.Length > 0, "requestPacket should not be null or 0-length array");
 
-                const int sendTimeOutMs = 1000;
-                const int receiveTimeOutMs = 1000;
+                bool isIpAddress = IPAddress.TryParse(browserHostname, out IPAddress address);
 
-                IPAddress address = null;
-                bool isIpAddress = IPAddress.TryParse(browserHostname, out address);
-
-                byte[] responsePacket = null;
-                using (UdpClient client = new UdpClient(!isIpAddress ? AddressFamily.InterNetwork : address.AddressFamily))
+                TimeSpan ts = default;
+                // In case the Timeout is Infinite, we will receive the max value of Int64 as the tick count
+                // The infinite Timeout is a function of ConnectionString Timeout=0
+                if (long.MaxValue != timerExpire)
                 {
-                    Task<int> sendTask = client.SendAsync(requestPacket, requestPacket.Length, browserHostname, port);
+                    ts = DateTime.FromFileTime(timerExpire) - DateTime.Now;
+                    ts = ts.Ticks < 0 ? TimeSpan.FromTicks(0) : ts;
+                }
+
+                IPAddress[] ipAddresses = null;
+                if (!isIpAddress)
+                {
+                    Task<IPAddress[]> serverAddrTask = Dns.GetHostAddressesAsync(browserHostname);
+                    bool taskComplete;
+                    try
+                    {
+                        taskComplete = serverAddrTask.Wait(ts);
+                    }
+                    catch (AggregateException ae)
+                    {
+                        throw ae.InnerException;
+                    }
+
+                    // If DNS took too long, need to return instead of blocking
+                    if (!taskComplete)
+                        return null;
+
+                    ipAddresses = serverAddrTask.Result;
+                }
+
+                Debug.Assert(ipAddresses.Length > 0, "DNS should throw if zero addresses resolve");
+
+                switch (ipPreference)
+                {
+                    case SqlConnectionIPAddressPreference.IPv4First:
+                        {
+                            SsrpResult response4 = SendUDPRequest(ipAddresses.Where(i => i.AddressFamily == AddressFamily.InterNetwork).ToArray(), port, requestPacket, allIPsInParallel);
+                            if (response4 != null && response4.ResponsePacket != null)
+                                return response4.ResponsePacket;
+
+                            SsrpResult response6 = SendUDPRequest(ipAddresses.Where(i => i.AddressFamily == AddressFamily.InterNetworkV6).ToArray(), port, requestPacket, allIPsInParallel);
+                            if (response6 != null && response6.ResponsePacket != null)
+                                return response6.ResponsePacket;
+
+                            // No responses so throw first error
+                            if (response4 != null && response4.Error != null)
+                                throw response4.Error;
+                            else if (response6 != null && response6.Error != null)
+                                throw response6.Error;
+
+                            break;
+                        }
+                    case SqlConnectionIPAddressPreference.IPv6First:
+                        {
+                            SsrpResult response6 = SendUDPRequest(ipAddresses.Where(i => i.AddressFamily == AddressFamily.InterNetworkV6).ToArray(), port, requestPacket, allIPsInParallel);
+                            if (response6 != null && response6.ResponsePacket != null)
+                                return response6.ResponsePacket;
+
+                            SsrpResult response4 = SendUDPRequest(ipAddresses.Where(i => i.AddressFamily == AddressFamily.InterNetwork).ToArray(), port, requestPacket, allIPsInParallel);
+                            if (response4 != null && response4.ResponsePacket != null)
+                                return response4.ResponsePacket;
+
+                            // No responses so throw first error
+                            if (response6 != null && response6.Error != null)
+                                throw response6.Error;
+                            else if (response4 != null && response4.Error != null)
+                                throw response4.Error;
+
+                            break;
+                        }
+                    default:
+                        {
+                            SsrpResult response = SendUDPRequest(ipAddresses, port, requestPacket, true); // allIPsInParallel);
+                            if (response != null && response.ResponsePacket != null)
+                                return response.ResponsePacket;
+                            else if (response != null && response.Error != null)
+                                throw response.Error;
+
+                            break;
+                        }
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Sends request to server, and receives response from server by UDP.
+        /// </summary>
+        /// <param name="ipAddresses">IP Addresses</param>
+        /// <param name="port">UDP server port</param>
+        /// <param name="requestPacket">request packet</param>
+        /// <param name="allIPsInParallel">query all resolved IP addresses in parallel</param>
+        /// <returns>response packet from UDP server</returns>
+        private static SsrpResult SendUDPRequest(IPAddress[] ipAddresses, int port, byte[] requestPacket, bool allIPsInParallel)
+        {
+            if (ipAddresses.Length == 0)
+                return null;
+
+            if (allIPsInParallel) // Used for MultiSubnetFailover
+            {
+                List<Task<SsrpResult>> tasks = new(ipAddresses.Length);
+                CancellationTokenSource cts = new CancellationTokenSource();
+                for (int i = 0; i < ipAddresses.Length; i++)
+                {
+                    IPEndPoint endPoint = new IPEndPoint(ipAddresses[i], port);
+                    tasks.Add(Task.Factory.StartNew<SsrpResult>(() => SendUDPRequest(endPoint, requestPacket)));
+                }
+
+                List<Task<SsrpResult>> completedTasks = new();
+                while (tasks.Count > 0)
+                {
+                    int first = Task.WaitAny(tasks.ToArray());
+                    if (tasks[first].Result.ResponsePacket != null)
+                    {
+                        cts.Cancel();
+                        return tasks[first].Result;
+                    }
+                    else
+                    {
+                        completedTasks.Add(tasks[first]);
+                        tasks.Remove(tasks[first]);
+                    }
+                }
+
+                Debug.Assert(completedTasks.Count > 0, "completedTasks should never be 0");
+
+                // All tasks failed. Return the error from the first failure.
+                return completedTasks[0].Result;
+            }
+            else
+            {
+                // If not parallel, use the first IP address provided
+                IPEndPoint endPoint = new IPEndPoint(ipAddresses[0], port);
+                return SendUDPRequest(endPoint, requestPacket);
+            }
+        }
+
+        private static SsrpResult SendUDPRequest(IPEndPoint endPoint, byte[] requestPacket)
+        {
+            const int sendTimeOutMs = 1000;
+            const int receiveTimeOutMs = 1000;
+
+            SsrpResult result = new();
+
+            try
+            {
+                using (UdpClient client = new UdpClient(endPoint.AddressFamily))
+                {
+                    Task<int> sendTask = client.SendAsync(requestPacket, requestPacket.Length, endPoint);
                     Task<UdpReceiveResult> receiveTask = null;
-                    
+
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Waiting for UDP Client to fetch Port info.");
                     if (sendTask.Wait(sendTimeOutMs) && (receiveTask = client.ReceiveAsync()).Wait(receiveTimeOutMs))
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received Port info from UDP Client.");
-                        responsePacket = receiveTask.Result.Buffer;
+                        result.ResponsePacket = receiveTask.Result.Buffer;
                     }
                 }
-
-                return responsePacket;
             }
+            catch (Exception e)
+            {
+                result.Error = e;
+            }
+
+            return result;
         }
     }
 }
