@@ -31,9 +31,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // TODO: Write tests using UTF8 collations
 
-        // skip creating databse on Azure
+        // skip creating database on Azure
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void UTF8databaseTest()
         {
