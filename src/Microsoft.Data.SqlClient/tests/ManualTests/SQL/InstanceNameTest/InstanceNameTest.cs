@@ -33,16 +33,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
                 connection.Close();
 
-                if (builder.Encrypt != SqlConnectionEncryptOption.Strict)
-                {
-                    // Exercise the IP address-specific code in SSRP
-                    IPAddress[] addresses = Dns.GetHostAddresses(hostname);
-                    builder.DataSource = builder.DataSource.Replace(hostname, addresses[0].ToString());
-                    builder.TrustServerCertificate = true;
-                    using SqlConnection connection2 = new(builder.ConnectionString);
-                    connection2.Open();
-                    connection2.Close();
-                }
+                // Exercise the IP address-specific code in SSRP
+                IPAddress[] addresses = Dns.GetHostAddresses(hostname);
+                builder.DataSource = builder.DataSource.Replace(hostname, addresses[0].ToString());
+                builder.TrustServerCertificate = true;
+                using SqlConnection connection2 = new(builder.ConnectionString);
+                connection2.Open();
+                connection2.Close();
             }
         }
 
