@@ -279,14 +279,7 @@ namespace Microsoft.Data.SqlClient.SNI
             Socket availableSocket = null;
             Task<Socket> connectTask;
 
-            Task<IPAddress[]> serverAddrTask = Dns.GetHostAddressesAsync(hostName);
-            bool complete = serverAddrTask.Wait(ts);
-
-            // DNS timed out - don't block
-            if (!complete)
-                return null;
-
-            IPAddress[] serverAddresses = serverAddrTask.Result;
+            IPAddress[] serverAddresses = SNICommon.GetDnsIpAddresses(hostName);
 
             if (serverAddresses.Length > MaxParallelIpAddresses)
             {
@@ -338,14 +331,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "IP preference : {0}", Enum.GetName(typeof(SqlConnectionIPAddressPreference), ipPreference));
 
-            Task<IPAddress[]> serverAddrTask = Dns.GetHostAddressesAsync(serverName);
-            bool complete = serverAddrTask.Wait(timeout);
-
-            // DNS timed out - don't block
-            if (!complete)
-                return null;
-
-            IPAddress[] ipAddresses = serverAddrTask.Result;
+            IPAddress[] ipAddresses = SNICommon.GetDnsIpAddresses(serverName);
 
             string IPv4String = null;
             string IPv6String = null;
