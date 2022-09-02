@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable release 3.1.1] - 2022-08-12
+
+### Fixed
+
+- Fixed null SqlBinary as rowversion. [#1700](https://github.com/dotnet/SqlClient/pull/1700)
+- Fixed Kerberos authentication failure when using .NET 6. [#1696](https://github.com/dotnet/SqlClient/pull/1696)
+- Fixed NullReferenceException during Azure Active Directory authentication. [#1695](https://github.com/dotnet/SqlClient/pull/1695)
+- Removed union overlay design and use reflection in `SqlTypeWorkarounds`. [#1699](https://github.com/dotnet/SqlClient/pull/1699)
+
+## [Stable release 3.1.0] - 2022-03-30
+
+### Added
+
+- Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1539](https://github.com/dotnet/SqlClient/pull/1539)
+- Included `42108` and `42109` error codes to retriable transient errors list. [#1560](https://github.com/dotnet/SqlClient/pull/1560)
+
+### Fixed
+
+- Changed EnclaveDelegate.Crypto GetEnclaveProvider to use a thread safe concurrent dictionary. [#1564](https://github.com/dotnet/SqlClient/pull/1564
+
 ## [Stable Release 3.0.1] - 2021-09-24
 
 ### Fixed
