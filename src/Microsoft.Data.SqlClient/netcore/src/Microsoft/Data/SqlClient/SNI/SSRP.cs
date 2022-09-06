@@ -170,7 +170,16 @@ namespace Microsoft.Data.SqlClient.SNI
                 Debug.Assert(port >= 0 && port <= 65535, "Invalid port");
                 Debug.Assert(requestPacket != null && requestPacket.Length > 0, "requestPacket should not be null or 0-length array");
 
-                bool isIpAddress = IPAddress.TryParse(browserHostname, out IPAddress address);
+                if (IPAddress.TryParse(browserHostname, out IPAddress address))
+                {
+                    SsrpResult response = SendUDPRequest(new IPAddress[] { address }, port, requestPacket, allIPsInParallel);
+                    if (response != null && response.ResponsePacket != null)
+                        return response.ResponsePacket;
+                    else if (response != null && response.Error != null)
+                        throw response.Error;
+                    else
+                        return null;
+                }
 
                 TimeSpan ts = default;
                 // In case the Timeout is Infinite, we will receive the max value of Int64 as the tick count
@@ -181,27 +190,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     ts = ts.Ticks < 0 ? TimeSpan.FromTicks(0) : ts;
                 }
 
-                IPAddress[] ipAddresses = null;
-                if (!isIpAddress)
-                {
-                    Task<IPAddress[]> serverAddrTask = Dns.GetHostAddressesAsync(browserHostname);
-                    bool taskComplete;
-                    try
-                    {
-                        taskComplete = serverAddrTask.Wait(ts);
-                    }
-                    catch (AggregateException ae)
-                    {
-                        throw ae.InnerException;
-                    }
-
-                    // If DNS took too long, need to return instead of blocking
-                    if (!taskComplete)
-                        return null;
-
-                    ipAddresses = serverAddrTask.Result;
-                }
-
+                IPAddress[] ipAddresses = SNICommon.GetDnsIpAddresses(browserHostname);
                 Debug.Assert(ipAddresses.Length > 0, "DNS should throw if zero addresses resolve");
 
                 switch (ipPreference)
@@ -278,7 +267,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 for (int i = 0; i < ipAddresses.Length; i++)
                 {
                     IPEndPoint endPoint = new IPEndPoint(ipAddresses[i], port);
-                    tasks.Add(Task.Factory.StartNew<SsrpResult>(() => SendUDPRequest(endPoint, requestPacket)));
+                    tasks.Add(Task.Factory.StartNew<SsrpResult>(() => SendUDPRequest(endPoint, requestPacket), cts.Token));
                 }
 
                 List<Task<SsrpResult>> completedTasks = new();

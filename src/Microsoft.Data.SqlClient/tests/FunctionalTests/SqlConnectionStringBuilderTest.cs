@@ -367,8 +367,21 @@ namespace Microsoft.Data.SqlClient.Tests
             builder.Encrypt = false;
             Assert.Equal("Encrypt=False", builder.ConnectionString);
             Assert.False(builder.Encrypt);
+            
             builder.Encrypt = true;
             Assert.Equal("Encrypt=True", builder.ConnectionString);
+            Assert.True(builder.Encrypt);
+
+            builder.Encrypt = SqlConnectionEncryptOption.Optional;
+            Assert.Equal("Encrypt=False", builder.ConnectionString);
+            Assert.False(builder.Encrypt);
+
+            builder.Encrypt = SqlConnectionEncryptOption.Mandatory;
+            Assert.Equal("Encrypt=True", builder.ConnectionString);
+            Assert.True(builder.Encrypt);
+
+            builder.Encrypt = SqlConnectionEncryptOption.Strict;
+            Assert.Equal("Encrypt=Strict", builder.ConnectionString);
             Assert.True(builder.Encrypt);
         }
 
