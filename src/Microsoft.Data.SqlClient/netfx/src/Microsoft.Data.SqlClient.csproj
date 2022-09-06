@@ -630,6 +630,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiRequestExecutor.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\sqlser.cs" />
+    <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netfx.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
   </ItemGroup>
   <!-- Resources  -->
