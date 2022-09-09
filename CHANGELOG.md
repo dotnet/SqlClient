@@ -123,7 +123,7 @@ This update brings the below changes over the previous release:
 
 ### Fixed
 
-- Fixed connection failure by skipping Certificate Revocation List (CRL) check during authentication. [#1718](https://github.com/dotnet/SqlClient/pull/1718)
+- Fixed connection failure by not requiring Certificate Revocation List (CRL) check during authentication. [#1718](https://github.com/dotnet/SqlClient/pull/1718)
 - Parallelize SSRP requests on Linux and macOS when MultiSubNetFailover is specified. [#1720](https://github.com/dotnet/SqlClient/pull/1720), [#1747](https://github.com/dotnet/SqlClient/pull/)
 - Added CommandText length validation when using stored procedure command types. [#1721](https://github.com/dotnet/SqlClient/pull/1721)
 - Fixed NullReferenceException during Azure Active Directory authentication. [#1722](https://github.com/dotnet/SqlClient/pull/1722)
