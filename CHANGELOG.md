@@ -132,7 +132,7 @@ This update brings the below changes over the previous release:
 
 ## Changed
 
-- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v4.0.1` [#1754](https://github.com/dotnet/SqlClient/pull/1754)
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v4.0.1` [#1754](https://github.com/dotnet/SqlClient/pull/1754), which includes the fix for AppDomain crash introducing in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418)
 - Various code improvements: [#1723](https://github.com/dotnet/SqlClient/pull/1723)
 
 ## [Stable release 4.0.1] - 2022-01-17
