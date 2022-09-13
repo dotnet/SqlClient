@@ -122,7 +122,7 @@ This update brings the below changes over the previous release:
 - Added CommandText length validation when using stored procedure command types. [#1709](https://github.com/dotnet/SqlClient/pull/1709)
 - Fixed NullReferenceException during Azure Active Directory authentication. [#1710](https://github.com/dotnet/SqlClient/pull/1710)
 - Fixed null SqlBinary as rowversion. [#1712](https://github.com/dotnet/SqlClient/pull/1712)
-- Fixed table's collation overriding with default UTF8 collation. [1749](https://github.com/dotnet/SqlClient/pull/1750)
+- Fixed table's collation overriding with default UTF8 collation. [#1749](https://github.com/dotnet/SqlClient/pull/1749)
 
 ## Changed
 
