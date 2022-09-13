@@ -113,7 +113,7 @@ This update brings the below changes over the previous release:
 - Sqlstream, SqlInternalTransaction and MetaDataUtilsSmi are moved to shared folder. [#1337](https://github.com/dotnet/SqlClient/pull/1337), [#1346](https://github.com/dotnet/SqlClient/pull/1346) and [#1339](https://github.com/dotnet/SqlClient/pull/1339)
 - Various code improvements: [#1197](https://github.com/dotnet/SqlClient/pull/1197), [#1313](https://github.com/dotnet/SqlClient/pull/1313),[#1330](https://github.com/dotnet/SqlClient/pull/1330),[#1366](https://github.com/dotnet/SqlClient/pull/1366), [#1435](https://github.com/dotnet/SqlClient/pull/1435),[#1478](https://github.com/dotnet/SqlClient/pull/1478)
 
-## [Stable release 4.1.1] - 2022-09-xx
+## [Stable release 4.1.1] - 2022-09-13
 
 ### Fixed
 
