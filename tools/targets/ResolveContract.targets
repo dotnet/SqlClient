@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
   <PropertyGroup Condition="'$(IsSourceProject)' == 'true'">
-    <ContractProject Condition="'$(ContractProject)' == ''">$(NetCoreSource)ref/$(MSBuildProjectName).csproj</ContractProject>
+    <ContractProject Condition="'$(ContractProject)' == ''">$(ManagedSourceCode)ref/$(MSBuildProjectName).csproj</ContractProject>
     <HasMatchingContract Condition="'$(HasMatchingContract)' == '' and Exists('$(ContractProject)')">true</HasMatchingContract>
     <ContractAssemblyPath Condition="'$(ContractAssemblyPath)' == ''">$(ContractOutputPath)/$(MSBuildProjectName).dll</ContractAssemblyPath>
   </PropertyGroup>
