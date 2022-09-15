@@ -3535,7 +3535,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)sniError);
                     AddError(_parser.ProcessSNIError(this));
-                    ThrowExceptionAndWarning(callerHasConnectionLock);
+                    ThrowExceptionAndWarning(callerHasConnectionLock, !sync);
                 }
                 AssertValidState();
             }
