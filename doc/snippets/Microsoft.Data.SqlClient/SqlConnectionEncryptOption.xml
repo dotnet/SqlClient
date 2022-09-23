@@ -18,9 +18,9 @@ Implicit conversions have been added to maintain backwards compatibility with bo
       </summary>
       <param name="value">A string containing the value to convert.</param>
       <returns>
-        An object that equivalent to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> contained in <paramref name="value"/>.
+        An object that is equivalent to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> contained in <paramref name="value"/>.
       </returns>
-      <exception cref="T:System.Exception">
+      <exception cref="T:System.ArgumentException">
         Throws exception if provided <paramref name="value"/> is not convertible to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> type.
       </exception>
     </Parse>
@@ -30,7 +30,7 @@ Implicit conversions have been added to maintain backwards compatibility with bo
       </summary>
       <param name="value">A string containing the value to convert.</param>
       <param name="result">
-        An object that equivalent to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> contained in <paramref name="value"/>. <see langword="null" /> if conversion fails.
+        An object that is equivalent to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> contained in <paramref name="value"/>. <see langword="null" /> if conversion fails.
       </param>
       <returns>
         <see langword="true" /> if the <paramref name="value"/> parameter was converted successfully; otherwise, <see langword="false" />.
