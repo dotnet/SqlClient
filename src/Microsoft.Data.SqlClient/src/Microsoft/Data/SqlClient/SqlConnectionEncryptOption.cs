@@ -33,41 +33,43 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Parse/*' />
         public static SqlConnectionEncryptOption Parse(string value)
         {
-            switch (value?.ToLower())
+            if (TryParse(value, out var result))
             {
-                case TRUE_LOWER:
-                case YES_LOWER:
-                case MANDATORY_LOWER:
-                    {
-                        return Mandatory;
-                    }
-                case FALSE_LOWER:
-                case NO_LOWER:
-                case OPTIONAL_LOWER:
-                    {
-                        return Optional;
-                    }
-                case STRICT_LOWER:
-                    {
-                        return Strict;
-                    }
-                default:
-                    throw ADP.InvalidConnectionOptionValue(SqlConnectionString.KEY.Encrypt);
+                return result;
+            }
+            else
+            {
+                throw ADP.InvalidConnectionOptionValue(SqlConnectionString.KEY.Encrypt);
             }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/TryParse/*' />
         public static bool TryParse(string value, out SqlConnectionEncryptOption result)
         {
-            result = null;
-            try
+            switch (value?.ToLower())
             {
-                result = Parse(value);
-                return true;
-            }
-            catch
-            {
-                return false;
+                case TRUE_LOWER:
+                case YES_LOWER:
+                case MANDATORY_LOWER:
+                    {
+                        result = Mandatory;
+                        return true;
+                    }
+                case FALSE_LOWER:
+                case NO_LOWER:
+                case OPTIONAL_LOWER:
+                    {
+                        result = Optional;
+                        return true;
+                    }
+                case STRICT_LOWER:
+                    {
+                        result = Strict;
+                        return true;
+                    }
+                default:
+                    result = null;
+                    return false;
             }
         }
 
