@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -29,9 +30,10 @@ namespace Microsoft.Data.SqlClient
             _value = value;
         }
 
-        internal static SqlConnectionEncryptOption Parse(string value)
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Parse/*' />
+        public static SqlConnectionEncryptOption Parse(string value)
         {
-            switch (value.ToLower())
+            switch (value?.ToLower())
             {
                 case TRUE_LOWER:
                 case YES_LOWER:
@@ -51,6 +53,21 @@ namespace Microsoft.Data.SqlClient
                     }
                 default:
                     throw ADP.InvalidConnectionOptionValue(SqlConnectionString.KEY.Encrypt);
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/TryParse/*' />
+        public static bool TryParse(string value, out SqlConnectionEncryptOption result)
+        {
+            result = null;
+            try
+            {
+                result = Parse(value);
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
 

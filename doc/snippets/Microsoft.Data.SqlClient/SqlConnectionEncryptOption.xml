@@ -12,6 +12,31 @@ Implicit conversions have been added to maintain backwards compatibility with bo
  ]]></format>
       </remarks>
     </SqlConnectionEncryptOption>
+    <Parse>
+      <summary>
+        Converts the specified string representation of a logical value to its <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> equivalent.
+      </summary>
+      <param name="value">A string containing the value to convert.</param>
+      <returns>
+        An object that equivalent to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> contained in <paramref name="value"/>.
+      </returns>
+      <exception cref="T:System.Exception">
+        Throws exception if provided <paramref name="value"/> is not convertible to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> type.
+      </exception>
+    </Parse>
+    <TryParse>
+      <summary>
+        Converts the specified string representation of a logical value to its <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> equivalent and returns a value that indicates whether the conversion succeeded.
+      </summary>
+      <param name="value">A string containing the value to convert.</param>
+      <param name="result">
+        An object that equivalent to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> contained in <paramref name="value"/>. <see langword="null" /> if conversion fails.
+      </param>
+      <returns>
+        <see langword="true" /> if the <paramref name="value"/> parameter was converted successfully; otherwise, <see langword="false" />.
+      </returns>
+      <remarks>This method does not throw an exception if conversion fails.</remarks>
+    </TryParse>
     <Optional>
       <summary>Specifies that TLS encryption is optional when connecting to the server. If the server requires encryption, encryption will be negotiated.</summary>
     </Optional>
