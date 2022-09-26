@@ -924,7 +924,7 @@ namespace Microsoft.Data.SqlClient
     public sealed class SqlConnectionEncryptOption
     {
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Parse/*' />
-        public static SqlConnectionEncryptOption Parse(string value) => null;
+        public static SqlConnectionEncryptOption Parse(string value) => throw null;
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/TryParse/*' />
         public static bool TryParse(string value, out SqlConnectionEncryptOption result) => throw null;

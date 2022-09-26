@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Parse/*' />
         public static SqlConnectionEncryptOption Parse(string value)
         {
-            if (TryParse(value, out var result))
+            if (TryParse(value, out SqlConnectionEncryptOption result))
             {
                 return result;
             }
