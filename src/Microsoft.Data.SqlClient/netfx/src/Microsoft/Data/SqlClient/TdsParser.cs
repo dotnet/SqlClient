@@ -510,6 +510,8 @@ namespace Microsoft.Data.SqlClient
             SqlAuthenticationMethod authType = connectionOptions.Authentication;
             string certificate = connectionOptions.Certificate;
             string hostNameInCertificate = connectionOptions.HostNameInCertificate;
+            // TODO: FIXME do something with the server certificate?
+            string serverCert = connectionOptions.ServerCertificate;
 
             if (_state != TdsParserState.Closed)
             {
@@ -695,6 +697,8 @@ namespace Microsoft.Data.SqlClient
 
             // UNDONE - send "" for instance now, need to fix later
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
+
+            // TODO: FIXME should we add the server certificate here and pass it in as one of the parameters or intro a new param?? 
             SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, !string.IsNullOrEmpty(certificate),
                 useOriginalAddressInfo, serverCallback, clientCallback);
 

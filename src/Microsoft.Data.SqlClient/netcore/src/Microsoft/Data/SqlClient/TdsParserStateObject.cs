@@ -801,7 +801,8 @@ namespace Microsoft.Data.SqlClient
             string serverSPN,
             bool isIntegratedSecurity = false,
             bool tlsFirst = false,
-            string hostNameInCertificate = "");
+            string hostNameInCertificate = "",
+            string serverCert = "");
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 
@@ -813,7 +814,7 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract void FreeGcHandle(int remaining, bool release);
 
-        internal abstract uint EnableSsl(ref uint info, bool tlsFirst);
+        internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCert);
 
         internal abstract uint WaitForSSLHandShakeToComplete(out int protocolVersion);
 

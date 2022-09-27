@@ -963,6 +963,7 @@ namespace Microsoft.Data.Common
         internal const string DataSource = "";
         internal static readonly SqlConnectionEncryptOption Encrypt = SqlConnectionEncryptOption.Mandatory;
         internal const string HostNameInCertificate = "";
+        internal const string ServerCertificate = "";
         internal const bool Enlist = true;
         internal const string FailoverPartner = "";
         internal const string InitialCatalog = "";
@@ -1028,6 +1029,7 @@ namespace Microsoft.Data.Common
         internal const string CurrentLanguage = "Current Language";
         internal const string Encrypt = "Encrypt";
         internal const string HostNameInCertificate = "Host Name In Certificate";
+        internal const string ServerCertificate = "Server Certificate";
         internal const string FailoverPartner = "Failover Partner";
         internal const string InitialCatalog = "Initial Catalog";
         internal const string MultipleActiveResultSets = "Multiple Active Result Sets";
@@ -1087,6 +1089,9 @@ namespace Microsoft.Data.Common
 
         // internal const string HostNameInCertificate        = HOSTNAMEINCERTIFICATE;
         internal const string HOSTNAMEINCERTIFICATE = "hostnameincertificate";
+
+        // internal const string ServerCertificate        = SERVERCERTIFICATE;
+        internal const string SERVERCERTIFICATE = "servercertificate";
 
         //internal const string ConnectTimeout         = CONNECTIONTIMEOUT+","+TIMEOUT;
         internal const string CONNECTIONTIMEOUT = "connection timeout";

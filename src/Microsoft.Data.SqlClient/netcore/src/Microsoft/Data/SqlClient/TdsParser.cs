@@ -369,6 +369,7 @@ namespace Microsoft.Data.SqlClient
             bool integratedSecurity = connectionOptions.IntegratedSecurity;
             SqlAuthenticationMethod authType = connectionOptions.Authentication;
             string hostNameInCertificate = connectionOptions.HostNameInCertificate;
+            string serverCert = connectionOptions.ServerCertificate;
 
             if (_state != TdsParserState.Closed)
             {
@@ -442,7 +443,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer,
                 false, true, fParallel, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject, serverInfo.ServerSPN,
                 integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated, encrypt == SqlConnectionEncryptOption.Strict,
-                hostNameInCertificate);
+                hostNameInCertificate, serverCert);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -501,7 +502,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
-            SendPreLoginHandshake(instanceName, encrypt, integratedSecurity);
+            SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCert);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
@@ -509,7 +510,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.SniContext = SniContext.Snix_PreLogin;
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Consuming prelogin handshake");
             PreLoginHandshakeStatus status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable,
-                out _connHandler._fedAuthRequired, encrypt == SqlConnectionEncryptOption.Strict);
+                out _connHandler._fedAuthRequired, encrypt == SqlConnectionEncryptOption.Strict, serverCert);
 
             if (status == PreLoginHandshakeStatus.InstanceFailure)
             {
@@ -540,9 +541,9 @@ namespace Microsoft.Data.SqlClient
                     _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
                 }
 
-                SendPreLoginHandshake(instanceName, encrypt, integratedSecurity);
+                SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCert);
                 status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired,
-                    encrypt == SqlConnectionEncryptOption.Strict);
+                    encrypt == SqlConnectionEncryptOption.Strict, serverCert);
 
                 // Don't need to check for 7.0 failure, since we've already consumed
                 // one pre-login packet and know we are connecting to 2000.
@@ -661,14 +662,15 @@ namespace Microsoft.Data.SqlClient
         private void SendPreLoginHandshake(
             byte[] instanceName,
             SqlConnectionEncryptOption encrypt,
-            bool integratedSecurity)
+            bool integratedSecurity,
+            string serverCert)
         {
             if (encrypt == SqlConnectionEncryptOption.Strict)
             {
                 //Always validate the certificate when in strict encryption mode
                 uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
 
-                EnableSsl(info, encrypt, integratedSecurity);
+                EnableSsl(info, encrypt, integratedSecurity, serverCert);
 
                 // Since encryption has already been negotiated, we need to set encryption not supported in
                 // prelogin so that we don't try to negotiate encryption again during ConsumePreLoginHandshake.
@@ -829,7 +831,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
         }
 
-        private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity)
+        private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCert)
         {
             uint error = 0;
 
@@ -841,7 +843,7 @@ namespace Microsoft.Data.SqlClient
                 info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
             }
 
-            error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict);
+            error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCert);
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
@@ -878,7 +880,8 @@ namespace Microsoft.Data.SqlClient
             bool integratedSecurity,
             out bool marsCapable,
             out bool fedAuthRequired,
-            bool tlsFirst)
+            bool tlsFirst,
+            string serverCert)
         {
             marsCapable = _fMARS; // Assign default value
             fedAuthRequired = false;
@@ -1010,7 +1013,7 @@ namespace Microsoft.Data.SqlClient
                             uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                                 | (is2005OrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
 
-                            EnableSsl(info, encrypt, integratedSecurity);
+                            EnableSsl(info, encrypt, integratedSecurity, serverCert);
                         }
 
                         break;

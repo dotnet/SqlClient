@@ -27,6 +27,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly Socket _socket;
         private NetworkStream _tcpStream;
         private readonly string _hostNameInCertificate;
+        private readonly string _serverCertificate;
         private readonly bool _tlsFirst;
 
         private Stream _stream;
@@ -121,7 +122,8 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="cachedFQDN">Key for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <param name="tlsFirst">Support TDS8.0</param>
-        /// <param name="hostNameInCertificate">Host Name in Certoficate</param>
+        /// <param name="hostNameInCertificate">Host Name in Certificate</param>
+        /// <param name="serverCert">Used for the path to the Server Certificate</param>
         public SNITCPHandle(
             string serverName,
             int port,
@@ -131,7 +133,8 @@ namespace Microsoft.Data.SqlClient.SNI
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             bool tlsFirst,
-            string hostNameInCertificate)
+            string hostNameInCertificate,
+            string serverCert)
         {
             using (TrySNIEventScope.Create(nameof(SNITCPHandle)))
             {
@@ -140,6 +143,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _targetServer = serverName;
                 _tlsFirst = tlsFirst;
                 _hostNameInCertificate = hostNameInCertificate;
+                _serverCertificate = serverCert;
                 _sendSync = new object();
 
                 SQLDNSInfo cachedDNSInfo;
@@ -660,6 +664,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: _connectionId);
                 return true;
             }
+            
             string serverNameToValidate;
             if (!string.IsNullOrEmpty(_hostNameInCertificate))
             {
@@ -668,6 +673,25 @@ namespace Microsoft.Data.SqlClient.SNI
             else
             {
                 serverNameToValidate = _targetServer;
+            }
+
+            // TODO: check if this callback is correct.
+            // TODO: if we have the serverCert specified should we use that for validation instead of the one from this callback
+            // or is there another location where the serverCert should be checked?
+            if (!string.IsNullOrEmpty(_serverCertificate))
+            {
+                X509Certificate serverCert = null;
+                try
+                {
+                    // TODO: should we check if exists first since it may be a bad path, so we should fall back to use the default cert.
+                    // if this is not a valid cert, we skip and fallback to the original cert coming back from the callback
+                    serverCert = new X509Certificate(_serverCertificate);
+                    return SNICommon.ValidateSslServerCertificate(serverNameToValidate, serverCert, policyErrors);
+                }
+                catch (Exception e)
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, IOException occurred: {1}", args0: _connectionId, args1: e.Message);
+                }
             }
 
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: _connectionId);
