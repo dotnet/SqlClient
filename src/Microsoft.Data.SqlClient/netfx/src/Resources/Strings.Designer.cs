@@ -5560,6 +5560,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider..
+        /// </summary>
+        internal static string DbConnectionString_AsynchronousProcessing {
+            get {
+                return ResourceManager.GetString("DbConnectionString_AsynchronousProcessing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The name of the primary file, including the full path name, of an attachable database..
         /// </summary>
         internal static string DbConnectionString_AttachDBFilename {
@@ -5722,6 +5731,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The hostname to be expected in the server&apos;s certificate when encryption is negotiated, if it&apos;s different from the default value derived from Addr/Address/Server..
+        /// </summary>
+        internal static string DbConnectionString_HostNameInCertificate {
+            get {
+                return ResourceManager.GetString("DbConnectionString_HostNameInCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The name of the initial catalog or database in the data source..
         /// </summary>
         internal static string DbConnectionString_InitialCatalog {
@@ -5862,6 +5880,15 @@ namespace System {
         internal static string DbConnectionString_Replication {
             get {
                 return ResourceManager.GetString("DbConnectionString_Replication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The path to a certificate file to match against the SQL Server TLS/SSL certificate..
+        /// </summary>
+        internal static string DbConnectionString_ServerCertificate {
+            get {
+                return ResourceManager.GetString("DbConnectionString_ServerCertificate", resourceCulture);
             }
         }
         
@@ -8884,6 +8911,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This command requires an asynchronous connection. Set &quot;Asynchronous Processing=true&quot; in the connection string..
+        /// </summary>
+        internal static string SQL_AsyncConnectionRequired {
+            get {
+                return ResourceManager.GetString("SQL_AsyncConnectionRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The asynchronous operation has already completed..
         /// </summary>
         internal static string SQL_AsyncOperationCompleted {
@@ -9685,7 +9721,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error code 0x{0}..
+        ///   Looks up a localized string similar to Error code 0x{0}.
         /// </summary>
         internal static string SQL_MSALInnerException {
             get {
@@ -10563,6 +10599,15 @@ namespace System {
         internal static string SqlConnection_AccessToken {
             get {
                 return ResourceManager.GetString("SqlConnection_AccessToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to State of connection, synchronous or asynchronous.  &apos;Asynchronous Processing=x&apos; in the connection string..
+        /// </summary>
+        internal static string SqlConnection_Asynchronous {
+            get {
+                return ResourceManager.GetString("SqlConnection_Asynchronous", resourceCulture);
             }
         }
         
