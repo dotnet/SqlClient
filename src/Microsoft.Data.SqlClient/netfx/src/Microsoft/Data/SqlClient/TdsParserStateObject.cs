@@ -857,7 +857,6 @@ namespace Microsoft.Data.SqlClient
             int totalTimeout,
             SqlConnectionIPAddressPreference ipPreference,
             string cachedFQDN,
-            bool tlsFirst = false,
             string hostNameInCertificate = "")
         {
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
@@ -888,7 +887,7 @@ namespace Microsoft.Data.SqlClient
 
             _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout),
                 out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
-                ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate);
+                ipPreference, cachedDNSInfo, hostNameInCertificate);
         }
 
         internal bool Deactivate()
