@@ -230,9 +230,9 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
-        internal const int SynonymCount = 32;
+        internal const int SynonymCount = 33;
 #else
-        internal const int SynonymCount = 29;
+        internal const int SynonymCount = 30;
         internal const int DeprecatedSynonymCount = 2;
 #endif // NETFRAMEWORK
 
