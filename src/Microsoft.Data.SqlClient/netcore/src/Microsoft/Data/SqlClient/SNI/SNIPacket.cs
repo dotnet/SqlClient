@@ -6,7 +6,6 @@
 
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -19,14 +18,14 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal sealed class SNIPacket
     {
+        private static readonly Action<Task<int>, object> s_readCallback = ReadFromStreamAsyncContinuation;
         private int _dataLength; // the length of the data in the data segment, advanced by Append-ing data, does not include smux header length
         private int _dataCapacity; // the total capacity requested, if the array is rented this may be less than the _data.Length, does not include smux header length
         private int _dataOffset; // the start point of the data in the data segment, advanced by Take-ing data
         private int _headerLength; // the amount of space at the start of the array reserved for the smux header, this is zeroed in SetHeader
                                    // _headerOffset is not needed because it is always 0
         private byte[] _data;
-        private SNIAsyncCallback _completionCallback;
-        private readonly Action<Task<int>, object> _readCallback;
+        private SNIAsyncCallback _asyncIOCompletionCallback;
 #if DEBUG
         internal readonly int _id;  // in debug mode every packet is assigned a unique id so that the entire lifetime can be tracked when debugging
         /// refcount = 0 means that a packet should only exist in the pool
@@ -85,7 +84,6 @@ namespace Microsoft.Data.SqlClient.SNI
 #endif
         public SNIPacket()
         {
-            _readCallback = ReadFromStreamAsyncContinuation;
         }
 
         /// <summary>
@@ -110,25 +108,19 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public int ReservedHeaderSize => _headerLength;
 
-        public bool HasCompletionCallback => !(_completionCallback is null);
+        public bool HasAsyncIOCompletionCallback => _asyncIOCompletionCallback is not null;
 
         /// <summary>
-        /// Set async completion callback
+        /// Set async receive callback
         /// </summary>
-        /// <param name="completionCallback">Completion callback</param>
-        public void SetCompletionCallback(SNIAsyncCallback completionCallback)
-        {
-            _completionCallback = completionCallback;
-        }
+        /// <param name="asyncIOCompletionCallback">Completion callback</param>
+        public void SetAsyncIOCompletionCallback(SNIAsyncCallback asyncIOCompletionCallback) => _asyncIOCompletionCallback = asyncIOCompletionCallback;
 
         /// <summary>
-        /// Invoke the completion callback
+        /// Invoke the receive callback
         /// </summary>
         /// <param name="sniErrorCode">SNI error</param>
-        public void InvokeCompletionCallback(uint sniErrorCode)
-        {
-            _completionCallback(this, sniErrorCode);
-        }
+        public void InvokeAsyncIOCompletionCallback(uint sniErrorCode) => _asyncIOCompletionCallback(this, sniErrorCode);
 
         /// <summary>
         /// Allocate space for data
@@ -253,7 +245,7 @@ namespace Microsoft.Data.SqlClient.SNI
             _dataLength = 0;
             _dataOffset = 0;
             _headerLength = 0;
-            _completionCallback = null;
+            _asyncIOCompletionCallback = null;
             IsOutOfBand = false;
         }
 
@@ -273,49 +265,48 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Read data from a stream asynchronously
         /// </summary>
         /// <param name="stream">Stream to read from</param>
-        /// <param name="callback">Completion callback</param>
-        public void ReadFromStreamAsync(Stream stream, SNIAsyncCallback callback)
+        public void ReadFromStreamAsync(Stream stream)
         {
             stream.ReadAsync(_data, 0, _dataCapacity, CancellationToken.None)
                 .ContinueWith(
-                    continuationAction: _readCallback,
-                    state: callback,
+                    continuationAction: s_readCallback,
+                    state: this,
                     CancellationToken.None,
                     TaskContinuationOptions.DenyChildAttach,
                     TaskScheduler.Default
                 );
         }
 
-        private void ReadFromStreamAsyncContinuation(Task<int> t, object state)
+        private static void ReadFromStreamAsyncContinuation(Task<int> task, object state)
         {
-            SNIAsyncCallback callback = (SNIAsyncCallback)state;
+            SNIPacket packet = (SNIPacket)state;
             bool error = false;
-            Exception e = t.Exception?.InnerException;
+            Exception e = task.Exception?.InnerException;
             if (e != null)
             {
                 SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, SNICommon.InternalExceptionError, e);
 #if DEBUG
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.ERR, "Connection Id {0}, Internal Exception occurred while reading data: {1}", args0: _owner?.ConnectionId, args1: e?.Message);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.ERR, "Connection Id {0}, Internal Exception occurred while reading data: {1}", args0: packet._owner?.ConnectionId, args1: e?.Message);
 #endif
                 error = true;
             }
             else
             {
-                _dataLength = t.Result;
+                packet._dataLength = task.Result;
 #if DEBUG
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} read from stream.", args0: _owner?.ConnectionId, args1: _id, args2: _dataLength);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} read from stream.", args0: packet._owner?.ConnectionId, args1: packet._id, args2: packet._dataLength);
 #endif
-                if (_dataLength == 0)
+                if (packet._dataLength == 0)
                 {
                     SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.ConnTerminatedError, Strings.SNI_ERROR_2);
 #if DEBUG
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.ERR, "Connection Id {0}, No data read from stream, connection was terminated.", args0: _owner?.ConnectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.ERR, "Connection Id {0}, No data read from stream, connection was terminated.", args0: packet._owner?.ConnectionId);
 #endif
                     error = true;
                 }
             }
 
-            callback(this, error ? TdsEnums.SNI_ERROR : TdsEnums.SNI_SUCCESS);
+            packet.InvokeAsyncIOCompletionCallback(error ? TdsEnums.SNI_ERROR : TdsEnums.SNI_SUCCESS);
         }
 
         /// <summary>

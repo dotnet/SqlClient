@@ -3,7 +3,12 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
+using System.Net.Security;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -13,14 +18,38 @@ namespace Microsoft.Data.SqlClient.SNI
     internal abstract class SNIHandle
     {
         /// <summary>
-        /// Exclude TLS 1.3 (not fully supported).
+        /// Exclude TLS 1.3 in TLS-over-TDS modes (TDS 7.4 and below)
         /// </summary>
-        protected readonly SslProtocols SupportedProtocols = LocalAppContextSwitches.UseSystemDefaultSecureProtocols ? SslProtocols.None : SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
+        protected static readonly SslProtocols s_supportedProtocols = LocalAppContextSwitches.UseSystemDefaultSecureProtocols ? SslProtocols.None : SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
         //protected readonly SslProtocols SupportedProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
 #pragma warning disable CS0618 // Type or member is obsolete
             | SslProtocols.Ssl2 | SslProtocols.Ssl3
 #pragma warning restore CS0618 // Type or member is obsolete
             ;
+
+#if !NETSTANDARD2_0
+        protected static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
+
+        protected static async Task AuthenticateAsClientAsync(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate, CancellationToken token)
+        {
+            SslClientAuthenticationOptions sslClientOptions = new()
+            {
+                TargetHost = serverNameIndication,
+                ApplicationProtocols = s_tdsProtocols,
+                ClientCertificates = certificate
+            };
+            await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
+        }
+#endif
+
+        protected static void AuthenticateAsClient(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate)
+        {
+#if !NETSTANDARD2_0
+            AuthenticateAsClientAsync(sslStream, serverNameIndication, certificate, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+#else
+	            throw new NotSupportedException(Strings.SQL_TDS8_NotSupported_Netstandard2_0);
+#endif
+        }
 
         /// <summary>
         /// Dispose class
@@ -51,9 +80,8 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Send a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
-        /// <param name="callback">Completion callback</param>
         /// <returns>SNI error code</returns>
-        public abstract uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null);
+        public abstract uint SendAsync(SNIPacket packet);
 
         /// <summary>
         /// Receive a packet synchronously

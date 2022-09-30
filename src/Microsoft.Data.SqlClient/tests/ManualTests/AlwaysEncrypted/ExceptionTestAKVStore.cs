@@ -218,22 +218,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Buffer.BlockCopy(cmkSignature, 0, tamperedCmkSignature, 0, tamperedCmkSignature.Length);
 
             // Corrupt one byte at a time 10 times
-            RandomNumberGenerator rng = RandomNumberGenerator.Create();
-            byte[] randomIndexInCipherText = new byte[1];
-            for (int i = 0; i < 10; i++)
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
             {
-                Assert.True(fixture.AkvStoreProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, allowEnclaveComputations: fEnclaveEnabled, signature: tamperedCmkSignature), @"tamperedCmkSignature before tampering should be verified without any problems.");
+                byte[] randomIndexInCipherText = new byte[1];
+                for (int i = 0; i < 10; i++)
+                {
+                    Assert.True(fixture.AkvStoreProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, allowEnclaveComputations: fEnclaveEnabled, signature: tamperedCmkSignature), @"tamperedCmkSignature before tampering should be verified without any problems.");
 
-                int startingByteIndex = 0;
-                rng.GetBytes(randomIndexInCipherText);
+                    int startingByteIndex = 0;
+                    rng.GetBytes(randomIndexInCipherText);
 
-                tamperedCmkSignature[startingByteIndex + randomIndexInCipherText[0]] = (byte)(cmkSignature[startingByteIndex + randomIndexInCipherText[0]] + 1);
+                    tamperedCmkSignature[startingByteIndex + randomIndexInCipherText[0]] = (byte)(cmkSignature[startingByteIndex + randomIndexInCipherText[0]] + 1);
 
-                // Expect failed verification for invalid signature bytes
-                Assert.False(fixture.AkvStoreProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, allowEnclaveComputations: fEnclaveEnabled, signature: tamperedCmkSignature));
+                    // Expect failed verification for invalid signature bytes
+                    Assert.False(fixture.AkvStoreProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, allowEnclaveComputations: fEnclaveEnabled, signature: tamperedCmkSignature));
 
-                // Fix up the corrupted byte
-                tamperedCmkSignature[startingByteIndex + randomIndexInCipherText[0]] = cmkSignature[startingByteIndex + randomIndexInCipherText[0]];
+                    // Fix up the corrupted byte
+                    tamperedCmkSignature[startingByteIndex + randomIndexInCipherText[0]] = cmkSignature[startingByteIndex + randomIndexInCipherText[0]];
+                }
             }
         }
 

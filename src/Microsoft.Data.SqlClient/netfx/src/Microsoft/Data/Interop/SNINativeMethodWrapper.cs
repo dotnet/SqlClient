@@ -170,14 +170,20 @@ namespace Microsoft.Data.SqlClient
             internal IntPtr key;
         }
 
-
+        [StructLayout(LayoutKind.Sequential)]
         internal struct AuthProviderInfo
         {
-            internal uint flags;
-            internal string certId;
-            internal bool certHash;
-            internal object clientCertificateCallbackContext;
-            internal SqlClientCertificateDelegate clientCertificateCallback;
+            public uint flags;
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool tlsFirst;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string certId;
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool certHash;
+            public object clientCertificateCallbackContext;
+            public SqlClientCertificateDelegate clientCertificateCallback;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string serverCertFileName;
         };
 
         internal struct CTAIPProviderInfo
@@ -339,6 +345,8 @@ namespace Microsoft.Data.SqlClient
             public Sni_Consumer_Info ConsumerInfo;
             [MarshalAs(UnmanagedType.LPWStr)]
             public string wszConnectionString;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string HostNameInCertificate;
             public PrefixEnum networkLibrary;
             public byte* szSPN;
             public uint cchSPN;
@@ -760,6 +768,26 @@ namespace Microsoft.Data.SqlClient
             return SNIInitialize(LocalAppContextSwitches.UseSystemDefaultSecureProtocols, IntPtr.Zero);
         }
 
+        internal static IntPtr SNIServerEnumOpen() => s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIServerEnumOpen() :
+                SNINativeManagedWrapperX86.SNIServerEnumOpen();
+
+        internal static int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readbuffer, int bufferLength, out bool more) => s_is64bitProcess ?
+              SNINativeManagedWrapperX64.SNIServerEnumRead(packet, readbuffer, bufferLength, out more) :
+              SNINativeManagedWrapperX86.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
+
+        internal static void SNIServerEnumClose([In] IntPtr packet)
+        {
+            if (s_is64bitProcess)
+            {
+                SNINativeManagedWrapperX64.SNIServerEnumClose(packet);
+            }
+            else
+            {
+                SNINativeManagedWrapperX86.SNIServerEnumClose(packet);
+            }
+        }
+
         internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
         {
             // initialize consumer info for MARS
@@ -775,8 +803,22 @@ namespace Microsoft.Data.SqlClient
             return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ipPreference, ref native_cachedDNSInfo);
         }
 
-        internal static unsafe uint SNIOpenSyncEx(ConsumerInfo consumerInfo, string constring, ref IntPtr pConn, byte[] spnBuffer, byte[] instanceName, bool fOverrideCache, bool fSync, int timeout, bool fParallel, 
-                        Int32 transparentNetworkResolutionStateNo, Int32 totalTimeout, Boolean isAzureSqlServerEndpoint, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
+        internal static unsafe uint SNIOpenSyncEx(
+            ConsumerInfo consumerInfo,
+            string constring,
+            ref IntPtr pConn,
+            byte[] spnBuffer,
+            byte[] instanceName,
+            bool fOverrideCache,
+            bool fSync,
+            int timeout,
+            bool fParallel,
+            Int32 transparentNetworkResolutionStateNo,
+            Int32 totalTimeout,
+            Boolean isAzureSqlServerEndpoint,
+            SqlConnectionIPAddressPreference ipPreference,
+            SQLDNSInfo cachedDNSInfo,
+            string hostNameInCertificate)
         {
             fixed (byte* pin_instanceName = &instanceName[0])
             {
@@ -786,8 +828,8 @@ namespace Microsoft.Data.SqlClient
                 MarshalConsumerInfo(consumerInfo, ref clientConsumerInfo.ConsumerInfo);
 
                 clientConsumerInfo.wszConnectionString = constring;
+                clientConsumerInfo.HostNameInCertificate = hostNameInCertificate;
                 clientConsumerInfo.networkLibrary = PrefixEnum.UNKNOWN_PREFIX;
-
                 clientConsumerInfo.szInstanceName = pin_instanceName;
                 clientConsumerInfo.cchInstanceName = (uint)instanceName.Length;
                 clientConsumerInfo.fOverrideLastConnectCache = fOverrideCache;

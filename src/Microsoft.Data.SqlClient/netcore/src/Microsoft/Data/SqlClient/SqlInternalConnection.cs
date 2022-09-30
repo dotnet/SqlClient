@@ -370,7 +370,7 @@ namespace Microsoft.Data.SqlClient
                 // NOTE: Global Transactions is an Azure SQL DB only
                 // feature where the Transaction Manager (TM) is not
                 // MS-DTC. Sys.Tx added APIs to support Non MS-DTC
-                // promoter types/TM in .NET 4.6.1. Following directions
+                // promoter types/TM in .NET 4.6.2. Following directions
                 // from .NETFX shiproom, to avoid a "hard-dependency"
                 // (compile time) on Sys.Tx, we use reflection to invoke
                 // the new APIs. Further, the _isGlobalTransaction flag

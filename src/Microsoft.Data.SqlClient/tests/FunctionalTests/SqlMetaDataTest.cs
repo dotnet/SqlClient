@@ -511,6 +511,11 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(SqlDbType.Udt, typeof(Address))]
         public void GenericConstructorWithoutXmlSchema(SqlDbType dbType, Type udt)
         {
+            if (udt != null)
+            {
+                Type t = udt.GetInterface("IBinarySerialize", true);
+                Assert.Equal(typeof(Microsoft.SqlServer.Server.IBinarySerialize), t);
+            }
             SqlMetaData metaData = new SqlMetaData("col2", dbType, 16, 2, 2, 2, SqlCompareOptions.IgnoreCase, udt, true, true, SortOrder.Ascending, 0);
             Assert.Equal(dbType, metaData.SqlDbType);
             Assert.True(metaData.UseServerDefault);
@@ -710,6 +715,15 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.False(metaData.IsUniqueKey);
             Assert.Equal(SortOrder.Unspecified, metaData.SortOrder);
             Assert.Equal(-1, metaData.SortOrdinal);
+        }
+
+        [Fact]
+        public static void InvalidUdtEcxeption_Throws()
+        {
+            SqlServer.Server.InvalidUdtException e = 
+                Assert.Throws<SqlServer.Server.InvalidUdtException> (() => new SqlMetaData("col1", SqlDbType.Udt, typeof(int), "UdtTestDb.dbo.Address"));
+
+            Assert.Equal("'System.Int32' is an invalid user defined type, reason: no UDT attribute.", e.Message);
         }
 
         [Fact]

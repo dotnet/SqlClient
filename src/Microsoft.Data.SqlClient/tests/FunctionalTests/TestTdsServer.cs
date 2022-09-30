@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.Tests
             server._endpoint.Start();
 
             int port = server._endpoint.ServerEndPoint.Port;
-            server._connectionStringBuilder = new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = false };
+            server._connectionStringBuilder = new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = SqlConnectionEncryptOption.Optional };
             server.ConnectionString = server._connectionStringBuilder.ConnectionString;
             return server;
         }

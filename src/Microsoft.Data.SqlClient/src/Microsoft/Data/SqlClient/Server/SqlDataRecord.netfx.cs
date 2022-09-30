@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 if (SmiVersion >= SmiContextFactory.Sql2008Version)
                 {
-                    ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], offset: 0, length: 0, peekAhead: null);
+                    ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], offset: 0, peekAhead: null);
                 }
                 else
                 {
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             if (SmiVersion >= SmiContextFactory.Sql2008Version)
             {
-                ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0, length: 0, peekAhead: null);
+                ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0, peekAhead: null);
             }
             else
             {

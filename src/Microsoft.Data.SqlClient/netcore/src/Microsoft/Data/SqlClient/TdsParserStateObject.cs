@@ -394,7 +394,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    _readerState = null;                    
+                    _readerState = null;
                 }
                 _owner.SetTarget(value);
             }
@@ -786,8 +786,22 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel, 
-                                SqlConnectionIPAddressPreference iPAddressPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false);
+        internal abstract void CreatePhysicalSNIHandle(
+            string serverName,
+            bool ignoreSniOpenTimeout,
+            long timerExpire,
+            out byte[] instanceName,
+            ref byte[][] spnBuffer,
+            bool flushCache,
+            bool async,
+            bool fParallel,
+            SqlConnectionIPAddressPreference iPAddressPreference,
+            string cachedFQDN,
+            ref SQLDNSInfo pendingDNSInfo,
+            string serverSPN,
+            bool isIntegratedSecurity = false,
+            bool tlsFirst = false,
+            string hostNameInCertificate = "");
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 
@@ -799,7 +813,7 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract void FreeGcHandle(int remaining, bool release);
 
-        internal abstract uint EnableSsl(ref uint info);
+        internal abstract uint EnableSsl(ref uint info, bool tlsFirst);
 
         internal abstract uint WaitForSSLHandShakeToComplete(out int protocolVersion);
 
@@ -1011,13 +1025,13 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         return AsyncHelper.CreateContinuationTaskWithState(
-                            task: writePacketTask, 
+                            task: writePacketTask,
                             state: this,
-                            onSuccess: static (object state) => 
+                            onSuccess: static (object state) =>
                             {
                                 TdsParserStateObject stateObject = (TdsParserStateObject)state;
                                 stateObject.HasPendingData = true;
-                                stateObject._messageStatus = 0; 
+                                stateObject._messageStatus = 0;
                             }
                         );
                     }
@@ -1197,33 +1211,38 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private bool GetSnapshottedState(SnapshottedStateFlags flag)
+        {
+            return (_snapshottedState & flag) == flag;
+        }
+
         internal bool HasOpenResult
         {
-            get => _snapshottedState.HasFlag(SnapshottedStateFlags.OpenResult);
+            get => GetSnapshottedState(SnapshottedStateFlags.OpenResult);
             set => SetSnapshottedState(SnapshottedStateFlags.OpenResult, value);
         }
 
         internal bool HasPendingData
         {
-            get => _snapshottedState.HasFlag(SnapshottedStateFlags.PendingData);
+            get => GetSnapshottedState(SnapshottedStateFlags.PendingData);
             set => SetSnapshottedState(SnapshottedStateFlags.PendingData, value);
         }
 
         internal bool HasReceivedError
         {
-            get => _snapshottedState.HasFlag(SnapshottedStateFlags.ErrorTokenReceived);
+            get => GetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived);
             set => SetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived, value);
         }
 
         internal bool HasReceivedAttention
         {
-            get => _snapshottedState.HasFlag(SnapshottedStateFlags.AttentionReceived);
+            get => GetSnapshottedState(SnapshottedStateFlags.AttentionReceived);
             set => SetSnapshottedState(SnapshottedStateFlags.AttentionReceived, value);
         }
 
         internal bool HasReceivedColumnMetadata
         {
-            get => _snapshottedState.HasFlag(SnapshottedStateFlags.ColMetaDataReceived);
+            get => GetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived);
             set => SetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived, value);
         }
 
@@ -2488,7 +2507,7 @@ namespace Microsoft.Data.SqlClient
                     Timeout.Infinite,
                     Timeout.Infinite
                 );
-                
+
 
                 // -1 == Infinite
                 //  0 == Already timed out (NOTE: To simulate the same behavior as sync we will only timeout on 0 if we receive an IO Pending from SNI)
@@ -2896,7 +2915,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(CheckPacket(packet, source) && source != null, "AsyncResult null on callback");
 
                 if (_parser.MARSOn)
-                { 
+                {
                     // Only take reset lock on MARS and Async.
                     CheckSetResetConnectionState(error, CallbackType.Read);
                 }
@@ -3616,7 +3635,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 #if DEBUG
-                }
+                    }
 #endif
 
                     SetTimeoutSeconds(AttentionTimeoutSeconds); // Initialize new attention timeout of 5 seconds.
@@ -4291,11 +4310,11 @@ namespace Microsoft.Data.SqlClient
                 _stateObj._cleanupAltMetaDataSetArray = _snapshotCleanupAltMetaDataSetArray;
 
                 // Make sure to go through the appropriate increment/decrement methods if changing the OpenResult flag
-                if (!_stateObj.HasOpenResult && _state.HasFlag(SnapshottedStateFlags.OpenResult))
+                if (!_stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) == SnapshottedStateFlags.OpenResult))
                 {
                     _stateObj.IncrementAndObtainOpenResultCount(_stateObj._executedUnderTransaction);
                 }
-                else if (_stateObj.HasOpenResult && !_state.HasFlag(SnapshottedStateFlags.OpenResult))
+                else if (_stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) != SnapshottedStateFlags.OpenResult))
                 {
                     _stateObj.DecrementOpenResultCount();
                 }

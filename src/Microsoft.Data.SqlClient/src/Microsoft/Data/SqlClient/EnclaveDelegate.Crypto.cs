@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class EnclaveDelegate
     {
-        private static readonly Dictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider> s_enclaveProviders = new Dictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider>();
+        private static readonly ConcurrentDictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider> s_enclaveProviders = new();
 
         /// <summary>
         /// Create a new enclave session
@@ -101,13 +101,11 @@ namespace Microsoft.Data.SqlClient
                         sqlColumnEncryptionEnclaveProvider = s_enclaveProviders[attestationProtocol];
                         break;
 
-#if ENCLAVE_SIMULATOR
-                    case SqlConnectionAttestationProtocol.SIM:
+                    case SqlConnectionAttestationProtocol.None:
                         NoneAttestationEnclaveProvider noneAttestationEnclaveProvider = new NoneAttestationEnclaveProvider();
-                        s_enclaveProviders[attestationProtocol] = (SqlColumnEncryptionEnclaveProvider)noneAttestationEnclaveProvider;
+                        s_enclaveProviders[attestationProtocol] = noneAttestationEnclaveProvider;
                         sqlColumnEncryptionEnclaveProvider = s_enclaveProviders[attestationProtocol];
                         break;
-#endif
 
                     default:
                         break;
@@ -116,7 +114,7 @@ namespace Microsoft.Data.SqlClient
 
             if (sqlColumnEncryptionEnclaveProvider == null)
             {
-                throw SQL.EnclaveProviderNotFound(enclaveType, ConvertAttestationProtocolToString(attestationProtocol));
+                throw SQL.EnclaveProviderNotFound(enclaveType, attestationProtocol.ToString());
             }
 
             return sqlColumnEncryptionEnclaveProvider;
@@ -207,26 +205,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return CombineByteArrays(attestationProtocolBytes, attestationProtocolInputLengthBytes, attestationProtocolInputBytes, clientDHPublicKeyLengthBytes, clientDHPublicKey);
-        }
-
-        private string ConvertAttestationProtocolToString(SqlConnectionAttestationProtocol attestationProtocol)
-        {
-            switch (attestationProtocol)
-            {
-                case SqlConnectionAttestationProtocol.AAS:
-                    return "AAS";
-
-                case SqlConnectionAttestationProtocol.HGS:
-                    return "HGS";
-
-#if ENCLAVE_SIMULATOR
-                case SqlConnectionAttestationProtocol.SIM:
-                    return "SIM";
-#endif
-
-                default:
-                    return "NotSpecified";
-            }
         }
     }
 }

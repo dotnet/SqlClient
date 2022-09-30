@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 
@@ -108,6 +109,7 @@ namespace Microsoft.Data.SqlClient.SNI
         internal const int ConnTimeoutError = 11;
         internal const int ConnNotUsableError = 19;
         internal const int InvalidConnStringError = 25;
+        internal const int ErrorLocatingServerInstance = 26;
         internal const int HandshakeFailureError = 31;
         internal const int InternalExceptionError = 35;
         internal const int ConnOpenFailedError = 40;
@@ -190,6 +192,15 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "targetServerName {0}, Client certificate validated successfully.", args0: targetServerName);
                 return true;
+            }
+        }
+
+        internal static IPAddress[] GetDnsIpAddresses(string serverName)
+        {
+            using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "Getting DNS host entries for serverName {0}.", args0: serverName);
+                return Dns.GetHostAddresses(serverName);
             }
         }
 
