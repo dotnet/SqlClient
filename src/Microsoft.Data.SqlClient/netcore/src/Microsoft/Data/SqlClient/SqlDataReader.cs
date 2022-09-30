@@ -4733,16 +4733,17 @@ namespace Microsoft.Data.SqlClient
                     return Task.FromException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
                 }
 
-                // If user's token is canceled, return a canceled task
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return Task.FromCanceled<bool>(cancellationToken);
-                }
-
+                // Register first to catch any already expired tokens to be able to trigger cancellation event.
                 IDisposable registration = null;
                 if (cancellationToken.CanBeCanceled)
                 {
                     registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
+                }
+
+                // If user's token is canceled, return a canceled task
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return Task.FromCanceled<bool>(cancellationToken);
                 }
 
                 // Check for existing async
