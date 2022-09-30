@@ -4739,6 +4739,12 @@ namespace Microsoft.Data.SqlClient
                     return Task.FromCanceled<bool>(cancellationToken);
                 }
 
+                IDisposable registration = null;
+                if (cancellationToken.CanBeCanceled)
+                {
+                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
+                }
+
                 // Check for existing async
                 if (_currentTask != null)
                 {
@@ -4829,12 +4835,6 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     _currentTask = null;
                     return source.Task;
-                }
-
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled)
-                {
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
                 }
 
                 ReadAsyncCallContext context = null;
