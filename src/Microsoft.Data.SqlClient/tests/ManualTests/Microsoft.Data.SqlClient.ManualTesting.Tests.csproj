@@ -86,6 +86,7 @@
     <Compile Include="SQL\ConnectivityTests\TcpDefaultForAzureTest.cs" />
     <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
     <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
+    <Compile Include="SQL\DataReaderTest\DataReaderCancellationTest.cs" />
     <Compile Include="SQL\DataReaderTest\DataReaderStreamsTest.cs" />
     <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
     <Compile Include="SQL\DataStreamTest\DataStreamTest.cs" />
@@ -272,7 +273,6 @@
     <Compile Include="SQL\Common\SystemDataInternals\DataReaderHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
-    <Compile Include="SQL\DataReaderTest\DataReaderCancellationTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
