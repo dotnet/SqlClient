@@ -27,9 +27,7 @@ namespace Microsoft.Data.SqlClient
         private bool _isGlobalTransactionEnabledForServer; // Whether Global Transactions are enabled for this Azure SQL DB Server
         private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
 
-#if NETFRAMEWORK
-        private bool _isAzureSQLConnection = false; // If connected to Azure SQL
-#else
+#if NETCOREAPP || NETSTANDARD
         internal SqlCommand.ExecuteReaderAsyncCallContext CachedCommandExecuteReaderAsyncContext;
         internal SqlDataReader.Snapshot CachedDataReaderSnapshot;
         internal SqlDataReader.IsDBNullAsyncCallContext CachedDataReaderIsDBNullContext;
@@ -154,18 +152,6 @@ namespace Microsoft.Data.SqlClient
             get;
         }
 
-#if NETFRAMEWORK
-        abstract internal bool Is2000
-        {
-            get;
-        }
-
-        abstract internal bool Is2005OrNewer
-        {
-            get;
-        }
-#endif
-
         abstract internal bool Is2008OrNewer
         {
             get;
@@ -208,6 +194,18 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
+        private bool _isAzureSQLConnection = false; // If connected to Azure SQL
+
+        abstract internal bool Is2000
+        {
+            get;
+        }
+
+        abstract internal bool Is2005OrNewer
+        {
+            get;
+        }
+
         internal bool IsAzureSQLConnection
         {
             get
@@ -278,13 +276,14 @@ namespace Microsoft.Data.SqlClient
                     tdsReliabilitySection.Stop();
                 }
 #endif // DEBUG
+#endif // NETFRAMEWORK
             }
-            catch (System.OutOfMemoryException e)
+            catch (OutOfMemoryException e)
             {
                 Connection.Abort(e);
                 throw;
             }
-            catch (System.StackOverflowException e)
+            catch (StackOverflowException e)
             {
                 Connection.Abort(e);
                 throw;
@@ -292,9 +291,10 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 Connection.Abort(e);
+#if NETFRAMEWORK
                 BestEffortCleanup(bestEffortCleanupTarget);
-                throw;
 #endif // NETFRAMEWORK
+                throw;
             }
             finally
             {
@@ -373,7 +373,6 @@ namespace Microsoft.Data.SqlClient
 #endif // DEBUG
 #endif // NETFRAMEWORK
             }
-#if NETFRAMEWORK
             catch (OutOfMemoryException)
             {
                 DoomThisConnection();
@@ -387,10 +386,11 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException)
             {
                 DoomThisConnection();
+#if NETFRAMEWORK
                 BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
-#endif
             catch (Exception e)
             {
                 if (!ADP.IsCatchableExceptionType(e))
@@ -739,31 +739,6 @@ namespace Microsoft.Data.SqlClient
             return reader;
         }
 
-#if NETFRAMEWORK
-        static internal TdsParser GetBestEffortCleanupTarget(SqlConnection connection)
-        {
-            if (null != connection)
-            {
-                SqlInternalConnectionTds innerConnection = (connection.InnerConnection as SqlInternalConnectionTds);
-                if (null != innerConnection)
-                {
-                    return innerConnection.Parser;
-                }
-            }
-
-            return null;
-        }
-
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        static internal void BestEffortCleanup(TdsParser target)
-        {
-            if (null != target)
-            {
-                target.BestEffortCleanup();
-            }
-        }
-#endif
-
         abstract protected byte[] GetDTCAddress();
 
         static private byte[] GetTransactionCookie(Transaction transaction, byte[] whereAbouts)
@@ -805,5 +780,30 @@ namespace Microsoft.Data.SqlClient
         abstract protected void PropagateTransactionCookie(byte[] transactionCookie);
 
         abstract internal void ValidateConnectionForExecute(SqlCommand command);
+
+#if NETFRAMEWORK
+        static internal TdsParser GetBestEffortCleanupTarget(SqlConnection connection)
+        {
+            if (null != connection)
+            {
+                SqlInternalConnectionTds innerConnection = (connection.InnerConnection as SqlInternalConnectionTds);
+                if (null != innerConnection)
+                {
+                    return innerConnection.Parser;
+                }
+            }
+
+            return null;
+        }
+
+        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+        static internal void BestEffortCleanup(TdsParser target)
+        {
+            if (null != target)
+            {
+                target.BestEffortCleanup();
+            }
+        }
+#endif
     }
 }
