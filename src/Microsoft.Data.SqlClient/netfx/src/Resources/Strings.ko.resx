@@ -3922,19 +3922,19 @@
     <value>Local Database Runtime 설치를 찾을 수 없습니다. SQL Server Express가 올바르게 설치되었고 로컬 데이터베이스 런타임 기능이 설정되었는지 확인하십시오.</value>
   </data>
   <data name="SNI_ERROR_53" xml:space="preserve">
-    <value>잘못된 Local Database Runtime 레지스트리 구성을 찾았습니다. SQL Server Express가 올바르게 설치되었는지 확인하십시오.</value>
+    <value>잘못된 Local Database Runtime 레지스트리 구성을 찾았습니다. SQL Server Express가 올바르게 설치되었는지 확인하세요.</value>
   </data>
   <data name="SNI_ERROR_54" xml:space="preserve">
-    <value>SQLUserInstance.dll 파일 경로에 대한 레지스트리 항목을 찾을 수 없습니다. SQL Server Express의 Local Database Runtime 기능이 올바르게 설치되었는지 확인하십시오.</value>
+    <value>SQLUserInstance.dll 파일 경로에 대한 레지스트리 항목을 찾을 수 없습니다. SQL Server Express의 Local Database Runtime 기능이 올바르게 설치되었는지 확인하세요.</value>
   </data>
   <data name="SNI_ERROR_55" xml:space="preserve">
-    <value>레지스트리 값에 잘못된 SQLUserInstance.dll 파일 경로가 들어 있습니다. SQL Server Express의 Local Database Runtime 기능이 올바르게 설치되었는지 확인하십시오.</value>
+    <value>레지스트리 값에 잘못된 SQLUserInstance.dll 파일 경로가 들어 있습니다. SQL Server Express의 Local Database Runtime 기능이 올바르게 설치되었는지 확인하세요.</value>
   </data>
   <data name="SNI_ERROR_56" xml:space="preserve">
-    <value>레지스트리에 지정된 위치에서 SQLUserInstance.dll을 로드할 수 없습니다. SQL Server Express의 Local Database Runtime 기능이 올바르게 설치되었는지 확인하십시오.</value>
+    <value>레지스트리에 지정된 위치에서 SQLUserInstance.dll을 로드할 수 없습니다. SQL Server Express의 Local Database Runtime 기능이 올바르게 설치되었는지 확인하세요.</value>
   </data>
   <data name="SNI_ERROR_57" xml:space="preserve">
-    <value>레지스트리에 지정된 위치에서 잘못된 SQLUserInstance.dll을 찾았습니다. SQL Server Express의 Local Database Runtime 기능이 올바르게 설치되었는지 확인하십시오.</value>
+    <value>레지스트리에 지정된 위치에서 잘못된 SQLUserInstance.dll을 찾았습니다. SQL Server Express의 Local Database Runtime 기능이 올바르게 설치되었는지 확인하세요.</value>
   </data>
   <data name="Snix_Connect" xml:space="preserve">
     <value>SQL Server에 연결을 설정하는 중에 네트워크 관련 또는 인스턴스 관련 오류가 발생했습니다. 서버를 찾을 수 없거나 액세스할 수 없습니다. 인스턴스 이름이 올바르고 SQL Server가 원격 연결을 허용하도록 구성되어 있는지 확인하십시오.</value>
@@ -3985,7 +3985,7 @@
     <value>Local Database Runtime: SQLUserInstance.dll을 로드할 수 없습니다.</value>
   </data>
   <data name="LocalDB_MethodNotFound" xml:space="preserve">
-    <value>레지스트리에 지정된 위치에서 잘못된 SQLUserInstance.dll을 찾았습니다. SQL Server Express의 Local Database Runtime 기능이 올바르게 설치되었는지 확인하십시오.</value>
+    <value>레지스트리에 지정된 위치에서 잘못된 SQLUserInstance.dll을 찾았습니다. SQL Server Express의 Local Database Runtime 기능이 올바르게 설치되었는지 확인하세요.</value>
   </data>
   <data name="LocalDB_UnobtainableMessage" xml:space="preserve">
     <value>Local Database Runtime 오류 메시지를 가져올 수 없음</value>
@@ -4616,5 +4616,14 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>부모 명령에서 EnableOptimizedParameterBinding을 사용하는 경우 매개 변수 '{0}'에는 Direction Output 또는 InputOutput을 사용할 수 없습니다.</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>'{0}' 인증 방법을 사용하여 액세스 토큰을 검색하는 동안 연결 시간이 초과되었습니다. 마지막 오류: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>장애 조치(failover) 파트너의 SPN(서비스 사용자 이름)입니다.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>서버의 SPN(서비스 사용자 이름)입니다.</value>
   </data>
 </root>

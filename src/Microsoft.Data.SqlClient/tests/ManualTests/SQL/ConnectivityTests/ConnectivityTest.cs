@@ -5,7 +5,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Threading;
+using Microsoft.Win32;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -83,6 +86,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(sessionSpid, sqlConnection.ServerProcessId);
             }
             Assert.True(false, "No non-empty hostname found for the application");
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async void ConnectionTimeoutInfiniteTest()
+        {
+            // Exercise the special-case infinite connect timeout code path
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            {
+                ConnectTimeout = 0 // Infinite
+            };
+
+            using SqlConnection conn = new(builder.ConnectionString);
+            CancellationTokenSource cts = new(30000);
+            // Will throw TaskCanceledException and fail the test in the event of a hang
+            await conn.OpenAsync(cts.Token);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -367,6 +385,77 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             timer.Stop();
             duration = timer.Elapsed;
             Assert.True(duration.Seconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");                //    sqlConnection.Open();
+        }
+
+        private const string ConnectToPath = "SOFTWARE\\Microsoft\\MSSQLServer\\Client\\ConnectTo";
+        private static bool CanCreateAliases()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
+                !DataTestUtility.IsTCPConnStringSetup())
+            {
+                return false;
+            }
+
+            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+            {
+                WindowsPrincipal principal = new(identity);
+                if (!principal.IsInRole(WindowsBuiltInRole.Administrator))
+                {
+                    return false;
+                }
+            }
+
+            using RegistryKey key = Registry.LocalMachine.OpenSubKey(ConnectToPath, true);
+            if (key == null)
+            {
+                // Registry not writable
+                return false;
+            }
+
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            if (!DataTestUtility.ParseDataSource(b.DataSource, out string hostname, out int port, out string instanceName) ||
+                !string.IsNullOrEmpty(instanceName))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        [PlatformSpecific(TestPlatforms.Windows)]
+        [ConditionalFact(nameof(CanCreateAliases))]
+        public static void ConnectionAliasTest()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                throw new Exception("Alias test only valid on Windows");
+            }
+
+            if (!CanCreateAliases())
+            {
+                throw new Exception("Unable to create aliases in this environment. Windows + Admin + non-instance data source required.");
+            }
+
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            if (!DataTestUtility.ParseDataSource(b.DataSource, out string hostname, out int port, out string instanceName) ||
+                !string.IsNullOrEmpty(instanceName))
+            {
+                // Only works with connection strings that parse successfully and don't include an instance name
+                throw new Exception("Unable to create aliases in this configuration. Parsable data source without instance required.");
+            }
+
+            b.DataSource = "TESTALIAS-" + Guid.NewGuid().ToString().Replace("-", "");
+            using RegistryKey key = Registry.LocalMachine.OpenSubKey(ConnectToPath, true);
+            key.SetValue(b.DataSource, "DBMSSOCN," + hostname + "," + (port == -1 ? 1433 : port));
+            try
+            {
+                using SqlConnection sqlConnection = new(b.ConnectionString);
+                sqlConnection.Open();
+            }
+            finally
+            {
+                key.DeleteValue(b.DataSource);
+            }
         }
     }
 }

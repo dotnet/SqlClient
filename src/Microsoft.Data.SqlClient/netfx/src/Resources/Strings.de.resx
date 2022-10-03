@@ -3925,16 +3925,16 @@
     <value>Es wurde eine ungültige Registrierungskonfiguration für die Local Database Runtime gefunden. Überprüfen Sie, ob SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="SNI_ERROR_54" xml:space="preserve">
-    <value>Der Registrierungseintrag für den Dateipfad zur Datei "SQLUserInstance.dll" wurde nicht gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
+    <value>Der Registrierungseintrag für den Dateipfad zur Datei SQLUserInstance.dll wurde nicht gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="SNI_ERROR_55" xml:space="preserve">
-    <value>Der Registrierungswert enthält einen ungültigen Dateipfad für "SQLUserInstance.dll". Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
+    <value>Der Registrierungswert enthält einen ungültigen Dateipfad für SQLUserInstance.dll. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="SNI_ERROR_56" xml:space="preserve">
-    <value>"SQLUserInstance.dll" kann nicht von dem in der Registrierung angegebenen Ort geladen werden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
+    <value>SQLUserInstance.dll kann nicht von dem in der Registrierung angegebenen Ort geladen werden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="SNI_ERROR_57" xml:space="preserve">
-    <value>An dem Ort, der in der Registrierung angegeben ist, wurde eine ungültige "SQLUserInstance.dll" gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
+    <value>An dem Ort, der in der Registrierung angegeben ist, wurde eine ungültige SQLUserInstance.dll gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="Snix_Connect" xml:space="preserve">
     <value>Netzwerkbezogener oder instanzspezifischer Fehler beim Herstellen einer Verbindung mit SQL Server. Der Server wurde nicht gefunden, oder auf ihn kann nicht zugegriffen werden. Überprüfen Sie, ob der Instanzname richtig ist und ob SQL Server Remoteverbindungen zulässt.</value>
@@ -3985,7 +3985,7 @@
     <value>Local Database Runtime: "SQLUserInstance.dll" kann nicht geladen werden.</value>
   </data>
   <data name="LocalDB_MethodNotFound" xml:space="preserve">
-    <value>An dem Ort, der in der Registrierung angegeben ist, wurde eine ungültige "SQLUserInstance.dll" gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
+    <value>An dem Ort, der in der Registrierung angegeben ist, wurde eine ungültige SQLUserInstance.dll gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="LocalDB_UnobtainableMessage" xml:space="preserve">
     <value>Fehlermeldung von Local Database Runtime konnte nicht abgerufen werden.</value>
@@ -4616,5 +4616,14 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Der Parameter "{0}" kann keine Ausgaberichtung oder InputOutput aufweisen, wenn EnableOptimizedParameterBinding für den übergeordneten Befehl aktiviert ist.</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Timeout bei der Verbindung beim Abrufen eines Zugriffstokens mithilfe der Authentifizierungsmethode "{0}". Letzter Fehler: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>Der Dienstprinzipalname (SPN) des Failoverpartners.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>Der Dienstprinzipalname (SPN) des Servers.</value>
   </data>
 </root>

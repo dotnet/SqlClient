@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -52,7 +53,9 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Addr = randomserver.sys.local; User Id = a; Password = b")]
         [InlineData("Database = master")]
         [InlineData("Enclave Attestation Url = http://dymmyurl")]
-        [InlineData("Encrypt = true")]
+        [InlineData("Encrypt = True")]
+        [InlineData("Encrypt = False")]
+        [InlineData("Encrypt = Strict")]
         [InlineData("Enlist = false")]
         [InlineData("Initial Catalog = Northwind; Failover Partner = randomserver.sys.local")]
         [InlineData("Initial Catalog = tempdb")]
@@ -82,6 +85,12 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("User Instance = true")]
         [InlineData("Workstation ID = myworkstation")]
         [InlineData("WSID = myworkstation")]
+        [InlineData("Host Name In Certificate = tds.test.com")]
+        [InlineData("HostNameInCertificate = tds.test.com")]
+        [InlineData("Server SPN = server1")]
+        [InlineData("ServerSPN = server2")]
+        [InlineData("Failover Partner SPN = server3")]
+        [InlineData("FailoverPartnerSPN = server4")]
         public void ConnectionStringTests(string connectionString)
         {
             ExecuteConnectionStringTests(connectionString);
@@ -305,6 +314,75 @@ namespace Microsoft.Data.SqlClient.Tests
             var builder = new SqlConnectionStringBuilder();
             builder.AttachDBFilename = value;
             Assert.Equal(expected, builder.ConnectionString);
+        }
+
+        [Fact]
+        public void SetEncryptInConnectionStringMapsToString()
+        {
+            var data = new List<Tuple<string, SqlConnectionEncryptOption>>
+            {
+                Tuple.Create("Encrypt=yes", SqlConnectionEncryptOption.Mandatory),
+                Tuple.Create("Encrypt=no", SqlConnectionEncryptOption.Optional),
+                Tuple.Create("Encrypt=true", SqlConnectionEncryptOption.Mandatory),
+                Tuple.Create("Encrypt=false", SqlConnectionEncryptOption.Optional),
+                Tuple.Create("Encrypt=mandatory", SqlConnectionEncryptOption.Mandatory),
+                Tuple.Create("Encrypt=optional", SqlConnectionEncryptOption.Optional),
+                Tuple.Create("Encrypt=strict", SqlConnectionEncryptOption.Strict)
+            };
+
+            foreach (var item in data)
+            {
+                string connectionString = item.Item1;
+                SqlConnectionEncryptOption expected = item.Item2;
+                SqlConnection sqlConnection = new(connectionString);
+                SqlConnectionStringBuilder scsb = new(sqlConnection.ConnectionString);
+                Assert.Equal(expected, scsb.Encrypt);
+            }
+        }
+
+        [Fact]
+        public void SetEncryptOnConnectionBuilderMapsToString()
+        {
+            var data = new List<Tuple<string, SqlConnectionEncryptOption>>
+            {
+                Tuple.Create("Encrypt=True", SqlConnectionEncryptOption.Mandatory),
+                Tuple.Create("Encrypt=False", SqlConnectionEncryptOption.Optional),
+                Tuple.Create("Encrypt=Strict", SqlConnectionEncryptOption.Strict)
+            };
+
+            foreach (Tuple<string, SqlConnectionEncryptOption> item in data)
+            {
+                string expected = item.Item1;
+                SqlConnectionEncryptOption option = item.Item2;
+                SqlConnectionStringBuilder scsb = new();
+                scsb.Encrypt = option;
+                Assert.Equal(expected, scsb.ConnectionString);
+            }
+        }
+
+        [Fact]
+        public void ConnectionBuilderEncryptBackwardsCompatibility()
+        {
+            SqlConnectionStringBuilder builder = new();
+            builder.Encrypt = false;
+            Assert.Equal("Encrypt=False", builder.ConnectionString);
+            Assert.False(builder.Encrypt);
+            
+            builder.Encrypt = true;
+            Assert.Equal("Encrypt=True", builder.ConnectionString);
+            Assert.True(builder.Encrypt);
+
+            builder.Encrypt = SqlConnectionEncryptOption.Optional;
+            Assert.Equal("Encrypt=False", builder.ConnectionString);
+            Assert.False(builder.Encrypt);
+
+            builder.Encrypt = SqlConnectionEncryptOption.Mandatory;
+            Assert.Equal("Encrypt=True", builder.ConnectionString);
+            Assert.True(builder.Encrypt);
+
+            builder.Encrypt = SqlConnectionEncryptOption.Strict;
+            Assert.Equal("Encrypt=Strict", builder.ConnectionString);
+            Assert.True(builder.Encrypt);
         }
 
         internal void ExecuteConnectionStringTests(string connectionString)

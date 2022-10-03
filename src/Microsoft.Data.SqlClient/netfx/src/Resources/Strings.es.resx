@@ -3922,19 +3922,19 @@
     <value>No se puede ubicar la instalación de Local Database Runtime. Compruebe que SQL Server Express se ha instalado correctamente y que se ha habilitado la característica de tiempo de ejecución de la base de datos local.</value>
   </data>
   <data name="SNI_ERROR_53" xml:space="preserve">
-    <value>La configuración del Registro de Local Database Runtime no es válida. Compruebe que SQL Server Express se ha instalado correctamente.</value>
+    <value>La configuración del registro de Local Database Runtime no es válida. Compruebe que SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="SNI_ERROR_54" xml:space="preserve">
-    <value>No se puede encontrar la entrada del Registro para la ruta del archivo SQLUserInstance.dll.Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
+    <value>No se puede encontrar la entrada del registro para la ruta del archivo SQLUserInstance.dll.Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="SNI_ERROR_55" xml:space="preserve">
-    <value>El valor del Registro contiene una ruta de acceso para el archivo SQLUserInstance.dll no válida. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
+    <value>El valor del registro contiene una ruta de acceso para el archivo SQLUserInstance.dll no válida. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="SNI_ERROR_56" xml:space="preserve">
-    <value>No se puede cargar SQLUserInstance.dll desde la ubicación que se especificó en el Registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
+    <value>No se puede cargar SQLUserInstance.dll desde la ubicación que se especificó en el registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="SNI_ERROR_57" xml:space="preserve">
-    <value>SQLUserInstance.dll no válido en la ubicación especificada en el Registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
+    <value>SQLUserInstance.dll no válido en la ubicación especificada en el registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="Snix_Connect" xml:space="preserve">
     <value>Error relacionado con la red o específico de la instancia mientras se establecía una conexión con el servidor SQL Server. No se encontró el servidor o éste no estaba accesible. Compruebe que el nombre de la instancia es correcto y que SQL Server está configurado para admitir conexiones remotas.</value>
@@ -3985,7 +3985,7 @@
     <value>Local Database Runtime: no se puede cargar SQLUserInstance.dll.</value>
   </data>
   <data name="LocalDB_MethodNotFound" xml:space="preserve">
-    <value>SQLUserInstance.dll no válido en la ubicación especificada en el Registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
+    <value>SQLUserInstance.dll no válido en la ubicación especificada en el registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="LocalDB_UnobtainableMessage" xml:space="preserve">
     <value>No se puede obtener el mensaje de error de Local Database Runtime</value>
@@ -4616,5 +4616,14 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>El parámetro “{0}” no puede tener la Dirección de salida ni InputOutput cuando EnableOptimizedParameterBinding está habilitado en el comando primario.</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Se agotó el tiempo de espera de la conexión al recuperar un token de acceso mediante el método de autenticación "{0}". Último error: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>Nombre de entidad de seguridad de servicio (SPN) del asociado de conmutación por error.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>Nombre de entidad de seguridad de servicio (SPN) del servidor.</value>
   </data>
 </root>

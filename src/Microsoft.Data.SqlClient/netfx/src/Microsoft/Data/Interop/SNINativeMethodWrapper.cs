@@ -170,14 +170,20 @@ namespace Microsoft.Data.SqlClient
             internal IntPtr key;
         }
 
-
+        [StructLayout(LayoutKind.Sequential)]
         internal struct AuthProviderInfo
         {
-            internal uint flags;
-            internal string certId;
-            internal bool certHash;
-            internal object clientCertificateCallbackContext;
-            internal SqlClientCertificateDelegate clientCertificateCallback;
+            public uint flags;
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool tlsFirst;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string certId;
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool certHash;
+            public object clientCertificateCallbackContext;
+            public SqlClientCertificateDelegate clientCertificateCallback;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string serverCertFileName;
         };
 
         internal struct CTAIPProviderInfo
@@ -339,6 +345,8 @@ namespace Microsoft.Data.SqlClient
             public Sni_Consumer_Info ConsumerInfo;
             [MarshalAs(UnmanagedType.LPWStr)]
             public string wszConnectionString;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string HostNameInCertificate;
             public PrefixEnum networkLibrary;
             public byte* szSPN;
             public uint cchSPN;
@@ -795,8 +803,22 @@ namespace Microsoft.Data.SqlClient
             return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ipPreference, ref native_cachedDNSInfo);
         }
 
-        internal static unsafe uint SNIOpenSyncEx(ConsumerInfo consumerInfo, string constring, ref IntPtr pConn, byte[] spnBuffer, byte[] instanceName, bool fOverrideCache, bool fSync, int timeout, bool fParallel, 
-                        Int32 transparentNetworkResolutionStateNo, Int32 totalTimeout, Boolean isAzureSqlServerEndpoint, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
+        internal static unsafe uint SNIOpenSyncEx(
+            ConsumerInfo consumerInfo,
+            string constring,
+            ref IntPtr pConn,
+            byte[] spnBuffer,
+            byte[] instanceName,
+            bool fOverrideCache,
+            bool fSync,
+            int timeout,
+            bool fParallel,
+            Int32 transparentNetworkResolutionStateNo,
+            Int32 totalTimeout,
+            Boolean isAzureSqlServerEndpoint,
+            SqlConnectionIPAddressPreference ipPreference,
+            SQLDNSInfo cachedDNSInfo,
+            string hostNameInCertificate)
         {
             fixed (byte* pin_instanceName = &instanceName[0])
             {
@@ -806,8 +828,8 @@ namespace Microsoft.Data.SqlClient
                 MarshalConsumerInfo(consumerInfo, ref clientConsumerInfo.ConsumerInfo);
 
                 clientConsumerInfo.wszConnectionString = constring;
+                clientConsumerInfo.HostNameInCertificate = hostNameInCertificate;
                 clientConsumerInfo.networkLibrary = PrefixEnum.UNKNOWN_PREFIX;
-
                 clientConsumerInfo.szInstanceName = pin_instanceName;
                 clientConsumerInfo.cchInstanceName = (uint)instanceName.Length;
                 clientConsumerInfo.fOverrideLastConnectCache = fOverrideCache;

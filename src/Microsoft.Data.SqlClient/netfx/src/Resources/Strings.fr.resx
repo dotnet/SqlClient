@@ -3850,7 +3850,7 @@
     <value>Erreur lors de la localisation de Server/Instance spécifié</value>
   </data>
   <data name="SNI_ERROR_27" xml:space="preserve">
-    <value>Erreur d'obtention de la liste des protocoles activés à partir du Registre</value>
+    <value>Erreur d'obtention de la liste des protocoles activés à partir du registre</value>
   </data>
   <data name="SNI_ERROR_28" xml:space="preserve">
     <value>Le serveur ne prend pas en charge le protocole demandé</value>
@@ -4616,5 +4616,14 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Le paramètre « {0} » ne peut pas avoir Direction Output ou InputOutput lorsque EnableOptimizedParameterBinding est activé sur la commande parente.</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>La connexion a expiré lors de la récupération d’un jeton d’accès à l’aide de '{0}' méthode d’authentification. Dernière erreur : {1} : {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>Le nom de principal du service (SPN) du partenaire de basculement.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>Le nom de principal du service (SPN) du serveur.</value>
   </data>
 </root>

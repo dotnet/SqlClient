@@ -3,8 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -345,18 +347,22 @@ namespace Microsoft.Data.SqlClient
         public const int SQL2005_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
         public const int SQL2008_MAJOR = 0x73;
         public const int SQL2012_MAJOR = 0x74;
+        public const int TDS8_MAJOR = 0x08;          // TDS8 version to be used at login7
+        public const string TDS8_Protocol = "tds/8.0"; //TDS8
 
         // Increments:
         public const int SQL2000SP1_INCREMENT = 0x00;
         public const int SQL2005_INCREMENT = 0x09;
         public const int SQL2008_INCREMENT = 0x0b;
         public const int SQL2012_INCREMENT = 0x00;
+        public const int TDS8_INCREMENT = 0x00;
 
         // Minors:
         public const int SQL2000SP1_MINOR = 0x0001;
         public const int SQL2005_RTM_MINOR = 0x0002;
         public const int SQL2008_MINOR = 0x0003;
         public const int SQL2012_MINOR = 0x0004;
+        public const int TDS8_MINOR = 0x00;
 
         public const int ORDER_68000 = 1;
         public const int USE_DB_ON = 1;
@@ -621,6 +627,7 @@ namespace Microsoft.Data.SqlClient
         public const uint SNI_SSL_VALIDATE_CERTIFICATE = 1;   // This enables validation of server certificate
         public const uint SNI_SSL_USE_SCHANNEL_CACHE = 2;     // This enables schannel session cache
         public const uint SNI_SSL_IGNORE_CHANNEL_BINDINGS = 0x10; // Used with SSL Provider, sent to SNIAddProvider in case of SQL Authentication & Encrypt.
+        public const uint SNI_SSL_SEND_ALPN_EXTENSION = 0x4000;   // This flag instructs SSL provider to send the ALPN extension in the ClientHello message
 
         public const string DEFAULT_ENGLISH_CODE_PAGE_STRING = "iso_1";
         public const short DEFAULT_ENGLISH_CODE_PAGE_VALUE = 1252;
