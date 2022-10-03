@@ -217,6 +217,8 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2012 = false;
 
+        private bool _is2022 = false;
+
         private byte[] _sniSpnBuffer = null;
 
         // UNDONE - need to have some for both instances - both command and default???
@@ -682,7 +684,7 @@ namespace Microsoft.Data.SqlClient
             if (!ClientOSEncryptionSupport)
             {
                 //If encryption is required, an error will be thrown.
-                if (encrypt == SqlConnectionEncryptOption.Mandatory)
+                if (encrypt != SqlConnectionEncryptOption.Optional)
                 {
                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                     _physicalStateObj.Dispose();
@@ -1193,6 +1195,7 @@ namespace Microsoft.Data.SqlClient
             authInfo.certHash = false;
             authInfo.clientCertificateCallbackContext = IntPtr.Zero;
             authInfo.clientCertificateCallback = null;
+            authInfo.serverCertFileName = null;
 
             if ((_encryptionOption & EncryptionOptions.CLIENT_CERT) != 0)
             {
@@ -3133,21 +3136,15 @@ namespace Microsoft.Data.SqlClient
                             _defaultCollation = env._newCollation;
                             _defaultLCID = env._newCollation.LCID;
 
-                            int newCodePage = GetCodePage(env._newCollation, stateObj);
 
                             // UTF8 collation
                             if (env._newCollation.IsUTF8)
                             {
                                 _defaultEncoding = Encoding.UTF8;
-
-                                if (newCodePage != _defaultCodePage)
-                                {
-                                    _defaultCodePage = newCodePage;
-                                }
                             }
                             else
                             {
-
+                                int newCodePage = GetCodePage(env._newCollation, stateObj);
                                 if (newCodePage != _defaultCodePage)
                                 {
                                     _defaultCodePage = newCodePage;
@@ -4125,10 +4122,16 @@ namespace Microsoft.Data.SqlClient
                     { throw SQL.InvalidTDSVersion(); }
                     _is2012 = true;
                     break;
+                case (uint)TdsEnums.TDS8_MAJOR << 24 | TdsEnums.TDS8_MINOR:
+                    if (increment != TdsEnums.TDS8_INCREMENT)
+                    { throw SQL.InvalidTDSVersion(); }
+                    _is2022 = true;
+                    break;
                 default:
                     throw SQL.InvalidTDSVersion();
             }
 
+            _is2012 |= _is2022;
             _is2008 |= _is2012;
             _is2005 |= _is2008;
             _is2000SP1 |= _is2005;            // includes all lower versions
@@ -8791,7 +8794,8 @@ namespace Microsoft.Data.SqlClient
                                TdsEnums.FeatureExtension requestedFeatures,
                                SessionData recoverySessionData,
                                FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
-                               SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo)
+                               SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo, 
+                               SqlConnectionEncryptOption encrypt)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
 
@@ -8989,7 +8993,14 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(length, _physicalStateObj);
                 if (recoverySessionData == null)
                 {
-                    WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
+                    if (encrypt == SqlConnectionEncryptOption.Strict)
+                    {
+                        WriteInt((TdsEnums.TDS8_MAJOR << 24) | (TdsEnums.TDS8_INCREMENT << 16) | TdsEnums.TDS8_MINOR, _physicalStateObj);
+                    }
+                    else
+                    {
+                        WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
+                    }
                 }
                 else
                 {
