@@ -86,6 +86,7 @@
     <Compile Include="SQL\ConnectivityTests\TcpDefaultForAzureTest.cs" />
     <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
     <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
+    <Compile Include="SQL\DataReaderTest\DataReaderCancellationTest.cs" />
     <Compile Include="SQL\DataReaderTest\DataReaderStreamsTest.cs" />
     <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
     <Compile Include="SQL\DataStreamTest\DataStreamTest.cs" />
