@@ -5326,6 +5326,13 @@ namespace Microsoft.Data.SqlClient
                     return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("ReadAsync")));
                 }
 
+                // Register first to catch any already expired tokens to be able to trigger cancellation event.
+                IDisposable registration = null;
+                if (cancellationToken.CanBeCanceled)
+                {
+                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
+                }
+
                 // If user's token is canceled, return a canceled task
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -5423,12 +5430,6 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     _currentTask = null;
                     return source.Task;
-                }
-
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled)
-                {
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
                 }
 
                 var context = Interlocked.Exchange(ref _cachedReadAsyncContext, null) ?? new ReadAsyncCallContext();
