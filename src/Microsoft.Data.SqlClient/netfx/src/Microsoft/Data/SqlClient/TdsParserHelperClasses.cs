@@ -679,10 +679,10 @@ namespace Microsoft.Data.SqlClient
         public object Clone()
         {
             _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection();
-            result.metaDataSet = metaDataSet == null ? null : (_SqlMetaDataSet)metaDataSet.Clone();
+            result.metaDataSet = metaDataSet == null ? null : metaDataSet.Clone();
             foreach (_SqlMetaDataSet set in altMetaDataSetArray)
             {
-                result.altMetaDataSetArray.Add((_SqlMetaDataSet)set.Clone());
+                result.altMetaDataSetArray.Add(set.Clone());
             }
             return result;
         }
