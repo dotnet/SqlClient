@@ -383,6 +383,54 @@ namespace Microsoft.Data.SqlClient.Tests
             builder.Encrypt = SqlConnectionEncryptOption.Strict;
             Assert.Equal("Encrypt=Strict", builder.ConnectionString);
             Assert.True(builder.Encrypt);
+
+            builder.Encrypt = null;
+            Assert.Equal("Encrypt=True", builder.ConnectionString);
+            Assert.True(builder.Encrypt);
+        }
+
+        [Theory]
+        [InlineData("true", "True")]
+        [InlineData("mandatory", "True")]
+        [InlineData("yes", "True")]
+        [InlineData("false", "False")]
+        [InlineData("optional", "False")]
+        [InlineData("no", "False")]
+        [InlineData("strict", "Strict")]
+        public void EncryptParserValidValuesParsesSuccessfully(string value, string expectedValue)
+            => Assert.Equal(expectedValue, SqlConnectionEncryptOption.Parse(value).ToString());
+
+        [Theory]
+        [InlineData("something")]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("  true  ")]
+        public void EncryptParserInvalidValuesThrowsException(string value)
+            => Assert.Throws<ArgumentException>(() => SqlConnectionEncryptOption.Parse(value));
+
+        [Theory]
+        [InlineData("true", "True")]
+        [InlineData("mandatory", "True")]
+        [InlineData("yes", "True")]
+        [InlineData("false", "False")]
+        [InlineData("optional", "False")]
+        [InlineData("no", "False")]
+        [InlineData("strict", "Strict")]
+        public void EncryptTryParseValidValuesReturnsTrue(string value, string expectedValue)
+        {
+            Assert.True(SqlConnectionEncryptOption.TryParse(value, out SqlConnectionEncryptOption result));
+            Assert.Equal(expectedValue, result.ToString());
+        }
+
+        [Theory]
+        [InlineData("something")]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("  true  ")]
+        public void EncryptTryParseInvalidValuesReturnsFalse(string value)
+        {
+            Assert.False(SqlConnectionEncryptOption.TryParse(value, out SqlConnectionEncryptOption result));
+            Assert.Null(result);
         }
 
         internal void ExecuteConnectionStringTests(string connectionString)
