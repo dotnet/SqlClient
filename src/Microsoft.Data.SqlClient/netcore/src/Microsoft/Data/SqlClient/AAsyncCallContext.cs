@@ -42,7 +42,6 @@ namespace Microsoft.Data.SqlClient
         {
             TDisposable copyDisposable = _disposable;
             _disposable = default;
-            _isDisposed = true;
             copyDisposable?.Dispose();
         }
     }

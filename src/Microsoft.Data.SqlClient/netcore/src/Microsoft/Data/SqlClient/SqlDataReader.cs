@@ -4734,7 +4734,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Register first to catch any already expired tokens to be able to trigger cancellation event.
-                IDisposable registration = null;
+                CancellationTokenRegistration registration = default;
                 if (cancellationToken.CanBeCanceled)
                 {
                     registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
@@ -4836,12 +4836,6 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     _currentTask = null;
                     return source.Task;
-                }
-
-                CancellationTokenRegistration registration = default;
-                if (cancellationToken.CanBeCanceled)
-                {
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
                 }
 
                 ReadAsyncCallContext context = null;
