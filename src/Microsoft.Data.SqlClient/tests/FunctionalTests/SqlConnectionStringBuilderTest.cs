@@ -383,6 +383,10 @@ namespace Microsoft.Data.SqlClient.Tests
             builder.Encrypt = SqlConnectionEncryptOption.Strict;
             Assert.Equal("Encrypt=Strict", builder.ConnectionString);
             Assert.True(builder.Encrypt);
+
+            builder.Encrypt = null;
+            Assert.Equal("Encrypt=True", builder.ConnectionString);
+            Assert.True(builder.Encrypt);
         }
 
         [Theory]
@@ -414,7 +418,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("strict", "Strict")]
         public void EncryptTryParseValidValuesReturnsTrue(string value, string expectedValue)
         {
-            Assert.True(SqlConnectionEncryptOption.TryParse(value, out var result));
+            Assert.True(SqlConnectionEncryptOption.TryParse(value, out SqlConnectionEncryptOption result));
             Assert.Equal(expectedValue, result.ToString());
         }
 
@@ -424,7 +428,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(null)]
         [InlineData("  true  ")]
         public void EncryptTryParseInvalidValuesReturnsFalse(string value)
-            => Assert.False(SqlConnectionEncryptOption.TryParse(value, out _));
+        {
+            Assert.False(SqlConnectionEncryptOption.TryParse(value, out SqlConnectionEncryptOption result));
+            Assert.Null(result);
+        }
 
         internal void ExecuteConnectionStringTests(string connectionString)
         {
