@@ -1044,7 +1044,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    _longlenleft = (ulong)chunklen;
+                    _longlenleft = chunklen;
                 }
             }
 
@@ -1110,7 +1110,7 @@ namespace Microsoft.Data.SqlClient
             // If total length is known up front, allocate the whole buffer in one shot instead of realloc'ing and copying over each time
             if (buff == null && _longlen != TdsEnums.SQL_PLP_UNKNOWNLEN)
             {
-                buff = new byte[(int)Math.Min((int)_longlen, len)];
+                buff = new byte[(Math.Min((int)_longlen, len))];
             }
 
             if (_longlenleft == 0)
@@ -1190,12 +1190,12 @@ namespace Microsoft.Data.SqlClient
 
             while (num > 0)
             {
-                int cbSkip = (int)Math.Min((long)int.MaxValue, num);
+                int cbSkip = (int)Math.Min(int.MaxValue, num);
                 if (!TryReadByteArray(Span<byte>.Empty, cbSkip))
                 {
                     return false;
                 }
-                num -= (long)cbSkip;
+                num -= cbSkip;
             }
 
             return true;
@@ -1465,7 +1465,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (!_attentionSent)
                     {
-                        AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+                        AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
 
                         // Grab a reference to the _networkPacketTaskSource in case it becomes null while we are trying to use it
                         TaskCompletionSource<object> source = _networkPacketTaskSource;
@@ -1826,7 +1826,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     stateObj.SetTimeoutStateStopped();
                     Debug.Assert(_parser.Connection != null, "SqlConnectionInternalTds handler can not be null at this point.");
-                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
 
                     if (!stateObj._attentionSent)
                     {
@@ -2746,7 +2746,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     Debug.Assert(_parser.Connection != null, "SqlConnectionInternalTds handler can not be null at this point.");
-                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
                     _bulkCopyWriteTimeout = true;
                     SendAttention();
                     _parser.ProcessPendingAck(this);
