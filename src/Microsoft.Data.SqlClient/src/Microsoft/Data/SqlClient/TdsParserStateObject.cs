@@ -20,8 +20,8 @@ namespace Microsoft.Data.SqlClient
 
     partial class TdsParserStateObject
     {
-        private static int _objectTypeCount; // EventSource counter
-        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource counter
+        internal readonly int _objectID = Interlocked.Increment(ref s_objectTypeCount);
 
         [Flags]
         internal enum SnapshottedStateFlags : byte
@@ -161,7 +161,7 @@ namespace Microsoft.Data.SqlClient
         //    attention to the server
         // 3) post session close - no attention is allowed
         private bool _cancelled;
-        private const int _waitForCancellationLockPollTimeout = 100;
+        private const int WaitForCancellationLockPollTimeout = 100;
 
         // Cache the transaction for which this command was executed so upon completion we can
         // decrement the appropriate result count.
@@ -253,30 +253,30 @@ namespace Microsoft.Data.SqlClient
         //        field.SetValue(null, true);
         //    }
         //
-        internal static bool _forceAllPends = false;
+        internal static bool s_forceAllPends = false;
 
         // set this while making a call that should not block.
         // instead of blocking it will fail.
-        internal static bool _failAsyncPends = false;
+        internal static bool s_failAsyncPends = false;
 
         // If this is set and an async read is made, then
         // we will switch to syncOverAsync mode for the
         // remainder of the async operation.
-        internal static bool _forceSyncOverAsyncAfterFirstPend = false;
+        internal static bool s_forceSyncOverAsyncAfterFirstPend = false;
 
         // Requests to send attention will be ignored when _skipSendAttention is true.
         // This is useful to simulate circumstances where timeouts do not recover.
-        internal static bool _skipSendAttention = false;
+        internal static bool s_skipSendAttention = false;
 
         // Prevents any pending read from completing until the user signals it using
         // CompletePendingReadWithSuccess() or CompletePendingReadWithFailure(int errorCode) in SqlCommand\SqlDataReader
-        internal static bool _forcePendingReadsToWaitForUser = false;
+        internal static bool s_forcePendingReadsToWaitForUser = false;
         internal TaskCompletionSource<object> _realNetworkPacketTaskSource;
 
         // Field is never assigned to, and will always have its default value
 #pragma warning disable 0649
         // Set to true to enable checking the call stacks match when packet retry occurs.
-        internal static bool _checkNetworkPacketRetryStacks = false;
+        internal static bool s_checkNetworkPacketRetryStacks = false;
 #pragma warning restore 0649
 #endif
 

@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient
                 // Keep looping until we either grabbed the lock (and therefore sent attention) or the connection closes\breaks
                 while ((!hasLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
                 {
-                    Monitor.TryEnter(this, _waitForCancellationLockPollTimeout, ref hasLock);
+                    Monitor.TryEnter(this, WaitForCancellationLockPollTimeout, ref hasLock);
                     if (hasLock)
                     { // Lock for the time being - since we need to synchronize the attention send.
                       // This lock is also protecting against concurrent close and async continuations
@@ -142,7 +142,7 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     try
                                     {
-                                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false, timeout: _waitForCancellationLockPollTimeout, lockTaken: ref hasParserLock);
+                                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false, timeout: WaitForCancellationLockPollTimeout, lockTaken: ref hasParserLock);
                                         if (hasParserLock)
                                         {
                                             _parser.Connection.ThreadHasParserLockForClose = true;
@@ -368,7 +368,7 @@ namespace Microsoft.Data.SqlClient
                 _networkPacketTaskSource = new TaskCompletionSource<object>();
                 Interlocked.MemoryBarrier();
 
-                if (_forcePendingReadsToWaitForUser)
+                if (s_forcePendingReadsToWaitForUser)
                 {
                     _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
                     _realNetworkPacketTaskSource.SetResult(null);
@@ -427,7 +427,7 @@ namespace Microsoft.Data.SqlClient
                 _networkPacketTaskSource = new TaskCompletionSource<object>();
                 Interlocked.MemoryBarrier();
 
-                if (_forcePendingReadsToWaitForUser)
+                if (s_forcePendingReadsToWaitForUser)
                 {
                     _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
                     _realNetworkPacketTaskSource.SetResult(null);
@@ -1156,7 +1156,7 @@ namespace Microsoft.Data.SqlClient
                     if (_snapshot.Replay())
                     {
 #if DEBUG
-                        if (_checkNetworkPacketRetryStacks)
+                        if (s_checkNetworkPacketRetryStacks)
                         {
                             _snapshot.CheckStack(Environment.StackTrace);
                         }
@@ -1166,7 +1166,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                     else
                     {
-                        if (_checkNetworkPacketRetryStacks)
+                        if (s_checkNetworkPacketRetryStacks)
                         {
                             _lastStack = Environment.StackTrace;
                         }
@@ -1187,11 +1187,11 @@ namespace Microsoft.Data.SqlClient
             ReadSni(new TaskCompletionSource<object>());
 
 #if DEBUG
-            if (_failAsyncPends)
+            if (s_failAsyncPends)
             {
                 throw new InvalidOperationException("Attempted to pend a read when _failAsyncPends test hook was enabled");
             }
-            if (_forceSyncOverAsyncAfterFirstPend)
+            if (s_forceSyncOverAsyncAfterFirstPend)
             {
                 _syncOverAsync = true;
             }
@@ -1241,7 +1241,7 @@ namespace Microsoft.Data.SqlClient
 
                     ProcessSniPacket(readPacket, 0);
 #if DEBUG
-                    if (_forcePendingReadsToWaitForUser)
+                    if (s_forcePendingReadsToWaitForUser)
                     {
                         _networkPacketTaskSource = new TaskCompletionSource<object>();
                         Interlocked.MemoryBarrier();
@@ -1481,7 +1481,7 @@ namespace Microsoft.Data.SqlClient
             }
 
 #if DEBUG
-            if (_forcePendingReadsToWaitForUser)
+            if (s_forcePendingReadsToWaitForUser)
             {
                 _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
             }
@@ -1566,7 +1566,7 @@ namespace Microsoft.Data.SqlClient
 
                     ReadSniError(this, error);
 #if DEBUG
-                    if ((_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null))
+                    if ((s_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null))
                     {
                         _realNetworkPacketTaskSource.TrySetResult(null);
                     }
@@ -1904,7 +1904,7 @@ namespace Microsoft.Data.SqlClient
 
             TaskCompletionSource<object> source = _networkPacketTaskSource;
 #if DEBUG
-            if ((_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null))
+            if ((s_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null))
             {
                 source = _realNetworkPacketTaskSource;
             }
@@ -2610,7 +2610,7 @@ namespace Microsoft.Data.SqlClient
                     // This prevents a race condition between receiving the attention ACK and setting _attentionSent
                     _attentionSending = true;
 #if DEBUG
-                    if (!_skipSendAttention)
+                    if (!s_skipSendAttention)
                     {
 #endif
                         // Take lock and send attention
@@ -3027,7 +3027,7 @@ namespace Microsoft.Data.SqlClient
             var realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
             var networkPacketTaskSource = _networkPacketTaskSource;
 
-            Debug.Assert(_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
+            Debug.Assert(s_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
             Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
 
             try
@@ -3044,7 +3044,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (resetForcePendingReadsToWait)
                     {
-                        _forcePendingReadsToWaitForUser = false;
+                        s_forcePendingReadsToWaitForUser = false;
                     }
 
                     networkPacketTaskSource.TrySetResult(null);
@@ -3057,7 +3057,7 @@ namespace Microsoft.Data.SqlClient
             var realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
             var networkPacketTaskSource = _networkPacketTaskSource;
 
-            Debug.Assert(_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
+            Debug.Assert(s_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
             Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
 
             try
@@ -3074,7 +3074,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (resetForcePendingReadsToWait)
                     {
-                        _forcePendingReadsToWaitForUser = false;
+                        s_forcePendingReadsToWaitForUser = false;
                     }
 
                     AddError(new SqlError(errorCode, 0x00, TdsEnums.FATAL_ERROR_CLASS, _parser.Server, string.Empty, string.Empty, 0));
@@ -3168,7 +3168,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
             internal bool DoPend()
             {
-                if (_failAsyncPends || !_forceAllPends)
+                if (s_failAsyncPends || !s_forceAllPends)
                 {
                     return false;
                 }
