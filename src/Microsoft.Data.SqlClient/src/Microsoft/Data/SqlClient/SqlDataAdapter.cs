@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient
             return _commandSet.ExecuteNonQuery();
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill1/*' />
         new public int Fill(DataSet dataSet)
         {
             int rows = 0;
