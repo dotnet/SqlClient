@@ -383,6 +383,10 @@ namespace Microsoft.Data.SqlClient.Tests
             builder.Encrypt = SqlConnectionEncryptOption.Strict;
             Assert.Equal("Encrypt=Strict", builder.ConnectionString);
             Assert.True(builder.Encrypt);
+
+            builder.Encrypt = null;
+            Assert.Equal("Encrypt=True", builder.ConnectionString);
+            Assert.True(builder.Encrypt);
         }
 
         internal void ExecuteConnectionStringTests(string connectionString)
