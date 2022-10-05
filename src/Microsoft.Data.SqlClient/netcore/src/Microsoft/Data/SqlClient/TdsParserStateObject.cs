@@ -398,7 +398,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(bytesToRead > 0, "0 byte read in TryReadByteArray");
                 if (!buff.IsEmpty)
                 {
-                    var copyFrom = new ReadOnlySpan<byte>(_inBuff, _inBytesUsed, bytesToRead);
+                    ReadOnlySpan<byte> copyFrom = new ReadOnlySpan<byte>(_inBuff, _inBytesUsed, bytesToRead);
                     Span<byte> copyTo = buff.Slice(totalRead, bytesToRead);
                     copyFrom.CopyTo(copyTo);
                 }
@@ -1292,7 +1292,7 @@ namespace Microsoft.Data.SqlClient
             Interlocked.MemoryBarrier();
 
             // then check for networkPacketTaskSource
-            var taskSource = _networkPacketTaskSource;
+            TaskCompletionSource<object> taskSource = _networkPacketTaskSource;
             if (taskSource != null)
             {
                 taskSource.TrySetException(ADP.ExceptionWithStackTrace(ADP.ClosedConnectionError()));
@@ -2055,7 +2055,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (Exception e)
                     {
-                        var writeCompletionSource = _writeCompletionSource;
+                        TaskCompletionSource<object> writeCompletionSource = _writeCompletionSource;
                         if (writeCompletionSource != null)
                         {
                             writeCompletionSource.TrySetException(e);
@@ -2071,7 +2071,7 @@ namespace Microsoft.Data.SqlClient
                             writeCompletionSource = _writeCompletionSource;
                             if (writeCompletionSource != null)
                             {
-                                var delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
+                                Exception delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
                                 if (delayedException != null)
                                 {
                                     writeCompletionSource.TrySetException(delayedException);
@@ -2095,7 +2095,7 @@ namespace Microsoft.Data.SqlClient
                     new Timer(obj =>
                     {
                         Interlocked.Decrement(ref _asyncWriteCount);
-                        var writeCompletionSource = _writeCompletionSource;
+                        TaskCompletionSource<object> writeCompletionSource = _writeCompletionSource;
                         if (_asyncWriteCount == 0 && writeCompletionSource != null)
                         {
                             writeCompletionSource.TrySetResult(null);
@@ -2116,7 +2116,7 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 #endif
-            var completionSource = _writeCompletionSource;
+            TaskCompletionSource<object> completionSource = _writeCompletionSource;
             if (_asyncWriteCount == 0 && completionSource != null)
             {
                 completionSource.TrySetResult(null);
@@ -2158,7 +2158,7 @@ namespace Microsoft.Data.SqlClient
         internal Task WaitForAccumulatedWrites()
         {
             // Checked for stored exceptions
-            var delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
+            Exception delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
             if (delayedException != null)
             {
                 throw delayedException;
@@ -2449,7 +2449,7 @@ namespace Microsoft.Data.SqlClient
         private Task SNIWritePacket(PacketHandle packet, out uint sniError, bool canAccumulate, bool callerHasConnectionLock, bool asyncClose = false)
         {
             // Check for a stored exception
-            var delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
+            Exception delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
             if (delayedException != null)
             {
                 throw delayedException;
@@ -2998,7 +2998,7 @@ namespace Microsoft.Data.SqlClient
         internal void AssertStateIsClean()
         {
             // If our TdsParser is closed or broken, then we don't really care about our state
-            var parser = _parser;
+            TdsParser parser = _parser;
             if ((parser != null) && (parser.State != TdsParserState.Closed) && (parser.State != TdsParserState.Broken))
             {
                 // Async reads
@@ -3020,8 +3020,8 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
         internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait)
         {
-            var realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
-            var networkPacketTaskSource = _networkPacketTaskSource;
+            TaskCompletionSource<object> realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
+            TaskCompletionSource<object> networkPacketTaskSource = _networkPacketTaskSource;
 
             Debug.Assert(s_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
             Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
@@ -3050,8 +3050,8 @@ namespace Microsoft.Data.SqlClient
 
         internal void CompletePendingReadWithFailure(int errorCode, bool resetForcePendingReadsToWait)
         {
-            var realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
-            var networkPacketTaskSource = _networkPacketTaskSource;
+            TaskCompletionSource<object> realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
+            TaskCompletionSource<object> networkPacketTaskSource = _networkPacketTaskSource;
 
             Debug.Assert(s_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
             Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
