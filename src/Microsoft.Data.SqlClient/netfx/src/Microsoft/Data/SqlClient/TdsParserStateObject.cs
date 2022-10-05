@@ -76,7 +76,8 @@ namespace Microsoft.Data.SqlClient
 
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
             SQLDNSInfo cachedDNSInfo;
-            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
+
+            SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, physicalConnection, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
             if (_sessionHandle.Status != TdsEnums.SNI_SUCCESS)
@@ -678,7 +679,7 @@ namespace Microsoft.Data.SqlClient
                 // If the long isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                int bytesRead = 0;
+                int bytesRead;
                 if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 8 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 8, "Read more data than required");
@@ -765,7 +766,7 @@ namespace Microsoft.Data.SqlClient
                 // If the int isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                int bytesRead = 0;
+                int bytesRead;
                 if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 4 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 4, "Read more data than required");
@@ -918,8 +919,7 @@ namespace Microsoft.Data.SqlClient
                 // Need to skip the current column before throwing the error - this ensures that the state shared between this and the data reader is consistent when calling DrainData
                 if (isPlp)
                 {
-                    ulong ignored;
-                    if (!_parser.TrySkipPlpValue((ulong)length, this, out ignored))
+                    if (!_parser.TrySkipPlpValue((ulong)length, this, out _))
                     {
                         value = null;
                         return false;
@@ -1084,10 +1084,9 @@ namespace Microsoft.Data.SqlClient
         // Every time you call this method increment the offst and decrease len by the value of totalBytesRead
         internal bool TryReadPlpBytes(ref byte[] buff, int offst, int len, out int totalBytesRead)
         {
-            int bytesRead = 0;
+            int bytesRead;
             int bytesLeft;
             byte[] newbuf;
-            ulong ignored;
 
             if (_longlen == 0)
             {
@@ -1116,7 +1115,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_longlenleft == 0)
             {
-                if (!TryReadPlpLength(false, out ignored))
+                if (!TryReadPlpLength(false, out _))
                 {
                     totalBytesRead = 0;
                     return false;
@@ -1161,7 +1160,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (_longlenleft == 0)
                 { // Read the next chunk or cleanup state if hit the end
-                    if (!TryReadPlpLength(false, out ignored))
+                    if (!TryReadPlpLength(false, out _))
                     {
                         return false;
                     }
@@ -1188,11 +1187,10 @@ namespace Microsoft.Data.SqlClient
         internal bool TrySkipLongBytes(long num)
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
-            int cbSkip = 0;
 
             while (num > 0)
             {
-                cbSkip = (int)Math.Min((long)Int32.MaxValue, num);
+                int cbSkip = (int)Math.Min((long)Int32.MaxValue, num);
                 if (!TryReadByteArray(Span<byte>.Empty, cbSkip))
                 {
                     return false;
@@ -2738,9 +2736,8 @@ namespace Microsoft.Data.SqlClient
             SNIPacket packet = GetResetWritePacket();
             SNINativeMethodWrapper.SNIPacketSetData(packet, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
 
-            uint sniError;
             Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
-            Task task = SNIWritePacket(Handle, packet, out sniError, canAccumulate, callerHasConnectionLock: true);
+            Task task = SNIWritePacket(Handle, packet, out _, canAccumulate, callerHasConnectionLock: true);
 
             // Check to see if the timeout has occurred.  This time out code is special case code to allow BCP writes to timeout to fix bug 350558, eventually we should make all writes timeout.
             if (_bulkCopyOpperationInProgress && 0 == GetTimeoutRemaining())
