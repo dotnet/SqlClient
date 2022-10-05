@@ -603,7 +603,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!TryReadByteArray(_bTmp, 2))
                 {
-                    value = default(short);
+                    value = default;
                     return false;
                 }
 
@@ -724,7 +724,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!TryReadByteArray(_bTmp, 2))
                 {
-                    value = default(ushort);
+                    value = default;
                     return false;
                 }
 
@@ -809,7 +809,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!TryReadByteArray(_bTmp, 4))
                 {
-                    value = default(float);
+                    value = default;
                     return false;
                 }
 
@@ -843,7 +843,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!TryReadByteArray(_bTmp, 8))
                 {
-                    value = default(double);
+                    value = default;
                     return false;
                 }
 

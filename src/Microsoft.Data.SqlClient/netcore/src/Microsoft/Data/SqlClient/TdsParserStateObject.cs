@@ -684,7 +684,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!TryReadByteArray(_bTmp, 4))
                 {
-                    value = default(float);
+                    value = default;
                     return false;
                 }
 
