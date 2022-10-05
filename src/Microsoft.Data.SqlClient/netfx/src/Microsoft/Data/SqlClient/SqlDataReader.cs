@@ -329,8 +329,8 @@ namespace Microsoft.Data.SqlClient
 
             if (null != metaData && 0 < metaData.Length)
             {
-                metaDataReturn = new SmiExtendedMetaData[metaData.visibleColumns];
-
+                metaDataReturn = new SmiExtendedMetaData[metaData.VisibleColumnCount];
+                int returnIndex = 0;
                 for (int index = 0; index < metaData.Length; index++)
                 {
                     _SqlMetaData colMetaData = metaData[index];
@@ -369,7 +369,7 @@ namespace Microsoft.Data.SqlClient
                             length /= ADP.CharSize;
                         }
 
-                        metaDataReturn[index] = new SmiQueryMetaData(
+                        metaDataReturn[returnIndex] = new SmiQueryMetaData(
                                                         colMetaData.type,
                                                         length,
                                                         colMetaData.precision,
@@ -397,6 +397,7 @@ namespace Microsoft.Data.SqlClient
                                                         colMetaData.IsDifferentName,
                                                         colMetaData.IsHidden
                                                         );
+                        returnIndex += 1;
                     }
                 }
             }
@@ -458,7 +459,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return 0;
                 }
-                return (md.visibleColumns);
+                return md.VisibleColumnCount;
             }
         }
 
@@ -1352,31 +1353,6 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(!ignored, "Parser read a row token while trying to read metadata");
             }
 
-            // we hide hidden columns from the user so build an internal map
-            // that compacts all hidden columns from the array
-            if (null != _metaData)
-            {
-
-                if (_snapshot != null && object.ReferenceEquals(_snapshot._metadata, _metaData))
-                {
-                    _metaData = (_SqlMetaDataSet)_metaData.Clone();
-                }
-
-                _metaData.visibleColumns = 0;
-
-                Debug.Assert(null == _metaData.indexMap, "non-null metaData indexmap");
-                int[] indexMap = new int[_metaData.Length];
-                for (int i = 0; i < indexMap.Length; ++i)
-                {
-                    indexMap[i] = _metaData.visibleColumns;
-
-                    if (!(_metaData[i].IsHidden))
-                    {
-                        _metaData.visibleColumns++;
-                    }
-                }
-                _metaData.indexMap = indexMap;
-            }
 
             return true;
         }
@@ -1690,15 +1666,15 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    if (null == _metaData || null == _metaData.schemaTable)
+                    if (null == _metaData || null == _metaData._schemaTable)
                     {
                         if (null != this.MetaData)
                         {
-                            _metaData.schemaTable = BuildSchemaTable();
-                            Debug.Assert(null != _metaData.schemaTable, "No schema information yet!");
+                            _metaData._schemaTable = BuildSchemaTable();
+                            Debug.Assert(null != _metaData._schemaTable, "No schema information yet!");
                         }
                     }
-                    return _metaData?.schemaTable;
+                    return _metaData?._schemaTable;
                 }
                 finally
                 {
@@ -2994,11 +2970,11 @@ namespace Microsoft.Data.SqlClient
 
                 SetTimeout(_defaultTimeoutMilliseconds);
 
-                int copyLen = (values.Length < _metaData.visibleColumns) ? values.Length : _metaData.visibleColumns;
+                int copyLen = (values.Length < _metaData.VisibleColumnCount) ? values.Length : _metaData.VisibleColumnCount;
 
                 for (int i = 0; i < copyLen; i++)
                 {
-                    values[_metaData.indexMap[i]] = GetSqlValueInternal(i);
+                    values[_metaData.GetVisibleColumnIndex(i)] = GetSqlValueInternal(i);
                 }
                 return copyLen;
             }
@@ -3398,7 +3374,7 @@ namespace Microsoft.Data.SqlClient
 
                 CheckMetaDataIsReady();
 
-                int copyLen = (values.Length < _metaData.visibleColumns) ? values.Length : _metaData.visibleColumns;
+                int copyLen = (values.Length < _metaData.VisibleColumnCount) ? values.Length : _metaData.VisibleColumnCount;
                 int maximumColumn = copyLen - 1;
 
                 SetTimeout(_defaultTimeoutMilliseconds);
@@ -3414,12 +3390,19 @@ namespace Microsoft.Data.SqlClient
                 for (int i = 0; i < copyLen; i++)
                 {
                     // Get the usable, TypeSystem-compatible value from the iternal buffer
-                    values[_metaData.indexMap[i]] = GetValueFromSqlBufferInternal(_data[i], _metaData[i]);
+                    int fieldIndex = _metaData.GetVisibleColumnIndex(i);
+                    values[i] = GetValueFromSqlBufferInternal(_data[fieldIndex], _metaData[fieldIndex]);
 
                     // If this is sequential access, then we need to wipe the internal buffer
                     if ((sequentialAccess) && (i < maximumColumn))
                     {
                         _data[i].Clear();
+                        if (fieldIndex > i && fieldIndex > 0)
+                        {
+                            // if we jumped an index forward because of a hidden column see if the buffer before the 
+                            // current one was populated by the seek forward and clear it if it was
+                            _data[fieldIndex - 1].Clear();
+                        }
                     }
                 }
 
@@ -4767,7 +4750,7 @@ namespace Microsoft.Data.SqlClient
             _tableNames = null;
             if (_metaData != null)
             {
-                _metaData.schemaTable = null;
+                _metaData._schemaTable = null;
                 _data = SqlBuffer.CreateBufferArray(metaData.Length);
             }
 
