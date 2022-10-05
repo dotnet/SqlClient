@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient
             set => _pendingData = value;
         }
         
-        internal UInt32 Status
+        internal uint Status
         {
             get
             {
@@ -302,16 +302,16 @@ namespace Microsoft.Data.SqlClient
 
             // Translate to SNI timeout values (Int32 milliseconds)
             long timeout;
-            if (Int64.MaxValue == timerExpire)
+            if (long.MaxValue == timerExpire)
             {
-                timeout = Int32.MaxValue;
+                timeout = int.MaxValue;
             }
             else
             {
                 timeout = ADP.TimerRemainingMilliseconds(timerExpire);
-                if (timeout > Int32.MaxValue)
+                if (timeout > int.MaxValue)
                 {
-                    timeout = Int32.MaxValue;
+                    timeout = int.MaxValue;
                 }
                 else if (0 > timeout)
                 {
@@ -623,7 +623,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             AssertValidState();
-            value = (Int16)((buffer[offset + 1] << 8) + buffer[offset]);
+            value = (short)((buffer[offset + 1] << 8) + buffer[offset]);
             return true;
         }
 
@@ -744,7 +744,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             AssertValidState();
-            value = (UInt16)((buffer[offset + 1] << 8) + buffer[offset]);
+            value = (ushort)((buffer[offset + 1] << 8) + buffer[offset]);
             return true;
         }
 
@@ -941,7 +941,7 @@ namespace Microsoft.Data.SqlClient
 
             if (isPlp)
             {
-                if (!TryReadPlpBytes(ref buf, 0, Int32.MaxValue, out length))
+                if (!TryReadPlpBytes(ref buf, 0, int.MaxValue, out length))
                 {
                     value = null;
                     return false;
@@ -1190,7 +1190,7 @@ namespace Microsoft.Data.SqlClient
 
             while (num > 0)
             {
-                int cbSkip = (int)Math.Min((long)Int32.MaxValue, num);
+                int cbSkip = (int)Math.Min((long)int.MaxValue, num);
                 if (!TryReadByteArray(Span<byte>.Empty, cbSkip))
                 {
                     return false;
@@ -1304,7 +1304,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             IntPtr readPacket = IntPtr.Zero;
-            UInt32 error;
+            uint error;
 
             RuntimeHelpers.PrepareConstrainedRegions();
             bool shouldDecrement = false;
@@ -1585,7 +1585,7 @@ namespace Microsoft.Data.SqlClient
 #endif
 
             IntPtr readPacket = IntPtr.Zero;
-            UInt32 error = 0;
+            uint error = 0;
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -1727,7 +1727,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    UInt32 error;
+                    uint error;
                     IntPtr readPacket = IntPtr.Zero;
 
                     RuntimeHelpers.PrepareConstrainedRegions();
@@ -1790,7 +1790,7 @@ namespace Microsoft.Data.SqlClient
                 return true;
             }
 
-            UInt32 error = TdsEnums.SNI_SUCCESS;
+            uint error = TdsEnums.SNI_SUCCESS;
             SniContext = SniContext.Snix_Connect;
             try
             {
@@ -1809,7 +1809,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // This method should only be called by ReadSni!  If not - it may have problems with timeouts!
-        private void ReadSniError(TdsParserStateObject stateObj, UInt32 error)
+        private void ReadSniError(TdsParserStateObject stateObj, uint error)
         {
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadSniSyncError");  // you need to setup for a thread abort somewhere before you call this method
 
@@ -1914,7 +1914,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // TODO: - does this need to be MUSTRUN???
-        public void ProcessSniPacket(IntPtr packet, UInt32 error)
+        public void ProcessSniPacket(IntPtr packet, uint error)
         {
             if (error != 0)
             {
@@ -1930,8 +1930,8 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                UInt32 dataSize = 0;
-                UInt32 getDataError = SNINativeMethodWrapper.SNIPacketGetData(packet, _inBuff, ref dataSize);
+                uint dataSize = 0;
+                uint getDataError = SNINativeMethodWrapper.SNIPacketGetData(packet, _inBuff, ref dataSize);
 
                 if (getDataError == TdsEnums.SNI_SUCCESS)
                 {
@@ -1984,7 +1984,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        public void ReadAsyncCallback(IntPtr key, IntPtr packet, UInt32 error)
+        public void ReadAsyncCallback(IntPtr key, IntPtr packet, uint error)
         { // Key never used.
             // Note - it's possible that when native calls managed that an asynchronous exception
             // could occur in the native->managed transition, which would
@@ -2126,7 +2126,7 @@ namespace Microsoft.Data.SqlClient
 
 #pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
 
-        public void WriteAsyncCallback(IntPtr key, IntPtr packet, UInt32 sniError)
+        public void WriteAsyncCallback(IntPtr key, IntPtr packet, uint sniError)
         { // Key never used.
             RemovePacketFromPendingList(packet);
             try
@@ -2320,7 +2320,7 @@ namespace Microsoft.Data.SqlClient
         //
         // Takes a byte array and writes it to the buffer.
         //
-        internal Task WriteByteArray(Byte[] b, int len, int offsetBuffer, bool canAccumulate = true, TaskCompletionSource<object> completion = null)
+        internal Task WriteByteArray(byte[] b, int len, int offsetBuffer, bool canAccumulate = true, TaskCompletionSource<object> completion = null)
         {
             try
             {
@@ -2514,7 +2514,7 @@ namespace Microsoft.Data.SqlClient
 
 #pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
 
-        private Task SNIWritePacket(SNIHandle handle, SNIPacket packet, out UInt32 sniError, bool canAccumulate, bool callerHasConnectionLock, bool asyncClose = false)
+        private Task SNIWritePacket(SNIHandle handle, SNIPacket packet, out uint sniError, bool canAccumulate, bool callerHasConnectionLock, bool asyncClose = false)
         {
             // Check for a stored exception
             var delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
@@ -2697,7 +2697,7 @@ namespace Microsoft.Data.SqlClient
                                 return;
                             }
 
-                            UInt32 sniError;
+                            uint sniError;
                             _parser._asyncWrite = false; // stop async write 
                             SNIWritePacket(Handle, attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false, asyncClose);
                             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendAttention|{0}> Send Attention ASync.", "Info");
