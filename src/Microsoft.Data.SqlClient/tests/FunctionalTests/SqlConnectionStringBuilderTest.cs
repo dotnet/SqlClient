@@ -361,6 +361,17 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void AbleToSetHostNameInCertificate()
+        {
+            var testhostname = "somedomain.net";
+            var builder = new SqlConnectionStringBuilder
+            {
+                HostNameInCertificate = testhostname
+            };
+            Assert.Equal(testhostname, builder.HostNameInCertificate);
+        }
+
+        [Fact]
         public void ConnectionBuilderEncryptBackwardsCompatibility()
         {
             SqlConnectionStringBuilder builder = new();
