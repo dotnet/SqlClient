@@ -1237,8 +1237,9 @@ namespace Microsoft.Data.SqlClient
             get => _encrypt;
             set
             {
-                SetSqlConnectionEncryptionValue(value);
-                _encrypt = value;
+                SqlConnectionEncryptOption newValue = value ?? DbConnectionStringDefaults.Encrypt;
+                SetSqlConnectionEncryptionValue(newValue);
+                _encrypt = newValue;
             }
         }
 

@@ -11,14 +11,6 @@ namespace Microsoft.Data.ProviderBase
 {
     sealed internal partial class DbConnectionPool
     {
-        partial void CheckPoolBlockingPeriod(Exception e)
-        {
-            if (!IsBlockingPeriodEnabled())
-            {
-                throw e;
-            }
-        }
-
         private bool IsBlockingPeriodEnabled()
         {
             var poolGroupConnectionOptions = _connectionPoolGroup.ConnectionOptions as SqlConnectionString;
