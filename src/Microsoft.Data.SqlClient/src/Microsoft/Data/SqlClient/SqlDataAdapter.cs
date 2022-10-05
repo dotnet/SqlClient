@@ -190,7 +190,7 @@ namespace Microsoft.Data.SqlClient
             return rows;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill2/*' />
         new public int Fill(DataSet dataSet, string srcTable)
         {
             int rows = 0;
@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient
             return rows;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill3/*' />
         new public int Fill(DataSet dataSet, int startRecord, int maxRecord, string srcTable)
         {
             int rows = 0;
@@ -226,7 +226,7 @@ namespace Microsoft.Data.SqlClient
             return rows;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill4/*' />
         new public int Fill(DataTable dataTable)
         {
             int rows = 0;
@@ -244,7 +244,7 @@ namespace Microsoft.Data.SqlClient
             return rows;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill5/*' />
         new public int Fill(int startRecord, int maxRecord, params DataTable[] dataTables)
         {
             int rows = 0;
