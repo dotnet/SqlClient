@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 5.1.0-preview1.X.1] - 2022-10-06
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed `ReadAsync()` behavior to register Cancellation token action before streaming results. [#1781](https://github.com/dotnet/SqlClient/pull/1781)
+- Fixed `NullReferenceException` when assigning `null` to `SqlConnectionStringBuilder.Encrypt`. [#1778](https://github.com/dotnet/SqlClient/pull/1778)
+- Fixed missing `HostNameInCertificate` property in .NET Framework Reference Project. [#1776](https://github.com/dotnet/SqlClient/pull/1776)
+- Fixed async deadlock issue when sending attention fails due to network failure. [#1766](https://github.com/dotnet/SqlClient/pull/1766)
+- Fixed failed connection requests in ConnectionPool in case of PoolBlock. [#1768](https://github.com/dotnet/SqlClient/pull/1768)
+- Fixed hang on infinite timeout and managed SNI. [#1742](https://github.com/dotnet/SqlClient/pull/1742)
+- Fixed Default UTF8 collation conflict. [#1739](https://github.com/dotnet/SqlClient/pull/1739)
+
+### Changed
+
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.1.0-preview1.X.1`. [TBD](https://github.com/dotnet/SqlClient/pull/TBD)
+- Updated `SqlConnectionEncryptOption` string parser public. [#1771](https://github.com/dotnet/SqlClient/pull/1771)
+- Converted `ExecuteNonQueryAsync` to use async context object. [#1692](https://github.com/dotnet/SqlClient/pull/1692)
+- Code health improvements [#1705](https://github.com/dotnet/SqlClient/pull/1705) [#1604](https://github.com/dotnet/SqlClient/pull/1604) [#1598](https://github.com/dotnet/SqlClient/pull/1598) [#1595](https://github.com/dotnet/SqlClient/pull/1595) [#1443](https://github.com/dotnet/SqlClient/pull/1443) 
+
 ## [Stable release 5.0.0] - 2022-08-05
 
 This update brings the below changes over the previous release:

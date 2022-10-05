@@ -4,6 +4,7 @@ The latest stable release is [Microsoft.Data.SqlClient 5.0](5.0).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient 5.1](5.1)
 - [Microsoft.Data.SqlClient 5.0](5.0)
 - [Microsoft.Data.SqlClient 4.1](4.1)
 - [Microsoft.Data.SqlClient 4.0](4.0)
