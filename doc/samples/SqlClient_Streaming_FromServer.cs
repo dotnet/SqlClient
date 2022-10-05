@@ -1,12 +1,12 @@
-﻿// <Snippet1>
+﻿namespace StreamingFromServer;
+
+// <Snippet1>
 using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml;
-
-namespace StreamingFromServer;
 
 class Program
 {
