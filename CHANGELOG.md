@@ -18,7 +18,6 @@ This update brings the below changes over the previous release:
 ### Changed
 
 - Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.0.1`. [#TBD](https://github.com/dotnet/SqlClient/pull/TBD) which includes the fix for AppDomain crash in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418)
-- Changed the `SqlConnectionEncryptOption` string parser to public. [#1771](https://github.com/dotnet/SqlClient/pull/1771)
 
 ## [Stable release 5.0.0] - 2022-08-05
 
