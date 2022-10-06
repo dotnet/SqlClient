@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable release 5.0.1] - 2022-10-06
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed `ReadAsync()` behavior to register Cancellation token action before streaming results. [#1781](https://github.com/dotnet/SqlClient/pull/1781)
+- Fixed `NullReferenceException` when assigning `null` to `SqlConnectionStringBuilder.Encrypt`. [#1778](https://github.com/dotnet/SqlClient/pull/1778)
+- Fixed missing `HostNameInCertificate` property in .NET Framework Reference Project. [#1776](https://github.com/dotnet/SqlClient/pull/1776)
+- Fixed async deadlock issue when sending attention fails due to network failure. [#1766](https://github.com/dotnet/SqlClient/pull/1766)
+
+### Changed
+
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.0.1`. [#TBD](https://github.com/dotnet/SqlClient/pull/TBD) which includes the fix for AppDomain crash in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418)
+- Changed the `SqlConnectionEncryptOption` string parser to public. [#1771](https://github.com/dotnet/SqlClient/pull/1771)
+
 ## [Stable release 5.0.0] - 2022-08-05
 
 This update brings the below changes over the previous release:
