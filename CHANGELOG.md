@@ -20,7 +20,7 @@ This update brings the below changes over the previous release:
 
 ### Changed
 
-- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.1.0-preview1.22278.1`. [#1787](https://github.com/dotnet/SqlClient/pull/1787)
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.1.0-preview1.22278.1`. [#1787](https://github.com/dotnet/SqlClient/pull/1787) which includes TLS 1.3 Support, ARM/ARM64 support, and fix for AppDomain crash in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418)
 - Updated `SqlConnectionEncryptOption` string parser public. [#1771](https://github.com/dotnet/SqlClient/pull/1771)
 - Converted `ExecuteNonQueryAsync` to use async context object. [#1692](https://github.com/dotnet/SqlClient/pull/1692)
 - Code health improvements [#1604](https://github.com/dotnet/SqlClient/pull/1604) [#1598](https://github.com/dotnet/SqlClient/pull/1598) [#1595](https://github.com/dotnet/SqlClient/pull/1595) [#1443](https://github.com/dotnet/SqlClient/pull/1443) 
