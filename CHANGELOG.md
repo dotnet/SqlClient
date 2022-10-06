@@ -25,6 +25,10 @@ This update brings the below changes over the previous release:
 - Converted `ExecuteNonQueryAsync` to use async context object. [#1692](https://github.com/dotnet/SqlClient/pull/1692)
 - Code health improvements [#1705](https://github.com/dotnet/SqlClient/pull/1705) [#1604](https://github.com/dotnet/SqlClient/pull/1604) [#1598](https://github.com/dotnet/SqlClient/pull/1598) [#1595](https://github.com/dotnet/SqlClient/pull/1595) [#1443](https://github.com/dotnet/SqlClient/pull/1443) 
 
+### Known issues
+
+- When using `Encrypt=Strict` with TLS v1.3, there is a bug where the tls/ssl handshake occurs twice before the data is transferred.
+
 ## [Stable release 5.0.0] - 2022-08-05
 
 This update brings the below changes over the previous release:
