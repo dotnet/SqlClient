@@ -3136,21 +3136,14 @@ namespace Microsoft.Data.SqlClient
                             _defaultCollation = env._newCollation;
                             _defaultLCID = env._newCollation.LCID;
 
-                            int newCodePage = GetCodePage(env._newCollation, stateObj);
-
                             // UTF8 collation
                             if (env._newCollation.IsUTF8)
                             {
                                 _defaultEncoding = Encoding.UTF8;
-
-                                if (newCodePage != _defaultCodePage)
-                                {
-                                    _defaultCodePage = newCodePage;
-                                }
                             }
                             else
                             {
-
+                                int newCodePage = GetCodePage(env._newCollation, stateObj);
                                 if (newCodePage != _defaultCodePage)
                                 {
                                     _defaultCodePage = newCodePage;
