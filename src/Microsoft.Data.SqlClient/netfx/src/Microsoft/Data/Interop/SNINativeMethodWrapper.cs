@@ -14,13 +14,16 @@ using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using System.Text;
+using System.Net.NetworkInformation;
+using System.Drawing;
+using System.Net.Sockets;
 
 namespace Microsoft.Data.SqlClient
 {
     internal static class SNINativeMethodWrapper
     {
         private static int s_sniMaxComposedSpnLength = -1;
-        private static readonly bool s_is64bitProcess = Environment.Is64BitProcess;
+        private static readonly System.Runtime.InteropServices.Architecture s_architecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture;
 
         private const int SniOpenTimeOut = -1; // infinite
 
@@ -405,206 +408,476 @@ namespace Microsoft.Data.SqlClient
 
         internal static uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref uint pInfo)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIAddProvider(pConn, ProvNum, ref pInfo) :
-                SNINativeManagedWrapperX86.SNIAddProvider(pConn, ProvNum, ref pInfo);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIAddProvider(pConn, ProvNum, ref pInfo);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIAddProvider(pConn, ProvNum, ref pInfo);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIAddProvider(pConn, ProvNum, ref pInfo);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIAddProvider(pConn, ProvNum, ref pInfo);
+                default:
+                    return SNINativeManagedWrapperX86.SNIAddProvider(pConn, ProvNum, ref pInfo);
+            }
         }
 
         internal static uint SNIAddProviderWrapper(SNIHandle pConn, ProviderEnum ProvNum, [In] ref SNICTAIPProviderInfo pInfo)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo) :
-                SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+                default:
+                    return SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+            }
         }
 
         internal static uint SNIAddProviderWrapper(SNIHandle pConn, ProviderEnum ProvNum, [In] ref AuthProviderInfo pInfo)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo) :
-                SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+                default:
+                    return SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+            }
         }
 
         internal static uint SNICheckConnection([In] SNIHandle pConn)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNICheckConnection(pConn) :
-                SNINativeManagedWrapperX86.SNICheckConnection(pConn);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNICheckConnection(pConn);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNICheckConnection(pConn);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNICheckConnection(pConn);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNICheckConnection(pConn);
+                default:
+                    return SNINativeManagedWrapperX86.SNICheckConnection(pConn);
+            }
         }
 
         internal static uint SNIClose(IntPtr pConn)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIClose(pConn) :
-                SNINativeManagedWrapperX86.SNIClose(pConn);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIClose(pConn);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIClose(pConn);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIClose(pConn);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIClose(pConn);
+                default:
+                    return SNINativeManagedWrapperX86.SNIClose(pConn);
+            }
         }
 
         internal static void SNIGetLastError(out SNI_Error pErrorStruct)
         {
-            if (s_is64bitProcess)
+            switch (s_architecture)
             {
-                SNINativeManagedWrapperX64.SNIGetLastError(out pErrorStruct);
-            }
-            else
-            {
-                SNINativeManagedWrapperX86.SNIGetLastError(out pErrorStruct);
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    SNINativeManagedWrapperARM64.SNIGetLastError(out pErrorStruct);
+                    break;
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    SNINativeManagedWrapperARM.SNIGetLastError(out pErrorStruct);
+                    break;
+                case System.Runtime.InteropServices.Architecture.X64:
+                    SNINativeManagedWrapperX64.SNIGetLastError(out pErrorStruct);
+                    break;
+                case System.Runtime.InteropServices.Architecture.X86:
+                    SNINativeManagedWrapperX86.SNIGetLastError(out pErrorStruct);
+                    break;
+                default:
+                    SNINativeManagedWrapperX86.SNIGetLastError(out pErrorStruct);
+                    break;
             }
         }
 
         internal static void SNIPacketRelease(IntPtr pPacket)
         {
-            if (s_is64bitProcess)
+            switch (s_architecture)
             {
-                SNINativeManagedWrapperX64.SNIPacketRelease(pPacket);
-            }
-            else
-            {
-                SNINativeManagedWrapperX86.SNIPacketRelease(pPacket);
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    SNINativeManagedWrapperARM64.SNIPacketRelease(pPacket);
+                    break;
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    SNINativeManagedWrapperARM.SNIPacketRelease(pPacket);
+                    break;
+                case System.Runtime.InteropServices.Architecture.X64:
+                    SNINativeManagedWrapperX64.SNIPacketRelease(pPacket);
+                    break;
+                case System.Runtime.InteropServices.Architecture.X86:
+                    SNINativeManagedWrapperX86.SNIPacketRelease(pPacket);
+                    break;
+                default:
+                    SNINativeManagedWrapperX86.SNIPacketRelease(pPacket);
+                    break;
             }
         }
 
         internal static void SNIPacketReset([In] SNIHandle pConn, IOType IOType, SNIPacket pPacket, ConsumerNumber ConsNum)
         {
-            if (s_is64bitProcess)
+            switch (s_architecture)
             {
-                SNINativeManagedWrapperX64.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
-            }
-            else
-            {
-                SNINativeManagedWrapperX86.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    SNINativeManagedWrapperARM64.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
+                    break;
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    SNINativeManagedWrapperARM.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
+                    break;
+                case System.Runtime.InteropServices.Architecture.X64:
+                    SNINativeManagedWrapperX64.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
+                    break;
+                case System.Runtime.InteropServices.Architecture.X86:
+                    SNINativeManagedWrapperX86.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
+                    break;
+                default:
+                    SNINativeManagedWrapperX86.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
+                    break;
             }
         }
 
         internal static uint SNIQueryInfo(QTypes QType, ref uint pbQInfo)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIQueryInfo(QType, ref pbQInfo) :
-                SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIQueryInfo(QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIQueryInfo(QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIQueryInfo(QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
+                default:
+                    return SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
+            }
         }
 
         internal static uint SNIQueryInfo(QTypes QType, ref IntPtr pbQInfo)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIQueryInfo(QType, ref pbQInfo) :
-                SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIQueryInfo(QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIQueryInfo(QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIQueryInfo(QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
+                default:
+                    return SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
+            }
         }
 
         internal static uint SNIReadAsync(SNIHandle pConn, ref IntPtr ppNewPacket)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIReadAsync(pConn, ref ppNewPacket) :
-                SNINativeManagedWrapperX86.SNIReadAsync(pConn, ref ppNewPacket);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIReadAsync(pConn, ref ppNewPacket);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIReadAsync(pConn, ref ppNewPacket);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIReadAsync(pConn, ref ppNewPacket);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIReadAsync(pConn, ref ppNewPacket);
+                default:
+                    return SNINativeManagedWrapperX86.SNIReadAsync(pConn, ref ppNewPacket);
+            }
         }
 
         internal static uint SNIReadSyncOverAsync(SNIHandle pConn, ref IntPtr ppNewPacket, int timeout)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout) :
-                SNINativeManagedWrapperX86.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
+                default:
+                    return SNINativeManagedWrapperX86.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
+            }
         }
 
         internal static uint SNIRemoveProvider(SNIHandle pConn, ProviderEnum ProvNum)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIRemoveProvider(pConn, ProvNum) :
-                SNINativeManagedWrapperX86.SNIRemoveProvider(pConn, ProvNum);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIRemoveProvider(pConn, ProvNum);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIRemoveProvider(pConn, ProvNum);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIRemoveProvider(pConn, ProvNum);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIRemoveProvider(pConn, ProvNum);
+                default:
+                    return SNINativeManagedWrapperX86.SNIRemoveProvider(pConn, ProvNum);
+            }
         }
 
         internal static uint SNISecInitPackage(ref uint pcbMaxToken)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNISecInitPackage(ref pcbMaxToken) :
-                SNINativeManagedWrapperX86.SNISecInitPackage(ref pcbMaxToken);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNISecInitPackage(ref pcbMaxToken);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNISecInitPackage(ref pcbMaxToken);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNISecInitPackage(ref pcbMaxToken);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNISecInitPackage(ref pcbMaxToken);
+                default:
+                    return SNINativeManagedWrapperX86.SNISecInitPackage(ref pcbMaxToken);
+            }
         }
 
         internal static uint SNISetInfo(SNIHandle pConn, QTypes QType, [In] ref uint pbQInfo)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNISetInfo(pConn, QType, ref pbQInfo) :
-                SNINativeManagedWrapperX86.SNISetInfo(pConn, QType, ref pbQInfo);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNISetInfo(pConn, QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNISetInfo(pConn, QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNISetInfo(pConn, QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNISetInfo(pConn, QType, ref pbQInfo);
+                default:
+                    return SNINativeManagedWrapperX86.SNISetInfo(pConn, QType, ref pbQInfo);
+            }
         }
 
         internal static uint SNITerminate()
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNITerminate() :
-                SNINativeManagedWrapperX86.SNITerminate();
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNITerminate();
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNITerminate();
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNITerminate();
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNITerminate();
+                default:
+                    return SNINativeManagedWrapperX86.SNITerminate();
+            }
         }
 
         internal static uint SNIWaitForSSLHandshakeToComplete([In] SNIHandle pConn, int dwMilliseconds, out uint pProtocolVersion)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion) :
-                SNINativeManagedWrapperX86.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
+                default:
+                    return SNINativeManagedWrapperX86.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
+            }
         }
 
         internal static uint UnmanagedIsTokenRestricted([In] IntPtr token, [MarshalAs(UnmanagedType.Bool)] out bool isRestricted)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.UnmanagedIsTokenRestricted(token, out isRestricted) :
-                SNINativeManagedWrapperX86.UnmanagedIsTokenRestricted(token, out isRestricted);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.UnmanagedIsTokenRestricted(token, out isRestricted);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.UnmanagedIsTokenRestricted(token, out isRestricted);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.UnmanagedIsTokenRestricted(token, out isRestricted);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.UnmanagedIsTokenRestricted(token, out isRestricted);
+                default:
+                    return SNINativeManagedWrapperX86.UnmanagedIsTokenRestricted(token, out isRestricted);
+            }
         }
 
         private static uint GetSniMaxComposedSpnLength()
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.GetSniMaxComposedSpnLength() :
-                SNINativeManagedWrapperX86.GetSniMaxComposedSpnLength();
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.GetSniMaxComposedSpnLength();
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.GetSniMaxComposedSpnLength();
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.GetSniMaxComposedSpnLength();
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.GetSniMaxComposedSpnLength();
+                default:
+                    return SNINativeManagedWrapperX86.GetSniMaxComposedSpnLength();
+            }
         }
 
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out Guid pbQInfo)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out pbQInfo) :
-                SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                default:
+                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+            }
         }
 
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out pbQInfo) :
-                SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                default:
+                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+            }
         }
 
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, ref IntPtr pbQInfo)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, ref pbQInfo) :
-                SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
+                default:
+                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
+            }
         }
 
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ushort portNum)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out portNum) :
-                SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out portNum);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out portNum);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIGetInfoWrapper(pConn, QType, out portNum);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out portNum);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out portNum);
+                default:
+                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out portNum);
+            }
         }
 
         private static uint SNIGetPeerAddrStrWrapper([In] SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLen)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen) :
-                SNINativeManagedWrapperX86.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
+                default:
+                    return SNINativeManagedWrapperX86.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
+            }
         }
 
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ProviderEnum provNum)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out provNum) :
-                SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out provNum);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out provNum);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIGetInfoWrapper(pConn, QType, out provNum);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out provNum);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out provNum);
+                default:
+                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out provNum);
+            }
         }
 
         private static uint SNIInitialize([In] bool useSystemDefaultSecureProtocols, [In] IntPtr pmo)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIInitialize(useSystemDefaultSecureProtocols, pmo) :
-                SNINativeManagedWrapperX86.SNIInitialize(useSystemDefaultSecureProtocols, pmo);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIInitialize(useSystemDefaultSecureProtocols, pmo);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIInitialize(useSystemDefaultSecureProtocols, pmo);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIInitialize(useSystemDefaultSecureProtocols, pmo);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIInitialize(useSystemDefaultSecureProtocols, pmo);
+                default:
+                    return SNINativeManagedWrapperX86.SNIInitialize(useSystemDefaultSecureProtocols, pmo);
+            }
         }
 
         private static uint SNIOpenSyncExWrapper(ref SNI_CLIENT_CONSUMER_INFO pClientConsumerInfo, out IntPtr ppConn)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn) :
-                SNINativeManagedWrapperX86.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
+                default:
+                    return SNINativeManagedWrapperX86.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
+            }
         }
 
         private static uint SNIOpenWrapper(
@@ -616,34 +889,74 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionIPAddressPreference ipPreference,
             [In] ref SNI_DNSCache_Info pDNSCachedInfo)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo) :
-                SNINativeManagedWrapperX86.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
+                default:
+                    return SNINativeManagedWrapperX86.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
+            }
         }
 
         private static IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIPacketAllocateWrapper(pConn, IOType) :
-                SNINativeManagedWrapperX86.SNIPacketAllocateWrapper(pConn, IOType);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIPacketAllocateWrapper(pConn, IOType);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIPacketAllocateWrapper(pConn, IOType);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIPacketAllocateWrapper(pConn, IOType);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIPacketAllocateWrapper(pConn, IOType);
+                default:
+                    return SNINativeManagedWrapperX86.SNIPacketAllocateWrapper(pConn, IOType);
+            }
         }
 
         private static uint SNIPacketGetDataWrapper([In] IntPtr packet, [In, Out] byte[] readBuffer, uint readBufferLength, out uint dataSize)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize) :
-                SNINativeManagedWrapperX86.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
+                default:
+                    return SNINativeManagedWrapperX86.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
+            }
         }
 
         private static unsafe void SNIPacketSetData(SNIPacket pPacket, [In] byte* pbBuf, uint cbBuf)
         {
-            if (s_is64bitProcess)
+            switch (s_architecture)
             {
-                SNINativeManagedWrapperX64.SNIPacketSetData(pPacket, pbBuf, cbBuf);
-            }
-            else
-            {
-                SNINativeManagedWrapperX86.SNIPacketSetData(pPacket, pbBuf, cbBuf);
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    SNINativeManagedWrapperARM64.SNIPacketSetData(pPacket, pbBuf, cbBuf);
+                    break;
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    SNINativeManagedWrapperARM.SNIPacketSetData(pPacket, pbBuf, cbBuf);
+                    break;
+                case System.Runtime.InteropServices.Architecture.X64:
+                    SNINativeManagedWrapperX64.SNIPacketSetData(pPacket, pbBuf, cbBuf);
+                    break;
+                case System.Runtime.InteropServices.Architecture.X86:
+                    SNINativeManagedWrapperX86.SNIPacketSetData(pPacket, pbBuf, cbBuf);
+                    break;
+                default:
+                    SNINativeManagedWrapperX86.SNIPacketSetData(pPacket, pbBuf, cbBuf);
+                    break;
             }
         }
 
@@ -659,30 +972,70 @@ namespace Microsoft.Data.SqlClient
             [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszUserName,
             [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszPassword)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword) :
-                SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                default:
+                    return SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+            }
         }
 
         private static uint SNIWriteAsyncWrapper(SNIHandle pConn, [In] SNIPacket pPacket)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIWriteAsyncWrapper(pConn, pPacket) :
-                SNINativeManagedWrapperX86.SNIWriteAsyncWrapper(pConn, pPacket);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIWriteAsyncWrapper(pConn, pPacket);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIWriteAsyncWrapper(pConn, pPacket);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIWriteAsyncWrapper(pConn, pPacket);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIWriteAsyncWrapper(pConn, pPacket);
+                default:
+                    return SNINativeManagedWrapperX86.SNIWriteAsyncWrapper(pConn, pPacket);
+            }
         }
 
         private static uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIWriteSyncOverAsync(pConn, pPacket) :
-                SNINativeManagedWrapperX86.SNIWriteSyncOverAsync(pConn, pPacket);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIWriteSyncOverAsync(pConn, pPacket);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIWriteSyncOverAsync(pConn, pPacket);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIWriteSyncOverAsync(pConn, pPacket);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIWriteSyncOverAsync(pConn, pPacket);
+                default:
+                    return SNINativeManagedWrapperX86.SNIWriteSyncOverAsync(pConn, pPacket);
+            }
         }
 
         private static IntPtr SNIClientCertificateFallbackWrapper(IntPtr pCallbackContext)
         {
-            return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIClientCertificateFallbackWrapper(pCallbackContext) :
-                SNINativeManagedWrapperX86.SNIClientCertificateFallbackWrapper(pCallbackContext);
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIClientCertificateFallbackWrapper(pCallbackContext);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIClientCertificateFallbackWrapper(pCallbackContext);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIClientCertificateFallbackWrapper(pCallbackContext);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIClientCertificateFallbackWrapper(pCallbackContext);
+                default:
+                    return SNINativeManagedWrapperX86.SNIClientCertificateFallbackWrapper(pCallbackContext);
+            }
         }
         #endregion
 
@@ -768,23 +1121,58 @@ namespace Microsoft.Data.SqlClient
             return SNIInitialize(LocalAppContextSwitches.UseSystemDefaultSecureProtocols, IntPtr.Zero);
         }
 
-        internal static IntPtr SNIServerEnumOpen() => s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIServerEnumOpen() :
-                SNINativeManagedWrapperX86.SNIServerEnumOpen();
-
-        internal static int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readbuffer, int bufferLength, out bool more) => s_is64bitProcess ?
-              SNINativeManagedWrapperX64.SNIServerEnumRead(packet, readbuffer, bufferLength, out more) :
-              SNINativeManagedWrapperX86.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
+        internal static IntPtr SNIServerEnumOpen()
+        {
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIServerEnumOpen();
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIServerEnumOpen();
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIServerEnumOpen();
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIServerEnumOpen();
+                default:
+                    return SNINativeManagedWrapperX86.SNIServerEnumOpen();
+            }
+        }
+        internal static int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readbuffer, int bufferLength, out bool more)
+        {
+            switch (s_architecture)
+            {
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    return SNINativeManagedWrapperARM64.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    return SNINativeManagedWrapperARM.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
+                case System.Runtime.InteropServices.Architecture.X64:
+                    return SNINativeManagedWrapperX64.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
+                case System.Runtime.InteropServices.Architecture.X86:
+                    return SNINativeManagedWrapperX86.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
+                default:
+                    return SNINativeManagedWrapperX86.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
+            }
+        }
 
         internal static void SNIServerEnumClose([In] IntPtr packet)
         {
-            if (s_is64bitProcess)
+            switch (s_architecture)
             {
-                SNINativeManagedWrapperX64.SNIServerEnumClose(packet);
-            }
-            else
-            {
-                SNINativeManagedWrapperX86.SNIServerEnumClose(packet);
+                case System.Runtime.InteropServices.Architecture.Arm64:
+                    SNINativeManagedWrapperARM64.SNIServerEnumClose(packet);
+                    break;
+                case System.Runtime.InteropServices.Architecture.Arm:
+                    SNINativeManagedWrapperARM.SNIServerEnumClose(packet);
+                    break;
+                case System.Runtime.InteropServices.Architecture.X64:
+                    SNINativeManagedWrapperX64.SNIServerEnumClose(packet);
+                    break;
+                case System.Runtime.InteropServices.Architecture.X86:
+                    SNINativeManagedWrapperX86.SNIServerEnumClose(packet);
+                    break;
+                default:
+                    SNINativeManagedWrapperX86.SNIServerEnumClose(packet);
+                    break;
             }
         }
 
