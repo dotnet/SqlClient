@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -29,28 +30,46 @@ namespace Microsoft.Data.SqlClient
             _value = value;
         }
 
-        internal static SqlConnectionEncryptOption Parse(string value)
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Parse/*' />
+        public static SqlConnectionEncryptOption Parse(string value)
         {
-            switch (value.ToLower())
+            if (TryParse(value, out SqlConnectionEncryptOption result))
+            {
+                return result;
+            }
+            else
+            {
+                throw ADP.InvalidConnectionOptionValue(SqlConnectionString.KEY.Encrypt);
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/TryParse/*' />
+        public static bool TryParse(string value, out SqlConnectionEncryptOption result)
+        {
+            switch (value?.ToLower())
             {
                 case TRUE_LOWER:
                 case YES_LOWER:
                 case MANDATORY_LOWER:
                     {
-                        return Mandatory;
+                        result = Mandatory;
+                        return true;
                     }
                 case FALSE_LOWER:
                 case NO_LOWER:
                 case OPTIONAL_LOWER:
                     {
-                        return Optional;
+                        result = Optional;
+                        return true;
                     }
                 case STRICT_LOWER:
                     {
-                        return Strict;
+                        result = Strict;
+                        return true;
                     }
                 default:
-                    throw ADP.InvalidConnectionOptionValue(SqlConnectionString.KEY.Encrypt);
+                    result = null;
+                    return false;
             }
         }
 
