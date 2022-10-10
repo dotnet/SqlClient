@@ -113,11 +113,43 @@ This update brings the below changes over the previous release:
 - Sqlstream, SqlInternalTransaction and MetaDataUtilsSmi are moved to shared folder. [#1337](https://github.com/dotnet/SqlClient/pull/1337), [#1346](https://github.com/dotnet/SqlClient/pull/1346) and [#1339](https://github.com/dotnet/SqlClient/pull/1339)
 - Various code improvements: [#1197](https://github.com/dotnet/SqlClient/pull/1197), [#1313](https://github.com/dotnet/SqlClient/pull/1313),[#1330](https://github.com/dotnet/SqlClient/pull/1330),[#1366](https://github.com/dotnet/SqlClient/pull/1366), [#1435](https://github.com/dotnet/SqlClient/pull/1435),[#1478](https://github.com/dotnet/SqlClient/pull/1478)
 
+## [Stable release 4.1.1] - 2022-09-13
+
+### Fixed
+
+- Fixed connection failure by not requiring Certificate Revocation List (CRL) check during authentication. [#1706](https://github.com/dotnet/SqlClient/pull/1706)
+- Parallelize SSRP requests on Linux and macOS when MultiSubNetFailover is specified. [#1708](https://github.com/dotnet/SqlClient/pull/1708), [#1746](https://github.com/dotnet/SqlClient/pull/1746)
+- Added CommandText length validation when using stored procedure command types. [#1709](https://github.com/dotnet/SqlClient/pull/1709)
+- Fixed NullReferenceException during Azure Active Directory authentication. [#1710](https://github.com/dotnet/SqlClient/pull/1710)
+- Fixed null SqlBinary as rowversion. [#1712](https://github.com/dotnet/SqlClient/pull/1712)
+- Fixed table's collation overriding with default UTF8 collation. [#1749](https://github.com/dotnet/SqlClient/pull/1749)
+
+## Changed
+
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v4.0.1` [#1755](https://github.com/dotnet/SqlClient/pull/1755), which includes the fix for AppDomain crash introducing in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418)
+- Various code improvements: [#1711](https://github.com/dotnet/SqlClient/pull/1711)
+
 ## [Stable release 4.1.0] - 2022-01-31
 
 ### Added
 
 - Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1419](https://github.com/dotnet/SqlClient/pull/1419) [#1425](https://github.com/dotnet/SqlClient/pull/1425)
+
+## [Stable release 4.0.2] - 2022-09-13
+
+### Fixed
+
+- Fixed connection failure by not requiring Certificate Revocation List (CRL) check during authentication. [#1718](https://github.com/dotnet/SqlClient/pull/1718)
+- Parallelize SSRP requests on Linux and macOS when MultiSubNetFailover is specified. [#1720](https://github.com/dotnet/SqlClient/pull/1720), [#1747](https://github.com/dotnet/SqlClient/pull/1747)
+- Added CommandText length validation when using stored procedure command types. [#1721](https://github.com/dotnet/SqlClient/pull/1721)
+- Fixed NullReferenceException during Azure Active Directory authentication. [#1722](https://github.com/dotnet/SqlClient/pull/1722)
+- Fixed null SqlBinary as rowversion. [#1724](https://github.com/dotnet/SqlClient/pull/1724)
+- Fixed table's collation overriding with default UTF8 collation. [#1750](https://github.com/dotnet/SqlClient/pull/1750)
+
+## Changed
+
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v4.0.1` [#1754](https://github.com/dotnet/SqlClient/pull/1754), which includes the fix for AppDomain crash introducing in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418)
+- Various code improvements: [#1723](https://github.com/dotnet/SqlClient/pull/1723)
 
 ## [Stable release 4.0.1] - 2022-01-17
 
