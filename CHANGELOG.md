@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed
 
-- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.0.1` [#1795](https://github.com/dotnet/SqlClient/pull/1795), which includes the fix for AppDomain crash introducing in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418).
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.0.1` [#1795](https://github.com/dotnet/SqlClient/pull/1795), which includes the fix for AppDomain crash in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418).
 
 ## [Stable release 5.0.0] - 2022-08-05
 
