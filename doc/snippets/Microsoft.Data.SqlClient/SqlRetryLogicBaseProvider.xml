@@ -11,7 +11,7 @@
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
-> [IMPORTAMT!]
+> [IMPORTANT!]
 > Don't block execution with a time consuming action when an event occurs. For instance, if you log data to a file, run it in a new thread to avoid blocking the main execution thread.  
 
 ]]>
