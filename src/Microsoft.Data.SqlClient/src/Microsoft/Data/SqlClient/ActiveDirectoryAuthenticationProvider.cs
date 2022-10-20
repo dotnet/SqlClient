@@ -227,22 +227,11 @@ namespace Microsoft.Data.SqlClient
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             {
-#if NETFRAMEWORK
-                SecureString password = new SecureString();
-                foreach (char c in parameters.Password)
-                    password.AppendChar(c);
-                password.MakeReadOnly();
-
-                result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, password)
-                    .WithCorrelationId(parameters.ConnectionId)
-                    .ExecuteAsync(cancellationToken: cts.Token)
-                    .ConfigureAwait(false);
-#else
                 result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
                    .WithCorrelationId(parameters.ConnectionId)
                    .ExecuteAsync(cancellationToken: cts.Token)
                    .ConfigureAwait(false);
-#endif
+
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result?.ExpiresOn);
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
