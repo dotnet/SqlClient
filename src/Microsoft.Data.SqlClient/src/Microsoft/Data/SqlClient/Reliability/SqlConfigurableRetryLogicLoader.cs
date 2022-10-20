@@ -5,6 +5,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Text.RegularExpressions;
 
 namespace Microsoft.Data.SqlClient
@@ -16,6 +17,17 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal sealed partial class SqlConfigurableRetryLogicLoader
     {
+        static SqlConfigurableRetryLogicLoader()
+        {
+            AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += OnUnloading;
+        }
+
+        private static void OnUnloading(AssemblyLoadContext obj)
+        {
+            AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Resolving -= Default_Resolving;
+            AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading -= OnUnloading;
+        }
+
         private const string TypeName = nameof(SqlConfigurableRetryLogicLoader);
 
         /// <summary>
@@ -46,8 +58,8 @@ namespace Microsoft.Data.SqlClient
             // Just only one subscription to this event is required.
             // This class isn't supposed to be called more than one time;
             // SqlConfigurableRetryLogicManager manages a single instance of this class.
-            System.Runtime.Loader.AssemblyLoadContext.Default.Resolving -= Default_Resolving;
-            System.Runtime.Loader.AssemblyLoadContext.Default.Resolving += Default_Resolving;
+            AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Resolving -= Default_Resolving;
+            AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Resolving += Default_Resolving;
 #endif
             AssignProviders(connectionRetryConfigs == null ? null : CreateRetryLogicProvider(cnnSectionName, connectionRetryConfigs),
                             commandRetryConfigs == null ? null : CreateRetryLogicProvider(cmdSectionName, commandRetryConfigs));
