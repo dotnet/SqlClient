@@ -5,8 +5,10 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Loader;
 using System.Text.RegularExpressions;
+#if !NETFRAMEWORK
+using System.Runtime.Loader;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -17,6 +19,7 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal sealed partial class SqlConfigurableRetryLogicLoader
     {
+#if !NETFRAMEWORK
         static SqlConfigurableRetryLogicLoader()
         {
             AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += OnUnloading;
@@ -27,6 +30,7 @@ namespace Microsoft.Data.SqlClient
             AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Resolving -= Default_Resolving;
             AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading -= OnUnloading;
         }
+#endif
 
         private const string TypeName = nameof(SqlConfigurableRetryLogicLoader);
 
