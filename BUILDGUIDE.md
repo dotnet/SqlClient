@@ -102,7 +102,7 @@ msbuild -t:RunTests -p:configuration=Release
 To specify custom target framework, use `TF` property:
 
 ```bash
-msbuild -t:RunTests -p:configuration=Release -p:TF=net5.0
+msbuild -t:RunTests -p:configuration=Release -p:TF=net7.0
 msbuild -t:RunTests -p:configuration=Release -p:TF=net48
 # Runs tests for specified target framework. 
 # TargetNetCoreVersion and TargetNetFxVersion are not to be used with TF property, they will take precedence over TF if provided.
@@ -285,9 +285,9 @@ msbuild -t:BuildTestsNetFx -p:TargetNetFxVersion=net462
 ```
 
 ```bash
-msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=netcoreapp3.1
+msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=net6.0
 # Build the tests for custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp3.1 | net5.0 | net6.0
+# Applicable values: net6.0 | net7.0 | net6.0
 ```
 
 ### Running Tests with custom target framework (traditional)
@@ -297,9 +297,9 @@ dotnet test -p:TargetNetFxVersion=net462 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Framework)
 # Applicable values: net462 (Default) | net462 | net47 | net471  net472 | net48
 
-dotnet test -p:TargetNetCoreVersion=netcoreapp3.1 ...
+dotnet test -p:TargetNetCoreVersion=net6.0 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp3.1 | net5.0 | net6.0
+# Applicable values: net6.0 | net7.0 | net6.0
 ```
 
 ## Using Managed SNI on Windows
@@ -389,7 +389,7 @@ Configure `runnerconfig.json` file with connection string and preferred settings
 
 ```bash
 cd src\Microsoft.Data.SqlClient\tests\PerformanceTests
-dotnet run -c Release -f netcoreapp3.1|net5.0
+dotnet run -c Release -f net6.0|net7.0
 ```
 
 _Only "**Release** Configuration" applies to Performance Tests_

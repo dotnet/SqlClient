@@ -3472,7 +3472,9 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
             {
+#if !NET6_0_OR_GREATER
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
 
                 try
                 {
@@ -4848,7 +4850,7 @@ namespace Microsoft.Data.SqlClient
                     context = new ReadAsyncCallContext();
                 }
 
-                Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == null, "cached ReadAsyncCallContext was not properly disposed");
+                Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == default, "cached ReadAsyncCallContext was not properly disposed");
 
                 context.Set(this, source, registration);
                 context._hasMoreData = more;

@@ -109,6 +109,7 @@ namespace Microsoft.Data.SqlClient
 #endif
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
+
         public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
         {
             CancellationTokenSource cts = new CancellationTokenSource();
@@ -226,6 +227,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             {
+#if NETFRAMEWORK
                 SecureString password = new SecureString();
                 foreach (char c in parameters.Password)
                     password.AppendChar(c);
@@ -235,6 +237,12 @@ namespace Microsoft.Data.SqlClient
                     .WithCorrelationId(parameters.ConnectionId)
                     .ExecuteAsync(cancellationToken: cts.Token)
                     .ConfigureAwait(false);
+#else
+                result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+                   .WithCorrelationId(parameters.ConnectionId)
+                   .ExecuteAsync(cancellationToken: cts.Token)
+                   .ConfigureAwait(false);
+#endif
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result?.ExpiresOn);
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
