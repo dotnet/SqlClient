@@ -16,11 +16,21 @@
     <Compile Include="Microsoft.Data.SqlClient.cs" />
     <Compile Include="Microsoft.Data.SqlClient.Manual.cs" />
   </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('netstandard2.1')) or ($(TargetFramework.StartsWith('netcoreapp')) and !$(TargetFramework.StartsWith('netcoreapp2')))">
+    <Compile Include="System.Data.Common.Batch.IAsyncDisposable.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('netcoreapp2')) or $(TargetFramework.StartsWith('netcoreapp3')) or $(TargetFramework.StartsWith('netstandard2'))">
+    <Compile Include="Microsoft.Data.SqlClient.Batch.cs" />
+    <Compile Include="System.Data.Common.Batch.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
-    <PackageReference Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
+    <Compile Include="Microsoft.Data.SqlClient.Batch.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard'">
     <Compile Include="Microsoft.Data.SqlClient.NetStandard.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
+    <PackageReference Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
