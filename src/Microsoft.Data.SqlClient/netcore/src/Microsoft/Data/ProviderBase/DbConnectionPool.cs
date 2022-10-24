@@ -377,8 +377,10 @@ namespace Microsoft.Data.ProviderBase
 
         private State _state;
 
-        private readonly ConcurrentStack<DbConnectionInternal> _stackOld = new ConcurrentStack<DbConnectionInternal>();
-        private readonly ConcurrentStack<DbConnectionInternal> _stackNew = new ConcurrentStack<DbConnectionInternal>();
+        // Reducing the pressure on a connection to avoid a race conditon on multi-thread applications, especially on interference of transactions
+        // by using "queue" data structure instead of "stack".
+        private readonly ConcurrentQueue<DbConnectionInternal> _stackOld = new ConcurrentQueue<DbConnectionInternal>();
+        private readonly ConcurrentBag<DbConnectionInternal> _stackNew = new ConcurrentBag<DbConnectionInternal>();
 
         private readonly ConcurrentQueue<PendingGetConnection> _pendingOpens = new ConcurrentQueue<PendingGetConnection>();
         private int _pendingOpensWaiting = 0;
@@ -598,7 +600,7 @@ namespace Microsoft.Data.ProviderBase
                     // We obtained a objects from the semaphore.
                     DbConnectionInternal obj;
 
-                    if (_stackOld.TryPop(out obj))
+                    if (_stackOld.TryDequeue(out obj))
                     {
                         Debug.Assert(obj != null, "null connection is not expected");
                         // If we obtained one from the old stack, destroy it.
@@ -657,7 +659,7 @@ namespace Microsoft.Data.ProviderBase
                 {
                     DbConnectionInternal obj;
 
-                    if (!_stackNew.TryPop(out obj))
+                    if (!_stackNew.TryTake(out obj))
                         break;
 
                     Debug.Assert(obj != null, "null connection is not expected");
@@ -665,7 +667,7 @@ namespace Microsoft.Data.ProviderBase
                     Debug.Assert(!obj.IsEmancipated, "pooled object not in pool");
                     Debug.Assert(obj.CanBePooled, "pooled object is not poolable");
 
-                    _stackOld.Push(obj);
+                    _stackOld.Enqueue(obj);
                 }
                 _waitHandles.PoolSemaphore.Release(1);
             }
@@ -696,13 +698,13 @@ namespace Microsoft.Data.ProviderBase
             }
 
             // Second, dispose of all the free connections.
-            while (_stackNew.TryPop(out obj))
+            while (_stackNew.TryTake(out obj))
             {
                 Debug.Assert(obj != null, "null connection is not expected");
                 SqlClientEventSource.Log.ExitFreeConnection();
                 DestroyObject(obj);
             }
-            while (_stackOld.TryPop(out obj))
+            while (_stackOld.TryDequeue(out obj))
             {
                 Debug.Assert(obj != null, "null connection is not expected");
                 SqlClientEventSource.Log.ExitFreeConnection();
@@ -1365,11 +1367,9 @@ namespace Microsoft.Data.ProviderBase
 
         private DbConnectionInternal GetFromGeneralPool()
         {
-            DbConnectionInternal obj = null;
-
-            if (!_stackNew.TryPop(out obj))
+            if (!_stackNew.TryTake(out DbConnectionInternal obj))
             {
-                if (!_stackOld.TryPop(out obj))
+                if (!_stackOld.TryDequeue(out obj))
                 {
                     obj = null;
                 }
@@ -1561,7 +1561,7 @@ namespace Microsoft.Data.ProviderBase
             // Debug.Assert(obj.CanBePooled,    "non-poolable object in pool");
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutNewObject|RES|CPOOL> {0}, Connection {1}, Pushing to general pool.", ObjectID, obj.ObjectID);
 
-            _stackNew.Push(obj);
+            _stackNew.Add(obj);
             _waitHandles.PoolSemaphore.Release(1);
             SqlClientEventSource.Log.EnterFreeConnection();
         }
@@ -1606,7 +1606,7 @@ namespace Microsoft.Data.ProviderBase
             // done and all transactions are ended.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended.", ObjectID, obj.ObjectID);
 
-            if (_state == State.Running && obj.CanBePooled)
+            if (_state == State.Running && obj.CanBePooled /*&& obj.EnlistedTransaction is null*/)
             {
                 PutNewObject(obj);
             }
