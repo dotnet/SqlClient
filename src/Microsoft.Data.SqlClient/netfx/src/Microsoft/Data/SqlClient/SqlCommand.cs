@@ -6581,9 +6581,6 @@ namespace Microsoft.Data.SqlClient
                             options |= TdsEnums.RPC_PARAM_DEFAULT;
                         }
 
-                        rpc.userParamMap[userParamCount] = ((((long)options) << 32) | (long)index);
-                        userParamCount += 1;
-
                         // detect incorrectly derived type names unchanged by the caller and fix them
                         if (parameter.IsDerivedParameterTypeName)
                         {
@@ -6601,6 +6598,9 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                     }
+
+                    rpc.userParamMap[userParamCount] = ((((long)options) << 32) | (long)index);
+                    userParamCount += 1;
 
                     // Must set parameter option bit for LOB_COOKIE if unfilled LazyMat blob
                 }
