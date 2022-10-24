@@ -6606,6 +6606,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
+            rpc.userParamCount = userParamCount;
+            rpc.userParams = parameters;
         }
 
         //
