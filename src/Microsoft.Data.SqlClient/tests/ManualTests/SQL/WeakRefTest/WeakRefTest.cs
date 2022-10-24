@@ -147,13 +147,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             {
                                 rdr.Read();
                                 Assert.Equal(1, rdr.FieldCount);
-                                Assert.Equal(rdr.GetName(0), COLUMN_NAME_2);
+                                Assert.Equal(COLUMN_NAME_2, rdr.GetName(0));
                             }
                             break;
 
                         case ReaderVerificationType.ChangeDatabase:
                             con.ChangeDatabase(CHANGE_DATABASE_NAME);
-                            Assert.Equal(con.Database, CHANGE_DATABASE_NAME);
+                            Assert.Equal(CHANGE_DATABASE_NAME, con.Database);
                             break;
 
                         case ReaderVerificationType.BeginTransaction:

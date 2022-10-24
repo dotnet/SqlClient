@@ -37,13 +37,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 string[] scopes = new string[] { scope };
                 SecureString password = new SecureString();
-                foreach (char c in parameters.Password)
-                    password.AppendChar(c);
-                password.MakeReadOnly();
 
                 AuthenticationResult result = await PublicClientApplicationBuilder.Create(_appClientId)
                 .WithAuthority(parameters.Authority)
-                .Build().AcquireTokenByUsernamePassword(scopes, parameters.UserId, password)
+                .Build().AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
                     .WithCorrelationId(parameters.ConnectionId)
                     .ExecuteAsync(cancellationToken: cts.Token);
 
@@ -691,7 +688,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup))]
         public static void Azure_AccessToken_SystemManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
@@ -705,7 +702,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup))]
         public static void Azure_AccessToken_UserManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };

@@ -14,15 +14,15 @@ namespace Microsoft.Data.SqlClient
         // NOTE: This is a very simplistic, lightweight pooler.  It wasn't
         //       intended to handle huge number of items, just to keep track
         //       of the session objects to ensure that they're cleaned up in
-        //       a timely manner, to avoid holding on to an unacceptible 
+        //       a timely manner, to avoid holding on to an unacceptable 
         //       amount of server-side resources in the event that consumers
         //       let their data readers be GC'd, instead of explicitly 
         //       closing or disposing of them
 
         private const int MaxInactiveCount = 10; // pick something, preferably small...
 
-        private static int _objectTypeCount; // EventSource Counter
-        private readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource Counter
+        private readonly int _objectID = System.Threading.Interlocked.Increment(ref s_objectTypeCount);
 
         private readonly TdsParser _parser;       // parser that owns us
         private readonly List<TdsParserStateObject> _cache;        // collection of all known sessions 
@@ -89,23 +89,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // This is called from a ThreadAbort - ensure that it can be run from a CER Catch
-        internal void BestEffortCleanup()
-        {
-            for (int i = 0; i < _cache.Count; i++)
-            {
-                TdsParserStateObject session = _cache[i];
-                if (null != session)
-                {
-                    var sessionHandle = session.Handle;
-                    if (sessionHandle != null)
-                    {
-                        sessionHandle.Dispose();
-                    }
-                }
-            }
-        }
-
         internal void Dispose()
         {
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserSessionPool.Dispose|ADV> {0} disposing cachedCount={1}", ObjectID, _cachedCount);
@@ -140,7 +123,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 _cache.Clear();
                 _cachedCount = 0;
-
                 // Any active sessions will take care of themselves
                 // (It's too dangerous to dispose them, as this can cause AVs)
             }
@@ -175,6 +157,7 @@ namespace Microsoft.Data.SqlClient
 
                 session.Activate(owner);
             }
+
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserSessionPool.GetSession|ADV> {0} using session {1}", ObjectID, session.ObjectID);
             return session;
         }
@@ -190,7 +173,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsDisposed)
                 {
-                    // We're diposed - just clean out the session
+                    // We're disposed - just clean out the session
                     Debug.Assert(_cachedCount == 0, "SessionPool is disposed, but there are still sessions in the cache?");
                     session.Dispose();
                 }
@@ -198,8 +181,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Session is good to re-use and our cache has space
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserSessionPool.PutSession|ADV> {0} keeping session {1} cachedCount={2}", ObjectID, session.ObjectID, _cachedCount);
+#if NETFRAMEWORK
                     Debug.Assert(!session._pendingData, "pending data on a pooled session?");
-
+#else
+                    Debug.Assert(!session.HasPendingData, "pending data on a pooled session?");
+#endif
                     _freeStateObjects[_freeStateObjectCount] = session;
                     _freeStateObjectCount++;
                 }
@@ -218,9 +204,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+
+        internal int ActiveSessionsCount => _cachedCount - _freeStateObjectCount;
+
         internal string TraceString()
         {
-            return String.Format(/*IFormatProvider*/ null,
+            return string.Format(/*IFormatProvider*/ null,
                         "(ObjID={0}, free={1}, cached={2}, total={3})",
                         _objectID,
                         null == _freeStateObjects ? "(null)" : _freeStateObjectCount.ToString((IFormatProvider)null),
@@ -228,13 +217,24 @@ namespace Microsoft.Data.SqlClient
                         _cache.Count);
         }
 
-        internal int ActiveSessionsCount
+#if NETFRAMEWORK
+        // This is called from a ThreadAbort - ensure that it can be run from a CER Catch
+        internal void BestEffortCleanup()
         {
-            get
+            for (int i = 0; i < _cache.Count; i++)
             {
-                return _cachedCount - _freeStateObjectCount;
+                TdsParserStateObject session = _cache[i];
+                if (null != session)
+                {
+                    SNIHandle sessionHandle = session.Handle;
+                    if (sessionHandle != null)
+                    {
+                        sessionHandle.Dispose();
+                    }
+                }
             }
         }
+#endif
     }
 }
 

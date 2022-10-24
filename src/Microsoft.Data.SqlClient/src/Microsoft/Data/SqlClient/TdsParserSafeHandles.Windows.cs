@@ -5,8 +5,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+#if NETFRAMEWORK
+using Microsoft.Data.Common;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -23,7 +27,7 @@ namespace Microsoft.Data.SqlClient
 
         private SNILoadHandle() : base(IntPtr.Zero, true)
         {
-            // From security review - SafeHandle guarantees this is only called once.
+            // SQL BU DT 346588 - from security review - SafeHandle guarantees this is only called once.
             // The reason for the safehandle is guaranteed initialization and termination of SNI to
             // ensure SNI terminates and cleans up properly.
             try
@@ -49,7 +53,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            UInt32 value = 0;
+                            uint value = 0;
                             // Query OS to find out whether encryption is supported.
                             SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE, ref value);
                             _clientOSEncryptionSupport = value != 0;
@@ -101,7 +105,11 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != stateObj)
                 {
+#if NETFRAMEWORK
+                    stateObj.ReadAsyncCallback(IntPtr.Zero, packet, error);
+#else
                     stateObj.ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromNativePointer(packet), error);
+#endif // NETFRAMEWORK
                 }
             }
         }
@@ -122,7 +130,11 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != stateObj)
                 {
+#if NETFRAMEWORK
+                    stateObj.WriteAsyncCallback(IntPtr.Zero, packet, error);
+#else
                     stateObj.WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromNativePointer(packet), error);
+#endif // NETFRAMEWORK
                 }
             }
         }
@@ -144,12 +156,19 @@ namespace Microsoft.Data.SqlClient
             bool flushCache,
             bool fSync,
             bool fParallel,
+#if NETFRAMEWORK
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+#endif
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDNSInfo,
             bool tlsFirst,
             string hostNameInCertificate)
             : base(IntPtr.Zero, true)
         {
+#if !NET6_0_OR_GREATER
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             { }
             finally
@@ -158,11 +177,21 @@ namespace Microsoft.Data.SqlClient
                 instanceName = new byte[256]; // Size as specified by netlibs.
                 if (ignoreSniOpenTimeout)
                 {
+                    // UNDONE: ITEM12001110 (DB Mirroring Reconnect) Old behavior of not truly honoring timeout presevered 
+                    //  for non-failover scenarios to avoid breaking changes as part of a QFE.  Consider fixing timeout
+                    //  handling in next full release and removing ignoreSniOpenTimeout parameter.
                     timeout = Timeout.Infinite; // -1 == native SNIOPEN_TIMEOUT_VALUE / INFINITE
                 }
 
-                _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle, spnBuffer, instanceName, flushCache,
-                    fSync, timeout, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
+#if NETFRAMEWORK
+                int transparentNetworkResolutionStateNo = (int)transparentNetworkResolutionState;
+                _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
+                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, transparentNetworkResolutionStateNo, totalTimeout,
+                            ADP.IsAzureSqlServerEndpoint(serverName), ipPreference, cachedDNSInfo, hostNameInCertificate);
+#else
+                _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
+                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
+#endif // NETFRAMEWORK
             }
         }
 

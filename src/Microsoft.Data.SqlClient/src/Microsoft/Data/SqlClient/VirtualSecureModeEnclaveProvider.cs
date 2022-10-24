@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Runtime.Serialization.Json;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -17,6 +18,10 @@ namespace Microsoft.Data.SqlClient
     internal class HostGuardianServiceEnclaveProvider : VirtualizationBasedSecurityEnclaveProviderBase
     {
         #region Members
+
+        // HttpClient is intended to be instantiated once per application, rather than per-use.
+        // see https://docs.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-6.0#remarks
+        private static readonly HttpClient s_client = new HttpClient();
 
         // this is endpoint given to us by HGS team from windows
         private const string AttestationUrlSuffix = @"/v2.0/signingCertificates";
@@ -66,10 +71,7 @@ namespace Microsoft.Data.SqlClient
                         Thread.Sleep(EnclaveRetrySleepInSeconds * 1000);
                     }
 
-                    WebRequest request = WebRequest.Create(url);
-
-                    using (WebResponse response = request.GetResponse())
-                    using (Stream stream = response.GetResponseStream())
+                    using (Stream stream = s_client.GetStreamAsync(url).ConfigureAwait(false).GetAwaiter().GetResult())
                     {
                         var deserializer = new DataContractJsonSerializer(typeof(byte[]));
                         return (byte[])deserializer.ReadObject(stream);

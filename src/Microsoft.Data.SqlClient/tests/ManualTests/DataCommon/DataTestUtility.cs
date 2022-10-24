@@ -223,10 +223,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SecureString securePassword = new SecureString();
 
-            foreach (char c in password)
-                securePassword.AppendChar(c);
             securePassword.MakeReadOnly();
-            result = app.AcquireTokenByUsernamePassword(scopes, userID, securePassword).ExecuteAsync().Result;
+            result = app.AcquireTokenByUsernamePassword(scopes, userID, password).ExecuteAsync().Result;
 
             return result.AccessToken;
         });

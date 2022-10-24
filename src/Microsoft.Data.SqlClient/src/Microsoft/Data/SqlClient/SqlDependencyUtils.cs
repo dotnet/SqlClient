@@ -132,6 +132,9 @@ namespace Microsoft.Data.SqlClient
 
         //  When remoted across appdomains, MarshalByRefObject links by default time out if there is no activity 
         //  within a few minutes.  Add this override to prevent marshaled links from timing out.
+#if NET6_0_OR_GREATER
+        [Obsolete("InitializeLifetimeService() is not supported after .Net5.0 and throws PlatformNotSupportedException.")]
+#endif
         public override object InitializeLifetimeService()
         {
             return null;

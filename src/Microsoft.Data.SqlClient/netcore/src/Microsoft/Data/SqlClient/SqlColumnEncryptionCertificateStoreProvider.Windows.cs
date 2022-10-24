@@ -79,7 +79,15 @@ namespace Microsoft.Data.SqlClient
 
             // Parse the path and get the X509 cert
             X509Certificate2 certificate = GetCertificateByPath(masterKeyPath, isSystemOp: true);
-            int keySizeInBytes = certificate.PublicKey.Key.KeySize / 8;
+            
+            RSA RSAPublicKey = certificate.GetRSAPublicKey();
+            int keySizeInBytes;
+#if NETCOREAPP || NETSTANDARD2_1
+            DSA DSAPublicKey = certificate.GetDSAPublicKey();
+            keySizeInBytes = RSAPublicKey is not null ? RSAPublicKey.KeySize / 8 : DSAPublicKey.KeySize / 8;
+#else
+            keySizeInBytes= RSAPublicKey.KeySize / 8;
+#endif
 
             // Validate and decrypt the EncryptedColumnEncryptionKey
             // Format is 
@@ -172,7 +180,15 @@ namespace Microsoft.Data.SqlClient
 
             // Parse the certificate path and get the X509 cert
             X509Certificate2 certificate = GetCertificateByPath(masterKeyPath, isSystemOp: false);
-            int keySizeInBytes = certificate.PublicKey.Key.KeySize / 8;
+            
+            RSA RSAPublicKey = certificate.GetRSAPublicKey();
+            int keySizeInBytes;
+#if NETCOREAPP || NETSTANDARD2_1
+            DSA DSAPublicKey = certificate.GetDSAPublicKey();
+            keySizeInBytes = RSAPublicKey is not null ? RSAPublicKey.KeySize / 8 : DSAPublicKey.KeySize / 8;
+#else
+            keySizeInBytes= RSAPublicKey.KeySize / 8;
+#endif
 
             // Construct the encryptedColumnEncryptionKey
             // Format is 
