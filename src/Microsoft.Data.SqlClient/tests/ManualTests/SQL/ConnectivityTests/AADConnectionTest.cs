@@ -658,7 +658,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsManagedIdentitySetup))]
         public static void Azure_SystemManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
@@ -673,7 +673,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsManagedIdentitySetup))]
         public static void Azure_UserManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
