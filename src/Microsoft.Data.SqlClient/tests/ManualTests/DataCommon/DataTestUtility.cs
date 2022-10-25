@@ -113,6 +113,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             MakecertPath = c.MakecertPath;
             KerberosDomainPassword = c.KerberosDomainPassword;
             KerberosDomainUser = c.KerberosDomainUser;
+            ManagedIdentitySupported = c.ManagedIdentitySupported;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 

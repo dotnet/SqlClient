@@ -29,5 +29,6 @@
     "IsAzureSynapse": false,
     "EnclaveAzureDatabaseConnString": "",
     "UserManagedIdentityClientId": "",
+    "ManagedIdentitySupported": true,
     "MakecertPath": ""
 }
