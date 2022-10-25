@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void Constructor2_Value_TimeOnly()
         {
-            TimeOnly value = new TimeOnly(9, 7, 41, 321);
+            TimeOnly value = new TimeOnly(9, 7, 42, 321);
             SqlParameter p = new SqlParameter("timeonly", value);
 
             Assert.Equal(DbType.Time, p.DbType);
