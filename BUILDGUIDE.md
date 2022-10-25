@@ -184,6 +184,7 @@ Manual Tests require the below setup to run:
   |DNSCachingConnString | Connection string for a server that supports DNS Caching|
   |IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
   |EnclaveAzureDatabaseConnString | (Optional) Connection string for Azure database with enclaves |
+  |ManagedIdentitySupported | (Optional) When set to false Managed Identity related tests won't run. Default value is true. |
   |MakecertPath | The full path to makecert.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\makecert.exe` |
 
 ### Commands to run Manual Tests
