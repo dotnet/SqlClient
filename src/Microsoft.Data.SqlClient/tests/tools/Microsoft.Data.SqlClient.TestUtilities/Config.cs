@@ -29,6 +29,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public bool EnclaveEnabled = false;
         public bool TracingEnabled = false;
         public bool SupportsIntegratedSecurity = false;
+        public bool ManagedIdentitySupported = true;
         public string FileStreamDirectory = null;
         public bool UseManagedSNIOnWindows = false;
         public string DNSCachingConnString = null;
