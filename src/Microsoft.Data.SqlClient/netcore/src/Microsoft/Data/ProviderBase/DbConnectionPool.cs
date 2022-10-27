@@ -1608,7 +1608,7 @@ namespace Microsoft.Data.ProviderBase
             // done and all transactions are ended.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended.", ObjectID, obj.ObjectID);
 
-            if (_state == State.Running && obj.CanBePooled /*&& obj.EnlistedTransaction is null*/)
+            if (_state == State.Running && obj.CanBePooled)
             {
                 PutNewObject(obj);
             }
