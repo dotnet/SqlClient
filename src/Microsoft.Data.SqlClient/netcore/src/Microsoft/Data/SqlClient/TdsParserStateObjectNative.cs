@@ -425,12 +425,16 @@ namespace Microsoft.Data.SqlClient
             var nativeProtocol = (NativeProtocols)nativeProtocolVersion;
 
             /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
-             * This driver does not support this version yet!
+             * This driver does not support this version yet! */
+#if NETCOREAPP3_1_OR_GREATER
             if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
             {
                 protocolVersion = (int)SslProtocols.Tls13;
-            }*/
+            }
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
+#else
             if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
+#endif
             {
                 protocolVersion = (int)SslProtocols.Tls12;
             }

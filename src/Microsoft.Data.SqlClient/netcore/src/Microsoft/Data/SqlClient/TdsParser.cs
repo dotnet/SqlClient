@@ -519,8 +519,20 @@ namespace Microsoft.Data.SqlClient
                 // On Instance failure re-connect and flush SNI named instance cache.
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
 
-                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer, true, true, fParallel,
-                                                _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject, serverInfo.ServerSPN, integratedSecurity);
+                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName,
+                    ignoreSniOpenTimeout, 
+                    timerExpire, 
+                    out instanceName, 
+                    ref _sniSpnBuffer, 
+                    true, 
+                    true, fParallel,
+                    _connHandler.ConnectionOptions.IPAddressPreference, 
+                    FQDNforDNSCache, 
+                    ref _connHandler.pendingSQLDNSObject, 
+                    serverInfo.ServerSPN, 
+                    integratedSecurity,
+                    encrypt == SqlConnectionEncryptOption.Strict,
+                    hostNameInCertificate);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {
@@ -552,6 +564,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.InstanceFailure();
                 }
             }
+            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
 
             if (_fMARS && marsCapable)
             {
@@ -1010,7 +1023,8 @@ namespace Microsoft.Data.SqlClient
                             uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                                 | (is2005OrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
 
-                            EnableSsl(info, encrypt, integratedSecurity);
+
+                            EnableSsl(info, encrypt == SqlConnectionEncryptOption.Mandatory, integratedSecurity);
                         }
 
                         break;
