@@ -37,13 +37,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 string[] scopes = new string[] { scope };
                 SecureString password = new SecureString();
-                foreach (char c in parameters.Password)
-                    password.AppendChar(c);
-                password.MakeReadOnly();
 
                 AuthenticationResult result = await PublicClientApplicationBuilder.Create(_appClientId)
                 .WithAuthority(parameters.Authority)
-                .Build().AcquireTokenByUsernamePassword(scopes, parameters.UserId, password)
+                .Build().AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
                     .WithCorrelationId(parameters.ConnectionId)
                     .ExecuteAsync(cancellationToken: cts.Token);
 

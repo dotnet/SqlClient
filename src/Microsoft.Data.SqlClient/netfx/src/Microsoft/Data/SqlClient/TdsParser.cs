@@ -524,7 +524,7 @@ namespace Microsoft.Data.SqlClient
             // Clean up IsSQLDNSCachingSupported flag from previous status
             _connHandler.IsSQLDNSCachingSupported = false;
 
-            UInt32 sniStatus = SNILoadHandle.SingletonInstance.SNIStatus;
+            UInt32 sniStatus = SNILoadHandle.SingletonInstance.Status;
             if (sniStatus != TdsEnums.SNI_SUCCESS)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -5098,7 +5098,6 @@ namespace Microsoft.Data.SqlClient
 
             metaData = null;
             _SqlMetaDataSet altMetaDataSet = new _SqlMetaDataSet(cColumns, null);
-            int[] indexMap = new int[cColumns];
 
             if (!stateObj.TryReadUInt16(out altMetaDataSet.id))
             {
@@ -5195,11 +5194,7 @@ namespace Microsoft.Data.SqlClient
                             break;
                     }
                 }
-                indexMap[i] = i;
             }
-
-            altMetaDataSet.indexMap = indexMap;
-            altMetaDataSet.visibleColumns = cColumns;
 
             metaData = altMetaDataSet;
             return true;
