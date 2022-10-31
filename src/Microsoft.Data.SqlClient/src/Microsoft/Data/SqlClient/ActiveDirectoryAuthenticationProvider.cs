@@ -227,7 +227,16 @@ namespace Microsoft.Data.SqlClient
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             {
+#if NETFRAMEWORK
+                SecureString securePwd = new();
+                for (int i = 0; i < parameters.Password.Length; i++)
+                {
+                    securePwd.AppendChar(parameters.Password[i]);
+                }
+                result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, securePwd)
+#else
                 result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+#endif
                    .WithCorrelationId(parameters.ConnectionId)
                    .ExecuteAsync(cancellationToken: cts.Token)
                    .ConfigureAwait(false);

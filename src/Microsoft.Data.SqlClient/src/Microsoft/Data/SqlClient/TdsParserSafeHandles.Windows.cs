@@ -162,7 +162,6 @@ namespace Microsoft.Data.SqlClient
 #endif
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDNSInfo,
-            bool tlsFirst,
             string hostNameInCertificate)
             : base(IntPtr.Zero, true)
         {

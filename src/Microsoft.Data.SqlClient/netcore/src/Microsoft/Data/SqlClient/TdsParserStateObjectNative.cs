@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer[0], ignoreSniOpenTimeout, checked((int)timeout), out instanceName,
-                flushCache, !async, fParallel, ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate);
+                flushCache, !async, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
         }
 
         protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
