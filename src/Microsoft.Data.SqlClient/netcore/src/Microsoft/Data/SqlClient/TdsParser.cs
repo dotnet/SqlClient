@@ -1024,7 +1024,7 @@ namespace Microsoft.Data.SqlClient
                                 | (is2005OrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
 
 
-                            EnableSsl(info, encrypt == SqlConnectionEncryptOption.Mandatory, integratedSecurity);
+                            EnableSsl(info, encrypt, integratedSecurity);
                         }
 
                         break;
