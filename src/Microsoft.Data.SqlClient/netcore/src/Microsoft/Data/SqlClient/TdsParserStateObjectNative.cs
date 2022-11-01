@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient
             bool isIntegratedSecurity,
             bool tlsFirst,
             string hostNameInCertificate,
-            string serverCert)
+            string serverCertificateFilename)
         {
             // We assume that the loadSSPILibrary has been called already. now allocate proper length of buffer
             spnBuffer = new byte[1][];
@@ -404,12 +404,12 @@ namespace Microsoft.Data.SqlClient
         internal override uint EnableMars(ref uint info)
             => SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SMUX_PROV, ref info);
 
-        internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCert)
+        internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
         {
             SNINativeMethodWrapper.AuthProviderInfo authInfo = new SNINativeMethodWrapper.AuthProviderInfo();
             authInfo.flags = info;
             authInfo.tlsFirst = tlsFirst;
-            authInfo.serverCertFileName = serverCert;
+            authInfo.serverCertFileName = serverCertificateFilename;
 
             // Add SSL (Encryption) SNI provider.
             return SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, ref authInfo);

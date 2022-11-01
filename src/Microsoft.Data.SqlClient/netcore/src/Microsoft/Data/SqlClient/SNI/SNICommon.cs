@@ -200,8 +200,8 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Certificate validation and chain trust validations are done by SSLStream class [System.Net.Security.SecureChannel.VerifyRemoteCertificate method]
         /// This method is called as a result of callback for SSL Stream Certificate validation.
         /// </summary>
-        /// <param name="clientCert">X.509 server certificate provided by the client</param>
-        /// <param name="serverCert">X.509 certificate provuded by the server</param>
+        /// <param name="clientCert">X.509 certificate provided by the client</param>
+        /// <param name="serverCert">X.509 certificate provided by the server</param>
         /// <param name="policyErrors">Policy errors</param>
         /// <returns>True if certificate is valid</returns>
         internal static bool ValidateSslServerCertificate(X509Certificate clientCert, X509Certificate serverCert, SslPolicyErrors policyErrors)

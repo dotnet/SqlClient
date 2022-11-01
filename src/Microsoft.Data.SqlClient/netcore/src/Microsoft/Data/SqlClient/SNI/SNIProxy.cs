@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <param name="tlsFirst">Support TDS8.0</param>
         /// <param name="hostNameInCertificate">Used for the HostName in certificate</param>
-        /// <param name="serverCert">Used for the path to the Server Certificate</param>
+        /// <param name="serverCertificateFilename">Used for the path to the Server Certificate</param>
         /// <returns>SNI handle</returns>
         internal static SNIHandle CreateConnectionHandle(
             string fullServerName,
@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClient.SNI
             ref SQLDNSInfo pendingDNSInfo,
             bool tlsFirst,
             string hostNameInCertificate,
-            string serverCert)
+            string serverCertificateFilename)
         {
             instanceName = new byte[1];
 
@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.None: // default to using tcp if no protocol is provided
                 case DataSource.Protocol.TCP:
                     sniHandle = CreateTcpHandle(details, timerExpire, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
-                        tlsFirst, hostNameInCertificate, serverCert);
+                        tlsFirst, hostNameInCertificate, serverCertificateFilename);
                     break;
                 case DataSource.Protocol.NP:
                     sniHandle = CreateNpHandle(details, timerExpire, parallel, tlsFirst);
@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <param name="tlsFirst">Support TDS8.0</param>
         /// <param name="hostNameInCertificate">Host name in certificate</param>
-        /// <param name="serverCert">Used for the path to the Server Certificate</param>
+        /// <param name="serverCertificateFilename">Used for the path to the Server Certificate</param>
         /// <returns>SNITCPHandle</returns>
         private static SNITCPHandle CreateTcpHandle(
             DataSource details,
@@ -299,7 +299,7 @@ namespace Microsoft.Data.SqlClient.SNI
             ref SQLDNSInfo pendingDNSInfo,
             bool tlsFirst,
             string hostNameInCertificate,
-            string serverCert)
+            string serverCertificateFilename)
         {
             // TCP Format:
             // tcp:<host name>\<instance name>
@@ -338,7 +338,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             return new SNITCPHandle(hostName, port, timerExpire, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
-                tlsFirst, hostNameInCertificate, serverCert);
+                tlsFirst, hostNameInCertificate, serverCertificateFilename);
         }
 
         /// <summary>

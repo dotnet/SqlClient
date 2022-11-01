@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient
             internal const string Current_Language = DbConnectionStringKeywords.CurrentLanguage;
             internal const string Data_Source = DbConnectionStringKeywords.DataSource;
 
-            // Encrpytion related
+            // Encrpyt related
             internal const string Encrypt = DbConnectionStringKeywords.Encrypt;
             internal const string HostNameInCertificate = DbConnectionStringKeywords.HostNameInCertificate;
             internal const string ServerCertificate = DbConnectionStringKeywords.ServerCertificate;
