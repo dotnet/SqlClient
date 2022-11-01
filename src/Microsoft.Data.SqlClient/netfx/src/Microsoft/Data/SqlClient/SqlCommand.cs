@@ -4581,6 +4581,7 @@ namespace Microsoft.Data.SqlClient
                 tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                 tsqlParam.Value = text;
                 tsqlParam.Size = text.Length;
+                tsqlParam.Direction = ParameterDirection.Input;
             }
             else
             {
