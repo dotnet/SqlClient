@@ -675,21 +675,17 @@ namespace Microsoft.Data.SqlClient.SNI
                 serverNameToValidate = _targetServer;
             }
 
-            // TODO: check if this callback is correct.
-            // TODO: if we have the serverCert specified should we use that for validation instead of the one from this callback
-            // or is there another location where the serverCert should be checked?
             if (!string.IsNullOrEmpty(_serverCertificate))
             {
                 X509Certificate serverCert = null;
                 try
                 {
-                    // TODO: should we check if exists first since it may be a bad path, so we should fall back to use the default cert.
-                    // if this is not a valid cert, we skip and fallback to the original cert coming back from the callback
                     serverCert = new X509Certificate(_serverCertificate);
-                    return SNICommon.ValidateSslServerCertificate(serverNameToValidate, serverCert, policyErrors);
+                    return SNICommon.ValidateSslServerCertificate(serverCert, cert, policyErrors);
                 }
                 catch (Exception e)
                 {
+                    // if this fails, then fall back to the HostNameInCertificate or TargetServer validation.
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, IOException occurred: {1}", args0: _connectionId, args1: e.Message);
                 }
             }
