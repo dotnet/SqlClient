@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <param name="tlsFirst">Support TDS8.0</param>
         /// <param name="hostNameInCertificate">Host Name in Certificate</param>
-        /// <param name="serverCertifiateFilename">Used for the path to the Server Certificate</param>
+        /// <param name="serverCertificateFilename">Used for the path to the Server Certificate</param>
         public SNITCPHandle(
             string serverName,
             int port,
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.SNI
             ref SQLDNSInfo pendingDNSInfo,
             bool tlsFirst,
             string hostNameInCertificate,
-            string serverCertifiateFilename)
+            string serverCertificateFilename)
         {
             using (TrySNIEventScope.Create(nameof(SNITCPHandle)))
             {
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _targetServer = serverName;
                 _tlsFirst = tlsFirst;
                 _hostNameInCertificate = hostNameInCertificate;
-                _serverCertificateFilename = serverCertifiateFilename;
+                _serverCertificateFilename = serverCertificateFilename;
                 _sendSync = new object();
 
                 SQLDNSInfo cachedDNSInfo;
