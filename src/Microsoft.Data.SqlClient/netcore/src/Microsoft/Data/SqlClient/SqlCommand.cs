@@ -4148,6 +4148,7 @@ namespace Microsoft.Data.SqlClient
             //@parameters
 
             SqlParameter paramsParam = describeParameterEncryptionRequest.systemParams[1];
+            paramsParam.Direction = ParameterDirection.Input;
             paramsParam.SqlDbType = ((parameterList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             paramsParam.Size = parameterList.Length;
             paramsParam.Value = parameterList;
@@ -4156,6 +4157,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlParameter attestationParametersParam = describeParameterEncryptionRequest.systemParams[2];
                 attestationParametersParam.Direction = ParameterDirection.Input;
+                attestationParametersParam.SqlDbType = SqlDbType.VarBinary;
                 attestationParametersParam.Size = attestationParameters.Length;
                 attestationParametersParam.Value = attestationParameters;
             }
