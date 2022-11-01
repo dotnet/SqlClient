@@ -4598,6 +4598,7 @@ namespace Microsoft.Data.SqlClient
                     tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                     tsqlParam.Value = text;
                     tsqlParam.Size = text.Length;
+                    tsqlParam.Direction = ParameterDirection.Input;
                 }
             }
 
@@ -4669,18 +4670,18 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlParameter paramsParam = describeParameterEncryptionRequest.systemParams[1];
-            paramsParam.Direction = ParameterDirection.Input;
             paramsParam.SqlDbType = ((parameterList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             paramsParam.Size = parameterList.Length;
             paramsParam.Value = parameterList;
+            paramsParam.Direction = ParameterDirection.Input;
 
             if (attestationParameters != null)
             {
                 SqlParameter attestationParametersParam = describeParameterEncryptionRequest.systemParams[2];
-                attestationParametersParam.Direction = ParameterDirection.Input;
                 attestationParametersParam.SqlDbType = SqlDbType.VarBinary;
                 attestationParametersParam.Size = attestationParameters.Length;
                 attestationParametersParam.Value = attestationParameters;
+                attestationParametersParam.Direction = ParameterDirection.Input;
             }
         }
 
@@ -6633,8 +6634,9 @@ namespace Microsoft.Data.SqlClient
 
             //@handle
             sqlParam = rpc.systemParams[0];
+            sqlParam.SqlDbType = SqlDbType.Int;
             sqlParam.Value = _prepareHandle;
-            sqlParam.Value = 4;
+            sqlParam.Size = 4;
             sqlParam.Direction = ParameterDirection.InputOutput;
             rpc.systemParamOptions[0] = TdsEnums.RPC_PARAM_BYREF;
 
@@ -6644,6 +6646,7 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             sqlParam.Value = paramList;
             sqlParam.Size = paramList.Length;
+            sqlParam.Direction = ParameterDirection.Input;
 
             //@batch_text
             string text = GetCommandText(behavior);
@@ -6651,6 +6654,7 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             sqlParam.Size = text.Length;
             sqlParam.Value = text;
+            sqlParam.Direction = ParameterDirection.Input;
 
             SetUpRPCParameters(rpc, false, _parameters);
             return rpc;
@@ -6752,6 +6756,7 @@ namespace Microsoft.Data.SqlClient
             SqlParameter sqlParam = rpc.systemParams[0];
             sqlParam.SqlDbType = SqlDbType.Int;
             sqlParam.Value = _prepareHandle;
+            sqlParam.Size = 4;
             sqlParam.Direction = ParameterDirection.Input;
 
             SetUpRPCParameters(rpc, inSchema, _parameters);
@@ -6803,6 +6808,7 @@ namespace Microsoft.Data.SqlClient
                 sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                 sqlParam.Size = paramList.Length;
                 sqlParam.Value = paramList;
+                sqlParam.Direction = ParameterDirection.Input;
 
                 bool inSchema = (0 != (behavior & CommandBehavior.SchemaOnly));
                 SetUpRPCParameters(rpc, inSchema, parameters);
