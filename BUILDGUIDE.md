@@ -321,12 +321,6 @@ Scaled decimal parameter truncation can be enabled by enabling the below AppCont
 
 `Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior`
 
-## Enabling OS secure protocols preference
-
-TLS 1.3 has been excluded due to the fact that the driver lacks full support. To enable OS preferences as before, enable the following AppContext switch on application startup:
-
-`Switch.Microsoft.Data.SqlClient.EnableSecureProtocolsByOS`
-
 ## Suppressing TLS security warning
 
 When connecting to a server, if a protocol lower than TLS 1.2 is negotiated, a security warning is output to the console. This warning can be suppressed on SQL connections with `Encrypt = false` by enabling the following AppContext switch on application startup:
