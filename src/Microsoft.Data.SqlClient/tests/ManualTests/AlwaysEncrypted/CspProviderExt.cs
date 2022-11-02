@@ -7,7 +7,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
-#if NET50_OR_LATER
+#if NET6_0_OR_GREATER
 using System.Runtime.Versioning;
 #endif
 
@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// Always Encrypted public CspProvider Manual tests.
     /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
-#if NET50_OR_LATER
+#if NET6_0_OR_GREATER
     [SupportedOSPlatform("windows")]
 #endif
     [PlatformSpecific(TestPlatforms.Windows)]
