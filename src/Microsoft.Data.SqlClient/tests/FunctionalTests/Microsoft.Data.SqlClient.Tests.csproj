@@ -7,7 +7,6 @@
     <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
     <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFRAMEWORK</DefineConstants>
     <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);NETCOREAPP</DefineConstants>
-    <DefineConstants Condition="'$(TargetGroup)' == 'netcoreapp' AND !$(TargetFramework.StartsWith('netcoreapp'))">$(DefineConstants);NET50_OR_LATER</DefineConstants>
     <DefineConstants Condition="$(ReferenceType.Contains('NetStandard'))">NETSTANDARDREFERNCE</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>

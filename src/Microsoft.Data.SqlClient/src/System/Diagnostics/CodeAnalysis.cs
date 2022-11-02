@@ -59,7 +59,7 @@ namespace System.Diagnostics.CodeAnalysis
     }
 #endif
 
-#if !NET5_0_OR_GREATER
+#if !NET6_0_OR_GREATER
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
     internal sealed class MemberNotNullAttribute : Attribute
     {
