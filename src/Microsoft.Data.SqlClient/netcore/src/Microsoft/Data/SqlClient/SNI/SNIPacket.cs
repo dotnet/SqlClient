@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     state: this,
                     CancellationToken.None,
                     TaskContinuationOptions.DenyChildAttach,
-                    TaskScheduler.Default
+                    TaskScheduler.Current // specifically continue on the current scheduler because we may override it for mars
                 );
         }
 

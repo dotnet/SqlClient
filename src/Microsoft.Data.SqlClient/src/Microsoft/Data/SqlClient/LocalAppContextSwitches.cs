@@ -15,13 +15,16 @@ namespace Microsoft.Data.SqlClient
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
         internal const string UseSystemDefaultSecureProtocolsString = @"Switch.Microsoft.Data.SqlClient.UseSystemDefaultSecureProtocols";
         internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
+        internal const string UseExperimentalMARSThreadingString = @"Switch.Microsoft.Data.SqlClient.UseExperimentalMARSThreading";
 
         private static bool s_makeReadAsyncBlocking;
         private static bool? s_LegacyRowVersionNullBehavior;
         private static bool? s_UseSystemDefaultSecureProtocols;
-        private static bool? s_SuppressInsecureTLSWarning;
+        private static bool? s_SuppressInsecureTLSWarning; 
+        private static bool? s_useExperimentalMARSThreading;
 
-#if !NETFRAMEWORK
+
+#if NETCOREAPP31_AND_ABOVE
         static LocalAppContextSwitches()
         {
             IAppContextSwitchOverridesSection appContextSwitch = AppConfigManager.FetchConfigurationSection<AppContextSwitchOverridesSection>(AppContextSwitchOverridesSection.Name);
@@ -93,6 +96,20 @@ namespace Microsoft.Data.SqlClient
                     s_UseSystemDefaultSecureProtocols = result;
                 }
                 return s_UseSystemDefaultSecureProtocols.Value;
+            }
+        }
+
+        public static bool UseExperimentalMARSThreading
+        {
+            get
+            {
+                if (s_useExperimentalMARSThreading is null)
+                {
+                    bool result;
+                    result = AppContext.TryGetSwitch(UseExperimentalMARSThreadingString, out result) ? result : false;
+                    s_useExperimentalMARSThreading = result;
+                }
+                return s_useExperimentalMARSThreading.Value;
             }
         }
     }
