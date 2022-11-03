@@ -5386,9 +5386,6 @@ namespace Microsoft.Data.SqlClient
             internal override Func<Task, object, Task<T>> Execute => s_execute;
         }
 
-
-
-
         /// <summary>
         /// Starts the process of executing an async call using an SqlDataReaderAsyncCallContext derived context object.
         /// After this call the context lifetime is handled by BeginAsyncCall ContinueAsyncCall and CompleteAsyncCall AsyncCall methods
