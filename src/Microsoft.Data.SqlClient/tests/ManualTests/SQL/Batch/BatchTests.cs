@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     try
                     {
-                        using (var reader = batch.ExecuteDbReader())
+                        using (var reader = batch.ExecuteReader())
                         {
                             do
                             {
@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         try
                         {
-                            using (var reader = batch.ExecuteDbReader())
+                            using (var reader = batch.ExecuteReader())
                             {
                                 do
                                 {

@@ -1492,14 +1492,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (ds.FieldCount > 0)
                         {
-                            if (returnLastResult)
-                            {
-                                retResult = ds.GetSqlValue(0);
-                            }
-                            else
-                            {
-                                retResult = ds.GetValue(0);
-                            }
+                            retResult = ds.GetValue(0);
                         }
                     }
                 } while (returnLastResult && ds.NextResult());
@@ -6035,21 +6028,29 @@ namespace Microsoft.Data.SqlClient
             // Check to see if the currently set transaction has completed.  If so,
             // null out our local reference.
             if (null != _transaction && _transaction.Connection == null)
+            {
                 _transaction = null;
+            }
 
             // throw if the connection is in a transaction but there is no
             // locally assigned transaction object
             if (_activeConnection.HasLocalTransactionFromAPI && (null == _transaction))
+            {
                 throw ADP.TransactionRequired(method);
+            }
 
             // if we have a transaction, check to ensure that the active
             // connection property matches the connection associated with
             // the transaction
             if (null != _transaction && _activeConnection != _transaction.Connection)
+            {
                 throw ADP.TransactionConnectionMismatch();
+            }
 
             if (ADP.IsEmpty(this.CommandText))
+            {
                 throw ADP.CommandTextRequired(method);
+            }
 
             // Notification property must be null for pre-2005 connections
             if ((Notification != null) && !_activeConnection.Is2005OrNewer)
@@ -6181,56 +6182,28 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// IMPORTANT NOTE: This is created as a copy of OnDoneProc below for Transparent Column Encryption improvement
-        /// as there is not much time, to address regressions. Will revisit removing the duplication, when we have time again.
-        /// </summary>
         internal void OnDoneDescribeParameterEncryptionProc(TdsParserStateObject stateObj)
         {
             // called per rpc batch complete
             if (_batchRPCMode)
             {
-                // track the records affected for the just completed rpc batch
-                // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].cumulativeRecordsAffected = _rowsAffected;
-
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].recordsAffected =
-                    (((0 < _currentlyExecutingDescribeParameterEncryptionRPC) && (0 <= _rowsAffected))
-                        ? (_rowsAffected - Math.Max(_sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC - 1].cumulativeRecordsAffected, 0))
-                        : _rowsAffected);
-
-                // track the error collection (not available from TdsParser after ExecuteNonQuery)
-                // and the which errors are associated with the just completed rpc batch
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].errorsIndexStart =
-                    ((0 < _currentlyExecutingDescribeParameterEncryptionRPC)
-                        ? _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC - 1].errorsIndexEnd
-                        : 0);
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].errorsIndexEnd = stateObj.ErrorCount;
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].errors = stateObj._errors;
-
-                // track the warning collection (not available from TdsParser after ExecuteNonQuery)
-                // and the which warnings are associated with the just completed rpc batch
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].warningsIndexStart =
-                    ((0 < _currentlyExecutingDescribeParameterEncryptionRPC)
-                        ? _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC - 1].warningsIndexEnd
-                        : 0);
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].warningsIndexEnd = stateObj.WarningCount;
-                _sqlRPCParameterEncryptionReqArray[_currentlyExecutingDescribeParameterEncryptionRPC].warnings = stateObj._warnings;
-
+                OnDone(stateObj, _currentlyExecutingDescribeParameterEncryptionRPC, _sqlRPCParameterEncryptionReqArray, _rowsAffected);
                 _currentlyExecutingDescribeParameterEncryptionRPC++;
             }
         }
 
-        /// <summary>
-        /// IMPORTANT NOTE: There is a copy of this function above in OnDoneDescribeParameterEncryptionProc.
-        /// Please consider the changes being done in this function for the above function as well.
-        /// </summary>
         internal void OnDoneProc(TdsParserStateObject stateObject)
-        { // called per rpc batch complete
+        {
+            // called per rpc batch complete
             if (_batchRPCMode)
             {
+                OnDone(stateObject, _currentlyExecutingBatch, _RPCList, _rowsAffected);
+                _currentlyExecutingBatch++;
+                Debug.Assert(_RPCList.Count >= _currentlyExecutingBatch, "OnDoneProc: Too many DONEPROC events");
+            }
+        }
 
-        private static void OnDone(TdsParserStateObject stateObj, int index, _SqlRPC[] array, int rowsAffected)
+        private static void OnDone(TdsParserStateObject stateObj, int index, IList<_SqlRPC> array, int rowsAffected)
         {
             _SqlRPC current = array[index];
             _SqlRPC previous = (index > 0) ? array[index - 1] : null;
@@ -6246,7 +6219,7 @@ namespace Microsoft.Data.SqlClient
 
             if (current.batchCommand != null)
             {
-                current.batchCommand.SetREcordAffected(current.recordsAffected.GetValueOrDefault());
+                current.batchCommand.SetRecordAffected(current.recordsAffected.GetValueOrDefault());
             }
 
             // track the error collection (not available from TdsParser after ExecuteNonQuery)
@@ -6929,7 +6902,7 @@ namespace Microsoft.Data.SqlClient
 
             if (userParamCount > 0)
             {
-                string paramList = BuildParamList(_stateObj.Parser, BatchRPCMode ? parameters : _parameters);
+                string paramList = BuildParamList(_stateObj.Parser, _batchRPCMode ? parameters : _parameters);
                 sqlParam = rpc.systemParams[1];
                 sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                 sqlParam.Size = paramList.Length;
@@ -7477,6 +7450,8 @@ namespace Microsoft.Data.SqlClient
             string commandText = batchCommand.CommandText;
             CommandType cmdType = batchCommand.CommandType;
 
+            CommandText = commandText;
+            CommandType = cmdType;
 
             // Set the column encryption setting.
             SetColumnEncryptionSetting(batchCommand.ColumnEncryptionSetting);

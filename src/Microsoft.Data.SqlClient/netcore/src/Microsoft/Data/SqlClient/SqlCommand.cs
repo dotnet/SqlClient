@@ -1171,14 +1171,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (ds.FieldCount > 0)
                         {
-                            if (returnLastResult)
-                            {
-                                retResult = ds.GetSqlValue(0);
-                            }
-                            else
-                            {
-                                retResult = ds.GetValue(0);
-                            }
+                            retResult = ds.GetValue(0);
                         }
                     }
                 } while (returnLastResult && ds.NextResult());
@@ -5460,21 +5453,29 @@ namespace Microsoft.Data.SqlClient
             // Check to see if the currently set transaction has completed.  If so,
             // null out our local reference.
             if (null != _transaction && _transaction.Connection == null)
+            {
                 _transaction = null;
+            }
 
             // throw if the connection is in a transaction but there is no
             // locally assigned transaction object
             if (_activeConnection.HasLocalTransactionFromAPI && (null == _transaction))
+            {
                 throw ADP.TransactionRequired(method);
+            }
 
             // if we have a transaction, check to ensure that the active
             // connection property matches the connection associated with
             // the transaction
             if (null != _transaction && _activeConnection != _transaction.Connection)
+            {
                 throw ADP.TransactionConnectionMismatch();
+            }
 
             if (string.IsNullOrEmpty(this.CommandText))
+            {
                 throw ADP.CommandTextRequired(method);
+            }
         }
 
         private void ValidateAsyncCommand()
@@ -5590,7 +5591,7 @@ namespace Microsoft.Data.SqlClient
 
             if (current.batchCommand != null)
             {
-                current.batchCommand.SetREcordAffected(current.recordsAffected.GetValueOrDefault());
+                current.batchCommand.SetRecordAffected(current.recordsAffected.GetValueOrDefault());
             }
 
             // track the error collection (not available from TdsParser after ExecuteNonQuery)
@@ -6738,6 +6739,8 @@ namespace Microsoft.Data.SqlClient
             string commandText = batchCommand.CommandText;
             CommandType cmdType = batchCommand.CommandType;
 
+            CommandText = commandText;
+            CommandType = cmdType;
 
             // Set the column encryption setting.
             SetColumnEncryptionSetting(batchCommand.ColumnEncryptionSetting);

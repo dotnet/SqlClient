@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void SetREcordAffected(int value)
+        internal void SetRecordAffected(int value)
         {
             _recordsAffected = value;
         }
