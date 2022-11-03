@@ -806,7 +806,7 @@ Connections are considered the same if they have the same connection string. Dif
 |Context Connection(Obsolete)|False|  
 |Current Language|Empty string|  
 |Data Source|Empty string|  
-|Encrypt|True|  
+|Encrypt|False in versions prior to 4.0, True in versions 4.0 and up|  
 |Enlist|True|  
 |Failover Partner|Empty string|  
 |Initial Catalog|Empty string|  
