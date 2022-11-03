@@ -327,14 +327,14 @@
   
 |||||  
 |-|-|-|-|  
-|Boolean|Byte|Char|DateTime|  
-|DateTimeOffset|Decimal|Double|Float|  
-|Guid|Int16|Int32|Int64|  
-|SqlBoolean|SqlByte|SqlDateTime|SqlDecimal|  
-|SqlDouble|SqlGuid|SqlInt16|SqlInt32|  
-|SqlInt64|SqlMoney|SqlSingle|SqlString|  
-|Stream|String|TextReader|UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|
-|XmlReader||||
+|Boolean|Byte|Char|DateOnly (.NET 6 or later)|  
+|DateTime|DateTimeOffset|Decimal|Double| 
+|Float|Guid|Int16|Int32|
+|Int64|SqlBoolean|SqlByte|SqlDateTime|
+|SqlDecimal|SqlDouble|SqlGuid|SqlInt16|
+|SqlInt32|SqlInt64|SqlMoney|SqlSingle|
+|SqlString|Stream|String|TextReader|
+|TimeOnly (.NET 6 or later)|XmlReader||UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|
   
  For more information, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).  
   
@@ -369,14 +369,14 @@
   
 |||||  
 |-|-|-|-|  
-|Boolean|Byte|Char|DateTime|  
-|DateTimeOffset|Decimal|Double|Float|  
-|Guid|Int16|Int32|Int64|  
-|SqlBoolean|SqlByte|SqlDateTime|SqlDecimal|  
-|SqlDouble|SqlGuid|SqlInt16|SqlInt32|  
-|SqlInt64|SqlMoney|SqlSingle|SqlString|  
-|Stream|String|TextReader|UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|
-|XmlReader||||
+|Boolean|Byte|Char|DateOnly (.NET 6 or later)|  
+|DateTime|DateTimeOffset|Decimal|Double| 
+|Float|Guid|Int16|Int32|
+|Int64|SqlBoolean|SqlByte|SqlDateTime|
+|SqlDecimal|SqlDouble|SqlGuid|SqlInt16|
+|SqlInt32|SqlInt64|SqlMoney|SqlSingle|
+|SqlString|Stream|String|TextReader|
+|TimeOnly (.NET 6 or later)|XmlReader||UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|
   
  For more information, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).  
   

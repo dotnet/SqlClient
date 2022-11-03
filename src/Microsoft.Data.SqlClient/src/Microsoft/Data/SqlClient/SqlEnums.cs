@@ -365,6 +365,16 @@ namespace Microsoft.Data.SqlClient
                     {
                         return MetaDateTimeOffset;
                     }
+#if NET6_0_OR_GREATER
+                    else if (dataType == typeof(DateOnly))
+                    {
+                        return s_metaDate;
+                    }
+                    else if (dataType == typeof(TimeOnly))
+                    {
+                        return MetaTime;
+                    }
+#endif
                     else
                     {
                         // UDT ?
@@ -630,6 +640,10 @@ namespace Microsoft.Data.SqlClient
                         break;
                     case TimeSpan:
                     case DateTimeOffset:
+#if NET6_0_OR_GREATER
+                    case TimeOnly:
+                    case DateOnly:
+#endif
                         sqlVal = comVal;
                         break;
                     default:
@@ -739,7 +753,7 @@ namespace Microsoft.Data.SqlClient
                     break; // no direct mapping, just use SqlDbType.Variant;
             }
             return sqlType;
-#else 
+#else
             // OleDbTypes not supported
             return SqlDbType.Variant;
 #endif // NETFRAMEWORK
