@@ -12,6 +12,11 @@
     <Compile Include="Microsoft.Data.SqlClient.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\ref\System.Data.Common.Batch.cs" />
+    <Compile Include="..\..\ref\Microsoft.Data.SqlClient.Batch.cs" />
+    <Compile Include="..\..\ref\Microsoft.Data.SqlClient.Batch.NetCoreApp.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Transactions" />
   </ItemGroup>

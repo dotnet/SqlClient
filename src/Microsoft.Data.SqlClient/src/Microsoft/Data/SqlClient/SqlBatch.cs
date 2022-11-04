@@ -16,14 +16,14 @@ namespace Microsoft.Data.SqlClient
     {
         private SqlCommand _batchCommand;
         private List<SqlBatchCommand> _commands;
-        private DbBatchCommandCollection _providerCommands;
+        private SqlBatchCommandCollection _providerCommands;
 
         public SqlBatch()
         {
             _batchCommand = new SqlCommand();
         }
 
-        public SqlBatch(SqlConnection connection, SqlTransaction transaction = null)
+        public SqlBatch(SqlConnection connection = null, SqlTransaction transaction = null)
             : this()
         {
             Connection = connection;
@@ -44,7 +44,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected override DbBatchCommandCollection DbBatchCommands => _providerCommands != null ? _providerCommands : _providerCommands = new SqlBatchCommandCollection(Commands); // Commands call will check disposed
+        protected override DbBatchCommandCollection DbBatchCommands => BatchCommands;
+
+        public new SqlBatchCommandCollection BatchCommands => _providerCommands != null ? _providerCommands : _providerCommands = new SqlBatchCommandCollection(Commands); // Commands call will check disposed
 
         protected override DbConnection DbConnection
         {
