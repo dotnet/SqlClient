@@ -60,23 +60,20 @@ namespace Microsoft.Data.SqlClient
         public bool Remove(Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
         public override bool Remove(System.Data.Common.DbBatchCommand item) => throw null;
         public override void RemoveAt(int index) => throw null;
-        Microsoft.Data.SqlClient.SqlBatchCommand System.Collections.Generic.IList<SqlBatchCommand>.this[int index]
-        {
-            get => throw null;
-            set => throw null;
-        }
-        public new Microsoft.Data.SqlClient.SqlBatchCommand this[int index]
-        {
-            get => throw null;
-            set => throw null;
-        }
+        Microsoft.Data.SqlClient.SqlBatchCommand System.Collections.Generic.IList<SqlBatchCommand>.this[int index] { get => throw null; set { } }
+        public new Microsoft.Data.SqlClient.SqlBatchCommand this[int index] { get => throw null; set { } }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => throw null;
         protected override System.Data.Common.DbBatchCommand GetBatchCommand(int index) => throw null;
         protected override void SetBatchCommand(int index, System.Data.Common.DbBatchCommand batchCommand) => throw null;
     }
     public sealed partial class SqlException
     {
-        public Microsoft.Data.SqlClient.SqlBatchCommand BatchCommand { get { throw null; } }
+        public
+#if NET6_0_OR_GREATER
+        new
+#endif 
+        Microsoft.Data.SqlClient.SqlBatchCommand BatchCommand { get { throw null; } }
+
     }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }

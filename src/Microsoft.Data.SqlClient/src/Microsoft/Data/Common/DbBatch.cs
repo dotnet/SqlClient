@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,21 +16,21 @@ namespace System.Data.Common
 
         public abstract int Timeout { get; set; }
 
-        public DbConnection? Connection
+        public DbConnection Connection
         {
             get => DbConnection;
             set => DbConnection = value;
         }
 
-        protected abstract DbConnection? DbConnection { get; set; }
+        protected abstract DbConnection DbConnection { get; set; }
 
-        public DbTransaction? Transaction
+        public DbTransaction Transaction
         {
             get => DbTransaction;
             set => DbTransaction = value;
         }
 
-        protected abstract DbTransaction? DbTransaction { get; set; }
+        protected abstract DbTransaction DbTransaction { get; set; }
 
         public DbDataReader ExecuteReader(CommandBehavior behavior = CommandBehavior.Default)
             => ExecuteDbDataReader(behavior);
@@ -52,9 +51,9 @@ namespace System.Data.Common
 
         public abstract Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken = default);
 
-        public abstract object? ExecuteScalar();
+        public abstract object ExecuteScalar();
 
-        public abstract Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken = default);
+        public abstract Task<object> ExecuteScalarAsync(CancellationToken cancellationToken = default);
 
         public abstract void Prepare();
 

@@ -111,12 +111,12 @@ namespace Microsoft.Data.SqlClient
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 #if NET6_0_OR_GREATER
-        protected override DbBatchCommand DbBatchCommand => SqlBatchCommand;
-#else
-        public DbBatchCommand BatchCommand => SqlBatchCommand;
-#endif
+        protected override DbBatchCommand DbBatchCommand => BatchCommand;
 
-        public SqlBatchCommand SqlBatchCommand
+        public new SqlBatchCommand BatchCommand
+#else
+        public SqlBatchCommand BatchCommand
+#endif 
         {
             get => _batchCommand;
             internal set => _batchCommand = value;
@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlException exception = new(message.ToString(), errorCollection, innerException, conId);
-            exception.SqlBatchCommand = batchCommand;
+            exception.BatchCommand = batchCommand;
             exception.Data.Add("HelpLink.ProdName", "Microsoft SQL Server");
             if (!string.IsNullOrEmpty(serverVersion))
             {

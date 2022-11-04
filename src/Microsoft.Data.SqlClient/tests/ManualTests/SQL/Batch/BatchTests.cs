@@ -227,7 +227,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             Assert.NotNull(exception);
-            Assert.NotNull(exception.SqlBatchCommand);
+            Assert.NotNull(exception.BatchCommand);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             Assert.NotNull(exception);
-            Assert.NotNull(exception.SqlBatchCommand);
+            Assert.NotNull(exception.BatchCommand);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -293,7 +293,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             Assert.NotNull(exception);
-            Assert.Null(exception.SqlBatchCommand);
+            Assert.Null(exception.BatchCommand);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]

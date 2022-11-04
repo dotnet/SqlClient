@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 namespace System.Data.Common
 {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
@@ -12,10 +10,10 @@ namespace System.Data.Common
         public System.Data.Common.DbBatchCommandCollection BatchCommands { get { throw null!; } }
         protected abstract System.Data.Common.DbBatchCommandCollection DbBatchCommands { get; }
         public abstract int Timeout { get; set; }
-        public System.Data.Common.DbConnection? Connection { get; set; }
-        protected abstract System.Data.Common.DbConnection? DbConnection { get; set; }
-        public System.Data.Common.DbTransaction? Transaction { get; set; }
-        protected abstract System.Data.Common.DbTransaction? DbTransaction { get; set; }
+        public System.Data.Common.DbConnection Connection { get; set; }
+        protected abstract System.Data.Common.DbConnection DbConnection { get; set; }
+        public System.Data.Common.DbTransaction Transaction { get; set; }
+        protected abstract System.Data.Common.DbTransaction DbTransaction { get; set; }
         public System.Data.Common.DbDataReader ExecuteReader(System.Data.CommandBehavior behavior = System.Data.CommandBehavior.Default) { throw null!; }
         protected abstract System.Data.Common.DbDataReader ExecuteDbDataReader(System.Data.CommandBehavior behavior);
         public System.Threading.Tasks.Task<System.Data.Common.DbDataReader> ExecuteReaderAsync(System.Threading.CancellationToken cancellationToken = default) { throw null!; }
@@ -23,8 +21,8 @@ namespace System.Data.Common
         protected abstract System.Threading.Tasks.Task<System.Data.Common.DbDataReader> ExecuteDbDataReaderAsync(System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken);
         public abstract int ExecuteNonQuery();
         public abstract System.Threading.Tasks.Task<int> ExecuteNonQueryAsync(System.Threading.CancellationToken cancellationToken = default);
-        public abstract object? ExecuteScalar();
-        public abstract System.Threading.Tasks.Task<object?> ExecuteScalarAsync(System.Threading.CancellationToken cancellationToken = default);
+        public abstract object ExecuteScalar();
+        public abstract System.Threading.Tasks.Task<object> ExecuteScalarAsync(System.Threading.CancellationToken cancellationToken = default);
         public abstract void Prepare();
         public abstract System.Threading.Tasks.Task PrepareAsync(System.Threading.CancellationToken cancellationToken = default);
         public abstract void Cancel();
