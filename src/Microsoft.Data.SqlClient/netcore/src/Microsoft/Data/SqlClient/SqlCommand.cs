@@ -3769,8 +3769,9 @@ namespace Microsoft.Data.SqlClient
                     SqlCommand command = (SqlCommand)state;
                     bool processFinallyBlockAsync = true;
                     bool decrementAsyncCountInFinallyBlockAsync = true;
-
+#if !NET6_0_OR_GREATER 
                     RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                     try
                     {
                         // Check for any exceptions on network write, before reading.
@@ -3842,7 +3843,9 @@ namespace Microsoft.Data.SqlClient
                 bool processFinallyBlockAsync = true;
                 bool decrementAsyncCountInFinallyBlockAsync = true;
 
+#if !NET6_0_OR_GREATER 
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
                     // Check for any exceptions on network write, before reading.
@@ -4055,6 +4058,7 @@ namespace Microsoft.Data.SqlClient
                 tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                 tsqlParam.Value = text;
                 tsqlParam.Size = text.Length;
+                tsqlParam.Direction = ParameterDirection.Input;
             }
             else
             {
@@ -4072,6 +4076,7 @@ namespace Microsoft.Data.SqlClient
                     tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                     tsqlParam.Value = text;
                     tsqlParam.Size = text.Length;
+                    tsqlParam.Direction = ParameterDirection.Input;
                 }
             }
 
@@ -4148,13 +4153,15 @@ namespace Microsoft.Data.SqlClient
             paramsParam.SqlDbType = ((parameterList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             paramsParam.Size = parameterList.Length;
             paramsParam.Value = parameterList;
+            paramsParam.Direction = ParameterDirection.Input;
 
             if (attestationParameters != null)
             {
                 SqlParameter attestationParametersParam = describeParameterEncryptionRequest.systemParams[2];
-                attestationParametersParam.Direction = ParameterDirection.Input;
+                attestationParametersParam.SqlDbType = SqlDbType.VarBinary;
                 attestationParametersParam.Size = attestationParameters.Length;
                 attestationParametersParam.Value = attestationParameters;
+                attestationParametersParam.Direction = ParameterDirection.Input;
             }
         }
 
@@ -5788,6 +5795,7 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             sqlParam.Value = paramList;
             sqlParam.Size = paramList.Length;
+            sqlParam.Direction = ParameterDirection.Input;
 
             //@batch_text
             string text = GetCommandText(behavior);
@@ -5795,6 +5803,7 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             sqlParam.Size = text.Length;
             sqlParam.Value = text;
+            sqlParam.Direction = ParameterDirection.Input;
 
             SetUpRPCParameters(rpc, false, _parameters);
             return rpc;
@@ -5896,6 +5905,7 @@ namespace Microsoft.Data.SqlClient
             //@handle
             SqlParameter sqlParam = rpc.systemParams[0];
             sqlParam.SqlDbType = SqlDbType.Int;
+            sqlParam.Size = 4;
             sqlParam.Value = _prepareHandle;
             sqlParam.Direction = ParameterDirection.Input;
 
@@ -5948,6 +5958,7 @@ namespace Microsoft.Data.SqlClient
                 sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                 sqlParam.Size = paramList.Length;
                 sqlParam.Value = paramList;
+                sqlParam.Direction = ParameterDirection.Input;
 
                 bool inSchema = (0 != (behavior & CommandBehavior.SchemaOnly));
                 SetUpRPCParameters(rpc, inSchema, parameters);

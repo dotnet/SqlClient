@@ -424,16 +424,17 @@ namespace Microsoft.Data.SqlClient
             uint returnValue = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
             var nativeProtocol = (NativeProtocols)nativeProtocolVersion;
 
-            /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
-             * This driver does not support this version yet!
-            if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
-            {
-                protocolVersion = (int)SslProtocols.Tls13;
-            }*/
             if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
             {
                 protocolVersion = (int)SslProtocols.Tls12;
             }
+#if NETCOREAPP
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
+            {
+                /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later */
+                protocolVersion = (int)SslProtocols.Tls13;
+            }
+#endif
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_SERVER))
             {
                 protocolVersion = (int)SslProtocols.Tls11;

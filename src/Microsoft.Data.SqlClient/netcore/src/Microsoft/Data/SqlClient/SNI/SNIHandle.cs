@@ -17,15 +17,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal abstract class SNIHandle
     {
-        /// <summary>
-        /// Exclude TLS 1.3 in TLS-over-TDS modes (TDS 7.4 and below)
-        /// </summary>
-        protected static readonly SslProtocols s_supportedProtocols = LocalAppContextSwitches.UseSystemDefaultSecureProtocols ? SslProtocols.None : SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
-        //protected readonly SslProtocols SupportedProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
-#pragma warning disable CS0618 // Type or member is obsolete
-            | SslProtocols.Ssl2 | SslProtocols.Ssl3
-#pragma warning restore CS0618 // Type or member is obsolete
-            ;
+        protected static readonly SslProtocols s_supportedProtocols = SslProtocols.None;
 
 #if !NETSTANDARD2_0
         protected static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };

@@ -2843,6 +2843,16 @@ namespace Microsoft.Data.SqlClient
             {
                 return (T)(object)data.DateTime;
             }
+#if NET6_0_OR_GREATER
+            else if (typeof(T) == typeof(DateOnly) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            {
+                return (T)(object)data.DateOnly;
+            }
+            else if (typeof(T) == typeof(TimeOnly) && dataType == typeof(TimeOnly) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            {
+                return (T)(object)data.TimeOnly;
+            }
+#endif
             else if (typeof(T) == typeof(XmlReader))
             {
                 // XmlReader only allowed on XML types
@@ -3472,7 +3482,9 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
             {
+#if !NET6_0_OR_GREATER
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
 
                 try
                 {
@@ -4397,6 +4409,7 @@ namespace Microsoft.Data.SqlClient
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
             using (TryEventScope.Create("SqlDataReader.NextResultAsync | API | Object Id {0}", ObjectID))
+            using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
 
@@ -4406,7 +4419,6 @@ namespace Microsoft.Data.SqlClient
                     return source.Task;
                 }
 
-                CancellationTokenRegistration registration = default;
                 if (cancellationToken.CanBeCanceled)
                 {
                     if (cancellationToken.IsCancellationRequested)
@@ -4414,7 +4426,7 @@ namespace Microsoft.Data.SqlClient
                         source.SetCanceled();
                         return source.Task;
                     }
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
+                    registrationHolder.Set(cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command));
                 }
 
                 Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
@@ -4432,7 +4444,7 @@ namespace Microsoft.Data.SqlClient
                     return source.Task;
                 }
 
-                return InvokeAsyncCall(new HasNextResultAsyncCallContext(this, source, registration));
+                return InvokeAsyncCall(new HasNextResultAsyncCallContext(this, source, registrationHolder.Take()));
             }
         }
 
@@ -4727,6 +4739,7 @@ namespace Microsoft.Data.SqlClient
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
             using (TryEventScope.Create("SqlDataReader.ReadAsync | API | Object Id {0}", ObjectID))
+            using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 if (IsClosed)
                 {
@@ -4734,10 +4747,9 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Register first to catch any already expired tokens to be able to trigger cancellation event.
-                CancellationTokenRegistration registration = default;
                 if (cancellationToken.CanBeCanceled)
                 {
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
+                    registrationHolder.Set(cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command));
                 }
 
                 // If user's token is canceled, return a canceled task
@@ -4848,9 +4860,9 @@ namespace Microsoft.Data.SqlClient
                     context = new ReadAsyncCallContext();
                 }
 
-                Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == null, "cached ReadAsyncCallContext was not properly disposed");
+                Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == default, "cached ReadAsyncCallContext was not properly disposed");
 
-                context.Set(this, source, registration);
+                context.Set(this, source, registrationHolder.Take());
                 context._hasMoreData = more;
                 context._hasReadRowToken = rowTokenRead;
 
@@ -4988,49 +5000,51 @@ namespace Microsoft.Data.SqlClient
                     return Task.FromException<bool>(ex);
                 }
 
-                // Setup and check for pending task
-                TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
-                Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-                if (original != null)
+                using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
                 {
-                    source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
-                    return source.Task;
+                    // Setup and check for pending task
+                    TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
+                    Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
+                    if (original != null)
+                    {
+                        source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
+                        return source.Task;
+                    }
+
+                    // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
+                    if (_cancelAsyncOnCloseToken.IsCancellationRequested)
+                    {
+                        source.SetCanceled();
+                        _currentTask = null;
+                        return source.Task;
+                    }
+
+                    // Setup cancellations
+                    if (cancellationToken.CanBeCanceled)
+                    {
+                        registrationHolder.Set(cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command));
+                    }
+
+                    IsDBNullAsyncCallContext context = null;
+                    if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                    {
+                        context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, null);
+                    }
+                    if (context is null)
+                    {
+                        context = new IsDBNullAsyncCallContext();
+                    }
+
+                    Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == default, "cached ISDBNullAsync context not properly disposed");
+
+                    context.Set(this, source, registrationHolder.Take());
+                    context._columnIndex = i;
+
+                    // Setup async
+                    PrepareAsyncInvocation(useSnapshot: true);
+
+                    return InvokeAsyncCall(context);
                 }
-
-                // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-                if (_cancelAsyncOnCloseToken.IsCancellationRequested)
-                {
-                    source.SetCanceled();
-                    _currentTask = null;
-                    return source.Task;
-                }
-
-                // Setup cancellations
-                CancellationTokenRegistration registration = default;
-                if (cancellationToken.CanBeCanceled)
-                {
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
-                }
-
-                IsDBNullAsyncCallContext context = null;
-                if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-                {
-                    context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, null);
-                }
-                if (context is null)
-                {
-                    context = new IsDBNullAsyncCallContext();
-                }
-
-                Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == default, "cached ISDBNullAsync context not properly disposed");
-
-                context.Set(this, source, registration);
-                context._columnIndex = i;
-
-                // Setup async
-                PrepareAsyncInvocation(useSnapshot: true);
-
-                return InvokeAsyncCall(context);
             }
         }
 
@@ -5135,37 +5149,39 @@ namespace Microsoft.Data.SqlClient
                 return Task.FromException<T>(ex);
             }
 
-            // Setup and check for pending task
-            TaskCompletionSource<T> source = new TaskCompletionSource<T>();
-            Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-            if (original != null)
+            using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
-                source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
-                return source.Task;
+                // Setup and check for pending task
+                TaskCompletionSource<T> source = new TaskCompletionSource<T>();
+                Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
+                if (original != null)
+                {
+                    source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
+                    return source.Task;
+                }
+
+                // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
+                if (_cancelAsyncOnCloseToken.IsCancellationRequested)
+                {
+                    source.SetCanceled();
+                    _currentTask = null;
+                    return source.Task;
+                }
+
+                // Setup cancellations
+                if (cancellationToken.CanBeCanceled)
+                {
+                    registrationHolder.Set(cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command));
+                }
+
+                // Setup async
+                PrepareAsyncInvocation(useSnapshot: true);
+
+                GetFieldValueAsyncCallContext<T> context = new GetFieldValueAsyncCallContext<T>(this, source, registrationHolder.Take());
+                context._columnIndex = i;
+
+                return InvokeAsyncCall(context);
             }
-
-            // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-            if (_cancelAsyncOnCloseToken.IsCancellationRequested)
-            {
-                source.SetCanceled();
-                _currentTask = null;
-                return source.Task;
-            }
-
-            // Setup cancellations
-            CancellationTokenRegistration registration = default;
-            if (cancellationToken.CanBeCanceled)
-            {
-                registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
-            }
-
-            // Setup async
-            PrepareAsyncInvocation(useSnapshot: true);
-
-            GetFieldValueAsyncCallContext<T> context = new GetFieldValueAsyncCallContext<T>(this, source, registration);
-            context._columnIndex = i;
-
-            return InvokeAsyncCall(context);
         }
 
         private static Task<T> GetFieldValueAsyncExecute<T>(Task task, object state)

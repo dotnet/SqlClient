@@ -25,7 +25,9 @@ namespace Microsoft.Data.Sql
         /// <returns></returns>
         internal static DataTable GetDataSources()
         {
+#if !NET6_0_OR_GREATER
             (new NamedPermissionSet("FullTrust")).Demand(); // SQLBUDT 244304
+#endif
             char[] buffer = null;
             StringBuilder strbldr = new();
 
@@ -35,12 +37,15 @@ namespace Microsoft.Data.Sql
             bool more = true;
             bool failure = false;
             IntPtr handle = ADP.s_ptrZero;
-
+#if !NET6_0_OR_GREATER
             RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 long s_timeoutTime = TdsParserStaticMethods.GetTimeoutSeconds(ADP.DefaultCommandTimeout);
+#if !NET6_0_OR_GREATER
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 { }
                 finally

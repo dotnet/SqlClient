@@ -9963,16 +9963,17 @@ namespace Microsoft.Data.SqlClient
                         WriteEnclaveInfo(stateObj, enclavePackage);
 
                         // Stream out parameters
-                        SqlParameter[] parameters = rpcext.parameters;
+                        int parametersLength = rpcext.userParamCount + rpcext.systemParamCount;
 
                         bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
                         bool enableOptimizedParameterBinding = cmd.EnableOptimizedParameterBinding;
 
-                        for (int i = (ii == startRpc) ? startParam : 0; i < parameters.Length; i++)
+                        for (int i = (ii == startRpc) ? startParam : 0; i < parametersLength; i++)
                         {
                             //                Debug.WriteLine("i:  " + i.ToString(CultureInfo.InvariantCulture));
                             // parameters can be unnamed
-                            SqlParameter param = parameters[i];
+                            byte options = 0;
+                            SqlParameter param = rpcext.GetParameterByIndex(i, out options);
                             // Since we are reusing the parameters array, we cannot rely on length to indicate no of parameters.
                             if (param == null)
                             {
@@ -10010,7 +10011,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (mt.Is2008Type)
                             {
-                                WriteSmiParameter(param, i, 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_DEFAULT), stateObj, enableOptimizedParameterBinding, isAdvancedTraceOn);
+                                WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj, enableOptimizedParameterBinding, isAdvancedTraceOn);
                                 continue;
                             }
 
@@ -10045,7 +10046,7 @@ namespace Microsoft.Data.SqlClient
                             WriteParameterName(param.ParameterNameFixed, stateObj, enableOptimizedParameterBinding);
 
                             // Write parameter status
-                            stateObj.WriteByte(rpcext.paramoptions[i]);
+                            stateObj.WriteByte(options);
 
                             // MaxLen field is only written out for non-fixed length data types
                             // use the greater of the two sizes for maxLen
@@ -10108,7 +10109,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 
-                            bool isParameterEncrypted = 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_ENCRYPTED);
+                            bool isParameterEncrypted = 0 != (options & TdsEnums.RPC_PARAM_ENCRYPTED);
 
                             // Additional information we need to send over wire to the server when writing encrypted parameters.
                             SqlColumnEncryptionInputParameterInfo encryptedParameterInfoToWrite = null;

@@ -183,7 +183,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public static void AddKeyToCsp(string containerName)
         {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
 #endif
             CspParameters cspParams = new();
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public static void RemoveKeyFromCsp(string containerName)
         {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
 #endif
             CspParameters cspParams = new CspParameters();
