@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient
     }
     public sealed partial class SqlException
     {
-        public Microsoft.Data.SqlClient.SqlBatchCommand SqlBatchCommand { get { throw null; } }
+        public Microsoft.Data.SqlClient.SqlBatchCommand BatchCommand { get { throw null; } }
     }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }
