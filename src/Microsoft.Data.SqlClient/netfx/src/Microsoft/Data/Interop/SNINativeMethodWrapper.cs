@@ -412,14 +412,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIAddProvider(pConn, ProvNum, ref pInfo);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIAddProvider(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIAddProvider(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIAddProvider(pConn, ProvNum, ref pInfo);
                 default:
-                    return SNINativeManagedWrapperX86.SNIAddProvider(pConn, ProvNum, ref pInfo);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -429,14 +427,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
                 default:
-                    return SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -446,14 +442,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
                 default:
-                    return SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -463,14 +457,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNICheckConnection(pConn);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNICheckConnection(pConn);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNICheckConnection(pConn);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNICheckConnection(pConn);
                 default:
-                    return SNINativeManagedWrapperX86.SNICheckConnection(pConn);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -480,14 +472,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIClose(pConn);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIClose(pConn);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIClose(pConn);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIClose(pConn);
                 default:
-                    return SNINativeManagedWrapperX86.SNIClose(pConn);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -498,9 +488,6 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     SNINativeManagedWrapperARM64.SNIGetLastError(out pErrorStruct);
                     break;
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    SNINativeManagedWrapperARM.SNIGetLastError(out pErrorStruct);
-                    break;
                 case System.Runtime.InteropServices.Architecture.X64:
                     SNINativeManagedWrapperX64.SNIGetLastError(out pErrorStruct);
                     break;
@@ -508,8 +495,7 @@ namespace Microsoft.Data.SqlClient
                     SNINativeManagedWrapperX86.SNIGetLastError(out pErrorStruct);
                     break;
                 default:
-                    SNINativeManagedWrapperX86.SNIGetLastError(out pErrorStruct);
-                    break;
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -520,9 +506,6 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     SNINativeManagedWrapperARM64.SNIPacketRelease(pPacket);
                     break;
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    SNINativeManagedWrapperARM.SNIPacketRelease(pPacket);
-                    break;
                 case System.Runtime.InteropServices.Architecture.X64:
                     SNINativeManagedWrapperX64.SNIPacketRelease(pPacket);
                     break;
@@ -530,8 +513,7 @@ namespace Microsoft.Data.SqlClient
                     SNINativeManagedWrapperX86.SNIPacketRelease(pPacket);
                     break;
                 default:
-                    SNINativeManagedWrapperX86.SNIPacketRelease(pPacket);
-                    break;
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -542,9 +524,6 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     SNINativeManagedWrapperARM64.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
                     break;
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    SNINativeManagedWrapperARM.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
-                    break;
                 case System.Runtime.InteropServices.Architecture.X64:
                     SNINativeManagedWrapperX64.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
                     break;
@@ -552,8 +531,7 @@ namespace Microsoft.Data.SqlClient
                     SNINativeManagedWrapperX86.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
                     break;
                 default:
-                    SNINativeManagedWrapperX86.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
-                    break;
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -563,14 +541,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIQueryInfo(QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIQueryInfo(QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIQueryInfo(QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
                 default:
-                    return SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -580,14 +556,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIQueryInfo(QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIQueryInfo(QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIQueryInfo(QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
                 default:
-                    return SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -597,14 +571,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIReadAsync(pConn, ref ppNewPacket);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIReadAsync(pConn, ref ppNewPacket);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIReadAsync(pConn, ref ppNewPacket);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIReadAsync(pConn, ref ppNewPacket);
                 default:
-                    return SNINativeManagedWrapperX86.SNIReadAsync(pConn, ref ppNewPacket);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -614,14 +586,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
                 default:
-                    return SNINativeManagedWrapperX86.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -631,14 +601,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIRemoveProvider(pConn, ProvNum);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIRemoveProvider(pConn, ProvNum);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIRemoveProvider(pConn, ProvNum);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIRemoveProvider(pConn, ProvNum);
                 default:
-                    return SNINativeManagedWrapperX86.SNIRemoveProvider(pConn, ProvNum);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -648,14 +616,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNISecInitPackage(ref pcbMaxToken);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNISecInitPackage(ref pcbMaxToken);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNISecInitPackage(ref pcbMaxToken);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNISecInitPackage(ref pcbMaxToken);
                 default:
-                    return SNINativeManagedWrapperX86.SNISecInitPackage(ref pcbMaxToken);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -665,14 +631,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNISetInfo(pConn, QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNISetInfo(pConn, QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNISetInfo(pConn, QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNISetInfo(pConn, QType, ref pbQInfo);
                 default:
-                    return SNINativeManagedWrapperX86.SNISetInfo(pConn, QType, ref pbQInfo);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -682,14 +646,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNITerminate();
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNITerminate();
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNITerminate();
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNITerminate();
                 default:
-                    return SNINativeManagedWrapperX86.SNITerminate();
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -699,14 +661,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
                 default:
-                    return SNINativeManagedWrapperX86.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -716,14 +676,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.UnmanagedIsTokenRestricted(token, out isRestricted);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.UnmanagedIsTokenRestricted(token, out isRestricted);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.UnmanagedIsTokenRestricted(token, out isRestricted);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.UnmanagedIsTokenRestricted(token, out isRestricted);
                 default:
-                    return SNINativeManagedWrapperX86.UnmanagedIsTokenRestricted(token, out isRestricted);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -733,14 +691,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.GetSniMaxComposedSpnLength();
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.GetSniMaxComposedSpnLength();
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.GetSniMaxComposedSpnLength();
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.GetSniMaxComposedSpnLength();
                 default:
-                    return SNINativeManagedWrapperX86.GetSniMaxComposedSpnLength();
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -750,14 +706,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
                 default:
-                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -767,14 +721,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
                 default:
-                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -784,14 +736,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
                 default:
-                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -801,14 +751,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out portNum);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIGetInfoWrapper(pConn, QType, out portNum);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out portNum);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out portNum);
                 default:
-                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out portNum);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -818,14 +766,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
                 default:
-                    return SNINativeManagedWrapperX86.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -835,14 +781,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out provNum);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIGetInfoWrapper(pConn, QType, out provNum);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out provNum);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out provNum);
                 default:
-                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out provNum);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -851,15 +795,13 @@ namespace Microsoft.Data.SqlClient
             switch (s_architecture)
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
-                    return SNINativeManagedWrapperARM64.SNIInitialize(pmo);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIInitialize(pmo);
+                    return SNINativeManagedWrapperARM64.SNIInitialize(false, pmo);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIInitialize(pmo);
+                    return SNINativeManagedWrapperX64.SNIInitialize(false, pmo);
                 case System.Runtime.InteropServices.Architecture.X86:
-                    return SNINativeManagedWrapperX86.SNIInitialize(pmo);
+                    return SNINativeManagedWrapperX86.SNIInitialize(false, pmo);
                 default:
-                    return SNINativeManagedWrapperX86.SNIInitialize(pmo);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -869,14 +811,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
                 default:
-                    return SNINativeManagedWrapperX86.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -893,14 +833,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
                 default:
-                    return SNINativeManagedWrapperX86.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -910,14 +848,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIPacketAllocateWrapper(pConn, IOType);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIPacketAllocateWrapper(pConn, IOType);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIPacketAllocateWrapper(pConn, IOType);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIPacketAllocateWrapper(pConn, IOType);
                 default:
-                    return SNINativeManagedWrapperX86.SNIPacketAllocateWrapper(pConn, IOType);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -927,14 +863,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
                 default:
-                    return SNINativeManagedWrapperX86.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -945,9 +879,6 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     SNINativeManagedWrapperARM64.SNIPacketSetData(pPacket, pbBuf, cbBuf);
                     break;
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    SNINativeManagedWrapperARM.SNIPacketSetData(pPacket, pbBuf, cbBuf);
-                    break;
                 case System.Runtime.InteropServices.Architecture.X64:
                     SNINativeManagedWrapperX64.SNIPacketSetData(pPacket, pbBuf, cbBuf);
                     break;
@@ -955,8 +886,7 @@ namespace Microsoft.Data.SqlClient
                     SNINativeManagedWrapperX86.SNIPacketSetData(pPacket, pbBuf, cbBuf);
                     break;
                 default:
-                    SNINativeManagedWrapperX86.SNIPacketSetData(pPacket, pbBuf, cbBuf);
-                    break;
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -976,14 +906,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
                 default:
-                    return SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -993,14 +921,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIWriteAsyncWrapper(pConn, pPacket);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIWriteAsyncWrapper(pConn, pPacket);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIWriteAsyncWrapper(pConn, pPacket);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIWriteAsyncWrapper(pConn, pPacket);
                 default:
-                    return SNINativeManagedWrapperX86.SNIWriteAsyncWrapper(pConn, pPacket);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -1010,14 +936,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIWriteSyncOverAsync(pConn, pPacket);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIWriteSyncOverAsync(pConn, pPacket);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIWriteSyncOverAsync(pConn, pPacket);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIWriteSyncOverAsync(pConn, pPacket);
                 default:
-                    return SNINativeManagedWrapperX86.SNIWriteSyncOverAsync(pConn, pPacket);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -1027,14 +951,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIClientCertificateFallbackWrapper(pCallbackContext);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIClientCertificateFallbackWrapper(pCallbackContext);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIClientCertificateFallbackWrapper(pCallbackContext);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIClientCertificateFallbackWrapper(pCallbackContext);
                 default:
-                    return SNINativeManagedWrapperX86.SNIClientCertificateFallbackWrapper(pCallbackContext);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
         #endregion
@@ -1118,7 +1040,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static uint SNIInitialize()
         {
-            return SNIInitialize(LocalAppContextSwitches.UseSystemDefaultSecureProtocols, IntPtr.Zero);
+            return SNIInitialize(IntPtr.Zero);
         }
 
         internal static IntPtr SNIServerEnumOpen()
@@ -1127,14 +1049,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIServerEnumOpen();
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIServerEnumOpen();
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIServerEnumOpen();
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIServerEnumOpen();
                 default:
-                    return SNINativeManagedWrapperX86.SNIServerEnumOpen();
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
         internal static int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readbuffer, int bufferLength, out bool more)
@@ -1143,14 +1063,12 @@ namespace Microsoft.Data.SqlClient
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    return SNINativeManagedWrapperARM.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
                 case System.Runtime.InteropServices.Architecture.X64:
                     return SNINativeManagedWrapperX64.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
                 default:
-                    return SNINativeManagedWrapperX86.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
@@ -1161,9 +1079,6 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     SNINativeManagedWrapperARM64.SNIServerEnumClose(packet);
                     break;
-                case System.Runtime.InteropServices.Architecture.Arm:
-                    SNINativeManagedWrapperARM.SNIServerEnumClose(packet);
-                    break;
                 case System.Runtime.InteropServices.Architecture.X64:
                     SNINativeManagedWrapperX64.SNIServerEnumClose(packet);
                     break;
@@ -1171,8 +1086,7 @@ namespace Microsoft.Data.SqlClient
                     SNINativeManagedWrapperX86.SNIServerEnumClose(packet);
                     break;
                 default:
-                    SNINativeManagedWrapperX86.SNIServerEnumClose(packet);
-                    break;
+                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
 
