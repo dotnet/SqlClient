@@ -494,7 +494,7 @@ This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN"
 This property corresponds to the "HostNameInCertificiate" and "Host Name in Certificiate" keys within the connection string. 
 
 > [!NOTE]
-> This property only applies when using `Encrypt` in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> mode, otherwise it is ignored.
+> This property only applies when using `Encrypt` in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> or <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> mode, otherwise it is ignored.
 
  ]]>
           </format>
@@ -874,7 +874,7 @@ Database = AdventureWorks
 This property corresponds to the "ServerCertificate" and "Server Certificate" keys within the connection string.  
 
 > [!NOTE]
-> This property only applies when using `Encrypt` in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> mode, otherwise it is ignored.
+> This property only applies when using `Encrypt` in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> or <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> mode, otherwise it is ignored.
 
  ]]>
             </format>
