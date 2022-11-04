@@ -4,19 +4,15 @@
 
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
-using System.Text;
-using System.Net.NetworkInformation;
-using System.Drawing;
-using System.Net.Sockets;
 
 namespace Microsoft.Data.SqlClient
 {
