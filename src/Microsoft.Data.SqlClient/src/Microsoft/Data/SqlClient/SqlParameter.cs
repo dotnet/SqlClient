@@ -989,17 +989,65 @@ namespace Microsoft.Data.SqlClient
             set => SetFlag(SqlParameterFlags.IsSqlParameterSqlType, value);
         }
 
-        internal string ParameterNameFixed
+        internal string GetPrefixedParameterName()
         {
-            get
+            string parameterName = ParameterName;
+            if ((parameterName.Length > 0) && (parameterName[0] != '@'))
             {
-                string parameterName = ParameterName;
-                if ((parameterName.Length > 0) && (parameterName[0] != '@'))
+                parameterName = "@" + parameterName;
+            }
+            Debug.Assert(parameterName.Length <= TdsEnums.MAX_PARAMETER_NAME_LENGTH, "parameter name too long");
+            return parameterName;
+        }
+
+        /// <summary>
+        /// Checks the parameter name for the @ prefix and appends it if it is missing, then apends the parameter name
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="rawParameterName"></param>
+        internal static void AppendPrefixedParameterName(StringBuilder builder, string rawParameterName)
+        {
+            if (!string.IsNullOrEmpty(rawParameterName))
+            {
+                if (rawParameterName[0] != '@')
                 {
-                    parameterName = "@" + parameterName;
+                    builder.Append('@');
                 }
-                Debug.Assert(parameterName.Length <= TdsEnums.MAX_PARAMETER_NAME_LENGTH, "parameter name too long");
-                return parameterName;
+                builder.Append(rawParameterName);
+            }
+        }
+
+        /// <summary>
+        /// Compares the two input names for equality discounting the @ prefix on either or both arguments
+        /// </summary>
+        /// <returns></returns>
+        internal static bool ParameterNamesEqual(string lhs, string rhs, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (!string.IsNullOrEmpty(lhs))
+            {
+                if (string.IsNullOrEmpty(rhs))
+                {
+                    return false;
+                }
+                else
+                {
+                    ReadOnlySpan<char> lhsSpan = lhs.AsSpan();
+                    if (lhs[0] == '@')
+                    {
+                        lhsSpan = lhsSpan.Slice(1);
+                    }
+                    ReadOnlySpan<char> rhsSpan = rhs.AsSpan();
+                    if (rhsSpan[0] == '@')
+                    {
+                        rhsSpan = rhsSpan.Slice(1);
+                    }
+                    return MemoryExtensions.Equals(lhsSpan, rhsSpan, comparison);
+                }
+            }
+            else
+            {
+                // lhs is null or empty so equality is only possible if the rhs is the same
+                return string.IsNullOrEmpty(rhs);
             }
         }
 
@@ -1804,7 +1852,7 @@ namespace Microsoft.Data.SqlClient
                 SqlDbType.Structured == mt.SqlDbType,
                 fields,
                 extendedProperties,
-                ParameterNameFixed,
+                GetPrefixedParameterName(),
                 typeSpecificNamePart1,
                 typeSpecificNamePart2,
                 typeSpecificNamePart3,

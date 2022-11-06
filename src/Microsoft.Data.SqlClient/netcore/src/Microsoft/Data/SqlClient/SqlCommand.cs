@@ -4359,7 +4359,7 @@ namespace Microsoft.Data.SqlClient
                             SqlParameter sqlParameter = rpc.userParams[index];
                             Debug.Assert(sqlParameter != null, "sqlParameter should not be null.");
 
-                            if (sqlParameter.ParameterNameFixed.Equals(parameterName, StringComparison.Ordinal))
+                            if (SqlParameter.ParameterNamesEqual(sqlParameter.ParameterName,parameterName,StringComparison.Ordinal))
                             {
                                 Debug.Assert(sqlParameter.CipherMetadata == null, "param.CipherMetadata should be null.");
                                 sqlParameter.HasReceivedMetadata = true;
@@ -5453,7 +5453,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (rec.tdsType != TdsEnums.SQLBIGVARBINARY)
                     {
-                        throw SQL.InvalidDataTypeForEncryptedParameter(thisParam.ParameterNameFixed, rec.tdsType, TdsEnums.SQLBIGVARBINARY);
+                        throw SQL.InvalidDataTypeForEncryptedParameter(thisParam.GetPrefixedParameterName(), rec.tdsType, TdsEnums.SQLBIGVARBINARY);
                     }
 
                     // Decrypt the ciphertext
@@ -5483,7 +5483,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         catch (Exception e)
                         {
-                            throw SQL.ParamDecryptionFailed(thisParam.ParameterNameFixed, null, e);
+                            throw SQL.ParamDecryptionFailed(thisParam.GetPrefixedParameterName(), null, e);
                         }
                     }
                     else
@@ -5624,7 +5624,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     thisParam = parameters[i];
                     // searching for Output or InputOutput or ReturnValue with matching name
-                    if (thisParam.Direction != ParameterDirection.Input && thisParam.Direction != ParameterDirection.ReturnValue && paramName == thisParam.ParameterNameFixed)
+                    if (
+                        thisParam.Direction != ParameterDirection.Input && 
+                        thisParam.Direction != ParameterDirection.ReturnValue && 
+                        SqlParameter.ParameterNamesEqual(paramName, thisParam.ParameterName,StringComparison.Ordinal)
+                    )
                     {
                         foundParam = true;
                         break; // found it
@@ -5995,11 +5999,11 @@ namespace Microsoft.Data.SqlClient
 
             // Find the return value parameter (if any).
             SqlParameter returnValueParameter = null;
-            foreach (SqlParameter parameter in parameters)
+            foreach (SqlParameter param in parameters)
             {
-                if (parameter.Direction == ParameterDirection.ReturnValue)
+                if (param.Direction == ParameterDirection.ReturnValue)
                 {
-                    returnValueParameter = parameter;
+                    returnValueParameter = param;
                     break;
                 }
             }
@@ -6008,7 +6012,8 @@ namespace Microsoft.Data.SqlClient
             // EXEC @returnValue = moduleName [parameters]
             if (returnValueParameter != null)
             {
-                execStatement.AppendFormat(@"{0}=", returnValueParameter.ParameterNameFixed);
+                SqlParameter.AppendPrefixedParameterName(execStatement, returnValueParameter.ParameterName);
+                execStatement.Append('=');
             }
 
             execStatement.Append(ParseAndQuoteIdentifier(storedProcedureName, false));
@@ -6019,6 +6024,7 @@ namespace Microsoft.Data.SqlClient
             // Append the first parameter
             int index = 0;
             int count = parameters.Count;
+            SqlParameter parameter;
             if (count > 0)
             {
                 // Skip the return value parameters.
@@ -6029,15 +6035,19 @@ namespace Microsoft.Data.SqlClient
 
                 if (index < count)
                 {
+                    parameter = parameters[index];
                     // Possibility of a SQL Injection issue through parameter names and how to construct valid identifier for parameters.
                     // Since the parameters comes from application itself, there should not be a security vulnerability.
                     // Also since the query is not executed, but only analyzed there is no possibility for elevation of privilege, but only for
                     // incorrect results which would only affect the user that attempts the injection.
-                    execStatement.AppendFormat(@" {0}={0}", parameters[index].ParameterNameFixed);
+                    execStatement.Append(' ');
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
+                    execStatement.Append('=');
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
 
                     // InputOutput and Output parameters need to be marked as such.
-                    if (parameters[index].Direction == ParameterDirection.Output ||
-                        parameters[index].Direction == ParameterDirection.InputOutput)
+                    if (parameter.Direction == ParameterDirection.Output ||
+                        parameter.Direction == ParameterDirection.InputOutput)
                     {
                         execStatement.AppendFormat(@" OUTPUT");
                     }
@@ -6050,14 +6060,18 @@ namespace Microsoft.Data.SqlClient
             // Append the rest of parameters
             for (; index < count; index++)
             {
-                if (parameters[index].Direction != ParameterDirection.ReturnValue)
+                parameter = parameters[index];
+                if (parameter.Direction != ParameterDirection.ReturnValue)
                 {
-                    execStatement.AppendFormat(@", {0}={0}", parameters[index].ParameterNameFixed);
+                    execStatement.Append(", ");
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
+                    execStatement.Append('=');
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
 
                     // InputOutput and Output parameters need to be marked as such.
                     if (
-                        parameters[index].Direction == ParameterDirection.Output ||
-                        parameters[index].Direction == ParameterDirection.InputOutput
+                        parameter.Direction == ParameterDirection.Output ||
+                        parameter.Direction == ParameterDirection.InputOutput
                     )
                     {
                         execStatement.AppendFormat(@" OUTPUT");
@@ -6091,9 +6105,11 @@ namespace Microsoft.Data.SqlClient
 
                 // add our separator for the ith parameter
                 if (fAddSeparator)
+                {
                     paramList.Append(',');
+                }
 
-                paramList.Append(sqlParam.ParameterNameFixed);
+                SqlParameter.AppendPrefixedParameterName(paramList, sqlParam.ParameterName);
 
                 MetaType mt = sqlParam.InternalMetaType;
 
@@ -6116,7 +6132,7 @@ namespace Microsoft.Data.SqlClient
                     string typeName = sqlParam.TypeName;
                     if (string.IsNullOrEmpty(typeName))
                     {
-                        throw SQL.MustSetTypeNameForParam(mt.TypeName, sqlParam.ParameterNameFixed);
+                        throw SQL.MustSetTypeNameForParam(mt.TypeName, sqlParam.GetPrefixedParameterName());
                     }
                     paramList.Append(ParseAndQuoteIdentifier(typeName, false /* is not UdtTypeName*/));
 
