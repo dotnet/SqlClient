@@ -7,13 +7,13 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
-#if NET50_OR_LATER
+#if NET6_0_OR_GREATER
 using System.Runtime.Versioning;
 #endif
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-#if NET50_OR_LATER
+#if NET6_0_OR_GREATER
     [SupportedOSPlatform("windows")]
 #endif
     [PlatformSpecific(TestPlatforms.Windows)]

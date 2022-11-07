@@ -594,11 +594,11 @@ namespace Microsoft.Data.SqlClient
                 SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out provNum);
         }
 
-        private static uint SNIInitialize([In] bool useSystemDefaultSecureProtocols, [In] IntPtr pmo)
+        private static uint SNIInitialize([In] IntPtr pmo)
         {
             return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIInitialize(useSystemDefaultSecureProtocols, pmo) :
-                SNINativeManagedWrapperX86.SNIInitialize(useSystemDefaultSecureProtocols, pmo);
+                SNINativeManagedWrapperX64.SNIInitialize(pmo) :
+                SNINativeManagedWrapperX86.SNIInitialize(pmo);
         }
 
         private static uint SNIOpenSyncExWrapper(ref SNI_CLIENT_CONSUMER_INFO pClientConsumerInfo, out IntPtr ppConn)
@@ -766,7 +766,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static uint SNIInitialize()
         {
-            return SNIInitialize(LocalAppContextSwitches.UseSystemDefaultSecureProtocols, IntPtr.Zero);
+            return SNIInitialize(IntPtr.Zero);
         }
 
         internal static IntPtr SNIServerEnumOpen() => s_is64bitProcess ?
