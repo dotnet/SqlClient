@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 This update brings the below changes over the previous release:
 
-### Breaking changes over preview release v5.1.0-preview2
+### Breaking changes over preview release v5.1.0-preview1
 
 - Add support for .NET 6.0 and Dropped support for .NET Core 3.1 [#1704](https://github.com/dotnet/SqlClient/pull/1704)
 
@@ -18,7 +18,7 @@ This update brings the below changes over the previous release:
 
 ### Changed
 
-- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.1.0-preview2.22311.2`. [#1831](https://github.com/dotnet/SqlClient/pull/1831) which includes TLS 1.3 fix timeout issue and double handshake, remove ARM32 binaries, and support for `ServerCertificate` [#1822](https://github.com/dotnet/SqlClient/issues/1822)
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.1.0-preview2.22311.2`. [#1831](https://github.com/dotnet/SqlClient/pull/1831) which includes the fix for the TLS 1.3 timeout and double handshake issue, removal of ARM32 binaries, and the support for `ServerCertificate`. [#1822](https://github.com/dotnet/SqlClient/issues/1822)
 - Revert excluding unsupported TLS protocols for issue [#1151](https://github.com/dotnet/SqlClient/issues/1151) (i.e. removed `Switch.Microsoft.Data.SqlClient.EnableSecureProtocolsByOS`). [#1824](https://github.com/dotnet/SqlClient/issues/1824)
 - Remove all `NET5` references from the driver. [#1823](https://github.com/dotnet/SqlClient/pull/1823)
 - Add support for `DateOnly` and `TimeOnly` for `SqlParameter` value and `GetFieldValue`. [#1813](https://github.com/dotnet/SqlClient/pull/1813)
