@@ -102,7 +102,7 @@ msbuild -t:RunTests -p:configuration=Release
 To specify custom target framework, use `TF` property:
 
 ```bash
-msbuild -t:RunTests -p:configuration=Release -p:TF=net5.0
+msbuild -t:RunTests -p:configuration=Release -p:TF=net7.0
 msbuild -t:RunTests -p:configuration=Release -p:TF=net48
 # Runs tests for specified target framework. 
 # TargetNetCoreVersion and TargetNetFxVersion are not to be used with TF property, they will take precedence over TF if provided.
@@ -184,6 +184,7 @@ Manual Tests require the below setup to run:
   |DNSCachingConnString | Connection string for a server that supports DNS Caching|
   |IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
   |EnclaveAzureDatabaseConnString | (Optional) Connection string for Azure database with enclaves |
+  |ManagedIdentitySupported | (Optional) When set to `false` **Managed Identity** related tests won't run. The default value is `true`. |
   |MakecertPath | The full path to makecert.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\makecert.exe` |
 
 ### Commands to run Manual Tests
@@ -285,9 +286,9 @@ msbuild -t:BuildTestsNetFx -p:TargetNetFxVersion=net462
 ```
 
 ```bash
-msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=netcoreapp3.1
+msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=net6.0
 # Build the tests for custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp3.1 | net5.0 | net6.0
+# Applicable values: net6.0 | net7.0 | net6.0
 ```
 
 ### Running Tests with custom target framework (traditional)
@@ -297,9 +298,9 @@ dotnet test -p:TargetNetFxVersion=net462 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Framework)
 # Applicable values: net462 (Default) | net462 | net47 | net471  net472 | net48
 
-dotnet test -p:TargetNetCoreVersion=netcoreapp3.1 ...
+dotnet test -p:TargetNetCoreVersion=net6.0 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp3.1 | net5.0 | net6.0
+# Applicable values: net6.0 | net7.0 | net6.0
 ```
 
 ## Using Managed SNI on Windows
@@ -319,12 +320,6 @@ Scaled decimal parameter truncation can be enabled by enabling the below AppCont
 `SqlDataReader` returns a `DBNull` value instead of an empty `byte[]`. To enable the legacy behavior, you must enable the following AppContext switch on application startup:
 
 `Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior`
-
-## Enabling OS secure protocols preference
-
-TLS 1.3 has been excluded due to the fact that the driver lacks full support. To enable OS preferences as before, enable the following AppContext switch on application startup:
-
-`Switch.Microsoft.Data.SqlClient.EnableSecureProtocolsByOS`
 
 ## Suppressing TLS security warning
 
@@ -389,7 +384,7 @@ Configure `runnerconfig.json` file with connection string and preferred settings
 
 ```bash
 cd src\Microsoft.Data.SqlClient\tests\PerformanceTests
-dotnet run -c Release -f netcoreapp3.1|net5.0
+dotnet run -c Release -f net6.0|net7.0
 ```
 
 _Only "**Release** Configuration" applies to Performance Tests_

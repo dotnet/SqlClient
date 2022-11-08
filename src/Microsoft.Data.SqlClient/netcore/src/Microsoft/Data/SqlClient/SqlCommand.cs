@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteXmlReaderInternal = BeginExecuteXmlReaderInternalCallback;
         private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteNonQueryInternal = BeginExecuteNonQueryInternalCallback;
 
-        internal sealed class ExecuteReaderAsyncCallContext : AAsyncCallContext<SqlCommand, SqlDataReader>
+        internal sealed class ExecuteReaderAsyncCallContext : AAsyncCallContext<SqlCommand, SqlDataReader, CancellationTokenRegistration>
         {
             public Guid OperationID;
             public CommandBehavior CommandBehavior;
@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient
             public SqlCommand Command => _owner;
             public TaskCompletionSource<SqlDataReader> TaskCompletionSource => _source;
 
-            public void Set(SqlCommand command, TaskCompletionSource<SqlDataReader> source, IDisposable disposable, CommandBehavior behavior, Guid operationID)
+            public void Set(SqlCommand command, TaskCompletionSource<SqlDataReader> source, CancellationTokenRegistration disposable, CommandBehavior behavior, Guid operationID)
             {
                 base.Set(command, source, disposable);
                 CommandBehavior = behavior;
@@ -70,6 +70,31 @@ namespace Microsoft.Data.SqlClient
             protected override void AfterCleared(SqlCommand owner)
             {
                 owner?.SetCachedCommandExecuteReaderAsyncContext(this);
+            }
+        }
+
+        internal sealed class ExecuteNonQueryAsyncCallContext : AAsyncCallContext<SqlCommand, int, CancellationTokenRegistration>
+        {
+            public Guid OperationID;
+
+            public SqlCommand Command => _owner;
+
+            public TaskCompletionSource<int> TaskCompletionSource => _source;
+
+            public void Set(SqlCommand command, TaskCompletionSource<int> source, CancellationTokenRegistration disposable,  Guid operationID)
+            {
+                base.Set(command, source, disposable);
+                OperationID = operationID;
+            }
+
+            protected override void Clear()
+            {
+                OperationID = default;
+            }
+
+            protected override void AfterCleared(SqlCommand owner)
+            {
+            
             }
         }
 
@@ -2540,23 +2565,36 @@ namespace Microsoft.Data.SqlClient
             }
 
             Task<int> returnedTask = source.Task;
+            returnedTask = RegisterForConnectionCloseNotification(returnedTask);
+
+            ExecuteNonQueryAsyncCallContext context = new ExecuteNonQueryAsyncCallContext();
+            context.Set(this, source, registration, operationId);
             try
             {
-                returnedTask = RegisterForConnectionCloseNotification(returnedTask);
-
-                Task<int>.Factory.FromAsync(BeginExecuteNonQueryAsync, EndExecuteNonQueryAsync, null)
-                    .ContinueWith((Task<int> task) =>
+                Task<int>.Factory.FromAsync(
+                    static (AsyncCallback callback, object stateObject) => ((ExecuteNonQueryAsyncCallContext)stateObject).Command.BeginExecuteNonQueryAsync(callback, stateObject),
+                    static (IAsyncResult result) => ((ExecuteNonQueryAsyncCallContext)result.AsyncState).Command.EndExecuteNonQueryAsync(result),
+                    state: context
+                ).ContinueWith(
+                    static (Task<int> task, object state) =>
                     {
-                        registration.Dispose();
+                        ExecuteNonQueryAsyncCallContext context = (ExecuteNonQueryAsyncCallContext)state;
+
+                        Guid operationId = context.OperationID;
+                        SqlCommand command = context.Command;
+                        TaskCompletionSource<int> source = context.TaskCompletionSource;
+
+                        context.Dispose();
+                        context = null;
+
                         if (task.IsFaulted)
                         {
                             Exception e = task.Exception.InnerException;
-                            s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                            s_diagnosticListener.WriteCommandError(operationId, command, command._transaction, e);
                             source.SetException(e);
                         }
                         else
                         {
-                            s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                             if (task.IsCanceled)
                             {
                                 source.SetCanceled();
@@ -2565,15 +2603,18 @@ namespace Microsoft.Data.SqlClient
                             {
                                 source.SetResult(task.Result);
                             }
+                            s_diagnosticListener.WriteCommandAfter(operationId, command, command._transaction);
                         }
-                    }, 
-                    TaskScheduler.Default
+                    },
+                    state: context,
+                    scheduler: TaskScheduler.Default
                 );
             }
             catch (Exception e)
             {
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 source.SetException(e);
+                context.Dispose();
             }
 
             return returnedTask;
@@ -2648,11 +2689,11 @@ namespace Microsoft.Data.SqlClient
             }
 
             Task<SqlDataReader> returnedTask = source.Task;
+            ExecuteReaderAsyncCallContext context = null;
             try
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
-                ExecuteReaderAsyncCallContext context = null;
                 if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
                 {
                     context = Interlocked.Exchange(ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext, null);
@@ -2680,6 +2721,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 source.SetException(e);
+                context.Dispose();
             }
 
             return returnedTask;
@@ -3727,8 +3769,9 @@ namespace Microsoft.Data.SqlClient
                     SqlCommand command = (SqlCommand)state;
                     bool processFinallyBlockAsync = true;
                     bool decrementAsyncCountInFinallyBlockAsync = true;
-
+#if !NET6_0_OR_GREATER 
                     RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                     try
                     {
                         // Check for any exceptions on network write, before reading.
@@ -3800,7 +3843,9 @@ namespace Microsoft.Data.SqlClient
                 bool processFinallyBlockAsync = true;
                 bool decrementAsyncCountInFinallyBlockAsync = true;
 
+#if !NET6_0_OR_GREATER 
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
                     // Check for any exceptions on network write, before reading.
@@ -4013,6 +4058,7 @@ namespace Microsoft.Data.SqlClient
                 tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                 tsqlParam.Value = text;
                 tsqlParam.Size = text.Length;
+                tsqlParam.Direction = ParameterDirection.Input;
             }
             else
             {
@@ -4030,6 +4076,7 @@ namespace Microsoft.Data.SqlClient
                     tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                     tsqlParam.Value = text;
                     tsqlParam.Size = text.Length;
+                    tsqlParam.Direction = ParameterDirection.Input;
                 }
             }
 
@@ -4106,13 +4153,15 @@ namespace Microsoft.Data.SqlClient
             paramsParam.SqlDbType = ((parameterList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             paramsParam.Size = parameterList.Length;
             paramsParam.Value = parameterList;
+            paramsParam.Direction = ParameterDirection.Input;
 
             if (attestationParameters != null)
             {
                 SqlParameter attestationParametersParam = describeParameterEncryptionRequest.systemParams[2];
-                attestationParametersParam.Direction = ParameterDirection.Input;
+                attestationParametersParam.SqlDbType = SqlDbType.VarBinary;
                 attestationParametersParam.Size = attestationParameters.Length;
                 attestationParametersParam.Value = attestationParameters;
+                attestationParametersParam.Direction = ParameterDirection.Input;
             }
         }
 
@@ -5746,6 +5795,7 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             sqlParam.Value = paramList;
             sqlParam.Size = paramList.Length;
+            sqlParam.Direction = ParameterDirection.Input;
 
             //@batch_text
             string text = GetCommandText(behavior);
@@ -5753,6 +5803,7 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             sqlParam.Size = text.Length;
             sqlParam.Value = text;
+            sqlParam.Direction = ParameterDirection.Input;
 
             SetUpRPCParameters(rpc, false, _parameters);
             return rpc;
@@ -5854,6 +5905,7 @@ namespace Microsoft.Data.SqlClient
             //@handle
             SqlParameter sqlParam = rpc.systemParams[0];
             sqlParam.SqlDbType = SqlDbType.Int;
+            sqlParam.Size = 4;
             sqlParam.Value = _prepareHandle;
             sqlParam.Direction = ParameterDirection.Input;
 
@@ -5906,6 +5958,7 @@ namespace Microsoft.Data.SqlClient
                 sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                 sqlParam.Size = paramList.Length;
                 sqlParam.Value = paramList;
+                sqlParam.Direction = ParameterDirection.Input;
 
                 bool inSchema = (0 != (behavior & CommandBehavior.SchemaOnly));
                 SetUpRPCParameters(rpc, inSchema, parameters);

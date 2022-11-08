@@ -635,7 +635,9 @@ namespace Microsoft.Data.Common
         /// Note: In Longhorn you'll be able to rename a machine without
         /// rebooting.  Therefore, don't cache this machine name.
         /// </summary>
+#if !NET6_0_OR_GREATER
         [EnvironmentPermission(SecurityAction.Assert, Read = "COMPUTERNAME")]
+#endif
         internal static string MachineName() => Environment.MachineName;
 
         internal static Transaction GetCurrentTransaction()

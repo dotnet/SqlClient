@@ -13,12 +13,10 @@ namespace Microsoft.Data.SqlClient
         private const string TypeName = nameof(LocalAppContextSwitches);
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
-        internal const string UseSystemDefaultSecureProtocolsString = @"Switch.Microsoft.Data.SqlClient.UseSystemDefaultSecureProtocols";
         internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
 
         private static bool s_makeReadAsyncBlocking;
         private static bool? s_LegacyRowVersionNullBehavior;
-        private static bool? s_UseSystemDefaultSecureProtocols;
         private static bool? s_SuppressInsecureTLSWarning;
 
 #if !NETFRAMEWORK
@@ -76,23 +74,6 @@ namespace Microsoft.Data.SqlClient
                     s_LegacyRowVersionNullBehavior = result;
                 }
                 return s_LegacyRowVersionNullBehavior.Value;
-            }
-        }
-
-        /// <summary>
-        /// For backward compatibility, this switch can be on to jump back on OS preferences.
-        /// </summary>
-        public static bool UseSystemDefaultSecureProtocols
-        {
-            get
-            {
-                if (s_UseSystemDefaultSecureProtocols is null)
-                {
-                    bool result;
-                    result = AppContext.TryGetSwitch(UseSystemDefaultSecureProtocolsString, out result) ? result : false;
-                    s_UseSystemDefaultSecureProtocols = result;
-                }
-                return s_UseSystemDefaultSecureProtocols.Value;
             }
         }
     }

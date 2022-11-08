@@ -16,11 +16,11 @@
     <IsEnabledWindows Condition="'$(TargetsUnix)' == 'true'">false</IsEnabledWindows>
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)' == 'true'">Unix</TestOS>
-    <TF Condition="$(TF) == ''">netcoreapp3.1</TF> <!-- Default Target Framework -->
-    <TFGroup Condition="$(TF.StartsWith('net4'))">netfx</TFGroup>
-    <TFGroup Condition="$(TFGroup) == ''">netcore</TFGroup>
-    <TargetGroup Condition="$(TF.StartsWith('net4'))">netfx</TargetGroup>
-    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
+    <TF Condition="$(TF) == ''">net6.0</TF> <!-- Default Target Framework -->
+    <TFGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TF)))' == '.NETFramework'">netfx</TFGroup>
+    <TFGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TF)))' == '.NETCoreApp'">netcore</TFGroup>
+    <TargetGroup Condition="'$(TFGroup)' == 'netfx'" >netfx</TargetGroup>
+    <TargetGroup Condition="'$(TFGroup)' == 'netcore'">netcoreapp</TargetGroup>
     <TargetNetCoreVersion Condition="$(TargetGroup) == 'netcoreapp' AND $(TargetNetCoreVersion) == ''">$(TF)</TargetNetCoreVersion>
     <TargetNetFxVersion Condition="$(TargetGroup) == 'netfx' AND $(TargetNetFxVersion) == ''">$(TF)</TargetNetFxVersion>
     <GenerateNuget Condition="'$(GenerateNuget)' == ''">true</GenerateNuget>

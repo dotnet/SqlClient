@@ -17,37 +17,67 @@ namespace Microsoft.Data.SqlClient
     // CONSIDER creating your own Set method that calls the base Set rather than providing a parameterized ctor, it is friendlier to caching
     // DO NOT use this class' state after Dispose has been called. It will not throw ObjectDisposedException but it will be a cleared object
 
-    internal abstract class AAsyncCallContext<TOwner, TTask> : IDisposable
+    internal abstract class AAsyncCallContext<TOwner, TTask, TDisposable> : AAsyncBaseCallContext<TOwner,TTask>
         where TOwner : class
+        where TDisposable : IDisposable
     {
-        protected TOwner _owner;
-        protected TaskCompletionSource<TTask> _source;
-        protected IDisposable _disposable;
+        protected TDisposable _disposable;
 
         protected AAsyncCallContext()
         {
         }
 
-        protected AAsyncCallContext(TOwner owner, TaskCompletionSource<TTask> source, IDisposable disposable = null)
+        protected AAsyncCallContext(TOwner owner, TaskCompletionSource<TTask> source, TDisposable disposable = default)
         {
             Set(owner, source, disposable);
         }
 
-        protected void Set(TOwner owner, TaskCompletionSource<TTask> source, IDisposable disposable = null)
+        protected void Set(TOwner owner, TaskCompletionSource<TTask> source, TDisposable disposable = default)
+        {
+            base.Set(owner, source);
+            _disposable = disposable;
+        }
+
+        protected override void DisposeCore()
+        {
+            TDisposable copyDisposable = _disposable;
+            _disposable = default;
+            copyDisposable?.Dispose();
+        }
+    }
+
+    internal abstract class AAsyncBaseCallContext<TOwner, TTask>
+    {
+        protected TOwner _owner;
+        protected TaskCompletionSource<TTask> _source;
+        protected bool _isDisposed;
+
+        protected AAsyncBaseCallContext()
+        {
+        }
+
+        protected void Set(TOwner owner, TaskCompletionSource<TTask> source)
         {
             _owner = owner ?? throw new ArgumentNullException(nameof(owner));
             _source = source ?? throw new ArgumentNullException(nameof(source));
-            _disposable = disposable;
+            _isDisposed = false;
         }
 
         protected void ClearCore()
         {
             _source = null;
             _owner = default;
-            IDisposable copyDisposable = _disposable;
-            _disposable = null;
-            copyDisposable?.Dispose();
+            try
+            {
+                DisposeCore();
+            }
+            finally
+            {
+                _isDisposed = true;
+            }
         }
+
+        protected abstract void DisposeCore();
 
         /// <summary>
         /// override this method to cleanup instance data before ClearCore is called which will blank the base data
@@ -65,16 +95,19 @@ namespace Microsoft.Data.SqlClient
 
         public void Dispose()
         {
-            TOwner owner = _owner;
-            try
+            if (!_isDisposed)
             {
-                Clear();
+                TOwner owner = _owner;
+                try
+                {
+                    Clear();
+                }
+                finally
+                {
+                    ClearCore();
+                }
+                AfterCleared(owner);
             }
-            finally
-            {
-                ClearCore();
-            }
-            AfterCleared(owner);
         }
     }
 }
