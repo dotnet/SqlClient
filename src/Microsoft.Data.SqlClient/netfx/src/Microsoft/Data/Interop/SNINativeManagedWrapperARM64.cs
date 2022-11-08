@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
         internal static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ProviderEnum provNum);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIInitialize")]
-        internal static extern uint SNIInitialize([In] bool useSystemDefaultSecureProtocols, [In] IntPtr pmo);
+        internal static extern uint SNIInitialize([In] IntPtr pmo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint SNIOpenSyncExWrapper(ref SNI_CLIENT_CONSUMER_INFO pClientConsumerInfo, out IntPtr ppConn);

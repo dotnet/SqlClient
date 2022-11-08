@@ -791,11 +791,11 @@ namespace Microsoft.Data.SqlClient
             switch (s_architecture)
             {
                 case System.Runtime.InteropServices.Architecture.Arm64:
-                    return SNINativeManagedWrapperARM64.SNIInitialize(false, pmo);
+                    return SNINativeManagedWrapperARM64.SNIInitialize(pmo);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIInitialize(false, pmo);
+                    return SNINativeManagedWrapperX64.SNIInitialize(pmo);
                 case System.Runtime.InteropServices.Architecture.X86:
-                    return SNINativeManagedWrapperX86.SNIInitialize(false, pmo);
+                    return SNINativeManagedWrapperX86.SNIInitialize(pmo);
                 default:
                     throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
