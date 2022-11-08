@@ -60,7 +60,6 @@ namespace Microsoft.Data.SqlClient
         // of very small open, query, close loops.
         private const long CheckConnectionWindow = 50000;
 
-
         protected readonly TdsParser _parser;                            // TdsParser pointer
         private readonly WeakReference<object> _owner = new(null);   // the owner of this session, used to track when it's been orphaned
         internal SqlDataReader.SharedState _readerState;                    // susbset of SqlDataReader state (if it is the owner) necessary for parsing abandoned results in TDS
@@ -134,7 +133,6 @@ namespace Microsoft.Data.SqlClient
         internal volatile bool _attentionSending;
         private readonly TimerCallback _onTimeoutAsync;
 
-
         // Below 2 properties are used to enforce timeout delays in code to 
         // reproduce issues related to theadpool starvation and timeout delay.
         // It should always be set to false by default, and only be enabled during testing.
@@ -181,7 +179,6 @@ namespace Microsoft.Data.SqlClient
         internal byte[] _bShortBytes;                 // scratch buffer to serialize Short values (2 bytes).
         internal byte[] _bDecimalBytes;                 // scratch buffer to serialize decimal values (17 bytes).
 
-
         // DO NOT USE THIS BUFFER FOR OTHER THINGS.
         // ProcessHeader can be called ANYTIME while doing network reads.
         private byte[] _partialHeaderBuffer = new byte[TdsEnums.HEADER_LEN];   // Scratch buffer for ProcessHeader
@@ -189,7 +186,6 @@ namespace Microsoft.Data.SqlClient
 
         internal _SqlMetaDataSet _cleanupMetaData;
         internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
-
 
         private SniContext _sniContext = SniContext.Undefined;
 #if DEBUG
@@ -280,7 +276,6 @@ namespace Microsoft.Data.SqlClient
 #pragma warning restore 0649
 #endif
 
-
         //////////////////
         // Constructors //
         //////////////////
@@ -301,7 +296,6 @@ namespace Microsoft.Data.SqlClient
             IncrementPendingCallbacks();
             _lastSuccessfulIOTimer = new LastIOTimer();
         }
-
 
         ////////////////
         // Properties //
@@ -547,7 +541,7 @@ namespace Microsoft.Data.SqlClient
         internal void CancelRequest()
         {
             ResetBuffer();    // clear out unsent buffer
-            // If the first sqlbulkcopy timeout, _outputPacketNumber may not be 1,
+            // VSDD#903514, if the first sqlbulkcopy timeout, _outputPacketNumber may not be 1,
             // the next sqlbulkcopy (same connection string) requires this to be 1, hence reset
             // it here when exception happens in the first sqlbulkcopy
             ResetPacketCounters();
@@ -566,7 +560,7 @@ namespace Microsoft.Data.SqlClient
             // Should only be called for MARS - that is the only time we need to take
             // the ResetConnection lock!
 
-            // It was raised in a security review by Microsoft questioning whether
+            // SQL BU DT 333026 - It was raised in a security review by Microsoft questioning whether
             // we need to actually process the resulting packet (sp_reset ack or error) to know if the
             // reset actually succeeded.  There was a concern that if the reset failed and we proceeded
             // there might be a security issue present.  We have been assured by the server that if
@@ -626,7 +620,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     if (HasOpenResult)
-                    {
+                    { // SQL BU DT 383773 - need to decrement openResultCount for all pending operations.
                         DecrementOpenResultCount();
                     }
 

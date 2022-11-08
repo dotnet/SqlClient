@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                var completion = new TaskCompletionSource<object>();
+                TaskCompletionSource<object> completion = new();
                 ContinueTaskWithState(task, completion, state,
                     onSuccess: (object continueState) =>
                     {
