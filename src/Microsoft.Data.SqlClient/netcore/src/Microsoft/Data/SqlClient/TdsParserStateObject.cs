@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly ContextCallback s_readAsyncCallbackComplete = ReadAsyncCallbackComplete;
 
         // Timeout variables
-        private WeakReference _cancellationOwner = new WeakReference(null);
+        private readonly WeakReference _cancellationOwner = new WeakReference(null);
 
 		// Async
         private StateSnapshot _cachedSnapshot;
@@ -3366,43 +3366,5 @@ namespace Microsoft.Data.SqlClient
                 _sparePacket = packet;
             }
         }
-
-        /*
-
-        // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)
-                private void DumpBuffer() {
-                    Console.WriteLine("dumping buffer");
-                    Console.WriteLine("_inBytesRead = {0}", _inBytesRead);
-                    Console.WriteLine("_inBytesUsed = {0}", _inBytesUsed);
-                    int cc = 0; // character counter
-                    int i;
-                    Console.WriteLine("used buffer:");
-                    for (i=0; i< _inBytesUsed; i++) {
-                        if (cc==16) {
-                            Console.WriteLine();
-                            cc = 0;
-                        }
-                        Console.Write("{0,-2:X2} ", _inBuff[i]);
-                        cc++;
-                    }
-                    if (cc>0) {
-                        Console.WriteLine();
-                    }
-
-                    cc = 0;
-                    Console.WriteLine("unused buffer:");
-                    for (i=_inBytesUsed; i<_inBytesRead; i++) {
-                        if (cc==16) {
-                            Console.WriteLine();
-                            cc = 0;
-                        }
-                        Console.Write("{0,-2:X2} ", _inBuff[i]);
-                        cc++;
-                    }
-                    if (cc>0) {
-                        Console.WriteLine();
-                    }
-                }
-        */
     }
 }

@@ -10,7 +10,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -27,8 +26,8 @@ namespace Microsoft.Data.SqlClient
         // SNI variables                                                     // multiple resultsets in one batch.
         private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
-        private WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
-        private Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
+        private readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
+        private readonly Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
 
         // Async variables
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
@@ -44,7 +43,6 @@ namespace Microsoft.Data.SqlClient
 
         internal bool _hasOpenResult = false;
 
-
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
         internal int _tracePasswordLength = 0;
@@ -52,7 +50,6 @@ namespace Microsoft.Data.SqlClient
         internal int _traceChangePasswordLength = 0;
 
         internal bool _receivedColMetaData;      // Used to keep track of when to fire StatementCompleted  event.
-
 
         //////////////////
         // Constructors //
@@ -3461,43 +3458,5 @@ namespace Microsoft.Data.SqlClient
                 ResetSnapshotState();
             }
         }
-
-        /*
-
-        // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)
-                private void DumpBuffer() {
-                    Console.WriteLine("dumping buffer");
-                    Console.WriteLine("_inBytesRead = {0}", _inBytesRead);
-                    Console.WriteLine("_inBytesUsed = {0}", _inBytesUsed);
-                    int cc = 0; // character counter
-                    int i;
-                    Console.WriteLine("used buffer:");
-                    for (i=0; i< _inBytesUsed; i++) {
-                        if (cc==16) {
-                            Console.WriteLine();
-                            cc = 0;
-                        }
-                        Console.Write("{0,-2:X2} ", _inBuff[i]);
-                        cc++;
-                    }
-                    if (cc>0) {
-                        Console.WriteLine();
-                    }
-
-                    cc = 0;
-                    Console.WriteLine("unused buffer:");
-                    for (i=_inBytesUsed; i<_inBytesRead; i++) {
-                        if (cc==16) {
-                            Console.WriteLine();
-                            cc = 0;
-                        }
-                        Console.Write("{0,-2:X2} ", _inBuff[i]);
-                        cc++;
-                    }
-                    if (cc>0) {
-                        Console.WriteLine();
-                    }
-                }
-        */
     }
 }

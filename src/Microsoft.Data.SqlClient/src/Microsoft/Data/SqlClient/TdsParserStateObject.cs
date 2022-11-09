@@ -143,8 +143,8 @@ namespace Microsoft.Data.SqlClient
 
         // secure password information to be stored
         //  At maximum number of secure string that need to be stored is two; one for login password and the other for new change password
-        private SecureString[] _securePasswords = new SecureString[2] { null, null };
-        private int[] _securePasswordOffsetsInBuffer = new int[2];
+        private readonly SecureString[] _securePasswords = new SecureString[2] { null, null };
+        private readonly int[] _securePasswordOffsetsInBuffer = new int[2];
 
         // This variable is used to track whether another thread has requested a cancel.  The
         // synchronization points are
@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient
 
         // DO NOT USE THIS BUFFER FOR OTHER THINGS.
         // ProcessHeader can be called ANYTIME while doing network reads.
-        private byte[] _partialHeaderBuffer = new byte[TdsEnums.HEADER_LEN];   // Scratch buffer for ProcessHeader
+        private readonly byte[] _partialHeaderBuffer = new byte[TdsEnums.HEADER_LEN];   // Scratch buffer for ProcessHeader
         internal int _partialHeaderBytesRead;
 
         internal _SqlMetaDataSet _cleanupMetaData;
@@ -415,10 +415,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!isNullCompressed || nullBitmapColumnsCount > 0, "Null-Compressed row requires columns count");
 
-            if (_snapshot != null)
-            {
-                _snapshot.CloneNullBitmapInfo();
-            }
+            _snapshot?.CloneNullBitmapInfo();
 
             // initialize or unset null bitmap information for the current row
             if (isNullCompressed)
@@ -634,9 +631,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
-#if NETFRAMEWORK
+
                 ADP.TraceExceptionWithoutRethrow(e);
-#endif
             }
             return goodForReuse;
         }
@@ -809,9 +805,8 @@ namespace Microsoft.Data.SqlClient
                         _messageStatus = _partialHeaderBuffer[1];
                         _spid = _partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 |
                                   _partialHeaderBuffer[TdsEnums.SPID_OFFSET + 1];
-#if !NETFRAMEWORK
+
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
-#endif
                     }
                     else
                     {
@@ -875,7 +870,6 @@ namespace Microsoft.Data.SqlClient
         internal bool TryPrepareBuffer()
         {
 #if NETFRAMEWORK
-
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadBuffer");  // you need to setup for a thread abort somewhere before you call this method
 #endif
             Debug.Assert(_inBuff != null, "packet buffer should not be null!");
@@ -1025,6 +1019,42 @@ namespace Microsoft.Data.SqlClient
 
             return false;
         }
+        /*
 
+        // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)
+        private void DumpBuffer() {
+            Console.WriteLine("dumping buffer");
+            Console.WriteLine("_inBytesRead = {0}", _inBytesRead);
+            Console.WriteLine("_inBytesUsed = {0}", _inBytesUsed);
+            int cc = 0; // character counter
+            int i;
+            Console.WriteLine("used buffer:");
+            for (i=0; i< _inBytesUsed; i++) {
+                if (cc==16) {
+                    Console.WriteLine();
+                    cc = 0;
+                }
+                Console.Write("{0,-2:X2} ", _inBuff[i]);
+                cc++;
+            }
+            if (cc>0) {
+                Console.WriteLine();
+            }
+
+            cc = 0;
+            Console.WriteLine("unused buffer:");
+            for (i=_inBytesUsed; i<_inBytesRead; i++) {
+                if (cc==16) {
+                    Console.WriteLine();
+                    cc = 0;
+                }
+                Console.Write("{0,-2:X2} ", _inBuff[i]);
+                cc++;
+            }
+            if (cc>0) {
+                Console.WriteLine();
+            }
+        }
+        */
     }
 }

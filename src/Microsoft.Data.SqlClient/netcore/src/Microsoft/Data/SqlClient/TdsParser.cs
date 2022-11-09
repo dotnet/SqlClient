@@ -1329,7 +1329,7 @@ namespace Microsoft.Data.SqlClient
                     // report exception to pending async operation
                     // before OnConnectionClosed overrides the exception
                     // due to connection close notification through references
-                    var taskSource = stateObj._networkPacketTaskSource;
+                    TaskCompletionSource<object> taskSource = stateObj._networkPacketTaskSource;
                     if (taskSource != null)
                     {
                         taskSource.TrySetException(ADP.ExceptionWithStackTrace(exception));
@@ -1339,7 +1339,7 @@ namespace Microsoft.Data.SqlClient
                 if (asyncClose)
                 {
                     // Wait until we have the parser lock, then try to close
-                    var connHandler = _connHandler;
+                    SqlInternalConnectionTds connHandler = _connHandler;
                     Action<Action> wrapCloseAction = closeAction =>
                     {
                         Task.Factory.StartNew(() =>
@@ -2609,7 +2609,7 @@ namespace Microsoft.Data.SqlClient
 
             while (tokenLength > processedLength)
             {
-                var env = new SqlEnvChange();
+                SqlEnvChange env = new SqlEnvChange();
                 if (!stateObj.TryReadByte(out env._type))
                 {
                     return false;
@@ -3372,7 +3372,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return false;
             }
-            var labels = new List<Label>(numLabels);
+            List<Label> labels = new List<Label>(numLabels);
             for (ushort i = 0; i < numLabels; i++)
             {
                 if (!TryReadSensitivityLabel(stateObj, out string label, out string id))
@@ -3387,7 +3387,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return false;
             }
-            var informationTypes = new List<InformationType>(numInformationTypes);
+            List<InformationType> informationTypes = new List<InformationType>(numInformationTypes);
             for (ushort i = 0; i < numInformationTypes; i++)
             {
                 if (!TryReadSensitivityInformationType(stateObj, out string informationType, out string id))
@@ -3412,7 +3412,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return false;
             }
-            var columnSensitivities = new List<ColumnSensitivity>(numResultColumns);
+            List<ColumnSensitivity> columnSensitivities = new List<ColumnSensitivity>(numResultColumns);
             for (ushort columnNum = 0; columnNum < numResultColumns; columnNum++)
             {
                 // get sensitivity properties for all the different sources which were used in generating the column output
@@ -3420,7 +3420,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return false;
                 }
-                var sensitivityProperties = new List<SensitivityProperty>(numSources);
+                List<SensitivityProperty> sensitivityProperties = new List<SensitivityProperty>(numSources);
                 for (ushort sourceNum = 0; sourceNum < numSources; sourceNum++)
                 {
                     // get the label index and then lookup label to use for source
@@ -4431,7 +4431,7 @@ namespace Microsoft.Data.SqlClient
                 SqlDataReader.SharedState sharedState = stateObj._readerState;
                 if (sharedState != null && sharedState._dataReady)
                 {
-                    var metadata = stateObj._cleanupMetaData;
+                    _SqlMetaDataSet metadata = stateObj._cleanupMetaData;
                     if (stateObj._partialHeaderBytesRead > 0)
                     {
                         if (!stateObj.TryProcessHeader())
@@ -7475,12 +7475,12 @@ namespace Microsoft.Data.SqlClient
             else
             {
 #if NETFRAMEWORK || NETSTANDARD2_0
-                var charData = s.ToCharArray(offset, numChars);
-                var byteData = encoding.GetBytes(charData, 0, numChars);
+                char[] charData = s.ToCharArray(offset, numChars);
+                byte[] byteData = encoding.GetBytes(charData, 0, numChars);
                 Debug.Assert(byteData != null, "no data from encoding");
                 return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
 #else
-                var byteData = encoding.GetBytes(s, offset, numChars);
+                byte[] byteData = encoding.GetBytes(s, offset, numChars);
                 Debug.Assert(byteData != null, "no data from encoding");
                 return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
 #endif
@@ -9856,7 +9856,7 @@ namespace Microsoft.Data.SqlClient
 
             if (advancedTraceIsOn)
             {
-                var sendDefaultValue = sendDefault ? 1 : 0;
+                int sendDefaultValue = sendDefault ? 1 : 0;
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.WriteSmiParameter|ADV> {0}, Sending parameter '{1}', default flag={2}, metadata:{3}", ObjectID, param.ParameterName, sendDefaultValue, metaData.TraceString(3));
             }
 
