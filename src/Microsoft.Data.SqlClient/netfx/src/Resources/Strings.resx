@@ -4632,4 +4632,7 @@
   <data name="DbConnectionString_ServerSPN" xml:space="preserve">
     <value>The service principal name (SPN) of the server.</value>
   </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>The '{0}' platform is not supported when targeting .NET Framework.</value>
+  </data>
 </root>
