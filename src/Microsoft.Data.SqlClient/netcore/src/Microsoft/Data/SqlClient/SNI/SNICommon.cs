@@ -194,6 +194,50 @@ namespace Microsoft.Data.SqlClient.SNI
                 return true;
             }
         }
+        
+        /// <summary>
+        /// We validate the provided certificate provided by the client with the one from the server to see if it matches.
+        /// Certificate validation and chain trust validations are done by SSLStream class [System.Net.Security.SecureChannel.VerifyRemoteCertificate method]
+        /// This method is called as a result of callback for SSL Stream Certificate validation.
+        /// </summary>
+        /// <param name="clientCert">X.509 certificate provided by the client</param>
+        /// <param name="serverCert">X.509 certificate provided by the server</param>
+        /// <param name="policyErrors">Policy errors</param>
+        /// <returns>True if certificate is valid</returns>
+        internal static bool ValidateSslServerCertificate(X509Certificate clientCert, X509Certificate serverCert, SslPolicyErrors policyErrors)
+        {
+            using (TrySNIEventScope.Create("SNICommon.ValidateSslServerCertificate | SNI | SCOPE | INFO | Entering Scope {0} "))
+            {
+                if (policyErrors == SslPolicyErrors.None)
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "serverCert {0}, SSL Server certificate not validated as PolicyErrors set to None.", args0: clientCert.Subject);
+                    return true;
+                }
+
+                if ((policyErrors & SslPolicyErrors.RemoteCertificateNameMismatch) != 0)
+                {
+                    // Verify that subject name matches
+                    if (serverCert.Subject != clientCert.Subject)
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "certificate subject from server is {0}, and does not match with the certificate provided client.", args0: serverCert.Subject);
+                        return false;
+                    }
+                    if (!serverCert.Equals(clientCert))
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "certificate from server does not match with the certificate provided client.", args0: serverCert.Subject);
+                        return false;
+                    }
+                }
+                else
+                {
+                    // Fail all other SslPolicy cases besides RemoteCertificateNameMismatch
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "certificate subject: {0}, SslPolicyError {1}, SSL Policy invalidated certificate.", args0: clientCert.Subject, args1: policyErrors);
+                    return false;
+                }
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "certificate subject {0}, Client certificate validated successfully.", args0: clientCert.Subject);
+                return true;
+            }
+        }
 
         internal static IPAddress[] GetDnsIpAddresses(string serverName)
         {

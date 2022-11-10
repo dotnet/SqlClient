@@ -90,11 +90,12 @@ namespace Microsoft.Data.SqlClient.SNI
             string serverSPN,
             bool isIntegratedSecurity,
             bool tlsFirst,
-            string hostNameInCertificate)
+            string hostNameInCertificate,
+            string serverCertificateFilename)
         {
             SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, serverSPN,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
-                hostNameInCertificate);
+                hostNameInCertificate, serverCertificateFilename);
 
             if (sessionHandle is not null)
             {
@@ -362,7 +363,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return TdsEnums.SNI_ERROR;
         }
 
-        internal override uint EnableSsl(ref uint info, bool tlsFirst)
+        internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
         {
             SNIHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
             try

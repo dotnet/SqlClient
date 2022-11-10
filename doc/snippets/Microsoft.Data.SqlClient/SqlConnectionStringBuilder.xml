@@ -481,6 +481,25 @@ This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN"
             </format>
           </remarks>
         </FailoverPartnerSPN>
+      <HostNameInCertificate>
+        <summary>Gets or sets the host name to use when validating the server certificate for the connection. When not specified, the server name from the `Data Source` is used for certificate validation. (Only available in v5.0+)</summary>
+        <value>
+          The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.HostNameInCertificate" /> property, or <see langword="String.Empty" /> if none has been supplied.
+        </value>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+
+## Remarks  
+This property corresponds to the "HostNameInCertificiate" and "Host Name in Certificiate" keys within the connection string. 
+
+> [!NOTE]
+> This property only applies when using `Encrypt` in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> or <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> mode, otherwise it is ignored.
+
+ ]]>
+          </format>
+        </remarks>
+      </HostNameInCertificate>
         <GetProperties>
             <param name="propertyDescriptors">To be added.</param>
             <summary>To be added.</summary>
@@ -787,7 +806,7 @@ Connections are considered the same if they have the same connection string. Dif
 |Context Connection(Obsolete)|False|  
 |Current Language|Empty string|  
 |Data Source|Empty string|  
-|Encrypt|False|  
+|Encrypt|False in versions prior to 4.0, True in versions 4.0 and up|  
 |Enlist|True|  
 |Failover Partner|Empty string|  
 |Initial Catalog|Empty string|  
@@ -842,6 +861,25 @@ Database = AdventureWorks
  ]]></format>
             </remarks>
         </Replication>
+        <ServerCertificate>
+          <summary>Gets or sets the path to a certificate file to match against the SQL Server TLS/SSL certificate for the connection. The accepted certificate formats are PEM, DER, and CER. If specified, the SQL Server certificate is checked by verifying if the `ServerCertificate` provided is an exact match. (Only available in v5.1+)</summary>
+          <value>
+            The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerCertificate" /> property, or <see langword="String.Empty" /> if none has been supplied.
+          </value>
+          <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+
+## Remarks  
+This property corresponds to the "ServerCertificate" and "Server Certificate" keys within the connection string.  
+
+> [!NOTE]
+> This property only applies when using `Encrypt` in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> or <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> mode, otherwise it is ignored.
+
+ ]]>
+            </format>
+          </remarks>
+        </ServerCertificate>
         <ServerSPN>
             <summary>Gets or sets the service principal name (SPN) of the data source.</summary>
             <value>

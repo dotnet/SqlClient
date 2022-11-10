@@ -175,6 +175,7 @@ namespace Microsoft.Data.SqlClient
             public uint flags;
             [MarshalAs(UnmanagedType.Bool)]
             public bool tlsFirst;
+            public object certContext;
             [MarshalAs(UnmanagedType.LPWStr)]
             public string certId;
             [MarshalAs(UnmanagedType.Bool)]
