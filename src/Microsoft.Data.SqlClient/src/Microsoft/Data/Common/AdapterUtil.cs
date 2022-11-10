@@ -1421,6 +1421,11 @@ namespace Microsoft.Data.Common
             return InvalidOperation(StringsHelper.GetString(Strings.ADP_ComputerNameEx, lastError));
         }
 
+        //
+        // : SNI
+        //
+        internal static PlatformNotSupportedException SNIPlatformNotSupported(string platform) => new(StringsHelper.GetString(Strings.SNI_PlatformNotSupportedNetFx, platform));
+
         // global constant strings
         internal const float FailoverTimeoutStepForTnir = 0.125F; // Fraction of timeout to use in case of Transparent Network IP resolution.
         internal const int MinimumTimeoutForTnirMs = 500; // The first login attempt in  Transparent network IP Resolution 
