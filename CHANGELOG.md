@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 5.1.0-preview2.22314.2] - 2022-11-10
+
+This update brings the below changes over the previous release:
+
+### Breaking changes over preview release v5.1.0-preview1
+
+- Add support for .NET 6.0 and Dropped support for .NET Core 3.1. [#1704](https://github.com/dotnet/SqlClient/pull/1704) [#1823](https://github.com/dotnet/SqlClient/pull/1823)
+
+### Added
+
+- Added support for `DateOnly` and `TimeOnly` for `SqlParameter` value and `GetFieldValue`. [#1813](https://github.com/dotnet/SqlClient/pull/1813)
+- Added support for TLS 1.3 for .NET Core and SNI Native. [#1821](https://github.com/dotnet/SqlClient/pull/1821)
+- Added `ServerCertificate` support for `Encrypt=Mandatory` or `Encrypt=Strict`. [#1822](https://github.com/dotnet/SqlClient/pull/1822)
+- Added Windows ARM64 support when targeting .NET Framework. [#1828](https://github.com/dotnet/SqlClient/pull/1828)
+
+### Fixed
+
+- Fixed memory leak regression from [#1781](https://github.com/dotnet/SqlClient/pull/1781) using a `DisposableTemporaryOnStack` struct. [#1818](https://github.com/dotnet/SqlClient/pull/1818)
+
+### Changed
+
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.1.0-preview2.22311.2`. [#1831](https://github.com/dotnet/SqlClient/pull/1831) which includes the fix for the TLS 1.3 timeout and double handshake issue, removal of ARM32 binaries, and support for the `ServerCertificate` option. [#1822](https://github.com/dotnet/SqlClient/issues/1822)
+- Reverted "Excluding unsupported TLS protocols" for issue [#1151](https://github.com/dotnet/SqlClient/issues/1151) (i.e. removed `Switch.Microsoft.Data.SqlClient.EnableSecureProtocolsByOS`) by adding support for TLS 1.3. [#1824](https://github.com/dotnet/SqlClient/issues/1824)
+- Code health improvements [#1812](https://github.com/dotnet/SqlClient/pull/1812) [#1520](https://github.com/dotnet/SqlClient/pull/1520) 
+
 ## [Preview Release 5.1.0-preview1.22279.3] - 2022-10-19
 
 This update brings the below changes over the previous release:
