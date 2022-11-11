@@ -3225,6 +3225,12 @@
   <data name="DbConnectionString_Encrypt" xml:space="preserve">
     <value>true인 경우 서버에 인증서가 설치되어 있으면 SQL Server는 클라이언트와 서버 간에 전송된 모든 데이터에 대해 SSL 암호화를 사용합니다.</value>
   </data>
+  <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
+    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+  </data>
+  <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
+    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+  </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Component Services(또는 Microsoft Windows NT를 사용하는 경우에는 MTS) 환경의 세션은 필요한 경우 전역 트랜잭션에 자동으로 참여해야 합니다.</value>
   </data>

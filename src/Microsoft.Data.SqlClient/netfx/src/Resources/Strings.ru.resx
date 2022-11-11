@@ -3225,6 +3225,12 @@
   <data name="DbConnectionString_Encrypt" xml:space="preserve">
     <value>Когда true (истина) и на сервере установлен сертификат, то SQL Server использует шифрование SSL для всех данных, которые пересылаются между клиентом и сервером.</value>
   </data>
+  <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
+    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+  </data>
+  <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
+    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+  </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Сеансы в среде служб компонентов Component Services (или MTS для Microsoft Windows NT) должны автоматически вноситься в глобальную транзакцию, если это необходимо.</value>
   </data>
