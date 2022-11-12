@@ -4633,6 +4633,6 @@
     <value>서버의 SPN(서비스 사용자 이름)입니다.</value>
   </data>
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
-    <value>The '{0}' platform is not supported when targeting .NET Framework.</value>
+    <value>.NET Framework를 대상으로 지정할 때는 '{0}' 플랫폼이 지원되지 않습니다.</value>
   </data>
 </root>
