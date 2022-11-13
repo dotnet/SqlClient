@@ -3226,10 +3226,10 @@
     <value>Se il valore è true, SQL Server utilizza la crittografia SSL per tutti i dati scambiati tra il client e il server, se nel server è installato un certificato.</value>
   </data>
   <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
-    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+    <value>Nome host previsto nel certificato del server quando viene negoziata la crittografia, se diverso dal valore predefinito derivato da Addr/Address/Server.</value>
   </data>
   <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
-    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+    <value>Percorso di un file di certificato da confrontare con il certificato TLS/SSL di SQL Server.</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Le sessioni in un ambiente Component Services (o MTS, se si utilizza Microsoft Windows NT) devono essere automaticamente inserite in una transazione globale, se richiesto.</value>
@@ -4633,6 +4633,6 @@
     <value>Nome principale dell'entità servizio (SPN) del server.</value>
   </data>
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
-    <value>The '{0}' platform is not supported when targeting .NET Framework.</value>
+    <value>La piattaforma '{0}' non è supportata quando la destinazione è .NET Framework.</value>
   </data>
 </root>

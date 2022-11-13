@@ -3226,10 +3226,10 @@
     <value>Se for true, o SQL Server usará criptografia SSL para todos os dados enviados entre cliente e servidor, se o servidor possuir um certificado instalado.</value>
   </data>
   <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
-    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+    <value>O nome do host esperado no certificado do servidor quando a criptografia for negociada, se for diferente do valor padrão derivado de endereço/endereço/servidor.</value>
   </data>
   <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
-    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+    <value>O caminho para um arquivo de certificado que corresponda ao certificado TLS/SSL do SQL Server.</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Sessões em um ambiente de Component Services (ou MTS, se você estiver usando o Microsoft Windows NT) devem ser inscritos automaticamente em uma transação global sempre que necessário.</value>

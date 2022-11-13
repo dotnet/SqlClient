@@ -4633,6 +4633,6 @@
     <value>Der Dienstprinzipalname (SPN) des Servers.</value>
   </data>
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
-    <value>The '{0}' platform is not supported when targeting .NET Framework.</value>
+    <value>Die Plattform "{0}" wird bei .NET Framework nicht unterstützt.</value>
   </data>
 </root>

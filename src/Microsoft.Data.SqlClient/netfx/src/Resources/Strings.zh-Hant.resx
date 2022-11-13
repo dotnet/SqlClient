@@ -3226,10 +3226,10 @@
     <value>當 True 時，若伺服器已安裝憑證，SQL Server 會使用 SSL 加密所有在用戶端與伺服端傳送的資料。</value>
   </data>
   <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
-    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+    <value>交涉加密時 (如果主機名稱與衍生自 Addr/Address/Server 的預設值不同) 伺服器憑證中預期的主機名稱。</value>
   </data>
   <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
-    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+    <value>要與 SQL Server TLS/SSL 憑證相符之憑證檔案的路徑。</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>必要時，Component Services 環境下的工作階段 (或若使用 Microsoft Windows NT 中的 MTS) 應自動列入全域交易。</value>

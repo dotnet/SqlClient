@@ -4633,6 +4633,6 @@
     <value>服务器的服务主体名称(SPN)。</value>
   </data>
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
-    <value>The '{0}' platform is not supported when targeting .NET Framework.</value>
+    <value>面向 .NET Framework 时，不支持 "{0}" 平台。</value>
   </data>
 </root>

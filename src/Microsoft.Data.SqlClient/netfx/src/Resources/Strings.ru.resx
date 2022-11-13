@@ -3226,10 +3226,10 @@
     <value>Когда true (истина) и на сервере установлен сертификат, то SQL Server использует шифрование SSL для всех данных, которые пересылаются между клиентом и сервером.</value>
   </data>
   <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
-    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+    <value>Имя узла, ожидаемое в сертификате сервера при согласовании шифрования, если оно отличается от значения по умолчанию, производного от Addr/Address/Server.</value>
   </data>
   <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
-    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+    <value>Путь к файлу сертификата для сопоставления с сертификатом TLS/SSL SQL Server.</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Сеансы в среде служб компонентов Component Services (или MTS для Microsoft Windows NT) должны автоматически вноситься в глобальную транзакцию, если это необходимо.</value>
@@ -4633,6 +4633,6 @@
     <value>Имя субъекта-службы (SPN) сервера.</value>
   </data>
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
-    <value>The '{0}' platform is not supported when targeting .NET Framework.</value>
+    <value>Платформа "{0}" не поддерживается, если целью является .NET Framework.</value>
   </data>
 </root>
