@@ -3226,10 +3226,10 @@
     <value>Lorsque sa valeur est true, SQL Server utilise le cryptage SSL pour toutes les données échangées entre le client et le serveur si un certificat a été installé sur ce dernier.</value>
   </data>
   <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
-    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+    <value>Le nom d’hôte à attendre dans le certificat du serveur lors de la négociation du chiffrement, s’il est différent de la valeur par défaut dérivée de Addr/Address/Server.</value>
   </data>
   <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
-    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+    <value>Chemin d’accès d’un fichier de certificat correspondant au certificat TLS/SSL de SQL Server.</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Les sessions d'un environnement Component Services (ou MTS, si vous utilisez Microsoft Windows NT) doivent automatiquement être inscrites dans une transaction globale, si nécessaire.</value>

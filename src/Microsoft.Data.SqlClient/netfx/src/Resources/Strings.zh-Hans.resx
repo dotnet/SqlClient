@@ -3226,10 +3226,10 @@
     <value>如果为 True，并且服务器安装了证书，那么 SQL Server 将对客户端与服务器之间发送的所有数据使用 SSL 加密。</value>
   </data>
   <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
-    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+    <value>协商加密时服务器证书中预期的主机名(如果它不同于从 Addr/Address/Server 派生的默认值)。</value>
   </data>
   <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
-    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+    <value>要与 SQL Server TLS/SSL 证书匹配的证书文件的路径。</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>如有必要，Component Services (如果使用 Microsoft Windows NT，则为 MTS)环境中的会话应自动登记在全局事务中。</value>
