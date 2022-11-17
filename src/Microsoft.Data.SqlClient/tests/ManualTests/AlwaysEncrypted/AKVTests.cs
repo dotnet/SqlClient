@@ -26,10 +26,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public void TestEncryptDecryptWithAKV()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestEncryptDecryptWithAKV(string connString)
         {
-            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(DataTestUtility.TCPConnectionString, @";Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(connString, @";Column Encryption Setting = Enabled;")))
             {
                 sqlConnection.Open();
 
@@ -54,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRoundTripWithAKVAndCertStoreProvider()
         {
@@ -72,14 +73,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public void TestLocalCekCacheIsScopedToProvider()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestLocalCekCacheIsScopedToProvider(string connString)
         {
-            using (SqlConnection sqlConnection = new(string.Concat(DataTestUtility.TCPConnectionString, @";Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new(string.Concat(connString, @";Column Encryption Setting = Enabled;")))
             {
                 sqlConnection.Open();
-
-                Customer customer = new(45, "Microsoft", "Corporation");
 
                 // Test INPUT parameter on an encrypted parameter
                 using (SqlCommand sqlCommand = new($"SELECT CustomerId, FirstName, LastName FROM [{akvTableName}] WHERE FirstName = @firstName",
