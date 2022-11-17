@@ -36,8 +36,6 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspExt.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == 'AE'">
-    <Compile Include="AlwaysEncrypted\AKVTests.cs" />
-    <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
     <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
@@ -76,6 +74,8 @@
     <Compile Include="SQL\AsyncTest\XmlReaderAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\AsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\AsyncCancelledConnectionsTest.cs" />
+    <Compile Include="AlwaysEncrypted\AKVTests.cs" />
+    <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '2'">
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
