@@ -26,32 +26,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TestEncryptDecryptWithAKV()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(DataTestUtility.TCPConnectionStringHGSVBS, @";Column Encryption Setting = Enabled;")))
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS);
+            builder.ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled;
+            builder.AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
+            builder.EnclaveAttestationUrl = "";
+            using SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString);
+
+            sqlConnection.Open();
+            Customer customer = new Customer(45, "Microsoft", "Corporation");
+
+            // Start a transaction and either commit or rollback based on the test variation.
+            using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction())
             {
-                sqlConnection.Open();
-
-                Customer customer = new Customer(45, "Microsoft", "Corporation");
-
-                // Start a transaction and either commit or rollback based on the test variation.
-                using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction())
-                {
-                    DatabaseHelper.InsertCustomerData(sqlConnection, sqlTransaction, akvTableName, customer);
-                    sqlTransaction.Commit();
-                }
-
-                // Test INPUT parameter on an encrypted parameter
-                using SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName FROM [{akvTableName}] WHERE FirstName = @firstName",
-                                                                sqlConnection);
-                SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
-                customerFirstParam.Direction = System.Data.ParameterDirection.Input;
-                customerFirstParam.ForceColumnEncryption = true;
-
-                using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
-                DatabaseHelper.ValidateResultSet(sqlDataReader);
+                DatabaseHelper.InsertCustomerData(sqlConnection, sqlTransaction, akvTableName, customer);
+                sqlTransaction.Commit();
             }
+
+            // Test INPUT parameter on an encrypted parameter
+            using SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName FROM [{akvTableName}] WHERE FirstName = @firstName",
+                                                            sqlConnection);
+            SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
+            customerFirstParam.Direction = System.Data.ParameterDirection.Input;
+            customerFirstParam.ForceColumnEncryption = true;
+
+            using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+            DatabaseHelper.ValidateResultSet(sqlDataReader);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
@@ -72,48 +74,49 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TestLocalCekCacheIsScopedToProvider()
         {
-            using (SqlConnection sqlConnection = new(string.Concat(DataTestUtility.TCPConnectionStringHGSVBS, @";Column Encryption Setting = Enabled;")))
-            {
-                sqlConnection.Open();
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS);
+            builder.ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled;
+            builder.AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
+            builder.EnclaveAttestationUrl = "";
 
-                // Test INPUT parameter on an encrypted parameter
-                using (SqlCommand sqlCommand = new($"SELECT CustomerId, FirstName, LastName FROM [{akvTableName}] WHERE FirstName = @firstName",
-                                                                sqlConnection))
-                {
-                    SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
-                    customerFirstParam.Direction = System.Data.ParameterDirection.Input;
-                    customerFirstParam.ForceColumnEncryption = true;
+            using SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString);
 
-                    SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
-                    sqlDataReader.Close();
+            sqlConnection.Open();
 
-                    SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
-                        new(new SqlClientCustomTokenCredential());
+            // Test INPUT parameter on an encrypted parameter
+            using SqlCommand sqlCommand = new($"SELECT CustomerId, FirstName, LastName FROM [{akvTableName}] WHERE FirstName = @firstName",
+                                                            sqlConnection);
+            SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
+            customerFirstParam.Direction = System.Data.ParameterDirection.Input;
+            customerFirstParam.ForceColumnEncryption = true;
 
-                    Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customProvider = new()
+            SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+            sqlDataReader.Close();
+
+            SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
+                new(new SqlClientCustomTokenCredential());
+
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customProvider = new()
                     {
                         { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider }
                     };
 
-                    // execute a query using provider from command-level cache. this will cache the cek in the local cek cache
-                    sqlCommand.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customProvider);
-                    SqlDataReader sqlDataReader2 = sqlCommand.ExecuteReader();
-                    sqlDataReader2.Close();
+            // execute a query using provider from command-level cache. this will cache the cek in the local cek cache
+            sqlCommand.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customProvider);
+            SqlDataReader sqlDataReader2 = sqlCommand.ExecuteReader();
+            sqlDataReader2.Close();
 
-                    // global cek cache and local cek cache are populated above
-                    // when using a new per-command provider, it will only use its local cek cache 
-                    // the following query should fail due to an empty cek cache and invalid credentials
-                    customProvider[SqlColumnEncryptionAzureKeyVaultProvider.ProviderName] =
-                        new SqlColumnEncryptionAzureKeyVaultProvider(new ClientSecretCredential("tenant", "client", "secret"));
-                    sqlCommand.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customProvider);
-                    Exception ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteReader());
-                    Assert.Contains("ClientSecretCredential authentication failed", ex.Message);
-                }
-            }
+            // global cek cache and local cek cache are populated above
+            // when using a new per-command provider, it will only use its local cek cache 
+            // the following query should fail due to an empty cek cache and invalid credentials
+            customProvider[SqlColumnEncryptionAzureKeyVaultProvider.ProviderName] =
+                new SqlColumnEncryptionAzureKeyVaultProvider(new ClientSecretCredential("tenant", "client", "secret"));
+            sqlCommand.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customProvider);
+            Exception ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteReader());
+            Assert.Contains("ClientSecretCredential authentication failed", ex.Message);
         }
-
     }
 }
