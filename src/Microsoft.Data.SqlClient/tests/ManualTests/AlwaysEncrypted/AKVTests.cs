@@ -117,9 +117,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             customProvider[SqlColumnEncryptionAzureKeyVaultProvider.ProviderName] =
                 new SqlColumnEncryptionAzureKeyVaultProvider(new ClientSecretCredential("tenant", "client", "secret"));
             sqlCommand.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customProvider);
-            sqlCommand.ExecuteReader();
-            //Exception ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteReader());
-            //Assert.Contains("ClientSecretCredential authentication failed", ex.Message);
+            Exception ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteReader());
+            Assert.StartsWith("Failed to decrypt a column encryption key using key store provider", ex.InnerException.Message);
         }
     }
 }
