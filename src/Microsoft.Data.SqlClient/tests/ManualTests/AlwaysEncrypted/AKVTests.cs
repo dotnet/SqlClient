@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 new SqlColumnEncryptionAzureKeyVaultProvider(new ClientSecretCredential("tenant", "client", "secret"));
             sqlCommand.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customProvider);
             Exception ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteReader());
-            Assert.StartsWith("The current credential is not configured to acquire tokens for tenent", ex.InnerException.Message);
+            Assert.StartsWith("The current credential is not configured to acquire tokens for tenant", ex.InnerException.Message);
         }
     }
 }
