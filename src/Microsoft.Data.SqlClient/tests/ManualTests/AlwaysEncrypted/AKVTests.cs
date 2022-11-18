@@ -26,10 +26,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public void TestEncryptDecryptWithAKV(string connString)
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public void TestEncryptDecryptWithAKV()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(DataTestUtility.TCPConnectionString, @";Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(DataTestUtility.TCPConnectionStringHGSVBS, @";Column Encryption Setting = Enabled;")))
             {
                 sqlConnection.Open();
 
@@ -72,10 +72,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TestLocalCekCacheIsScopedToProvider()
         {
-            using (SqlConnection sqlConnection = new(string.Concat(DataTestUtility.TCPConnectionString, @";Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new(string.Concat(DataTestUtility.TCPConnectionStringHGSVBS, @";Column Encryption Setting = Enabled;")))
             {
                 sqlConnection.Open();
 
