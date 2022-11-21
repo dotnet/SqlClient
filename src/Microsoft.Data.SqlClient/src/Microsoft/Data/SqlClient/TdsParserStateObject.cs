@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient
         // Out buffer variables
         internal byte[] _outBuff;                         // internal write buffer - initialize on login
         internal int _outBytesUsed = TdsEnums.HEADER_LEN; // number of bytes used in internal write buffer - initialize past header
-        
+
         // In buffer variables
 
         /// <summary>
@@ -122,6 +122,7 @@ namespace Microsoft.Data.SqlClient
 
         // Async variables
         private int _pendingCallbacks;                      // we increment this before each async read/write call and decrement it in the callback.  We use this to determine when to release the GcHandle...
+        private SnapshottedStateFlags _snapshottedState;
 
         // Timeout variables
         private long _timeoutMilliseconds;
@@ -943,7 +944,7 @@ namespace Microsoft.Data.SqlClient
             _outputPacketNumber = 1;
             _outputPacketCount = 0;
         }
-        
+
         internal bool SetPacketSize(int size)
         {
             if (size > TdsEnums.MAX_PACKET_SIZE)
@@ -1056,5 +1057,1818 @@ namespace Microsoft.Data.SqlClient
             }
         }
         */
+
+        ///////////////////////////////////////
+        // Buffer read methods - data values //
+        ///////////////////////////////////////
+
+        // look at the next byte without pulling it off the wire, don't just returun _inBytesUsed since we may
+        // have to go to the network to get the next byte.
+        internal bool TryPeekByte(out byte value)
+        {
+            if (!TryReadByte(out value))
+            {
+                return false;
+            }
+
+            // now do fixup
+            _inBytesPacket++;
+            _inBytesUsed--;
+
+            AssertValidState();
+            return true;
+        }
+
+        // Takes a byte array, an offset, and a len and fills the array from the offset to len number of
+        // bytes from the in buffer.
+        public bool TryReadByteArray(Span<byte> buff, int len)
+        {
+            return TryReadByteArray(buff, len, out _);
+        }
+
+        // NOTE: This method must be retriable WITHOUT replaying a snapshot
+        // Every time you call this method increment the offset and decrease len by the value of totalRead
+        public bool TryReadByteArray(Span<byte> buff, int len, out int totalRead)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            totalRead = 0;
+
+#if DEBUG
+            if (_snapshot != null && _snapshot.DoPend())
+            {
+                _networkPacketTaskSource = new TaskCompletionSource<object>();
+                Interlocked.MemoryBarrier();
+
+                if (s_forcePendingReadsToWaitForUser)
+                {
+                    _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
+                    _realNetworkPacketTaskSource.SetResult(null);
+                }
+                else
+                {
+                    _networkPacketTaskSource.TrySetResult(null);
+                }
+                return false;
+            }
+#endif
+
+            Debug.Assert(buff.IsEmpty || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
+
+            // loop through and read up to array length
+            while (len > 0)
+            {
+                if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
+                {
+                    if (!TryPrepareBuffer())
+                    {
+                        return false;
+                    }
+                }
+
+                int bytesToRead = Math.Min(len, Math.Min(_inBytesPacket, _inBytesRead - _inBytesUsed));
+                Debug.Assert(bytesToRead > 0, "0 byte read in TryReadByteArray");
+                if (!buff.IsEmpty)
+                {
+                    ReadOnlySpan<byte> copyFrom = new ReadOnlySpan<byte>(_inBuff, _inBytesUsed, bytesToRead);
+                    Span<byte> copyTo = buff.Slice(totalRead, bytesToRead);
+                    copyFrom.CopyTo(copyTo);
+                }
+
+                totalRead += bytesToRead;
+                _inBytesUsed += bytesToRead;
+                _inBytesPacket -= bytesToRead;
+                len -= bytesToRead;
+
+                AssertValidState();
+            }
+
+            return true;
+        }
+
+        // Takes no arguments and returns a byte from the buffer.  If the buffer is empty, it is filled
+        // before the byte is returned.
+        internal bool TryReadByte(out byte value)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByte");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            Debug.Assert(_inBytesUsed >= 0 && _inBytesUsed <= _inBytesRead, "ERROR - TDSParser: _inBytesUsed < 0 or _inBytesUsed > _inBytesRead");
+            value = 0;
+
+#if DEBUG
+            if (_snapshot != null && _snapshot.DoPend())
+            {
+                _networkPacketTaskSource = new TaskCompletionSource<object>();
+                Interlocked.MemoryBarrier();
+
+                if (s_forcePendingReadsToWaitForUser)
+                {
+                    _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
+                    _realNetworkPacketTaskSource.SetResult(null);
+                }
+                else
+                {
+                    _networkPacketTaskSource.TrySetResult(null);
+                }
+                return false;
+            }
+#endif
+
+            if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
+            {
+                if (!TryPrepareBuffer())
+                {
+                    return false;
+                }
+            }
+
+            // decrement the number of bytes left in the packet
+            _inBytesPacket--;
+
+            Debug.Assert(_inBytesPacket >= 0, "ERROR - TDSParser: _inBytesPacket < 0");
+
+            // return the byte from the buffer and increment the counter for number of bytes used in the in buffer
+            value = (_inBuff[_inBytesUsed++]);
+
+            AssertValidState();
+            return true;
+        }
+
+        internal bool TryReadChar(out char value)
+        {
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+
+            Span<byte> buffer = stackalloc byte[2];
+            if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
+            {
+                // If the char isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+                if (!TryReadByteArray(buffer, 2))
+                {
+                    value = '\0';
+                    return false;
+                }
+            }
+            else
+            {
+                // The entire char is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
+                _inBytesUsed += 2;
+                _inBytesPacket -= 2;
+            }
+
+            AssertValidState();
+            value = (char)((buffer[1] << 8) + buffer[0]);
+            return true;
+        }
+
+        internal bool TryReadInt16(out short value)
+        {
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+
+            Span<byte> buffer = stackalloc byte[2];
+            if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
+            {
+                // If the int16 isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+                if (!TryReadByteArray(buffer, 2))
+                {
+                    value = default;
+                    return false;
+                }
+            }
+            else
+            {
+                // The entire int16 is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
+                _inBytesUsed += 2;
+                _inBytesPacket -= 2;
+            }
+
+            AssertValidState();
+            value = (short)((buffer[1] << 8) + buffer[0]);
+            return true;
+        }
+
+        internal bool TryReadInt32(out int value)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadInt32");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+            Span<byte> buffer = stackalloc byte[4];
+            if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
+            {
+                // If the int isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+                if (!TryReadByteArray(buffer, 4))
+                {
+                    value = 0;
+                    return false;
+                }
+            }
+            else
+            {
+                // The entire int is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+                buffer = _inBuff.AsSpan(_inBytesUsed, 4);
+                _inBytesUsed += 4;
+                _inBytesPacket -= 4;
+            }
+
+            AssertValidState();
+            value = (buffer[3] << 24) + (buffer[2] << 16) + (buffer[1] << 8) + buffer[0];
+            return true;
+
+        }
+
+        // This method is safe to call when doing async without snapshot
+        internal bool TryReadInt64(out long value)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadInt64");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
+            {
+                if (!TryPrepareBuffer())
+                {
+                    value = 0;
+                    return false;
+                }
+            }
+
+            if ((_bTmpRead > 0) || (((_inBytesUsed + 8) > _inBytesRead) || (_inBytesPacket < 8)))
+            {
+                // If the long isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+
+                if (!TryReadByteArray(_bTmp.AsSpan(_bTmpRead), 8 - _bTmpRead, out int bytesRead))
+                {
+                    Debug.Assert(_bTmpRead + bytesRead <= 8, "Read more data than required");
+                    _bTmpRead += bytesRead;
+                    value = 0;
+                    return false;
+                }
+
+                Debug.Assert(_bTmpRead + bytesRead == 8, "TryReadByteArray returned true without reading all data required");
+                _bTmpRead = 0;
+                AssertValidState();
+                value = BitConverter.ToInt64(_bTmp, 0);
+                return true;
+            }
+            // The entire long is in the packet and in the buffer, so just return it
+            // and take care of the counters.
+
+            value = BitConverter.ToInt64(_inBuff, _inBytesUsed);
+
+            _inBytesUsed += 8;
+            _inBytesPacket -= 8;
+
+            AssertValidState();
+            return true;
+        }
+
+        internal bool TryReadUInt16(out ushort value)
+        {
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+
+            Span<byte> buffer = stackalloc byte[2];
+            if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
+            {
+                // If the uint16 isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+                if (!TryReadByteArray(buffer, 2))
+                {
+                    value = default;
+                    return false;
+                }
+            }
+            else
+            {
+                // The entire uint16 is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
+                _inBytesUsed += 2;
+                _inBytesPacket -= 2;
+            }
+
+            AssertValidState();
+            value = (ushort)((buffer[1] << 8) + buffer[0]);
+            return true;
+        }
+
+        // This method is safe to call when doing async without replay
+        internal bool TryReadUInt32(out uint value)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadUInt32");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
+            {
+                if (!TryPrepareBuffer())
+                {
+                    value = 0;
+                    return false;
+                }
+            }
+
+            if ((_bTmpRead > 0) || (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4)))
+            {
+                // If the int isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+
+                if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 4 - _bTmpRead, out int bytesRead))
+                {
+                    Debug.Assert(_bTmpRead + bytesRead <= 4, "Read more data than required");
+                    _bTmpRead += bytesRead;
+                    value = 0;
+                    return false;
+                }
+
+                Debug.Assert(_bTmpRead + bytesRead == 4, "TryReadByteArray returned true without reading all data required");
+                _bTmpRead = 0;
+                AssertValidState();
+                value = BitConverter.ToUInt32(_bTmp, 0);
+                return true;
+            }
+            // The entire int is in the packet and in the buffer, so just return it
+            // and take care of the counters.
+
+            value = BitConverter.ToUInt32(_inBuff, _inBytesUsed);
+
+            _inBytesUsed += 4;
+            _inBytesPacket -= 4;
+
+            AssertValidState();
+            return true;
+        }
+
+        internal bool TryReadSingle(out float value)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadSingle");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+            if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
+            {
+                // If the float isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+
+                if (!TryReadByteArray(_bTmp, 4))
+                {
+                    value = default;
+                    return false;
+                }
+
+                AssertValidState();
+                value = BitConverter.ToSingle(_bTmp, 0);
+                return true;
+            }
+            // The entire float is in the packet and in the buffer, so just return it
+            // and take care of the counters.
+
+            value = BitConverter.ToSingle(_inBuff, _inBytesUsed);
+
+            _inBytesUsed += 4;
+            _inBytesPacket -= 4;
+
+            AssertValidState();
+            return true;
+        }
+
+        internal bool TryReadDouble(out double value)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadDouble");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+            if (((_inBytesUsed + 8) > _inBytesRead) || (_inBytesPacket < 8))
+            {
+                // If the double isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+
+                if (!TryReadByteArray(_bTmp, 8))
+                {
+                    value = default;
+                    return false;
+                }
+
+                AssertValidState();
+                value = BitConverter.ToDouble(_bTmp, 0);
+                return true;
+            }
+            // The entire double is in the packet and in the buffer, so just return it
+            // and take care of the counters.
+
+            value = BitConverter.ToDouble(_inBuff, _inBytesUsed);
+
+            _inBytesUsed += 8;
+            _inBytesPacket -= 8;
+
+            AssertValidState();
+            return true;
+        }
+
+        internal bool TryReadString(int length, out string value)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadString");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+            int cBytes = length << 1;
+            byte[] buf;
+            int offset = 0;
+
+            if (((_inBytesUsed + cBytes) > _inBytesRead) || (_inBytesPacket < cBytes))
+            {
+                if (_bTmp == null || _bTmp.Length < cBytes)
+                {
+                    _bTmp = new byte[cBytes];
+                }
+
+                if (!TryReadByteArray(_bTmp, cBytes))
+                {
+                    value = null;
+                    return false;
+                }
+
+                // assign local to point to parser scratch buffer
+                buf = _bTmp;
+
+                AssertValidState();
+            }
+            else
+            {
+                // assign local to point to _inBuff
+                buf = _inBuff;
+                offset = _inBytesUsed;
+                _inBytesUsed += cBytes;
+                _inBytesPacket -= cBytes;
+
+                AssertValidState();
+            }
+
+            value = System.Text.Encoding.Unicode.GetString(buf, offset, cBytes);
+            return true;
+        }
+
+        internal bool TryReadStringWithEncoding(int length, System.Text.Encoding encoding, bool isPlp, out string value)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadStringWithEncoding");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+
+            if (null == encoding)
+            {
+                // Bug 462435:CR: TdsParser.DrainData(stateObj) hitting timeout exception after Connection Resiliency change
+                // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=462435
+                // Need to skip the current column before throwing the error - this ensures that the state shared between this and the data reader is consistent when calling DrainData
+                if (isPlp)
+                {
+                    if (!_parser.TrySkipPlpValue((ulong)length, this, out _))
+                    {
+                        value = null;
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!TrySkipBytes(length))
+                    {
+                        value = null;
+                        return false;
+                    }
+                }
+
+                _parser.ThrowUnsupportedCollationEncountered(this);
+            }
+            byte[] buf = null;
+            int offset = 0;
+
+            if (isPlp)
+            {
+                if (!TryReadPlpBytes(ref buf, 0, int.MaxValue, out length))
+                {
+                    value = null;
+                    return false;
+                }
+
+                AssertValidState();
+            }
+            else
+            {
+                if (((_inBytesUsed + length) > _inBytesRead) || (_inBytesPacket < length))
+                {
+                    if (_bTmp == null || _bTmp.Length < length)
+                    {
+                        _bTmp = new byte[length];
+                    }
+
+                    if (!TryReadByteArray(_bTmp, length))
+                    {
+                        value = null;
+                        return false;
+                    }
+
+                    // assign local to point to parser scratch buffer
+                    buf = _bTmp;
+
+                    AssertValidState();
+                }
+                else
+                {
+                    // assign local to point to _inBuff
+                    buf = _inBuff;
+                    offset = _inBytesUsed;
+                    _inBytesUsed += length;
+                    _inBytesPacket -= length;
+
+                    AssertValidState();
+                }
+            }
+
+            // BCL optimizes to not use char[] underneath
+            value = encoding.GetString(buf, offset, length);
+            return true;
+        }
+
+        internal ulong ReadPlpLength(bool returnPlpNullIfNull)
+        {
+            Debug.Assert(_syncOverAsync, "Should not attempt pends in a synchronous call");
+            bool result = TryReadPlpLength(returnPlpNullIfNull, out ulong value);
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
+            return value;
+        }
+
+        // Reads the length of either the entire data or the length of the next chunk in a
+        //   partially length prefixed data
+        // After this call, call  ReadPlpBytes/ReadPlpUnicodeChars until the specified length of data
+        // is consumed. Repeat this until ReadPlpLength returns 0 in order to read the
+        // entire stream.
+        // When this function returns 0, it means the data stream is read completely and the
+        // plp state in the tdsparser is cleaned.
+        internal bool TryReadPlpLength(bool returnPlpNullIfNull, out ulong lengthLeft)
+        {
+            bool isNull = false;
+
+            Debug.Assert(_longlenleft == 0, "Out of synch length read request");
+            if (_longlen == 0)
+            {
+                // First chunk is being read. Find out what type of chunk it is
+                if (!TryReadInt64(out long value))
+                {
+                    lengthLeft = 0;
+                    return false;
+                }
+                _longlen = (ulong)value;
+            }
+
+            if (_longlen == TdsEnums.SQL_PLP_NULL)
+            {
+                _longlen = 0;
+                _longlenleft = 0;
+                isNull = true;
+            }
+            else
+            {
+                // Data is coming in uint chunks, read length of next chunk
+                if (!TryReadUInt32(out uint chunklen))
+                {
+                    lengthLeft = 0;
+                    return false;
+                }
+                if (chunklen == TdsEnums.SQL_PLP_CHUNK_TERMINATOR)
+                {
+                    _longlenleft = 0;
+                    _longlen = 0;
+                }
+                else
+                {
+                    _longlenleft = chunklen;
+                }
+            }
+
+            AssertValidState();
+
+            if (isNull && returnPlpNullIfNull)
+            {
+                lengthLeft = TdsEnums.SQL_PLP_NULL;
+                return true;
+            }
+
+            lengthLeft = _longlenleft;
+            return true;
+        }
+
+        internal int ReadPlpBytesChunk(byte[] buff, int offset, int len)
+        {
+            Debug.Assert(_syncOverAsync, "Should not attempt pends in a synchronous call");
+            Debug.Assert(_longlenleft > 0, "Read when no data available");
+
+            int bytesToRead = (int)Math.Min(_longlenleft, (ulong)len);
+            bool result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out int value);
+            _longlenleft -= (ulong)bytesToRead;
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
+            return value;
+        }
+
+        // Reads the requested number of bytes from a plp data stream, or the entire data if
+        // requested length is -1 or larger than the actual length of data. First call to this method
+        //  should be preceeded by a call to ReadPlpLength or ReadDataLength.
+        // Returns the actual bytes read.
+        // NOTE: This method must be retriable WITHOUT replaying a snapshot
+        // Every time you call this method increment the offset and decrease len by the value of totalBytesRead
+        internal bool TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead)
+        {
+            int bytesRead;
+            int bytesLeft;
+            byte[] newbuf;
+
+            if (_longlen == 0)
+            {
+                Debug.Assert(_longlenleft == 0);
+                if (buff == null)
+                {
+                    buff = Array.Empty<byte>();
+                }
+
+                AssertValidState();
+                totalBytesRead = 0;
+                return true;       // No data
+            }
+
+            Debug.Assert(_longlen != TdsEnums.SQL_PLP_NULL, "Out of sync plp read request");
+            Debug.Assert((buff == null && offset == 0) || (buff.Length >= offset + len), "Invalid length sent to ReadPlpBytes()!");
+
+            bytesLeft = len;
+
+            // If total length is known up front, allocate the whole buffer in one shot instead of realloc'ing and copying over each time
+            if (buff == null && _longlen != TdsEnums.SQL_PLP_UNKNOWNLEN)
+            {
+
+                if (_snapshot != null)
+                {
+                    // if there is a snapshot and it contains a stored plp buffer take it
+                    // and try to use it if it is the right length
+                    buff = _snapshot._plpBuffer;
+                    _snapshot._plpBuffer = null;
+                }
+
+                if ((ulong)(buff?.Length ?? 0) != _longlen)
+                {
+                    // if the buffer is null or the wrong length create one to use
+                    buff = new byte[(Math.Min((int)_longlen, len))];
+                }
+            }
+
+            if (_longlenleft == 0)
+            {
+                if (!TryReadPlpLength(false, out _))
+                {
+                    totalBytesRead = 0;
+                    return false;
+                }
+                if (_longlenleft == 0)
+                { // Data read complete
+                    totalBytesRead = 0;
+                    return true;
+                }
+            }
+
+            if (buff == null)
+            {
+                buff = new byte[_longlenleft];
+            }
+
+            totalBytesRead = 0;
+
+            while (bytesLeft > 0)
+            {
+                int bytesToRead = (int)Math.Min(_longlenleft, (ulong)bytesLeft);
+                if (buff.Length < (offset + bytesToRead))
+                {
+                    // Grow the array
+                    newbuf = new byte[offset + bytesToRead];
+                    Buffer.BlockCopy(buff, 0, newbuf, 0, offset);
+                    buff = newbuf;
+                }
+
+                bool result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out bytesRead);
+                Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
+                Debug.Assert((ulong)bytesRead <= _longlenleft, "Read more bytes than is available");
+
+                bytesLeft -= bytesRead;
+                offset += bytesRead;
+                totalBytesRead += bytesRead;
+                _longlenleft -= (ulong)bytesRead;
+                if (!result)
+                {
+                    if (_snapshot != null)
+                    {
+                        // a partial read has happened so store the target buffer in the snapshot
+                        // so it can be re-used when another packet arrives and we read again
+                        _snapshot._plpBuffer = buff;
+                    }
+                    return false;
+                }
+
+                if (_longlenleft == 0)
+                {
+                    // Read the next chunk or cleanup state if hit the end
+                    if (!TryReadPlpLength(false, out _))
+                    {
+                        if (_snapshot != null)
+                        {
+                            // a partial read has happened so store the target buffer in the snapshot
+                            // so it can be re-used when another packet arrives and we read again
+                            _snapshot._plpBuffer = buff;
+                        }
+                        return false;
+                    }
+                }
+
+                AssertValidState();
+
+                // Catch the point where we read the entire plp data stream and clean up state
+                if (_longlenleft == 0)   // Data read complete
+                    break;
+            }
+            return true;
+        }
+
+        private void SetSnapshottedState(SnapshottedStateFlags flag, bool value)
+        {
+            if (value)
+            {
+                _snapshottedState |= flag;
+            }
+            else
+            {
+                _snapshottedState &= ~flag;
+            }
+        }
+
+        private bool GetSnapshottedState(SnapshottedStateFlags flag)
+        {
+            return (_snapshottedState & flag) == flag;
+        }
+
+        internal bool HasOpenResult
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.OpenResult);
+            set => SetSnapshottedState(SnapshottedStateFlags.OpenResult, value);
+        }
+
+        internal bool HasPendingData
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.PendingData);
+            set => SetSnapshottedState(SnapshottedStateFlags.PendingData, value);
+        }
+
+        internal bool HasReceivedError
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived, value);
+        }
+
+        internal bool HasReceivedAttention
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.AttentionReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.AttentionReceived, value);
+        }
+
+        internal bool HasReceivedColumnMetadata
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived, value);
+        }
+
+
+
+        /////////////////////////////////////////
+        // Value Skip Logic                    //
+        /////////////////////////////////////////
+
+
+        // Reads bytes from the buffer but doesn't return them, in effect simply deleting them.
+        // Does not handle plp fields, need to use SkipPlpBytesValue for those.
+        // Does not handle null values or NBC bitmask, ensure the value is not null before calling this method
+        internal bool TrySkipLongBytes(long num)
+        {
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+
+            while (num > 0)
+            {
+                int cbSkip = (int)Math.Min(int.MaxValue, num);
+                if (!TryReadByteArray(Span<byte>.Empty, cbSkip))
+                {
+                    return false;
+                }
+                num -= cbSkip;
+            }
+
+            return true;
+        }
+
+
+        // Reads bytes from the buffer but doesn't return them, in effect simply deleting them.
+        internal bool TrySkipBytes(int num)
+        {
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+            return TryReadByteArray(Span<byte>.Empty, num);
+        }
+
+
+
+        /////////////////////////////////////////
+        // Network/Packet Reading & Processing //
+        /////////////////////////////////////////
+        internal bool TryReadNetworkPacket()
+        {
+#if DEBUG
+            Debug.Assert(!_shouldHaveEnoughData || _attentionSent, "Caller said there should be enough data, but we are currently reading a packet");
+#endif
+
+            if (_snapshot != null)
+            {
+                if (_snapshotReplay)
+                {
+                    if (_snapshot.Replay())
+                    {
+#if DEBUG
+                        if (s_checkNetworkPacketRetryStacks)
+                        {
+#if NETFRAMEWORK
+                            _snapshot.CheckStack(new StackTrace());
+#else
+                            _snapshot.CheckStack(Environment.StackTrace);
+#endif
+                        }
+#endif
+                        return true;
+                    }
+#if DEBUG
+
+                    if (s_checkNetworkPacketRetryStacks)
+                    {
+#if NETFRAMEWORK
+                        _lastStack = new StackTrace();
+#else
+                        _lastStack = Environment.StackTrace;
+#endif
+                    }
+#endif
+                }
+
+                // previous buffer is in snapshot
+                _inBuff = new byte[_inBuff.Length];
+            }
+
+            if (_syncOverAsync)
+            {
+                ReadSniSyncOverAsync();
+                return true;
+            }
+
+            ReadSni(new TaskCompletionSource<object>());
+
+#if DEBUG
+            if (s_failAsyncPends)
+            {
+                throw new InvalidOperationException("Attempted to pend a read when _failAsyncPends test hook was enabled");
+            }
+            if (s_forceSyncOverAsyncAfterFirstPend)
+            {
+                _syncOverAsync = true;
+            }
+#endif
+            Debug.Assert((_snapshot != null) ^ _asyncReadWithoutSnapshot, "Must have either _snapshot set up or _asyncReadWithoutSnapshot enabled (but not both) to pend a read");
+
+            return false;
+        }
+
+        internal void PrepareReplaySnapshot()
+        {
+            _networkPacketTaskSource = null;
+            _snapshot.PrepareReplay();
+        }
+
+        internal void OnConnectionClosed()
+        {
+            // the stateObj is not null, so the async invocation that registered this callback
+            // via the SqlReferenceCollection has not yet completed.  We will look for a
+            // _networkPacketTaskSource and mark it faulted.  If we don't find it, then
+            // TdsParserStateObject.ReadSni will abort when it does look to see if the parser
+            // is open.  If we do, then when the call that created it completes and a continuation
+            // is registered, we will ensure the completion is called.
+
+            // Note, this effort is necessary because when the app domain is being unloaded,
+            // we don't get callback from SNI.
+
+            // first mark parser broken.  This is to ensure that ReadSni will abort if it has
+            // not yet executed.
+            Parser.State = TdsParserState.Broken;
+            Parser.Connection.BreakConnection();
+
+            // Ensure that changing state occurs before checking _networkPacketTaskSource
+            Interlocked.MemoryBarrier();
+
+            // then check for networkPacketTaskSource
+            TaskCompletionSource<object> taskSource = _networkPacketTaskSource;
+            if (taskSource != null)
+            {
+                taskSource.TrySetException(ADP.ExceptionWithStackTrace(ADP.ClosedConnectionError()));
+            }
+
+            taskSource = _writeCompletionSource;
+            if (taskSource != null)
+            {
+                taskSource.TrySetException(ADP.ExceptionWithStackTrace(ADP.ClosedConnectionError()));
+            }
+        }
+        public void SetTimeoutStateStopped()
+        {
+            Interlocked.Exchange(ref _timeoutState, TimeoutState.Stopped);
+            _timeoutIdentityValue = 0;
+        }
+
+        public bool IsTimeoutStateExpired
+        {
+            get
+            {
+                int state = _timeoutState;
+                return state == TimeoutState.ExpiredAsync || state == TimeoutState.ExpiredSync;
+            }
+        }
+
+        private void OnTimeoutAsync(object state)
+        {
+            if (_enforceTimeoutDelay)
+            {
+                Thread.Sleep(_enforcedTimeoutDelayInMilliSeconds);
+            }
+
+            int currentIdentityValue = _timeoutIdentityValue;
+            TimeoutState timeoutState = (TimeoutState)state;
+            if (timeoutState.IdentityValue == _timeoutIdentityValue)
+            {
+                // the return value is not useful here because no choice is going to be made using it 
+                // we only want to make this call to set the state knowing that it will be seen later
+                OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredAsync);
+            }
+            else
+            {
+                Debug.WriteLine($"OnTimeoutAsync called with identity state={timeoutState.IdentityValue} but current identity is {currentIdentityValue} so it is being ignored");
+            }
+        }
+
+        private bool OnTimeoutSync(bool asyncClose = false)
+        {
+            return OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredSync, asyncClose);
+        }
+
+        /// <summary>
+        /// attempts to change the timout state from the expected state to the target state and if it succeeds
+        /// will setup the the stateobject into the timeout expired state
+        /// </summary>
+        /// <param name="expectedState">the state that is the expected current state, state will change only if this is correct</param>
+        /// <param name="targetState">the state that will be changed to if the expected state is correct</param>
+        /// <param name="asyncClose">any close action to be taken by an async task to avoid deadlock.</param>
+        /// <returns>boolean value indicating whether the call changed the timeout state</returns>
+        private bool OnTimeoutCore(int expectedState, int targetState, bool asyncClose = false)
+        {
+            Debug.Assert(targetState == TimeoutState.ExpiredAsync || targetState == TimeoutState.ExpiredSync, "OnTimeoutCore must have an expiry state as the targetState");
+
+            bool retval = false;
+            if (Interlocked.CompareExchange(ref _timeoutState, targetState, expectedState) == expectedState)
+            {
+                retval = true;
+                // lock protects against Close and Cancel
+                lock (this)
+                {
+                    if (!_attentionSent)
+                    {
+                        AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+
+                        // Grab a reference to the _networkPacketTaskSource in case it becomes null while we are trying to use it
+                        TaskCompletionSource<object> source = _networkPacketTaskSource;
+
+                        if (_parser.Connection.IsInPool)
+                        {
+                            // Dev11 Bug 390048 : Timing issue between OnTimeout and ReadAsyncCallback results in SqlClient's packet parsing going out of sync          
+                            // We should never timeout if the connection is currently in the pool: the safest thing to do here is to doom the connection to avoid corruption
+                            Debug.Assert(_parser.Connection.IsConnectionDoomed, "Timeout occurred while the connection is in the pool");
+                            _parser.State = TdsParserState.Broken;
+                            _parser.Connection.BreakConnection();
+                            if (source != null)
+                            {
+                                source.TrySetCanceled();
+                            }
+                        }
+                        else if (_parser.State == TdsParserState.OpenLoggedIn)
+                        {
+                            try
+                            {
+                                SendAttention(mustTakeWriteLock: true, asyncClose);
+                            }
+                            catch (Exception e)
+                            {
+                                if (!ADP.IsCatchableExceptionType(e))
+                                {
+                                    throw;
+                                }
+                                // if unable to send attention, cancel the _networkPacketTaskSource to
+                                // request the parser be broken.  SNIWritePacket errors will already
+                                // be in the _errors collection.
+                                if (source != null)
+                                {
+                                    source.TrySetCanceled();
+                                }
+                            }
+                        }
+
+                        // If we still haven't received a packet then we don't want to actually close the connection
+                        // from another thread, so complete the pending operation as cancelled, informing them to break it
+                        if (source != null)
+                        {
+                            Task.Delay(AttentionTimeoutSeconds * 1000).ContinueWith(_ =>
+                            {
+                                // Only break the connection if the read didn't finish
+                                if (!source.Task.IsCompleted)
+                                {
+                                    int pendingCallback = IncrementPendingCallbacks();
+#if NETFRAMEWORK
+                                    System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
+#endif
+                                    try
+                                    {
+                                        // If pendingCallback is at 3, then ReadAsyncCallback hasn't been called yet
+                                        // So it is safe for us to break the connection and cancel the Task (since we are not sure that ReadAsyncCallback will ever be called)
+                                        if ((pendingCallback == 3) && (!source.Task.IsCompleted))
+                                        {
+                                            Debug.Assert(source == _networkPacketTaskSource, "_networkPacketTaskSource which is being timed is not the current task source");
+
+                                            // Try to throw the timeout exception and store it in the task
+                                            bool exceptionStored = false;
+                                            try
+                                            {
+                                                CheckThrowSNIException();
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                if (source.TrySetException(ex))
+                                                {
+                                                    exceptionStored = true;
+                                                }
+                                            }
+
+                                            // Ensure that the connection is no longer usable 
+                                            // This is needed since the timeout error added above is non-fatal (and so throwing it won't break the connection)
+                                            _parser.State = TdsParserState.Broken;
+                                            _parser.Connection.BreakConnection();
+
+                                            // If we didn't get an exception (something else observed it?) then ensure that the task is cancelled
+                                            if (!exceptionStored)
+                                            {
+                                                source.TrySetCanceled();
+                                            }
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        DecrementPendingCallbacks(release: false);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            return retval;
+        }
+
+        private void ChangeNetworkPacketTimeout(int dueTime, int period)
+        {
+            Timer networkPacketTimeout = _networkPacketTimeout;
+            if (networkPacketTimeout != null)
+            {
+                try
+                {
+                    networkPacketTimeout.Change(dueTime, period);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // _networkPacketTimeout is set to null before Disposing, but there is still a slight chance
+                    // that object was disposed after we took a copy
+                }
+            }
+        }
+
+        /////////////////////////////////////////
+        // Network/Packet Writing & Processing //
+        /////////////////////////////////////////
+
+        //
+        // Takes a secure string and offsets and saves them for a write latter when the information is written out to SNI Packet
+        //  This method is provided to better handle the life cycle of the clear text of the secure string
+        //  This method also ensures that the clear text is not held in the unpined managed buffer so that it avoids getting moved around by CLR garbage collector
+        //  TdsParserStaticMethods.EncryptPassword operation is also done in the unmanaged buffer for the clear text later
+        //
+        internal void WriteSecureString(SecureString secureString)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to WriteSecureString");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            Debug.Assert(_securePasswords[0] == null || _securePasswords[1] == null, "There are more than two secure passwords");
+
+            int index = _securePasswords[0] != null ? 1 : 0;
+
+            _securePasswords[index] = secureString;
+            _securePasswordOffsetsInBuffer[index] = _outBytesUsed;
+
+            // loop through and write the entire array
+            int lengthInBytes = secureString.Length * 2;
+
+            // It is guaranteed both secure password and secure change password should fit into the first packet
+            // Given current TDS format and implementation it is not possible that one of secure string is the last item and exactly fill up the output buffer
+            //  if this ever happens and it is correct situation, the packet needs to be written out after _outBytesUsed is update
+            Debug.Assert((_outBytesUsed + lengthInBytes) < _outBuff.Length, "Passwords cannot be split into two different packet or the last item which fully fill up _outBuff!!!");
+
+            _outBytesUsed += lengthInBytes;
+        }
+
+        // ResetSecurePasswordsInformation: clears information regarding secure passwords when login is done; called from TdsParser.TdsLogin
+        internal void ResetSecurePasswordsInformation()
+        {
+            for (int i = 0; i < _securePasswords.Length; ++i)
+            {
+                _securePasswords[i] = null;
+                _securePasswordOffsetsInBuffer[i] = 0;
+            }
+        }
+
+        internal Task WaitForAccumulatedWrites()
+        {
+            // Checked for stored exceptions
+            Exception delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
+            if (delayedException != null)
+            {
+                throw delayedException;
+            }
+#pragma warning restore 420
+
+            if (_asyncWriteCount == 0)
+            {
+                return null;
+            }
+
+            _writeCompletionSource = new TaskCompletionSource<object>();
+            Task task = _writeCompletionSource.Task;
+
+            // Ensure that _writeCompletionSource is set before checking state
+            Interlocked.MemoryBarrier();
+
+            // Now that we have set _writeCompletionSource, check if parser is closed or broken
+            if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
+            {
+                throw ADP.ClosedConnectionError();
+            }
+
+            // Check for stored exceptions
+            delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
+            if (delayedException != null)
+            {
+                throw delayedException;
+            }
+
+            // If there are no outstanding writes, see if we can shortcut and return null
+            if ((_asyncWriteCount == 0) && ((!task.IsCompleted) || (task.Exception == null)))
+            {
+                task = null;
+            }
+
+            return task;
+        }
+
+        // Takes in a single byte and writes it to the buffer.  If the buffer is full, it is flushed
+        // and then the buffer is re-initialized in flush() and then the byte is put in the buffer.
+        internal void WriteByte(byte b)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to WriteByte");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            Debug.Assert(_outBytesUsed <= _outBuff.Length, "ERROR - TDSParser: _outBytesUsed > _outBuff.Length");
+
+            // check to make sure we haven't used the full amount of space available in the buffer, if so, flush it
+            if (_outBytesUsed == _outBuff.Length)
+            {
+                WritePacket(TdsEnums.SOFTFLUSH, canAccumulate: true);
+            }
+            // set byte in buffer and increment the counter for number of bytes used in the out buffer
+            _outBuff[_outBytesUsed++] = b;
+        }
+
+        internal Task WriteByteSpan(ReadOnlySpan<byte> span, bool canAccumulate = true, TaskCompletionSource<object> completion = null)
+        {
+            return WriteBytes(span, span.Length, 0, canAccumulate, completion);
+        }
+
+        internal Task WriteByteArray(byte[] b, int len, int offsetBuffer, bool canAccumulate = true, TaskCompletionSource<object> completion = null)
+        {
+
+            return WriteBytes(ReadOnlySpan<byte>.Empty, len, offsetBuffer, canAccumulate, completion, b);
+        }
+
+        //
+        // Takes a span or a byte array and writes it to the buffer
+        // If you pass in a span and a null array then the span wil be used.
+        // If you pass in a non-null array then the array will be used and the span is ignored.
+        // if the span cannot be written into the current packet then the remaining contents of the span are copied to a
+        //  new heap allocated array that will used to callback into the method to continue the write operation.
+        private Task WriteBytes(ReadOnlySpan<byte> b, int len, int offsetBuffer, bool canAccumulate = true, TaskCompletionSource<object> completion = null, byte[] array = null)
+        {
+            if (array != null)
+            {
+                b = new ReadOnlySpan<byte>(array, offsetBuffer, len);
+            }
+            try
+            {
+#if NETFRAMEWORK
+                TdsParser.ReliabilitySection.Assert("unreliable call to WriteByteArray");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+                bool async = _parser._asyncWrite;  // NOTE: We are capturing this now for the assert after the Task is returned, since WritePacket will turn off async if there is an exception
+                Debug.Assert(async || _asyncWriteCount == 0);
+                // Do we have to send out in packet size chunks, or can we rely on netlib layer to break it up?
+                // would prefer to do something like:
+                //
+                // if (len > what we have room for || len > out buf)
+                //   flush buffer
+                //   UnsafeNativeMethods.Write(b)
+                //
+
+                int offset = offsetBuffer;
+
+                Debug.Assert(b.Length >= len, "Invalid length sent to WriteBytes()!");
+
+                // loop through and write the entire array
+                do
+                {
+                    if ((_outBytesUsed + len) > _outBuff.Length)
+                    {
+                        // If the remainder of the data won't fit into the buffer, then we have to put
+                        // whatever we can into the buffer, and flush that so we can then put more into
+                        // the buffer on the next loop of the while.
+
+                        int remainder = _outBuff.Length - _outBytesUsed;
+
+                        // write the remainder
+                        Span<byte> copyTo = _outBuff.AsSpan(_outBytesUsed, remainder);
+                        ReadOnlySpan<byte> copyFrom = b.Slice(0, remainder);
+
+                        Debug.Assert(copyTo.Length == copyFrom.Length, $"copyTo.Length:{copyTo.Length} and copyFrom.Length{copyFrom.Length:D} should be the same");
+
+                        copyFrom.CopyTo(copyTo);
+
+                        offset += remainder;
+                        _outBytesUsed += remainder;
+                        len -= remainder;
+                        b = b.Slice(remainder, len);
+
+                        Task packetTask = WritePacket(TdsEnums.SOFTFLUSH, canAccumulate);
+
+                        if (packetTask != null)
+                        {
+                            Task task = null;
+                            Debug.Assert(async, "Returned task in sync mode");
+                            if (completion == null)
+                            {
+                                completion = new TaskCompletionSource<object>();
+                                task = completion.Task; // we only care about return from topmost call, so do not access Task property in other cases
+                            }
+
+                            if (array == null)
+                            {
+                                byte[] tempArray = new byte[len];
+                                Span<byte> copyTempTo = tempArray.AsSpan();
+
+                                Debug.Assert(copyTempTo.Length == b.Length, $"copyTempTo.Length:{copyTempTo.Length} and copyTempFrom.Length:{b.Length:D} should be the same");
+
+                                b.CopyTo(copyTempTo);
+                                array = tempArray;
+                                offset = 0;
+                            }
+
+                            WriteBytesSetupContinuation(array, len, completion, offset, packetTask);
+                            return task;
+                        }
+                    }
+                    else
+                    {
+                        //((stateObj._outBytesUsed + len) <= stateObj._outBuff.Length )
+                        // Else the remainder of the string will fit into the buffer, so copy it into the
+                        // buffer and then break out of the loop.
+
+                        Span<byte> copyTo = _outBuff.AsSpan(_outBytesUsed, len);
+                        ReadOnlySpan<byte> copyFrom = b.Slice(0, len);
+
+                        Debug.Assert(copyTo.Length == copyFrom.Length, $"copyTo.Length:{copyTo.Length} and copyFrom.Length:{copyFrom.Length:D} should be the same");
+
+                        copyFrom.CopyTo(copyTo);
+
+                        // handle out buffer bytes used counter
+                        _outBytesUsed += len;
+                        break;
+                    }
+                } while (len > 0);
+
+                if (completion != null)
+                {
+                    completion.SetResult(null);
+                }
+                return null;
+            }
+            catch (Exception e)
+            {
+                if (completion != null)
+                {
+                    completion.SetException(e);
+                    return null;
+                }
+
+                throw;
+            }
+        }
+
+        // Dumps contents of buffer to SNI for network write.
+        internal Task WritePacket(byte flushMode, bool canAccumulate = false)
+        {
+            TdsParserState state = _parser.State;
+            if ((state == TdsParserState.Closed) || (state == TdsParserState.Broken))
+            {
+                throw ADP.ClosedConnectionError();
+            }
+
+            if (
+                // This appears to be an optimization to avoid writing empty packets in 2005
+                // However, since we don't know the version prior to login Is2005OrNewer was always false prior to login
+                // So removing the Is2005OrNewer check causes issues since the login packet happens to meet the rest of the conditions below
+                // So we need to avoid this check prior to login completing
+                state == TdsParserState.OpenLoggedIn &&
+                !_bulkCopyOpperationInProgress && // ignore the condition checking for bulk copy
+                    _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen))
+                    && _outputPacketCount == 0
+                || _outBytesUsed == _outputHeaderLen
+                    && _outputPacketCount == 0)
+            {
+                return null;
+            }
+
+            byte status;
+            byte packetNumber = _outputPacketNumber;
+
+            // Set Status byte based whether this is end of message or not
+            bool willCancel = (_cancelled) && (_parser._asyncWrite);
+            if (willCancel)
+            {
+                status = TdsEnums.ST_EOM | TdsEnums.ST_IGNORE;
+                ResetPacketCounters();
+            }
+            else if (TdsEnums.HARDFLUSH == flushMode)
+            {
+                status = TdsEnums.ST_EOM;
+                ResetPacketCounters();
+            }
+            else if (TdsEnums.SOFTFLUSH == flushMode)
+            {
+                status = TdsEnums.ST_BATCH;
+                _outputPacketNumber++;
+                _outputPacketCount++;
+            }
+            else
+            {
+                status = TdsEnums.ST_EOM;
+                Debug.Fail($"Unexpected argument {flushMode,-2:x2} to WritePacket");
+            }
+
+            _outBuff[0] = _outputMessageType;         // Message Type
+            _outBuff[1] = status;
+            _outBuff[2] = (byte)(_outBytesUsed >> 8); // length - upper byte
+            _outBuff[3] = (byte)(_outBytesUsed & 0xff); // length - lower byte
+            _outBuff[4] = 0;                          // channel
+            _outBuff[5] = 0;
+            _outBuff[6] = packetNumber;               // packet
+            _outBuff[7] = 0;                          // window
+
+            Task task = null;
+            _parser.CheckResetConnection(this);       // HAS SIDE EFFECTS - re-org at a later time if possible
+
+            task = WriteSni(canAccumulate);
+            AssertValidState();
+
+            if (willCancel)
+            {
+                // If we have been canceled, then ensure that we write the ATTN packet as well
+                task = AsyncHelper.CreateContinuationTask(task, CancelWritePacket);
+            }
+            return task;
+        }
+
+        private void CancelWritePacket()
+        {
+            Debug.Assert(_cancelled, "Should not call CancelWritePacket if _cancelled is not set");
+
+            _parser.Connection.ThreadHasParserLockForClose = true;      // In case of error, let the connection know that we are holding the lock
+            try
+            {
+                // Send the attention and wait for the ATTN_ACK
+                SendAttention();
+                ResetCancelAndProcessAttention();
+
+                // Let the caller know that we've given up
+                throw SQL.OperationCancelled();
+            }
+            finally
+            {
+                _parser.Connection.ThreadHasParserLockForClose = false;
+            }
+        }
+
+        //////////////////////////////////////////////
+        // Statistics, Tracing, and related methods //
+        //////////////////////////////////////////////
+
+        private void SniReadStatisticsAndTracing()
+        {
+            SqlStatistics statistics = Parser.Statistics;
+            if (null != statistics)
+            {
+                if (statistics.WaitForReply)
+                {
+                    statistics.SafeIncrement(ref statistics._serverRoundtrips);
+                    statistics.ReleaseAndUpdateNetworkServerTimer();
+                }
+
+                statistics.SafeAdd(ref statistics._bytesReceived, _inBytesRead);
+                statistics.SafeIncrement(ref statistics._buffersReceived);
+            }
+        }
+
+        [Conditional("DEBUG")]
+        private void AssertValidState()
+        {
+            if (_inBytesUsed < 0 || _inBytesRead < 0)
+            {
+                Debug.Fail($"Invalid TDS Parser State: either _inBytesUsed or _inBytesRead is negative: {_inBytesUsed}, {_inBytesRead}");
+            }
+            else if (_inBytesUsed > _inBytesRead)
+            {
+                Debug.Fail($"Invalid TDS Parser State: _inBytesUsed > _inBytesRead: {_inBytesUsed} > {_inBytesRead}");
+            }
+
+            // TODO: add more state validations here, remember to call AssertValidState every place the relevant fields change
+
+            Debug.Assert(_inBytesPacket >= 0, "Packet must not be negative");
+        }
+
+        //////////////////////////////////////////////
+        // Errors and Warnings                      //
+        //////////////////////////////////////////////
+
+        /// <summary>
+        /// True if there is at least one error or warning (not counting the pre-attention errors\warnings)
+        /// </summary>
+        internal bool HasErrorOrWarning
+        {
+            get
+            {
+                return _hasErrorOrWarning;
+            }
+        }
+
+        /// <summary>
+        /// Adds an error to the error collection
+        /// </summary>
+        /// <param name="error"></param>
+        internal void AddError(SqlError error)
+        {
+            Debug.Assert(error != null, "Trying to add a null error");
+
+            // Switch to sync once we see an error
+            _syncOverAsync = true;
+
+            lock (_errorAndWarningsLock)
+            {
+                _hasErrorOrWarning = true;
+                if (_errors == null)
+                {
+                    _errors = new SqlErrorCollection();
+                }
+                _errors.Add(error);
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of errors currently in the error collection
+        /// </summary>
+        internal int ErrorCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_errors != null)
+                    {
+                        count = _errors.Count;
+                    }
+                }
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Adds an warning to the warning collection
+        /// </summary>
+        /// <param name="error"></param>
+        internal void AddWarning(SqlError error)
+        {
+            Debug.Assert(error != null, "Trying to add a null error");
+
+            // Switch to sync once we see a warning
+            _syncOverAsync = true;
+
+            lock (_errorAndWarningsLock)
+            {
+                _hasErrorOrWarning = true;
+                if (_warnings == null)
+                {
+                    _warnings = new SqlErrorCollection();
+                }
+                _warnings.Add(error);
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of warnings currently in the warning collection
+        /// </summary>
+        internal int WarningCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_warnings != null)
+                    {
+                        count = _warnings.Count;
+                    }
+                }
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of errors currently in the pre-attention error collection
+        /// </summary>
+        internal int PreAttentionErrorCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_preAttentionErrors != null)
+                    {
+                        count = _preAttentionErrors.Count;
+                    }
+                }
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of errors currently in the pre-attention warning collection
+        /// </summary>
+        internal int PreAttentionWarningCount
+        {
+            get
+            {
+                int count = 0;
+                lock (_errorAndWarningsLock)
+                {
+                    if (_preAttentionWarnings != null)
+                    {
+                        count = _preAttentionWarnings.Count;
+                    }
+                }
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Gets the full list of errors and warnings (including the pre-attention ones), then wipes all error and warning lists
+        /// </summary>
+        /// <param name="broken">If true, the connection should be broken</param>
+        /// <returns>An array containing all of the errors and warnings</returns>
+        internal SqlErrorCollection GetFullErrorAndWarningCollection(out bool broken)
+        {
+            SqlErrorCollection allErrors = new SqlErrorCollection();
+            broken = false;
+
+            lock (_errorAndWarningsLock)
+            {
+                _hasErrorOrWarning = false;
+
+                // Merge all error lists, then reset them
+                AddErrorsToCollection(_errors, ref allErrors, ref broken);
+                AddErrorsToCollection(_warnings, ref allErrors, ref broken);
+                _errors = null;
+                _warnings = null;
+
+                // We also process the pre-attention error lists here since, if we are here and they are populated, then an error occurred while sending attention so we should show the errors now (otherwise they'd be lost)
+                AddErrorsToCollection(_preAttentionErrors, ref allErrors, ref broken);
+                AddErrorsToCollection(_preAttentionWarnings, ref allErrors, ref broken);
+                _preAttentionErrors = null;
+                _preAttentionWarnings = null;
+            }
+
+            return allErrors;
+        }
+
+        private void AddErrorsToCollection(SqlErrorCollection inCollection, ref SqlErrorCollection collectionToAddTo, ref bool broken)
+        {
+            if (inCollection != null)
+            {
+                foreach (SqlError error in inCollection)
+                {
+                    collectionToAddTo.Add(error);
+                    broken |= (error.Class >= TdsEnums.FATAL_ERROR_CLASS);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Stores away current errors and warnings so that an attention can be processed
+        /// </summary>
+        internal void StoreErrorAndWarningForAttention()
+        {
+            lock (_errorAndWarningsLock)
+            {
+                Debug.Assert(_preAttentionErrors == null && _preAttentionWarnings == null, "Can't store errors for attention because there are already errors stored");
+
+                _hasErrorOrWarning = false;
+
+                _preAttentionErrors = _errors;
+                _preAttentionWarnings = _warnings;
+
+                _errors = null;
+                _warnings = null;
+            }
+        }
+
+        /// <summary>
+        /// Restores errors and warnings that were stored in order to process an attention
+        /// </summary>
+        internal void RestoreErrorAndWarningAfterAttention()
+        {
+            lock (_errorAndWarningsLock)
+            {
+                Debug.Assert(_errors == null && _warnings == null, "Can't restore errors after attention because there are already other errors");
+
+                _hasErrorOrWarning = (((_preAttentionErrors != null) && (_preAttentionErrors.Count > 0)) || ((_preAttentionWarnings != null) && (_preAttentionWarnings.Count > 0)));
+
+                _errors = _preAttentionErrors;
+                _warnings = _preAttentionWarnings;
+
+                _preAttentionErrors = null;
+                _preAttentionWarnings = null;
+            }
+        }
+
+        /// <summary>
+        /// Checks if an error is stored in _error and, if so, throws an error
+        /// </summary>
+        internal void CheckThrowSNIException()
+        {
+            if (HasErrorOrWarning)
+            {
+                ThrowExceptionAndWarning();
+            }
+        }
+
+        /// <summary>
+        /// Debug Only: Ensures that the TdsParserStateObject has no lingering state and can safely be re-used
+        /// </summary>
+        [Conditional("DEBUG")]
+        internal void AssertStateIsClean()
+        {
+            // If our TdsParser is closed or broken, then we don't really care about our state
+            TdsParser parser = _parser;
+            if ((parser != null) && (parser.State != TdsParserState.Closed) && (parser.State != TdsParserState.Broken))
+            {
+                // Async reads
+                Debug.Assert(_snapshot == null && !_snapshotReplay, "StateObj has leftover snapshot state");
+                Debug.Assert(!_asyncReadWithoutSnapshot, "StateObj has AsyncReadWithoutSnapshot still enabled");
+                Debug.Assert(_executionContext == null, "StateObj has a stored execution context from an async read");
+                // Async writes
+                Debug.Assert(_asyncWriteCount == 0, "StateObj still has outstanding async writes");
+                Debug.Assert(_delayedWriteAsyncCallbackException == null, "StateObj has an unobserved exceptions from an async write");
+                // Attention\Cancellation\Timeouts
+                Debug.Assert(!HasReceivedAttention && !_attentionSent && !_attentionSending, $"StateObj is still dealing with attention: Sent: {_attentionSent}, Received: {HasReceivedAttention}, Sending: {_attentionSending}");
+                Debug.Assert(!_cancelled, "StateObj still has cancellation set");
+                Debug.Assert(_timeoutState == TimeoutState.Stopped, "StateObj still has internal timeout set");
+                // Errors and Warnings
+                Debug.Assert(!_hasErrorOrWarning, "StateObj still has stored errors or warnings");
+            }
+        }
+
+        #if DEBUG
+        internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait)
+        {
+            TaskCompletionSource<object> realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
+            TaskCompletionSource<object> networkPacketTaskSource = _networkPacketTaskSource;
+
+            Debug.Assert(s_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
+            Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
+
+            try
+            {
+                if (realNetworkPacketTaskSource != null)
+                {
+                    // Wait for the real read to complete
+                    realNetworkPacketTaskSource.Task.Wait();
+                }
+            }
+            finally
+            {
+                if (networkPacketTaskSource != null)
+                {
+                    if (resetForcePendingReadsToWait)
+                    {
+                        s_forcePendingReadsToWaitForUser = false;
+                    }
+
+                    networkPacketTaskSource.TrySetResult(null);
+                }
+            }
+        }
+
+        internal void CompletePendingReadWithFailure(int errorCode, bool resetForcePendingReadsToWait)
+        {
+            TaskCompletionSource<object> realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
+            TaskCompletionSource<object> networkPacketTaskSource = _networkPacketTaskSource;
+
+            Debug.Assert(s_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
+            Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
+
+            try
+            {
+                if (realNetworkPacketTaskSource != null)
+                {
+                    // Wait for the real read to complete
+                    realNetworkPacketTaskSource.Task.Wait();
+                }
+            }
+            finally
+            {
+                if (networkPacketTaskSource != null)
+                {
+                    if (resetForcePendingReadsToWait)
+                    {
+                        s_forcePendingReadsToWaitForUser = false;
+                    }
+
+                    AddError(new SqlError(errorCode, 0x00, TdsEnums.FATAL_ERROR_CLASS, _parser.Server, string.Empty, string.Empty, 0));
+                    try
+                    {
+                        ThrowExceptionAndWarning();
+                    }
+                    catch (Exception ex)
+                    {
+                        networkPacketTaskSource.TrySetException(ex);
+                    }
+                }
+            }
+        }
+#endif
+        internal void CloneCleanupAltMetaDataSetArray()
+        {
+            if (_snapshot != null)
+            {
+                _snapshot.CloneCleanupAltMetaDataSetArray();
+            }
+        }
+
     }
 }
