@@ -467,7 +467,7 @@ namespace Microsoft.Data.SqlClient
             return _nullBitmapInfo.IsGuaranteedNull(columnOrdinal);
         }
 
-        private partial struct NullBitmap
+        private struct NullBitmap
         {
             private byte[] _nullBitmap;
             private int _columnsCount; // set to 0 if not used or > 0 for NBC rows
@@ -510,6 +510,30 @@ namespace Microsoft.Data.SqlClient
                 byte testBit = (byte)(1 << (columnOrdinal & 0x7)); // columnOrdinal & 0x7 == columnOrdinal MOD 0x7
                 byte testByte = _nullBitmap[columnOrdinal >> 3];
                 return (testBit & testByte) != 0;
+            }
+
+            internal bool TryInitialize(TdsParserStateObject stateObj, int columnsCount)
+            {
+                _columnsCount = columnsCount;
+                // 1-8 columns need 1 byte
+                // 9-16: 2 bytes, and so on
+                int bitmapArrayLength = (columnsCount + 7) / 8;
+
+                // allow reuse of previously allocated bitmap
+                if (_nullBitmap == null || _nullBitmap.Length != bitmapArrayLength)
+                {
+                    _nullBitmap = new byte[bitmapArrayLength];
+                }
+
+                // read the null bitmap compression information from TDS
+                if (!stateObj.TryReadByteArray(_nullBitmap, _nullBitmap.Length))
+                {
+                    return false;
+                }
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap data. Null Bitmap {1}, Null bitmap length: {2}", stateObj.ObjectID, _nullBitmap, (ushort)_nullBitmap.Length);
+
+                return true;
             }
         }
 
