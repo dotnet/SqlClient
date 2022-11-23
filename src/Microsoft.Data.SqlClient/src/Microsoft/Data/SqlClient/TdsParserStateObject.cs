@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient
         // 3) post session close - no attention is allowed
         private bool _cancelled;
         private const int WaitForCancellationLockPollTimeout = 100;
-        private WeakReference _cancellationOwner = new WeakReference(null);
+        private readonly WeakReference _cancellationOwner = new WeakReference(null);
 
         // Cache the transaction for which this command was executed so upon completion we can
         // decrement the appropriate result count.
@@ -276,11 +276,8 @@ namespace Microsoft.Data.SqlClient
         internal static bool s_forcePendingReadsToWaitForUser = false;
         internal TaskCompletionSource<object> _realNetworkPacketTaskSource;
 
-        // Field is never assigned to, and will always have its default value
-#pragma warning disable 0649
         // Set to true to enable checking the call stacks match when packet retry occurs.
         internal static bool s_checkNetworkPacketRetryStacks = false;
-#pragma warning restore 0649
 #endif
 
         //////////////////
@@ -439,7 +436,7 @@ namespace Microsoft.Data.SqlClient
             int remaining;
             if (0 != _timeoutMilliseconds)
             {
-                remaining = (int)Math.Min((long)int.MaxValue, _timeoutMilliseconds);
+                remaining = (int)Math.Min(int.MaxValue, _timeoutMilliseconds);
                 _timeoutTime = TdsParserStaticMethods.GetTimeout(_timeoutMilliseconds);
                 _timeoutMilliseconds = 0;
             }
@@ -918,7 +915,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void SetTimeoutSeconds(int timeout)
         {
-            SetTimeoutMilliseconds((long)timeout * 1000L);
+            SetTimeoutMilliseconds(timeout * 1000L);
         }
 
         internal void SetTimeoutMilliseconds(long timeout)
@@ -1011,8 +1008,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         // All read
                         _partialHeaderBytesRead = 0;
-                        _inBytesPacket = ((int)_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
-                                  (int)_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+                        _inBytesPacket = (_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
+                                  _partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
 
                         _messageStatus = _partialHeaderBuffer[1];
                         _spid = _partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 |
@@ -1855,7 +1852,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    _longlenleft = (ulong)chunklen;
+                    _longlenleft = chunklen;
                 }
             }
 
@@ -1933,7 +1930,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                 {
                     // if the buffer is null or the wrong length create one to use
-                    buff = new byte[(int)Math.Min((int)_longlen, len)];
+                    buff = new byte[(Math.Min((int)_longlen, len))];
                 }
             }
 
@@ -2026,16 +2023,15 @@ namespace Microsoft.Data.SqlClient
         internal bool TrySkipLongBytes(long num)
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
-            int cbSkip = 0;
-
+            
             while (num > 0)
             {
-                cbSkip = (int)Math.Min((long)int.MaxValue, num);
+                int cbSkip = (int)Math.Min(int.MaxValue, num);
                 if (!TryReadByteArray(Span<byte>.Empty, cbSkip))
                 {
                     return false;
                 }
-                num -= (long)cbSkip;
+                num -= cbSkip;
             }
 
             return true;
@@ -2296,7 +2292,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (!_attentionSent)
                     {
-                        AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+                        AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
 
                         // Grab a reference to the _networkPacketTaskSource in case it becomes null while we are trying to use it
                         TaskCompletionSource<object> source = _networkPacketTaskSource;
@@ -2667,7 +2663,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     stateObj.SetTimeoutStateStopped();
                     Debug.Assert(_parser.Connection != null, "SqlConnectionInternalTds handler can not be null at this point.");
-                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
 
                     if (!stateObj._attentionSent)
                     {
