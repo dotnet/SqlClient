@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient
         internal volatile bool _attentionSending;
         private readonly TimerCallback _onTimeoutAsync;
 
-        // Below 2 properties are used to enforce timeout delays in code to 
+        // Below 2 properties are used to enforce timeout delays in code to
         // reproduce issues related to theadpool starvation and timeout delay.
         // It should always be set to false by default, and only be enabled during testing.
         internal bool _enforceTimeoutDelay = false;
@@ -1480,7 +1480,7 @@ namespace Microsoft.Data.SqlClient
                 // If the long isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                int bytesRead = 0;
+                int bytesRead;
                 if (!TryReadByteArray(_bTmp.AsSpan(_bTmpRead), 8 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 8, "Read more data than required");
@@ -1562,7 +1562,7 @@ namespace Microsoft.Data.SqlClient
                 // If the int isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                int bytesRead = 0;
+                int bytesRead;
                 if (!TryReadByteArray(_bTmp.AsSpan(_bTmpRead), 4 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 4, "Read more data than required");
@@ -2255,7 +2255,7 @@ namespace Microsoft.Data.SqlClient
             TimeoutState timeoutState = (TimeoutState)state;
             if (timeoutState.IdentityValue == _timeoutIdentityValue)
             {
-                // the return value is not useful here because no choice is going to be made using it 
+                // the return value is not useful here because no choice is going to be made using it
                 // we only want to make this call to set the state knowing that it will be seen later
                 OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredAsync);
             }
@@ -2421,7 +2421,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(completion != null, "Async on but null asyncResult passed");
 
-                // if the state is currently stopped then change it to running and allocate a new identity value from 
+                // if the state is currently stopped then change it to running and allocate a new identity value from
                 // the identity source. The identity value is used to correlate timer callback events to the currently
                 // running timeout and prevents a late timer callback affecting a result it does not relate to
                 int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
@@ -2871,7 +2871,7 @@ namespace Microsoft.Data.SqlClient
 
                 // The timer thread may be unreliable under high contention scenarios. It cannot be
                 // assumed that the timeout has happened on the timer thread callback. Check the timeout
-                // synchrnously and then call OnTimeoutSync to force an atomic change of state. 
+                // synchrnously and then call OnTimeoutSync to force an atomic change of state.
                 if (TimeoutHasExpired)
                 {
                     OnTimeoutSync(true);
@@ -2967,7 +2967,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed || _parser.Connection.IsConnectionDoomed, "Failed to capture exception while the connection was still healthy");
 
                 // The safest thing to do is to ensure that the connection is broken and attempt to cancel the task
-                // This must be done from another thread to not block the callback thread                
+                // This must be done from another thread to not block the callback thread
                 Task.Factory.StartNew(() =>
                 {
                     _parser.State = TdsParserState.Broken;

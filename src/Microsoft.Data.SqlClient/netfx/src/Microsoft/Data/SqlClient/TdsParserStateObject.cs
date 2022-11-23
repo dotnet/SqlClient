@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool TransparentNetworkIPResolution => _parser.Connection.ConnectionOptions.TransparentNetworkIPResolution;
 
-        // SNI variables  
+        // SNI variables
         private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
         private readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
@@ -274,7 +274,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private uint SNIPacketGetData(IntPtr packet, byte[] _inBuff, ref uint dataSize)
-        { 
+        {
             return SNINativeMethodWrapper.SNIPacketGetData(packet, _inBuff, ref dataSize);
         }
 
@@ -562,7 +562,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
             else if (!sync && !canAccumulate && SqlCommand.DebugForceAsyncWriteDelay > 0)
             {
-                // Executed synchronously - callback will not be called 
+                // Executed synchronously - callback will not be called
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 uint error = sniError;
                 new Timer(obj =>
@@ -623,7 +623,7 @@ namespace Microsoft.Data.SqlClient
             return task;
         }
 
-#pragma warning restore 420 
+#pragma warning restore 420
 
         // Sends an attention signal - executing thread will consume attn.
         internal void SendAttention(bool mustTakeWriteLock = false, bool asyncClose = false)
@@ -672,7 +672,7 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             uint sniError;
-                            _parser._asyncWrite = false; // stop async write 
+                            _parser._asyncWrite = false; // stop async write
                             SNIWritePacket(Handle, attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false, asyncClose);
                             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendAttention|{0}> Send Attention ASync.", "Info");
                         }
@@ -1339,7 +1339,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_stateObj._permitReplayStackTraceToDiffer || prev.Stack.ToString() == trace.ToString(), "The stack trace on subsequent replays should be the same");
                 }
             }
-#endif 
+#endif
 
             internal bool Replay()
             {
