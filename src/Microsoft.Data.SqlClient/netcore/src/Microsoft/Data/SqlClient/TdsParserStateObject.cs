@@ -28,7 +28,6 @@ namespace Microsoft.Data.SqlClient
         ////////////////
         internal abstract uint DisableSsl();
 
-
         internal abstract uint EnableMars(ref uint info);
 
         internal abstract uint Status
@@ -775,7 +774,6 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(_inBytesPacket >= 0, "Packet must not be negative");
         }
-
 
         //////////////////////////////////////////////
         // Errors and Warnings                      //

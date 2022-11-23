@@ -903,7 +903,6 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_inBytesPacket >= 0, "Packet must not be negative");
         }
 
-
         //////////////////////////////////////////////
         // Errors and Warnings                      //
         //////////////////////////////////////////////
