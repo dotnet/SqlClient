@@ -191,14 +191,14 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
   </Target>
 
-  <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true' AND !$(ReferenceType.Contains('NetStandard'))">
+  <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
     <Message Text=">>> Building AKVNetFx [$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties)] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties)" Condition="!$(ReferenceType.Contains('Package'))"/>
 
     <!-- Only build platform specific builds for Package reference types -->
     <Message Text=">>> Building AKVNetFx [$(CI);TestTargetOS=$(TestOS)netfx;Platform=$(Platform);$(TestProjectProperties)] ..." Condition="$(ReferenceType.Contains('Package'))"/>
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netfx;Platform=$(Platform);$(TestProjectProperties)" Condition="$(ReferenceType.Contains('Package'))"/>
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netfx;Platform=$(Platform);$(TestProjectProperties);" Condition="$(ReferenceType.Contains('Package'))"/>
   </Target>
 
   <Target Name="BuildAKVNetCore">
