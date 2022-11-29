@@ -8,8 +8,8 @@ call :pauseOnError msbuild -t:Clean
 :: CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION
 :: msbuild -p:configuration=Release
 
-:: Based on `dotnet test` documentation, `Platform` propertry has no effect on choosing the underlating architecture.
-:: It's required running tests by desired `dotnet` version for a platform(x64, x86, Arm64) specific assessment.
+:: Based on `dotnet test` documentation, the `Platform` property has no effect on choosing the underlying architecture for the test execution environment.
+:: You need to install and run the `dotnet` command for a specific architecture (x64, x86, Arm64).
 
 :: REFERENCE TYPE "PACKAGE"
 call :pauseOnError msbuild -p:Configuration="Release" -t:BuildAKVNetFx -p:ReferenceType=Package
