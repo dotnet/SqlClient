@@ -28,8 +28,11 @@
     <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
     <ResultsDirectory Condition="$(ResultsDirectory) == ''">TestResults</ResultsDirectory>
-    <!-- Path to a `dotnet` version like a x86 or any lower versions
-    It's empty by default -->
+    <!-- 
+      Path to a `dotnet` version like a x86 or any especific versions in addition to a default installed version.
+      This property is empty by default to use the default path of the system's path variable. 
+      The provided path should be ended to a `\` character without white spaces: Ex. C:\x86\
+    -->
     <DotnetPath></DotnetPath>
   </PropertyGroup>
 
