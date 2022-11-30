@@ -1,4 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
 
@@ -9,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [PlatformSpecific(TestPlatforms.Windows)]
     public class DistributedTransactionTest
     {
-        [ConditionalFact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), Timeout = 10000)]
         public async Task Delegated_transaction_deadlock_in_SinglePhaseCommit()
         {
             TransactionManager.ImplicitDistributedTransactions = true;
@@ -29,8 +33,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             await conn2.OpenAsync();
             conn2.EnlistTransaction(transaction);
 
+            // Possible deadlock
             transaction.Commit();
-            // We never get here because of the deadlock
         }
     }
 }
