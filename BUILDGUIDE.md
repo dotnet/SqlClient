@@ -243,7 +243,7 @@ Tests can be built and run with custom "Reference Type" property that enables di
 >  msbuild -p:configuration=Release
 > ```
 
-Only with package and NetStandardPackage reference types, a none-AnyCPU platform can be used, otherwise, the specified platform will be replaced with AnyCPU on the build process.
+A non-AnyCPU platform reference can only be used with package and NetStandardPackage reference types. Otherwise, the specified platform will be replaced with AnyCPU in the build process.
 
 ### Building Tests with Reference Type
 
