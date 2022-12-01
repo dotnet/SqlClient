@@ -11,7 +11,6 @@ echo Building .NET Framework Tests ...
 call :pauseOnError msbuild -p:Configuration="Release"
 call :pauseOnError msbuild -p:Configuration="Release" -t:BuildAKVNetStAllOS
 call :pauseOnError msbuild -p:Configuration="Release" -t:BuildAKVNetFx
-call :pauseOnError msbuild -p:Configuration="Release" -t:BuildAKVNetCoreAllOS
 call :pauseOnError msbuild -p:Configuration="Release" -t:BuildTestsNetFx -p:TargetNetFxVersion=net462
 call :pauseOnError msbuild -p:Configuration="Release" -t:BuildTestsNetFx -p:TargetNetFxVersion=net48
 
