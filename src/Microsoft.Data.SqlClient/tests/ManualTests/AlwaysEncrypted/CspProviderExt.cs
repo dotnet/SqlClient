@@ -7,6 +7,9 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
+using System.Net.Http;
+using System.Collections.Generic;
+using static Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.CertificateUtilityWin;
 #if NET6_0_OR_GREATER
 using System.Runtime.Versioning;
 #endif
@@ -51,7 +54,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     certificateName = string.Format(@"AETest - {0}", providerName);
                 }
 
-                CertificateUtilityWin.CreateCertificate(certificateName, StoreLocation.CurrentUser.ToString(), providerName, providerType);
+                var extensions = new List<Tuple<string, string, string>>();
+                CertificateOption certOption = new()
+                {
+                    Subject = certificateName,
+                    KeyExportPolicy = "Exportable",
+                    CertificateStoreLocation = $"{StoreLocation.CurrentUser}\\My",
+                    Provider = providerName,
+                    Type = providerType,
+                };
+                CreateCertificate(certOption);
                 SQLSetupStrategyCspExt sqlSetupStrategyCsp = null;
                 try
                 {
@@ -113,7 +125,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string providerType = "24";
 
             string certificateName = string.Format(@"AETest - {0}", providerName);
-            CertificateUtilityWin.CreateCertificate(certificateName, StoreLocation.CurrentUser.ToString(), providerName, providerType);
+            CertificateOption options = new()
+            {
+                Subject = certificateName,
+                CertificateStoreLocation = StoreLocation.CurrentUser.ToString(),
+                Provider = providerName,
+                Type = providerType
+            };
+            CertificateUtilityWin.CreateCertificate(options);
             try
             {
                 X509Certificate2 cert = CertificateUtilityWin.GetCertificate(certificateName, StoreLocation.CurrentUser);
