@@ -7,7 +7,6 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
-using System.Net.Http;
 using System.Collections.Generic;
 using static Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.CertificateUtilityWin;
 #if NET6_0_OR_GREATER
