@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// Create a self-signed certificate through makecert.
+        /// Create a self-signed certificate through PowerShell.
         /// </summary>
         internal static void CreateCertificate(CertificateOption option)
         {
@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
 
 
-            string powerShellPath = string.IsNullOrEmpty(DataTestUtility.MakecertPath) ? "powershell" : DataTestUtility.MakecertPath;
+            string powerShellPath = string.IsNullOrEmpty(DataTestUtility.PowerShellPath) ? "powershell" : DataTestUtility.PowerShellPath;
             ProcessStartInfo processStartInfo = new ProcessStartInfo(powerShellPath)
             {
                 Arguments = $"New-SelfSignedCertificate -Subject " +
