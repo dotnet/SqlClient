@@ -457,8 +457,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUdtInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlUdtInfo.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
-      <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlReliabilityUtil.cs">
+      <Link>Microsoft\Data\SqlClient\SqlReliabilityUtil.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsEnums.cs">
       <Link>Microsoft\Data\SqlClient\TdsEnums.cs</Link>
