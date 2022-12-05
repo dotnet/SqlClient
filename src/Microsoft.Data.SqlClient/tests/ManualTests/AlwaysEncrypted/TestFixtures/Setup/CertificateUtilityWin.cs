@@ -50,8 +50,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.False(string.IsNullOrWhiteSpace(option.Subject), "FAILED: certificateName should not be null or empty.");
             Assert.False(string.IsNullOrWhiteSpace(option.CertificateStoreLocation), "FAILED: certificateLocation should not be null or empty.");
 
-
-
             string powerShellPath = string.IsNullOrEmpty(DataTestUtility.MakecertPath) ? "powershell" : DataTestUtility.MakecertPath;
             ProcessStartInfo processStartInfo = new ProcessStartInfo(powerShellPath)
             {
