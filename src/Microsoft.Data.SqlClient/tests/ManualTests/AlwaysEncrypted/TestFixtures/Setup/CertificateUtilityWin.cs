@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.False(string.IsNullOrWhiteSpace(option.Subject), "FAILED: certificateName should not be null or empty.");
             Assert.False(string.IsNullOrWhiteSpace(option.CertificateStoreLocation), "FAILED: certificateLocation should not be null or empty.");
 
-            string powerShellPath = string.IsNullOrEmpty(DataTestUtility.MakecertPath) ? "powershell" : DataTestUtility.MakecertPath;
+            string powerShellPath = string.IsNullOrEmpty(DataTestUtility.PowerShellPath) ? "powershell.exe" : DataTestUtility.PowerShellPath;
             ProcessStartInfo processStartInfo = new ProcessStartInfo(powerShellPath)
             {
                 Arguments = $"New-SelfSignedCertificate -Subject " +
@@ -65,7 +65,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 $"-KeyLength {option.KeyLength}  " +
                 $"-HashAlgorithm {option.HashAlgorithm} " +
                 $"-KeyUsage {option.KeyUsage} " +
-                $"{option.TestRoot}"
+                $"{option.TestRoot}",
+                Verb="runas"
             };
             Process process = new()
             {
