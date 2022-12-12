@@ -12538,7 +12538,6 @@ namespace Microsoft.Data.SqlClient
         // Returns the actual chars read.
         internal bool TryReadPlpUnicodeChars(ref char[] buff, int offst, int len, TdsParserStateObject stateObj, out int totalCharsRead, bool supportRentedBuff, ref bool rentedBuff)
         {
-            bool inputWasRentedBuff = rentedBuff;
             int charsRead = 0;
             int charsLeft = 0;
             char[] newbuf;
