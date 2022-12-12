@@ -12561,12 +12561,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (supportRentedBuff && len < 1073741824) // 1 Gib
                 {
-                    if (buff != null && rentedBuff)
-                    {
-                        buff.AsSpan(0, offst).Clear();
-                        ArrayPool<char>.Shared.Return(buff, clearArray: false);
-                    }
-                    buff = ArrayPool<char>.Shared.Rent(len);
+                    buff = ArrayPool<char>.Shared.Rent((int)Math.Min((int)stateObj._longlen, len));
                     rentedBuff = true;
                 }
                 else
