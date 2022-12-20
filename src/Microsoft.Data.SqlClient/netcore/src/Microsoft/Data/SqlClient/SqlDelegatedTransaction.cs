@@ -340,6 +340,8 @@ namespace Microsoft.Data.SqlClient
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
+                    Exception commitException = null;
+
                     lock (connection)
                     {
                         // If the connection is doomed, we can be certain that the
@@ -354,7 +356,6 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            Exception commitException;
                             try
                             {
                                 // Now that we've acquired the lock, make sure we still have valid state for this operation.
@@ -364,7 +365,6 @@ namespace Microsoft.Data.SqlClient
                                 _connection = null;   // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
 
                                 connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
-                                commitException = null;
                             }
                             catch (SqlException e)
                             {
@@ -412,12 +412,13 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
-                            if (commitException == null)
-                            {
-                                // connection.ExecuteTransaction succeeded
-                                enlistment.Committed();
-                            }
                         }
+                    }
+
+                    if (commitException == null)
+                    {
+                        // connection.ExecuteTransaction succeeded
+                        enlistment.Committed();
                     }
                 }
                 catch (System.OutOfMemoryException e)
