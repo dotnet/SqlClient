@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static Dictionary<string, bool> AvailableDatabases;
         private static BaseEventListener TraceListener;
 
-        public static readonly bool IsMangedInstance = false;
+        public static readonly bool IsManagedInstance = false;
 
         //Kerberos variables
         public static readonly string KerberosDomainUser = null;
@@ -116,6 +116,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             KerberosDomainPassword = c.KerberosDomainPassword;
             KerberosDomainUser = c.KerberosDomainUser;
             ManagedIdentitySupported = c.ManagedIdentitySupported;
+            IsManagedInstance = c.IsManagedInstance;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 

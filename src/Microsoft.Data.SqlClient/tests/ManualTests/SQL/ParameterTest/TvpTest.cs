@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             else
             {
-                if (DataTestUtility.IsMangedInstance)
+                if (DataTestUtility.IsManagedInstance)
                 {
                     baselinePath = "SqlParameterTest_DebugMode.bsl";
                 }
