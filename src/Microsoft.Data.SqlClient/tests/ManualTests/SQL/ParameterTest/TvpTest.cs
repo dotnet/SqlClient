@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             else
             {
-                if (DataTestUtility.IsMangedInstance)
+                if (DataTestUtility.IsManagedInstance)
                 {
                     baselinePath = "SqlParameterTest_DebugMode.bsl";
                 }
@@ -212,7 +212,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     baselinePath = "SqlParameterTest_DebugMode_Azure.bsl";
                 }
             }
-            // string baselinePath = DataTestUtility.IsNotAzureServer() ? "SqlParameterTest_DebugMode.bsl" : "SqlParameterTest_DebugMode_Azure.bsl";
 #else
             if (DataTestUtility.IsNotAzureServer())
             {
@@ -220,7 +219,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             else
             {
-                if (DataTestUtility.IsMangedInstance)
+                if (DataTestUtility.IsManagedInstance)
                 {
                     baselinePath = "SqlParameterTest_ReleaseMode.bsl";
                 }
