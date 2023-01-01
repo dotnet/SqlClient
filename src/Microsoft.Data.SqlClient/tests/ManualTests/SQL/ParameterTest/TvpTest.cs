@@ -219,9 +219,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             else
             {
+                Console.WriteLine($">>>>>>>>Managed Instance value: {DataTestUtility.IsManagedInstance}");
                 if (DataTestUtility.IsManagedInstance)
                 {
+                    Console.WriteLine($">>>>>>>>Managed Instance value: {DataTestUtility.IsManagedInstance}");
+
                     baselinePath = "SqlParameterTest_ReleaseMode.bsl";
+                    Console.WriteLine($">>>>>>>>Managed Instance value: {baselinePath}");
+
                 }
                 else
                 {
