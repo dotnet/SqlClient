@@ -197,36 +197,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string outputPath = "SqlParameterTest.out";
             string baselinePath;
 #if DEBUG
-            if (DataTestUtility.IsNotAzureServer())
+            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
             {
                 baselinePath = "SqlParameterTest_DebugMode.bsl";
             }
             else
             {
-                if (DataTestUtility.IsManagedInstance)
-                {
-                    baselinePath = "SqlParameterTest_DebugMode.bsl";
-                }
-                else
-                {
-                    baselinePath = "SqlParameterTest_DebugMode_Azure.bsl";
-                }
+                baselinePath = "SqlParameterTest_DebugMode_Azure.bsl";
             }
 #else
-            if (DataTestUtility.IsNotAzureServer())
+            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
             {
                 baselinePath = "SqlParameterTest_ReleaseMode.bsl";
             }
             else
             {
-                if (DataTestUtility.IsManagedInstance)
-                {
-                    baselinePath = "SqlParameterTest_ReleaseMode.bsl";
-                }
-                else
-                {
-                    baselinePath = "SqlParameterTest_ReleaseMode_Azure.bsl";
-                }
+                baselinePath = "SqlParameterTest_ReleaseMode_Azure.bsl";
             }
 #endif
 
