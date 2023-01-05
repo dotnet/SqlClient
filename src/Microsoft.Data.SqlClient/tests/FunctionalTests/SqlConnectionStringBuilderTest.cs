@@ -55,6 +55,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Enclave Attestation Url = http://dymmyurl")]
         [InlineData("Encrypt = True")]
         [InlineData("Encrypt = False")]
+        [InlineData("Encrypt = Mandatory")]
+        [InlineData("Encrypt = Optional")]
         [InlineData("Encrypt = Strict")]
         [InlineData("Enlist = false")]
         [InlineData("Initial Catalog = Northwind; Failover Partner = randomserver.sys.local")]
