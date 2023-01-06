@@ -48,11 +48,15 @@ namespace Microsoft.Data.SqlClient.SNI
                 _tlsFirst = tlsFirst;
                 try
                 {
+                    // we either have to pass a variable indicating if the process is async and add some thing like below or take the PipeOptions.Asynchronous totally out. This PR is going with the second approach. I have tested with the first one, but the 
+                    // value for async in TDSParser is set to be always true and I am not sure about the reasoning and needs more investigations to see the outcome of changing that value in the entire driver aspect.
+                    //PipeOptions options = _async?  PipeOptions.Asynchronous | PipeOptions.WriteThrough : PipeOptions.WriteThrough
+
                     _pipeStream = new NamedPipeClientStream(
                         serverName,
                         pipeName,
                         PipeDirection.InOut,
-                        PipeOptions.Asynchronous | PipeOptions.WriteThrough);
+                        PipeOptions.WriteThrough);
 
                     bool isInfiniteTimeOut = long.MaxValue == timerExpire;
                     if (isInfiniteTimeOut)

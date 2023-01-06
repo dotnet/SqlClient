@@ -130,6 +130,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
         }
 
+#if NETCOREAPP
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
+        public async Task ConcurrentExecutionAsync(string cnnString, SqlRetryLogicBaseProvider provider)
+        {
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries + 1;
+            int retriesCount = 0;
+            int concurrentExecution = 5;
+            provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);
+
+            await Parallel.ForEachAsync(System.Linq.Enumerable.Range(0, concurrentExecution),
+             async (i, c) =>
+             {
+                 using (var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries))
+                 {
+                     await Assert.ThrowsAsync<AggregateException>(async () => await cnn.OpenAsync());
+                 }
+             });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+
+            retriesCount = 0;
+            Parallel.For(0, concurrentExecution,
+            i =>
+            {
+                using (var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries))
+                {
+                    Assert.ThrowsAsync<AggregateException>(() => cnn.OpenAsync()).Wait();
+                }
+            });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+        }
+#endif
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetNoneRetriableCondition), MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public void DefaultOpenWithoutRetry(string connectionString, SqlRetryLogicBaseProvider cnnProvider)
