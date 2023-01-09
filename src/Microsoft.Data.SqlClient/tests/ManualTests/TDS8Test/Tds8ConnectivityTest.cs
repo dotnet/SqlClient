@@ -12,16 +12,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
 
         // These environment variables are populated from a powershell or bash script.after the certificates are generated
         private const string ENV_CERT_FRIENDLYNAME = "TDS8_Test_Certificate_FriendlyName";
+        private const string ENV_CERT_MISMATCH_FRIENDLYNAME = "TDS8_Test_Certificate_Mismatch_FriendlyName";
         private const string ENV_VALID_CERT_PATH = "TDS8_Test_Certificate_On_FileSystem";
+        private const string ENV_VALID_MISMATCH_CERT_PATH = "TDS8_Test_MismatchCertificate_On_FileSystem";
         private const string ENV_INVALID_CERT_PATH = "TDS8_Test_InvalidCertificate_On_FileSystem";
+        private const string ENV_EXTERNAL_IP = "TDS8_EXTERNAL_IP";
+        private const string ENV_SQL_SERVER_VERSION = "SqlServerVersion";
 
         // Note these names comes from the makeSelfSignCert.ps1
-        private const string MISMATCH_HNIC = "sqlclienttest.sqlservercert.com";
         private readonly string ValidCertificateFriendlyName = "TDS8SqlClientCert";
+        private readonly string ValidMismatchCertificateFriendlyName = "TDS8SqlClientCertMismatch";
 
         // The following variables are populated from the environment variables above.
-        private static string ValidCertificatePath = "c:/cert/testing2.cer";
-        private static string InvalidFormatCertificatePath = "c:/cert/testing2.pfx";
+        private static string ValidCertificatePath = "c:/cert/sqlservercert.cer";
+        private static string ValidMismatchCertificatePath = "c:/cert/mismatchsqlservercert.cer";
+        private static string InvalidFormatCertificatePath = "c:/cert/sqlservercert.pfx";
         private static string InvalidDNECertificatePath = "c:/cert/does_not_exist.cer";
 
         private static string s_hostName = null;
@@ -32,6 +37,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 s_hostName = System.Net.Dns.GetHostEntry(Environment.MachineName).HostName;
             }
             return s_hostName;
+        }
+
+        private static string s_externalIp = null;
+        private static string GetExternalIp()
+        {
+            if (s_externalIp == null)
+            {
+                s_externalIp = Environment.GetEnvironmentVariable(ENV_EXTERNAL_IP);
+                if (s_externalIp == null)
+                {
+                    throw new NullReferenceException("Unable to retrieve the external ip address from the environment variable.");
+                }
+            }
+            return s_externalIp;
+        }
+
+        private static string s_serverVersion = null;
+        private static string GetServerVersion()
+        {
+            if (s_serverVersion == null)
+            {
+                s_serverVersion = Environment.GetEnvironmentVariable(ENV_SQL_SERVER_VERSION);
+                if (s_serverVersion == null)
+                {
+                    throw new NullReferenceException("Unable to retrieve the sql server version from the environment variable.");
+                }
+            }
+            return s_serverVersion;
         }
 
         // Helper enum and convert methods for the server name
@@ -152,7 +185,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         // Hence, the following flags/conditionals are
         public static bool TrustedRootWithMismatchHostNameSelfSignedCertifcateInstalled()
         {
-            X509Certificate2 cert = GetCertificateFromStore(GetHostName(), true);
+            X509Certificate2 cert = GetCertificateFromStore(GetExternalIp(), true);
             if (cert == null)
             {
                 return false;
@@ -173,9 +206,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         {
             // Populate the variables with the environment variable values
             ValidCertificateFriendlyName = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_CERT_FRIENDLYNAME)) ? ValidCertificateFriendlyName : Environment.GetEnvironmentVariable(ENV_CERT_FRIENDLYNAME);
+            ValidMismatchCertificateFriendlyName = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_CERT_MISMATCH_FRIENDLYNAME)) ? ValidMismatchCertificateFriendlyName : Environment.GetEnvironmentVariable(ENV_CERT_MISMATCH_FRIENDLYNAME);
             InvalidFormatCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_INVALID_CERT_PATH)) ? InvalidFormatCertificatePath : Environment.GetEnvironmentVariable(ENV_INVALID_CERT_PATH);
             InvalidDNECertificatePath = Path.Combine(Environment.CurrentDirectory, "DOES_NOT_EXIST.cer");
             ValidCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_VALID_CERT_PATH)) ? ValidCertificatePath : Environment.GetEnvironmentVariable(ENV_VALID_CERT_PATH);
+            ValidMismatchCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_VALID_MISMATCH_CERT_PATH)) ? ValidMismatchCertificatePath : Environment.GetEnvironmentVariable(ENV_VALID_MISMATCH_CERT_PATH);
         }
 
         [ConditionalTheory(nameof(IsNotAzureServer), nameof(IsNotAzureSynapse), nameof(AreConnectionStringsSetup))]
@@ -198,11 +233,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 return;
             }
 
+            // The certificate subject name is the IP Address in this mismatch certificate and the local machine hostname will be set in the HNIC.
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 DataSource = GetDataSourceName(dataSourceType),
                 Encrypt = strict ? SqlConnectionEncryptOption.Strict : SqlConnectionEncryptOption.Mandatory,
-                HostNameInCertificate = MISMATCH_HNIC
+                HostNameInCertificate = GetHostName()
             };
 
             Connect(builder.ConnectionString);
