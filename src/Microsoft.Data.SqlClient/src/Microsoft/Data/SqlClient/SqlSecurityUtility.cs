@@ -65,10 +65,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>A byte array containing cryptographically generated random bytes</returns>
         internal static void GenerateRandomBytes(byte[] randomBytes)
         {
-            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(randomBytes);
-            }
+            RandomNumberGenerator.Fill(randomBytes);
         }
 
         /// <summary>
