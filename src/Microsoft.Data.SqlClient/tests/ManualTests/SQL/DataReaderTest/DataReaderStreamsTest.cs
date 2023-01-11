@@ -153,7 +153,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalText, outputText);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Cannot find data type 'XML'.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetFieldValue_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
