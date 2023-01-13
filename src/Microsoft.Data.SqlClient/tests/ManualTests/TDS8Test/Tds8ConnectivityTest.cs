@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         private const string ENV_VALID_MISMATCH_CERT_PATH = "TDS8_Test_MismatchCertificate_On_FileSystem";
         private const string ENV_INVALID_CERT_PATH = "TDS8_Test_InvalidCertificate_On_FileSystem";
         private const string ENV_EXTERNAL_IP = "TDS8_EXTERNAL_IP";
-        private const string ENV_SQL_SERVER_VERSION = "SqlServerVersion";
+        private const string ENV_SQL_SERVER_VERSION = "TDS8_Test_SqlServerVersion";
 
         // Note these names comes from the makeSelfSignCert.ps1
         private readonly string ValidCertificateFriendlyName = "TDS8SqlClientCert";

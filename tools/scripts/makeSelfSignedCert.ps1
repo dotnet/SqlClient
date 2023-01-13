@@ -1,13 +1,39 @@
-# Check if the powershell script is running with adminstrative privilleges
-# If ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()].IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator") {
-	# Write-Host "This will run with adminstrative "
-# } else {
-	# Write-Host "This script require admin privilleges to run.
-	# Exit
-# }
-# Store the SQL Server version in a global variable
-Import-Module "sqlps"
-$Env:SqlServerVersion = $(Invoke-sqlcmd "SELECT @@version").Column1
+# This script is used to generate the assign the self-signed certificate to the first sql server instance found in the list.
+# the self-signed certificate is also exported in the current working directory which is used by the server certificate validation tests
+# NOTE: this script must be run with administrative privileges; otherwise, it will fail because it modifies certificate private key read permissions,
+# it moves self-signed certificate to the root trust store, and it restarts the sql server instance service.
+
+# A helper function to set Private Key permissions
+# ref: https://stackoverflow.com/a/31175117/85936
+function Set-PrivateKeyPermissions {
+param(
+[Parameter(Mandatory=$true)][string]$thumbprint,
+[Parameter(Mandatory=$false)][string]$account = "NT AUTHORITY\NETWORK SERVICE"
+)
+	#Open Certificate store and locate certificate based on provided thumbprint
+	$store = New-Object System.Security.Cryptography.X509Certificates.X509Store("My","LocalMachine")
+	$store.Open("ReadWrite")
+	$cert = $store.Certificates | where {$_.Thumbprint -eq $thumbprint}
+
+	#Create new CSP object based on existing certificate provider and key name
+	$csp = New-Object System.Security.Cryptography.CspParameters($cert.PrivateKey.CspKeyContainerInfo.ProviderType, $cert.PrivateKey.CspKeyContainerInfo.ProviderName, $cert.PrivateKey.CspKeyContainerInfo.KeyContainerName)
+
+	# Set flags and key security based on existing cert
+	$csp.Flags = "UseExistingKey","UseMachineKeyStore"
+	$csp.CryptoKeySecurity = $cert.PrivateKey.CspKeyContainerInfo.CryptoKeySecurity
+	$csp.KeyNumber = $cert.PrivateKey.CspKeyContainerInfo.KeyNumber
+
+	# Create new access rule - could use parameters for permissions, but I only needed GenericRead
+	$access = New-Object System.Security.AccessControl.CryptoKeyAccessRule($account,"GenericRead","Allow")
+	# Add access rule to CSP object
+	$csp.CryptoKeySecurity.AddAccessRule($access)
+
+	#Create new CryptoServiceProvider object which updates Key with CSP information created/modified above
+	$rsa2 = New-Object System.Security.Cryptography.RSACryptoServiceProvider($csp)
+
+	#Close certificate store
+	$store.Close()
+}
 
 $Subject="CN=$([System.Net.Dns]::GetHostByName($env:computerName).HostName)"
 $Env:TDS8_EXTERNAL_IP = (Invoke-WebRequest ifconfig.me/ip).Content.Trim()
@@ -15,80 +41,96 @@ $Env:TDS8_Test_Certificate_FriendlyName = "TDS8SqlClientCert"
 $Env:TDS8_Test_Certificate_MismatchFriendlyName = "TDS8SqlClientCertMismatch"
 $MismatchSubject="CN=$Env:TDS8_EXTERNAL_IP"
 
-Write-Host "Make self-signed certificates in the Personal"
-New-SelfSignedCertificate -Subject $Subject -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation "cert:\LocalMachine\My" -FriendlyName $Env:TDS8_Test_Certificate_FriendlyName -TextExtension @("2.5.29.17={text}DNS=localhost&IPAddress=127.0.0.1&IPAddress=::1") -KeyExportPolicy Exportable -HashAlgorithm "SHA256" -Type SSLServerAuthentication -Provider "Microsoft RSA SChannel Cryptographic Provider" | Select 
-New-SelfSignedCertificate -Subject $MismatchSubject -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation "cert:\LocalMachine\My" -FriendlyName $Env:TDS8_Test_Certificate_MismatchFriendlyName -TextExtension @("2.5.29.17={text}DNS=localhost&IPAddress=127.0.0.1&IPAddress=::1") -KeyExportPolicy Exportable -HashAlgorithm "SHA256" -Type SSLServerAuthentication -Provider "Microsoft RSA SChannel Cryptographic Provider" | Select 
+$existingCert = (Get-ChildItem Cert:\LocalMachine\My | where-object -Property Subject -eq -Value $Subject)
+$existingMismatchCert = (Get-ChildItem Cert:\LocalMachine\My | where-object -Property Subject -eq -Value $MismatchSubject)
 
-# TODO: need to handle case when there's previously already a self signed cert
+Write-Host "Make self-signed certificates in the Personal cert store"
 
-$thumbprint = (Get-ChildItem Cert:\LocalMachine\My | where-object -Property Subject -eq -Value $Subject).thumbprint
-$mismatchthumbprint = (Get-ChildItem Cert:\LocalMachine\My | where-object -Property Subject -eq -Value $MismatchSubject).thumbprint
+if ([string]::IsNullOrEmpty($existingCert)) {
+	New-SelfSignedCertificate -Subject $Subject -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation "cert:\LocalMachine\My" -FriendlyName $Env:TDS8_Test_Certificate_FriendlyName -TextExtension @("2.5.29.17={text}DNS=localhost&IPAddress=127.0.0.1&IPAddress=::1") -KeyExportPolicy Exportable -HashAlgorithm "SHA256" -Type SSLServerAuthentication -Provider "Microsoft RSA SChannel Cryptographic Provider" | Select 
+} else {
+	Write-Host "The cert with $Subject already exists"
+}
 
-$cert = Get-ChildItem Cert:\LocalMachine\My\$thumbprint
-$mismatchcert = Get-ChildItem Cert:\LocalMachine\My\$mismatchthumbprint
+if ([string]::IsNullOrEmpty($existingMismatchCert)) {
+	New-SelfSignedCertificate -Subject $MismatchSubject -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation "cert:\LocalMachine\My" -FriendlyName $Env:TDS8_Test_Certificate_MismatchFriendlyName -TextExtension @("2.5.29.17={text}DNS=localhost&IPAddress=127.0.0.1&IPAddress=::1") -KeyExportPolicy Exportable -HashAlgorithm "SHA256" -Type SSLServerAuthentication -Provider "Microsoft RSA SChannel Cryptographic Provider" | Select 
+} else {
+	Write-Host "The cert with $MismatchSubject already exists"
+}
 
-$Pwd = ConvertTo-SecureString -String "PLACEHOLDER" -Force -AsPlainText
+$certThumbprint = (Get-ChildItem Cert:\LocalMachine\My | where-object -Property Subject -eq -Value $Subject).thumbprint
+$mismatchCertThumbprint = (Get-ChildItem Cert:\LocalMachine\My | where-object -Property Subject -eq -Value $MismatchSubject).thumbprint
+
+$cert = Get-ChildItem Cert:\LocalMachine\My\$certThumbprint
+
+$mismatchcert = Get-ChildItem Cert:\LocalMachine\My\$mismatchCertThumbprint
+
+$PASSWORD = ConvertTo-SecureString -String "PLACEHOLDER" -Force -AsPlainText
 
 $Env:TDS8_Test_Certificate_On_FileSystem = "$(pwd)\sqlservercert.cer"
 $Env:TDS8_Test_MismatchCertificate_On_FileSystem = "$(pwd)\mismatchsqlservercert.cer"
 $Env:TDS8_Test_InvalidCertificate_On_FileSystem = "$(pwd)\sqlservercert.pfx"
 
 Write-Host "Export certificate in pfx"
-Export-PfxCertificate -Cert "Cert:\LocalMachine\My\$thumbprint" -FilePath $Env:TDS8_Test_InvalidCertificate_On_FileSystem -Password $Pwd -Force
+Export-PfxCertificate -Cert "Cert:\LocalMachine\My\$certThumbprint" -FilePath $Env:TDS8_Test_InvalidCertificate_On_FileSystem -Password $PASSWORD -Force
 
 Write-Host "Export certificate in cer"
-Export-Certificate -Cert "Cert:\LocalMachine\My\$thumbprint" -FilePath $Env:TDS8_Test_Certificate_On_FileSystem -Force
-Export-Certificate -Cert "Cert:\LocalMachine\My\$mismatchthumbprint" -FilePath $Env:TDS8_Test_MismatchCertificate_On_FileSystem -Force
+Export-Certificate -Cert "Cert:\LocalMachine\My\$certThumbprint" -FilePath $Env:TDS8_Test_Certificate_On_FileSystem -Force
+Export-Certificate -Cert "Cert:\LocalMachine\My\$mismatchCertThumbprint" -FilePath $Env:TDS8_Test_MismatchCertificate_On_FileSystem -Force
 
 Write-Host "Set private key permissions for the certificate "
-$permission = "ReadAndExecute", "ReadPermission"
 
-# TODO: Need to implement this command
-Set-PrivateKeyPermissions -Certificate $cert -User "NT Service\MSSQLSERVER" -Permission $permission
-Set-PrivateKeyPermissions -Certificate $mismatchcert -User "NT Service\MSSQLSERVER" -Permission $permission
+# The service name and the account running the service are the same. Therefore, we get the instance name from registry.
+$SqlInstanceNames = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server" -name "InstalledInstances").InstalledInstances
+$SqlInstanceName = If ($SqlInstanceNames -is [array]) { $SqlInstanceNames[0] } else { $SqlInstanceNames }
 
-Write-Host "Copy the certificate to the trusted root certificate authorities on the local machine"
-#Copy-Item $cert Cert:\LocalMachine\Root
-#Copy-Item $mismatchcert Cert:\LocalMachine\Root
+Set-PrivateKeyPermissions -thumbprint $certThumbprint -account "NT Service\$SqlInstanceName"
+Set-PrivateKeyPermissions -thumbprint $mismatchCertThumbprint -account "NT Service\$SqlInstanceName"
 
+Write-Host "Moving the certificate to the trusted root certificate authorities on the local machine"
+
+# Add the self-signed certificate into the trusted root store
 Move-Item -path cert:\LocalMachine\My\$cert -Destination cert:\LocalMachine\Root\
 Move-Item -path cert:\LocalMachine\My\$mismatchcert -Destination cert:\LocalMachine\Root\
 
-Write-Host "Set the Sql Server Instance to reference the new certificate"
-$SqlCertificateRegKey = "Certificate"
+Write-Host "Set the Sql Server Instance to reference the self-signed certificate"
 
-$SqlServerRegPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server"
+# Retrieves the registry name e.g. MSSQL15.MSSQLSERVER
+$SqlInstanceRegName = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL" -name $SqlInstanceName).$SqlInstanceName
 
-# type of multistring
-$SqlInstancesKey = "InstalledInstances"
+# This environment variable is used in the test
+$Env:TDS8_Test_SqlServerVersion = ($SqlInstanceRegName.split("."))[0]
+Write-Host "The sql server instance version is $Env:SqlServerVersion"
+# The alternative to get the version
+# Import-Module "sqlps"
+# $Env:TDS8_Test_SqlServerVersion = $(Invoke-sqlcmd "SELECT @@version").Column1
 
-#grab first index and store it in a variable
-$SqlInstanceName = (Get-ItemProperty -Path $SqlServerRegPath -name $SqlInstancesKey).$SqlInstancesKey
-
-$SqlServerInstanceNameRegPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL"
-
-$SqlInstanceRegName = (Get-ItemProperty -Path $SqlServerInstanceNameRegPath -name $SqlInstanceName).$SqlInstanceName
 
 # This is for Sql Server 2019 i.e. MSSQL15 with instance name MSSQLSERVER
-# the default name is MSSQL15.MSSQLSERVER
+# If it's running Sql Server 2022 i.e. MSSQL16 with instance name MSSQLSERVER01 if both 2019 and 2022 are on the same machine
 $SqlInstanceRegPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$SqlInstanceRegName\MSSQLServer\SuperSocketNetLib"
 
-# TODO: break this into a seperate script so the mismatch certificate can be set
+$prevCertificate = (Get-ItemProperty -Path $SqlInstanceRegPath -name "Certificate").Certificate
 
-$prevCertificate = (Get-ItemProperty -Path $SqlInstanceRegPath -name $SqlCertificateRegKey).$SqlCertificateRegKey
-
-# On Windows: you may need to set permission of the new certificate so that NT Service\MSSQLSERVER has read permissions; otherwise, when the service restarts, it'll fail.
 if (Test-Path $SqlInstanceRegPath) {
 	Write-Host "The certificate for $SqlInstanceName was previously set to $prevCertificate will be replaced."
-	Set-ItemProperty -Path $SqlInstanceRegPath -name $SqlCertificateRegKey -value $thumbprint -Type String -Force
+	Set-ItemProperty -Path $SqlInstanceRegPath -name "Certificate" -value $certThumbprint -Type String -Force
 } else {
-	New-ItemProperty -Path $SqlInstanceRegPath -name $SqlCertificateRegKey -value $thumbprint -Type String -Force
+	New-ItemProperty -Path $SqlInstanceRegPath -name "Certificate" -value $certThumbprint -Type String -Force
 }
-# TODO: check previous step was successful
-Write-Host "The certificate has been set to $thumbprint"
 
-# On Windows: you will need to restart the MSSQLSERVER service after setting this value in registry
-Restart-Service -Name "MSSQLSERVER"
+if ($?) {
+	Write-Host "The certificate has been set to $certThumbprint"
+	
+	Write-Host "Restarting the Sql Server Instance"
+	
+	Restart-Service -Name "$SqlInstanceName"
 
-# Verifies the certificate is installed
-Invoke-sqlcmd "EXEC sp_readerrorlog 0, 1, 'encryption'"
+	Write-Host "Verifies the certificate is installed"
+	Import-Module "sqlps"
+	Invoke-sqlcmd "EXEC sp_readerrorlog 0, 1, 'encryption'"
+} else {
+	Write-Host "Failed to set the certificate."
+	Exit 1
+}
+
