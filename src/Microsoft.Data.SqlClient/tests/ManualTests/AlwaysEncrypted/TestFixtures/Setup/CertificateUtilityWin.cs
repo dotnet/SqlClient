@@ -7,39 +7,71 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
-#if NET50_OR_LATER
+using System.Collections.Generic;
+using static System.Net.Mime.MediaTypeNames;
+#if NET6_0_OR_GREATER
 using System.Runtime.Versioning;
 #endif
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-#if NET50_OR_LATER
+#if NET6_0_OR_GREATER
     [SupportedOSPlatform("windows")]
 #endif
     [PlatformSpecific(TestPlatforms.Windows)]
     class CertificateUtilityWin
     {
+
+        public class CertificateOption
+        {
+            public string Subject { get; set; }
+            public string KeyExportPolicy { get; set; } = "Exportable";
+            public string CertificateStoreLocation { get; set; }
+            public List<Tuple<string, string, string>> TextExtensions { get; set; } = new List<Tuple<string, string, string>> { new Tuple<string, string, string>("2.5.29.3", "1.3.6.1.5.5.8.2.2", "1.3.6.1.4.1.311.10.3.11") };
+            public string KeySpec { get; set; } = "KeyExchange";
+            public string Provider { get; set; } = "Microsoft Enhanced RSA and AES Cryptographic Provider";
+            public string Type { get; set; } = "24";
+            public string KeyAlgorithm { get; set; } = "rsa";
+            public string KeyLength { get; set; } = "2048";
+            public string HashAlgorithm { get; set; } = "sha256";
+            public string KeyUsage { get; set; } = "None";
+            public string TestRoot { get; set; } = "-TestRoot";
+        }
+
         private CertificateUtilityWin()
         {
         }
 
         /// <summary>
-        /// Create a self-signed certificate through makecert.
+        /// Create a self-signed certificate through PowerShell.
         /// </summary>
-        internal static void CreateCertificate(string certificateName, string certificateLocation, string providerName, string providerType)
+        internal static void CreateCertificate(CertificateOption option)
         {
-            Assert.False(string.IsNullOrWhiteSpace(certificateName), "FAILED: certificateName should not be null or empty.");
-            Assert.False(string.IsNullOrWhiteSpace(certificateLocation), "FAILED: certificateLocation should not be null or empty.");
+            Assert.False(string.IsNullOrWhiteSpace(option.Subject), "FAILED: certificateName should not be null or empty.");
+            Assert.False(string.IsNullOrWhiteSpace(option.CertificateStoreLocation), "FAILED: certificateLocation should not be null or empty.");
 
-            string makecertPath = string.IsNullOrEmpty(DataTestUtility.MakecertPath) ? "makecert" : DataTestUtility.MakecertPath;
-            ProcessStartInfo processStartInfo = new ProcessStartInfo(makecertPath);
-            processStartInfo.Arguments = string.Format(@"-n ""CN={0}"" -pe -sr {1} -r -eku 1.3.6.1.5.5.8.2.2,1.3.6.1.4.1.311.10.3.11 -ss my -sky exchange -sp ""{2}"" -sy {3} -len 2048 -a sha256",
-                                        certificateName,
-                                        certificateLocation,
-                                        providerName,
-                                        providerType);
-            Process process = new Process();
-            process.StartInfo = processStartInfo;
+            string powerShellPath = string.IsNullOrEmpty(DataTestUtility.PowerShellPath) ? "powershell.exe" : DataTestUtility.PowerShellPath;
+            ProcessStartInfo processStartInfo = new ProcessStartInfo(powerShellPath)
+            {
+                Arguments = $"New-SelfSignedCertificate -Subject " +
+                $"'CN={option.Subject}' " +
+                $"-KeyExportPolicy {option.KeyExportPolicy} " +
+                $"-CertStoreLocation '{option.CertificateStoreLocation}\\My' " +
+                $"-TextExtension @('{option.TextExtensions[0].Item1}={{text}}{option.TextExtensions[0].Item2},{option.TextExtensions[0].Item3}') " +
+                $"-KeySpec {option.KeySpec} " +
+                $"-Provider '{option.Provider}' " +
+                $"-Type {option.Type}  " +
+                $"-KeyAlgorithm {option.KeyAlgorithm} " +
+                $"-KeyLength {option.KeyLength}  " +
+                $"-HashAlgorithm {option.HashAlgorithm} " +
+                $"-KeyUsage {option.KeyUsage} " +
+                $"{option.TestRoot}",
+                Verb="runas"
+            };
+            Process process = new()
+            {
+                StartInfo = processStartInfo
+            };
             process.StartInfo.UseShellExecute = true;
             process.StartInfo.CreateNoWindow = true;
             process.Start();

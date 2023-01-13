@@ -97,6 +97,64 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(string.Empty, p.XmlSchemaCollectionOwningSchema);
         }
 
+#if NET6_0_OR_GREATER
+        [Fact]
+        public void Constructor2_Value_DateOnly()
+        {
+            DateOnly value = new DateOnly(2004, 8, 24);
+            SqlParameter p = new SqlParameter("dateonly", value);
+
+            Assert.Equal(DbType.Date, p.DbType);
+            Assert.Equal(ParameterDirection.Input, p.Direction);
+            Assert.False(p.IsNullable);
+            Assert.Equal(0, p.LocaleId);
+            Assert.Equal(0, p.Offset);
+            Assert.Equal("dateonly", p.ParameterName);
+            Assert.Equal(0, p.Precision);
+            Assert.Equal(0, p.Scale);
+            Assert.Equal(0, p.Size);
+            Assert.Equal(string.Empty, p.SourceColumn);
+            Assert.False(p.SourceColumnNullMapping);
+            Assert.Equal(DataRowVersion.Current, p.SourceVersion);
+            Assert.Equal(SqlDbType.Date, p.SqlDbType);
+            Assert.Equal(value, p.SqlValue);
+            Assert.Equal(string.Empty, p.TypeName);
+            Assert.Equal(string.Empty, p.UdtTypeName);
+            Assert.Equal(value, p.Value);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionDatabase);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionName);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionOwningSchema);
+        }
+
+        [Fact]
+        public void Constructor2_Value_TimeOnly()
+        {
+            TimeOnly value = new TimeOnly(9, 7, 42, 321);
+            SqlParameter p = new SqlParameter("timeonly", value);
+
+            Assert.Equal(DbType.Time, p.DbType);
+            Assert.Equal(ParameterDirection.Input, p.Direction);
+            Assert.False(p.IsNullable);
+            Assert.Equal(0, p.LocaleId);
+            Assert.Equal(0, p.Offset);
+            Assert.Equal("timeonly", p.ParameterName);
+            Assert.Equal(0, p.Precision);
+            Assert.Equal(0, p.Scale);
+            Assert.Equal(0, p.Size);
+            Assert.Equal(string.Empty, p.SourceColumn);
+            Assert.False(p.SourceColumnNullMapping);
+            Assert.Equal(DataRowVersion.Current, p.SourceVersion);
+            Assert.Equal(SqlDbType.Time, p.SqlDbType);
+            Assert.Equal(value, p.SqlValue);
+            Assert.Equal(string.Empty, p.TypeName);
+            Assert.Equal(string.Empty, p.UdtTypeName);
+            Assert.Equal(value, p.Value);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionDatabase);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionName);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionOwningSchema);
+        }
+#endif
+
         [Fact]
         public void Constructor2_Value_Null()
         {
@@ -382,6 +440,58 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(SqlDbType.NVarChar, p.SqlDbType);
             Assert.Equal(value, p.Value);
         }
+
+#if NET6_0_OR_GREATER
+        [Fact]
+        public void InferType_DateOnly()
+        {
+            DateOnly value;
+            SqlParameter param;
+
+            value = DateOnly.FromDateTime(DateTime.Now.Date);
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Date, param.SqlDbType);
+            Assert.Equal(DbType.Date, param.DbType);
+
+            value = DateOnly.FromDateTime(DateTime.Now.Date);
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Date, param.SqlDbType);
+            Assert.Equal(DbType.Date, param.DbType);
+
+            value = DateOnly.FromDateTime(new DateTime(1973, 8, 13));
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Date, param.SqlDbType);
+            Assert.Equal(DbType.Date, param.DbType);
+        }
+
+        [Fact]
+        public void InferType_TimeOnly()
+        {
+            TimeOnly value;
+            SqlParameter param;
+
+            value = TimeOnly.FromDateTime(DateTime.Now);
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Time, param.SqlDbType);
+            Assert.Equal(DbType.Time, param.DbType);
+
+            value = TimeOnly.FromDateTime(DateTime.Now);
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Time, param.SqlDbType);
+            Assert.Equal(DbType.Time, param.DbType);
+
+            value = TimeOnly.FromDateTime(new DateTime(2022, 10, 22, 15, 27, 38));
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Time, param.SqlDbType);
+            Assert.Equal(DbType.Time, param.DbType);
+        }
+#endif
 
         [Fact]
         public void InferType_DateTime()

@@ -257,7 +257,9 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
             TdsParser bestEffortCleanupTarget = null;
 #endif
+#if !NET6_0_OR_GREATER
             RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
 #if NETFRAMEWORK

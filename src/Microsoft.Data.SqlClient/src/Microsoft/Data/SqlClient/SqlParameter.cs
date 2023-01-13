@@ -2252,6 +2252,16 @@ namespace Microsoft.Data.SqlClient
                     {
                         value = new DateTimeOffset((DateTime)value);
                     }
+#if NET6_0_OR_GREATER
+                    else if ((currentType == typeof(DateOnly)) && (destinationType.SqlDbType == SqlDbType.Date))
+                    {
+                        value = ((DateOnly)value).ToDateTime(new TimeOnly(0, 0));
+                    }
+                    else if ((currentType == typeof(TimeOnly)) && (destinationType.SqlDbType == SqlDbType.Time))
+                    {
+                        value = ((TimeOnly)value).ToTimeSpan();
+                    }
+#endif
                     else if (
                         TdsEnums.SQLTABLE == destinationType.TDSType &&
                         (

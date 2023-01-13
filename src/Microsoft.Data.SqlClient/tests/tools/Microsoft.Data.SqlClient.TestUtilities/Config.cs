@@ -29,6 +29,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public bool EnclaveEnabled = false;
         public bool TracingEnabled = false;
         public bool SupportsIntegratedSecurity = false;
+        public bool ManagedIdentitySupported = true;
         public string FileStreamDirectory = null;
         public bool UseManagedSNIOnWindows = false;
         public string DNSCachingConnString = null;
@@ -39,7 +40,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public string EnclaveAzureDatabaseConnString = null;
         public string UserManagedIdentityClientId = null;
-        public string MakecertPath = null;
+        public string PowerShellPath = null;
         public string KerberosDomainPassword = null;
         public string KerberosDomainUser = null;
 

@@ -3225,6 +3225,12 @@
   <data name="DbConnectionString_Encrypt" xml:space="preserve">
     <value>When true, SQL Server uses SSL encryption for all data sent between the client and server if the server has a certificate installed.</value>
   </data>
+  <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
+    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+  </data>
+  <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
+    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+  </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Sessions in a Component Services (or MTS, if you are using Microsoft Windows NT) environment should automatically be enlisted in a global transaction where required.</value>
   </data>
@@ -4625,5 +4631,8 @@
   </data>
   <data name="DbConnectionString_ServerSPN" xml:space="preserve">
     <value>The service principal name (SPN) of the server.</value>
+  </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>The '{0}' platform is not supported when targeting .NET Framework.</value>
   </data>
 </root>

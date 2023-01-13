@@ -27,6 +27,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly Socket _socket;
         private NetworkStream _tcpStream;
         private readonly string _hostNameInCertificate;
+        private readonly string _serverCertificateFilename;
         private readonly bool _tlsFirst;
 
         private Stream _stream;
@@ -121,7 +122,8 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="cachedFQDN">Key for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <param name="tlsFirst">Support TDS8.0</param>
-        /// <param name="hostNameInCertificate">Host Name in Certoficate</param>
+        /// <param name="hostNameInCertificate">Host Name in Certificate</param>
+        /// <param name="serverCertificateFilename">Used for the path to the Server Certificate</param>
         public SNITCPHandle(
             string serverName,
             int port,
@@ -131,7 +133,8 @@ namespace Microsoft.Data.SqlClient.SNI
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             bool tlsFirst,
-            string hostNameInCertificate)
+            string hostNameInCertificate,
+            string serverCertificateFilename)
         {
             using (TrySNIEventScope.Create(nameof(SNITCPHandle)))
             {
@@ -140,6 +143,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _targetServer = serverName;
                 _tlsFirst = tlsFirst;
                 _hostNameInCertificate = hostNameInCertificate;
+                _serverCertificateFilename = serverCertificateFilename;
                 _sendSync = new object();
 
                 SQLDNSInfo cachedDNSInfo;
@@ -649,17 +653,18 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Validate server certificate callback
         /// </summary>
         /// <param name="sender">Sender object</param>
-        /// <param name="cert">X.509 certificate</param>
+        /// <param name="serverCertificate">X.509 certificate provided from the server</param>
         /// <param name="chain">X.509 chain</param>
         /// <param name="policyErrors">Policy errors</param>
         /// <returns>True if certificate is valid</returns>
-        private bool ValidateServerCertificate(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors policyErrors)
+        private bool ValidateServerCertificate(object sender, X509Certificate serverCertificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
             if (!_validateCert)
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: _connectionId);
                 return true;
             }
+            
             string serverNameToValidate;
             if (!string.IsNullOrEmpty(_hostNameInCertificate))
             {
@@ -670,8 +675,23 @@ namespace Microsoft.Data.SqlClient.SNI
                 serverNameToValidate = _targetServer;
             }
 
+            if (!string.IsNullOrEmpty(_serverCertificateFilename))
+            {
+                X509Certificate clientCertificate = null;
+                try
+                {
+                    clientCertificate = new X509Certificate(_serverCertificateFilename);
+                    return SNICommon.ValidateSslServerCertificate(clientCertificate, serverCertificate, policyErrors);
+                }
+                catch (Exception e)
+                {
+                    // if this fails, then fall back to the HostNameInCertificate or TargetServer validation.
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, IOException occurred: {1}", args0: _connectionId, args1: e.Message);
+                }
+            }
+
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: _connectionId);
-            return SNICommon.ValidateSslServerCertificate(serverNameToValidate, cert, policyErrors);
+            return SNICommon.ValidateSslServerCertificate(serverNameToValidate, serverCertificate, policyErrors);
         }
 
         /// <summary>

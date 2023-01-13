@@ -457,5 +457,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 key.DeleteValue(b.DataSource);
             }
         }
+
+        private static bool CanUseDacConnection()
+        {
+            if (!DataTestUtility.IsTCPConnStringSetup())
+            {
+                return false;
+            }
+
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            if (!DataTestUtility.ParseDataSource(b.DataSource, out string hostname, out int port, out string instanceName))
+            {
+                return false;
+            }
+
+            if ("localhost".Equals(hostname.ToLower()) && (port.Equals(-1) || port.Equals(1433)) &&
+                string.IsNullOrEmpty(instanceName) && b.UserID != null && b.UserID.ToLower().Equals("sa"))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        [ConditionalFact(nameof(CanUseDacConnection))]
+        public static void DacConnectionTest()
+        {
+            if (!CanUseDacConnection())
+            {
+                throw new Exception("Unable to use a DAC connection in this environment. Localhost + sa credentials required.");
+            }
+
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            b.DataSource = "admin:localhost";
+            using SqlConnection sqlConnection = new(b.ConnectionString);
+            sqlConnection.Open();
+        }
     }
 }

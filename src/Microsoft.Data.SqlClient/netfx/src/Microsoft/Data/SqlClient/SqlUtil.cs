@@ -46,6 +46,28 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal static Task CreateContinuationTaskWithState(Task task, object state, Action<object> onSuccess, Action<Exception, object> onFailure = null)
+        {
+            if (task == null)
+            {
+                onSuccess(state);
+                return null;
+            }
+            else
+            {
+                TaskCompletionSource<object> completion = new();
+                ContinueTaskWithState(task, completion, state,
+                    onSuccess: (object continueState) =>
+                    {
+                        onSuccess(continueState);
+                        completion.SetResult(null);
+                    },
+                    onFailure: onFailure
+                );
+                return completion.Task;
+            }
+        }
+
         internal static Task CreateContinuationTask<T1, T2>(Task task, Action<T1, T2> onSuccess, T1 arg1, T2 arg2, SqlInternalConnectionTds connectionToDoom = null, Action<Exception> onFailure = null)
         {
             return CreateContinuationTask(task, () => onSuccess(arg1, arg2), connectionToDoom, onFailure);

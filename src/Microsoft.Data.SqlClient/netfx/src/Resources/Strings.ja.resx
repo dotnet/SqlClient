@@ -3225,6 +3225,12 @@
   <data name="DbConnectionString_Encrypt" xml:space="preserve">
     <value>True の場合、SQL Server は、サーバーに証明書がインストールされている場合は、クライアントとサーバー間で送信されるすべてのデータに SSL 暗号化を使用します。</value>
   </data>
+  <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
+    <value>Addr/Address/Server から派生した既定値と異なる場合、暗号化がネゴシエートされるときにサーバーの証明書で期待されるホスト名。</value>
+  </data>
+  <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
+    <value>SQL Server TLS/SSL 証明書と照合する証明書ファイルへのパス。</value>
+  </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>必要に応じ、Component Services (Microsoft Windows NT を使用している場合は MTS) 環境内のセッションをグローバル トランザクションに含める必要があります。</value>
   </data>
@@ -4625,5 +4631,8 @@
   </data>
   <data name="DbConnectionString_ServerSPN" xml:space="preserve">
     <value>サーバーのサービス プリンシパル名 (SPN)。</value>
+  </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>.NET Framework を対象とする場合、'{0}' プラットフォームはサポートされません。</value>
   </data>
 </root>

@@ -635,7 +635,9 @@ namespace Microsoft.Data.Common
         /// Note: In Longhorn you'll be able to rename a machine without
         /// rebooting.  Therefore, don't cache this machine name.
         /// </summary>
+#if !NET6_0_OR_GREATER
         [EnvironmentPermission(SecurityAction.Assert, Read = "COMPUTERNAME")]
+#endif
         internal static string MachineName() => Environment.MachineName;
 
         internal static Transaction GetCurrentTransaction()
@@ -1418,6 +1420,11 @@ namespace Microsoft.Data.Common
         {
             return InvalidOperation(StringsHelper.GetString(Strings.ADP_ComputerNameEx, lastError));
         }
+
+        //
+        // : SNI
+        //
+        internal static PlatformNotSupportedException SNIPlatformNotSupported(string platform) => new(StringsHelper.GetString(Strings.SNI_PlatformNotSupportedNetFx, platform));
 
         // global constant strings
         internal const float FailoverTimeoutStepForTnir = 0.125F; // Fraction of timeout to use in case of Transparent Network IP resolution.

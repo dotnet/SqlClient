@@ -297,7 +297,9 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginRead/*' />
+#if !NET6_0_OR_GREATER
         [HostProtection(ExternalThreading = true)]
+#endif
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
             if (_m_disposed)
@@ -316,7 +318,9 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginWrite/*' />
+#if !NET6_0_OR_GREATER
         [HostProtection(ExternalThreading = true)]
+#endif
         public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
             if (_m_disposed)
@@ -422,7 +426,7 @@ namespace Microsoft.Data.SqlTypes
             _m_fs.Flush();
         }
 
-        #endregion
+#endregion
 
         [Conditional("DEBUG")]
         static private void AssertPathFormat(string path)

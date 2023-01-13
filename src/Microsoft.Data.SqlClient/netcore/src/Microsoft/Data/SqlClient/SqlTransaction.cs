@@ -119,7 +119,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/RollbackTransactionName/*' />
+#if NET6_0_OR_GREATER
+       public override void Rollback(string transactionName)
+#else
         public void Rollback(string transactionName)
+#endif
         {
             using (DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionRollbackScope(_isolationLevel, _connection, InternalTransaction, transactionName))
             {
@@ -151,7 +155,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*' />
+#if NET6_0_OR_GREATER
+        public override void Save(string savePointName)
+#else
         public void Save(string savePointName)
+#endif
         {
             ZombieCheck();
 

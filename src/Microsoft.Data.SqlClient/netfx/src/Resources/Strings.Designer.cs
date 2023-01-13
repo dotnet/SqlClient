@@ -5722,6 +5722,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The hostname to be expected in the server&apos;s certificate when encryption is negotiated, if it&apos;s different from the default value derived from Addr/Address/Server..
+        /// </summary>
+        internal static string DbConnectionString_HostNameInCertificate {
+            get {
+                return ResourceManager.GetString("DbConnectionString_HostNameInCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The name of the initial catalog or database in the data source..
         /// </summary>
         internal static string DbConnectionString_InitialCatalog {
@@ -5862,6 +5871,15 @@ namespace System {
         internal static string DbConnectionString_Replication {
             get {
                 return ResourceManager.GetString("DbConnectionString_Replication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The path to a certificate file to match against the SQL Server TLS/SSL certificate..
+        /// </summary>
+        internal static string DbConnectionString_ServerCertificate {
+            get {
+                return ResourceManager.GetString("DbConnectionString_ServerCertificate", resourceCulture);
             }
         }
         
@@ -8650,6 +8668,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The &apos;{0}&apos; platform is not supported when targeting .NET Framework..
+        /// </summary>
+        internal static string SNI_PlatformNotSupportedNetFx {
+            get {
+                return ResourceManager.GetString("SNI_PlatformNotSupportedNetFx", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to HTTP Provider.
         /// </summary>
         internal static string SNI_PN0 {
@@ -9685,7 +9712,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error code 0x{0}..
+        ///   Looks up a localized string similar to Error code 0x{0}.
         /// </summary>
         internal static string SQL_MSALInnerException {
             get {

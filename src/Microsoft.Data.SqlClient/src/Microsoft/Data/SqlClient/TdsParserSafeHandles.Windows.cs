@@ -162,11 +162,12 @@ namespace Microsoft.Data.SqlClient
 #endif
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDNSInfo,
-            bool tlsFirst,
             string hostNameInCertificate)
             : base(IntPtr.Zero, true)
         {
+#if !NET6_0_OR_GREATER
             RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             { }
             finally
