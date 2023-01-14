@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         private static X509Certificate2 GetCertificateFromStore(string subject, bool checkFromTrustStore = false)
         {
             // Get the certificate store for the current user.
-            X509Store store = checkFromTrustStore ? new X509Store(StoreName.Root, StoreLocation.LocalMachine) : new X509Store(StoreLocation.CurrentUser);
+            X509Store store = checkFromTrustStore ? new X509Store(StoreName.Root, StoreLocation.LocalMachine) : new X509Store(StoreLocation.LocalMachine);
 
             if (store == null)
             {
