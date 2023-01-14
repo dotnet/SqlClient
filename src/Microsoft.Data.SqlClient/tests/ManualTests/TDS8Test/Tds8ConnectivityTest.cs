@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.IO;
+using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
 
@@ -47,6 +48,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 s_externalIp = Environment.GetEnvironmentVariable(ENV_EXTERNAL_IP);
                 if (s_externalIp == null)
                 {
+                    using HttpClient client = new();
+                    
+                    var response = client.GetAsync("https://ifconfig.me/ip").Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string body = response.Content.ReadAsStringAsync().Result;
+
+
+                        if (!string.IsNullOrEmpty(body))
+                        {
+                            s_externalIp = body;
+                            return s_externalIp;
+                        }
+                    }
+
                     throw new NullReferenceException("Unable to retrieve the external ip address from the environment variable.");
                 }
             }
