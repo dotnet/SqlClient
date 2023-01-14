@@ -87,11 +87,13 @@ $SqlInstanceName = If ($SqlInstanceNames -is [array]) { $SqlInstanceNames[0] } e
 Set-PrivateKeyPermissions -thumbprint $certThumbprint -account "NT Service\$SqlInstanceName"
 Set-PrivateKeyPermissions -thumbprint $mismatchCertThumbprint -account "NT Service\$SqlInstanceName"
 
-Write-Host "Moving the certificate to the trusted root certificate authorities on the local machine"
+Write-Host "Importing the certificate to the trusted root certificate authorities on the local machine"
 
 # Add the self-signed certificate into the trusted root store
-Move-Item -path cert:\LocalMachine\My\$cert -Destination cert:\LocalMachine\Root\
-Move-Item -path cert:\LocalMachine\My\$mismatchcert -Destination cert:\LocalMachine\Root\
+# Move-Item -path cert:\LocalMachine\My\$certThumbprint -Destination cert:\LocalMachine\Root\
+# Move-Item -path cert:\LocalMachine\My\$mismatchCertThumbprint -Destination cert:\LocalMachine\Root\
+Import-Certificate -FilePath $Env:TDS8_Test_Certificate_On_FileSystem -CertStoreLocation cert:\LocalMachine\Root\
+Import-Certificate -FilePath $Env:TDS8_Test_MismatchCertificate_On_FileSystem -CertStoreLocation cert:\LocalMachine\Root\
 
 Write-Host "Set the Sql Server Instance to reference the self-signed certificate"
 
