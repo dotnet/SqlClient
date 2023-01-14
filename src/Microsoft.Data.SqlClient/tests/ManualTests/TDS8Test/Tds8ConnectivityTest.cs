@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
 
             if (!TrustedRootWithMismatchHostNameSelfSignedCertifcateInstalled())
             {
-                Assert.True(false, "The self sign certificate is not installed and test skipped.");
+                Assert.True(false, "The mismatch self sign certificate is not installed in the trusted root and test skipped.");
                 return;
             }
 
@@ -275,11 +275,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
             // NOTE: the server must have the self-signed certificate installed in the trusted root.
             if (!TrustedRootSelfSignedCertifcateInstalled())
             {
-                Assert.True(false, "The self sign certificate is not installed and test skipped.");
+                Assert.True(false, "The self sign certificate is not installed in trusted root and test skipped.");
                 return;
             }
 
-            SqlConnectionStringBuilder builder = new()
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 DataSource = GetDataSourceName(dataSourceType),
                 Encrypt = strict ? SqlConnectionEncryptOption.Strict : SqlConnectionEncryptOption.Mandatory,
@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 return;
             }
 
-            SqlConnectionStringBuilder builder = new()
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 DataSource = GetDataSourceName(dataSourceType),
                 Encrypt = strict ? SqlConnectionEncryptOption.Strict : SqlConnectionEncryptOption.Mandatory,
@@ -314,15 +314,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         }
 
         [ConditionalTheory(nameof(IsNotAzureServer), nameof(IsNotAzureSynapse), nameof(AreConnectionStringsSetup))]
-        [InlineData(DataSourceType.Localhost, CertificatePathType.Invalid_DNE, true)]
-        [InlineData(DataSourceType.Localhost, CertificatePathType.Invalid_DNE, false)]
-        [InlineData(DataSourceType.Hostname, CertificatePathType.Invalid_DNE, true)]
-        [InlineData(DataSourceType.Hostname, CertificatePathType.Invalid_DNE, false)]
-        [InlineData(DataSourceType.Localhost, CertificatePathType.Invalid_Format, true)]
-        [InlineData(DataSourceType.Localhost, CertificatePathType.Invalid_Format, false)]
-        [InlineData(DataSourceType.Hostname, CertificatePathType.Invalid_Format, true)]
-        [InlineData(DataSourceType.Hostname, CertificatePathType.Invalid_Format, false)]
-        public void ShouldFailWithLocalhostAndInvalidServerCertificate(DataSourceType dataSourceType, CertificatePathType certPathType, bool strict)
+        [InlineData(DataSourceType.Localhost, true)]
+        [InlineData(DataSourceType.Localhost, false)]
+        [InlineData(DataSourceType.Hostname, true)]
+        [InlineData(DataSourceType.Hostname, false)]
+        public void ShouldFailWithLocalhostAndMissingServerCertificate(DataSourceType dataSourceType, bool strict)
         {
             // NOTE: the server must have the self-signed certificate installed.
             if (!SelfSignedCertificateInstalled())
@@ -331,11 +327,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 return;
             }
 
-            SqlConnectionStringBuilder builder = new()
+            string pathToMissingCert = GetPathFromCertificateType(CertificatePathType.Invalid_DNE);
+            Assert.False(File.Exists(pathToMissingCert), "The path to certificate should not exist.");
+
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 DataSource = GetDataSourceName(dataSourceType),
                 Encrypt = strict ? SqlConnectionEncryptOption.Strict : SqlConnectionEncryptOption.Mandatory,
-                ServerCertificate = GetPathFromCertificateType(certPathType)
+                ServerCertificate = pathToMissingCert
+            };
+
+            SqlException ex = Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
+            Assert.NotNull(ex);
+        }
+
+        [ConditionalTheory(nameof(IsNotAzureServer), nameof(IsNotAzureSynapse), nameof(AreConnectionStringsSetup))]
+        [InlineData(DataSourceType.Localhost, true)]
+        [InlineData(DataSourceType.Localhost, false)]
+        [InlineData(DataSourceType.Hostname, true)]
+        [InlineData(DataSourceType.Hostname, false)]
+        public void ShouldFailWithLocalhostAndInvalidServerCertificateFormat(DataSourceType dataSourceType, bool strict)
+        {
+            // NOTE: the server must have the self-signed certificate installed.
+            if (!SelfSignedCertificateInstalled())
+            {
+                Assert.True(false, "The self sign certificate is not installed and test skipped.");
+                return;
+            }
+
+            string pathToInvalidFormatCertificate = GetPathFromCertificateType(CertificatePathType.Invalid_Format);
+            Assert.True(File.Exists(pathToInvalidFormatCertificate), "The certificate must exist for the test.");
+
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            {
+                DataSource = GetDataSourceName(dataSourceType),
+                Encrypt = strict ? SqlConnectionEncryptOption.Strict : SqlConnectionEncryptOption.Mandatory,
+                ServerCertificate = pathToInvalidFormatCertificate
             };
 
             SqlException ex = Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
@@ -354,7 +381,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 return;
             }
 
-            SqlConnectionStringBuilder builder = new()
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 DataSource = GetDataSourceName(dataSourceType),
                 Encrypt = SqlConnectionEncryptOption.Optional,
@@ -376,7 +403,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 return;
             }
 
-            SqlConnectionStringBuilder builder = new()
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 DataSource = GetDataSourceName(dataSourceType),
                 Encrypt = SqlConnectionEncryptOption.Optional,
@@ -397,7 +424,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 return;
             }
 
-            SqlConnectionStringBuilder builder = new()
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 DataSource = GetDataSourceName(dataSourceType),
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
@@ -422,9 +449,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 return;
             }
 
-            Assert.True(File.Exists(ValidCertificatePath));
+            Assert.True(File.Exists(ValidCertificatePath), "The validate certificate does not exist.");
 
-            SqlConnectionStringBuilder builder = new()
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 DataSource = GetDataSourceName(dataSourceType),
                 Encrypt = strict ? SqlConnectionEncryptOption.Strict : SqlConnectionEncryptOption.Mandatory,
