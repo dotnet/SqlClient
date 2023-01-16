@@ -25,10 +25,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         private readonly string ValidMismatchCertificateFriendlyName = "TDS8SqlClientCertMismatch";
 
         // The following variables are populated from the environment variables above.
-        private static string ValidCertificatePath = "c:/cert/sqlservercert.cer";
-        private static string ValidMismatchCertificatePath = "c:/cert/mismatchsqlservercert.cer";
-        private static string InvalidFormatCertificatePath = "c:/cert/sqlservercert.pfx";
-        private static string InvalidDNECertificatePath = "c:/cert/does_not_exist.cer";
+
+        private const string certificateFileName = "sqlservercert.cer";
+        private const string mismatchCertificateFileName = "mismatchsqlservercert.cer";
+        private const string invalidCertificateFormatFileName = "sqlservercert.pfx";
+
+        private static string ValidCertificatePath = "";
+        private static string ValidMismatchCertificatePath = "";
+        private static string InvalidFormatCertificatePath = "";
+        private static string InvalidDNECertificatePath = "";
 
         private static string s_hostName = null;
         private static string GetHostName()
@@ -113,7 +118,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
 
         public enum CertificatePathType
         {
-            Valid, Invalid_DNE, Invalid_Format
+            Valid, Mismatch, Invalid_DNE, Invalid_Format
         }
 
         /// <summary>
@@ -128,6 +133,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
             {
                 case CertificatePathType.Valid:
                     return ValidCertificatePath;
+                case CertificatePathType.Mismatch:
+                    return ValidMismatchCertificatePath;
                 case CertificatePathType.Invalid_DNE:
                     return InvalidDNECertificatePath;
                 case CertificatePathType.Invalid_Format:
@@ -162,7 +169,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
             string subjectName = "";
             if (!subject.StartsWith("CN="))
             {
-                subjectName = $"CN={subject}";
+                 subjectName = $"CN={subject}";
             }
 
             try
@@ -216,18 +223,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
 
         #endregion // Flags for detecting if a certificate is installed
 
-        // TODO: needs a way to check what version is local server running without using a sql query if possible
         // TODO: needs to call sqlcmd or modify the registry to ensure SqlServer is running with the self-signed certificate set.
 
         public Tds8ConnectivityTest()
         {
+            // Get tools script directory
+            string solutionDir = "";
+            string rootName = "SqlClient";
+            int solutionDirIndex = Environment.CurrentDirectory.IndexOf(rootName);
+            if (solutionDirIndex != -1)
+            {
+                solutionDir = Environment.CurrentDirectory.Substring(0, solutionDirIndex + rootName.Length);
+            }
+            string scriptsDir = Path.Combine(solutionDir, "tools", "scripts");
+
             // Populate the variables with the environment variable values
-            ValidCertificateFriendlyName = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_CERT_FRIENDLYNAME)) ? ValidCertificateFriendlyName : Environment.GetEnvironmentVariable(ENV_CERT_FRIENDLYNAME);
-            ValidMismatchCertificateFriendlyName = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_CERT_MISMATCH_FRIENDLYNAME)) ? ValidMismatchCertificateFriendlyName : Environment.GetEnvironmentVariable(ENV_CERT_MISMATCH_FRIENDLYNAME);
-            InvalidFormatCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_INVALID_CERT_PATH)) ? InvalidFormatCertificatePath : Environment.GetEnvironmentVariable(ENV_INVALID_CERT_PATH);
+            ValidCertificateFriendlyName = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_CERT_FRIENDLYNAME)) ?
+                ValidCertificateFriendlyName : Environment.GetEnvironmentVariable(ENV_CERT_FRIENDLYNAME);
+            ValidMismatchCertificateFriendlyName = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_CERT_MISMATCH_FRIENDLYNAME)) ?
+                ValidMismatchCertificateFriendlyName : Environment.GetEnvironmentVariable(ENV_CERT_MISMATCH_FRIENDLYNAME);
+            InvalidFormatCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_INVALID_CERT_PATH)) ?
+                Path.Combine(scriptsDir, invalidCertificateFormatFileName) : Environment.GetEnvironmentVariable(ENV_INVALID_CERT_PATH);
             InvalidDNECertificatePath = Path.Combine(Environment.CurrentDirectory, "DOES_NOT_EXIST.cer");
-            ValidCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_VALID_CERT_PATH)) ? ValidCertificatePath : Environment.GetEnvironmentVariable(ENV_VALID_CERT_PATH);
-            ValidMismatchCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_VALID_MISMATCH_CERT_PATH)) ? ValidMismatchCertificatePath : Environment.GetEnvironmentVariable(ENV_VALID_MISMATCH_CERT_PATH);
+            ValidCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_VALID_CERT_PATH)) ?
+                Path.Combine(scriptsDir, certificateFileName): Environment.GetEnvironmentVariable(ENV_VALID_CERT_PATH);
+            ValidMismatchCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_VALID_MISMATCH_CERT_PATH)) ?
+                Path.Combine(scriptsDir,  mismatchCertificateFileName) : Environment.GetEnvironmentVariable(ENV_VALID_MISMATCH_CERT_PATH);
         }
 
         [ConditionalTheory(nameof(IsNotAzureServer), nameof(IsNotAzureSynapse), nameof(AreConnectionStringsSetup))]
@@ -441,7 +462,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         [InlineData(DataSourceType.Localhost, false)]
         [InlineData(DataSourceType.Hostname, true)]
         [InlineData(DataSourceType.Hostname, false)]
-        public static void ShouldConnectWithMatchingServerCertificate(DataSourceType dataSourceType, bool strict)
+        public void ShouldConnectWithMatchingServerCertificate(DataSourceType dataSourceType, bool strict)
         {
             if (!SelfSignedCertificateInstalled())
             {
@@ -449,13 +470,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 return;
             }
 
-            Assert.True(File.Exists(ValidCertificatePath), "The validate certificate does not exist.");
+            string validCertificatePath = GetPathFromCertificateType(CertificatePathType.Valid);
+            Assert.True(File.Exists(validCertificatePath), "The validate certificate does not exist.");
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 DataSource = GetDataSourceName(dataSourceType),
                 Encrypt = strict ? SqlConnectionEncryptOption.Strict : SqlConnectionEncryptOption.Mandatory,
-                ServerCertificate = ValidCertificatePath
+                ServerCertificate = validCertificatePath
             };
 
             Connect(builder.ConnectionString);

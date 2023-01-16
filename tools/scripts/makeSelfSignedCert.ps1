@@ -67,9 +67,12 @@ $mismatchcert = Get-ChildItem Cert:\LocalMachine\My\$mismatchCertThumbprint
 
 $PASSWORD = ConvertTo-SecureString -String "PLACEHOLDER" -Force -AsPlainText
 
-$Env:TDS8_Test_Certificate_On_FileSystem = "$(pwd)\sqlservercert.cer"
-$Env:TDS8_Test_MismatchCertificate_On_FileSystem = "$(pwd)\mismatchsqlservercert.cer"
-$Env:TDS8_Test_InvalidCertificate_On_FileSystem = "$(pwd)\sqlservercert.pfx"
+# creates the certificates in the same directory as this script
+$outputDirectory = $PSScriptRoot
+
+$Env:TDS8_Test_Certificate_On_FileSystem = "$outputDirectory\sqlservercert.cer"
+$Env:TDS8_Test_MismatchCertificate_On_FileSystem = "$outputDirectory\mismatchsqlservercert.cer"
+$Env:TDS8_Test_InvalidCertificate_On_FileSystem = "$outputDirectory\sqlservercert.pfx"
 
 Write-Host "Export certificate in pfx"
 Export-PfxCertificate -Cert "Cert:\LocalMachine\My\$certThumbprint" -FilePath $Env:TDS8_Test_InvalidCertificate_On_FileSystem -Password $PASSWORD -Force
