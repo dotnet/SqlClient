@@ -470,14 +470,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 return;
             }
 
-            string validCertificatePath = GetPathFromCertificateType(CertificatePathType.Valid);
-            Assert.True(File.Exists(validCertificatePath), "The validate certificate does not exist.");
+            string mismatchValidCertificatePath = GetPathFromCertificateType(CertificatePathType.Mismatch);
+            Assert.True(File.Exists(mismatchValidCertificatePath), "The validate certificate does not exist.");
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 DataSource = GetDataSourceName(dataSourceType),
                 Encrypt = strict ? SqlConnectionEncryptOption.Strict : SqlConnectionEncryptOption.Mandatory,
-                ServerCertificate = validCertificatePath
+                ServerCertificate = mismatchValidCertificatePath
             };
 
             Connect(builder.ConnectionString);

@@ -35,11 +35,12 @@ param(
 	$store.Close()
 }
 
-$Subject="CN=$([System.Net.Dns]::GetHostByName($env:computerName).HostName)"
+$FQDN = ([System.Net.Dns]::GetHostByName($env:computerName).HostName)
+$Subject = "CN=$FQDN"
 $Env:TDS8_EXTERNAL_IP = (Invoke-WebRequest ifconfig.me/ip).Content.Trim()
 $Env:TDS8_Test_Certificate_FriendlyName = "TDS8SqlClientCert"
 $Env:TDS8_Test_Certificate_MismatchFriendlyName = "TDS8SqlClientCertMismatch"
-$MismatchSubject="CN=$Env:TDS8_EXTERNAL_IP"
+$MismatchSubject = "CN=$Env:TDS8_EXTERNAL_IP"
 
 $existingCert = (Get-ChildItem Cert:\LocalMachine\My | where-object -Property Subject -eq -Value $Subject)
 $existingMismatchCert = (Get-ChildItem Cert:\LocalMachine\My | where-object -Property Subject -eq -Value $MismatchSubject)
@@ -53,7 +54,7 @@ if ([string]::IsNullOrEmpty($existingCert)) {
 }
 
 if ([string]::IsNullOrEmpty($existingMismatchCert)) {
-	New-SelfSignedCertificate -Subject $MismatchSubject -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation "cert:\LocalMachine\My" -FriendlyName $Env:TDS8_Test_Certificate_MismatchFriendlyName -TextExtension @("2.5.29.17={text}DNS=localhost&IPAddress=127.0.0.1&IPAddress=::1") -KeyExportPolicy Exportable -HashAlgorithm "SHA256" -Type SSLServerAuthentication -Provider "Microsoft RSA SChannel Cryptographic Provider" | Select 
+	New-SelfSignedCertificate -Subject $MismatchSubject -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation "cert:\LocalMachine\My" -FriendlyName $Env:TDS8_Test_Certificate_MismatchFriendlyName -TextExtension @("2.5.29.17={text}DNS=$FQDN&IPAddress=127.0.0.1&IPAddress=::1&upn=$FQDN") -KeyExportPolicy Exportable -HashAlgorithm "SHA256" -Type SSLServerAuthentication -Provider "Microsoft RSA SChannel Cryptographic Provider" | Select 
 } else {
 	Write-Host "The cert with $MismatchSubject already exists"
 }
@@ -119,9 +120,9 @@ $prevCertificate = (Get-ItemProperty -Path $SqlInstanceRegPath -name "Certificat
 
 if (Test-Path $SqlInstanceRegPath) {
 	Write-Host "The certificate for $SqlInstanceName was previously set to $prevCertificate will be replaced."
-	Set-ItemProperty -Path $SqlInstanceRegPath -name "Certificate" -value $certThumbprint -Type String -Force
+	Set-ItemProperty -Path $SqlInstanceRegPath -name "Certificate" -value $mismatchCertThumbprint -Type String -Force
 } else {
-	New-ItemProperty -Path $SqlInstanceRegPath -name "Certificate" -value $certThumbprint -Type String -Force
+	New-ItemProperty -Path $SqlInstanceRegPath -name "Certificate" -value $mismatchCertThumbprint -Type String -Force
 }
 
 if ($?) {
