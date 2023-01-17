@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
@@ -13,7 +14,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [PlatformSpecific(TestPlatforms.Windows)]
     public class DistributedTransactionTest
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), Timeout = 10000)]
+        private static bool s_DelegatedTransactionCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotAzureServer() && PlatformDetection.IsNotX86Process;
+
+        [ConditionalFact(nameof(s_DelegatedTransactionCondition), Timeout = 10000)]
         public async Task Delegated_transaction_deadlock_in_SinglePhaseCommit()
         {
             TransactionManager.ImplicitDistributedTransactions = true;
