@@ -43,6 +43,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string PowerShellPath = null;
         public string KerberosDomainPassword = null;
         public string KerberosDomainUser = null;
+        public bool IsManagedInstance = false;
 
         public static Config Load(string configPath = @"config.json")
         {

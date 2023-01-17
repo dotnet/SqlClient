@@ -195,10 +195,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private bool RunTestCoreAndCompareWithBaseline()
         {
             string outputPath = "SqlParameterTest.out";
+            string baselinePath;
 #if DEBUG
-            string baselinePath = DataTestUtility.IsNotAzureServer() ? "SqlParameterTest_DebugMode.bsl" : "SqlParameterTest_DebugMode_Azure.bsl";
+            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
+            {
+                baselinePath = "SqlParameterTest_DebugMode.bsl";
+            }
+            else
+            {
+                baselinePath = "SqlParameterTest_DebugMode_Azure.bsl";
+            }
 #else
-            string baselinePath = DataTestUtility.IsNotAzureServer() ? "SqlParameterTest_ReleaseMode.bsl" : "SqlParameterTest_ReleaseMode_Azure.bsl";
+            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
+            {
+                baselinePath = "SqlParameterTest_ReleaseMode.bsl";
+            }
+            else
+            {
+                baselinePath = "SqlParameterTest_ReleaseMode_Azure.bsl";
+            }
 #endif
 
             var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
