@@ -9,9 +9,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
 {
     public class Tds8ConnectivityTest
     {
-        #region Environment setup variables and helper methods
+        // NOTE: Please run SqlClient\tools\scripts\makeSelfSignedCert.ps1 to set up the self-signed certificate for tests.
 
-        // These environment variables are populated from a powershell or bash script.after the certificates are generated
+        #region Environment setup variables and helper methods
+        // These environment variables are populated from a powershell script or bash script after the certificate is generated.
         private const string ENV_CERT_FRIENDLYNAME = "TDS8_Test_Certificate_FriendlyName";
         private const string ENV_CERT_MISMATCH_FRIENDLYNAME = "TDS8_Test_Certificate_Mismatch_FriendlyName";
         private const string ENV_VALID_CERT_PATH = "TDS8_Test_Certificate_On_FileSystem";
@@ -75,18 +76,47 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
             return s_externalIp;
         }
 
-        private static string s_serverVersion = null;
-        private static string GetServerVersion()
+        private static int? s_serverMajorVersion = null;
+        private static int? GetSqlServerMajorVersion()
         {
-            if (s_serverVersion == null)
+            if (s_serverMajorVersion == null)
             {
-                s_serverVersion = Environment.GetEnvironmentVariable(ENV_SQL_SERVER_VERSION);
-                if (s_serverVersion == null)
+                string version = Environment.GetEnvironmentVariable(ENV_SQL_SERVER_VERSION);
+                if (version != null)
                 {
+                    if (int.TryParse(version, out int majorVersionNumber))
+                    {
+                        // NOTE: version 15 is 2019, and 16 is 2022
+                        s_serverMajorVersion = majorVersionNumber;
+                    }
+                }
+
+                // Note the fallback to retrieve the SQL Server major version from the query is a bit of overhead.
+                if (s_serverMajorVersion == null)
+                {
+                    string versionQuery = "select SERVERPROPERTY('ProductMajorVersion')";
+
+                    // this connection string should already be verfied from the conditional theory.
+                    using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+                    connection.Open();
+
+                    using SqlCommand command = new SqlCommand(versionQuery, connection);
+                    string majorVersion = command.ExecuteScalar().ToString();
+
+                    if(!string.IsNullOrEmpty(majorVersion))
+                    {
+                        if (int.TryParse(majorVersion, out int majorVersionNumber))
+                        {
+                            s_serverMajorVersion = majorVersionNumber;
+
+                            return s_serverMajorVersion;
+                        }
+                    }
+
                     throw new NullReferenceException("Unable to retrieve the sql server version from the environment variable.");
                 }
             }
-            return s_serverVersion;
+            return s_serverMajorVersion;
         }
 
         // Helper enum and convert methods for the server name
@@ -223,8 +253,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
 
         #endregion // Flags for detecting if a certificate is installed
 
-        // TODO: needs to call sqlcmd or modify the registry to ensure SqlServer is running with the self-signed certificate set.
-
         public Tds8ConnectivityTest()
         {
             // Get tools script directory
@@ -279,7 +307,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 HostNameInCertificate = GetHostName()
             };
 
-            Connect(builder.ConnectionString);
+            if (strict && GetSqlServerMajorVersion() < 16)
+            {
+                // Connecting in Strict mode with HNIC is only available in SQL Server 2022; it's expected to fail lower SQL Server versions.
+                SqlException ex = Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
+                Assert.NotNull(ex);
+            } 
+            else
+            {
+                Connect(builder.ConnectionString);
+            }
         }
 
         [ConditionalTheory(nameof(IsNotAzureServer), nameof(IsNotAzureSynapse), nameof(AreConnectionStringsSetup))]
@@ -326,11 +363,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 return;
             }
 
+            string pathToMissingCert = GetPathFromCertificateType(CertificatePathType.Invalid_DNE);
+            Assert.False(File.Exists(pathToMissingCert), $"The path to certificate [{pathToMissingCert}] should not exist.");
+
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 DataSource = GetDataSourceName(dataSourceType),
                 Encrypt = strict ? SqlConnectionEncryptOption.Strict : SqlConnectionEncryptOption.Mandatory,
-                ServerCertificate = GetPathFromCertificateType(CertificatePathType.Invalid_DNE),
+                ServerCertificate = pathToMissingCert,
             };
         }
 
@@ -349,7 +389,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
             }
 
             string pathToMissingCert = GetPathFromCertificateType(CertificatePathType.Invalid_DNE);
-            Assert.False(File.Exists(pathToMissingCert), "The path to certificate should not exist.");
+            Assert.False(File.Exists(pathToMissingCert), $"The path to certificate [{pathToMissingCert}] should not exist.");
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -377,7 +417,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
             }
 
             string pathToInvalidFormatCertificate = GetPathFromCertificateType(CertificatePathType.Invalid_Format);
-            Assert.True(File.Exists(pathToInvalidFormatCertificate), "The certificate must exist for the test.");
+            Assert.True(File.Exists(pathToInvalidFormatCertificate), $"The certificate [{invalidCertificateFormatFileName}] must exist for the test.");
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -456,7 +496,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
             Connect(builder.ConnectionString);
         }
 
-        // Ideally, we would have a remote server to connect to and one that is a SQL Server 2022 agent and one that is not.
         [ConditionalTheory(nameof(IsNotAzureServer), nameof(IsNotAzureSynapse), nameof(AreConnectionStringsSetup))]
         [InlineData(DataSourceType.Localhost, true)]
         [InlineData(DataSourceType.Localhost, false)]
@@ -480,7 +519,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 ServerCertificate = mismatchValidCertificatePath
             };
 
-            Connect(builder.ConnectionString);
+            if (strict && GetSqlServerMajorVersion() < 16)
+            {
+                // Connecting in Strict mode with Server Cerficiate is only available in SQL Server 2022; it's expected to fail lower SQL Server versions.
+                SqlException ex = Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
+                Assert.NotNull(ex);
+            }
+            else
+            {
+                Connect(builder.ConnectionString);
+            }
+
         }
 
         /// <summary>
