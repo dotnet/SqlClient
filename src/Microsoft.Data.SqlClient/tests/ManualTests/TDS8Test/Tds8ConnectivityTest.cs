@@ -1,4 +1,8 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Net.Http;
@@ -62,7 +66,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                     {
                         string body = response.Content.ReadAsStringAsync().Result;
 
-
                         if (!string.IsNullOrEmpty(body))
                         {
                             s_externalIp = body;
@@ -121,8 +124,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
 
         // Helper enum and convert methods for the server name
         private static string TcpDataSourceHostName => string.Format("tcp:{0}", GetHostName());
-        private static string TcpDataSourceLocalhost => "tcp:localhost";
-        private static string TcpDataSourceLoopbackAddress => "tcp:127.0.0.1";
+        private const string TcpDataSourceLocalhost = "tcp:localhost";
+        private const string TcpDataSourceLoopbackAddress = "tcp:127.0.0.1";
 
         public enum DataSourceType
         {
@@ -187,12 +190,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
 
             if (store == null)
             {
-                throw new ArgumentNullException("Unable to load the certificate store");
+                throw new ArgumentNullException(nameof(store), "Unable to load the certificate store");
             }
 
             if (string.IsNullOrWhiteSpace(subject))
             {
-                throw new ArgumentNullException("The subject cannot be empty");
+                throw new ArgumentNullException(nameof(subject), "The subject cannot be empty");
             }
 
             // Append CN= to the subject if it is missing.
@@ -293,11 +296,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
             // NOTE: the server must have the mismatch hostname certificate installed in the trusted root authorties
             // i.e. subject = CA="something.else.com" and hostname is computer.
 
-            if (!TrustedRootWithMismatchHostNameSelfSignedCertifcateInstalled())
-            {
-                Assert.True(false, "The mismatch self sign certificate is not installed in the trusted root and test skipped.");
-                return;
-            }
+            Assert.True(TrustedRootWithMismatchHostNameSelfSignedCertifcateInstalled(), "The mismatch self-sign certificate is not installed in the trusted root and test skipped.");
 
             // The certificate subject name is the IP Address in this mismatch certificate and the local machine hostname will be set in the HNIC.
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
@@ -310,8 +309,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
             if (strict && GetSqlServerMajorVersion() < 16)
             {
                 // Connecting in Strict mode with HNIC is only available in SQL Server 2022; it's expected to fail lower SQL Server versions.
-                SqlException ex = Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
-                Assert.NotNull(ex);
+                Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
             } 
             else
             {
@@ -398,8 +396,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 ServerCertificate = pathToMissingCert
             };
 
-            SqlException ex = Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
-            Assert.NotNull(ex);
+            Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
         }
 
         [ConditionalTheory(nameof(IsNotAzureServer), nameof(IsNotAzureSynapse), nameof(AreConnectionStringsSetup))]
@@ -426,8 +423,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 ServerCertificate = pathToInvalidFormatCertificate
             };
 
-            SqlException ex = Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
-            Assert.NotNull(ex);
+            Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
         }
 
         [ConditionalTheory(nameof(IsNotAzureServer), nameof(IsNotAzureSynapse), nameof(AreConnectionStringsSetup))]
@@ -522,8 +518,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
             if (strict && GetSqlServerMajorVersion() < 16)
             {
                 // Connecting in Strict mode with Server Cerficiate is only available in SQL Server 2022; it's expected to fail lower SQL Server versions.
-                SqlException ex = Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
-                Assert.NotNull(ex);
+                Assert.Throws<SqlException>(() => Connect(builder.ConnectionString));
             }
             else
             {
