@@ -33,8 +33,8 @@ call :pauseOnError msbuild -p:Configuration="Release" -t:BuildAKVNetFx
 call :pauseOnError msbuild -p:Configuration="Release" -t:BuildTestsNetFx -p:TargetNetFxVersion=%netfxVersion%
 
 echo Running .NET Framework %netfxVersion% Tests ...
-call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" -p:TargetNetFxVersion=%netfxVersion% --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-%netfxVersion%-functional-anycpu.xml
-call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" -p:TargetNetFxVersion=%netfxVersion% --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-%netfxVersion%-manual-anycpu.xml
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" -p:TargetNetFxVersion=%netfxVersion% --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:"trx;LogFileName=..\..\..\..\..\artifacts\Results\project-%netfxVersion%-functional-anycpu.xml"
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" -p:TargetNetFxVersion=%netfxVersion% --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:"trx;LogFileName=..\..\..\..\..\artifacts\Results\project-%netfxVersion%-manual-anycpu.xml"
 
 echo Building .NET %netcoreVersion% Tests ...
 call pause
@@ -45,8 +45,8 @@ call :pauseOnError msbuild -p:Configuration="Release" -t:BuildAKVNetCoreAllOS
 call :pauseOnError msbuild -p:Configuration="Release" -t:BuildTestsNetCore -p:TargetNetCoreVersion=%netcoreVersion%
 
 echo Running .NET %netcoreVersion% Tests ...
-call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" -p:TargetNetCoreVersion=%netcoreVersion% --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-%netcoreVersion%-functional-anycpu.xml
-call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" -p:TargetNetCoreVersion=%netcoreVersion% --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-%netcoreVersion%-manual-anycpu.xml
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" -p:TargetNetCoreVersion=%netcoreVersion% --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests" -l:"trx;LogFileName=..\..\..\..\..\artifacts\Results\project-%netcoreVersion%-functional-anycpu.xml"
+call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" -p:TargetNetCoreVersion=%netcoreVersion% --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests" -l:"trx;LogFileName=..\..\..\..\..\artifacts\Results\project-%netcoreVersion%-manual-anycpu.xml"
 
 goto :eof
 
