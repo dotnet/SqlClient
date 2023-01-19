@@ -4,7 +4,7 @@ The following Microsoft.Data.SqlClient 5.1 stable releases have been shipped:
 
 | Release Date | Version | Notes |
 | :-- | :-- | :--: |
-| 2022/01/19 | 5.1.0 | [release notes](5.1.0.md) |
+| 2023/01/19 | 5.1.0 | [release notes](5.1.0.md) |
 
 The following Microsoft.Data.SqlClient 5.1 preview releases have been shipped:
 

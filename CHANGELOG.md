@@ -10,9 +10,9 @@ This update brings the below changes over the previous release:
 
 ### Fixed
 
-- Fixed transient error list on configurable retry logic for ConcurrentExecution. [#1882](https://github.com/dotnet/SqlClient/pull/1882)
+- Fixed transient error list in configurable retry logic for ConcurrentExecution. [#1882](https://github.com/dotnet/SqlClient/pull/1882)
 - Fixed deadlock when using SinglePhaseCommit with distributed transactions. [#1801](https://github.com/dotnet/SqlClient/pull/1801)
-- Fixed DAC connections to localhost in managed SNI. [#1865](https://github.com/dotnet/SqlClient/pull/1865)
+- Fixed Dedicated Admin Connections (DAC) to localhost in managed SNI. [#1865](https://github.com/dotnet/SqlClient/pull/1865)
 
 ### Changed
 
@@ -25,7 +25,7 @@ This update brings the below changes over the previous release:
 
 ### Breaking changes over preview release v5.1.0-preview1
 
-- Added support for .NET 6.0 and dropped support for .NET Core 3.1. [#1704](https://github.com/dotnet/SqlClient/pull/1704) [#1823](https://github.com/dotnet/SqlClient/pull/1823)
+- Dropped support for .NET Core 3.1. [#1704](https://github.com/dotnet/SqlClient/pull/1704) [#1823](https://github.com/dotnet/SqlClient/pull/1823)
 
 ### Added
 
