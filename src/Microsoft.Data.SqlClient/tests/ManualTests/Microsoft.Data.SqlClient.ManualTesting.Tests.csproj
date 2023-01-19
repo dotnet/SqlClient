@@ -193,6 +193,7 @@
     <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
     <Compile Include="SQL\SqlSchemaInfoTest\SqlSchemaInfoTest.cs" />
     <Compile Include="SQL\SqlStatisticsTest\SqlStatisticsTest.cs" />
+    <Compile Include="SQL\TDS8Test\Tds8ConnectivityTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionEnlistmentTest.cs" />
     <Compile Include="SQL\UdtTest\SqlServerTypesTest.cs" />
@@ -214,7 +215,6 @@
     <Compile Include="SQL\ParameterTest\SteTypeBoundaries.cs" />
     <Compile Include="SQL\ParameterTest\StreamInputParam.cs" />
     <Compile Include="SQL\ParameterTest\TvpTest.cs" />
-    <Compile Include="TDS8Test\Tds8ConnectivityTest.cs" />
     <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>SqlParameterTest_DebugMode.bsl</Link>

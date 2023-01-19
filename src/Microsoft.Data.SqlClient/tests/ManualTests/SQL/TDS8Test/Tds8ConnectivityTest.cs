@@ -9,7 +9,7 @@ using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class Tds8ConnectivityTest
     {
