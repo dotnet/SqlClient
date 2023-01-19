@@ -29,6 +29,7 @@ This update brings the below changes over the previous release:
 
 ### Added
 
+- Added support for .NET 6.0. [#1704](https://github.com/dotnet/SqlClient/pull/1704)
 - Added support for `DateOnly` and `TimeOnly` for `SqlParameter` value and `GetFieldValue`. [#1813](https://github.com/dotnet/SqlClient/pull/1813)
 - Added support for TLS 1.3 for .NET Core and SNI Native. [#1821](https://github.com/dotnet/SqlClient/pull/1821)
 - Added `ServerCertificate` support for `Encrypt=Mandatory` or `Encrypt=Strict`. [#1822](https://github.com/dotnet/SqlClient/pull/1822)
