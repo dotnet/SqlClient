@@ -126,7 +126,7 @@ if (Test-Path $SqlInstanceRegPath) {
 }
 
 if ($?) {
-	Write-Host "The certificate has been set to $certThumbprint"
+	Write-Host "The certificate has been set to $mismatchCertThumbprint"
 	
 	Write-Host "Restarting the Sql Server Instance"
 	
