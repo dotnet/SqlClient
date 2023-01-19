@@ -709,12 +709,6 @@
     <PackageReference Include="System.Text.Encodings.Web">
       <Version>$(SystemTextEncodingsWebVersion)</Version>
     </PackageReference>
-    <PackageReference Include="System.Security.Cryptography.Algorithms">
-      <Version>$(SystemSecurityCryptographyAlgorithmsVersion)</Version>
-    </PackageReference>
-    <PackageReference Include="System.Security.Cryptography.Primitives">
-      <Version>$(SystemSecurityCryptographyPrimitivesVersion)</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <Version>$(MicrosoftDataSqlClientSniVersion)</Version>
       <PrivateAssets>All</PrivateAssets>
@@ -734,9 +728,6 @@
     </PackageReference>
     <PackageReference Include="System.Buffers">
       <Version>$(SystemBuffersVersion)</Version>
-    </PackageReference>
-    <PackageReference Include="System.IO">
-      <Version>$(SystemIOVersion)</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

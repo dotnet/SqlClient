@@ -14,9 +14,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Test ensures cancellation token is registered before ReadAsync starts processing results from TDS Stream,
         /// such that when Cancel is triggered, the token is capable of canceling reading further results.
+        /// Synapse: Incompatible query. 
         /// </summary>
         /// <returns>Async Task</returns>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task CancellationTokenIsRespected_ReadAsync()
         {
             const string longRunningQuery = @"
@@ -49,9 +50,10 @@ from ThousandRows as A, ThousandRows as B, ThousandRows as C;";
         /// <summary>
         /// Test ensures cancellation token is registered before ReadAsync starts processing results from TDS Stream,
         /// such that when Cancel is triggered, the token is capable of canceling reading further results.
+        /// Synapse: Incompatible query & Parallel query execution on the same connection is not supported.
         /// </summary>
         /// <returns>Async Task</returns>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task CancelledCancellationTokenIsRespected_ReadAsync()
         {
             const string longRunningQuery = @"

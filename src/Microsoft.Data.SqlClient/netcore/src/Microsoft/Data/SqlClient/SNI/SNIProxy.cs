@@ -579,10 +579,12 @@ namespace Microsoft.Data.SqlClient.SNI
         private void InferLocalServerName()
         {
             // If Server name is empty or localhost, then use "localhost"
-            if (string.IsNullOrEmpty(ServerName) || IsLocalHost(ServerName))
+            if (string.IsNullOrEmpty(ServerName) || IsLocalHost(ServerName) ||
+                (Environment.MachineName.Equals(ServerName, StringComparison.CurrentCultureIgnoreCase) &&
+                 _connectionProtocol == Protocol.Admin))
             {
-                ServerName = _connectionProtocol == Protocol.Admin ?
-                    Environment.MachineName : DefaultHostName;
+                // For DAC use "localhost" instead of the server name.
+                ServerName = DefaultHostName;
             }
         }
 
