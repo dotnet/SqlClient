@@ -17,7 +17,7 @@ This update brings the below changes over the previous release:
 ### Changed
 
 - Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.1.0`. [#1889](https://github.com/dotnet/SqlClient/pull/1889)
-- Code health improvements [#1849](https://github.com/dotnet/SqlClient/pull/1849)
+- Code health improvements [#1867](https://github.com/dotnet/SqlClient/pull/1867) [#1849](https://github.com/dotnet/SqlClient/pull/1849)
 
 ## [Preview Release 5.1.0-preview2.22314.2] - 2022-11-10
 
