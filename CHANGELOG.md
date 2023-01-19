@@ -10,13 +10,13 @@ This update brings the below changes over the previous release:
 
 ### Fixed
 
-- Fixed transient error list in configurable retry logic for ConcurrentExecution. [#1882](https://github.com/dotnet/SqlClient/pull/1882)
+- Fixed thread safety of transient error list in configurable retry logic. [#1882](https://github.com/dotnet/SqlClient/pull/1882)
 - Fixed deadlock when using SinglePhaseCommit with distributed transactions. [#1801](https://github.com/dotnet/SqlClient/pull/1801)
 - Fixed Dedicated Admin Connections (DAC) to localhost in managed SNI. [#1865](https://github.com/dotnet/SqlClient/pull/1865)
 
 ### Changed
 
-- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.1.0`. [#1889](https://github.com/dotnet/SqlClient/pull/1889)
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.1.0`. [#1889](https://github.com/dotnet/SqlClient/pull/1889) which includes fix for AppDomain crash in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418), TLS 1.3 Support, removal of ARM32 binaries, and support for the `ServerCertificate` option.
 - Code health improvements [#1867](https://github.com/dotnet/SqlClient/pull/1867) [#1849](https://github.com/dotnet/SqlClient/pull/1849)
 
 ## [Preview Release 5.1.0-preview2.22314.2] - 2022-11-10
