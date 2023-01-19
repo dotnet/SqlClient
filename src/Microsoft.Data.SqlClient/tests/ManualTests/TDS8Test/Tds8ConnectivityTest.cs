@@ -26,27 +26,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         private const string ENV_SQL_SERVER_VERSION = "TDS8_Test_SqlServerVersion";
 
         // Note these names comes from the makeSelfSignCert.ps1
-        private readonly string ValidCertificateFriendlyName = "TDS8SqlClientCert";
-        private readonly string ValidMismatchCertificateFriendlyName = "TDS8SqlClientCertMismatch";
+        private readonly string _validCertificateFriendlyName = "TDS8SqlClientCert";
+        private readonly string _validMismatchCertificateFriendlyName = "TDS8SqlClientCertMismatch";
 
         // The following variables are populated from the environment variables above.
 
-        private const string certificateFileName = "sqlservercert.cer";
-        private const string mismatchCertificateFileName = "mismatchsqlservercert.cer";
-        private const string invalidCertificateFormatFileName = "sqlservercert.pfx";
+        private const string CertificateFileName = "sqlservercert.cer";
+        private const string MismatchCertificateFileName = "mismatchsqlservercert.cer";
+        private const string InvalidCertificateFormatFileName = "sqlservercert.pfx";
 
-        private static string ValidCertificatePath = "";
-        private static string ValidMismatchCertificatePath = "";
-        private static string InvalidFormatCertificatePath = "";
-        private static string InvalidDNECertificatePath = "";
+        private static string s_validCertificatePath = "";
+        private static string s_validMismatchCertificatePath = "";
+        private static string s_invalidFormatCertificatePath = "";
+        private static string s_invalidDNECertificatePath = "";
 
         private static string s_hostName = null;
         private static string GetHostName()
         {
-            if (s_hostName == null)
+            if (s_hostName != null)
             {
-                s_hostName = System.Net.Dns.GetHostEntry(Environment.MachineName).HostName;
+                return s_hostName;
             }
+            s_hostName = System.Net.Dns.GetHostEntry(Environment.MachineName).HostName;
             return s_hostName;
         }
 
@@ -59,8 +60,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 if (s_externalIp == null)
                 {
                     using HttpClient client = new();
-                    
-                    var response = client.GetAsync("https://ifconfig.me/ip").Result;
+
+                    HttpResponseMessage response = client.GetAsync("https://ifconfig.me/ip").Result;
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -100,10 +101,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                     string versionQuery = "select SERVERPROPERTY('ProductMajorVersion')";
 
                     // this connection string should already be verfied from the conditional theory.
-                    using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+                    using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
                     connection.Open();
 
-                    using SqlCommand command = new SqlCommand(versionQuery, connection);
+                    using SqlCommand command = new(versionQuery, connection);
                     string majorVersion = command.ExecuteScalar().ToString();
 
                     if(!string.IsNullOrEmpty(majorVersion))
@@ -134,19 +135,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
 
         public static string GetDataSourceName(DataSourceType type)
         {
-            switch (type)
+            return type switch
             {
-                case DataSourceType.Hostname:
-                    return TcpDataSourceHostName;
-                case DataSourceType.Localhost:
-                    return TcpDataSourceLocalhost;
-                case DataSourceType.LoopbackAddress:
-                    return TcpDataSourceLoopbackAddress;
-                case DataSourceType.NamedPipe:
-                    return ".";
-                default:
-                    throw new InvalidEnumArgumentException("The value passed in is not supported.");
-            }
+                DataSourceType.Hostname => TcpDataSourceHostName,
+                DataSourceType.Localhost => TcpDataSourceLocalhost,
+                DataSourceType.LoopbackAddress => TcpDataSourceLoopbackAddress,
+                DataSourceType.NamedPipe => ".",
+                _ => throw new InvalidEnumArgumentException("The value passed in is not supported."),
+            };
         }
 
         public enum CertificatePathType
@@ -162,19 +158,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         /// <exception cref="InvalidEnumArgumentException">When a valid does not exist in the enum</exception>
         public static string GetPathFromCertificateType(CertificatePathType type)
         {
-            switch (type)
+            return type switch
             {
-                case CertificatePathType.Valid:
-                    return ValidCertificatePath;
-                case CertificatePathType.Mismatch:
-                    return ValidMismatchCertificatePath;
-                case CertificatePathType.Invalid_DNE:
-                    return InvalidDNECertificatePath;
-                case CertificatePathType.Invalid_Format:
-                    return InvalidFormatCertificatePath;
-                default:
-                    throw new InvalidEnumArgumentException("The value passed in is not supported.");
-            }
+                CertificatePathType.Valid => s_validCertificatePath,
+                CertificatePathType.Mismatch => s_validMismatchCertificatePath,
+                CertificatePathType.Invalid_DNE => s_invalidDNECertificatePath,
+                CertificatePathType.Invalid_Format => s_invalidFormatCertificatePath,
+                _ => throw new InvalidEnumArgumentException("The value passed in is not supported."),
+            };
         }
 
         /// <summary>
@@ -269,17 +260,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
             string scriptsDir = Path.Combine(solutionDir, "tools", "scripts");
 
             // Populate the variables with the environment variable values
-            ValidCertificateFriendlyName = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_CERT_FRIENDLYNAME)) ?
-                ValidCertificateFriendlyName : Environment.GetEnvironmentVariable(ENV_CERT_FRIENDLYNAME);
-            ValidMismatchCertificateFriendlyName = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_CERT_MISMATCH_FRIENDLYNAME)) ?
-                ValidMismatchCertificateFriendlyName : Environment.GetEnvironmentVariable(ENV_CERT_MISMATCH_FRIENDLYNAME);
-            InvalidFormatCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_INVALID_CERT_PATH)) ?
-                Path.Combine(scriptsDir, invalidCertificateFormatFileName) : Environment.GetEnvironmentVariable(ENV_INVALID_CERT_PATH);
-            InvalidDNECertificatePath = Path.Combine(Environment.CurrentDirectory, "DOES_NOT_EXIST.cer");
-            ValidCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_VALID_CERT_PATH)) ?
-                Path.Combine(scriptsDir, certificateFileName): Environment.GetEnvironmentVariable(ENV_VALID_CERT_PATH);
-            ValidMismatchCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_VALID_MISMATCH_CERT_PATH)) ?
-                Path.Combine(scriptsDir,  mismatchCertificateFileName) : Environment.GetEnvironmentVariable(ENV_VALID_MISMATCH_CERT_PATH);
+            _validCertificateFriendlyName = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_CERT_FRIENDLYNAME)) ?
+                _validCertificateFriendlyName : Environment.GetEnvironmentVariable(ENV_CERT_FRIENDLYNAME);
+            _validMismatchCertificateFriendlyName = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_CERT_MISMATCH_FRIENDLYNAME)) ?
+                _validMismatchCertificateFriendlyName : Environment.GetEnvironmentVariable(ENV_CERT_MISMATCH_FRIENDLYNAME);
+            s_invalidFormatCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_INVALID_CERT_PATH)) ?
+                Path.Combine(scriptsDir, InvalidCertificateFormatFileName) : Environment.GetEnvironmentVariable(ENV_INVALID_CERT_PATH);
+            s_invalidDNECertificatePath = Path.Combine(Environment.CurrentDirectory, "DOES_NOT_EXIST.cer");
+            s_validCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_VALID_CERT_PATH)) ?
+                Path.Combine(scriptsDir, CertificateFileName): Environment.GetEnvironmentVariable(ENV_VALID_CERT_PATH);
+            s_validMismatchCertificatePath = string.IsNullOrEmpty(Environment.GetEnvironmentVariable(ENV_VALID_MISMATCH_CERT_PATH)) ?
+                Path.Combine(scriptsDir,  MismatchCertificateFileName) : Environment.GetEnvironmentVariable(ENV_VALID_MISMATCH_CERT_PATH);
         }
 
         [ConditionalTheory(nameof(IsNotAzureServer), nameof(IsNotAzureSynapse), nameof(AreConnectionStringsSetup))]
@@ -329,11 +320,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         public static void ShouldConnectIgnoreHNICWithCertificateInTrustedRootCertificate(DataSourceType dataSourceType, bool strict)
         {
             // NOTE: the server must have the self-signed certificate installed in the trusted root.
-            if (!TrustedRootSelfSignedCertifcateInstalled())
-            {
-                Assert.True(false, "The self sign certificate is not installed in trusted root and test skipped.");
-                return;
-            }
+            Assert.True(TrustedRootSelfSignedCertifcateInstalled(), "The self sign certificate is not installed in trusted root and test skipped.");
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -341,6 +328,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 Encrypt = strict ? SqlConnectionEncryptOption.Strict : SqlConnectionEncryptOption.Mandatory,
                 HostNameInCertificate = "IGNORED.TEST.COM",
             };
+
+            Connect(builder.ConnectionString);
         }
 
         [ConditionalTheory(nameof(IsNotAzureServer), nameof(IsNotAzureSynapse), nameof(AreConnectionStringsSetup))]
@@ -355,11 +344,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         public void ShouldConnectIgnoreServerCertificateWithCertificateInRootTrustedCertificate(DataSourceType dataSourceType, bool strict)
         {
             // NOTE: the server must have the self-signed certificate installed.
-            if (!SelfSignedCertificateInstalled())
-            {
-                Assert.True(true, "The self sign certificate is not installed and test skipped.");
-                return;
-            }
+            Assert.True(SelfSignedCertificateInstalled(), "The self sign certificate is not installed and test skipped.");
 
             string pathToMissingCert = GetPathFromCertificateType(CertificatePathType.Invalid_DNE);
             Assert.False(File.Exists(pathToMissingCert), $"The path to certificate [{pathToMissingCert}] should not exist.");
@@ -370,6 +355,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
                 Encrypt = strict ? SqlConnectionEncryptOption.Strict : SqlConnectionEncryptOption.Mandatory,
                 ServerCertificate = pathToMissingCert,
             };
+
+            Connect(builder.ConnectionString);
         }
 
         [ConditionalTheory(nameof(IsNotAzureServer), nameof(IsNotAzureSynapse), nameof(AreConnectionStringsSetup))]
@@ -380,11 +367,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         public void ShouldFailWithLocalhostAndMissingServerCertificate(DataSourceType dataSourceType, bool strict)
         {
             // NOTE: the server must have the self-signed certificate installed.
-            if (!SelfSignedCertificateInstalled())
-            {
-                Assert.True(false, "The self sign certificate is not installed and test skipped.");
-                return;
-            }
+            Assert.True(SelfSignedCertificateInstalled(), "The self sign certificate is not installed and test skipped.");
 
             string pathToMissingCert = GetPathFromCertificateType(CertificatePathType.Invalid_DNE);
             Assert.False(File.Exists(pathToMissingCert), $"The path to certificate [{pathToMissingCert}] should not exist.");
@@ -407,14 +390,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         public void ShouldFailWithLocalhostAndInvalidServerCertificateFormat(DataSourceType dataSourceType, bool strict)
         {
             // NOTE: the server must have the self-signed certificate installed.
-            if (!SelfSignedCertificateInstalled())
-            {
-                Assert.True(false, "The self sign certificate is not installed and test skipped.");
-                return;
-            }
+            Assert.True(SelfSignedCertificateInstalled(), "The self sign certificate is not installed and test skipped.");
 
             string pathToInvalidFormatCertificate = GetPathFromCertificateType(CertificatePathType.Invalid_Format);
-            Assert.True(File.Exists(pathToInvalidFormatCertificate), $"The certificate [{invalidCertificateFormatFileName}] must exist for the test.");
+            Assert.True(File.Exists(pathToInvalidFormatCertificate), $"The certificate [{InvalidCertificateFormatFileName}] must exist for the test.");
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -432,11 +411,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         public void ShouldConnectIgnoreHNICAndConnectWithEncryptOpional(DataSourceType dataSourceType)
         {
             // NOTE: the server must have the self-signed certificate installed.
-            if (!SelfSignedCertificateInstalled())
-            {
-                Assert.True(false, "The self sign certificate is not installed and test skipped.");
-                return;
-            }
+            Assert.True(SelfSignedCertificateInstalled(), "The self sign certificate is not installed and test skipped.");
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -454,11 +429,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         public void ShouldConnectIgnoreServerCertificateWithEncryptOptional(DataSourceType dataSourceType)
         {
             // NOTE: the server must have the self-signed certificate installed.
-            if (!SelfSignedCertificateInstalled())
-            {
-                Assert.True(false, "The self sign certificate is not installed and test skipped.");
-                return;
-            }
+            Assert.True(SelfSignedCertificateInstalled(), "The self sign certificate is not installed and test skipped.");
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -475,11 +446,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         [InlineData(DataSourceType.Hostname)]
         public void ShouldConnectIgnoreServerCertificateWithTrustServerCertificateEncryptOptional(DataSourceType dataSourceType)
         {
-            if (!SelfSignedCertificateInstalled())
-            {
-                Assert.True(false, "The self sign certificate is not installed and test skipped.");
-                return;
-            }
+            Assert.True(SelfSignedCertificateInstalled(), "The self sign certificate is not installed and test skipped.");
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -499,11 +466,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         [InlineData(DataSourceType.Hostname, false)]
         public void ShouldConnectWithMatchingServerCertificate(DataSourceType dataSourceType, bool strict)
         {
-            if (!SelfSignedCertificateInstalled())
-            {
-                Assert.True(false, "The self sign certificate is not installed and test skipped.");
-                return;
-            }
+            Assert.True(SelfSignedCertificateInstalled(), "The self sign certificate is not installed and test skipped.");
 
             string mismatchValidCertificatePath = GetPathFromCertificateType(CertificatePathType.Mismatch);
             Assert.True(File.Exists(mismatchValidCertificatePath), "The validate certificate does not exist.");
@@ -533,12 +496,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.TDS8
         /// <param name="connectionString">The connection string</param>
         private static void Connect(string connectionString)
         {
-            using SqlConnection connection = new SqlConnection(connectionString);
+            using SqlConnection connection = new(connectionString);
             connection.Open();
 
             // The reason why we also make a query is because it validates that decryption is working from SNI.
             // If it fails decryption, it would throw an exception.
-            using SqlCommand command = new SqlCommand("select @@VERSION", connection);
+            using SqlCommand command = new("select @@VERSION", connection);
 
             string version = command.ExecuteScalar().ToString();
 
