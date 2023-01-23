@@ -1962,7 +1962,8 @@ namespace Microsoft.Data.SqlClient
                 token == TdsEnums.SQLSSPI ||
                 token == TdsEnums.SQLFEATUREEXTACK ||
                 token == TdsEnums.SQLSESSIONSTATE ||
-                token == TdsEnums.SQLFEDAUTHINFO);
+                token == TdsEnums.SQLFEDAUTHINFO ||
+                token == TdsEnums.SQLDEBUG_CMD );
         }
 
         // Main parse loop for the top-level tds tokens, calls back into the I*Handler interfaces
@@ -2040,8 +2041,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     case TdsEnums.SQLERROR:
                     case TdsEnums.SQLINFO:
+                    case TdsEnums.SQLDEBUG_CMD:
                         {
-                            if (token == TdsEnums.SQLERROR)
+                            if (token == TdsEnums.SQLERROR || token == TdsEnums.SQLDEBUG_CMD)
                             {
                                 stateObj.HasReceivedError = true; // Keep track of the fact error token was received - for Done processing.
                             }
@@ -3909,7 +3911,8 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(((errorClass >= TdsEnums.MIN_ERROR_CLASS) && token == TdsEnums.SQLERROR) ||
-                          ((errorClass < TdsEnums.MIN_ERROR_CLASS) && token == TdsEnums.SQLINFO), "class and token don't match!");
+                          ((errorClass < TdsEnums.MIN_ERROR_CLASS) && token == TdsEnums.SQLINFO) || 
+                          ((errorClass < TdsEnums.MIN_ERROR_CLASS) && token == TdsEnums.SQLDEBUG_CMD ), "class and token don't match!");
 
             if (!stateObj.TryReadUInt16(out shortLen))
             {
