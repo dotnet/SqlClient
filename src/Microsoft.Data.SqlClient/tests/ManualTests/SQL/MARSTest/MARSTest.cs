@@ -162,8 +162,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 #endif
-
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parallel query execution on the same connection is not supported.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task MARSAsyncBusyReaderTest()
         {
             using SqlConnection con = new(_connStr);
