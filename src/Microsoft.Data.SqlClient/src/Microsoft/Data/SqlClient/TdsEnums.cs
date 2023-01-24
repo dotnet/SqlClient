@@ -149,7 +149,7 @@ namespace Microsoft.Data.SqlClient
         public const byte SQLDONEINPROC = 0xff;
         public const byte SQLOFFSET = 0x78;
         public const byte SQLORDER = 0xa9;
-        public const byte SQLDEBUG_CMD = 0x60;
+        public const byte SQLDEBUG_CMD = 0x60; // This needs more info
         public const byte SQLLOGINACK = 0xad;
         public const byte SQLFEATUREEXTACK = 0xae;    // TDS 7.4 - feature ack
         public const byte SQLSESSIONSTATE = 0xe4;    // TDS 7.4 - connection resiliency session state
