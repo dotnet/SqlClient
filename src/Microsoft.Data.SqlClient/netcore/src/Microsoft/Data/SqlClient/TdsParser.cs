@@ -2043,7 +2043,7 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.SQLINFO:
                     case TdsEnums.SQLDEBUG_CMD:
                         {
-                            if (token == TdsEnums.SQLERROR || token == TdsEnums.SQLDEBUG_CMD)
+                            if (token == TdsEnums.SQLERROR || token == TdsEnums.SQLDEBUG_CMD) // This the value of 0x60 send fromm TDS Control token
                             {
                                 stateObj.HasReceivedError = true; // Keep track of the fact error token was received - for Done processing.
                             }
