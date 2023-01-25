@@ -5285,7 +5285,7 @@ namespace Microsoft.Data.SqlClient
             {
                 TDisposable copy = _disposable;
                 _disposable = default;
-                copy.Dispose();
+                copy?.Dispose();
             }
         }
 
