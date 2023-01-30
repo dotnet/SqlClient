@@ -4617,4 +4617,7 @@
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>使用“{0}”身份验证方法检索访问令牌时连接超时。最后一个错误: {1}: {2}</value>
   </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>面向 .NET Framework 时，不支持 "{0}" 平台。</value>
+  </data>
 </root>

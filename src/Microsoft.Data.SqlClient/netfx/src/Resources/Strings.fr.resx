@@ -4617,4 +4617,7 @@
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>La connexion a expiré lors de la récupération d’un jeton d’accès à l’aide de '{0}' méthode d’authentification. Dernière erreur : {1} : {2}</value>
   </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>La plateforme '{0}' n’est pas prise en charge lors du ciblage de .NET Framework.</value>
+  </data>
 </root>

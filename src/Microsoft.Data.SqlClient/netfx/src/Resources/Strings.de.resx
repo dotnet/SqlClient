@@ -4617,4 +4617,7 @@
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>Timeout bei der Verbindung beim Abrufen eines Zugriffstokens mithilfe der Authentifizierungsmethode "{0}". Letzter Fehler: {1}: {2}</value>
   </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>Die Plattform "{0}" wird bei .NET Framework nicht unterstützt.</value>
+  </data>
 </root>

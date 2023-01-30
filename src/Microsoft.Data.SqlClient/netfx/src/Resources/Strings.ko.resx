@@ -4617,4 +4617,7 @@
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>'{0}' 인증 방법을 사용하여 액세스 토큰을 검색하는 동안 연결 시간이 초과되었습니다. 마지막 오류: {1}: {2}</value>
   </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>.NET Framework를 대상으로 지정할 때는 '{0}' 플랫폼이 지원되지 않습니다.</value>
+  </data>
 </root>
