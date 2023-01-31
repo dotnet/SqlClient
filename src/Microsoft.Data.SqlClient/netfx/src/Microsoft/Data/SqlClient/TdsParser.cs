@@ -3063,20 +3063,13 @@ namespace Microsoft.Data.SqlClient
                             _defaultCollation = env.newCollation;
                             _defaultLCID = env.newCollation.LCID;
 
-                            int newCodePage = GetCodePage(env.newCollation, stateObj);
-
                             if ((env.newCollation.info & TdsEnums.UTF8_IN_TDSCOLLATION) == TdsEnums.UTF8_IN_TDSCOLLATION)
                             { // UTF8 collation
                                 _defaultEncoding = Encoding.UTF8;
-
-                                if (newCodePage != _defaultCodePage)
-                                {
-                                    _defaultCodePage = newCodePage;
-                                }
                             }
                             else
                             {
-
+                                int newCodePage = GetCodePage(env.newCollation, stateObj);
                                 if (newCodePage != _defaultCodePage)
                                 {
                                     _defaultCodePage = newCodePage;
