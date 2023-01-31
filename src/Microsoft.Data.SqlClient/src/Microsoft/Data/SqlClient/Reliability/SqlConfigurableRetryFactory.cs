@@ -37,6 +37,7 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/SqlConfigurableRetryFactory/*' />
     public sealed class SqlConfigurableRetryFactory
     {
+        private readonly static object s_syncObject = new();
         /// Default known transient error numbers.
         private static readonly HashSet<int> s_defaultTransientErrors
             = new HashSet<int>
@@ -111,7 +112,12 @@ namespace Microsoft.Data.SqlClient
             {
                 foreach (SqlError item in ex.Errors)
                 {
-                    if (retriableConditions.Contains(item.Number))
+                    bool retriable;
+                    lock (s_syncObject)
+                    {
+                        retriable = retriableConditions.Contains(item.Number);
+                    }
+                    if (retriable)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|ERR|CATCH> Found a transient error: number = <{2}>, message = <{3}>", nameof(SqlConfigurableRetryFactory), MethodBase.GetCurrentMethod().Name, item.Number, item.Message);
                         result = true;
