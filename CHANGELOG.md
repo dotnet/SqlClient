@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable release 3.1.2] - 2023-01-31
+
+### Added
+
+- Added Windows ARM64 support when targeting .NET Framework. [#1908](https://github.com/dotnet/SqlClient/pull/1908)
+
+### Fixed
+
+- Fixed thread safety of transient error list in configurable retry logic. [#1911](https://github.com/dotnet/SqlClient/pull/1911)
+- Fixed deadlock when using SinglePhaseCommit with distributed transactions. [#1912](https://github.com/dotnet/SqlClient/pull/1912)
+- Fixed Default UTF8 collation conflict. [#1910](https://github.com/dotnet/SqlClient/pull/1910)
+- Added CommandText length validation when using stored procedure command types. [#1909](https://github.com/dotnet/SqlClient/pull/1909)
+
 ## [Stable release 3.1.1] - 2022-08-12
 
 ### Fixed
