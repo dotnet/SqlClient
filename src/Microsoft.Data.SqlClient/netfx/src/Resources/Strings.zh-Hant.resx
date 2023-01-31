@@ -4617,4 +4617,7 @@
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>使用 '{0}' 驗證方法擷取存取權杖時已逾時。上次錯誤: {1}: {2}</value>
   </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>以.NET Framework 為目標時，不支援 '{0}' 平台。</value>
+  </data>
 </root>

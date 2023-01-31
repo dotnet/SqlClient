@@ -8639,6 +8639,15 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_9", resourceCulture);
             }
         }
+
+         /// <summary>
+        ///   Looks up a localized string similar to The &apos;{0}&apos; platform is not supported when targeting .NET Framework..
+        /// </summary>
+        internal static string SNI_PlatformNotSupportedNetFx {
+            get {
+                return ResourceManager.GetString("SNI_PlatformNotSupportedNetFx", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to HTTP Provider.

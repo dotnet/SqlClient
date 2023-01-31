@@ -2135,6 +2135,11 @@ namespace Microsoft.Data.Common
             return Argument(StringsHelper.GetString(Strings.ADP_InvalidArgumentValue, methodName));
         }
 
+         //
+        // : SNI
+        //
+        internal static PlatformNotSupportedException SNIPlatformNotSupported(string platform) => new(StringsHelper.GetString(Strings.SNI_PlatformNotSupportedNetFx, platform));
+
         // global constant strings
         internal const string Append = "Append";
         internal const string BeginExecuteNonQuery = "BeginExecuteNonQuery";

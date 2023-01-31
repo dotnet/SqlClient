@@ -4617,4 +4617,7 @@
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>A conexão expirou ao recuperar um token de acesso usando o método de autenticação '{0}'. Último erro: {1}: {2}</value>
   </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>A plataforma '{0}' não é suportada ao direcionar o .NET Framework.</value>
+  </data>
 </root>
