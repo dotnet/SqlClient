@@ -10,8 +10,6 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Text;
 using System.Threading;
@@ -12510,7 +12508,6 @@ namespace Microsoft.Data.SqlClient
             {
                 charsToRead = (int)(stateObj._longlenleft >> 1);
             }
-
 
             if (!stateObj.TryReadChars(buff, offst, charsToRead, out charsRead))
             {
