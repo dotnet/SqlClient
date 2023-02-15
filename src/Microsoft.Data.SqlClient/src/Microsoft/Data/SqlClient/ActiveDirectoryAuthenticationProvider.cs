@@ -206,36 +206,10 @@ namespace Microsoft.Data.SqlClient
 
             IPublicClientApplication app = GetPublicClientAppInstance(pcaKey);
 
-            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
-            {
-                if (!string.IsNullOrEmpty(parameters.UserId))
-                {
-                    result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
-                        .WithCorrelationId(parameters.ConnectionId)
-                        .WithUsername(parameters.UserId)
-                        .ExecuteAsync(cancellationToken: cts.Token)
-                        .ConfigureAwait(false);
-                }
-                else
-                {
-                    result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
-                        .WithCorrelationId(parameters.ConnectionId)
-                        .ExecuteAsync(cancellationToken: cts.Token)
-                        .ConfigureAwait(false);
-                }
-                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result?.ExpiresOn);
-            }
-            else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
-            {
-                result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
-                   .WithCorrelationId(parameters.ConnectionId)
-                   .ExecuteAsync(cancellationToken: cts.Token)
-                   .ConfigureAwait(false);
-
-                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result?.ExpiresOn);
-            }
-            else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
-                     parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
+                parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword ||
+                parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
+                parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
                 // Fetch available accounts from 'app' instance
                 System.Collections.Generic.IEnumerator<IAccount> accounts = (await app.GetAccountsAsync().ConfigureAwait(false)).GetEnumerator();
@@ -276,15 +250,54 @@ namespace Microsoft.Data.SqlClient
                         // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
                         // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
                         // or the user needs to perform two factor authentication.
-                        result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts).ConfigureAwait(false);
-                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+                        if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
+                            parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+                        {
+                            result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts).ConfigureAwait(false);
+                            SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+                        }
+                        else
+                        {
+                            throw;
+                        }
                     }
                 }
                 else
                 {
-                    // If no existing 'account' is found, we request user to sign in interactively.
-                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts).ConfigureAwait(false);
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+                    if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
+                    {
+                        if (!string.IsNullOrEmpty(parameters.UserId))
+                        {
+                            result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
+                                .WithCorrelationId(parameters.ConnectionId)
+                                .WithUsername(parameters.UserId)
+                                .ExecuteAsync(cancellationToken: cts.Token)
+                                .ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
+                                .WithCorrelationId(parameters.ConnectionId)
+                                .ExecuteAsync(cancellationToken: cts.Token)
+                                .ConfigureAwait(false);
+                        }
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result?.ExpiresOn);
+                    }
+                    else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
+                    {
+                        result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
+                           .WithCorrelationId(parameters.ConnectionId)
+                           .ExecuteAsync(cancellationToken: cts.Token)
+                           .ConfigureAwait(false);
+
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result?.ExpiresOn);
+                    }
+                    else
+                    {
+                        // If no existing 'account' is found, we request user to sign in interactively.
+                        result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts).ConfigureAwait(false);
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+                    }
                 }
             }
             else
