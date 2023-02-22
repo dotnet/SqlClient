@@ -3,12 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -487,6 +484,7 @@ namespace Microsoft.Data.SqlClient
 
             AssertValidState();
             value = (char)((buffer[1] << 8) + buffer[0]);
+            
             return true;
         }
 

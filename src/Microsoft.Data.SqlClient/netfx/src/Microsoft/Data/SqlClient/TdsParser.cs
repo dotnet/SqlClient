@@ -13528,7 +13528,6 @@ namespace Microsoft.Data.SqlClient
         // Returns the actual chars read
         private bool TryReadPlpUnicodeCharsChunk(char[] buff, int offst, int len, TdsParserStateObject stateObj, out int charsRead)
         {
-
             Debug.Assert((buff == null && len == 0) || (buff.Length >= offst + len), "Invalid length sent to ReadPlpUnicodeChars()!");
             Debug.Assert((stateObj._longlen != 0) && (stateObj._longlen != TdsEnums.SQL_PLP_NULL),
                         "Out of sync plp read request");
@@ -13539,18 +13538,18 @@ namespace Microsoft.Data.SqlClient
                 return true;
             }
 
-            charsRead = len;
+            int charsToRead = len;
 
             // stateObj._longlenleft is in bytes
-            if ((stateObj._longlenleft >> 1) < (ulong)len)
-                charsRead = (int)(stateObj._longlenleft >> 1);
-
-            for (int ii = 0; ii < charsRead; ii++)
+            if ((stateObj._longlenleft / 2) < (ulong)len)
             {
-                if (!stateObj.TryReadChar(out buff[offst + ii]))
-                {
-                    return false;
-                }
+                charsToRead = (int)(stateObj._longlenleft >> 1);
+            }
+
+            if (!stateObj.TryReadChars(buff, offst, charsToRead, out charsRead))
+            {
+                charsRead = 0;
+                return false;
             }
 
             stateObj._longlenleft -= ((ulong)charsRead << 1);
