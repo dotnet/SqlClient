@@ -2,20 +2,17 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NETFRAMEWORK
 using System;
-using System.Globalization;
-using Microsoft.SqlServer.Types;
-#else
-using System.Collections.ObjectModel;
-using System.Data.Common;
-#endif
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
+using System.Data.Common;
 using System.Data.SqlTypes;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Microsoft.SqlServer.Types;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -49,27 +46,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void GetValueTestThrowsExceptionOnNetCore()
-        {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlCommand cmd = new SqlCommand("select hierarchyid::Parse('/1/') as col0", conn))
-            {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    Assert.True(reader.Read());
-
-                    // SqlHierarchyId is part of Microsoft.SqlServer.Types, which is not supported in Core
-                    Assert.Throws<FileNotFoundException>(() => reader.GetValue(0));
-                    Assert.Throws<FileNotFoundException>(() => reader.GetSqlValue(0));
-                }
-            }
-        }
-
-        // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void GetValueTest()
         {
@@ -274,7 +250,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
-#if NETCOREAPP
+
         // Synapse: Parse error at line: 1, column: 41: Incorrect syntax near 'hierarchyid'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSchemaMetadata()
@@ -313,7 +289,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
-#endif
+
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'geometry'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtParameterSetSqlByteValue()
@@ -411,7 +387,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return hex.ToString();
         }
 
-#if NETFRAMEWORK
         private static string GetUdtName(Type udtClrType)
         {
             if (typeof(SqlHierarchyId) == udtClrType)
@@ -518,6 +493,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DataTestUtility.DropTable(conn, tableName);
             }
         }
-#endif
     }
 }

@@ -335,8 +335,12 @@ The following example uses the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> 
 				<format type="text/markdown"><![CDATA[
 
 When <xref:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming> is `true`, <xref:Microsoft.Data.SqlClient.SqlBulkCopy> reads from an <xref:System.Data.IDataReader> object using <xref:System.Data.CommandBehavior.SequentialAccess>,
-optimizing memory usage by using the <xref:System.Data.IDataReader> streaming capabilities. When it's set to false, the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class loads all the data returned by the
-<xref:System.Data.IDataReader> object into memory before sending it to SQL Server or SQL Azure.
+optimizing memory usage by using the <xref:System.Data.IDataReader> streaming capabilities. Streaming is only applicable to max data types (i.e.
+VARBINARY(MAX), VARCHAR(MAX), NVARCHAR(MAX), and XML). When <xref:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming> is set to false,
+the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class loads all the data returned by the <xref:System.Data.IDataReader> object into memory before sending it to the server.
+
+> [!NOTE]
+> The main advantage of enabling streaming is reducing memory usage during bulk copy of max data types.
 ]]></format>
 			</remarks>
 		</EnableStreaming>
@@ -504,7 +508,7 @@ and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 ## Remarks
 This value is incremented during the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event and does not imply that this number of rows has been sent to the server or committed.
 
-During the execution of a bulk copy operation, this value can be accessed, but it cannot be changed. Any attempt to change it will throw an <xref:System.InvalidOperationException>.
+This value can be accessed during or after the execution of a bulk copy operation.
 ]]></format>
 			</remarks>
 		</RowsCopied>

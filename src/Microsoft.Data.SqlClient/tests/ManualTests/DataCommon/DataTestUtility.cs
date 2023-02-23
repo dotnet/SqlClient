@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool UseManagedSNIOnWindows = false;
         public static readonly bool IsAzureSynapse = false;
         public static Uri AKVBaseUri = null;
-        public static readonly string MakecertPath = null;
+        public static readonly string PowerShellPath = null;
         public static string FileStreamDirectory = null;
 
         public static readonly string DNSCachingConnString = null;
@@ -77,6 +77,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static Dictionary<string, bool> AvailableDatabases;
         private static BaseEventListener TraceListener;
+
+        public static readonly bool IsManagedInstance = false;
 
         //Kerberos variables
         public static readonly string KerberosDomainUser = null;
@@ -110,10 +112,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
             UserManagedIdentityClientId = c.UserManagedIdentityClientId;
-            MakecertPath = c.MakecertPath;
+            PowerShellPath = c.PowerShellPath;
             KerberosDomainPassword = c.KerberosDomainPassword;
             KerberosDomainUser = c.KerberosDomainUser;
             ManagedIdentitySupported = c.ManagedIdentitySupported;
+            IsManagedInstance = c.IsManagedInstance;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 

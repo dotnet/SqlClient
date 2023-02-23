@@ -17,7 +17,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 
 msbuild
 # Builds the driver for the Client OS in 'Debug' Configuration for 'AnyCPU' platform.
-# Both .NET Framework  (NetFx) and .NET Core drivers are built by default (as supported by Client OS).
+# Both .NET Framework (NetFx) and .NET (CoreFx) drivers are built by default (as supported by Client OS).
 ```
 
 ```bash
@@ -28,11 +28,6 @@ msbuild -t:clean
 ```bash
 msbuild -p:Configuration=Release
 # Builds the driver in 'Release' Configuration for `AnyCPU` platform.
-```
-
-```bash
-msbuild -p:Platform=Win32
-# Builds the .NET Framework (NetFx) driver for Win32 (x86) platform on Windows in 'Debug' Configuration.
 ```
 
 ```bash
@@ -58,14 +53,14 @@ msbuild -p:OSGroup=Unix
 
 ```bash
 msbuild -t:BuildNetCoreAllOS
-# Builds the .NET Core driver for all Operating Systems.
+# Builds the .NET driver for all Operating Systems.
 ```
 
 ## Building Tests
 
 ```bash
 msbuild -t:BuildTestsNetCore
-# Build the tests for the .NET Core driver in 'Debug' Configuration. Default .NET Core version is 3.1.
+# Build the tests for the .NET driver in 'Debug' Configuration. Default .NET version is 6.0.
 ```
 
 ```bash
@@ -86,17 +81,22 @@ There are 2 ways to run tests, using MsBuild or Dotnet SDK.
 
 ```bash
 msbuild -t:RunFunctionalTests
-# Run all functional tests for *default* target framework (.NET Core 3.1).
+# Run all functional tests in Debug configuration for *default* target framework (.NET 6.0).
 ```
 
 ```bash
 msbuild -t:RunManualTests
-# Run all manual tests for *default* target framework (.NET Core 3.1).
+# Run all manual tests in Debug configuration for *default* target framework (.NET 6.0).
 ```
 
 ```bash
 msbuild -t:RunTests -p:configuration=Release
-# Run both functional and manual tests for *default* target framework (.NET Core 3.1).
+# Run both functional and manual tests in Release configuration for *default* target framework (.NET 6.0).
+```
+
+```bash
+msbuild -t:RunTests -p:configuration=Release -p:DotnetPath=C:\net6-win-x86\
+# Run both functional and manual tests in Release configuration for *default* target framework (.NET 6.0) against the installed dotnet tool in the provided path.
 ```
 
 To specify custom target framework, use `TF` property:
@@ -125,7 +125,7 @@ Other properties can be set alongside as needed.
 - Windows (`netfx x86`):
 
 ```bash
-dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="Win32" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
+dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="x86" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
 - Windows (`netfx x64`):
@@ -135,9 +135,11 @@ dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.S
 ```
 
 - AnyCPU:
+  
+  Project reference only builds Driver with `AnyCPU` platform, and underlying process decides to run the tests with a compatible architecture (x64, x86, ARM64).
 
   Windows (`netcoreapp`):
-
+  
 ```bash
 dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
 ```
@@ -185,14 +187,15 @@ Manual Tests require the below setup to run:
   |IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
   |EnclaveAzureDatabaseConnString | (Optional) Connection string for Azure database with enclaves |
   |ManagedIdentitySupported | (Optional) When set to `false` **Managed Identity** related tests won't run. The default value is `true`. |
-  |MakecertPath | The full path to makecert.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\makecert.exe` |
+  |IsManagedInstance | (Optional) When set to `true` **TVP** related tests will use on non-Azure bs files to compare test results. this is needed when testing against Managed Instances or TVP Tests will fail on Test set 3. The default value is `false`. |
+  |PowerShellPath | The full path to PowerShell.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\PowerShell.exe` |
 
 ### Commands to run Manual Tests
 
 - Windows (`netfx x86`):
 
 ```bash
-dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="Win32" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
+dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="x86" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
   ```
 
 - Windows (`netfx x64`):
@@ -241,9 +244,11 @@ Tests can be built and run with custom "Reference Type" property that enables di
 >  msbuild -p:configuration=Release
 > ```
 
+A non-AnyCPU platform reference can only be used with package and NetStandardPackage reference types. Otherwise, the specified platform will be replaced with AnyCPU in the build process.
+
 ### Building Tests with Reference Type
 
-For .NET Core, all 4 reference types are supported:
+For .NET, all 4 reference types are supported:
 
 ```bash
 msbuild -t:BuildTestsNetCore -p:ReferenceType=Project
@@ -282,13 +287,13 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 ```bash
 msbuild -t:BuildTestsNetFx -p:TargetNetFxVersion=net462
 # Build the tests for custom TargetFramework (.NET Framework)
-# Applicable values: net462 (Default) | net462 | net47 | net471  net472 | net48
+# Applicable values: net462 (Default) | net47 | net471  net472 | net48 | net481
 ```
 
 ```bash
 msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=net6.0
-# Build the tests for custom TargetFramework (.NET Core)
-# Applicable values: net6.0 | net7.0 | net6.0
+# Build the tests for custom TargetFramework (.NET)
+# Applicable values: net6.0 | net7.0
 ```
 
 ### Running Tests with custom target framework (traditional)
@@ -296,11 +301,11 @@ msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=net6.0
 ```bash
 dotnet test -p:TargetNetFxVersion=net462 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Framework)
-# Applicable values: net462 (Default) | net462 | net47 | net471  net472 | net48
+# Applicable values: net462 (Default) | net47 | net471  net472 | net48 | net481
 
 dotnet test -p:TargetNetCoreVersion=net6.0 ...
-# Use above property to run Functional Tests with custom TargetFramework (.NET Core)
-# Applicable values: net6.0 | net7.0 | net6.0
+# Use above property to run Functional Tests with custom TargetFramework (.NET)
+# Applicable values: net6.0 | net7.0
 ```
 
 ## Using Managed SNI on Windows

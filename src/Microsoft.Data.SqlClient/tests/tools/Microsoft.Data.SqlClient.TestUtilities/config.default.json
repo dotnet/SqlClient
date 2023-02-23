@@ -1,6 +1,6 @@
 {
-    "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;",
-    "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;",
+    "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
+    "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
     "TCPConnectionStringHGSVBS": "",
     "TCPConnectionStringAASVBS": "",
     "TCPConnectionStringNoneVBS": "",
@@ -30,5 +30,5 @@
     "EnclaveAzureDatabaseConnString": "",
     "ManagedIdentitySupported": true,
     "UserManagedIdentityClientId": "",
-    "MakecertPath": ""
+    "PowerShellPath": ""
 }
