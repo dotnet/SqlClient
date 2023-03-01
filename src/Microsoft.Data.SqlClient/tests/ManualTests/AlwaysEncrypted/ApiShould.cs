@@ -698,33 +698,44 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int columnsCount = 50;
 
             // Arrange - drops the table with long name and re-creates it with 52 columns (ID, name, ColumnName0..49)
-            DropTable(connection, tableName);
-            CreateTable(connection, tableName, columnsCount);
-            string name = "nobody";
-
-            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            try
             {
-                await sqlConnection.OpenAsync();
-                // This creates a "select top 100" query that has over 40k characters
-                using (SqlCommand sqlCommand = new SqlCommand(GenerateSelectQuery(tableName, columnsCount, 10, "WHERE Name = @FirstName AND ID = @CustomerId"),
-                    sqlConnection,
-                    transaction: null,
-                    columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                DropTableIfExists(connection, tableName);
+                CreateTable(connection, tableName, columnsCount);
+                string name = "nobody";
+
+                using (SqlConnection sqlConnection = new SqlConnection(connection))
                 {
-                    sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
-                    sqlCommand.Parameters.Add(@"FirstName", SqlDbType.VarChar, name.Length);
-
-                    sqlCommand.Parameters[0].Value = 0;
-                    sqlCommand.Parameters[1].Value = name;
-
-                    // Act and Assert
-                    // Test that execute reader async does not throw an exception.
-                    // The table is empty so there should be no results; however, the bug previously found is that it causes a TDS RPC exception on enclave.
-                    using (SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync())
+                    await sqlConnection.OpenAsync();
+                    // This creates a "select top 100" query that has over 40k characters
+                    using (SqlCommand sqlCommand = new SqlCommand(GenerateSelectQuery(tableName, columnsCount, 10, "WHERE Name = @FirstName AND ID = @CustomerId"),
+                        sqlConnection,
+                        transaction: null,
+                        columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                     {
-                        sqlDataReader.Read();
+                        sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
+                        sqlCommand.Parameters.Add(@"FirstName", SqlDbType.VarChar, name.Length);
+
+                        sqlCommand.Parameters[0].Value = 0;
+                        sqlCommand.Parameters[1].Value = name;
+
+                        // Act and Assert
+                        // Test that execute reader async does not throw an exception.
+                        // The table is empty so there should be no results; however, the bug previously found is that it causes a TDS RPC exception on enclave.
+                        using (SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync())
+                        {
+                            Assert.False(sqlDataReader.HasRows, "The table should be empty");
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail($"The following exception was thrown: {ex.Message}");
+            }
+            finally
+            {
+                DropTableIfExists(connection, tableName);
             }
         }
 
@@ -2845,6 +2856,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        /// <summary>
+        /// Creates a table with the specified number of bit columns.
+        /// </summary>
+        /// <param name="connString">The connection string to the database</param>
+        /// <param name="tableName">The table name</param>
+        /// <param name="columnsCount">The number of bit columns</param>
         private void CreateTable(string connString, string tableName, int columnsCount)
         {
             using (var sqlConnection = new SqlConnection(connString))
@@ -2856,7 +2873,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        private void DropTable(string connString, string tableName)
+        /// <summary>
+        /// Drops the table if the specified table exists
+        /// </summary>
+        /// <param name="connString">The connection string to the database</param>
+        /// <param name="tableName">The name of the table to be dropped</param>
+        private void DropTableIfExists(string connString, string tableName)
         {
             using (var sqlConnection = new SqlConnection(connString))
             {
@@ -2866,6 +2888,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        /// <summary>
+        /// Generates the query for creating a table with the number of bit columns specified.
+        /// </summary>
+        /// <param name="tableName">The name of the table</param>
+        /// <param name="columnsCount">The number of columns for the table</param>
+        /// <returns></returns>
         private string GenerateCreateQuery(string tableName, int columnsCount)
         {
             StringBuilder builder = new StringBuilder();
@@ -2883,6 +2911,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             return builder.ToString();
         }
 
+        /// <summary>
+        /// Generates the large query with the select top 100 of all the columns repeated multiple times.
+        /// </summary>
+        /// <param name="tableName">The name of the table</param>
+        /// <param name="columnsCount">The number of columns to be explicitly included</param>
+        /// <param name="repeat">The number of times the select query is repeated</param>
+        /// <param name="where">A where clause for additional filters</param>
+        /// <returns></returns>
         private string GenerateSelectQuery(string tableName, int columnsCount, int repeat = 10, string where = "")
         {
             StringBuilder builder = new StringBuilder();
