@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Resolved type if it could resolve the type; otherwise, the `SqlConfigurableRetryFactory` type.</returns>
         private static Type LoadType(string fullyQualifiedName)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(LoadType);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             var result = Type.GetType(fullyQualifiedName, AssemblyResolver, TypeResolver);
@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static string MakeFullPath(string directory, string assemblyName, string extension = ".dll")
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(MakeFullPath);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly in '{3}' directory."
                                                     , TypeName, methodName, assemblyName, directory);
             string fullPath = Path.Combine(directory, assemblyName);
@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient
 
         private static Assembly AssemblyResolver(AssemblyName arg)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(AssemblyResolver);
 
             string fullPath = MakeFullPath(Environment.CurrentDirectory, arg.Name);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly by '{3}' full path."
@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static Assembly Default_Resolving(AssemblyLoadContext arg1, AssemblyName arg2)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(Default_Resolving);
 
             string target = MakeFullPath(Environment.CurrentDirectory, arg2.Name);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly that is requested by '{3}' ALC from '{4}' path."

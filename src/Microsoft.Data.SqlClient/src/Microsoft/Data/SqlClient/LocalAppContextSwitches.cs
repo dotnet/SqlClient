@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient
             catch (Exception e)
             {
                 // Don't throw an exception for an invalid config file
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO>: {2}", TypeName, MethodBase.GetCurrentMethod().Name, e);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO>: {2}", TypeName, "..ctor", e);
             }
         }
 #endif

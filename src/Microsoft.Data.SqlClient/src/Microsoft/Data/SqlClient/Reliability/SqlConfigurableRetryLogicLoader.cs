@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
 
         private static SqlRetryLogicBaseProvider CreateRetryLogicProvider(string sectionName, ISqlConfigurableRetryConnectionSection configSection)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(CreateRetryLogicProvider);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             try
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient
 
         private static SqlRetryLogicBaseProvider ResolveRetryLogicProvider(string configurableRetryType, string retryMethod, SqlRetryLogicOption option)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(ResolveRetryLogicProvider);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             if (string.IsNullOrEmpty(retryMethod))
@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient
 
         private static object CreateInstance(Type type, string retryMethodName, SqlRetryLogicOption option)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(CreateInstance);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             if (type == typeof(SqlConfigurableRetryFactory) || type == null)
@@ -257,7 +257,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Parameters are prepared to invoke the `{2}.{3}()` method."
-                                                  , TypeName, MethodBase.GetCurrentMethod().Name, typeof(SqlConfigurableRetryFactory).FullName, retryMethod);
+                                                  , TypeName, nameof(PrepareParamValues), typeof(SqlConfigurableRetryFactory).FullName, retryMethod);
             return funcParams;
         }
 
