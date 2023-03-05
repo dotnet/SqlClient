@@ -10,7 +10,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal static partial class LocalAppContextSwitches
     {
-        private const string TypeName = nameof(LocalAppContextSwitches);
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
         internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
@@ -30,7 +29,7 @@ namespace Microsoft.Data.SqlClient
             catch (Exception e)
             {
                 // Don't throw an exception for an invalid config file
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO>: {2}", TypeName, "..ctor", e);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.LocalAppContextSwitches..cctor|INFO>: {0}", e);
             }
         }
 #endif
