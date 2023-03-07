@@ -5,7 +5,9 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+#if DEBUG
 using System.Linq;
+#endif
 
 namespace Microsoft.Data.SqlClient.SNI
 {
