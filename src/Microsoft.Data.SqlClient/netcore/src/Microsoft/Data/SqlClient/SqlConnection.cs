@@ -6,7 +6,6 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -14,7 +13,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Security;
 using System.Threading;
@@ -266,7 +264,11 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Combined list of provider names</returns>
         internal static List<string> GetColumnEncryptionSystemKeyStoreProvidersNames()
         {
-            return s_systemColumnEncryptionKeyStoreProviders.Keys.ToList();
+            if (s_systemColumnEncryptionKeyStoreProviders.Count > 0)
+            {
+                return new List<string>(s_systemColumnEncryptionKeyStoreProviders.Keys);
+            }
+            return new List<string>(0);
         }
 
         /// <summary>
@@ -279,13 +281,13 @@ namespace Microsoft.Data.SqlClient
             if (_customColumnEncryptionKeyStoreProviders is not null &&
                 _customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return _customColumnEncryptionKeyStoreProviders.Keys.ToList();
+                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
             }
             if (s_globalCustomColumnEncryptionKeyStoreProviders is not null)
             {
-                return s_globalCustomColumnEncryptionKeyStoreProviders.Keys.ToList();
+                return new List<string>(s_globalCustomColumnEncryptionKeyStoreProviders.Keys);
             }
-            return new List<string>();
+            return new List<string>(0);
         }
 
         /// <summary>
