@@ -254,6 +254,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     result = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                 }
                 catch (MsalUiRequiredException)
                 {
