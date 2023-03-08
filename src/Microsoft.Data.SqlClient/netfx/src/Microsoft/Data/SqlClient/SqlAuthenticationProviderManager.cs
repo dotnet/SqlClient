@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Linq;
 using System.Configuration;
 
 namespace Microsoft.Data.SqlClient
@@ -166,10 +165,17 @@ namespace Microsoft.Data.SqlClient
             }
 
             var methodName = "SetProvider";
-            if (_authenticationsWithAppSpecifiedProvider.Contains(authenticationMethod))
+
+            if (_authenticationsWithAppSpecifiedProvider.Count > 0)
             {
-                _sqlAuthLogger.LogError(_typeName, methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(_providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
-                return false;
+                foreach (SqlAuthenticationMethod candidateMethod in _authenticationsWithAppSpecifiedProvider)
+                {
+                    if (candidateMethod == authenticationMethod)
+                    {
+                        _sqlAuthLogger.LogError(_typeName, methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(_providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
+                        break;
+                    }
+                }
             }
             _providers.AddOrUpdate(authenticationMethod, provider, (key, oldProvider) =>
             {

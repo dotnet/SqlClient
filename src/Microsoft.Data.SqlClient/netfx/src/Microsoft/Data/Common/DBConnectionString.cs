@@ -6,11 +6,12 @@ namespace Microsoft.Data.Common
 {
 
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Data;
     using System.Diagnostics;
+#if DEBUG
     using System.Linq;
+#endif
     using System.Text;
     using Microsoft.Data.SqlClient;
 

@@ -31,9 +31,15 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         internal static void ValidateNotNullOrWhitespaceForEach(string[] parameters, string name)
         {
-            if (parameters.Any(s => string.IsNullOrWhiteSpace(s)))
+            if (parameters != null && parameters.Length > 0)
             {
-                throw ADP.NullOrWhitespaceForEach(name);
+                for (int index = 0; index < parameters.Length; index++)
+                {
+                    if (string.IsNullOrEmpty(parameters[index]))
+                    {
+                        throw ADP.NullOrWhitespaceForEach(name);
+                    }
+                }
             }
         }
 

@@ -5,7 +5,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+#if DEBUG
 using System.Linq;
+#endif
 using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
@@ -3333,8 +3335,9 @@ namespace Microsoft.Data.SqlClient
 
             internal void PushBuffer(byte[] buffer, int read)
             {
+#if DEBUG
                 Debug.Assert(!_snapshotInBuffs.Any(b => object.ReferenceEquals(b, buffer)));
-
+#endif
                 PacketData packetData = new PacketData();
                 packetData.Buffer = buffer;
                 packetData.Read = read;
