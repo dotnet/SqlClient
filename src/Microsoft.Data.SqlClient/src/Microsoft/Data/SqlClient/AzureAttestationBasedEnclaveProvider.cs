@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Runtime.Caching;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -191,14 +190,12 @@ namespace Microsoft.Data.SqlClient
                     offset += sizeof(uint);
 
                     // Get the enclave public key
-                    byte[] identityBuffer = attestationInfo.Skip(offset).Take(identitySize).ToArray();
+                    byte[] identityBuffer = EnclaveHelpers.TakeBytesAndAdvance(attestationInfo, ref offset, identitySize);
                     Identity = new EnclavePublicKey(identityBuffer);
-                    offset += identitySize;
 
                     // Get Azure attestation token
-                    byte[] attestationTokenBuffer = attestationInfo.Skip(offset).Take(attestationTokenSize).ToArray();
-                    AttestationToken = new AzureAttestationToken(attestationTokenBuffer);
-                    offset += attestationTokenSize;
+                    byte[] attestationTokenBuffer = EnclaveHelpers.TakeBytesAndAdvance(attestationInfo, ref offset, attestationTokenSize);
+                    AttestationToken = new AzureAttestationToken(attestationTokenBuffer);                    
 
                     uint secureSessionInfoResponseSize = BitConverter.ToUInt32(attestationInfo, offset);
                     offset += sizeof(uint);
@@ -207,9 +204,8 @@ namespace Microsoft.Data.SqlClient
                     offset += sizeof(long);
 
                     int secureSessionBufferSize = Convert.ToInt32(secureSessionInfoResponseSize) - sizeof(uint);
-                    byte[] secureSessionBuffer = attestationInfo.Skip(offset).Take(secureSessionBufferSize).ToArray();
+                    byte[] secureSessionBuffer = EnclaveHelpers.TakeBytesAndAdvance(attestationInfo, ref offset, secureSessionBufferSize);
                     EnclaveDHInfo = new EnclaveDiffieHellmanInfo(secureSessionBuffer);
-                    offset += Convert.ToInt32(EnclaveDHInfo.Size);
                 }
                 catch (Exception exception)
                 {
@@ -467,7 +463,7 @@ namespace Microsoft.Data.SqlClient
 
             // Get all the claims from the token
             Dictionary<string, string> claims = new Dictionary<string, string>();
-            foreach (Claim claim in token.Claims.ToList())
+            foreach (Claim claim in token.Claims)
             {
                 claims.Add(claim.Type, claim.Value);
             }

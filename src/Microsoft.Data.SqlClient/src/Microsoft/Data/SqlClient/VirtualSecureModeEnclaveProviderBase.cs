@@ -285,7 +285,7 @@ namespace Microsoft.Data.SqlClient
         private void VerifyEnclaveReportSignature(EnclaveReportPackage enclaveReportPackage, X509Certificate2 healthReportCert)
         {
             // Check if report is formatted correctly
-            uint calculatedSize = Convert.ToUInt32(enclaveReportPackage.PackageHeader.GetSizeInPayload()) + enclaveReportPackage.PackageHeader.SignedStatementSize + enclaveReportPackage.PackageHeader.SignatureSize;
+            uint calculatedSize = Convert.ToUInt32(EnclaveReportPackageHeader.SizeInPayload) + enclaveReportPackage.PackageHeader.SignedStatementSize + enclaveReportPackage.PackageHeader.SignatureSize;
 
             if (calculatedSize != enclaveReportPackage.PackageHeader.PackageSize)
             {
