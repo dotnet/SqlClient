@@ -6884,6 +6884,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         catch (Exception e)
                         {
+                            _physicalStateObj.HasPendingData = false;
                             throw SQL.ColumnDecryptionFailed(columnName, null, e);
                         }
                     }
