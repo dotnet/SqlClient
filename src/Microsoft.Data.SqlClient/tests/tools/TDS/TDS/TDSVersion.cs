@@ -12,19 +12,19 @@ namespace Microsoft.SqlServer.TDS
     public static class TDSVersion
     {
         /// <summary>
-        /// Yukon TDS version
+        /// 2005 (Yukon) TDS version
         /// </summary>
         public static Version SqlServer2005 = new Version(7, 2, 9, 2);
 
         /// <summary>
-        /// Katmai TDS version
+        /// 2008 (Katmai) TDS version
         /// </summary>
         public static Version SqlServer2008 = new Version(7, 3, 11, 3);
 
         /// <summary>
-        /// Denali TDS version
+        /// 2012 (Denali) TDS version
         /// </summary>
-        public static Version SqlServer2010 = new Version(7, 4, 0, 4);
+        public static Version SqlServer2012 = new Version(7, 4, 0, 4);
 
         /// <summary>
         /// Map SQL Server build version to TDS version
@@ -36,17 +36,14 @@ namespace Microsoft.SqlServer.TDS
             // Check build version Major part
             if (buildVersion.Major == 11)
             {
-                // Denali
-                return SqlServer2010;
+                return SqlServer2012;
             }
             else if (buildVersion.Major == 10)
             {
-                // Katmai
                 return SqlServer2008;
             }
             else if (buildVersion.Major == 9)
             {
-                // Yukon
                 return SqlServer2005;
             }
             else
@@ -82,7 +79,7 @@ namespace Microsoft.SqlServer.TDS
         /// </summary>
         public static bool IsSupported(Version tdsVersion)
         {
-            return tdsVersion >= SqlServer2005 && tdsVersion <= SqlServer2010;
+            return tdsVersion >= SqlServer2005 && tdsVersion <= SqlServer2012;
         }
     }
 }

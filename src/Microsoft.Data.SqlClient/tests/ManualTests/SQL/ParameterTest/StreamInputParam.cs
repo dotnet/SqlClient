@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 if (_errorPos >= _pos && _errorPos < _pos + nRead)
                     throw new CustomStreamException();
-                Array.Copy(_data, _pos, buffer, offset, nRead);
+                Buffer.BlockCopy(_data, _pos, buffer, offset, nRead);
                 _pos += nRead;
                 return nRead;
             }

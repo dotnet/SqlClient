@@ -16,18 +16,18 @@ namespace Microsoft.Data.SqlClient.Server
             => MetaType.GetMetaTypeFromSqlDbType(GetSqlMetaData(ordinal).SqlDbType, false).ClassType;
 
         private object GetValueFrameworkSpecific(int ordinal) 
-            => ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+            => ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), null);
         private object GetSqlValueFrameworkSpecific(int ordinal) 
-            => ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+            => ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), null);
     
         private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) 
-            => ValueUtilsSmi.GetSqlBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+            => ValueUtilsSmi.GetSqlBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), null);
 
         private SqlXml GetSqlXmlFrameworkSpecific(int ordinal) 
-            => ValueUtilsSmi.GetSqlXml(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+            => ValueUtilsSmi.GetSqlXml(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), null);
 
         private SqlChars GetSqlCharsFrameworkSpecific(int ordinal) 
-            => ValueUtilsSmi.GetSqlChars(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+            => ValueUtilsSmi.GetSqlChars(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), null);
         private int SetValuesFrameworkSpecific(params object[] values)
         {
             if (values == null)
@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient.Server
             //      the validation loop and here, or if an invalid UDT was sent).
             for (int i = 0; i < copyLength; i++)
             {
-                ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], offset: 0, length: 0, peekAhead: null);
+                ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], offset: 0, peekAhead: null);
             }
 
             return copyLength;
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.Server
                 throw ADP.InvalidCast();
             }
 
-            ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0, length: 0, peekAhead: null);
+            ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0, peekAhead: null);
         }
 
          private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) 

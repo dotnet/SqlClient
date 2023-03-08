@@ -41,10 +41,12 @@
     <Artifacts>$(RepoRoot)artifacts\$(ReferenceType)\</Artifacts>
     <ToolsArtifactsDir Condition="'$(ToolsArtifactsDir)'==''">$(Artifacts)tools\</ToolsArtifactsDir>
     <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
+    <SqlServerSourceCode>$(ProjectDir)Microsoft.SqlServer.Server\</SqlServerSourceCode>
     <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
     <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
     <NetFxResources>$(ManagedSourceCode)netfx\src\Resources\</NetFxResources>
     <AddOnsPath>$(ManagedSourceCode)add-ons\</AddOnsPath>
+    <SqlServerSource>$(RepoRoot)src\Microsoft.SqlServer.Server\</SqlServerSource>
     <ObjFolder>$(Artifacts)obj\</ObjFolder>
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
     <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>

@@ -776,7 +776,12 @@ namespace Microsoft.Data.ProviderBase
                     throw;
                 }
 
-                CheckPoolBlockingPeriod(e);
+#if NETCOREAPP
+                if (!IsBlockingPeriodEnabled())
+                {
+                    throw;
+                }
+#endif
 
                 // Close associated Parser if connection already established.
                 if (newObj?.IsConnectionAlive() == true)
@@ -823,9 +828,6 @@ namespace Microsoft.Data.ProviderBase
             }
             return newObj;
         }
-
-        //This method is implemented in DbConnectionPool.NetCoreApp 
-        partial void CheckPoolBlockingPeriod(Exception e);
 
         private void DeactivateObject(DbConnectionInternal obj)
         {

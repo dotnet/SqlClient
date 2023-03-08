@@ -1,6 +1,7 @@
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/dotnet/sqlclient/master/LICENSE)
 [![Nuget](https://img.shields.io/nuget/dt/Microsoft.Data.SqlClient?label=Nuget.org%20Downloads&style=flat-square&color=blue)](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
 [![Gitter](https://img.shields.io/gitter/room/badges/shields.svg?style=flat-square&color=blue)](https://gitter.im/Microsoft/mssql-developers)
+[![Build status](https://sqlclientdrivers.visualstudio.com/public/_apis/build/status/ADO/CI-SqlClient)](https://sqlclientdrivers.visualstudio.com/public/_build/latest?definitionId=1139)
 
 # Microsoft SqlClient Data Provider for SQL Server
 
@@ -12,7 +13,7 @@ Microsoft.Data.SqlClient is a data provider for Microsoft SQL Server and Azure S
 
 The Microsoft.Data.SqlClient package supports the below environments:
 
-- .NET Framework 4.6.1+
+- .NET Framework 4.6.2+
 - .NET Core 3.1+
 - .NET Standard 2.0+
 

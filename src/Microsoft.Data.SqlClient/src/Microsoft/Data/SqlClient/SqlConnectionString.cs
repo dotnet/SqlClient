@@ -32,7 +32,9 @@ namespace Microsoft.Data.SqlClient
             internal const int Connect_Timeout = DbConnectionStringDefaults.ConnectTimeout;
             internal const string Current_Language = DbConnectionStringDefaults.CurrentLanguage;
             internal const string Data_Source = DbConnectionStringDefaults.DataSource;
-            internal const bool Encrypt = DbConnectionStringDefaults.Encrypt;
+            internal static readonly SqlConnectionEncryptOption Encrypt = DbConnectionStringDefaults.Encrypt;
+            internal const string HostNameInCertificate = DbConnectionStringDefaults.HostNameInCertificate;
+            internal const string ServerCertificate = DbConnectionStringDefaults.ServerCertificate;
             internal const bool Enlist = DbConnectionStringDefaults.Enlist;
             internal const string FailoverPartner = DbConnectionStringDefaults.FailoverPartner;
             internal const string Initial_Catalog = DbConnectionStringDefaults.InitialCatalog;
@@ -59,6 +61,8 @@ namespace Microsoft.Data.SqlClient
             internal static readonly SqlAuthenticationMethod Authentication = DbConnectionStringDefaults.Authentication;
             internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
             internal static readonly SqlConnectionIPAddressPreference IpAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
+            internal const string ServerSPN = DbConnectionStringDefaults.ServerSPN;
+            internal const string FailoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSPN;
 #if NETFRAMEWORK
             internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
             internal const bool Connection_Reset = DbConnectionStringDefaults.ConnectionReset;
@@ -88,7 +92,12 @@ namespace Microsoft.Data.SqlClient
             internal const string Context_Connection = DbConnectionStringKeywords.ContextConnection;
             internal const string Current_Language = DbConnectionStringKeywords.CurrentLanguage;
             internal const string Data_Source = DbConnectionStringKeywords.DataSource;
+
+            // Encrypt related
             internal const string Encrypt = DbConnectionStringKeywords.Encrypt;
+            internal const string HostNameInCertificate = DbConnectionStringKeywords.HostNameInCertificate;
+            internal const string ServerCertificate = DbConnectionStringKeywords.ServerCertificate;
+
             internal const string Enlist = DbConnectionStringKeywords.Enlist;
             internal const string FailoverPartner = DbConnectionStringKeywords.FailoverPartner;
             internal const string Initial_Catalog = DbConnectionStringKeywords.InitialCatalog;
@@ -113,6 +122,8 @@ namespace Microsoft.Data.SqlClient
             internal const string Connect_Retry_Count = DbConnectionStringKeywords.ConnectRetryCount;
             internal const string Connect_Retry_Interval = DbConnectionStringKeywords.ConnectRetryInterval;
             internal const string Authentication = DbConnectionStringKeywords.Authentication;
+            internal const string Server_SPN = DbConnectionStringKeywords.ServerSPN;
+            internal const string Failover_Partner_SPN = DbConnectionStringKeywords.FailoverPartnerSPN;
 #if NETFRAMEWORK
             internal const string TransparentNetworkIPResolution = DbConnectionStringKeywords.TransparentNetworkIPResolution;
 #if ADONET_CERT_AUTH
@@ -143,6 +154,10 @@ namespace Microsoft.Data.SqlClient
             internal const string ADDRESS = DbConnectionStringSynonyms.ADDRESS;
             internal const string SERVER = DbConnectionStringSynonyms.SERVER;
             internal const string NETWORK_ADDRESS = DbConnectionStringSynonyms.NETWORKADDRESS;
+            // host name in certificate
+            internal const string HOSTNAMEINCERTIFICATE = DbConnectionStringSynonyms.HOSTNAMEINCERTIFICATE;
+            // server certificate
+            internal const string SERVERCERTIFICATE = DbConnectionStringSynonyms.SERVERCERTIFICATE;
             // initial catalog
             internal const string DATABASE = DbConnectionStringSynonyms.DATABASE;
             // integrated security
@@ -173,11 +188,14 @@ namespace Microsoft.Data.SqlClient
             internal const string User = DbConnectionStringSynonyms.User;
             // workstation id
             internal const string WSID = DbConnectionStringSynonyms.WSID;
+            // server SPNs
+            internal const string ServerSPN = DbConnectionStringSynonyms.ServerSPN;
+            internal const string FailoverPartnerSPN = DbConnectionStringSynonyms.FailoverPartnerSPN;
 
 #if NETFRAMEWORK
             internal const string TRANSPARENTNETWORKIPRESOLUTION = DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION;
 #endif
-            
+
             // make sure to update SynonymCount value below when adding or removing synonyms
         }
 
@@ -212,9 +230,9 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
-        internal const int SynonymCount = 29;
+        internal const int SynonymCount = 33;
 #else
-        internal const int SynonymCount = 26;
+        internal const int SynonymCount = 30;
         internal const int DeprecatedSynonymCount = 2;
 #endif // NETFRAMEWORK
 
@@ -222,7 +240,7 @@ namespace Microsoft.Data.SqlClient
 
         private readonly bool _integratedSecurity;
 
-        private readonly bool _encrypt;
+        private readonly SqlConnectionEncryptOption _encrypt;
         private readonly bool _trustServerCertificate;
         private readonly bool _enlist;
         private readonly bool _mars;
@@ -257,6 +275,10 @@ namespace Microsoft.Data.SqlClient
         private readonly string _initialCatalog;
         private readonly string _password;
         private readonly string _userID;
+        private readonly string _hostNameInCertificate;
+        private readonly string _serverCertificate;
+        private readonly string _serverSPN;
+        private readonly string _failoverPartnerSPN;
 
         private readonly string _workstationId;
 
@@ -289,7 +311,7 @@ namespace Microsoft.Data.SqlClient
 
             _integratedSecurity = ConvertValueToIntegratedSecurity();
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
-            _encrypt = ConvertValueToBoolean(KEY.Encrypt, DEFAULT.Encrypt);
+            _encrypt = ConvertValueToSqlConnectionEncrypt();
             _enlist = ConvertValueToBoolean(KEY.Enlist, DEFAULT.Enlist);
             _mars = ConvertValueToBoolean(KEY.MARS, DEFAULT.MARS);
             _persistSecurityInfo = ConvertValueToBoolean(KEY.Persist_Security_Info, DEFAULT.Persist_Security_Info);
@@ -322,6 +344,10 @@ namespace Microsoft.Data.SqlClient
             _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
             _attestationProtocol = ConvertValueToAttestationProtocol();
             _ipAddressPreference = ConvertValueToIPAddressPreference();
+            _hostNameInCertificate = ConvertValueToString(KEY.HostNameInCertificate, DEFAULT.HostNameInCertificate);
+            _serverCertificate = ConvertValueToString(KEY.ServerCertificate, DEFAULT.ServerCertificate);
+            _serverSPN = ConvertValueToString(KEY.Server_SPN, DEFAULT.ServerSPN);
+            _failoverPartnerSPN = ConvertValueToString(KEY.Failover_Partner_SPN, DEFAULT.FailoverPartnerSPN);
 
             // Temporary string - this value is stored internally as an enum.
             string typeSystemVersionString = ConvertValueToString(KEY.Type_System_Version, null);
@@ -368,7 +394,7 @@ namespace Microsoft.Data.SqlClient
             // SQLPT 41700: Ignore ResetConnection=False (still validate the keyword/value)
             _connectionReset = ConvertValueToBoolean(KEY.Connection_Reset, DEFAULT.Connection_Reset);
             _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
-            _encrypt = ConvertValueToEncrypt();
+            _encrypt = ConvertValueToSqlConnectionEncrypt();
             _enlist = ConvertValueToBoolean(KEY.Enlist, ADP.s_isWindowsNT);
             _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.TransparentNetworkIPResolution);
             _networkLibrary = ConvertValueToString(KEY.Network_Library, null);
@@ -400,7 +426,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (!_encrypt)
+            if (_encrypt == SqlConnectionEncryptOption.Optional)
             {    // Support legacy registry encryption settings
                 const string folder = "Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib";
                 const string value = "Encrypt";
@@ -408,7 +434,7 @@ namespace Microsoft.Data.SqlClient
                 object obj = ADP.LocalMachineRegistryValue(folder, value);
                 if ((obj is int iObj) && (iObj == 1))
                 {         // If the registry key exists
-                    _encrypt = true;
+                    _encrypt = SqlConnectionEncryptOption.Mandatory;
                 }
             }
 
@@ -675,6 +701,8 @@ namespace Microsoft.Data.SqlClient
             _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
             _attestationProtocol = connectionOptions._attestationProtocol;
+            _serverSPN = connectionOptions._serverSPN;
+            _failoverPartnerSPN = connectionOptions._failoverPartnerSPN;
 #if NETFRAMEWORK
             _connectionReset = connectionOptions._connectionReset;
             _contextConnection = connectionOptions._contextConnection;
@@ -696,8 +724,10 @@ namespace Microsoft.Data.SqlClient
         // SQLPT 41700: Ignore ResetConnection=False, always reset the connection for security
         internal bool ConnectionReset => true;
         //        internal bool EnableUdtDownload => _enableUdtDownload;} }
-        internal bool Encrypt => _encrypt;
+        internal SqlConnectionEncryptOption Encrypt => _encrypt;
+        internal string HostNameInCertificate => _hostNameInCertificate;
         internal bool TrustServerCertificate => _trustServerCertificate;
+        public string ServerCertificate => _serverCertificate;
         internal bool Enlist => _enlist;
         internal bool MARS => _mars;
         internal bool MultiSubnetFailover => _multiSubnetFailover;
@@ -732,7 +762,8 @@ namespace Microsoft.Data.SqlClient
         internal string UserID => _userID;
         internal string WorkstationId => _workstationId;
         internal PoolBlockingPeriod PoolBlockingPeriod => _poolBlockingPeriod;
-
+        internal string ServerSPN => _serverSPN;
+        internal string FailoverPartnerSPN => _failoverPartnerSPN;
 
         internal TypeSystem TypeSystemVersion => _typeSystemVersion;
         internal Version TypeSystemAssemblyVersion => _typeSystemAssemblyVersion;
@@ -748,7 +779,6 @@ namespace Microsoft.Data.SqlClient
                 return (null != _expandedAttachDBFilename) && (null == _localDBInstance);
             }
         }
-
 
         protected internal override string Expand()
         {
@@ -817,6 +847,8 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Encrypt, KEY.Encrypt },
                     { KEY.Enlist, KEY.Enlist },
                     { KEY.FailoverPartner, KEY.FailoverPartner },
+                    { KEY.HostNameInCertificate, KEY.HostNameInCertificate },
+                    { KEY.ServerCertificate, KEY.ServerCertificate},
                     { KEY.Initial_Catalog, KEY.Initial_Catalog },
                     { KEY.Integrated_Security, KEY.Integrated_Security },
                     { KEY.Load_Balance_Timeout, KEY.Load_Balance_Timeout },
@@ -843,10 +875,14 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval },
                     { KEY.Authentication, KEY.Authentication },
                     { KEY.IPAddressPreference, KEY.IPAddressPreference },
+                    { KEY.Server_SPN, KEY.Server_SPN },
+                    { KEY.Failover_Partner_SPN, KEY.Failover_Partner_SPN },
 
                     { SYNONYM.APP, KEY.Application_Name },
                     { SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent },
                     { SYNONYM.EXTENDED_PROPERTIES, KEY.AttachDBFilename },
+                    { SYNONYM.HOSTNAMEINCERTIFICATE, KEY.HostNameInCertificate },
+                    { SYNONYM.SERVERCERTIFICATE, KEY.ServerCertificate},
                     { SYNONYM.INITIAL_FILE_NAME, KEY.AttachDBFilename },
                     { SYNONYM.CONNECTRETRYCOUNT, KEY.Connect_Retry_Count },
                     { SYNONYM.CONNECTRETRYINTERVAL, KEY.Connect_Retry_Interval },
@@ -871,6 +907,8 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.UID, KEY.User_ID },
                     { SYNONYM.User, KEY.User_ID },
                     { SYNONYM.WSID, KEY.Workstation_Id },
+                    { SYNONYM.ServerSPN, KEY.Server_SPN },
+                    { SYNONYM.FailoverPartnerSPN, KEY.Failover_Partner_SPN },
 #if NETFRAMEWORK
 #if ADONET_CERT_AUTH
                     { KEY.Certificate, KEY.Certificate },
@@ -1102,18 +1140,25 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETFRAMEWORK
-        protected internal override PermissionSet CreatePermissionSet()
+        internal SqlConnectionEncryptOption ConvertValueToSqlConnectionEncrypt()
         {
-            PermissionSet permissionSet = new(PermissionState.None);
-            permissionSet.AddPermission(new SqlClientPermission(this));
-            return permissionSet;
-        }
+            if (!TryGetParsetableValue(KEY.Encrypt, out string value))
+            {
+                return DEFAULT.Encrypt;
+            }
 
-        internal bool ConvertValueToEncrypt()
-        {
-            bool defaultEncryptValue = !Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : true;
-            return ConvertValueToBoolean(KEY.Encrypt, defaultEncryptValue);
+            try
+            {
+                return DbConnectionStringBuilderUtil.ConvertToSqlConnectionEncryptOption(KEY.Encrypt, value);
+            }
+            catch (FormatException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.Encrypt, e);
+            }
+            catch (OverflowException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.Encrypt, e);
+            }
         }
 
         static internal Hashtable NetlibMapping()
@@ -1166,6 +1211,21 @@ namespace Microsoft.Data.SqlClient
         }
 
         private static Hashtable s_netlibMapping;
+
+#if NETFRAMEWORK
+        protected internal override PermissionSet CreatePermissionSet()
+        {
+            PermissionSet permissionSet = new(PermissionState.None);
+            permissionSet.AddPermission(new SqlClientPermission(this));
+            return permissionSet;
+        }
+
+        internal SqlConnectionEncryptOption ConvertValueToEncrypt()
+        {
+            SqlConnectionEncryptOption defaultEncryptValue = !Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : SqlConnectionEncryptOption.Mandatory;
+            return ConvertValueToSqlConnectionEncrypt();
+        }
+
         private readonly bool _connectionReset;
         private readonly bool _contextConnection;
         private readonly bool _transparentNetworkIPResolution;

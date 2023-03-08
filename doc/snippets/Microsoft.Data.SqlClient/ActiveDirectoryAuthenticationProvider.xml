@@ -95,13 +95,16 @@ The following example demonstrates providing a custom device flow callback to Sq
           <![CDATA[  
   
 ## Remarks  
- The supported authentication modes with <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> are:
+ The supported authentication modes with <xref=Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider> are:
 
 - Active Directory Password
 - Active Directory Integrated
 - Active Directory Interactive
 - Active Directory Service Principal
 - Active Directory Device Code Flow
+- Active Directory Managed Identity
+- Active Directory MSI
+- Active Directory Default
 
  ]]>
         </format>

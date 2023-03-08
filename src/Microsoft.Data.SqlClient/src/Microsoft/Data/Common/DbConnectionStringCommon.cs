@@ -716,13 +716,11 @@ namespace Microsoft.Data.Common
                 result = SqlConnectionAttestationProtocol.AAS;
                 return true;
             }
-#if ENCLAVE_SIMULATOR
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionAttestationProtocol.SIM)))
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionAttestationProtocol.None)))
             {
-                result = SqlConnectionAttestationProtocol.SIM;
+                result = SqlConnectionAttestationProtocol.None;
                 return true;
             }
-#endif
             else
             {
                 result = DbConnectionStringDefaults.AttestationProtocol;
@@ -732,18 +730,11 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol value)
         {
-#if ENCLAVE_SIMULATOR
             Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 4, "SqlConnectionAttestationProtocol enum has changed, update needed");
             return value == SqlConnectionAttestationProtocol.NotSpecified
                 || value == SqlConnectionAttestationProtocol.HGS
                 || value == SqlConnectionAttestationProtocol.AAS
-                || value == SqlConnectionAttestationProtocol.SIM;
-#else
-            Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 3, "SqlConnectionAttestationProtocol enum has changed, update needed");
-            return value == SqlConnectionAttestationProtocol.NotSpecified
-                || value == SqlConnectionAttestationProtocol.HGS
-                || value == SqlConnectionAttestationProtocol.AAS;
-#endif
+                || value == SqlConnectionAttestationProtocol.None;
         }
 
         internal static string AttestationProtocolToString(SqlConnectionAttestationProtocol value)
@@ -754,9 +745,7 @@ namespace Microsoft.Data.Common
             {
                 SqlConnectionAttestationProtocol.AAS => nameof(SqlConnectionAttestationProtocol.AAS),
                 SqlConnectionAttestationProtocol.HGS => nameof(SqlConnectionAttestationProtocol.HGS),
-#if ENCLAVE_SIMULATOR
-                SqlConnectionAttestationProtocol.SIM => nameof(SqlConnectionAttestationProtocol.SIM),
-#endif
+                SqlConnectionAttestationProtocol.None => nameof(SqlConnectionAttestationProtocol.None),
                 _ => null
             };
         }
@@ -820,6 +809,20 @@ namespace Microsoft.Data.Common
                     throw ADP.InvalidEnumerationValue(typeof(SqlConnectionAttestationProtocol), (int)eValue);
                 }
             }
+        }
+
+        internal static SqlConnectionEncryptOption ConvertToSqlConnectionEncryptOption(string keyword, object value)
+        {
+            if (value is null)
+            {
+                return DbConnectionStringDefaults.Encrypt;
+            }
+            else if (value is string sValue)
+            {
+                return SqlConnectionEncryptOption.Parse(sValue);
+            }
+
+            throw ADP.InvalidConnectionOptionValue(keyword);
         }
 
         #endregion
@@ -959,7 +962,9 @@ namespace Microsoft.Data.Common
 #endif
         internal const string CurrentLanguage = "";
         internal const string DataSource = "";
-        internal const bool Encrypt = true;
+        internal static readonly SqlConnectionEncryptOption Encrypt = SqlConnectionEncryptOption.Mandatory;
+        internal const string HostNameInCertificate = "";
+        internal const string ServerCertificate = "";
         internal const bool Enlist = true;
         internal const string FailoverPartner = "";
         internal const string InitialCatalog = "";
@@ -988,6 +993,8 @@ namespace Microsoft.Data.Common
         internal const SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
         internal const SqlConnectionIPAddressPreference IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
         internal const PoolBlockingPeriod PoolBlockingPeriod = SqlClient.PoolBlockingPeriod.Auto;
+        internal const string ServerSPN = "";
+        internal const string FailoverPartnerSPN = "";
     }
 
     internal static class DbConnectionStringKeywords
@@ -1022,6 +1029,8 @@ namespace Microsoft.Data.Common
         internal const string ContextConnection = "Context Connection";
         internal const string CurrentLanguage = "Current Language";
         internal const string Encrypt = "Encrypt";
+        internal const string HostNameInCertificate = "Host Name In Certificate";
+        internal const string ServerCertificate = "Server Certificate";
         internal const string FailoverPartner = "Failover Partner";
         internal const string InitialCatalog = "Initial Catalog";
         internal const string MultipleActiveResultSets = "Multiple Active Result Sets";
@@ -1041,6 +1050,8 @@ namespace Microsoft.Data.Common
         internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
         internal const string AttestationProtocol = "Attestation Protocol";
         internal const string IPAddressPreference = "IP Address Preference";
+        internal const string ServerSPN = "Server SPN";
+        internal const string FailoverPartnerSPN = "Failover Partner SPN";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";
@@ -1076,6 +1087,12 @@ namespace Microsoft.Data.Common
         //internal const string AttachDBFilename       = EXTENDEDPROPERTIES+","+INITIALFILENAME;
         internal const string EXTENDEDPROPERTIES = "extended properties";
         internal const string INITIALFILENAME = "initial file name";
+
+        // internal const string HostNameInCertificate        = HOSTNAMEINCERTIFICATE;
+        internal const string HOSTNAMEINCERTIFICATE = "hostnameincertificate";
+
+        // internal const string ServerCertificate        = SERVERCERTIFICATE;
+        internal const string SERVERCERTIFICATE = "servercertificate";
 
         //internal const string ConnectTimeout         = CONNECTIONTIMEOUT+","+TIMEOUT;
         internal const string CONNECTIONTIMEOUT = "connection timeout";
@@ -1134,5 +1151,9 @@ namespace Microsoft.Data.Common
 
         //internal const string WorkstationID          = WSID;
         internal const string WSID = "wsid";
+
+        //internal const string server SPNs
+        internal const string ServerSPN = "ServerSPN";
+        internal const string FailoverPartnerSPN = "FailoverPartnerSPN";
     }
 }

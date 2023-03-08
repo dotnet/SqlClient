@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
         internal static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ProviderEnum provNum);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIInitialize")]
-        internal static extern uint SNIInitialize([In] bool useSystemDefaultSecureProtocols, [In] IntPtr pmo);
+        internal static extern uint SNIInitialize([In] IntPtr pmo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint SNIOpenSyncExWrapper(ref SNI_CLIENT_CONSUMER_INFO pClientConsumerInfo, out IntPtr ppConn);
@@ -134,5 +134,17 @@ namespace Microsoft.Data.SqlClient
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr SNIClientCertificateFallbackWrapper(IntPtr pCallbackContext);
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumOpenWrapper")]
+        internal static extern IntPtr SNIServerEnumOpen();
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumCloseWrapper")]
+        internal static extern void SNIServerEnumClose([In] IntPtr packet);
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumReadWrapper", CharSet = CharSet.Unicode)]
+        internal static extern int SNIServerEnumRead([In] IntPtr packet,
+                                                     [In, Out][MarshalAs(UnmanagedType.LPArray)] char[] readBuffer,
+                                                     [In] int bufferLength,
+                                                     [MarshalAs(UnmanagedType.Bool)] out bool more);
     }
 }

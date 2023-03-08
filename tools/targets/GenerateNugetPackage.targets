@@ -9,4 +9,13 @@
       -command &quot;&amp;$(ToolsDir)scripts\downloadLatestNuget.ps1 -nugetDestPath '$(NuGetRoot)'&quot;" />
     <Exec Command="$(NuGetCmd) pack $(ToolsDir)specs\Microsoft.Data.SqlClient.nuspec -Version $(NugetPackageVersion) -OutputDirectory $(PackagesDir) -properties Configuration=$(Configuration)" />
   </Target>
+  <Target Name="GenerateSqlServerPackage" Condition="'$(GenerateNuget)' == 'true'">
+    <PropertyGroup>
+      <SqlServerPackageVersion Condition="'$(Configuration)' == 'Debug'">$(SqlServerPackageVersion)-debug</SqlServerPackageVersion>
+    </PropertyGroup>
+    <Message Text="Setting SqlServerPackageVersion to $(SqlServerPackageVersion)" />
+    <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
+      -command &quot;&amp;$(ToolsDir)scripts\downloadLatestNuget.ps1 -nugetDestPath '$(NuGetRoot)'&quot;" />
+    <Exec Command="$(NuGetCmd) pack $(ToolsDir)specs\Microsoft.SqlServer.Server.nuspec -Version $(SqlServerPackageVersion) -OutputDirectory $(PackagesDir) -properties Configuration=$(Configuration)" />
+  </Target>
 </Project>

@@ -2,14 +2,17 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Microsoft.SqlServer.Types;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -43,27 +46,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void GetValueTestThrowsExceptionOnNetCore()
-        {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlCommand cmd = new SqlCommand("select hierarchyid::Parse('/1/') as col0", conn))
-            {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    Assert.True(reader.Read());
-
-                    // SqlHierarchyId is part of Microsoft.SqlServer.Types, which is not supported in Core
-                    Assert.Throws<FileNotFoundException>(() => reader.GetValue(0));
-                    Assert.Throws<FileNotFoundException>(() => reader.GetSqlValue(0));
-                }
-            }
-        }
-
-        // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void GetValueTest()
         {
@@ -268,7 +250,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
-#if NETCOREAPP
+
         // Synapse: Parse error at line: 1, column: 41: Incorrect syntax near 'hierarchyid'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSchemaMetadata()
@@ -307,7 +289,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
-#endif
+
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'geometry'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtParameterSetSqlByteValue()
@@ -403,6 +385,113 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             return hex.ToString();
+        }
+
+        private static string GetUdtName(Type udtClrType)
+        {
+            if (typeof(SqlHierarchyId) == udtClrType)
+            {
+                return "hierarchyid";
+            }
+            if (typeof(SqlGeography) == udtClrType)
+            {
+                return "geography";
+            }
+            if (typeof(SqlGeometry) == udtClrType)
+            {
+                return "geometry";
+            }
+
+            throw new ArgumentException("Unknwon UDT CLR Type " + udtClrType.FullName);
+        }
+
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'geometry'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void TestSqlServerTypesInsertAndRead()
+        {
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Type");
+            string allTypesSQL = @$"
+                    if not exists (select * from sysobjects where name='{tableName}' and xtype='U')
+                    Begin
+                    create table {tableName}
+                    (
+                        id int identity not null,
+                        c1 hierarchyid not null,
+                        c2 uniqueidentifier not null,
+                        c3 geography not null,
+                        c4 geometry not null,
+                    );
+                    End
+                    ";
+
+            Dictionary<string, object> rowValues = new();
+            rowValues["c1"] = SqlHierarchyId.Parse(new SqlString("/1/1/3/"));
+            rowValues["c2"] = Guid.NewGuid();
+            rowValues["c3"] = SqlGeography.Point(1.1, 2.2, 4120);
+            rowValues["c4"] = SqlGeometry.Point(5.2, 1.1, 4120);
+
+            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            conn.Open();
+            try
+            {
+                using SqlCommand cmd1 = conn.CreateCommand();
+
+                // Create db and table
+                cmd1.CommandText = allTypesSQL.ToString();
+                cmd1.ExecuteNonQuery();
+
+                using SqlCommand cmd2 = conn.CreateCommand();
+
+                StringBuilder columnsSql = new();
+                StringBuilder valuesSql = new();
+
+                foreach (KeyValuePair<string, object> pair in rowValues)
+                {
+                    string paramName = "@" + pair.Key;
+                    object paramValue = pair.Value;
+                    columnsSql.Append(pair.Key);
+                    valuesSql.Append(paramName);
+
+                    columnsSql.Append(",");
+                    valuesSql.Append(",");
+
+                    SqlParameter param = new(paramName, paramValue);
+                    cmd2.Parameters.Add(param);
+
+                    if (paramValue.GetType().Assembly == typeof(SqlHierarchyId).Assembly)
+                    {
+                        param.UdtTypeName = GetUdtName(paramValue.GetType());
+                    }
+                }
+
+                columnsSql.Length--;
+                valuesSql.Length--;
+
+                string insertSql = string.Format(CultureInfo.InvariantCulture, $"insert {tableName}" + @" ({0}) values({1})",
+                    columnsSql.ToString(), valuesSql.ToString());
+
+                cmd2.CommandText = insertSql;
+                cmd2.ExecuteNonQuery();
+
+                cmd1.CommandText = @$"select * from dbo.{tableName}";
+                using SqlDataReader r = cmd1.ExecuteReader();
+                while (r.Read())
+                {
+                    Assert.Equal(rowValues["c1"].GetType(), r.GetValue(1).GetType());
+                    Assert.Equal(rowValues["c2"].GetType(), r.GetValue(2).GetType());
+                    Assert.Equal(rowValues["c3"].GetType(), r.GetValue(3).GetType());
+                    Assert.Equal(rowValues["c4"].GetType(), r.GetValue(4).GetType());
+
+                    Assert.Equal(rowValues["c1"].ToString(), r.GetValue(1).ToString());
+                    Assert.Equal(rowValues["c2"].ToString(), r.GetValue(2).ToString());
+                    Assert.Equal(rowValues["c3"].ToString(), r.GetValue(3).ToString());
+                    Assert.Equal(rowValues["c4"].ToString(), r.GetValue(4).ToString());
+                }
+            }
+            finally
+            {
+                DataTestUtility.DropTable(conn, tableName);
+            }
         }
     }
 }

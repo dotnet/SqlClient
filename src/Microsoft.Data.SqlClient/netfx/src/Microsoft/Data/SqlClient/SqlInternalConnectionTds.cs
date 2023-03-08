@@ -105,6 +105,8 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
     {
+        // https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/retry-after#simple-retry-for-errors-with-http-error-codes-500-600
+        internal const int MsalHttpRetryStatusCode = 429;
 
         // Connection re-route limit
         internal const int _maxNumberOfRedirectRoute = 10;
@@ -738,11 +740,11 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return IsTransactionRoot && (!IsKatmaiOrNewer || null == Pool);
+                return IsTransactionRoot && (!Is2008OrNewer || null == Pool);
             }
         }
 
-        override internal bool IsShiloh
+        override internal bool Is2000
         {
             get
             {
@@ -750,19 +752,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool IsYukonOrNewer
+        override internal bool Is2005OrNewer
         {
             get
             {
-                return _parser.IsYukonOrNewer;
+                return _parser.Is2005OrNewer;
             }
         }
 
-        override internal bool IsKatmaiOrNewer
+        override internal bool Is2008OrNewer
         {
             get
             {
-                return _parser.IsKatmaiOrNewer;
+                return _parser.Is2008OrNewer;
             }
         }
 
@@ -996,7 +998,7 @@ namespace Microsoft.Data.SqlClient
                 tdsReliabilitySection.Start();
 #endif //DEBUG
 
-            isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
+                isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
 
 #if DEBUG
             }
@@ -1082,9 +1084,9 @@ namespace Microsoft.Data.SqlClient
 
             if (_fResetConnection)
             {
-                // Ensure we are either going against shiloh, or we are not enlisted in a
+                // Ensure we are either going against 2000, or we are not enlisted in a
                 // distributed transaction - otherwise don't reset!
-                if (IsShiloh)
+                if (Is2000)
                 {
                     // Prepare the parser for the connection reset - the next time a trip
                     // to the server is made.
@@ -1092,7 +1094,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (!IsEnlistedInTransaction)
                 {
-                    // If not Shiloh, we are going against Sphinx.  On Sphinx, we
+                    // If not 2000, we are going against 7.0.  On 7.0, we
                     // may only reset if not enlisted in a distributed transaction.
                     try
                     {
@@ -1175,18 +1177,18 @@ namespace Microsoft.Data.SqlClient
 
             string transactionName = (null == name) ? String.Empty : name;
 
-            if (!_parser.IsYukonOrNewer)
+            if (!_parser.Is2005OrNewer)
             {
-                ExecuteTransactionPreYukon(transactionRequest, transactionName, iso, internalTransaction);
+                ExecuteTransactionPre2005(transactionRequest, transactionName, iso, internalTransaction);
             }
             else
             {
-                ExecuteTransactionYukon(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
+                ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
             }
         }
 
         // This function will not handle idle connection resiliency, as older servers will not support it
-        internal void ExecuteTransactionPreYukon(
+        internal void ExecuteTransactionPre2005(
                     TransactionRequest transactionRequest,
                     string transactionName,
                     IsolationLevel iso,
@@ -1236,7 +1238,7 @@ namespace Microsoft.Data.SqlClient
                     sqlBatch.Append(transactionName);
                     break;
                 case TransactionRequest.Promote:
-                    Debug.Assert(false, "Promote called with transaction name or on pre-Yukon!");
+                    Debug.Assert(false, "Promote called with transaction name or on pre-2005!");
                     break;
                 case TransactionRequest.Commit:
                     sqlBatch.Append(TdsEnums.TRANS_COMMIT);
@@ -1263,7 +1265,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
             _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
 
-            // Prior to Yukon, we didn't have any transaction tokens to manage,
+            // Prior to 2005, we didn't have any transaction tokens to manage,
             // or any feedback to know when one was created, so we just presume
             // that successful execution of the request caused the transaction
             // to be created, and we set that on the parser.
@@ -1275,7 +1277,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        internal void ExecuteTransactionYukon(
+        internal void ExecuteTransaction2005(
                     TransactionRequest transactionRequest,
                     string transactionName,
                     IsolationLevel iso,
@@ -1337,7 +1339,7 @@ namespace Microsoft.Data.SqlClient
                         requestType = TdsEnums.TransactionManagerRequestType.Commit;
                         break;
                     case TransactionRequest.IfRollback:
-                    // Map IfRollback to Rollback since with Yukon and beyond we should never need
+                    // Map IfRollback to Rollback since with 2005 and beyond we should never need
                     // the if since the server will inform us when transactions have completed
                     // as a result of an error on the server.
                     case TransactionRequest.Rollback:
@@ -1395,7 +1397,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     if (internalTransaction.OpenResultsCount != 0)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransactionYukon|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransaction2005|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
                                                                ObjectID,
                                                                internalTransaction.OpenResultsCount,
                                                                _parser.MARSOn);
@@ -1514,7 +1516,7 @@ namespace Microsoft.Data.SqlClient
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
         }
 
-        private void Login(ServerInfo server, TimeoutTimer timeout, string newPassword, SecureString newSecurePassword)
+        private void Login(ServerInfo server, TimeoutTimer timeout, string newPassword, SecureString newSecurePassword, SqlConnectionEncryptOption encrypt)
         {
             // create a new login record
             SqlLogin login = new SqlLogin();
@@ -1647,7 +1649,7 @@ namespace Microsoft.Data.SqlClient
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
-            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo);
+            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo, encrypt);
         }
 
         private void LoginFailure()
@@ -1896,7 +1898,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ROR_TimeoutAfterRoutingInfo(this);
                         }
 
-                        serverInfo = new ServerInfo(ConnectionOptions, _routingInfo, serverInfo.ResolvedServerName);
+                        serverInfo = new ServerInfo(ConnectionOptions, _routingInfo, serverInfo.ResolvedServerName, serverInfo.ServerSPN);
                         timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
                         _originalClientConnectionId = _clientConnectionId;
                         _routingDestination = serverInfo.UserServerName;
@@ -2066,7 +2068,7 @@ namespace Microsoft.Data.SqlClient
             long timeoutUnitInterval;
 
             string protocol = ConnectionOptions.NetworkLibrary;
-            ServerInfo failoverServerInfo = new ServerInfo(connectionOptions, failoverHost);
+            ServerInfo failoverServerInfo = new ServerInfo(connectionOptions, failoverHost, connectionOptions.FailoverPartnerSPN);
 
             ResolveExtendedServerName(primaryServerInfo, !redirectedUserInstance, connectionOptions);
             if (null == ServerProvidedFailOverPartner)
@@ -2169,7 +2171,7 @@ namespace Microsoft.Data.SqlClient
                         _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
                         Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
 
-                        currentServerInfo = new ServerInfo(ConnectionOptions, _routingInfo, currentServerInfo.ResolvedServerName);
+                        currentServerInfo = new ServerInfo(ConnectionOptions, _routingInfo, currentServerInfo.ResolvedServerName, currentServerInfo.ServerSPN);
                         timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
                         _originalClientConnectionId = _clientConnectionId;
                         _routingDestination = currentServerInfo.UserServerName;
@@ -2315,13 +2317,9 @@ namespace Microsoft.Data.SqlClient
                             this,
                             ignoreSniOpenTimeout,
                             timeout.LegacyTimerExpire,
-                            ConnectionOptions.Encrypt,
-                            ConnectionOptions.TrustServerCertificate,
-                            ConnectionOptions.IntegratedSecurity,
+                            ConnectionOptions,
                             withFailover,
                             isFirstTransparentAttempt,
-                            ConnectionOptions.Authentication,
-                            ConnectionOptions.Certificate,
                             _serverCallback,
                             _clientCallback,
                             _originalNetworkAddressInfo != null,
@@ -2331,7 +2329,7 @@ namespace Microsoft.Data.SqlClient
             timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
-            this.Login(serverInfo, timeout, newPassword, newSecurePassword);
+            this.Login(serverInfo, timeout, newPassword, newSecurePassword, ConnectionOptions.Encrypt);
 
             timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
             timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
@@ -2403,18 +2401,18 @@ namespace Microsoft.Data.SqlClient
                     {
                         tdsReliabilitySection.Start();
 #endif //DEBUG
-                    Task reconnectTask = parent.ValidateAndReconnect(() =>
-                    {
-                        ThreadHasParserLockForClose = false;
-                        _parserLock.Release();
-                        releaseConnectionLock = false;
-                    }, timeout);
-                    if (reconnectTask != null)
-                    {
-                        AsyncHelper.WaitForCompletion(reconnectTask, timeout);
-                        return true;
-                    }
-                    return false;
+                        Task reconnectTask = parent.ValidateAndReconnect(() =>
+                        {
+                            ThreadHasParserLockForClose = false;
+                            _parserLock.Release();
+                            releaseConnectionLock = false;
+                        }, timeout);
+                        if (reconnectTask != null)
+                        {
+                            AsyncHelper.WaitForCompletion(reconnectTask, timeout);
+                            return true;
+                        }
+                        return false;
 #if DEBUG
                     }
                     finally
@@ -2476,36 +2474,36 @@ namespace Microsoft.Data.SqlClient
         internal void OnEnvChange(SqlEnvChange rec)
         {
             Debug.Assert(!IgnoreEnvChange, "This function should not be called if IgnoreEnvChange is set!");
-            switch (rec.type)
+            switch (rec._type)
             {
                 case TdsEnums.ENV_DATABASE:
                     // If connection is not open and recovery is not in progresss, store the server value as the original.
                     if (!_fConnectionOpen && _recoverySessionData == null)
                     {
-                        _originalDatabase = rec.newValue;
+                        _originalDatabase = rec._newValue;
                     }
 
-                    CurrentDatabase = rec.newValue;
+                    CurrentDatabase = rec._newValue;
                     break;
 
                 case TdsEnums.ENV_LANG:
                     // If connection is not open and recovery is not in progresss, store the server value as the original.
                     if (!_fConnectionOpen && _recoverySessionData == null)
                     {
-                        _originalLanguage = rec.newValue;
+                        _originalLanguage = rec._newValue;
                     }
 
-                    _currentLanguage = rec.newValue; // TODO: finish this.
+                    _currentLanguage = rec._newValue; // TODO: finish this.
                     break;
 
                 case TdsEnums.ENV_PACKETSIZE:
-                    _currentPacketSize = Int32.Parse(rec.newValue, CultureInfo.InvariantCulture);
+                    _currentPacketSize = int.Parse(rec._newValue, CultureInfo.InvariantCulture);
                     break;
 
                 case TdsEnums.ENV_COLLATION:
                     if (_currentSessionData != null)
                     {
-                        _currentSessionData._collation = rec.newCollation;
+                        _currentSessionData._collation = rec._newCollation;
                     }
                     break;
 
@@ -2521,18 +2519,29 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENV_LOGSHIPNODE:
-                    _currentFailoverPartner = rec.newValue;
+                    _currentFailoverPartner = rec._newValue;
                     break;
 
                 case TdsEnums.ENV_PROMOTETRANSACTION:
-                    PromotedDTCToken = rec.newBinValue;
+                    byte[] dtcToken;
+                    if (rec._newBinRented)
+                    {
+                        dtcToken = new byte[rec._newLength];
+                        Buffer.BlockCopy(rec._newBinValue, 0, dtcToken, 0, dtcToken.Length);
+                    }
+                    else
+                    {
+                        dtcToken = rec._newBinValue;
+                        rec._newBinValue = null;
+                    }
+                    PromotedDTCToken = dtcToken;
                     break;
 
                 case TdsEnums.ENV_TRANSACTIONENDED:
                     break;
 
                 case TdsEnums.ENV_TRANSACTIONMANAGERADDRESS:
-                    // For now we skip these Yukon only env change notifications
+                    // For now we skip these 2005 only env change notifications
                     break;
 
                 case TdsEnums.ENV_SPRESETCONNECTIONACK:
@@ -2544,16 +2553,16 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENV_USERINSTANCE:
-                    _instanceName = rec.newValue;
+                    _instanceName = rec._newValue;
                     break;
 
                 case TdsEnums.ENV_ROUTING:
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnEnvChange|ADV> {0}, Received routing info", ObjectID);
-                    if (string.IsNullOrEmpty(rec.newRoutingInfo.ServerName) || rec.newRoutingInfo.Protocol != 0 || rec.newRoutingInfo.Port == 0)
+                    if (string.IsNullOrEmpty(rec._newRoutingInfo.ServerName) || rec._newRoutingInfo.Protocol != 0 || rec._newRoutingInfo.Port == 0)
                     {
                         throw SQL.ROR_InvalidRoutingInfo(this);
                     }
-                    _routingInfo = rec.newRoutingInfo;
+                    _routingInfo = rec._newRoutingInfo;
                     break;
 
                 default:
@@ -2878,7 +2887,7 @@ namespace Microsoft.Data.SqlClient
                 // Deal with Msal service exceptions first, retry if 429 received.
                 catch (MsalServiceException serviceException)
                 {
-                    if (429 == serviceException.StatusCode)
+                    if (serviceException.StatusCode == MsalHttpRetryStatusCode)
                     {
                         RetryConditionHeaderValue retryAfter = serviceException.Headers.RetryAfter;
                         if (retryAfter.Delta.HasValue)
@@ -2897,8 +2906,14 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            break;
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken.MsalServiceException error:> Timeout: {0}", serviceException.ErrorCode);
+                            throw SQL.ActiveDirectoryTokenRetrievingTimeout(Enum.GetName(typeof(SqlAuthenticationMethod), ConnectionOptions.Authentication), serviceException.ErrorCode, serviceException);
                         }
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken.MsalServiceException error:> {0}", serviceException.ErrorCode);
+                        throw ADP.CreateSqlException(serviceException, ConnectionOptions, this, username);
                     }
                 }
                 // Deal with normal MsalExceptions.
@@ -2910,21 +2925,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken.MSALException error:> {0}", msalException.ErrorCode);
 
-                        // Error[0]
-                        SqlErrorCollection sqlErs = new SqlErrorCollection();
-                        sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, StringsHelper.GetString(Strings.SQL_MSALFailure, username, ConnectionOptions.Authentication.ToString("G")), ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
-
-                        // Error[1]
-                        string errorMessage1 = StringsHelper.GetString(Strings.SQL_MSALInnerException, msalException.ErrorCode);
-                        sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, errorMessage1, ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
-
-                        // Error[2]
-                        if (!string.IsNullOrEmpty(msalException.Message))
-                        {
-                            sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, msalException.Message, ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
-                        }
-                        SqlException exc = SqlException.CreateException(sqlErs, "", this);
-                        throw exc;
+                        throw ADP.CreateSqlException(msalException, ConnectionOptions, this, username);
                     }
 
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, sleeping {1}[Milliseconds]", ObjectID, sleepInterval);
@@ -3263,6 +3264,7 @@ namespace Microsoft.Data.SqlClient
         internal string ResolvedServerName { get; private set; } // the resolved servername only
         internal string ResolvedDatabaseName { get; private set; } // name of target database after resolution
         internal string UserProtocol { get; private set; } // the user specified protocol
+        internal string ServerSPN { get; private set; } // the server SPN
 
         // The original user-supplied server name from the connection string.
         // If connection string has no Data Source, the value is set to string.Empty.
@@ -3283,10 +3285,16 @@ namespace Microsoft.Data.SqlClient
         internal readonly string PreRoutingServerName;
 
         // Initialize server info from connection options,
-        internal ServerInfo(SqlConnectionString userOptions) : this(userOptions, userOptions.DataSource) { }
+        internal ServerInfo(SqlConnectionString userOptions) : this(userOptions, userOptions.DataSource, userOptions.ServerSPN) { }
+
+        // Initialize server info from connection options, but override DataSource and ServerSPN with given server name and server SPN
+        internal ServerInfo(SqlConnectionString userOptions, string serverName, string serverSPN) : this(userOptions, serverName)
+        {
+            ServerSPN = serverSPN;
+        }
 
         // Initialize server info from connection options, but override DataSource with given server name
-        internal ServerInfo(SqlConnectionString userOptions, string serverName)
+        private ServerInfo(SqlConnectionString userOptions, string serverName)
         {
             //-----------------
             // Preconditions
@@ -3305,7 +3313,7 @@ namespace Microsoft.Data.SqlClient
 
 
         // Initialize server info from connection options, but override DataSource with given server name
-        internal ServerInfo(SqlConnectionString userOptions, RoutingInfo routing, string preRoutingServerName)
+        internal ServerInfo(SqlConnectionString userOptions, RoutingInfo routing, string preRoutingServerName, string serverSPN)
         {
             //-----------------
             // Preconditions
@@ -3326,6 +3334,7 @@ namespace Microsoft.Data.SqlClient
             UserProtocol = TdsEnums.TCP;
             SetDerivedNames(UserProtocol, UserServerName);
             ResolvedDatabaseName = userOptions.InitialCatalog;
+            ServerSPN = serverSPN;
         }
 
         internal void SetDerivedNames(string protocol, string serverName)

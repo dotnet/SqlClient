@@ -106,6 +106,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 _con.Open();
 
                 _cachedServer = _con.DataSource;
+                bool? dbId = null;
 
 #if NETFRAMEWORK
                 if (hashHelper.Identity != null)
@@ -125,7 +126,16 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     CommandText = "select is_broker_enabled from sys.databases where database_id=db_id()"
                 };
 
-                if (!(bool)_com.ExecuteScalar())
+                // db_id() returns the database ID of the current database hence it will always be one line result
+                using (SqlDataReader reader = _com.ExecuteReader(CommandBehavior.SingleRow))
+                {
+                    if (reader.Read() && reader[0] is not null)
+                    {
+                        dbId = reader.GetBoolean(0);
+                    }
+                }
+
+                if (dbId is null || !dbId.Value)
                 {
                     throw SQL.SqlDependencyDatabaseBrokerDisabled();
                 }
@@ -1131,37 +1141,25 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                     messageAttributes |= MessageAttributes.Source;
                                     break;
                                 case InfoAttribute:
-                                    try
+                                    string value = xmlReader.Value;
+                                    // 3 of the server info values do not match client values - map.
+                                    switch (value)
                                     {
-                                        string value = xmlReader.Value;
-                                        // 3 of the server info values do not match client values - map.
-                                        switch (value)
-                                        {
-                                            case "set options":
-                                                info = SqlNotificationInfo.Options;
-                                                break;
-                                            case "previous invalid":
-                                                info = SqlNotificationInfo.PreviousFire;
-                                                break;
-                                            case "query template limit":
-                                                info = SqlNotificationInfo.TemplateLimit;
-                                                break;
-                                            default:
-                                                SqlNotificationInfo temp = (SqlNotificationInfo)Enum.Parse(typeof(SqlNotificationInfo), value, true);
-                                                if (Enum.IsDefined(typeof(SqlNotificationInfo), temp))
-                                                {
-                                                    info = temp;
-                                                }
-                                                break;
-                                        }
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        if (!ADP.IsCatchableExceptionType(e))
-                                        {
-                                            throw;
-                                        }
-                                        ADP.TraceExceptionWithoutRethrow(e); // Discard failure, if it should occur.
+                                        case "set options":
+                                            info = SqlNotificationInfo.Options;
+                                            break;
+                                        case "previous invalid":
+                                            info = SqlNotificationInfo.PreviousFire;
+                                            break;
+                                        case "query template limit":
+                                            info = SqlNotificationInfo.TemplateLimit;
+                                            break;
+                                        default:
+                                            if (Enum.TryParse(value, true, out SqlNotificationInfo temp) && Enum.IsDefined(typeof(SqlNotificationInfo), temp))
+                                            {
+                                                info = temp;
+                                            }
+                                            break;
                                     }
                                     messageAttributes |= MessageAttributes.Info;
                                     break;
@@ -1453,6 +1451,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     }
 
     // Needed for remoting to prevent lifetime issues and default GC cleanup.
+#if NET6_0_OR_GREATER
+    [Obsolete("InitializeLifetimeService() is not supported after .Net5.0 and throws PlatformNotSupportedException.")]
+#endif
     public override object InitializeLifetimeService()
     {
         return null;

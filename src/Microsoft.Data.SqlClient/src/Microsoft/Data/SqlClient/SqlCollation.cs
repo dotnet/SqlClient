@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient
             int lcidValue = lcid & (int)MaskLcid;
             Debug.Assert(lcidValue == lcid, "invalid set_LCID value");
 
-            // Some new Katmai LCIDs do not have collation with version = 0
+            // Some 2008 LCIDs do not have collation with version = 0
             // since user has no way to specify collation version, we set the first (minimal) supported version for these collations
             int versionBits = FirstSupportedCollationVersion(lcidValue) << LcidVersionBitOffset;
             Debug.Assert((versionBits & MaskLcidVersion) == versionBits, "invalid version returned by FirstSupportedCollationVersion");

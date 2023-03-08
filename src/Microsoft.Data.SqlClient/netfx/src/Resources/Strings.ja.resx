@@ -2872,7 +2872,7 @@
     <value>この Azure SQL Database では、グローバル トランザクションは有効ではありません。Azure SQL Database サポートにお問い合わせください。</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>現在読み込まれている System.Transactions.dll では、グローバル トランザクションはサポートされていません。.NET Framework 4.6.1 またはそれ以降にアップグレードしてください。</value>
+    <value>現在読み込まれている System.Transactions.dll では、グローバル トランザクションはサポートされていません。.NET Framework 4.6.2 またはそれ以降にアップグレードしてください。</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>コンテキスト接続では、更新のバッチ処理はサポートされていません。</value>
@@ -3224,6 +3224,12 @@
   </data>
   <data name="DbConnectionString_Encrypt" xml:space="preserve">
     <value>True の場合、SQL Server は、サーバーに証明書がインストールされている場合は、クライアントとサーバー間で送信されるすべてのデータに SSL 暗号化を使用します。</value>
+  </data>
+  <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
+    <value>Addr/Address/Server から派生した既定値と異なる場合、暗号化がネゴシエートされるときにサーバーの証明書で期待されるホスト名。</value>
+  </data>
+  <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
+    <value>SQL Server TLS/SSL 証明書と照合する証明書ファイルへのパス。</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>必要に応じ、Component Services (Microsoft Windows NT を使用している場合は MTS) 環境内のセッションをグローバル トランザクションに含める必要があります。</value>
@@ -4616,5 +4622,17 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>親コマンドで EnableOptimizedParameterBinding が有効になっている場合、パラメーター '{0}' に Direction 出力または InputOutput は指定できません。</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>認証方法 '{0}' によるアクセス トークンの取得中に接続がタイムアウトしました。前回のエラー: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>フェールオーバー パートナーのサービス プリンシパル名 (SPN)。</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>サーバーのサービス プリンシパル名 (SPN)。</value>
+  </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>.NET Framework を対象とする場合、'{0}' プラットフォームはサポートされません。</value>
   </data>
 </root>

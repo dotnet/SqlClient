@@ -2872,7 +2872,7 @@
     <value>Le transazioni globali non sono abilitate per questo database SQL di Azure. Per assistenza, contattare il supporto del database SQL di Azure.</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>Il file System.Transactions.dll attualmente caricato non supporta le transazioni globali. Effettuare l'aggiornamento a .NET Framework 4.6.1 o versioni successive.</value>
+    <value>Il file System.Transactions.dll attualmente caricato non supporta le transazioni globali. Eseguire l'aggiornamento a .NET Framework 4.6.2 o versione successiva.</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>L'esecuzione di batch di aggiornamenti non è supportata nella connessione contesto.</value>
@@ -3224,6 +3224,12 @@
   </data>
   <data name="DbConnectionString_Encrypt" xml:space="preserve">
     <value>Se il valore è true, SQL Server utilizza la crittografia SSL per tutti i dati scambiati tra il client e il server, se nel server è installato un certificato.</value>
+  </data>
+  <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
+    <value>Nome host previsto nel certificato del server quando viene negoziata la crittografia, se diverso dal valore predefinito derivato da Addr/Address/Server.</value>
+  </data>
+  <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
+    <value>Percorso di un file di certificato da confrontare con il certificato TLS/SSL di SQL Server.</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Le sessioni in un ambiente Component Services (o MTS, se si utilizza Microsoft Windows NT) devono essere automaticamente inserite in una transazione globale, se richiesto.</value>
@@ -4616,5 +4622,17 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Il parametro '{0}' non può includere Output o InputOutput come valore di Direction quando nel comando padre è abilitato EnableOptimizedParameterBinding.</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Timeout della connessione durante il recupero di un token di accesso tramite il metodo di autenticazione '{0}'. Ultimo errore: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>Nome principale dell'entità servizio (SPN) del partner di failover.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>Nome principale dell'entità servizio (SPN) del server.</value>
+  </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>La piattaforma '{0}' non è supportata quando la destinazione è .NET Framework.</value>
   </data>
 </root>

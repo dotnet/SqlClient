@@ -9,6 +9,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Xml.Linq;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -51,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalData, outputData);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async Task GetFieldValueAsync_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
@@ -153,7 +154,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalText, outputText);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Cannot find data type 'XML'.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetFieldValue_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
@@ -220,7 +222,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalData, outputData);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetFieldValue_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
         {
@@ -290,7 +292,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalData, outputData);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
@@ -358,7 +360,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalText, outputText);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehaviourAndAccessorTypes))]
         public static void NullStreamProperties(CommandBehavior behavior, AccessorType accessorType)
         {
@@ -443,7 +445,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetCommandBehaviourAndAccessorTypes))]
         public static void InvalidCastExceptionStream(CommandBehavior behavior, AccessorType accessorType)
         {
@@ -469,6 +471,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
+
+#if NETCOREAPP
+        [ConditionalFact(typeof(DataTestUtility),nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static async void ReadAsyncContentsCompletes()
+        {
+            string expectedXml = "<test>This is a test string</test>";
+            string query = $"SELECT CAST('{expectedXml}' AS NVARCHAR(MAX))";
+
+            string returnedXml = null;
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand command = new SqlCommand(query, connection))
+            {
+                connection.Open();
+
+                await using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess).ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync().ConfigureAwait(false))
+                    {
+                        using (TextReader textReader = reader.GetTextReader(0))
+                        using (XmlReader xmlReader = XmlReader.Create(textReader, new XmlReaderSettings() { Async = true }))
+                        {
+                            XDocument xdoc = await XDocument.LoadAsync(xmlReader, LoadOptions.None, default).ConfigureAwait(false);
+                            returnedXml = xdoc.ToString();
+                        }
+                    }
+                }
+            }
+
+            Assert.Equal(expectedXml, returnedXml, StringComparer.Ordinal);
+        }
+#endif
 
         private static async Task<SqlDataReader> ExecuteReader(SqlCommand command, CommandBehavior behavior, bool isExecuteAsync)
             => isExecuteAsync ? await command.ExecuteReaderAsync(behavior) : command.ExecuteReader(behavior);

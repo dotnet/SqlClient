@@ -2872,7 +2872,7 @@
     <value>尚未为此 Azure SQL 数据库启用全局事务。若要获取帮助，请联系 Azure SQL 数据库支持人员。</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>当前加载的 System.Transactions.dll 不支持全局事务。请升级到 .NET Framework 4.6.1 或更高版本。</value>
+    <value>当前加载的 System.Transactions.dll 不支持全局事务。请升级到 .NET Framework 4.6.2 或更高版本。</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>在上下文连接上不支持批处理更新。</value>
@@ -3224,6 +3224,12 @@
   </data>
   <data name="DbConnectionString_Encrypt" xml:space="preserve">
     <value>如果为 True，并且服务器安装了证书，那么 SQL Server 将对客户端与服务器之间发送的所有数据使用 SSL 加密。</value>
+  </data>
+  <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
+    <value>协商加密时服务器证书中预期的主机名(如果它不同于从 Addr/Address/Server 派生的默认值)。</value>
+  </data>
+  <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
+    <value>要与 SQL Server TLS/SSL 证书匹配的证书文件的路径。</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>如有必要，Component Services (如果使用 Microsoft Windows NT，则为 MTS)环境中的会话应自动登记在全局事务中。</value>
@@ -4616,5 +4622,17 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>当在父命令上启用 EnableOptimizedParameterBinding 时，参数“{0}”不能具有 Direction Output 或 InputOutput。</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>使用“{0}”身份验证方法检索访问令牌时连接超时。最后一个错误: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>故障转移合作伙伴的服务主体名称(SPN)。</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>服务器的服务主体名称(SPN)。</value>
+  </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>面向 .NET Framework 时，不支持 "{0}" 平台。</value>
   </data>
 </root>

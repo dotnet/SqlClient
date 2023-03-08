@@ -97,6 +97,64 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(string.Empty, p.XmlSchemaCollectionOwningSchema);
         }
 
+#if NET6_0_OR_GREATER
+        [Fact]
+        public void Constructor2_Value_DateOnly()
+        {
+            DateOnly value = new DateOnly(2004, 8, 24);
+            SqlParameter p = new SqlParameter("dateonly", value);
+
+            Assert.Equal(DbType.Date, p.DbType);
+            Assert.Equal(ParameterDirection.Input, p.Direction);
+            Assert.False(p.IsNullable);
+            Assert.Equal(0, p.LocaleId);
+            Assert.Equal(0, p.Offset);
+            Assert.Equal("dateonly", p.ParameterName);
+            Assert.Equal(0, p.Precision);
+            Assert.Equal(0, p.Scale);
+            Assert.Equal(0, p.Size);
+            Assert.Equal(string.Empty, p.SourceColumn);
+            Assert.False(p.SourceColumnNullMapping);
+            Assert.Equal(DataRowVersion.Current, p.SourceVersion);
+            Assert.Equal(SqlDbType.Date, p.SqlDbType);
+            Assert.Equal(value, p.SqlValue);
+            Assert.Equal(string.Empty, p.TypeName);
+            Assert.Equal(string.Empty, p.UdtTypeName);
+            Assert.Equal(value, p.Value);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionDatabase);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionName);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionOwningSchema);
+        }
+
+        [Fact]
+        public void Constructor2_Value_TimeOnly()
+        {
+            TimeOnly value = new TimeOnly(9, 7, 42, 321);
+            SqlParameter p = new SqlParameter("timeonly", value);
+
+            Assert.Equal(DbType.Time, p.DbType);
+            Assert.Equal(ParameterDirection.Input, p.Direction);
+            Assert.False(p.IsNullable);
+            Assert.Equal(0, p.LocaleId);
+            Assert.Equal(0, p.Offset);
+            Assert.Equal("timeonly", p.ParameterName);
+            Assert.Equal(0, p.Precision);
+            Assert.Equal(0, p.Scale);
+            Assert.Equal(0, p.Size);
+            Assert.Equal(string.Empty, p.SourceColumn);
+            Assert.False(p.SourceColumnNullMapping);
+            Assert.Equal(DataRowVersion.Current, p.SourceVersion);
+            Assert.Equal(SqlDbType.Time, p.SqlDbType);
+            Assert.Equal(value, p.SqlValue);
+            Assert.Equal(string.Empty, p.TypeName);
+            Assert.Equal(string.Empty, p.UdtTypeName);
+            Assert.Equal(value, p.Value);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionDatabase);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionName);
+            Assert.Equal(string.Empty, p.XmlSchemaCollectionOwningSchema);
+        }
+#endif
+
         [Fact]
         public void Constructor2_Value_Null()
         {
@@ -383,6 +441,58 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(value, p.Value);
         }
 
+#if NET6_0_OR_GREATER
+        [Fact]
+        public void InferType_DateOnly()
+        {
+            DateOnly value;
+            SqlParameter param;
+
+            value = DateOnly.FromDateTime(DateTime.Now.Date);
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Date, param.SqlDbType);
+            Assert.Equal(DbType.Date, param.DbType);
+
+            value = DateOnly.FromDateTime(DateTime.Now.Date);
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Date, param.SqlDbType);
+            Assert.Equal(DbType.Date, param.DbType);
+
+            value = DateOnly.FromDateTime(new DateTime(1973, 8, 13));
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Date, param.SqlDbType);
+            Assert.Equal(DbType.Date, param.DbType);
+        }
+
+        [Fact]
+        public void InferType_TimeOnly()
+        {
+            TimeOnly value;
+            SqlParameter param;
+
+            value = TimeOnly.FromDateTime(DateTime.Now);
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Time, param.SqlDbType);
+            Assert.Equal(DbType.Time, param.DbType);
+
+            value = TimeOnly.FromDateTime(DateTime.Now);
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Time, param.SqlDbType);
+            Assert.Equal(DbType.Time, param.DbType);
+
+            value = TimeOnly.FromDateTime(new DateTime(2022, 10, 22, 15, 27, 38));
+            param = new SqlParameter();
+            param.Value = value;
+            Assert.Equal(SqlDbType.Time, param.SqlDbType);
+            Assert.Equal(DbType.Time, param.DbType);
+        }
+#endif
+
         [Fact]
         public void InferType_DateTime()
         {
@@ -659,13 +769,67 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(DbType.DateTimeOffset, param.DbType);
         }
 
-        [Fact]
-        public void LocaleId()
+        [Theory]
+        [InlineData(15)]
+        [InlineData(1044)]
+        [InlineData(1047)]
+        [InlineData(1056)]
+        [InlineData(1065)]
+        [InlineData(1068)]
+        [InlineData(1070)]
+        [InlineData(1071)]
+        [InlineData(1081)]
+        [InlineData(1082)]
+        [InlineData(1083)]
+        [InlineData(1087)]
+        [InlineData(1090)]
+        [InlineData(1091)]
+        [InlineData(1092)]
+        [InlineData(1093)]
+        [InlineData(1101)]
+        [InlineData(1105)]
+        [InlineData(1106)]
+        [InlineData(1107)]
+        [InlineData(1108)]
+        [InlineData(1114)]
+        [InlineData(1121)]
+        [InlineData(1122)]
+        [InlineData(1123)]
+        [InlineData(1125)]
+        [InlineData(1133)]
+        [InlineData(1146)]
+        [InlineData(1148)]
+        [InlineData(1150)]
+        [InlineData(1152)]
+        [InlineData(1153)]
+        [InlineData(1155)]
+        [InlineData(1157)]
+        [InlineData(1164)]
+        [InlineData(2074)]
+        [InlineData(2092)]
+        [InlineData(2107)]
+        [InlineData(2143)]
+        [InlineData(3076)]
+        [InlineData(3098)]
+        [InlineData(5124)]
+        [InlineData(5146)]
+        [InlineData(8218)]
+        public void LocaleId(int lcid)
         {
+            // To verify all the cases in SqlCollation.FirstSupportedCollationVersion
             SqlParameter parameter = new SqlParameter();
             Assert.Equal(0, parameter.LocaleId);
-            parameter.LocaleId = 15;
-            Assert.Equal(15, parameter.LocaleId);
+            parameter.LocaleId = lcid;
+            Assert.Equal(parameter.LocaleId, lcid);
+        }
+
+        [Fact]
+        public void LocaleIdOutOfRange_Throws()
+        {
+            SqlParameter parameter = new SqlParameter();
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => { parameter.LocaleId = -1; });
+            Assert.NotNull(ex.ParamName);
+            Assert.Contains("LocaleId", ex.ParamName, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]

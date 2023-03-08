@@ -104,7 +104,8 @@ namespace Microsoft.Data.SqlClient
             //       the server, we will use that name over what was specified  
             //       in the original connection string.
 
-            if (null == userConnectionOptions[SqlConnectionString.KEY.FailoverPartner])
+            if (userConnectionOptions.ContainsKey(SqlConnectionString.KEY.FailoverPartner) &&
+                null == userConnectionOptions[SqlConnectionString.KEY.FailoverPartner])
             {
                 keywordToReplace = SqlConnectionString.KEY.Data_Source;
             }

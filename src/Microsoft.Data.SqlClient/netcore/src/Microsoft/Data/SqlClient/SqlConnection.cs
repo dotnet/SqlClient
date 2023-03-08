@@ -21,7 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -414,9 +414,15 @@ namespace Microsoft.Data.SqlClient
             if (connString != null)
             {
                 _connectRetryCount = connString.ConnectRetryCount;
+                // For Azure Synapse ondemand connections, set _connectRetryCount to 5 instead of 1 to greatly improve recovery
+                //  success rate. Note: Synapse should be detected first as it could be detected as a regular Azure SQL DB endpoint.
+                if (_connectRetryCount == 1 && ADP.IsAzureSynapseOnDemandEndpoint(connString.DataSource))
+                {
+                    _connectRetryCount = 5;
+                }
                 // For Azure SQL connection, set _connectRetryCount to 2 instead of 1 will greatly improve recovery
-                //   success rate
-                if (_connectRetryCount == 1 && ADP.IsAzureSqlServerEndpoint(connString.DataSource))
+                //  success rate
+                else if (_connectRetryCount == 1 && ADP.IsAzureSqlServerEndpoint(connString.DataSource))
                 {
                     _connectRetryCount = 2;
                 }
@@ -1837,7 +1843,35 @@ namespace Microsoft.Data.SqlClient
                 // are not present. Throwing on open with a meaningful message helps identify the issue.
                 if (_cultureCheckState == CultureCheckState.Unknown)
                 {
-                    _cultureCheckState = CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant") ? CultureCheckState.Invariant : CultureCheckState.Standard;
+                    // check if invariant state has been set by appcontext switch directly 
+                    if (AppContext.TryGetSwitch("System.Globalization.Invariant", out bool isEnabled) && isEnabled)
+                    {
+                        _cultureCheckState = CultureCheckState.Invariant;
+                    }
+                    else
+                    {
+                        // check if invariant state has been set through environment variables
+                        string envValue = Environment.GetEnvironmentVariable("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT");
+                        if (string.Equals(envValue, bool.TrueString, StringComparison.OrdinalIgnoreCase) || string.Equals(envValue, "1", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _cultureCheckState = CultureCheckState.Invariant;
+                        }
+                        else
+                        {
+                            // if it hasn't been manually set it could still apply if the os doesn't have
+                            //  icu libs installed or is a native binary with icu support trimmed away
+                            // netcore 3.1 to net5 do not throw in attempting to create en-us in inariant mode
+                            // net6 and greater will throw so catch and infer invariant mode from the exception
+                            try
+                            {
+                                _cultureCheckState = CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant") ? CultureCheckState.Invariant : CultureCheckState.Standard;
+                            }
+                            catch (CultureNotFoundException)
+                            {
+                                _cultureCheckState = CultureCheckState.Invariant;
+                            }
+                        }
+                    }
                 }
                 if (_cultureCheckState == CultureCheckState.Invariant)
                 {
@@ -1930,15 +1964,15 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        internal bool IsKatmaiOrNewer
+        internal bool Is2008OrNewer
         {
             get
             {
                 if (_currentReconnectionTask != null)
                 { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be Katmai+
+                    return true; // if CR is enabled, connection, if established, will be 2008+
                 }
-                return GetOpenTdsConnection().IsKatmaiOrNewer;
+                return GetOpenTdsConnection().Is2008OrNewer;
             }
         }
 
@@ -2372,7 +2406,7 @@ namespace Microsoft.Data.SqlClient
 
                 MemoryStream stm = new MemoryStream((byte[])value);
 
-                o = SerializationHelperSql9.Deserialize(stm, metaData.udt?.Type);
+                o = Server.SerializationHelperSql9.Deserialize(stm, metaData.udt?.Type);
 
                 Debug.Assert(o != null, "object could NOT be created");
                 return o;
@@ -2400,7 +2434,7 @@ namespace Microsoft.Data.SqlClient
 
             using (MemoryStream stm = new MemoryStream(maxSize < 0 ? 0 : maxSize))
             {
-                SerializationHelperSql9.Serialize(stm, o);
+                Server.SerializationHelperSql9.Serialize(stm, o);
                 retval = stm.ToArray();
             }
             return retval;

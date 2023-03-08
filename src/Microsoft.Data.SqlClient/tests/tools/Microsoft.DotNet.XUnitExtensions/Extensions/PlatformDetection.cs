@@ -10,5 +10,7 @@ namespace System
     {
         public static bool IsArmProcess => RuntimeInformation.ProcessArchitecture == Architecture.Arm;
         public static bool IsNotArmProcess => !IsArmProcess;
+        public static bool IsX86Process => RuntimeInformation.ProcessArchitecture == Architecture.X86;
+        public static bool IsNotX86Process => !IsX86Process;
     }
 }

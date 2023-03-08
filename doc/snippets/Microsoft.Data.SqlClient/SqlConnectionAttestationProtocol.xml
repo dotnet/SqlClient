@@ -13,10 +13,10 @@
             <summary>Attestation portocol for Azure Attestation Service</summary>
             <value>1</value>
         </AAS>
-        <SIM>
-            <summary>Attestation protocol for Simulator</summary>
+        <None>
+            <summary>Attestation protocol for no attestation. Only compatible with Virtualization-based security (VBS) enclaves. An Enclave Attestation Url is not required when using this protocol.</summary>
             <value>2</value>
-        </SIM>
+        </None>
         <HGS>
             <summary>Attestation protocol for Host Guardian Service</summary>
              <value>3</value>

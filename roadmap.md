@@ -13,8 +13,10 @@ The Microsoft.Data.SqlClient roadmap communicates project priorities for evolvin
 |---------------------------|--------------|---------------|
 | Microsoft.Data.SqlClient v1.1 (servicing) | As needed (see also [1.1 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/1.1)) | Closed |
 | Microsoft.Data.SqlClient v2.1 (servicing) | As needed (see also [2.1 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/2.1)) | Closed |
-| Microsoft.Data.SqlClient v3.0 (servicing) | As needed (see also [3.0 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/3.0) | Closed |
-| Microsoft.Data.SqlClient v4.0 | GA (General Availability) estimated for November 2021 | [SqlClient 4.0.0](https://github.com/dotnet/SqlClient/projects/8)
+| Microsoft.Data.SqlClient v3.0 (servicing) | As needed (see also [3.0 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/3.0)) | Closed |
+| Microsoft.Data.SqlClient v4.0 (servicing) | As needed (see also [4.0 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/4.0)) | Closed |
+| Microsoft.Data.SqlClient v4.1 (servicing) | As needed (see also [4.1 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/4.1)) | Closed |
+| Microsoft.Data.SqlClient v5.0 | GA (General Availability) estimated for May 2022 | [SqlClient 5.0.0](https://github.com/dotnet/SqlClient/projects/9)
 
 > Note: Dates are calendar year (as opposed to fiscal year).
 

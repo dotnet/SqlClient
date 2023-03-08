@@ -150,7 +150,8 @@ namespace Microsoft.Data.SqlClient
             TransparentNetworkResolutionState transparentNetworkResolutionState,
             int totalTimeout,
             SqlConnectionIPAddressPreference ipPreference,
-            SQLDNSInfo cachedDNSInfo)
+            SQLDNSInfo cachedDNSInfo,
+            string hostNameInCertificate)
             : base(IntPtr.Zero, true)
         {
 
@@ -172,7 +173,7 @@ namespace Microsoft.Data.SqlClient
                 int transparentNetworkResolutionStateNo = (int)transparentNetworkResolutionState;
                 _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
                             spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, transparentNetworkResolutionStateNo, totalTimeout,
-                            ADP.IsAzureSqlServerEndpoint(serverName), ipPreference, cachedDNSInfo);
+                            ADP.IsAzureSqlServerEndpoint(serverName), ipPreference, cachedDNSInfo, hostNameInCertificate);
             }
         }
 

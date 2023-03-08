@@ -87,13 +87,8 @@ namespace Microsoft.Data.SqlClient
 
         private Task _currentTask;
         private Snapshot _snapshot;
-
         private CancellationTokenSource _cancelAsyncOnCloseTokenSource;
         private CancellationToken _cancelAsyncOnCloseToken;
-
-        // Used for checking if the Type parameter provided to GetValue<T> is an INullable
-        internal static readonly Type _typeofINullable = typeof(INullable);
-        private static readonly Type s_typeofSqlString = typeof(SqlString);
 
         private SqlSequentialStream _currentStream;
         private SqlSequentialTextReader _currentTextReader;
@@ -557,7 +552,7 @@ namespace Microsoft.Data.SqlClient
                 schemaRow[nonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
                 schemaRow[dataTypeName] = GetDataTypeNameInternal(col);
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsNewKatmaiDateTimeType)
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[providerType] = SqlDbType.NVarChar;
                     switch (col.type)
@@ -600,12 +595,12 @@ namespace Microsoft.Data.SqlClient
 
                     if (col.type == SqlDbType.Udt)
                     { // Additional metadata for UDTs.
-                        Debug.Assert(Connection.IsKatmaiOrNewer, "Invalid Column type received from the server");
+                        Debug.Assert(Connection.Is2008OrNewer, "Invalid Column type received from the server");
                         schemaRow[udtAssemblyQualifiedName] = col.udt?.AssemblyQualifiedName;
                     }
                     else if (col.type == SqlDbType.Xml)
                     { // Additional metadata for Xml.
-                        Debug.Assert(Connection.IsKatmaiOrNewer, "Invalid DataType (Xml) for the column");
+                        Debug.Assert(Connection.Is2008OrNewer, "Invalid DataType (Xml) for the column");
                         schemaRow[xmlSchemaCollectionDatabase] = col.xmlSchemaCollection?.Database;
                         schemaRow[xmlSchemaCollectionOwningSchema] = col.xmlSchemaCollection?.OwningSchema;
                         schemaRow[xmlSchemaCollectionName] = col.xmlSchemaCollection?.Name;
@@ -640,7 +635,7 @@ namespace Microsoft.Data.SqlClient
                     schemaRow[precision] = col.metaType.Precision;
                 }
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsNewKatmaiDateTimeType)
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[scale] = MetaType.MetaNVarChar.Scale;
                 }
@@ -1175,7 +1170,7 @@ namespace Microsoft.Data.SqlClient
         {
             string dataTypeName = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 dataTypeName = MetaType.MetaNVarChar.TypeName;
             }
@@ -1257,9 +1252,9 @@ namespace Microsoft.Data.SqlClient
         {
             Type fieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
-                // Return katmai types as string
+                // Return 2008 types as string
                 fieldType = MetaType.MetaNVarChar.ClassType;
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
@@ -1365,7 +1360,7 @@ namespace Microsoft.Data.SqlClient
         {
             Type providerSpecificFieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 providerSpecificFieldType = MetaType.MetaNVarChar.SqlType;
             }
@@ -2289,7 +2284,7 @@ namespace Microsoft.Data.SqlClient
 
             DateTime dt = _data[i].DateTime;
             // This accessor can be called for regular DateTime column. In this case we should not throw
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 // TypeSystem.SQLServer2005 or less
 
@@ -2387,10 +2382,10 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
             SqlString data;
-            // Convert Katmai types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            // Convert 2008 types to string
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
-                data = _data[i].KatmaiDateTimeSqlString;
+                data = _data[i].Sql2008DateTimeSqlString;
             }
             else
             {
@@ -2467,9 +2462,9 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
-                return _data[i].KatmaiDateTimeSqlString;
+                return _data[i].Sql2008DateTimeSqlString;
             }
 
             return _data[i].SqlString;
@@ -2546,10 +2541,10 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
-            // Convert Katmai types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            // Convert 2008 types to string
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
-                return data.KatmaiDateTimeSqlString;
+                return data.Sql2008DateTimeSqlString;
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
@@ -2626,10 +2621,10 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
 
-            // Convert katmai value to string if type system knob is 2005 or earlier
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            // Convert 2008 value to string if type system knob is 2005 or earlier
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
-                return _data[i].KatmaiDateTimeString;
+                return _data[i].Sql2008DateTimeString;
             }
 
             return _data[i].String;
@@ -2736,7 +2731,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 if (data.IsNull)
                 {
@@ -2744,7 +2739,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    return data.KatmaiDateTimeString;
+                    return data.Sql2008DateTimeString;
                 }
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
@@ -2840,14 +2835,24 @@ namespace Microsoft.Data.SqlClient
             {
                 return (T)(object)data.Decimal;
             }
-            else if (typeof(T) == typeof(DateTimeOffset) && dataType == typeof(DateTimeOffset) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            else if (typeof(T) == typeof(DateTimeOffset) && dataType == typeof(DateTimeOffset) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 return (T)(object)data.DateTimeOffset;
             }
-            else if (typeof(T) == typeof(DateTime) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            else if (typeof(T) == typeof(DateTime) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 return (T)(object)data.DateTime;
             }
+#if NET6_0_OR_GREATER
+            else if (typeof(T) == typeof(DateOnly) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            {
+                return (T)(object)data.DateOnly;
+            }
+            else if (typeof(T) == typeof(TimeOnly) && dataType == typeof(TimeOnly) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            {
+                return (T)(object)data.TimeOnly;
+            }
+#endif
             else if (typeof(T) == typeof(XmlReader))
             {
                 // XmlReader only allowed on XML types
@@ -2955,7 +2960,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // If its a SQL Type or Nullable UDT
                     object rawValue = GetSqlValueFromSqlBufferInternal(data, metaData);
-                    if (typeof(T) == s_typeofSqlString)
+                    if (typeof(T) == typeof(SqlString))
                     {
                         // Special case: User wants SqlString, but we have a SqlXml
                         // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
@@ -2986,6 +2991,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (InvalidCastException) when (data.IsNull)
                     {
+                        // If the value was actually null, then we should throw a SqlNullValue instead
                         throw SQL.SqlNullValue();
                     }
 
@@ -3476,7 +3482,9 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
             {
+#if !NET6_0_OR_GREATER
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
 
                 try
                 {
@@ -4401,6 +4409,7 @@ namespace Microsoft.Data.SqlClient
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
             using (TryEventScope.Create("SqlDataReader.NextResultAsync | API | Object Id {0}", ObjectID))
+            using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
 
@@ -4410,7 +4419,6 @@ namespace Microsoft.Data.SqlClient
                     return source.Task;
                 }
 
-                IDisposable registration = null;
                 if (cancellationToken.CanBeCanceled)
                 {
                     if (cancellationToken.IsCancellationRequested)
@@ -4418,7 +4426,7 @@ namespace Microsoft.Data.SqlClient
                         source.SetCanceled();
                         return source.Task;
                     }
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
+                    registrationHolder.Set(cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command));
                 }
 
                 Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
@@ -4436,7 +4444,7 @@ namespace Microsoft.Data.SqlClient
                     return source.Task;
                 }
 
-                return InvokeAsyncCall(new HasNextResultAsyncCallContext(this, source, registration));
+                return InvokeAsyncCall(new HasNextResultAsyncCallContext(this, source, registrationHolder.Take()));
             }
         }
 
@@ -4710,7 +4718,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(context.Source != null, "context._source should not be null when continuing");
                     // setup for cleanup/completing
                     retryTask.ContinueWith(
-                        continuationAction: SqlDataReaderAsyncCallContext<int>.s_completeCallback,
+                        continuationAction: SqlDataReaderBaseAsyncCallContext<int>.s_completeCallback,
                         state: context,
                         TaskScheduler.Default
                     );
@@ -4731,10 +4739,17 @@ namespace Microsoft.Data.SqlClient
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
             using (TryEventScope.Create("SqlDataReader.ReadAsync | API | Object Id {0}", ObjectID))
+            using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 if (IsClosed)
                 {
                     return Task.FromException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
+                }
+
+                // Register first to catch any already expired tokens to be able to trigger cancellation event.
+                if (cancellationToken.CanBeCanceled)
+                {
+                    registrationHolder.Set(cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command));
                 }
 
                 // If user's token is canceled, return a canceled task
@@ -4835,12 +4850,6 @@ namespace Microsoft.Data.SqlClient
                     return source.Task;
                 }
 
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled)
-                {
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
-                }
-
                 ReadAsyncCallContext context = null;
                 if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
                 {
@@ -4851,9 +4860,9 @@ namespace Microsoft.Data.SqlClient
                     context = new ReadAsyncCallContext();
                 }
 
-                Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == null, "cached ReadAsyncCallContext was not properly disposed");
+                Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == default, "cached ReadAsyncCallContext was not properly disposed");
 
-                context.Set(this, source, registration);
+                context.Set(this, source, registrationHolder.Take());
                 context._hasMoreData = more;
                 context._hasReadRowToken = rowTokenRead;
 
@@ -4991,49 +5000,51 @@ namespace Microsoft.Data.SqlClient
                     return Task.FromException<bool>(ex);
                 }
 
-                // Setup and check for pending task
-                TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
-                Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-                if (original != null)
+                using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
                 {
-                    source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
-                    return source.Task;
+                    // Setup and check for pending task
+                    TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
+                    Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
+                    if (original != null)
+                    {
+                        source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
+                        return source.Task;
+                    }
+
+                    // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
+                    if (_cancelAsyncOnCloseToken.IsCancellationRequested)
+                    {
+                        source.SetCanceled();
+                        _currentTask = null;
+                        return source.Task;
+                    }
+
+                    // Setup cancellations
+                    if (cancellationToken.CanBeCanceled)
+                    {
+                        registrationHolder.Set(cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command));
+                    }
+
+                    IsDBNullAsyncCallContext context = null;
+                    if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                    {
+                        context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, null);
+                    }
+                    if (context is null)
+                    {
+                        context = new IsDBNullAsyncCallContext();
+                    }
+
+                    Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == default, "cached ISDBNullAsync context not properly disposed");
+
+                    context.Set(this, source, registrationHolder.Take());
+                    context._columnIndex = i;
+
+                    // Setup async
+                    PrepareAsyncInvocation(useSnapshot: true);
+
+                    return InvokeAsyncCall(context);
                 }
-
-                // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-                if (_cancelAsyncOnCloseToken.IsCancellationRequested)
-                {
-                    source.SetCanceled();
-                    _currentTask = null;
-                    return source.Task;
-                }
-
-                // Setup cancellations
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled)
-                {
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
-                }
-
-                IsDBNullAsyncCallContext context = null;
-                if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-                {
-                    context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, null);
-                }
-                if (context is null)
-                {
-                    context = new IsDBNullAsyncCallContext();
-                }
-
-                Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == null, "cached ISDBNullAsync context not properly disposed");
-
-                context.Set(this, source, registration);
-                context._columnIndex = i;
-
-                // Setup async
-                PrepareAsyncInvocation(useSnapshot: true);
-
-                return InvokeAsyncCall(context);
             }
         }
 
@@ -5138,37 +5149,39 @@ namespace Microsoft.Data.SqlClient
                 return Task.FromException<T>(ex);
             }
 
-            // Setup and check for pending task
-            TaskCompletionSource<T> source = new TaskCompletionSource<T>();
-            Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-            if (original != null)
+            using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
-                source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
-                return source.Task;
+                // Setup and check for pending task
+                TaskCompletionSource<T> source = new TaskCompletionSource<T>();
+                Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
+                if (original != null)
+                {
+                    source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
+                    return source.Task;
+                }
+
+                // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
+                if (_cancelAsyncOnCloseToken.IsCancellationRequested)
+                {
+                    source.SetCanceled();
+                    _currentTask = null;
+                    return source.Task;
+                }
+
+                // Setup cancellations
+                if (cancellationToken.CanBeCanceled)
+                {
+                    registrationHolder.Set(cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command));
+                }
+
+                // Setup async
+                PrepareAsyncInvocation(useSnapshot: true);
+
+                GetFieldValueAsyncCallContext<T> context = new GetFieldValueAsyncCallContext<T>(this, source, registrationHolder.Take());
+                context._columnIndex = i;
+
+                return InvokeAsyncCall(context);
             }
-
-            // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-            if (_cancelAsyncOnCloseToken.IsCancellationRequested)
-            {
-                source.SetCanceled();
-                _currentTask = null;
-                return source.Task;
-            }
-
-            // Setup cancellations
-            IDisposable registration = null;
-            if (cancellationToken.CanBeCanceled)
-            {
-                registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
-            }
-
-            // Setup async
-            PrepareAsyncInvocation(useSnapshot: true);
-
-            GetFieldValueAsyncCallContext<T> context = new GetFieldValueAsyncCallContext<T>(this, source, registration);
-            context._columnIndex = i;
-
-            return InvokeAsyncCall(context);
         }
 
         private static Task<T> GetFieldValueAsyncExecute<T>(Task task, object state)
@@ -5220,49 +5233,63 @@ namespace Microsoft.Data.SqlClient
         }
 
 #endif
-
-        internal abstract class SqlDataReaderAsyncCallContext<T> : AAsyncCallContext<SqlDataReader, T>
+        
+        internal abstract class SqlDataReaderBaseAsyncCallContext<T> : AAsyncBaseCallContext<SqlDataReader, T>
         {
             internal static readonly Action<Task<T>, object> s_completeCallback = CompleteAsyncCallCallback;
 
             internal static readonly Func<Task, object, Task<T>> s_executeCallback = ExecuteAsyncCallCallback;
 
-            protected SqlDataReaderAsyncCallContext()
+            protected SqlDataReaderBaseAsyncCallContext()
             {
             }
 
-            protected SqlDataReaderAsyncCallContext(SqlDataReader owner, TaskCompletionSource<T> source, IDisposable disposable = null)
+            protected SqlDataReaderBaseAsyncCallContext(SqlDataReader owner, TaskCompletionSource<T> source)
             {
-                Set(owner, source, disposable);
+                Set(owner, source);
             }
 
             internal abstract Func<Task, object, Task<T>> Execute { get; }
 
             internal SqlDataReader Reader { get => _owner; set => _owner = value; }
 
-            public IDisposable Disposable { get => _disposable; set => _disposable = value; }
-
             public TaskCompletionSource<T> Source { get => _source; set => _source = value; }
-
-            new public void Set(SqlDataReader reader, TaskCompletionSource<T> source, IDisposable disposable)
-            {
-                base.Set(reader, source, disposable);
-            }
 
             private static Task<T> ExecuteAsyncCallCallback(Task task, object state)
             {
-                SqlDataReaderAsyncCallContext<T> context = (SqlDataReaderAsyncCallContext<T>)state;
+                SqlDataReaderBaseAsyncCallContext<T> context = (SqlDataReaderBaseAsyncCallContext<T>)state;
                 return context.Reader.ContinueAsyncCall(task, context);
             }
 
             private static void CompleteAsyncCallCallback(Task<T> task, object state)
             {
-                SqlDataReaderAsyncCallContext<T> context = (SqlDataReaderAsyncCallContext<T>)state;
+                SqlDataReaderBaseAsyncCallContext<T> context = (SqlDataReaderBaseAsyncCallContext<T>)state;
                 context.Reader.CompleteAsyncCall(task, context);
             }
         }
 
-        internal sealed class ReadAsyncCallContext : SqlDataReaderAsyncCallContext<bool>
+        internal abstract class SqlDataReaderAsyncCallContext<T, TDisposable> : SqlDataReaderBaseAsyncCallContext<T>
+            where TDisposable : IDisposable
+        {
+            private TDisposable _disposable;
+
+            public TDisposable Disposable { get => _disposable; set => _disposable = value; }
+
+            public void Set(SqlDataReader owner, TaskCompletionSource<T> source, TDisposable disposable)
+            {
+                base.Set(owner, source);
+                _disposable = disposable;
+            }
+
+            protected override void DisposeCore()
+            {
+                TDisposable copy = _disposable;
+                _disposable = default;
+                copy?.Dispose();
+            }
+        }
+
+        internal sealed class ReadAsyncCallContext : SqlDataReaderAsyncCallContext<bool, CancellationTokenRegistration>
         {
             internal static readonly Func<Task, object, Task<bool>> s_execute = SqlDataReader.ReadAsyncExecute;
 
@@ -5281,7 +5308,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal sealed class IsDBNullAsyncCallContext : SqlDataReaderAsyncCallContext<bool>
+        internal sealed class IsDBNullAsyncCallContext : SqlDataReaderAsyncCallContext<bool, CancellationTokenRegistration>
         {
             internal static readonly Func<Task, object, Task<bool>> s_execute = SqlDataReader.IsDBNullAsyncExecute;
 
@@ -5297,19 +5324,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private sealed class HasNextResultAsyncCallContext : SqlDataReaderAsyncCallContext<bool>
+        private sealed class HasNextResultAsyncCallContext : SqlDataReaderAsyncCallContext<bool, CancellationTokenRegistration>
         {
             private static readonly Func<Task, object, Task<bool>> s_execute = SqlDataReader.NextResultAsyncExecute;
 
-            public HasNextResultAsyncCallContext(SqlDataReader reader, TaskCompletionSource<bool> source, IDisposable disposable)
-                : base(reader, source, disposable)
+            public HasNextResultAsyncCallContext(SqlDataReader reader, TaskCompletionSource<bool> source, CancellationTokenRegistration disposable)
             {
+                Set(reader, source, disposable);
             }
 
             internal override Func<Task, object, Task<bool>> Execute => s_execute;
         }
 
-        private sealed class GetBytesAsyncCallContext : SqlDataReaderAsyncCallContext<int>
+        private sealed class GetBytesAsyncCallContext : SqlDataReaderAsyncCallContext<int, CancellationTokenSource>
         {
             internal enum OperationMode
             {
@@ -5347,7 +5374,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private sealed class GetFieldValueAsyncCallContext<T> : SqlDataReaderAsyncCallContext<T>
+        private sealed class GetFieldValueAsyncCallContext<T> : SqlDataReaderAsyncCallContext<T, CancellationTokenRegistration>
         {
             private static readonly Func<Task, object, Task<T>> s_execute = SqlDataReader.GetFieldValueAsyncExecute<T>;
 
@@ -5355,9 +5382,9 @@ namespace Microsoft.Data.SqlClient
 
             internal GetFieldValueAsyncCallContext() { }
 
-            internal GetFieldValueAsyncCallContext(SqlDataReader reader, TaskCompletionSource<T> source, IDisposable disposable)
-                : base(reader, source, disposable)
+            internal GetFieldValueAsyncCallContext(SqlDataReader reader, TaskCompletionSource<T> source, CancellationTokenRegistration disposable)
             {
+                Set(reader, source, disposable);
             }
 
             protected override void Clear()
@@ -5377,7 +5404,7 @@ namespace Microsoft.Data.SqlClient
         /// <typeparam name="T"></typeparam>
         /// <param name="context"></param>
         /// <returns></returns>
-        private Task<T> InvokeAsyncCall<T>(SqlDataReaderAsyncCallContext<T> context)
+        private Task<T> InvokeAsyncCall<T>(SqlDataReaderBaseAsyncCallContext<T> context)
         {
             TaskCompletionSource<T> source = context.Source;
             try
@@ -5399,7 +5426,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     task.ContinueWith(
-                        continuationAction: SqlDataReaderAsyncCallContext<T>.s_completeCallback,
+                        continuationAction: SqlDataReaderBaseAsyncCallContext<T>.s_completeCallback,
                         state: context,
                         TaskScheduler.Default
                     );
@@ -5424,7 +5451,7 @@ namespace Microsoft.Data.SqlClient
         /// <typeparam name="T"></typeparam>
         /// <param name="context"></param>
         /// <returns></returns>
-        private Task<T> ExecuteAsyncCall<T>(SqlDataReaderAsyncCallContext<T> context)
+        private Task<T> ExecuteAsyncCall<T>(AAsyncBaseCallContext<SqlDataReader, T> context)
         {
             // _networkPacketTaskSource could be null if the connection was closed
             // while an async invocation was outstanding.
@@ -5437,7 +5464,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 return completionSource.Task.ContinueWith(
-                    continuationFunction: SqlDataReaderAsyncCallContext<T>.s_executeCallback,
+                    continuationFunction: SqlDataReaderBaseAsyncCallContext<T>.s_executeCallback,
                     state: context,
                     TaskScheduler.Default
                 ).Unwrap();
@@ -5453,7 +5480,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="task"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        private Task<T> ContinueAsyncCall<T>(Task task, SqlDataReaderAsyncCallContext<T> context)
+        private Task<T> ContinueAsyncCall<T>(Task task, SqlDataReaderBaseAsyncCallContext<T> context)
         {
             // this function must be an instance function called from the static callback because otherwise a compiler error
             // is caused by accessing the _cancelAsyncOnCloseToken field of a MarshalByRefObject derived class
@@ -5513,7 +5540,7 @@ namespace Microsoft.Data.SqlClient
         /// <typeparam name="T"></typeparam>
         /// <param name="task"></param>
         /// <param name="context"></param>
-        private void CompleteAsyncCall<T>(Task<T> task, SqlDataReaderAsyncCallContext<T> context)
+        private void CompleteAsyncCall<T>(Task<T> task, SqlDataReaderBaseAsyncCallContext<T> context)
         {
             TaskCompletionSource<T> source = context.Source;
             context.Dispose();
@@ -5744,7 +5771,7 @@ namespace Microsoft.Data.SqlClient
                 _SqlMetaData col = md[i];
                 SqlDbColumn dbColumn = new SqlDbColumn(md[i]);
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsNewKatmaiDateTimeType)
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     dbColumn.SqlNumericScale = MetaType.MetaNVarChar.Scale;
                 }

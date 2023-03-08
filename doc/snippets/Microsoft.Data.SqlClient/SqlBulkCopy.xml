@@ -8,11 +8,11 @@
 				<format ttype="text/markdown"><![CDATA[
 
 ## Remarks
-Microsoft SQL Server includes a popular command-prompt utility named **bcp** for moving data from one table to another, whether on a single server or between servers. The <see cref="Microsoft.Data.SqlClient.SqlBulkCopy"/> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <see cref="Microsoft.Data.SqlClient.SqlBulkCopy"/> offers a significant performance advantage over them. The <see cref="Microsoft.Data.SqlClient.SqlBulkCopy"/> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <see cref="System.Data.DataTable"/> instance or read with a <see cref="System.Data.IDataReader"/> instance. <see cref="Microsoft.Data.SqlClient.SqlBulkCopy"/> will fail when bulk loading a <see cref="System.Data.DataTable"/> column of type <see cref="System.Data.SqlTypes.SqlDateTime"/> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
+Microsoft SQL Server includes a popular command-prompt utility named **bcp** for moving data from one table to another, whether on a single server or between servers. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <xref:Microsoft.Data.SqlClient.SqlBulkCopy> offers a significant performance advantage over them. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <xref:System.Data.DataTable> instance or read with a <xref:System.Data.IDataReader> instance. <xref:Microsoft.Data.SqlClient.SqlBulkCopy> will fail when bulk loading a <xref:System.Data.DataTable> column of type <xref:System.Data.SqlTypes.SqlDateTime> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
 
 ## Examples
-The following console application demonstrates how to load data using the <xref=Microsoft.Data.SqlClient.SqlBulkCopy> class.
-In this example, a <xref=Microsoft.Data.SqlClient.SqlDataReader> is used to copy data from the **Production.Product** table in the SQL Server **AdventureWorks** database to a similar table in the same database.
+The following console application demonstrates how to load data using the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class.
+In this example, a <xref:Microsoft.Data.SqlClient.SqlDataReader> is used to copy data from the **Production.Product** table in the SQL Server **AdventureWorks** database to a similar table in the same database.
 
 > [!IMPORTANT]
 > This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/sql/connect/ado-net/sql/bulk-copy-example-setup).
@@ -335,8 +335,12 @@ The following example uses the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> 
 				<format type="text/markdown"><![CDATA[
 
 When <xref:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming> is `true`, <xref:Microsoft.Data.SqlClient.SqlBulkCopy> reads from an <xref:System.Data.IDataReader> object using <xref:System.Data.CommandBehavior.SequentialAccess>,
-optimizing memory usage by using the <xref:System.Data.IDataReader> streaming capabilities. When it's set to false, the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class loads all the data returned by the
-<xref:System.Data.IDataReader> object into memory before sending it to SQL Server or SQL Azure.
+optimizing memory usage by using the <xref:System.Data.IDataReader> streaming capabilities. Streaming is only applicable to max data types (i.e.
+VARBINARY(MAX), VARCHAR(MAX), NVARCHAR(MAX), and XML). When <xref:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming> is set to false,
+the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class loads all the data returned by the <xref:System.Data.IDataReader> object into memory before sending it to the server.
+
+> [!NOTE]
+> The main advantage of enabling streaming is reducing memory usage during bulk copy of max data types.
 ]]></format>
 			</remarks>
 		</EnableStreaming>
@@ -504,7 +508,7 @@ and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 ## Remarks
 This value is incremented during the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event and does not imply that this number of rows has been sent to the server or committed.
 
-During the execution of a bulk copy operation, this value can be accessed, but it cannot be changed. Any attempt to change it will throw an <xref:System.InvalidOperationException>.
+This value can be accessed during or after the execution of a bulk copy operation.
 ]]></format>
 			</remarks>
 		</RowsCopied>
