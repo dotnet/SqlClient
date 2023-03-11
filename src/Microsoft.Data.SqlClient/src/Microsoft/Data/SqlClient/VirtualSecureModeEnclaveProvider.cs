@@ -4,6 +4,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.Serialization.Json;
@@ -150,11 +152,10 @@ namespace Microsoft.Data.SqlClient
             SessionId = BitConverter.ToInt64(attestationInfo, offset);
             offset += sizeof(long);
 
-            int secureSessionBufferSize = Convert.ToInt32(secureSessionInfoResponseSize) - sizeof(uint);
-            byte[] secureSessionBuffer = EnclaveHelpers.TakeBytesAndAdvance(attestationInfo, ref offset, secureSessionBufferSize);
-
-            EnclaveDHInfo = new EnclaveDiffieHellmanInfo(secureSessionBuffer);
+            EnclaveDHInfo = new EnclaveDiffieHellmanInfo(attestationInfo, offset);
             offset += Convert.ToInt32(EnclaveDHInfo.Size);
+
+            Debug.Assert(offset == attestationInfo.Length);
         }
     }
 

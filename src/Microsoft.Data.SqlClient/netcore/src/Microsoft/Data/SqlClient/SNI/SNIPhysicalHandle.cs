@@ -87,12 +87,9 @@ namespace Microsoft.Data.SqlClient.SNI
             // trims off most of the bottom of the stack because when running under xunit there's a lot of spam
             string[] parts = Environment.StackTrace.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
             List<string> take = new List<string>(7);
-            for (int index = 0; take.Count < 7 && index < parts.Length; index++)
+            for (int index = 3; take.Count < 7 && index < parts.Length; index++)
             {
-                if (index > 2)
-                {
-                    take.Add(parts[index]);
-                }
+                take.Add(parts[index]);
             }
 
             return string.Join(Environment.NewLine, take.ToArray());

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Runtime.Caching;
 using System.Security.Claims;
@@ -203,9 +204,10 @@ namespace Microsoft.Data.SqlClient
                     SessionId = BitConverter.ToInt64(attestationInfo, offset);
                     offset += sizeof(long);
 
-                    int secureSessionBufferSize = Convert.ToInt32(secureSessionInfoResponseSize) - sizeof(uint);
-                    byte[] secureSessionBuffer = EnclaveHelpers.TakeBytesAndAdvance(attestationInfo, ref offset, secureSessionBufferSize);
-                    EnclaveDHInfo = new EnclaveDiffieHellmanInfo(secureSessionBuffer);
+                    EnclaveDHInfo = new EnclaveDiffieHellmanInfo(attestationInfo, offset);
+                    offset += EnclaveDHInfo.Size;
+
+                    Debug.Assert(offset == attestationInfo.Length);
                 }
                 catch (Exception exception)
                 {
