@@ -2465,8 +2465,8 @@ namespace Microsoft.Data.SqlClient
                                 authParamsBuilder.WithUserId(ConnectionOptions.UserID);
                                 SqlAuthenticationParameters parameters = authParamsBuilder;
                                 CancellationTokenSource cts = new();
-                                // Use Connection timeout value to cancel token acquire request after certain period of time.
-                                cts.CancelAfter(_timeout.MillisecondsRemaining);
+                                // Use Connection timeout value to cancel token acquire request after certain period of time.(int)
+                                cts.CancelAfter((int)_timeout.MillisecondsRemaining);
                                 _fedAuthToken = Task.Run(async () => await _accessTokenCallback(new AadTokenRequestContext(parameters.Resource), cts.Token)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
