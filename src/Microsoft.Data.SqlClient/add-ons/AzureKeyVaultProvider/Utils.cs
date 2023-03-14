@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     {
         internal static void ValidateNotNull(object parameter, string name)
         {
-            if (null == parameter)
+            if (parameter == null)
             {
                 throw ADP.NullArgument(name);
             }
@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             {
                 for (int index = 0; index < parameters.Length; index++)
                 {
-                    if (string.IsNullOrEmpty(parameters[index]))
+                    if (string.IsNullOrWhiteSpace(parameters[index]))
                     {
                         throw ADP.NullOrWhitespaceForEach(name);
                     }
