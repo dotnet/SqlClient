@@ -6080,7 +6080,11 @@ namespace Microsoft.Data.SqlClient
                         }
                         catch (Exception e)
                         {
-                            _physicalStateObj.HasPendingData = false;
+                            if (stateObj is not null)
+                            {
+                                DrainData(stateObj);
+                                stateObj.HasPendingData = false;
+                            }
                             throw SQL.ColumnDecryptionFailed(columnName, null, e);
                         }
                     }
