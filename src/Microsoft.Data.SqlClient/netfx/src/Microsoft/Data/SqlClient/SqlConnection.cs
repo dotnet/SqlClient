@@ -1730,6 +1730,7 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID {0} - give up reconnection", _originalConnectionId);
                             if (e.Class >= TdsEnums.FATAL_ERROR_CLASS)
                             {
+                                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID {0} - Fatal Error occured. Error Class: {1}", _originalConnectionId, e.Class);
                                 InnerConnection.CloseConnection(InnerConnection.Owner, ConnectionFactory);
                             }
                             throw SQL.CR_AllAttemptsFailed(e, _originalConnectionId);
