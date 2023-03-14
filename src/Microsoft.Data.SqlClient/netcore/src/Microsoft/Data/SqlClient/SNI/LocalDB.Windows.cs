@@ -3,6 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32;
@@ -30,10 +33,10 @@ namespace Microsoft.Data.SqlClient.SNI
         // HRESULT LocalDBStartInstance( [Input ] PCWSTR pInstanceName, [Input ] DWORD dwFlags,[Output] LPWSTR wszSqlConnection,[Input/Output] LPDWORD lpcchSqlConnection);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         internal delegate int LocalDBStartInstance(
-                [In] [MarshalAs(UnmanagedType.LPWStr)] string localDBInstanceName,
-                [In]  int flags,
-                [Out] [MarshalAs(UnmanagedType.LPWStr)] StringBuilder sqlConnectionDataSource,
-                [In, Out]ref int bufferLength);
+                [In][MarshalAs(UnmanagedType.LPWStr)] string localDBInstanceName,
+                [In] int flags,
+                [Out][MarshalAs(UnmanagedType.LPWStr)] StringBuilder sqlConnectionDataSource,
+                [In, Out] ref int bufferLength);
 
         private LocalDBStartInstance localDBStartInstanceFunc = null;
 
@@ -41,8 +44,135 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private LocalDB() { }
 
-        internal static string GetLocalDBConnectionString(string localDbInstance) =>
-            Instance.LoadUserInstanceDll() ? Instance.GetConnectionString(localDbInstance) : null;
+        /// <summary>
+        /// 
+        /// </summary>
+        public static Lazy<string> s_sqlLocalDBExe = new Lazy<string>(() => GetPathToSqlLocalDB());
+
+        private static string GetPathToSqlLocalDB()
+        {
+            RegistryKey mssqlRegKey = null;
+
+            try
+            {
+                mssqlRegKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Microsoft SQL Server");
+                if (mssqlRegKey != null)
+                {
+                    foreach (var item in mssqlRegKey.GetSubKeyNames().Where(x => int.TryParse(x, out var _)).OrderByDescending(_ => _))
+                    {
+                        using (var sk = mssqlRegKey.OpenSubKey($@"{item}\Tools\\ClientSetup", writable: false))
+                        {
+                            if (sk.GetValue("Path") is string value)
+                            {
+                                var path = Path.Combine(value, "SqlLocalDB.exe");
+                                if (File.Exists(path))
+                                {
+                                    return path;
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+            catch
+            {
+                // Too bad...
+            }
+            finally
+            {
+                mssqlRegKey?.Close();
+            }
+
+            return null;
+        }
+
+        private static bool TryGetLocalDBConnectionStringUsingSqlLocalDBExe(string localDbInstance, out string connString)
+        {
+            connString = null;
+
+            try
+            {
+                // Make sure the instance is running first. If it is, this call won't do any harm, aside from
+                // wasting some time.
+                var psi = new ProcessStartInfo(s_sqlLocalDBExe.Value, $"s \"{localDbInstance}\"")
+                {
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                };
+
+                var proc = Process.Start(psi);
+
+                proc.WaitForExit(milliseconds: 5000);
+
+                psi = new ProcessStartInfo(s_sqlLocalDBExe.Value, $"i \"{localDbInstance}\"")
+                {
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                };
+
+                proc = Process.Start(psi);
+
+                proc.WaitForExit(milliseconds: 5000);
+
+                var alllines = proc.StandardOutput.ReadToEnd();
+
+                SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, $"Called: {s_sqlLocalDBExe.Value} \"{localDbInstance}\"");
+
+                var lines = alllines.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+
+                // TODO: Are named pipes the only option for SqlLocaLDB?
+                // TODO: Probably sensitive to move out of this method to avoid compiling it all the time
+                System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex("(np:.+)\r", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+                // Iterate over all the lines in the stdout looking for something that is a named pipe: that would be
+                // the connection string we are looking for!
+                foreach (var line in lines)
+                {
+                    var foo = regex.Match(line);
+
+                    if (foo.Success)
+                    {
+                        connString = foo.Captures[0].Value;
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
+        internal static string GetLocalDBConnectionString(string localDbInstance)
+        {
+            try
+            {
+                return Instance.LoadUserInstanceDll() ? Instance.GetConnectionString(localDbInstance) : null;
+            }
+            catch
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Falling back to use SqlLocalDB.exe.");
+
+                // The old logic to load the SqlUserInstance.dll did not quite work possibly because
+                // of an archiecture mismatch (e.g. we are running in an ARM64 process and SqlLocalDB.exe
+                // installed on the machine is an AMD64 process).
+                // We try to figure out what we need by asking SqlLocalDB.exe (out of proc).
+
+                if (!TryGetLocalDBConnectionStringUsingSqlLocalDBExe(localDbInstance, out string connString))
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "Unable to to use SqlLocalDB.exe to get the ConnectionString.");
+                    throw;
+                }
+
+                return connString;
+            }
+        }
 
         internal static IntPtr GetProcAddress(string functionName) =>
             Instance.LoadUserInstanceDll() ? Interop.Kernel32.GetProcAddress(LocalDB.Instance._sqlUserInstanceLibraryHandle, functionName) : IntPtr.Zero;
@@ -103,6 +233,9 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         private bool LoadUserInstanceDll()
         {
+            _sqlUserInstanceLibraryHandle = null;
+            throw new Exception();
+#if NONO
             long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
@@ -182,6 +315,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
             }
+#endif
         }
 
         /// <summary>
