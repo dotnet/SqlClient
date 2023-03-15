@@ -692,15 +692,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public async void TestExecuteReaderAsyncWithLargeQuery(string connection)
+        public async void TestExecuteReaderAsyncWithLargeQuery(string connectionString)
         {
-            string tableName = "VeryLong_01234567890123456789012345678901234567890123456789_TestTableName";
+            string randomName = DataTestUtility.GetUniqueName(Guid.NewGuid().ToString().Replace("-", ""), false);
+            if (randomName.Length > 50)
+            {
+                randomName = randomName.Substring(0, 50);
+            }
+            string tableName = $"VeryLong_{randomName}_TestTableName";
             int columnsCount = 50;
 
             // Arrange - drops the table with long name and re-creates it with 52 columns (ID, name, ColumnName0..49)
             try
             {
-                DropTableIfExists(connection, tableName);
                 CreateTable(connection, tableName, columnsCount);
                 string name = "nobody";
 
@@ -729,9 +733,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Assert.Fail($"The following exception was thrown: {ex.Message}");
+                throw;
             }
             finally
             {
@@ -2856,36 +2860,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        /// <summary>
-        /// Creates a table with the specified number of bit columns.
-        /// </summary>
-        /// <param name="connString">The connection string to the database</param>
-        /// <param name="tableName">The table name</param>
-        /// <param name="columnsCount">The number of bit columns</param>
-        private void CreateTable(string connString, string tableName, int columnsCount)
-        {
-            using (var sqlConnection = new SqlConnection(connString))
-            {
-                sqlConnection.Open();
-
-                SqlCommand cmd = new SqlCommand(GenerateCreateQuery(tableName, columnsCount), sqlConnection);
-                cmd.ExecuteNonQuery();
-            }
-        }
-
+        private static void CreateTable(string connString, string tableName, int columnsCount)
+            => DataTestUtility.RunNonQuery(connString, GenerateCreateQuery(tableName, columnsCount));
         /// <summary>
         /// Drops the table if the specified table exists
         /// </summary>
         /// <param name="connString">The connection string to the database</param>
         /// <param name="tableName">The name of the table to be dropped</param>
-        private void DropTableIfExists(string connString, string tableName)
+        private static void DropTableIfExists(string connString, string tableName)
         {
-            using (var sqlConnection = new SqlConnection(connString))
-            {
-                sqlConnection.Open();
-                SqlCommand cmd = new SqlCommand($"DROP TABLE IF EXISTS {tableName};", sqlConnection);
-                cmd.ExecuteNonQuery();
-            }
+            using var sqlConnection = new SqlConnection(connString);
+            sqlConnection.Open();
+            DataTestUtility.DropTable(sqlConnection, tableName);
         }
 
         /// <summary>
@@ -2894,7 +2880,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="tableName">The name of the table</param>
         /// <param name="columnsCount">The number of columns for the table</param>
         /// <returns></returns>
-        private string GenerateCreateQuery(string tableName, int columnsCount)
+        private static string GenerateCreateQuery(string tableName, int columnsCount)
         {
             StringBuilder builder = new StringBuilder();
             builder.Append(string.Format("CREATE TABLE [dbo].[{0}]", tableName));
@@ -2919,7 +2905,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="repeat">The number of times the select query is repeated</param>
         /// <param name="where">A where clause for additional filters</param>
         /// <returns></returns>
-        private string GenerateSelectQuery(string tableName, int columnsCount, int repeat = 10, string where = "")
+        private static string GenerateSelectQuery(string tableName, int columnsCount, int repeat = 10, string where = "")
         {
             StringBuilder builder = new StringBuilder();
             builder.AppendLine($"SELECT TOP 100");
