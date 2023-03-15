@@ -4,7 +4,6 @@
 
 using System;
 using System.Configuration;
-using System.Reflection;
 
 namespace Microsoft.Data.SqlClient
 {
