@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient
             catch (Exception e)
             {
                 // Don't throw an exception for an invalid config file
-                SqlClientEventSource.Log.TryTraceEvent("<sc.LocalAppContextSwitches..cctor|INFO>: {0}", e);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.ctor|INFO>: {1}", nameof(LocalAppContextSwitches), e);
             }
         }
 #endif
