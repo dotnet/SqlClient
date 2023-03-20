@@ -692,7 +692,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public async void TestExecuteReaderAsyncWithLargeQuery(string connection)
+        public async void TestExecuteReaderAsyncWithLargeQuery(string connectionString)
         {
             string randomName = DataTestUtility.GetUniqueName(Guid.NewGuid().ToString().Replace("-", ""), false);
             if (randomName.Length > 50)
@@ -705,15 +705,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Arrange - drops the table with long name and re-creates it with 52 columns (ID, name, ColumnName0..49)
             try
             {
-                CreateTable(connection, tableName, columnsCount);
+                CreateTable(connectionString, tableName, columnsCount);
                 string name = "nobody";
 
-                using (SqlConnection sqlConnection = new SqlConnection(connection))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    await sqlConnection.OpenAsync();
+                    await connection.OpenAsync();
                     // This creates a "select top 100" query that has over 40k characters
                     using (SqlCommand sqlCommand = new SqlCommand(GenerateSelectQuery(tableName, columnsCount, 10, "WHERE Name = @FirstName AND ID = @CustomerId"),
-                        sqlConnection,
+                        connection,
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                     {
@@ -739,7 +739,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             finally
             {
-                DropTableIfExists(connection, tableName);
+                DropTableIfExists(connectionString, tableName);
             }
         }
 
