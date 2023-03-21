@@ -10017,10 +10017,10 @@ namespace Microsoft.Data.SqlClient
 
                             // Options
                             WriteShort((short)rpcext.options, stateObj);
-                        }
 
-                        byte[] enclavePackage = cmd.enclavePackage != null ? cmd.enclavePackage.EnclavePackageBytes : null;
-                        WriteEnclaveInfo(stateObj, enclavePackage);
+                            byte[] enclavePackage = cmd.enclavePackage != null ? cmd.enclavePackage.EnclavePackageBytes : null;
+                            WriteEnclaveInfo(stateObj, enclavePackage);
+                        }
 
                         // Stream out parameters
                         int parametersLength = rpcext.userParamCount + rpcext.systemParamCount;
