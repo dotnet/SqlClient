@@ -7,6 +7,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 
@@ -36,6 +37,9 @@ namespace Microsoft.Data.ProviderBase
         private const string SqlCommandKey = "SQLCommand";
         private const string PrepareCollectionKey = "PrepareCollection";
 
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode("Metadata loaded from XML stream may require types which was trimmed out")]
+#endif
         public DbMetaDataFactory(Stream xmlStream, string serverVersion, string normalizedServerVersion)
         {
             ADP.CheckArgumentNull(xmlStream, nameof(xmlStream));
@@ -495,6 +499,9 @@ namespace Microsoft.Data.ProviderBase
             return result;
         }
 
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode("LoadDataSetFromXml uses System.Data.DataSet.ReadXml(Stream)")]
+#endif
         private void LoadDataSetFromXml(Stream XmlStream)
         {
             _metaDataCollectionsDataSet = new DataSet

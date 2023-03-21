@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -21,6 +22,9 @@ namespace Microsoft.Data.SqlClient
         /// and its related assemblies in default assembly load context if they aren't loaded yet.
         /// </summary>
         /// <returns>Resolved type if it could resolve the type; otherwise, the `SqlConfigurableRetryFactory` type.</returns>
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode("The type might be removed")]
+#endif
         private static Type LoadType(string fullyQualifiedName)
         {
             string methodName = nameof(LoadType);
@@ -58,6 +62,9 @@ namespace Microsoft.Data.SqlClient
             return File.Exists(fullPath) ? fullPath : null;
         }
 
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode("Calls System.Runtime.Loader.AssemblyLoadContext.LoadFromAssemblyPath(String)")]
+#endif
         private static Assembly AssemblyResolver(AssemblyName arg)
         {
             string methodName = nameof(AssemblyResolver);
@@ -69,6 +76,10 @@ namespace Microsoft.Data.SqlClient
             return fullPath == null ? null : AssemblyLoadContext.Default.LoadFromAssemblyPath(fullPath);
         }
 
+
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode("Calls System.Reflection.Assembly.ExportedTypes")]
+#endif
         private static Type TypeResolver(Assembly arg1, string arg2, bool arg3)
         {
             IEnumerable<Type> types = arg1?.ExportedTypes;
@@ -97,6 +108,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Load assemblies on request.
         /// </summary>
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode("Calls System.Runtime.Loader.AssemblyLoadContext.LoadFromAssemblyPath(String)")]
+#endif
         private static Assembly Default_Resolving(AssemblyLoadContext arg1, AssemblyName arg2)
         {
             string methodName = nameof(Default_Resolving);
@@ -107,6 +121,6 @@ namespace Microsoft.Data.SqlClient
 
             return target == null ? null : arg1.LoadFromAssemblyPath(target);
         }
-        #endregion
+#endregion
     }
 }

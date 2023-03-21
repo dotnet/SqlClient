@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 using System.Text;
 using System.Threading;
@@ -73,6 +74,8 @@ namespace Microsoft.Data.SqlClient
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
     internal partial class SqlClientEventSource : SqlClientEventSourceBase
     {
+        private const string EventSourceSuppressMessage = "Parameters to this method are primitive and are trimmer safe";
+
         // Defines the singleton instance for the Resources ETW provider
         internal static readonly SqlClientEventSource Log = new();
 
@@ -1007,6 +1010,8 @@ namespace Microsoft.Data.SqlClient
         // Do not change the first 4 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, 
         // unless you have checked with them and they are able to change their design. Additional items could be added at the end.
         [Event(BeginExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
+        [SuppressMessage("ReflectionAnalysis", "IL2026:UnrecognizedReflectionPattern",
+                   Justification = EventSourceSuppressMessage)]
         internal void BeginExecute(int objectId, string dataSource, string database, string commandText, string message)
         {
             WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText, message);
@@ -1015,6 +1020,8 @@ namespace Microsoft.Data.SqlClient
         // Do not change the first 3 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, 
         // unless you have checked with them and they are able to change their design. Additional items could be added at the end.
         [Event(EndExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
+        [SuppressMessage("ReflectionAnalysis", "IL2026:UnrecognizedReflectionPattern",
+                   Justification = EventSourceSuppressMessage)]
         internal void EndExecute(int objectId, int compositestate, int sqlExceptionNumber, string message)
         {
             WriteEvent(EndExecuteEventId, objectId, compositestate, sqlExceptionNumber, message);

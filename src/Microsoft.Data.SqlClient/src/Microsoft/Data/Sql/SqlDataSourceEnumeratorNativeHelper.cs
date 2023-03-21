@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Text;
@@ -106,6 +107,10 @@ namespace Microsoft.Data.Sql
             return ParseServerEnumString(strbldr.ToString());
         }
 
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
+            Justification = "Filter expression uses only primitive types and trimmer safe")]
+#endif
         private static DataTable ParseServerEnumString(string serverInstances)
         {
             DataTable dataTable = PrepareDataTable();

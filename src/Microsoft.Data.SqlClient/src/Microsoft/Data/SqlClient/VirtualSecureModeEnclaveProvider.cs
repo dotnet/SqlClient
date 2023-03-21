@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.Serialization.Json;
@@ -57,6 +58,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Makes a web request to the provided url and returns the response as a byte[]
+        [SuppressMessage("ReflectionAnalysis", "IL2026:UnrecognizedReflectionPattern",
+                   Justification = "DataContractJsonSerializer used here deserialize only byte[] which is already kept.")]
         protected override byte[] MakeRequest(string url)
         {
             Exception exception = null;

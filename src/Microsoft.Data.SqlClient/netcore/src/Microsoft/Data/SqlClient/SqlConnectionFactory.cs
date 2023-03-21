@@ -5,6 +5,7 @@
 using System;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
@@ -296,6 +297,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if NET6_0_OR_GREATER
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(GroupByBehavior))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(IdentifierCase))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SupportedJoinOperators))]
+        [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
+            Justification = "All non-primitive types which are contained in the XML stream marked as dynamic dependencies.")]
+#endif
         protected override DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, out bool cacheMetaDataFactory)
         {
             Debug.Assert(internalConnection != null, "internalConnection may not be null.");

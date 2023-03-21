@@ -11,6 +11,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -543,6 +544,9 @@ namespace Microsoft.Data.SqlClient
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SqlRetryLogicBaseProvider RetryLogicProvider
         {
+#if NET6_0_OR_GREATER
+            [RequiresUnreferencedCode("RetryLogicProvider can be read from app.config which is unsafe for trimming")]
+#endif
             get
             {
                 if (_retryLogicProvider == null)
