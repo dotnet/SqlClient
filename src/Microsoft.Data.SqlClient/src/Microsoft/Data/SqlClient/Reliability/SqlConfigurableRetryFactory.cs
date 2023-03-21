@@ -1,12 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
-
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-
+﻿
 namespace Microsoft.Data.SqlClient
 {
 
@@ -115,10 +107,24 @@ namespace Microsoft.Data.SqlClient
             {
                 foreach (SqlError item in ex.Errors)
                 {
-                    bool retriable;
+                    bool retriable = false;
                     lock (s_syncObject)
                     {
-                        retriable = retriableConditions.Contains(item.Number);
+                        if (retriableConditions is ICollection<int> collection)
+                        {
+                            retriable = collection.Contains(item.Number);
+                        }
+                        else
+                        {
+                            foreach (int candidate in retriableConditions)
+                            {
+                                if (candidate == item.Number)
+                                {
+                                    retriable = true;
+                                    break;
+                                }
+                            }
+                        }
                     }
                     if (retriable)
                     {
