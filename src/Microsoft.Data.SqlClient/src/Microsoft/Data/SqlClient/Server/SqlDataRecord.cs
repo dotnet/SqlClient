@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Data.SqlTypes;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
@@ -51,6 +52,9 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFieldType/*' />
+#if NET6_0_OR_GREATER
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
         public virtual Type GetFieldType(int ordinal) => GetFieldTypeFrameworkSpecific(ordinal);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValue/*' />

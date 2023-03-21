@@ -11,6 +11,7 @@ using System.Data.OleDb;
 #endif
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Xml;
@@ -21,6 +22,9 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class MetaType
     {
+#if NET6_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
         internal readonly Type ClassType;   // com+ type
         internal readonly Type SqlType;
 
@@ -55,7 +59,11 @@ namespace Microsoft.Data.SqlClient
         internal readonly bool Is90Supported;
         internal readonly bool Is100Supported;
 
-        public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName, Type classType, Type sqlType, SqlDbType sqldbType, DbType dbType, byte propBytes)
+        public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+            Type classType, Type sqlType, SqlDbType sqldbType, DbType dbType, byte propBytes)
         {
             Precision = precision;
             Scale = scale;

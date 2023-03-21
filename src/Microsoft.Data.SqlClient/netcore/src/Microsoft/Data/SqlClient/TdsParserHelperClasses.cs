@@ -10,6 +10,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security;
 using System.Security.Authentication;
@@ -564,6 +565,9 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class SqlMetaDataUdt
     {
+#if NET6_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
         internal Type Type;
         internal string DatabaseName;
         internal string SchemaName;
