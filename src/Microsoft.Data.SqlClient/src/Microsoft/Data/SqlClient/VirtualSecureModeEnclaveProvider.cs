@@ -73,8 +73,15 @@ namespace Microsoft.Data.SqlClient
 
                     using (Stream stream = s_client.GetStreamAsync(url).ConfigureAwait(false).GetAwaiter().GetResult())
                     {
-                        var deserializer = new DataContractJsonSerializer(typeof(byte[]));
-                        return (byte[])deserializer.ReadObject(stream);
+                        int result = DecodeUtf8JsonBytes(stream, out byte[] bytes);
+                        if (result == 0)
+                        {
+                            return bytes;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("failed to decode json with result code " + result.ToString());
+                        }
                     }
                 }
                 catch (Exception e)
@@ -86,7 +93,201 @@ namespace Microsoft.Data.SqlClient
             throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateRequestFailedFormat, url, exception.Message), exception);
         }
 
+        private static int DecodeUtf8JsonBytes(Stream input, out byte[] bytes)
+        {
+            bytes = null;
+            int code = 0;
+            Span<byte> digits = stackalloc byte[3];
+            State state = State.Start;
+            int digitCount = 0;
+
+            using (MemoryStream output = new MemoryStream())
+            {
+                int read = input.ReadByte();
+
+                while (state != State.Failed && read != -1)
+                {
+                    byte current = (byte)read;
+
+                    switch (state)
+                    {
+                        case State.Start:
+                            if (current == (byte)'[')
+                            {
+                                state = State.ArrayStart;
+                            }
+                            else
+                            {
+                                code = 1; // invalid data prefix
+                                state = State.Failed;
+                            }
+                            break;
+
+                        case State.ArrayStart:
+                            if (current >= 48 && current <= 57)
+                            {
+                                digits[0] = (byte)(read - 48);
+                                digitCount = 1;
+                                state = State.Digit;
+                            }
+                            else
+                            {
+                                code = 2; // invalid array start suffix
+                                state = State.Failed;
+                            }
+                            break;
+
+                        case State.Digit:
+                            if (current >= 48 && current <= 57) // allow zero
+                            {
+                                switch (digitCount)
+                                {
+                                    case 3:
+                                        code = 3; // too many digits
+                                        state = State.Failed;
+                                        break;
+                                    case 1:
+                                        if (digits[0] == 0)
+                                        {
+                                            code = 4; // leading zero in multi digit
+                                            state = State.Failed;
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            goto default;
+                                        }
+                                    default:
+                                        digits[digitCount] = (byte)(read - 48);
+                                        digitCount += 1;
+                                        break;
+
+                                }
+                            }
+                            else if (current == (byte)',')
+                            {
+                                if (digitCount > 0)
+                                {
+                                    int pushCode = PushDigits(output, digits.Slice(0, digitCount));
+                                    if (pushCode == 0)
+                                    {
+                                        digitCount = 0;
+                                        state = State.Comma;
+                                    }
+                                    else
+                                    {
+                                        code = pushCode;
+                                        state = State.Failed;
+                                    }
+                                }
+                                else
+                                {
+                                    code = 5; // comma suffix comma
+                                    state = State.Failed;
+                                }
+                            }
+                            else if (current == (byte)']')
+                            {
+                                if (digitCount > 0)
+                                {
+                                    int pushCode = PushDigits(output, digits.Slice(0, digitCount));
+                                    if (pushCode == 0)
+                                    {
+                                        digitCount = 0;
+                                    }
+                                    else
+                                    {
+                                        code = pushCode;
+                                        state = State.Failed;
+                                    }
+                                }
+                                state = State.ArrayEnd;
+                            }
+                            else
+                            {
+                                code = 6; // invalid character in digits
+                                state = State.Failed;
+                            }
+                            break;
+
+                        case State.Comma:
+                            if (current >= 48 && current <= 57)
+                            {
+                                digits[0] = (byte)(read - 48);
+                                digitCount = 1;
+                                state = State.Digit;
+                            }
+                            else
+                            {
+                                code = 7; // invalid comma suffix
+                                state = State.Failed;
+                            }
+                            break;
+
+                        case State.ArrayEnd:
+                            code = 8; // invalid array end suffix
+                            state = State.Failed;
+                            break;
+
+                    }
+
+                    read = input.ReadByte();
+                }
+
+                if (state == State.ArrayEnd)
+                {
+                    bytes = output.ToArray();
+                }
+            }
+
+            return code;
+        }
+
+        private static int PushDigits(MemoryStream output, ReadOnlySpan<byte> digits)
+        {
+            int code = 0;
+            int temp = 0;
+            int index = 0;
+            switch (digits.Length)
+            {
+                case 3:
+                    temp += (digits[index]) * 100;
+                    index += 1;
+                    goto case 2;
+                case 2:
+                    temp += (digits[index]) * 10;
+                    index += 1;
+                    goto default;
+                default:
+                    temp += digits[index];
+                    break;
+            }
+            if (temp <= 255)
+            {
+                output.WriteByte((byte)temp);
+            }
+            else
+            {
+                code = 9; // value is too large
+            }
+            return code;
+        }
+
+        private enum State
+        {
+            Start,
+            ArrayStart,
+            Digit,
+            Comma,
+            ArrayEnd,
+            End,
+
+            Failed
+        }
+
         #endregion
+
+
     }
 
     #region Models
