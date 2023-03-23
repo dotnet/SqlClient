@@ -19,6 +19,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string orderIdQuery = "select orderid from orders where orderid < 10250";
 
         [Fact]
+        public void TestConnectionStateWithErrorClass20()
+        {
+            using TestTdsServer server = TestTdsServer.StartTestServer();
+            using SqlConnection conn = new(server.ConnectionString);
+            conn.Open();
+            SqlCommand cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT 1";
+            int result = cmd.ExecuteNonQuery();
+            Assert.Equal(-1, result);
+            Assert.Equal("Open", conn.State.ToString());
+            server.Dispose();
+            try
+            {
+                int result2 = cmd.ExecuteNonQuery();
+            }
+            catch (SqlException ex)
+            {
+                Assert.True(ex.Class >= 20);
+                // Since the server is not accessible driver can close the close the connection
+                // It is user responsibilty to maintain the connection.
+                Assert.Equal("Closed", conn.State.ToString());
+            }
+        }
+
+        [Fact]
         public void ExceptionTests()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
