@@ -1235,7 +1235,7 @@ namespace Microsoft.Data.SqlClient
 
             // for non-pooled connections, enlist in a distributed transaction
             // if present - and user specified to enlist
-            if (enlistOK && ConnectionOptions.Enlist)
+            if (enlistOK && ConnectionOptions.Enlist && RoutingInfo == null)
             {
                 _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
                 Transaction tx = ADP.GetCurrentTransaction();
