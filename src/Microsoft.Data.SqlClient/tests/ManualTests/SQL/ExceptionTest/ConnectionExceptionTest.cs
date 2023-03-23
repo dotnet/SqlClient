@@ -23,12 +23,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using TestTdsServer server = TestTdsServer.StartTestServer();
             using SqlConnection conn = new(server.ConnectionString);
+
             conn.Open();
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT 1";
             int result = cmd.ExecuteNonQuery();
+
             Assert.Equal(-1, result);
-            Assert.Equal("Open", conn.State.ToString());
+            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
+
             server.Dispose();
             try
             {
@@ -36,10 +39,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (SqlException ex)
             {
-                Assert.True(ex.Class >= 20);
+                Assert.Equal(11, ex.Class);
+                Assert.NotNull(ex.InnerException);
+                SqlException innerEx = Assert.IsType<SqlException>(ex.InnerException);
+                Assert.Equal(20, innerEx.Class);
+                Assert.StartsWith("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible.", innerEx.Message);
                 // Since the server is not accessible driver can close the close the connection
                 // It is user responsibilty to maintain the connection.
-                Assert.Equal("Closed", conn.State.ToString());
+                Assert.Equal(System.Data.ConnectionState.Closed, conn.State);
             }
         }
 

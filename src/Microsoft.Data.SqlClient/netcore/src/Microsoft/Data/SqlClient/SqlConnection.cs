@@ -1417,6 +1417,7 @@ namespace Microsoft.Data.SqlClient
                             if (e.Class >= TdsEnums.FATAL_ERROR_CLASS)
                             {
                                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID {0} - Fatal Error occured. Error Class: {1}", _originalConnectionId, e.Class);
+                                // Errors 20-25, usuallyterminate the database connection
                                 InnerConnection.CloseConnection(InnerConnection.Owner, ConnectionFactory);
                             }
                             throw SQL.CR_AllAttemptsFailed(e, _originalConnectionId);
