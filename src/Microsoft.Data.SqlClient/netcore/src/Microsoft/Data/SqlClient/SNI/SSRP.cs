@@ -197,7 +197,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     case SqlConnectionIPAddressPreference.IPv4First:
                         {
-                            SplitIPv4AndIPv6(ipv4Addresses, out ipv4Addresses, out ipv6Addresses);
+                            SplitIPv4AndIPv6(ipAddresses, out ipv4Addresses, out ipv6Addresses);
 
                             SsrpResult response4 = SendUDPRequest(ipv4Addresses, port, requestPacket, allIPsInParallel);
                             if (response4 != null && response4.ResponsePacket != null)
@@ -225,7 +225,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         }
                     case SqlConnectionIPAddressPreference.IPv6First:
                         {
-                            SplitIPv4AndIPv6(ipv4Addresses, out ipv4Addresses, out ipv6Addresses);
+                            SplitIPv4AndIPv6(ipAddresses, out ipv4Addresses, out ipv6Addresses);
 
                             SsrpResult response6 = SendUDPRequest(ipv6Addresses, port, requestPacket, allIPsInParallel);
                             if (response6 != null && response6.ResponsePacket != null)

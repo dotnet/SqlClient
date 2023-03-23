@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.Serialization.Json;
@@ -299,8 +298,6 @@ namespace Microsoft.Data.SqlClient
             ReportVersion = BitConverter.ToUInt32(payload, offset);
             offset += sizeof(uint);
 
-            //EnclaveData = payload.Skip(offset).Take(EnclaveDataLength).ToArray();
-            //offset += EnclaveDataLength;
             EnclaveData = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, EnclaveDataLength);
 
             Identity = new EnclaveIdentity(EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, EnclaveIdentity.SizeInPayload));
@@ -438,8 +435,6 @@ namespace Microsoft.Data.SqlClient
             Svn = BitConverter.ToUInt32(payload, offset);
             offset += sizeof(uint);
 
-            // strLen is not used, should we be reading strLen chars from the payload here?
-            int strLen = Convert.ToInt32(Header.ModuleSize) - offset;
             ModuleName = BitConverter.ToString(payload, offset, 1);
             offset += sizeof(char) * 1;
         }

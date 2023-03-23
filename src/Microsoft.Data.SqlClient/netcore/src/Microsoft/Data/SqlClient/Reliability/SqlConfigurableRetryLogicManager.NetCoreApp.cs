@@ -72,17 +72,26 @@ namespace Microsoft.Data.SqlClient
         private static Type TypeResolver(Assembly arg1, string arg2, bool arg3)
         {
             IEnumerable<Type> types = arg1?.ExportedTypes;
+            Type result = null;
             if (types != null)
             {
                 foreach (Type type in types)
                 {
                     if (type.FullName == arg2)
                     {
-                        return type;
+                        if (result != null)
+                        {
+                            throw new InvalidOperationException("Sequence contains more than one matching element");
+                        }
+                        result = type;
                     }
                 }
             }
-            throw new InvalidOperationException("Sequence contains no matching element");
+            if (result == null)
+            {
+                throw new InvalidOperationException("Sequence contains no matching element");
+            }
+            return result;
         }
 
         /// <summary>

@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient
                     return set;
                 }
             }
-            return null;
+            return new HashSet<int>();
         }
     }
 }
