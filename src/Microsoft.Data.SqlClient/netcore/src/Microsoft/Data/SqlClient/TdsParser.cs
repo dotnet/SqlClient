@@ -6024,6 +6024,13 @@ namespace Microsoft.Data.SqlClient
                         }
                         catch (Exception e)
                         {
+                            if (stateObj is not null)
+                            {
+                                // call to decrypt column keys has failed. The data wont be decrypted.
+                                // Not setting the value to false, forces the driver to look for column value.
+                                // Packet received from Key Vault will throws invalid token header.
+                                stateObj.HasPendingData = false;
+                            }
                             throw SQL.ColumnDecryptionFailed(columnName, null, e);
                         }
                     }
