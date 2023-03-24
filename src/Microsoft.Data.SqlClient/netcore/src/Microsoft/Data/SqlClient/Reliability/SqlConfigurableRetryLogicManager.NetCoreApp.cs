@@ -3,8 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 
@@ -69,7 +69,30 @@ namespace Microsoft.Data.SqlClient
             return fullPath == null ? null : AssemblyLoadContext.Default.LoadFromAssemblyPath(fullPath);
         }
 
-        private static Type TypeResolver(Assembly arg1, string arg2, bool arg3) => arg1?.ExportedTypes.Single(t => t.FullName == arg2);
+        private static Type TypeResolver(Assembly arg1, string arg2, bool arg3)
+        {
+            IEnumerable<Type> types = arg1?.ExportedTypes;
+            Type result = null;
+            if (types != null)
+            {
+                foreach (Type type in types)
+                {
+                    if (type.FullName == arg2)
+                    {
+                        if (result != null)
+                        {
+                            throw new InvalidOperationException("Sequence contains more than one matching element");
+                        }
+                        result = type;
+                    }
+                }
+            }
+            if (result == null)
+            {
+                throw new InvalidOperationException("Sequence contains no matching element");
+            }
+            return result;
+        }
 
         /// <summary>
         /// Load assemblies on request.

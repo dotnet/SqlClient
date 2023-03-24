@@ -3,9 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Linq;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -83,12 +83,16 @@ namespace Microsoft.Data.SqlClient.SNI
 #if DEBUG
         private string GetStackParts()
         {
-            return string.Join(Environment.NewLine,
-                Environment.StackTrace
-                .Split(new string[] { Environment.NewLine }, StringSplitOptions.None)
-                .Skip(3) // trims off the common parts at the top of the stack so you can see what the actual caller was
-                .Take(7) // trims off most of the bottom of the stack because when running under xunit there's a lot of spam
-            );
+            // trims off the common parts at the top of the stack so you can see what the actual caller was
+            // trims off most of the bottom of the stack because when running under xunit there's a lot of spam
+            string[] parts = Environment.StackTrace.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+            List<string> take = new List<string>(7);
+            for (int index = 3; take.Count < 7 && index < parts.Length; index++)
+            {
+                take.Add(parts[index]);
+            }
+
+            return string.Join(Environment.NewLine, take.ToArray());
         }
 #endif
     }

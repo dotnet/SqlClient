@@ -6,7 +6,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Security.Cryptography;
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
@@ -15,7 +14,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     {
         internal static void ValidateNotNull(object parameter, string name)
         {
-            if (null == parameter)
+            if (parameter == null)
             {
                 throw ADP.NullArgument(name);
             }
@@ -31,9 +30,15 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         internal static void ValidateNotNullOrWhitespaceForEach(string[] parameters, string name)
         {
-            if (parameters.Any(s => string.IsNullOrWhiteSpace(s)))
+            if (parameters != null && parameters.Length > 0)
             {
-                throw ADP.NullOrWhitespaceForEach(name);
+                for (int index = 0; index < parameters.Length; index++)
+                {
+                    if (string.IsNullOrWhiteSpace(parameters[index]))
+                    {
+                        throw ADP.NullOrWhitespaceForEach(name);
+                    }
+                }
             }
         }
 
