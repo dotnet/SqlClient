@@ -10,7 +10,7 @@ This update brings the below changes over the previous release:
 
 ### Fixed
 
-- Fixed the incorrect exception being thrown when a symmetric key fails to decrypt a column using Always Encrypted. [#1968](https://github.com/dotnet/SqlClient/pull/1968)
+- Fixed an incorrect exception when a symmetric key fails to decrypt a column using Always Encrypted. [#1968](https://github.com/dotnet/SqlClient/pull/1968)
 - Fixed `TransactionScope` connection issue when `Enlist` is `enabled`, `Pooling` is `disabled`, and `Network Connection Type` is set to `Redirect`. [#1967](https://github.com/dotnet/SqlClient/pull/1967)
 - Fixed throttling of token requests by calling `AcquireTokenSilent`. [#1966](https://github.com/dotnet/SqlClient/pull/1966)
 - Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`. [#1965](https://github.com/dotnet/SqlClient/pull/1965)
