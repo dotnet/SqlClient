@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable release 5.1.1] - 2023-03-28
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed the incorrect exception being thrown when a symmetric key fails to decrypt a column using Always Encrypted. [#1968](https://github.com/dotnet/SqlClient/pull/1968)
+- Fixed `TransactionScope` connection issue when `Enlist` is `enabled`, `Pooling` is `disabled`, and `Network Connection Type` is set to `Redirect`. [#1967](https://github.com/dotnet/SqlClient/pull/1967)
+- Fixed throttling of token requests by calling `AcquireTokenSilent`. [#1966](https://github.com/dotnet/SqlClient/pull/1966)
+- Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`. [#1965](https://github.com/dotnet/SqlClient/pull/1965)
+- Fixed `NullReferenceException` in `GetBytesAsync`. [#1964](https://github.com/dotnet/SqlClient/pull/1964)
+
 ## [Stable release 5.1.0] - 2023-01-19
 
 This update brings the below changes over the previous release:
