@@ -5,8 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -116,14 +114,28 @@ namespace Microsoft.Data.SqlClient
             {
                 foreach (SqlError item in ex.Errors)
                 {
-                    bool retriable;
+                    bool retriable = false;
                     lock (s_syncObject)
                     {
-                        retriable = retriableConditions.Contains(item.Number);
+                        if (retriableConditions is ICollection<int> collection)
+                        {
+                            retriable = collection.Contains(item.Number);
+                        }
+                        else
+                        {
+                            foreach (int candidate in retriableConditions)
+                            {
+                                if (candidate == item.Number)
+                                {
+                                    retriable = true;
+                                    break;
+                                }
+                            }
+                        }
                     }
                     if (retriable)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|ERR|CATCH> Found a transient error: number = <{2}>, message = <{3}>", nameof(SqlConfigurableRetryFactory), MethodBase.GetCurrentMethod().Name, item.Number, item.Message);
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|ERR|CATCH> Found a transient error: number = <{2}>, message = <{3}>", nameof(SqlConfigurableRetryFactory), nameof(TransientErrorsCondition), item.Number, item.Message);
                         result = true;
                         break;
                     }

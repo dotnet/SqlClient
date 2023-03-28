@@ -2,10 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -23,7 +21,6 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryMSI = "active directory msi";
         private const string ActiveDirectoryDefault = "active directory default";
 
-        private readonly string _typeName;
         private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;
         private readonly ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers;
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
@@ -55,10 +52,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         public SqlAuthenticationProviderManager()
         {
-            _typeName = GetType().Name;
             _providers = new ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider>();
             _authenticationsWithAppSpecifiedProvider = new HashSet<SqlAuthenticationMethod>();
-            _sqlAuthLogger.LogInfo(_typeName, "Ctor", "No SqlAuthProviders configuration section found.");
+            _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), "Ctor", "No SqlAuthProviders configuration section found.");
         }
 
         /// <summary>
@@ -85,9 +81,16 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.UnsupportedAuthenticationByProvider(authenticationMethod.ToString(), provider.GetType().Name);
             }
             var methodName = "SetProvider";
-            if (_authenticationsWithAppSpecifiedProvider.Contains(authenticationMethod))
+            if (_authenticationsWithAppSpecifiedProvider.Count > 0)
             {
-                _sqlAuthLogger.LogError(_typeName, methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(_providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
+                foreach (SqlAuthenticationMethod candidateMethod in _authenticationsWithAppSpecifiedProvider)
+                {
+                    if (candidateMethod == authenticationMethod)
+                    {
+                        _sqlAuthLogger.LogError(nameof(SqlAuthenticationProviderManager), methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(_providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
+                        break;
+                    }
+                }
             }
             _providers.AddOrUpdate(authenticationMethod, provider, (key, oldProvider) =>
             {
@@ -99,7 +102,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     provider.BeforeLoad(authenticationMethod);
                 }
-                _sqlAuthLogger.LogInfo(_typeName, methodName, $"Added auth provider {GetProviderType(provider)}, overriding existed provider {GetProviderType(oldProvider)} for authentication {authenticationMethod}.");
+                _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, $"Added auth provider {GetProviderType(provider)}, overriding existed provider {GetProviderType(oldProvider)} for authentication {authenticationMethod}.");
                 return provider;
             });
             return true;

@@ -11,7 +11,6 @@ using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using System.Security.Permissions;
@@ -3320,7 +3319,11 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Combined list of provider names</returns>
         internal List<string> GetColumnEncryptionCustomKeyStoreProvidersNames()
         {
-            return _customColumnEncryptionKeyStoreProviders.Keys.ToList();
+            if (_customColumnEncryptionKeyStoreProviders.Count > 0)
+            {
+                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
+            }
+            return new List<string>(0);
         }
 
         // If the user part is quoted, remove first and last brackets and then unquote any right square
@@ -4480,7 +4483,8 @@ namespace Microsoft.Data.SqlClient
                     inputParameterEncryptionNeeded = true;
                 }
 
-                _sqlRPCParameterEncryptionReqArray = describeParameterEncryptionRpcOriginalRpcMap.Keys.ToArray();
+                _sqlRPCParameterEncryptionReqArray = new _SqlRPC[describeParameterEncryptionRpcOriginalRpcMap.Count];
+                describeParameterEncryptionRpcOriginalRpcMap.Keys.CopyTo(_sqlRPCParameterEncryptionReqArray, 0);
 
                 Debug.Assert(_sqlRPCParameterEncryptionReqArray.Length > 0, "There should be at-least 1 describe parameter encryption rpc request.");
                 Debug.Assert(_sqlRPCParameterEncryptionReqArray.Length <= _SqlRPCBatchArray.Length,

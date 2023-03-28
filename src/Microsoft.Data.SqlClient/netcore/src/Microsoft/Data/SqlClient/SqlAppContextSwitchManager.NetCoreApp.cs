@@ -4,7 +4,6 @@
 
 using System;
 using System.Configuration;
-using System.Reflection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -20,7 +19,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal static void ApplyContextSwitches(IAppContextSwitchOverridesSection appContextSwitches)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(ApplyContextSwitches);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
             if (appContextSwitches != null)
             {
@@ -32,7 +31,7 @@ namespace Microsoft.Data.SqlClient
 
         private static bool ApplySwitchValues(string[] switches)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(ApplySwitchValues);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             if (switches == null || switches.Length == 0 || switches.Length % 2 == 1)

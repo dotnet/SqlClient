@@ -447,7 +447,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         catch (Exception e)
                         {
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
-                            SqlClientEventSource.Log.TryAdvancedTraceEvent($"{nameof(SNITCPHandle)}.{System.Reflection.MethodBase.GetCurrentMethod().Name}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
+                            SqlClientEventSource.Log.TryAdvancedTraceEvent($"{nameof(SNITCPHandle)}.{nameof(Connect)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
                         }
                     }
 

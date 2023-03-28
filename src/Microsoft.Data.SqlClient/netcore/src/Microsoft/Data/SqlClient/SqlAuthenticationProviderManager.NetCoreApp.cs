@@ -43,25 +43,24 @@ namespace Microsoft.Data.SqlClient
         public SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection configSection = null)
         {
             var methodName = "Ctor";
-            _typeName = GetType().Name;
             _providers = new ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider>();
             var authenticationsWithAppSpecifiedProvider = new HashSet<SqlAuthenticationMethod>();
             _authenticationsWithAppSpecifiedProvider = authenticationsWithAppSpecifiedProvider;
 
             if (configSection == null)
             {
-                _sqlAuthLogger.LogInfo(_typeName, methodName, "Neither SqlClientAuthenticationProviders nor SqlAuthenticationProviders configuration section found.");
+                _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, "Neither SqlClientAuthenticationProviders nor SqlAuthenticationProviders configuration section found.");
                 return;
             }
 
             if (!string.IsNullOrEmpty(configSection.ApplicationClientId))
             {
                 _applicationClientId = configSection.ApplicationClientId;
-                _sqlAuthLogger.LogInfo(_typeName, methodName, "Received user-defined Application Client Id");
+                _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, "Received user-defined Application Client Id");
             }
             else
             {
-                _sqlAuthLogger.LogInfo(_typeName, methodName, "No user-defined Application Client Id found.");
+                _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, "No user-defined Application Client Id found.");
             }
 
             // Create user-defined auth initializer, if any.
@@ -77,11 +76,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.CannotCreateSqlAuthInitializer(configSection.InitializerType, e);
                 }
-                _sqlAuthLogger.LogInfo(_typeName, methodName, "Created user-defined SqlAuthenticationInitializer.");
+                _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, "Created user-defined SqlAuthenticationInitializer.");
             }
             else
             {
-                _sqlAuthLogger.LogInfo(_typeName, methodName, "No user-defined SqlAuthenticationInitializer found.");
+                _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, "No user-defined SqlAuthenticationInitializer found.");
             }
 
             // add user-defined providers, if any.
@@ -107,12 +106,12 @@ namespace Microsoft.Data.SqlClient
 
                     _providers[authentication] = provider;
                     authenticationsWithAppSpecifiedProvider.Add(authentication);
-                    _sqlAuthLogger.LogInfo(_typeName, methodName, string.Format("Added user-defined auth provider: {0} for authentication {1}.", providerSettings?.Type, authentication));
+                    _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, string.Format("Added user-defined auth provider: {0} for authentication {1}.", providerSettings?.Type, authentication));
                 }
             }
             else
             {
-                _sqlAuthLogger.LogInfo(_typeName, methodName, "No user-defined auth providers.");
+                _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, "No user-defined auth providers.");
             }
         }
 
