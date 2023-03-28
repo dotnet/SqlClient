@@ -249,12 +249,16 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 catch (OverflowException)
                                 {
-                                    throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                                    throw new OverflowException(SQLResource.ConversionOverflowMessage + " for " + sqlValue.ToString());
                                 }
                             }
                         }
-                        throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                        throw new OverflowException(SQLResource.ConversionOverflowMessage+ " for " + sqlValue.ToString());
                     }
+
+SqlDecimal sqlValue = new(_value._numericInfo._precision, _value._numericInfo._scale, _value._numericInfo._positive, 
+                                                          _value._numericInfo._data1, _value._numericInfo._data2, 
+                                                          _value._numericInfo._data3, _value._numericInfo._data4);
                     return new decimal(_value._numericInfo._data1, _value._numericInfo._data2, _value._numericInfo._data3, !_value._numericInfo._positive, _value._numericInfo._scale);
                 }
                 if (StorageType.Money == _type)
