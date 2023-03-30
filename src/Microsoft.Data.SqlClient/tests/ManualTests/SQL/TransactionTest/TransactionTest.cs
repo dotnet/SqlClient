@@ -46,8 +46,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ReadNextQueryAfterTxAbortedPoolEnabled(string connString)
             => ReadNextQueryAfterTxAbortedTest(connString);
 
-        // Azure SQL has no DTC support
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(PoolDisabledConnectionStrings))]
         public static void ReadNextQueryAfterTxAbortedPoolDisabled(string connString)
             => ReadNextQueryAfterTxAbortedTest(connString);
