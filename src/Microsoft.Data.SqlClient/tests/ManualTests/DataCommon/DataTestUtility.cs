@@ -60,6 +60,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public static readonly string UserManagedIdentityClientId = null;
+        public static readonly string AliasName = null;
 
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
@@ -117,6 +118,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             KerberosDomainUser = c.KerberosDomainUser;
             ManagedIdentitySupported = c.ManagedIdentitySupported;
             IsManagedInstance = c.IsManagedInstance;
+            AliasName = c.AliasName;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
