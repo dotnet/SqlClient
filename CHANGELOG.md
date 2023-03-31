@@ -82,7 +82,7 @@ This update brings the below changes over the previous release:
 
 - When using `Encrypt=Strict` with TLS v1.3, the TLS handshake occurs twice on initial connection on .NET Framework due to a timeout during the TLS handshake and a retry helper re-establishes the connection; however, on .NET Core, it will throw a `System.ComponentModel.Win32Exception (258): The wait operation timed out.` and is being investigated. If you're using Microsoft.Data.SqlClient with .NET Core on Windows 11, you will need to enable the managed SNI on Windows context switch using following statement `AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);` to use TLS v1.3 or disabling TLS 1.3 from the registry by assigning `0` to the following `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.3\Client\Enabled` registry key and it'll use TLS v1.2 for the connection. This will be fixed in a future release.
 
-## [Stable release 5.0.2] - 2023-03-30
+## [Stable release 5.0.2] - 2023-03-31
 
 ### Fixed
 
