@@ -370,7 +370,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 InitialCatalog = "DoesNotExist0982532435423",
                 Pooling = false,
-                ConnectTimeout=15
+                ConnectTimeout = 15
             };
             using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
@@ -388,43 +388,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(duration.Seconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");                //    sqlConnection.Open();
         }
 
-        private const string ConnectToPath = "SOFTWARE\\Microsoft\\MSSQLServer\\Client\\ConnectTo";
-        private static bool CanCreateAliases()
-        {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
-                !DataTestUtility.IsTCPConnStringSetup())
-            {
-                return false;
-            }
-
-            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
-            {
-                WindowsPrincipal principal = new(identity);
-                if (!principal.IsInRole(WindowsBuiltInRole.Administrator))
-                {
-                    return false;
-                }
-            }
-
-            using RegistryKey key = Registry.LocalMachine.OpenSubKey(ConnectToPath, true);
-            if (key == null)
-            {
-                // Registry not writable
-                return false;
-            }
-
-            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
-            if (!DataTestUtility.ParseDataSource(b.DataSource, out string hostname, out int port, out string instanceName) ||
-                !string.IsNullOrEmpty(instanceName))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
         [PlatformSpecific(TestPlatforms.Windows)]
-        [ConditionalFact(nameof(CanCreateAliases))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ConnectionAliasTest()
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -433,13 +398,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
-            if (!DataTestUtility.ParseDataSource(b.DataSource, out string hostname, out int port, out string instanceName) ||
-                !string.IsNullOrEmpty(instanceName))
-            {
-                // Only works with connection strings that parse successfully and don't include an instance name
-                throw new Exception("Unable to create aliases in this configuration. Parsable data source without instance required.");
-            }
-
             try
             {
                 b.DataSource = DataTestUtility.AliasName;
@@ -448,7 +406,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 sqlConnection.Open();
                 Assert.Equal(ConnectionState.Open, sqlConnection.State);
             }
-            catch(SqlException ex)
+            catch (SqlException ex)
             {
                 Assert.Fail(ex.Message);
             }
