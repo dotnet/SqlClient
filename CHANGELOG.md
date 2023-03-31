@@ -86,6 +86,7 @@ This update brings the below changes over the previous release:
 
 ### Fixed
 
+- Fixed memory leak regression from [#1785](https://github.com/dotnet/SqlClient/pull/1785) using a `DisposableTemporaryOnStack` struct. [#1980](https://github.com/dotnet/SqlClient/pull/1980)
 - Fixed `TransactionScope` connection issue when `Enlist` is `enabled`, `Pooling` is `disabled`, and `Network Connection Type` is set to `Redirect`. [#1978](https://github.com/dotnet/SqlClient/pull/1978)
 - Fixed an incorrect exception when a symmetric key fails to decrypt a column using Always Encrypted. [#1977](https://github.com/dotnet/SqlClient/pull/1977)
 - Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`. [#1976](https://github.com/dotnet/SqlClient/pull/1976)
