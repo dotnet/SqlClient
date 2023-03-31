@@ -302,6 +302,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
         }
 
+        public static bool IsSQLAliasSetup()
+        {
+            return !string.IsNullOrEmpty(AliasName);
+        }
         public static bool IsTCPConnStringSetup()
         {
             return !string.IsNullOrEmpty(TCPConnectionString);

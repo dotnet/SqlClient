@@ -389,20 +389,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [PlatformSpecific(TestPlatforms.Windows)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSQLAliasSetup))]
         public static void ConnectionAliasTest()
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
-                throw new Exception("Alias test only valid on Windows");
-            }
-
-            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+                DataSource = DataTestUtility.AliasName
+            };
+            using SqlConnection sqlConnection = new(builder.ConnectionString);
+            Assert.Equal(DataTestUtility.AliasName, builder.DataSource);
             try
             {
-                b.DataSource = DataTestUtility.AliasName;
-                using SqlConnection sqlConnection = new(b.ConnectionString);
-                Assert.Equal(DataTestUtility.AliasName, b.DataSource);
                 sqlConnection.Open();
                 Assert.Equal(ConnectionState.Open, sqlConnection.State);
             }
