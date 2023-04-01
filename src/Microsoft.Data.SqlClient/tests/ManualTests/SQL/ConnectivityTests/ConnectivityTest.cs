@@ -6,10 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Security.Principal;
 using System.Threading;
-using Microsoft.Win32;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
