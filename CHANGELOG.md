@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable release 5.1.1] - 2023-03-28
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed an incorrect exception when a symmetric key fails to decrypt a column using Always Encrypted. [#1968](https://github.com/dotnet/SqlClient/pull/1968)
+- Fixed `TransactionScope` connection issue when `Enlist` is `enabled`, `Pooling` is `disabled`, and `Network Connection Type` is set to `Redirect`. [#1967](https://github.com/dotnet/SqlClient/pull/1967)
+- Fixed throttling of token requests by calling `AcquireTokenSilent`. [#1966](https://github.com/dotnet/SqlClient/pull/1966)
+- Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`. [#1965](https://github.com/dotnet/SqlClient/pull/1965)
+- Fixed `NullReferenceException` in `GetBytesAsync`. [#1964](https://github.com/dotnet/SqlClient/pull/1964)
+
 ## [Stable release 5.1.0] - 2023-01-19
 
 This update brings the below changes over the previous release:
@@ -69,6 +81,16 @@ This update brings the below changes over the previous release:
 ### Known issues
 
 - When using `Encrypt=Strict` with TLS v1.3, the TLS handshake occurs twice on initial connection on .NET Framework due to a timeout during the TLS handshake and a retry helper re-establishes the connection; however, on .NET Core, it will throw a `System.ComponentModel.Win32Exception (258): The wait operation timed out.` and is being investigated. If you're using Microsoft.Data.SqlClient with .NET Core on Windows 11, you will need to enable the managed SNI on Windows context switch using following statement `AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);` to use TLS v1.3 or disabling TLS 1.3 from the registry by assigning `0` to the following `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.3\Client\Enabled` registry key and it'll use TLS v1.2 for the connection. This will be fixed in a future release.
+
+## [Stable release 5.0.2] - 2023-03-31
+
+### Fixed
+
+- Fixed memory leak regression from [#1785](https://github.com/dotnet/SqlClient/pull/1785) using a `DisposableTemporaryOnStack` struct. [#1980](https://github.com/dotnet/SqlClient/pull/1980)
+- Fixed `TransactionScope` connection issue when `Enlist` is `enabled`, `Pooling` is `disabled`, and `Network Connection Type` is set to `Redirect`. [#1978](https://github.com/dotnet/SqlClient/pull/1978)
+- Fixed an incorrect exception when a symmetric key fails to decrypt a column using Always Encrypted. [#1977](https://github.com/dotnet/SqlClient/pull/1977)
+- Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`. [#1976](https://github.com/dotnet/SqlClient/pull/1976)
+- Fixed deadlock when using SinglePhaseCommit with distributed transactions. [#1975](https://github.com/dotnet/SqlClient/pull/1975)
 
 ## [Stable release 5.0.1] - 2022-10-07
 
