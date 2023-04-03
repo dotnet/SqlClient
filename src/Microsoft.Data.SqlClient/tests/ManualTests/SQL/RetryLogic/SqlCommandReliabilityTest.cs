@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cnn2.Open();
                     cnn3.Open();
 
-                    // kill the active connection to the database after the first faliure.
+                    // kill the active connection to the database after the first failure.
                     provider.Retrying += (s, e) =>
                     {
                         currentRetries = e.RetryCount;
@@ -274,7 +274,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             using (var cmd3 = cnn3.CreateCommand())
                             {
                                 cmd3.CommandText = $"KILL {cnn2.ServerProcessId}";
-                                cmd3.ExecuteNonQueryAsync();
+                                cmd3.ExecuteNonQuery();
                             }
                             cnn2.Close();
                         }
