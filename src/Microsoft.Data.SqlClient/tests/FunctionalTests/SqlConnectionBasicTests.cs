@@ -96,11 +96,12 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public async Task TransientFaultDisabledTestAsync(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(false, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
                 IntegratedSecurity = true,
+                ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
@@ -110,9 +111,12 @@ namespace Microsoft.Data.SqlClient.Tests
                 await connection.OpenAsync();
                 Assert.False(true, "Connection should not have opened.");
             }
-            catch
+            catch (SqlException e)
             {
-                Assert.Equal(ConnectionState.Closed, connection.State);
+                if (e.Class == 20) // FATAL Error, should result in closed connection.
+                {
+                    Assert.Equal(ConnectionState.Closed, connection.State);
+                }
             }
         }
 
@@ -123,11 +127,12 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultDisabledTest(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(false, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
                 IntegratedSecurity = true,
+                ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
@@ -137,9 +142,12 @@ namespace Microsoft.Data.SqlClient.Tests
                 connection.Open();
                 Assert.False(true, "Connection should not have opened.");
             }
-            catch
+            catch (SqlException e)
             {
-                Assert.Equal(ConnectionState.Closed, connection.State);
+                if (e.Class == 20) // FATAL Error, should result in closed connection.
+                {
+                    Assert.Equal(ConnectionState.Closed, connection.State);
+                }
             }
         }
 
