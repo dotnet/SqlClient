@@ -1416,6 +1416,12 @@ namespace Microsoft.Data.SqlClient
                         if (attempt == retryCount - 1)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ReconnectAsync | Info | Original Client Connection Id {0}, give up reconnection", _originalConnectionId);
+                            if (e.Class >= TdsEnums.FATAL_ERROR_CLASS)
+                            {
+                                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID {0} - Fatal Error occured. Error Class: {1}", _originalConnectionId, e.Class);
+                                // Error Class: 20-25, usually terminates the database connection
+                                InnerConnection.CloseConnection(InnerConnection.Owner, ConnectionFactory);
+                            }
                             throw SQL.CR_AllAttemptsFailed(e, _originalConnectionId);
                         }
                         if (timeout > 0 && ADP.TimerRemaining(commandTimeoutExpiration) < ADP.TimerFromSeconds(ConnectRetryInterval))

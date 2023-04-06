@@ -516,11 +516,10 @@
       <Link>Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NotSupported.cs</Link>
     </Compile>
   </ItemGroup>
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' == 'netstandard2.0'">
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.Task.cs" />    
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetStandard.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
   </ItemGroup>
@@ -552,25 +551,21 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs">
       <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs</Link>
     </Compile>
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.ValueTask.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.CrossPlatform.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />
-  </ItemGroup>
-  <!-- netstandard 2.1 and above -->
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
+    <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs">
       <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs</Link>
     </Compile>
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.ValueTask.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />    
-    <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="Resources\StringsHelper.cs">
@@ -642,6 +637,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
@@ -939,9 +935,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Managed.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'">
-    <Reference Include="Microsoft.Win32.Registry" />
-  </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(IsUAPAssembly)' == 'true'">
     <Reference Include="System.Collections.NonGeneric" />
     <Reference Include="System.Memory" />
@@ -962,7 +955,7 @@
     <!-- Enable the project reference for debugging purposes. -->
     <!-- <ProjectReference Include="$(SqlServerSourceCode)\Microsoft.SqlServer.Server.csproj" /> -->
     <PackageReference Include="Microsoft.SqlServer.Server" Version="$(MicrosoftSqlServerServerVersion)" />
-    <PackageReference Condition="$(TargetGroup) == 'netcoreapp' " Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
+    <PackageReference Condition="$(TargetGroup) == 'netstandard'" Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
