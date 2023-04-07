@@ -3906,7 +3906,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="inputParameterEncryptionNeeded"></param>
         /// <param name="task"></param>
         /// <param name="describeParameterEncryptionRpcOriginalRpcMap"></param>
-        /// <param name="isRetry"></param>
+        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
         /// <returns></returns>
         private SqlDataReader TryFetchInputParameterEncryptionInfo(int timeout,
                                                                    bool isAsync,
@@ -4175,7 +4175,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
         /// <param name="describeParameterEncryptionRpcOriginalRpcMap"> Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
-        /// <param name="isRetry">Is this a retry of a filed call.</param>
+        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
         private void ReadDescribeEncryptionParameterResults(SqlDataReader ds, ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool isRetry)
         {
             _SqlRPC rpc = null;
@@ -4581,7 +4581,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     // We only want to retry once, so don't retry if we are already in retry.
                     // If we didn't use the cache, we don't want to retry.
-                    // The async retries are handled separately, handle only sync calls here.
                     if (inRetry || (!usedCache && !ShouldUseEnclaveBasedWorkflow))
                     {
                         throw;

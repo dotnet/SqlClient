@@ -4411,7 +4411,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="inputParameterEncryptionNeeded"></param>
         /// <param name="task"></param>
         /// <param name="describeParameterEncryptionRpcOriginalRpcMap"></param>
-        /// <param name="inRetry"></param>
+        /// <param name="inRetry">Indicates if this is a retry from a failed call.</param>
         /// <returns></returns>
         private SqlDataReader TryFetchInputParameterEncryptionInfo(int timeout,
                                                                    bool async,
@@ -4694,7 +4694,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
         /// <param name="describeParameterEncryptionRpcOriginalRpcMap"> Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
-        /// <param name="inRetry"> Retrying a failed call.</param>
+        /// <param name="inRetry">Indicates if this is a retry from a failed call.</param>
         private void ReadDescribeEncryptionParameterResults(SqlDataReader ds, ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool inRetry)
         {
             _SqlRPC rpc = null;

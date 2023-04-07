@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="attestationParameters">attestation parameters</param>
         /// <param name="customData">A set of extra data needed for attestating the enclave.</param>
         /// <param name="customDataLength">The length of the extra data needed for attestating the enclave.</param>
-        /// <param name="isRetry">Indicates if this is retrying a failed call.</param>
+        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
         internal void CreateEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, EnclaveSessionParameters enclaveSessionParameters,
             byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, byte[] customData, int customDataLength, bool isRetry)
         {

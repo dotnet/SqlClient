@@ -42,7 +42,7 @@ the enclave attestation protocol as well as the logic for creating and caching e
             <param name="counter">A counter that the enclave provider is expected to increment each time SqlClient retrieves the session from the cache. The purpose of this field is to prevent replay attacks.</param>
             <param name="customData">A set of extra data needed for attestating the enclave.</param>
             <param name="customDataLength">The length of the extra data needed for attestating the enclave.</param>
-            <param name="isRetry">Indicates if this a retry from a failed call.</param>
+            <param name="isRetry">Indicates if this is a retry from a failed call.</param>
             <summary>When overridden in a derived class, looks up an existing enclave session information in the enclave session cache. If the enclave provider doesn't implement enclave session caching, this method is expected to return <see langword="null" /> in the <paramref name="sqlEnclaveSession" /> parameter.
             </summary>
             <remarks>To be added.</remarks>
