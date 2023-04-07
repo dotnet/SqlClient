@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient
             lock (enclaveCacheLock)
             {
                 enclaveSession = new SqlEnclaveSession(sharedSecret, sessionId);
-                enclaveMemoryCache.Add(cacheKey, enclaveSession, DateTime.UtcNow.AddHours(enclaveCacheTimeOutInHours));
+                enclaveMemoryCache.Add(cacheKey, enclaveSession, DateTime.UtcNow.AddSeconds(enclaveCacheTimeOutInHours));
                 counter = Interlocked.Increment(ref _counter);
             }
 

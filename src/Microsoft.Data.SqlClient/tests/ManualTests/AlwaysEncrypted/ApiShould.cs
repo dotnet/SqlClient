@@ -2330,6 +2330,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 reader.Close();
             }
 
+            //Thread.Sleep(8100);
+
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            }
+
+            Task readAsyncTask2 = ReadAsync(cmd, values, CommandBehavior.Default);
+            readAsyncTask2.Wait();
+
+            //Thread.Sleep(8100);
+
+            Task readAsyncTask = ReadAsync(cmd, values, CommandBehavior.Default);
+            readAsyncTask.Wait();
+
             // revert the CEK change to the CustomerId column
             cmd.Parameters.Clear();
             cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey1.Name);
