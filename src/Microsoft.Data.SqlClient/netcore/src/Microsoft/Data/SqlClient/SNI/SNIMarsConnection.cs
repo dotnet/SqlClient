@@ -27,13 +27,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <summary>
         /// Connection ID
         /// </summary>
-        public Guid ConnectionId
-        {
-            get
-            {
-                return _connectionId;
-            }
-        }
+        public Guid ConnectionId => _connectionId;
 
         public int ProtocolVersion => _lowerHandle.ProtocolVersion;
 
