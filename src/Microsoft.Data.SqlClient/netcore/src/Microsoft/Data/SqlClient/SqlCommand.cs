@@ -137,6 +137,11 @@ namespace Microsoft.Data.SqlClient
         /// Internal flag for testing purposes that forces all queries to internally end async calls.
         /// </summary>
         private static bool _forceInternalEndQuery = false;
+
+        /// <summary>
+        /// Internal flag for testing purposes that forces one RetryableEnclaveQueryExecutionException during GenerateEnclavePackage
+        /// </summary>
+        private static bool _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
 #endif
 
         private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
@@ -2442,12 +2447,7 @@ namespace Microsoft.Data.SqlClient
                             // Remove the entry from the cache since it was inconsistent.
                             SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
 
-                            if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
-                            {
-                                EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
-                                EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
-                                    enclaveSessionParameters, this.enclavePackage.EnclaveSession);
-                            }
+                            InvalidateEnclaveSession();
 
                             try
                             {
@@ -2481,6 +2481,26 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }, TaskScheduler.Default);
+        }
+
+        private void InvalidateEnclaveSession()
+        {
+            if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
+            {
+                EnclaveDelegate.Instance.InvalidateEnclaveSession(
+                    this._activeConnection.AttestationProtocol,
+                    this._activeConnection.Parser.EnclaveType,
+                    GetEnclaveSessionParameters(),
+                    this.enclavePackage.EnclaveSession);
+            }
+        }
+
+        private EnclaveSessionParameters GetEnclaveSessionParameters()
+        {
+            return new EnclaveSessionParameters(
+                this._activeConnection.DataSource,
+                this._activeConnection.EnclaveAttestationUrl,
+                this._activeConnection.Database);
         }
 
         private void BeginExecuteReaderInternalReadStage(TaskCompletionSource<object> completion)
@@ -3663,7 +3683,13 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     // Fetch the encryption information that applies to any of the input parameters.
-                    describeParameterEncryptionDataReader = TryFetchInputParameterEncryptionInfo(timeout, isAsync, asyncWrite, out describeParameterEncryptionNeeded, out fetchInputParameterEncryptionInfoTask, out describeParameterEncryptionRpcOriginalRpcMap, inRetry);
+                    describeParameterEncryptionDataReader = TryFetchInputParameterEncryptionInfo(timeout,
+                                                                                                 isAsync,
+                                                                                                 asyncWrite,
+                                                                                                 out describeParameterEncryptionNeeded,
+                                                                                                 out fetchInputParameterEncryptionInfoTask,
+                                                                                                 out describeParameterEncryptionRpcOriginalRpcMap,
+                                                                                                 inRetry);
 
                     Debug.Assert(describeParameterEncryptionNeeded || describeParameterEncryptionDataReader == null,
                         "describeParameterEncryptionDataReader should be null if we don't need to request describe parameter encryption request.");
@@ -3698,7 +3724,13 @@ namespace Microsoft.Data.SqlClient
                         // Mark that we should not process the finally block since we have async execution pending.
                         // Note that this should be done outside the task's continuation delegate.
                         processFinallyBlock = false;
-                        describeParameterEncryptionDataReader = GetParameterEncryptionDataReader(out returnTask, fetchInputParameterEncryptionInfoTask, describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap, describeParameterEncryptionNeeded, inRetry);
+                        describeParameterEncryptionDataReader = GetParameterEncryptionDataReader(
+                            out returnTask,
+                            fetchInputParameterEncryptionInfoTask,
+                            describeParameterEncryptionDataReader,
+                            describeParameterEncryptionRpcOriginalRpcMap,
+                            describeParameterEncryptionNeeded,
+                            inRetry);
 
                         decrementAsyncCountInFinallyBlock = false;
                     }
@@ -3710,14 +3742,22 @@ namespace Microsoft.Data.SqlClient
                             // Mark that we should not process the finally block since we have async execution pending.
                             // Note that this should be done outside the task's continuation delegate.
                             processFinallyBlock = false;
-                            describeParameterEncryptionDataReader = GetParameterEncryptionDataReaderAsync(out returnTask, describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap, describeParameterEncryptionNeeded, inRetry);
+                            describeParameterEncryptionDataReader = GetParameterEncryptionDataReaderAsync(
+                                out returnTask,
+                                describeParameterEncryptionDataReader,
+                                describeParameterEncryptionRpcOriginalRpcMap,
+                                describeParameterEncryptionNeeded,
+                                inRetry);
 
                             decrementAsyncCountInFinallyBlock = false;
                         }
                         else
                         {
                             // For synchronous execution, read the results of describe parameter encryption here.
-                            ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap, inRetry);
+                            ReadDescribeEncryptionParameterResults(
+                                describeParameterEncryptionDataReader,
+                                describeParameterEncryptionRpcOriginalRpcMap,
+                                inRetry);
                         }
 
 #if DEBUG
@@ -3926,7 +3966,7 @@ namespace Microsoft.Data.SqlClient
                 SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
                 string enclaveType = this._activeConnection.Parser.EnclaveType;
 
-                EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
+                EnclaveSessionParameters enclaveSessionParameters = GetEnclaveSessionParameters();
 
                 SqlEnclaveSession sqlEnclaveSession = null;
                 EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, true, out sqlEnclaveSession, out customData, out customDataLength, isRetry);
@@ -4455,9 +4495,16 @@ namespace Microsoft.Data.SqlClient
 
                         SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
                         string enclaveType = this._activeConnection.Parser.EnclaveType;
-                        EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
 
-                        EnclaveDelegate.Instance.CreateEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, attestationInfo, enclaveAttestationParameters, customData, customDataLength, isRetry);
+                        EnclaveDelegate.Instance.CreateEnclaveSession(
+                            attestationProtocol,
+                            enclaveType,
+                            GetEnclaveSessionParameters(),
+                            attestationInfo,
+                            enclaveAttestationParameters,
+                            customData,
+                            customDataLength,
+                            isRetry);
                         enclaveAttestationParameters = null;
                         attestationInfoRead = true;
                     }
@@ -4567,12 +4614,7 @@ namespace Microsoft.Data.SqlClient
                     // First invalidate the entry from the cache, so that we refresh our encryption MD.
                     SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
 
-                    if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
-                    {
-                        EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
-                        EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
-                            enclaveSessionParameters, this.enclavePackage.EnclaveSession);
-                    }
+                    InvalidateEnclaveSession();
 
                     return RunExecuteReader(cmdBehavior, runBehavior, returnStream, completion, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, isAsync, inRetry: true, method: method);
                 }
@@ -4610,12 +4652,7 @@ namespace Microsoft.Data.SqlClient
                         // First invalidate the entry from the cache, so that we refresh our encryption MD.
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
 
-                        if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
-                        {
-                            EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
-                            EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
-                              enclaveSessionParameters, this.enclavePackage.EnclaveSession);
-                        }
+                        InvalidateEnclaveSession();
 
                         return RunExecuteReader(cmdBehavior, runBehavior, returnStream, completion, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, isAsync, inRetry: true, method: method);
                     }
@@ -4717,9 +4754,15 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
+#if DEBUG
+                if (_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage)
+                {
+                    _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
+                    throw new EnclaveDelegate.RetryableEnclaveQueryExecutionException("testing", null);
+                }
+#endif
                 this.enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(attestationProtocol, keysToBeSentToEnclave,
-                    this.CommandText, enclaveType, enclaveSessionParameters, _activeConnection, this);
+                    this.CommandText, enclaveType, GetEnclaveSessionParameters(), _activeConnection, this);
             }
             catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
             {
