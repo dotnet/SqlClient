@@ -8,6 +8,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
@@ -687,6 +688,59 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
             });
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public async void TestExecuteReaderAsyncWithLargeQuery(string connectionString)
+        {
+            string randomName = DataTestUtility.GetUniqueName(Guid.NewGuid().ToString().Replace("-", ""), false);
+            if (randomName.Length > 50)
+            {
+                randomName = randomName.Substring(0, 50);
+            }
+            string tableName = $"VeryLong_{randomName}_TestTableName";
+            int columnsCount = 50;
+
+            // Arrange - drops the table with long name and re-creates it with 52 columns (ID, name, ColumnName0..49)
+            try
+            {
+                CreateTable(connectionString, tableName, columnsCount);
+                string name = "nobody";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    // This creates a "select top 100" query that has over 40k characters
+                    using (SqlCommand sqlCommand = new SqlCommand(GenerateSelectQuery(tableName, columnsCount, 10, "WHERE Name = @FirstName AND ID = @CustomerId"),
+                        connection,
+                        transaction: null,
+                        columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                    {
+                        sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
+                        sqlCommand.Parameters.Add(@"FirstName", SqlDbType.VarChar, name.Length);
+
+                        sqlCommand.Parameters[0].Value = 0;
+                        sqlCommand.Parameters[1].Value = name;
+
+                        // Act and Assert
+                        // Test that execute reader async does not throw an exception.
+                        // The table is empty so there should be no results; however, the bug previously found is that it causes a TDS RPC exception on enclave.
+                        using (SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync())
+                        {
+                            Assert.False(sqlDataReader.HasRows, "The table should be empty");
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                DropTableIfExists(connectionString, tableName);
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -2786,6 +2840,75 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
                 Table.DeleteData(tableName, sqlConnection);
             }
+        }
+
+        private static void CreateTable(string connString, string tableName, int columnsCount)
+            => DataTestUtility.RunNonQuery(connString, GenerateCreateQuery(tableName, columnsCount));
+        /// <summary>
+        /// Drops the table if the specified table exists
+        /// </summary>
+        /// <param name="connString">The connection string to the database</param>
+        /// <param name="tableName">The name of the table to be dropped</param>
+        private static void DropTableIfExists(string connString, string tableName)
+        {
+            using var sqlConnection = new SqlConnection(connString);
+            sqlConnection.Open();
+            DataTestUtility.DropTable(sqlConnection, tableName);
+        }
+
+        /// <summary>
+        /// Generates the query for creating a table with the number of bit columns specified.
+        /// </summary>
+        /// <param name="tableName">The name of the table</param>
+        /// <param name="columnsCount">The number of columns for the table</param>
+        /// <returns></returns>
+        private static string GenerateCreateQuery(string tableName, int columnsCount)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.Append(string.Format("CREATE TABLE [dbo].[{0}]", tableName));
+            builder.Append('(');
+            builder.AppendLine("[ID][bigint] NOT NULL,");
+            builder.AppendLine("[Name] [varchar] (200) NOT NULL");
+            for (int i = 0; i < columnsCount; i++)
+            {
+                builder.Append(',');
+                builder.Append($"[ColumnName{i}][bit] NULL");
+            }
+            builder.Append(");");
+
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Generates the large query with the select top 100 of all the columns repeated multiple times.
+        /// </summary>
+        /// <param name="tableName">The name of the table</param>
+        /// <param name="columnsCount">The number of columns to be explicitly included</param>
+        /// <param name="repeat">The number of times the select query is repeated</param>
+        /// <param name="where">A where clause for additional filters</param>
+        /// <returns></returns>
+        private static string GenerateSelectQuery(string tableName, int columnsCount, int repeat = 10, string where = "")
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine($"SELECT TOP 100");
+            builder.AppendLine($"[{tableName}].[ID],");
+            builder.AppendLine($"[{tableName}].[Name]");
+            for (int i = 0; i < columnsCount; i++)
+            {
+                builder.Append(",");
+                builder.AppendLine($"[{tableName}].[ColumnName{i}]");
+            }
+
+            string extra = string.IsNullOrEmpty(where) ? $"(NOLOCK) [{tableName}]" : where;
+            builder.AppendLine($"FROM [{tableName}] {extra};");
+
+            StringBuilder builder2 = new StringBuilder();
+            for (int i = 0; i < repeat; i++)
+            {
+                builder2.AppendLine(builder.ToString());
+            }
+
+            return builder2.ToString();
         }
 
         /// <summary>
