@@ -14,14 +14,15 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal class SNIMarsConnection
     {
-        private readonly Guid _connectionId = Guid.NewGuid();
-        private readonly Dictionary<int, SNIMarsHandle> _sessions = new Dictionary<int, SNIMarsHandle>();
-        private readonly byte[] _headerBytes = new byte[SNISMUXHeader.HEADER_LENGTH];
-        private readonly SNISMUXHeader _currentHeader = new SNISMUXHeader();
+        private readonly Guid _connectionId;
+        private readonly Dictionary<int, SNIMarsHandle> _sessions;
+        private readonly byte[] _headerBytes;
+        private readonly SNISMUXHeader _currentHeader;
+        private readonly object _sync;
         private SNIHandle _lowerHandle;
-        private ushort _nextSessionId = 0;
-        private int _currentHeaderByteCount = 0;
-        private int _dataBytesLeft = 0;
+        private ushort _nextSessionId;
+        private int _currentHeaderByteCount;
+        private int _dataBytesLeft;
         private SNIPacket _currentPacket;
 
         /// <summary>
@@ -31,12 +32,22 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public int ProtocolVersion => _lowerHandle.ProtocolVersion;
 
+        internal object DemuxerSync => _sync;
+
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="lowerHandle">Lower handle</param>
         public SNIMarsConnection(SNIHandle lowerHandle)
         {
+            _sync = new object();
+            _connectionId = Guid.NewGuid();
+            _sessions = new Dictionary<int, SNIMarsHandle>();
+            _headerBytes = new byte[SNISMUXHeader.HEADER_LENGTH];
+            _currentHeader = new SNISMUXHeader();
+            _nextSessionId = 0;
+            _currentHeaderByteCount = 0;
+            _dataBytesLeft = 0;
             _lowerHandle = lowerHandle;
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "Created MARS Session Id {0}", args0: ConnectionId);
             _lowerHandle.SetAsyncCallbacks(HandleReceiveComplete, HandleSendComplete);
@@ -44,7 +55,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public SNIMarsHandle CreateMarsSession(object callbackObject, bool async)
         {
-            lock (this)
+            lock (DemuxerSync)
             {
                 ushort sessionId = _nextSessionId++;
                 SNIMarsHandle handle = new SNIMarsHandle(this, sessionId, callbackObject, async);
@@ -83,7 +94,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             using (TrySNIEventScope.Create(nameof(SNIMarsConnection)))
             {
-                lock (this)
+                lock (DemuxerSync)
                 {
                     return _lowerHandle.Send(packet);
                 }
@@ -99,7 +110,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             using (TrySNIEventScope.Create(nameof(SNIMarsConnection)))
             {
-                lock (this)
+                lock (DemuxerSync)
                 {
                     return _lowerHandle.SendAsync(packet);
                 }
@@ -124,7 +135,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     packet = null;
                 }
 
-                lock (this)
+                lock (DemuxerSync)
                 {
                     var response = _lowerHandle.ReceiveAsync(ref packet);
 #if DEBUG
@@ -143,7 +154,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             using (TrySNIEventScope.Create(nameof(SNIMarsConnection)))
             {
-                lock (this)
+                lock (DemuxerSync)
                 {
                     return _lowerHandle.CheckConnection();
                 }
@@ -199,7 +210,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 if (sniErrorCode != TdsEnums.SNI_SUCCESS)
                 {
-                    lock (this)
+                    lock (DemuxerSync)
                     {
                         HandleReceiveError(packet);
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "MARS Session Id {0}, Handled receive error code: {1}", args0: _lowerHandle?.ConnectionId, args1: sniErrorCode);
@@ -209,7 +220,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 while (true)
                 {
-                    lock (this)
+                    lock (DemuxerSync)
                     {
                         if (_currentHeaderByteCount != SNISMUXHeader.HEADER_LENGTH)
                         {
@@ -324,7 +335,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         _currentPacket = null;
                     }
 
-                    lock (this)
+                    lock (DemuxerSync)
                     {
                         if (packet.DataLeft == 0)
                         {
