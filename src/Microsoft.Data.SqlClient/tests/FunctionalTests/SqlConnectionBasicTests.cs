@@ -113,10 +113,9 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (SqlException e)
             {
-                if (e.Class == 20) // FATAL Error, should result in closed connection.
-                {
-                    Assert.Equal(ConnectionState.Closed, connection.State);
-                }
+                // FATAL Error, should result in closed connection.
+                Assert.Equal(20, e.Class);
+                Assert.Equal(ConnectionState.Closed, connection.State);
             }
         }
 
@@ -144,10 +143,9 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (SqlException e)
             {
-                if (e.Class == 20) // FATAL Error, should result in closed connection.
-                {
-                    Assert.Equal(ConnectionState.Closed, connection.State);
-                }
+                // FATAL Error, should result in closed connection.
+                Assert.Equal(20, e.Class);
+                Assert.Equal(ConnectionState.Closed, connection.State);
             }
         }
 
