@@ -2,8 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Text;
+using System.Threading;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -31,7 +31,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-
         // skip creating database on Azure
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void UTF8databaseTest()
@@ -53,9 +52,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 builder.InitialCatalog = dbName;
                 using SqlConnection cnnTest = new(builder.ConnectionString);
                 // creating a databse is a time consumer action and could be retried.
-                SqlRetryLogicOption retryOption = new() { NumberOfTries = 3, DeltaTime = TimeSpan.FromMilliseconds(200) };
-                cnnTest.RetryLogicProvider = SqlConfigurableRetryFactory.CreateIncrementalRetryProvider(retryOption);
-                cnnTest.Open();
+                int count = 3;
+                while(count-- > 0)
+                {
+                    try
+                    {
+                        cnnTest.Open();
+                        break;
+                    }
+                    catch
+                    {
+                        if (count == 0) throw;
+
+                        Thread.Sleep(200);
+                    }
+                }
 
                 using SqlCommand cmd = cnnTest.CreateCommand();
                 cmd.CommandText = $"SELECT * FROM {tblName}";

@@ -358,16 +358,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return uniqueName;
         }
 
-        // SQL Server supports long names (up to 128 characters), add extra info for troubleshooting
-        public static string GetUniqueNameForSqlServer(string prefix)
+        /// <summary>
+        /// Uses environment values `UserName` and `MachineName` in addition to the specified `prefix` and current date
+        /// to generate a unique name to use in Sql Server; 
+        /// SQL Server supports long names (up to 128 characters), add extra info for troubleshooting.
+        /// </summary>
+        /// <param name="prefix">Add the prefix to the generate string.</param>
+        /// <param name="withBracket">Database name must be pass with brackets by default.</param>
+        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
+        public static string GetUniqueNameForSqlServer(string prefix, bool withBracket = true)
         {
             string extendedPrefix = string.Format(
-                "{0}_{1}@{2}",
+                "{0}_{1}_{2}@{3}",
                 prefix,
                 Environment.UserName,
                 Environment.MachineName,
                 DateTime.Now.ToString("yyyy_MM_dd", CultureInfo.InvariantCulture));
-            string name = GetUniqueName(extendedPrefix);
+            string name = GetUniqueName(extendedPrefix, withBracket);
             if (name.Length > 128)
             {
                 throw new ArgumentOutOfRangeException("the name is too long - SQL Server names are limited to 128");
@@ -397,6 +404,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 cmd.ExecuteNonQuery();
             }
+        }
+
+        private static void ResurrectConnection(SqlConnection sqlConnection, int counter = 2)
+        {
+            if (sqlConnection.State == ConnectionState.Closed)
+            {
+                sqlConnection.Open();
+            }
+            while (counter-- > 0 && sqlConnection.State == ConnectionState.Connecting)
+            {
+                Thread.Sleep(80);
+            }
+        }
+
+        /// <summary>
+        /// Drops specified database on provided connection.
+        /// </summary>
+        /// <param name="sqlConnection">Open connection to be used.</param>
+        /// <param name="dbName">Database name without brackets.</param>
+        public static void DropDatabase(SqlConnection sqlConnection, string dbName)
+        {
+            ResurrectConnection(sqlConnection);
+            using SqlCommand cmd = new(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection);
+            cmd.ExecuteNonQuery();
         }
 
         public static bool IsLocalDBInstalled() => SupportsLocalDb;
