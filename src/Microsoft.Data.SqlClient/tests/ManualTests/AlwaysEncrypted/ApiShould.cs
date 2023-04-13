@@ -2394,7 +2394,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             // Execute again to exercise the async session retry logic
             Task readAsyncTask = ReadAsync(cmd, values, CommandBehavior.Default);
-            readAsyncTask.Wait();
+            readAsyncTask.GetAwaiter().GetResult();
 
 #if DEBUG
             CommandHelper.ForceThrowDuringGenerateEnclavePackage(cmd);
@@ -2413,7 +2413,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             // Execute again to exercise the async session retry logic
             Task readAsyncTask2 = ReadAsync(cmd, values, CommandBehavior.Default);
-            readAsyncTask2.Wait();
+            readAsyncTask2.GetAwaiter().GetResult();
 #endif
 
             // revert the CEK change to the CustomerId column

@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
 
         #region protected methods
         // Helper method to get the enclave session from the cache if present
-        protected void GetEnclaveSessionHelper(EnclaveSessionParameters enclaveSessionParameters, bool shouldGenerateNonce, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength, bool isRetry)
+        protected void GetEnclaveSessionHelper(EnclaveSessionParameters enclaveSessionParameters, bool shouldGenerateNonce, bool isRetry, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
             customData = null;
             customDataLength = 0;

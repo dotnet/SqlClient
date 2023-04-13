@@ -33,11 +33,11 @@ namespace Microsoft.Data.SqlClient
                 sqlColumnEncryptionEnclaveProvider.GetEnclaveSession(
                     enclaveSessionParameters,
                     generateCustomData: false,
+                    isRetry: isRetry,
                     sqlEnclaveSession: out SqlEnclaveSession sqlEnclaveSession,
                     counter: out _,
                     customData: out _,
-                    customDataLength: out _,
-                    isRetry: isRetry
+                    customDataLength: out _
                 );
 
                 if (sqlEnclaveSession != null)
@@ -62,15 +62,15 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out byte[] customData, out int customDataLength, bool isRetry)
+        internal void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, bool isRetry, out SqlEnclaveSession sqlEnclaveSession, out byte[] customData, out int customDataLength)
         {
-            GetEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, generateCustomData, out sqlEnclaveSession, out _, out customData, out customDataLength, throwIfNull: false, isRetry);
+            GetEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, generateCustomData, isRetry, out sqlEnclaveSession, out _, out customData, out customDataLength, throwIfNull: false);
         }
 
-        private void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength, bool throwIfNull, bool isRetry)
+        private void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, bool isRetry, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength, bool throwIfNull)
         {
             SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(attestationProtocol, enclaveType);
-            sqlColumnEncryptionEnclaveProvider.GetEnclaveSession(enclaveSessionParameters, generateCustomData, out sqlEnclaveSession, out counter, out customData, out customDataLength, isRetry);
+            sqlColumnEncryptionEnclaveProvider.GetEnclaveSession(enclaveSessionParameters, generateCustomData, isRetry, out sqlEnclaveSession, out counter, out customData, out customDataLength);
 
             if (throwIfNull && sqlEnclaveSession == null)
             {
@@ -145,12 +145,12 @@ namespace Microsoft.Data.SqlClient
                     enclaveType,
                     enclaveSessionParameters,
                     generateCustomData: false,
+                    isRetry: false,
                     sqlEnclaveSession: out sqlEnclaveSession,
                     counter: out counter,
                     customData: out _,
                     customDataLength: out _,
-                    throwIfNull: true,
-                    isRetry: false
+                    throwIfNull: true
                 );
             }
             catch (Exception e)
