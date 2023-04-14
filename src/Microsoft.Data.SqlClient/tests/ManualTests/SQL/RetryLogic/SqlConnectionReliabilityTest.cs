@@ -98,6 +98,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(currentRetries > 0);
         }
 
+        [ActiveIssue(25147)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
