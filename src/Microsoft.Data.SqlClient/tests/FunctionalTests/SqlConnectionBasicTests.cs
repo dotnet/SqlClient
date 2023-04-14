@@ -51,15 +51,8 @@ namespace Microsoft.Data.SqlClient.Tests
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                await connection.OpenAsync();
-                Assert.Equal(ConnectionState.Open, connection.State);
-            }
-            catch (Exception e)
-            {
-                Assert.False(true, e.Message);
-            }
+            await connection.OpenAsync();
+            Assert.Equal(ConnectionState.Open, connection.State);
         }
 
         [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
