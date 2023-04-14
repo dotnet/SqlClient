@@ -285,7 +285,6 @@ namespace Microsoft.Data.SqlClient
             DeviceCodeFlow = MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW,
             ManagedIdentity = MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY,
             Default = MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT,
-            TokenCredential = MSALWORKFLOW_ACTIVEDIRECTORYTOKENCREDENTIAL,
         }
 
         // The string used for username in the error message when Authentication = Active Directory Integrated with FedAuth is used, if authentication fails.

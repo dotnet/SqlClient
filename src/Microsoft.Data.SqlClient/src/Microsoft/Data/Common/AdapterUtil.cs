@@ -1268,7 +1268,22 @@ namespace Microsoft.Data.Common
 
         static internal Exception InvalidMixedUsageOfCredentialAndAccessToken()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfCredentialAndAccessToken));
-#endregion
+
+        static internal Exception InvalidMixedUsageOfAccessTokenAndTokenCallback()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback));
+
+        internal static Exception InvalidMixedUsageOfAccessTokenCallbackAndAuthentication()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback));
+
+        internal static Exception InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity));
+
+        internal static Exception InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword));
+
+        internal static Exception InvalidMixedUsageOfCredentialAndAccessTokenCallback()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfCredentialAndAccessTokenCallback));
+        #endregion
 
         internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;

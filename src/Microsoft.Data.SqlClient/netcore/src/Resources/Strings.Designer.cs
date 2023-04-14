@@ -430,6 +430,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessToken property if the AccessTokenCallback has been set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessToken property if &apos;UserID&apos;, &apos;UID&apos;, &apos;Password&apos;, or &apos;PWD&apos; has been specified in connection string..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword {
@@ -439,11 +448,38 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if the &apos;Integrated Security&apos; connection string keyword has been set to &apos;true&apos; or &apos;SSPI&apos;..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if &apos;UserID&apos;, &apos;UID&apos;, &apos;Password&apos;, or &apos;PWD&apos; has been specified in connection string..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the Credential property if the AccessToken property is already set..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfCredentialAndAccessToken {
             get {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfCredentialAndAccessToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if the AccessTokenCallback property is already set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfCredentialAndAccessTokenCallback {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfCredentialAndAccessTokenCallback", resourceCulture);
             }
         }
         
@@ -950,7 +986,7 @@ namespace System {
                 return ResourceManager.GetString("Data_InvalidOffsetLength", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services..
         /// </summary>
@@ -1915,7 +1951,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Incorrect physicalConnection type.
+        ///   Looks up a localized string similar to Incorrect physicalConnection type..
         /// </summary>
         internal static string SNI_IncorrectPhysicalConnectionType {
             get {

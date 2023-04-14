@@ -39,7 +39,7 @@ namespace System {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", typeof(Strings).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SqlClient.Resources.Strings", typeof(Strings).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -907,6 +907,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessToken property if the AccessTokenCallback has been set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessToken property if &apos;UserID&apos;, &apos;UID&apos;, &apos;Password&apos;, or &apos;PWD&apos; has been specified in connection string..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword {
@@ -916,11 +925,38 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if the &apos;Integrated Security&apos; connection string keyword has been set to &apos;true&apos; or &apos;SSPI&apos;..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if &apos;UserID&apos;, &apos;UID&apos;, &apos;Password&apos;, or &apos;PWD&apos; has been specified in connection string..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the Credential property if the AccessToken property is already set..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfCredentialAndAccessToken {
             get {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfCredentialAndAccessToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if the AccessTokenCallback property is already set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfCredentialAndAccessTokenCallback {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfCredentialAndAccessTokenCallback", resourceCulture);
             }
         }
         
@@ -5560,6 +5596,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider..
+        /// </summary>
+        internal static string DbConnectionString_AsynchronousProcessing {
+            get {
+                return ResourceManager.GetString("DbConnectionString_AsynchronousProcessing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The name of the primary file, including the full path name, of an attachable database..
         /// </summary>
         internal static string DbConnectionString_AttachDBFilename {
@@ -8911,6 +8956,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This command requires an asynchronous connection. Set &quot;Asynchronous Processing=true&quot; in the connection string..
+        /// </summary>
+        internal static string SQL_AsyncConnectionRequired {
+            get {
+                return ResourceManager.GetString("SQL_AsyncConnectionRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The asynchronous operation has already completed..
         /// </summary>
         internal static string SQL_AsyncOperationCompleted {
@@ -10590,6 +10644,15 @@ namespace System {
         internal static string SqlConnection_AccessToken {
             get {
                 return ResourceManager.GetString("SqlConnection_AccessToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to State of connection, synchronous or asynchronous.  &apos;Asynchronous Processing=x&apos; in the connection string..
+        /// </summary>
+        internal static string SqlConnection_Asynchronous {
+            get {
+                return ResourceManager.GetString("SqlConnection_Asynchronous", resourceCulture);
             }
         }
         
