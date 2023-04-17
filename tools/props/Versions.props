@@ -30,13 +30,12 @@
   <PropertyGroup>
     <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
     <MicrosoftDataSqlClientSNIRuntimeVersion>4.0.1</MicrosoftDataSqlClientSNIRuntimeVersion>
-    <SystemConfigurationConfigurationManagerVersion>5.0.0</SystemConfigurationConfigurationManagerVersion>
+    <SystemConfigurationConfigurationManagerVersion>6.0.1</SystemConfigurationConfigurationManagerVersion>
     <SystemDiagnosticsDiagnosticSourceVersion>5.0.0</SystemDiagnosticsDiagnosticSourceVersion>
     <SystemDiagnosticsPerformanceCounterVersion>5.0.0</SystemDiagnosticsPerformanceCounterVersion>
     <SystemResourcesResourceManagerVersion>4.3.0</SystemResourcesResourceManagerVersion>
-    <SystemRuntimeCachingVersion>5.0.0</SystemRuntimeCachingVersion>
+    <SystemRuntimeCachingVersion>6.0.0</SystemRuntimeCachingVersion>
     <SystemSecurityCryptographyCngVersion>5.0.0</SystemSecurityCryptographyCngVersion>
-    <SystemSecurityPermissionsVersion>5.0.0</SystemSecurityPermissionsVersion>
     <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
     <SystemTextEncodingCodePagesVersion>5.0.0</SystemTextEncodingCodePagesVersion>
   </PropertyGroup>
