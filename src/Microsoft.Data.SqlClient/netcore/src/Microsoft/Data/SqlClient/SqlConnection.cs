@@ -2231,17 +2231,44 @@ namespace Microsoft.Data.SqlClient
         internal Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask, object value, int tag)
         {
             // Connection exists,  schedule removal, will be added to ref collection after calling ValidateAndReconnect
+
+            object state = null;
+            if (outerTask.AsyncState == this)
+            {
+                // if the caller created the TaskCompletionSource for outerTask with this connection
+                // as the state parameter (which is immutable) we can use task.AsyncState and state
+                // to carry the two pieces of state that we need into the continuation avoiding the
+                // allocation of a new state object to carry them
+                state = value;
+            }
+            else
+            {
+                // otherwise we need to create a Tuple to carry the two pieces of state
+                state = Tuple.Create(this, value);
+            }
+
             return outerTask.ContinueWith(
                 continuationFunction: static (task, state) =>
                 {
-                    Tuple<SqlConnection, object> parameters = (Tuple<SqlConnection, object>)state;
-                    SqlConnection connection = parameters.Item1;
-                    object obj = parameters.Item2;
+                    SqlConnection connection = null;
+                    object obj = null;
+                    if (state is Tuple<SqlConnection, object> tuple)
+                    {
+                        // special state tuple, unpack it
+                        connection = tuple.Item1;
+                        obj = tuple.Item2;
+                    }
+                    else
+                    {
+                        // use state on task and state object
+                        connection = (SqlConnection)task.AsyncState;
+                        obj = state;
+                    }
 
                     connection.RemoveWeakReference(obj);
                     return task;
                 },
-                state: Tuple.Create(this, value),
+                state: state,
                 scheduler: TaskScheduler.Default
            ).Unwrap();
         }

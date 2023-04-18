@@ -10110,7 +10110,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 
-                            WriteParameterName(param.ParameterNameFixed, stateObj, enableOptimizedParameterBinding);
+                            WriteParameterName(param.ParameterName, stateObj, enableOptimizedParameterBinding);
 
                             // Write parameter status
                             stateObj.WriteByte(options);
@@ -10791,17 +10791,34 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
-        private void WriteParameterName(string parameterName, TdsParserStateObject stateObj, bool isAnonymous)
+        /// <summary>
+        /// Will check the parameter name for the required @ prefix and then write the correct prefixed
+        /// form and correct character length to the output buffer
+        /// </summary>
+        private void WriteParameterName(string rawParameterName, TdsParserStateObject stateObj, bool isAnonymous)
         {
             // paramLen
             // paramName
-            if (!isAnonymous && !string.IsNullOrEmpty(parameterName))
+            if (!isAnonymous && !string.IsNullOrEmpty(rawParameterName))
             {
-                Debug.Assert(parameterName.Length <= 0xff, "parameter name can only be 255 bytes, shouldn't get to TdsParser!");
-                int tempLen = parameterName.Length & 0xff;
-                stateObj.WriteByte((byte)tempLen);
-                WriteString(parameterName, tempLen, 0, stateObj);
+                int nameLength = rawParameterName.Length;
+                int totalLength = nameLength;
+                bool writePrefix = false;
+                if (nameLength > 0)
+                {
+                    if (rawParameterName[0] != '@')
+                    {
+                        writePrefix = true;
+                        totalLength += 1;
+                    }
+                }
+                Debug.Assert(totalLength <= 0xff, "parameter name can only be 255 bytes, shouldn't get to TdsParser!");
+                stateObj.WriteByte((byte)(totalLength & 0xFF));
+                if (writePrefix)
+                {
+                    WriteString("@", 1, 0, stateObj);
+                }
+                WriteString(rawParameterName, nameLength, 0, stateObj);
             }
             else
             {
