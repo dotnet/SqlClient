@@ -466,6 +466,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if &apos;Authentication=Active Directory Default&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfActiveDirectoryDefaultTokenAndTokenCallback {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfActiveDirectoryDefaultTokenAndTokenCallback", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the Credential property if the AccessToken property is already set..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfCredentialAndAccessToken {

@@ -552,6 +552,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryDefaultWithAccessTokenCallbackMustFail()
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=ActiveDirectoryDefault";
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
+            {
+                using (SqlConnection conn = new SqlConnection(connStrWithNoCred))
+                {
+                    conn.AccessTokenCallback = (ctx, token) =>
+                        Task.FromResult(new SqlAuthenticationToken("my token", DateTimeOffset.MaxValue));
+                    conn.Open();
+
+                    Assert.True(conn.State == System.Data.ConnectionState.Open);
+                }
+            });
+
+            string expectedMessage = "Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+       
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ActiveDirectoryDefaultMustPass()
         {
             string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };

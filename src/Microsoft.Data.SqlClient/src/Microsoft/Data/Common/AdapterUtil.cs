@@ -1283,6 +1283,9 @@ namespace Microsoft.Data.Common
 
         internal static Exception InvalidMixedUsageOfCredentialAndAccessTokenCallback()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfCredentialAndAccessTokenCallback));
+
+        internal static Exception InvalidMixedUsageOfActiveDirectoryDefaultTokenAndTokenCallback()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfActiveDirectoryDefaultTokenAndTokenCallback));
         #endregion
 
         internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);

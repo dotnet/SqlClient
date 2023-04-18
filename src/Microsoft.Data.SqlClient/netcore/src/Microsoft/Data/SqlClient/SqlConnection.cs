@@ -1082,6 +1082,11 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity();
             }
 
+            if (UsesActiveDirectoryDefault(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfActiveDirectoryDefaultTokenAndTokenCallback();
+            }
+
             if (UsesAuthentication(connectionOptions))
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndAuthentication();
