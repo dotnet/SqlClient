@@ -2964,7 +2964,10 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteNonQueryAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             SqlConnection.ExecutePermission.Demand();
 
-            TaskCompletionSource<int> source = new TaskCompletionSource<int>();
+            // connection can be used as state in RegisterForConnectionCloseNotification continuation
+            // to avoid an allocation so use it as the state value if possible but it can be changed if
+            // you need it for a more important piece of data that justifies the tuple allocation later
+            TaskCompletionSource<int> source = new TaskCompletionSource<int>(_activeConnection);
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)
@@ -2980,7 +2983,7 @@ namespace Microsoft.Data.SqlClient
             Task<int> returnedTask = source.Task;
             try
             {
-                RegisterForConnectionCloseNotification(ref returnedTask);
+                returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
                 Task<int>.Factory.FromAsync(BeginExecuteNonQueryAsync, EndExecuteNonQueryAsync, null).ContinueWith((t) =>
                 {
@@ -3061,7 +3064,10 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReaderAsync|API|Correlation> ObjectID {0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
             SqlConnection.ExecutePermission.Demand();
 
-            TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>();
+            // connection can be used as state in RegisterForConnectionCloseNotification continuation
+            // to avoid an allocation so use it as the state value if possible but it can be changed if
+            // you need it for a more important piece of data that justifies the tuple allocation later
+            TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>(_activeConnection);
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)
@@ -3077,7 +3083,7 @@ namespace Microsoft.Data.SqlClient
             Task<SqlDataReader> returnedTask = source.Task;
             try
             {
-                RegisterForConnectionCloseNotification(ref returnedTask);
+                returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
                 Task<SqlDataReader>.Factory.FromAsync(BeginExecuteReaderAsync, EndExecuteReaderAsync, behavior, null).ContinueWith((t) =>
                 {
@@ -3207,7 +3213,10 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteXmlReaderAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             SqlConnection.ExecutePermission.Demand();
 
-            TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();
+            // connection can be used as state in RegisterForConnectionCloseNotification continuation
+            // to avoid an allocation so use it as the state value if possible but it can be changed if
+            // you need it for a more important piece of data that justifies the tuple allocation later
+            TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>(_activeConnection);
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)
@@ -3223,7 +3232,7 @@ namespace Microsoft.Data.SqlClient
             Task<XmlReader> returnedTask = source.Task;
             try
             {
-                RegisterForConnectionCloseNotification(ref returnedTask);
+                returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
                 Task<XmlReader>.Factory.FromAsync(BeginExecuteXmlReaderAsync, EndExecuteXmlReaderAsync, null).ContinueWith((t) =>
                 {
@@ -5814,7 +5823,7 @@ namespace Microsoft.Data.SqlClient
             return Clone();
         }
 
-        private void RegisterForConnectionCloseNotification<T>(ref Task<T> outterTask)
+        private Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outterTask)
         {
             SqlConnection connection = _activeConnection;
             if (connection == null)
@@ -5823,7 +5832,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ClosedConnectionError();
             }
 
-            connection.RegisterForConnectionCloseNotification<T>(ref outterTask, this, SqlReferenceCollection.CommandTag);
+            return connection.RegisterForConnectionCloseNotification(outterTask, this, SqlReferenceCollection.CommandTag);
         }
 
         // validates that a command has commandText and a non-busy open connection
