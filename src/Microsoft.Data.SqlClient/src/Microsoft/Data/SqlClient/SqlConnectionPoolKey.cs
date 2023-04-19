@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient
                             SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo,
                             Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionString)
         {
-            Debug.Assert(_credential == null || _accessToken == null, "Credential and AccessToken can't have the value at the same time.");
+            Debug.Assert(_credential == null || _accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have the value at the same time.");
             _credential = credential;
             _accessToken = accessToken;
             _accessTokenCallback = accessTokenCallback;

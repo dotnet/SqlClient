@@ -577,11 +577,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
        
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void ActiveDirectoryDefaultMustPass()
+        public static void AccessTokenCallbackDefaultMustPass()
         {
             string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
-
             var cred = new DefaultAzureCredential();
             const string defaultScopeSuffix = "/.default";
             using (SqlConnection conn = new SqlConnection(connStr))
@@ -597,7 +596,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void AccessTokenCallbackDefaultMustPass()
+        public static void ActiveDirectoryDefaultMustPass()
         {
             string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +

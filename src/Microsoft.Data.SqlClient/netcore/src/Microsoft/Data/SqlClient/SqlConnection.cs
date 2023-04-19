@@ -718,7 +718,7 @@ namespace Microsoft.Data.SqlClient
                     throw new ArgumentNullException(nameof(AccessTokenCallback), "Callback cannot be null.");
                 }
 
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, value));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value));
                 _accessTokenCallback = value;
             }
         }

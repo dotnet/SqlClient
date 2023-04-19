@@ -447,7 +447,8 @@ namespace Microsoft.Data.SqlClient
             bool applyTransientFaultHandling = false,
             string accessToken = null,
             DbConnectionPool pool = null,
-            Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
+            Func<AadTokenRequestContext, CancellationToken,
+            Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
 
         {
 #if DEBUG
@@ -2383,7 +2384,6 @@ namespace Microsoft.Data.SqlClient
                             databaseName: ConnectionOptions.InitialCatalog)
                         .WithConnectionId(_clientConnectionId)
                         .WithConnectionTimeout(ConnectionOptions.ConnectTimeout);
-
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:

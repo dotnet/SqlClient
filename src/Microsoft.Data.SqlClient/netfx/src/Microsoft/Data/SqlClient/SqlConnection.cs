@@ -804,7 +804,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (_credential != null || _accessToken != null)
+                if (_credential != null || _accessToken != null || _accessTokenCallback != null)
                 {
                     SqlConnectionString connectionOptions = new SqlConnectionString(value);
                     if (_credential != null)
