@@ -2068,7 +2068,7 @@ namespace Microsoft.Data.SqlClient
 
             bool result = false;
 
-            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
+            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
 
             if (connectionOptions != null &&
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
@@ -2111,7 +2111,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Set future transient fault handling based on connection options
-            _applyTransientFaultHandling = (retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
+            _applyTransientFaultHandling = connectionOptions != null && connectionOptions.ConnectRetryCount > 0;
 
             return result;
         }
