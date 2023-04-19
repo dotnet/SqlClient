@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 5.2.0-preview1.23108.2] - 2023-04-19
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed AE enclave retry logic not working for async queries. [#1988](https://github.com/dotnet/SqlClient/pull/1988)
+- Fixed activity correlator to continue using same GUID for connection activity. [#1997](https://github.com/dotnet/SqlClient/pull/1997)
+- Fixed addressing the excepted behavior when error class is greater than 20 on retry connecting. [#1953](https://github.com/dotnet/SqlClient/pull/1953)
+- Fixed dropping reference to Microsoft.Win32.Registry in netcore. [#1974](https://github.com/dotnet/SqlClient/pull/1974)
+- Fixed addressing failure on providing correct error message when symmetric key decryption fails using Always Encrypted. [#1948](https://github.com/dotnet/SqlClient/pull/1948)
+- Fixed TransactionScope connection issue when Enlist is enable, Pooling is disabled and network connection type is Redirect. [#1960](https://github.com/dotnet/SqlClient/pull/1960)
+- Fixed TDS RPC error on large queries in SqlCommand.ExecuteReaderAsync. [#1936](https://github.com/dotnet/SqlClient/pull/1936)
+- Fixed throttling of token requests by calling AcquireTokenSilent. [#1925] (https://github.com/dotnet/SqlClient/pull/1925)
+- Fixed Linux code coverage result in Build proj. [#1950] (https://github.com/dotnet/SqlClient/pull/1950)
+- Fixed NullReferenceException in GetBytesAsync. [#1906] (https://github.com/dotnet/SqlClient/pull/1906)
+- Fixed Transient fault handling issue with OpenAsync. [#1983] (https://github.com/dotnet/SqlClient/pull/1983)
+
+### Changed
+
+- Add allocation free path for close notifications. [#1198] (https://github.com/dotnet/SqlClient/pull/1198)
+- Stop creating parameter prefixed names. [#1829](https://github.com/dotnet/SqlClient/pull/1829)
+- Update NuGet package description. [#1973] (https://github.com/dotnet/SqlClient/pull/1973)
+- Enable SqlDiagnosticListener on .NET Standard. [#1931] (https://github.com/dotnet/SqlClient/pull/1931)
+- Remove LINQ operations. [#1949] (https://github.com/dotnet/SqlClient/pull/1949)
+- Replace calls to Method.GetCurrentMethod().Name with nameof(). [#1943] (https://github.com/dotnet/SqlClient/pull/1943)
+- Upgrade Azure Identity from 1.7.0 to 1.8.0. [#1921] (https://github.com/dotnet/SqlClient/pull/1921)
+- Enhance invariant mode checks. [#1917] (https://github.com/dotnet/SqlClient/pull/1917)
+- Add and use TryReadChars method. [#1544] (https://github.com/dotnet/SqlClient/pull/1544)
+
 ## [Stable release 5.1.1] - 2023-03-28
 
 This update brings the below changes over the previous release:
@@ -249,7 +279,6 @@ This update brings the below changes over the previous release:
 - Fixed NullReferenceException during Azure Active Directory authentication. [#1722](https://github.com/dotnet/SqlClient/pull/1722)
 - Fixed null SqlBinary as rowversion. [#1724](https://github.com/dotnet/SqlClient/pull/1724)
 - Fixed table's collation overriding with default UTF8 collation. [#1750](https://github.com/dotnet/SqlClient/pull/1750)
-
 ## Changed
 
 - Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v4.0.1` [#1754](https://github.com/dotnet/SqlClient/pull/1754), which includes the fix for AppDomain crash introducing in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418)
