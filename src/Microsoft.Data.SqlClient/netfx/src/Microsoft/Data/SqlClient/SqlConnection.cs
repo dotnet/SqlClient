@@ -759,7 +759,7 @@ namespace Microsoft.Data.SqlClient
                 if (value != null)
                 {
                     // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
-                    // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken((SqlConnectionString)ConnectionOptions);
+                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
                 }
                 if (value == null)
                 {
@@ -843,6 +843,10 @@ namespace Microsoft.Data.SqlClient
                     else if (_accessToken != null)
                     {
                         CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken(connectionOptions);
+                    }
+                    else if (_accessTokenCallback != null)
+                    {
+                        CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(connectionOptions);
                     }
                 }
                 ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
@@ -1248,6 +1252,49 @@ namespace Microsoft.Data.SqlClient
             if (_credential != null)
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndCredential();
+            }
+
+            if (_accessTokenCallback != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
+            }
+        }
+
+        // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback: check if the usage of AccessTokenCallback has any conflict
+        //  with the keys used in connection string and credential
+        //  If there is any conflict, it throws InvalidOperationException
+        //  This is to be used setter of ConnectionString and AccessTokenCallback properties
+        private void CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(SqlConnectionString connectionOptions)
+        {
+            if (UsesClearUserIdOrPassword(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword();
+            }
+
+            if (UsesIntegratedSecurity(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity();
+            }
+
+            if (UsesActiveDirectoryDefault(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfActiveDirectoryDefaultTokenAndTokenCallback();
+            }
+
+            if (UsesAuthentication(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndAuthentication();
+            }
+
+            // Check if the usage of AccessToken has the conflict with credential
+            if (_credential != null)
+            {
+                throw ADP.InvalidMixedUsageOfCredentialAndAccessTokenCallback();
+            }
+
+            if (_accessToken != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
             }
         }
 
