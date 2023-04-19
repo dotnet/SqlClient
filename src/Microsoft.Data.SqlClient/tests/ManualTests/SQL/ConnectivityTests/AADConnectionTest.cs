@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.Identity.Client;
 using Xunit;
 
@@ -576,6 +578,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
        
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ActiveDirectoryDefaultMustPass()
+        {
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
+
+            var cred = new DefaultAzureCredential();
+            const string defaultScopeSuffix = "/.default";
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.AccessTokenCallback = (ctx, cancellationToken) =>
+                {
+                    string scope = ctx.Resource.EndsWith(defaultScopeSuffix) ? ctx.Resource : ctx.Resource + defaultScopeSuffix;
+                    var token = cred.GetToken(new TokenRequestContext(new[] { scope }), cancellationToken);
+                    return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
+                };
+                conn.Open();
+            }
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void AccessTokenCallbackDefaultMustPass()
         {
             string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
