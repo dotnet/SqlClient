@@ -279,6 +279,7 @@ This update brings the below changes over the previous release:
 - Fixed NullReferenceException during Azure Active Directory authentication. [#1722](https://github.com/dotnet/SqlClient/pull/1722)
 - Fixed null SqlBinary as rowversion. [#1724](https://github.com/dotnet/SqlClient/pull/1724)
 - Fixed table's collation overriding with default UTF8 collation. [#1750](https://github.com/dotnet/SqlClient/pull/1750)
+
 ## Changed
 
 - Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v4.0.1` [#1754](https://github.com/dotnet/SqlClient/pull/1754), which includes the fix for AppDomain crash introducing in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418)
