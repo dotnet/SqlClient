@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 5.2.0-preview1.23108.2] - 2023-04-19
+## [Preview Release 5.2.0-preview1.23109.1] - 2023-04-19
 
 This update brings the below changes over the previous release:
 
@@ -26,7 +26,6 @@ This update brings the below changes over the previous release:
 
 - Add allocation free path for close notifications. [#1198] (https://github.com/dotnet/SqlClient/pull/1198)
 - Stop creating parameter prefixed names. [#1829](https://github.com/dotnet/SqlClient/pull/1829)
-- Update NuGet package description. [#1973] (https://github.com/dotnet/SqlClient/pull/1973)
 - Enable SqlDiagnosticListener on .NET Standard. [#1931] (https://github.com/dotnet/SqlClient/pull/1931)
 - Remove LINQ operations. [#1949] (https://github.com/dotnet/SqlClient/pull/1949)
 - Replace calls to Method.GetCurrentMethod().Name with nameof(). [#1943] (https://github.com/dotnet/SqlClient/pull/1943)
