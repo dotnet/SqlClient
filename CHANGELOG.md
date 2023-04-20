@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 5.2.0-preview1.23109.1] - 2023-04-19
+## [Preview Release 5.2.0-preview1.23109.1] - 2023-04-20
 
 This update brings the below changes over the previous release:
 
@@ -33,13 +33,7 @@ This update brings the below changes over the previous release:
 - Add and use TryReadChars method. [#1544] (https://github.com/dotnet/SqlClient/pull/1544)
 - Removed reference to Microsoft.Win32.Registry since it's shipped starting with .NET 6.0. [#1974](https://github.com/dotnet/SqlClient/pull/1974)
 - Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848] (https://github.com/dotnet/SqlClient/pull/1848)
-
-### Code health improvements
-
-- Replaced calls to Method.GetCurrentMethod().Name with nameof(). [#1943] (https://github.com/dotnet/SqlClient/pull/1943)
-- Removed LINQ operations. [#1949] (https://github.com/dotnet/SqlClient/pull/1949)
-- Added allocation free path for close notifications. [#1198] (https://github.com/dotnet/SqlClient/pull/1198)
-- Stopped creation of parameter prefixed names. [#1829](https://github.com/dotnet/SqlClient/pull/1829)
+- Code health improvements:[#1943] (https://github.com/dotnet/SqlClient/pull/1943)[#1949] (https://github.com/dotnet/SqlClient/pull/1949)[#1198] (https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
 
 ## [Stable release 5.1.1] - 2023-03-28
 
