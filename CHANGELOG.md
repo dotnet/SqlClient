@@ -239,6 +239,13 @@ This update brings the below changes over the previous release:
 
 - Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1419](https://github.com/dotnet/SqlClient/pull/1419) [#1425](https://github.com/dotnet/SqlClient/pull/1425)
 
+## [Stable release 4.0.3] - 2023-04-20
+
+### Fixed
+
+- Fixed throttling of token requests by calling AcquireTokenSilent in AAD Integrated/Password flows when the account is already cached.[#1995](https://github.com/dotnet/SqlClient/pull/1995)
+- Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`.[#1987](https://github.com/dotnet/SqlClient/pull/1987)
+
 ## [Stable release 4.0.2] - 2022-09-13
 
 ### Fixed
