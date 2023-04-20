@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 This update brings the below changes over the previous release:
 
+###Added
+
+- Added SqlDiagnosticListener on .NET Standard. [#1931] (https://github.com/dotnet/SqlClient/pull/1931)
+
 ### Fixed
 
 - Fixed AE enclave retry logic for async queries. [#1988](https://github.com/dotnet/SqlClient/pull/1988)
@@ -20,18 +24,17 @@ This update brings the below changes over the previous release:
 - Fixed Linux code coverage result in Build proj. [#1950] (https://github.com/dotnet/SqlClient/pull/1950)
 - Fixed NullReferenceException in GetBytesAsync. [#1906] (https://github.com/dotnet/SqlClient/pull/1906)
 - Fixed Transient fault handling issue with OpenAsync. [#1983] (https://github.com/dotnet/SqlClient/pull/1983)
+- Fixed invariant mode checks. [#1917] (https://github.com/dotnet/SqlClient/pull/1917)
 
 ### Changed
 
-- Enabled SqlDiagnosticListener on .NET Standard. [#1931] (https://github.com/dotnet/SqlClient/pull/1931)
-- Replaced calls to Method.GetCurrentMethod().Name with nameof(). [#1943] (https://github.com/dotnet/SqlClient/pull/1943)
-- Upgraded Azure Identity from 1.7.0 to 1.8.0. [#1921] (https://github.com/dotnet/SqlClient/pull/1921)
-- Enhance invariant mode checks. [#1917] (https://github.com/dotnet/SqlClient/pull/1917)
+- Updated Azure Identity version from 1.7.0 to 1.8.0. [#1921] (https://github.com/dotnet/SqlClient/pull/1921)
 - Add and use TryReadChars method. [#1544] (https://github.com/dotnet/SqlClient/pull/1544)
-- Removed reference of Microsoft.Win32.Registry in netcore. [#1974](https://github.com/dotnet/SqlClient/pull/1974)
+- Removed reference to Microsoft.Win32.Registry since it's shipped starting with .NET 6.0. [#1974](https://github.com/dotnet/SqlClient/pull/1974)
 
 ### Code health improvements
 
+- Replaced calls to Method.GetCurrentMethod().Name with nameof(). [#1943] (https://github.com/dotnet/SqlClient/pull/1943)
 - Removed LINQ operations. [#1949] (https://github.com/dotnet/SqlClient/pull/1949)
 - Added allocation free path for close notifications. [#1198] (https://github.com/dotnet/SqlClient/pull/1198)
 - Stopped creation of parameter prefixed names. [#1829](https://github.com/dotnet/SqlClient/pull/1829)
