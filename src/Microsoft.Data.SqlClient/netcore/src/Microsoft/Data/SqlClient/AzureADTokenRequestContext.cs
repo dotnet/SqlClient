@@ -9,13 +9,13 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     ///
     /// </summary>
-    public class AadTokenRequestContext
+    public class AzureADTokenRequestContext
     {
         /// <summary>
         ///
         /// </summary>
         /// <param name="resource"></param>
-        public AadTokenRequestContext(string resource) { Resource = resource; }
+        public AzureADTokenRequestContext(string resource) { Resource = resource; }
 
         /// <summary>
         ///

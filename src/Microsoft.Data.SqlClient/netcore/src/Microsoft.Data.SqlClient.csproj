@@ -972,7 +972,7 @@
     <PackageReference Condition="$(BuildForRelease) == 'true'" Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Microsoft\Data\SqlClient\AadTokenRequestContext.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\AzureADTokenRequestContext.cs" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />

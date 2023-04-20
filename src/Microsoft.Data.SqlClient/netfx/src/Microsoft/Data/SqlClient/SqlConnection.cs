@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
         /// Instance-level list of custom key store providers. It can be set more than once by the user.
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
-        private Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+        private Func<AzureADTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
             _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
@@ -745,7 +745,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         ///
         /// </summary>
-        public Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback
+        public Func<AzureADTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback
         {
             get { return _accessTokenCallback; }
             set
