@@ -10,7 +10,7 @@ This update brings the below changes over the previous release:
 
 ###Added
 
-- Added SqlDiagnosticListener on .NET Standard. [#1931] (https://github.com/dotnet/SqlClient/pull/1931)
+- Added support of `SqlDiagnosticListener` on **.NET Standard**. [#1931] (https://github.com/dotnet/SqlClient/pull/1931)
 
 ### Fixed
 
