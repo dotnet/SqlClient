@@ -1530,10 +1530,11 @@ namespace Microsoft.Data.SqlClient
                 if (t == 0 && LocalAppContextSwitches.UseMinimumLoginTimeout)
                 {
                     // Take 1 as the minimum value, since 0 is treated as an infinite timeout
+                    // to allow 1 second more for login to complete, since it should take only a few milliseconds.
                     t = 1;
                 }
 
-                if ((long)Int32.MaxValue > t)
+                if (int.MaxValue > t)
                 {
                     timeoutInSeconds = (int)t;
                 }
