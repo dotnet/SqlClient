@@ -8,9 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 This update brings the below changes over the previous release:
 
-###Added
+### Added
 
-- Added support of `SqlDiagnosticListener` on **.NET Standard**. [#1931] (https://github.com/dotnet/SqlClient/pull/1931)
+- Added support of `SqlDiagnosticListener` on **.NET Standard**. [#1931](https://github.com/dotnet/SqlClient/pull/1931)
 
 ### Fixed
 
@@ -20,20 +20,20 @@ This update brings the below changes over the previous release:
 - Fixed error message when symmetric key decryption failed using Always Encrypted. [#1948](https://github.com/dotnet/SqlClient/pull/1948)
 - Fixed TransactionScope connection issue when Enlist is enable, Pooling is disabled and network connection type is Redirect. [#1960](https://github.com/dotnet/SqlClient/pull/1960)
 - Fixed TDS RPC error on large queries in SqlCommand.ExecuteReaderAsync. [#1936](https://github.com/dotnet/SqlClient/pull/1936)
-- Fixed throttling of token requests by calling AcquireTokenSilent. [#1925] (https://github.com/dotnet/SqlClient/pull/1925)
-- Fixed Linux code coverage result in Build proj. [#1950] (https://github.com/dotnet/SqlClient/pull/1950)
-- Fixed NullReferenceException in GetBytesAsync. [#1906] (https://github.com/dotnet/SqlClient/pull/1906)
-- Fixed Transient fault handling issue with OpenAsync. [#1983] (https://github.com/dotnet/SqlClient/pull/1983)
-- Fixed invariant mode checks. [#1917] (https://github.com/dotnet/SqlClient/pull/1917)
-- Fixed GC behavior in TdsParser by adding array rental capability in TryReadPlpUnicodeChars. [#1866] (https://github.com/dotnet/SqlClient/pull/1866)
+- Fixed throttling of token requests by calling AcquireTokenSilent. [#1925](https://github.com/dotnet/SqlClient/pull/1925)
+- Fixed Linux code coverage result in Build proj. [#1950](https://github.com/dotnet/SqlClient/pull/1950)
+- Fixed NullReferenceException in GetBytesAsync. [#1906](https://github.com/dotnet/SqlClient/pull/1906)
+- Fixed Transient fault handling issue with OpenAsync. [#1983](https://github.com/dotnet/SqlClient/pull/1983)
+- Fixed invariant mode checks. [#1917](https://github.com/dotnet/SqlClient/pull/1917)
+- Fixed GC behavior in TdsParser by adding array rental capability in TryReadPlpUnicodeChars. [#1866](https://github.com/dotnet/SqlClient/pull/1866)
 
 ### Changed
 
-- Updated Azure Identity version from 1.7.0 to 1.8.0. [#1921] (https://github.com/dotnet/SqlClient/pull/1921)
-- Add and use TryReadChars method. [#1544] (https://github.com/dotnet/SqlClient/pull/1544)
+- Updated Azure Identity version from 1.7.0 to 1.8.0. [#1921](https://github.com/dotnet/SqlClient/pull/1921)
+- Improved parsing buffered characters in `TdsParser`. [#1544](https://github.com/dotnet/SqlClient/pull/1544)
 - Removed reference to Microsoft.Win32.Registry since it's shipped starting with .NET 6.0. [#1974](https://github.com/dotnet/SqlClient/pull/1974)
-- Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848] (https://github.com/dotnet/SqlClient/pull/1848)
-- Code health improvements:[#1943] (https://github.com/dotnet/SqlClient/pull/1943)[#1949] (https://github.com/dotnet/SqlClient/pull/1949)[#1198] (https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
+- Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
+- Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
 
 ## [Stable release 5.1.1] - 2023-03-28
 
