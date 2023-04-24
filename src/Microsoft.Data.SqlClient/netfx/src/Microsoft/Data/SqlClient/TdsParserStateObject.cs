@@ -2390,9 +2390,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool OnTimeoutSync()
+        private bool OnTimeoutSync(bool asyncClose = false)
         {
-            return OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredSync);
+            return OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredSync, asyncClose);
         }
 
         /// <summary>
@@ -2401,8 +2401,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="expectedState">the state that is the expected current state, state will change only if this is correct</param>
         /// <param name="targetState">the state that will be changed to if the expected state is correct</param>
+        /// <param name="asyncClose">any close action to be taken by an async task to avoid deadlock.</param>
         /// <returns>boolean value indicating whether the call changed the timeout state</returns>
-        private bool OnTimeoutCore(int expectedState, int targetState)
+        private bool OnTimeoutCore(int expectedState, int targetState, bool asyncClose = false)
         {
             Debug.Assert(targetState == TimeoutState.ExpiredAsync || targetState == TimeoutState.ExpiredSync, "OnTimeoutCore must have an expiry state as the targetState");
 
@@ -2436,7 +2437,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             try
                             {
-                                SendAttention(mustTakeWriteLock: true);
+                                SendAttention(mustTakeWriteLock: true, asyncClose);
                             }
                             catch (Exception e)
                             {
@@ -2978,7 +2979,7 @@ namespace Microsoft.Data.SqlClient
                 // synchrnously and then call OnTimeoutSync to force an atomic change of state.
                 if (TimeoutHasExpired)
                 {
-                    OnTimeoutSync();
+                    OnTimeoutSync(asyncClose: true);
                 }
 
                 // try to change to the stopped state but only do so if currently in the running state
@@ -3464,7 +3465,7 @@ namespace Microsoft.Data.SqlClient
 
 #pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
 
-        private Task SNIWritePacket(SNIHandle handle, SNIPacket packet, out UInt32 sniError, bool canAccumulate, bool callerHasConnectionLock)
+        private Task SNIWritePacket(SNIHandle handle, SNIPacket packet, out UInt32 sniError, bool canAccumulate, bool callerHasConnectionLock, bool asyncClose = false)
         {
             // Check for a stored exception
             var delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
@@ -3555,7 +3556,7 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)error);
 
                             AddError(_parser.ProcessSNIError(this));
-                            ThrowExceptionAndWarning();
+                            ThrowExceptionAndWarning(false, asyncClose);
                         }
                         AssertValidState();
                         completion.SetResult(null);
@@ -3592,7 +3593,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)sniError);
                     AddError(_parser.ProcessSNIError(this));
-                    ThrowExceptionAndWarning(callerHasConnectionLock);
+                    ThrowExceptionAndWarning(callerHasConnectionLock, false);
                 }
                 AssertValidState();
             }
@@ -3602,7 +3603,7 @@ namespace Microsoft.Data.SqlClient
 #pragma warning restore 420 
 
         // Sends an attention signal - executing thread will consume attn.
-        internal void SendAttention(bool mustTakeWriteLock = false)
+        internal void SendAttention(bool mustTakeWriteLock = false, bool asyncClose = false)
         {
             if (!_attentionSent)
             {
@@ -3649,7 +3650,7 @@ namespace Microsoft.Data.SqlClient
 
                             UInt32 sniError;
                             _parser._asyncWrite = false; // stop async write 
-                            SNIWritePacket(Handle, attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
+                            SNIWritePacket(Handle, attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false, asyncClose);
                             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendAttention|{0}> Send Attention ASync.", "Info");
                         }
                         finally
