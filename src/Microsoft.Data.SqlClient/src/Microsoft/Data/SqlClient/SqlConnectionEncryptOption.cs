@@ -43,6 +43,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Parse/*' />
+
+        public static SqlConnectionEncryptOption Parse(bool value)
+        {
+            if (TryParse(value, out SqlConnectionEncryptOption result))
+            {
+                return result;
+            }
+            else
+            {
+                throw ADP.InvalidConnectionOptionValue(SqlConnectionString.KEY.Encrypt);
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/TryParse/*' />
         public static bool TryParse(string value, out SqlConnectionEncryptOption result)
         {
@@ -70,6 +84,21 @@ namespace Microsoft.Data.SqlClient
                 default:
                     result = null;
                     return false;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/TryParse/*' />
+
+        public static bool TryParse(bool value, out SqlConnectionEncryptOption result)
+        {
+            switch(value)
+            {
+                case true:
+                    result = Mandatory;
+                    return true;
+                        case false:
+                    result = Optional;
+                    return true;
             }
         }
 
