@@ -10,7 +10,7 @@
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
     <repository type="git" url="https://github.com/dotnet/sqlclient" />
-    <description>Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)
+    <description>The current data provider for SQL Server and Azure SQL databases. This has replaced System.Data.SqlClient. These classes provide access to SQL and encapsulate database-specific protocols, including tabular data stream (TDS).
     
 Commonly Used Types:
 Microsoft.Data.SqlClient.SqlConnection
@@ -61,7 +61,6 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.24.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
-        <dependency id="System.Diagnostics.DiagnosticSource" version="6.0.0" exclude="Compile" />
         <dependency id="System.Runtime.Caching" version="6.0.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="6.0.0" exclude="Compile" />
         <dependency id="System.Text.Encodings.Web" version="6.0.0" />
@@ -78,6 +77,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
         <dependency id="System.Buffers" version="4.5.1" />
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="6.0.0" exclude="Compile" />
         <dependency id="System.Runtime.Caching" version="6.0.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="6.0.0" exclude="Compile" />
         <dependency id="System.Text.Encodings.Web" version="6.0.0" />
@@ -94,6 +94,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="6.0.0" exclude="Compile" />
         <dependency id="System.Runtime.Caching" version="6.0.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="6.0.0" exclude="Compile" />
         <dependency id="System.Text.Encodings.Web" version="6.0.0" />
