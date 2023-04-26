@@ -26,7 +26,7 @@ Implicit conversions have been added to maintain backwards compatibility with bo
     </Parse>
     <TryParse>
       <summary>
-        Converts the specified string, boolean representation of a logical value to its <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> equivalent and returns a value that indicates whether the conversion succeeded.
+        Converts the specified string representation of a logical value to its <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> equivalent and returns a value that indicates whether the conversion succeeded.
       </summary>
       <param name="value">A string containing the value to convert.</param>
       <param name="result">
