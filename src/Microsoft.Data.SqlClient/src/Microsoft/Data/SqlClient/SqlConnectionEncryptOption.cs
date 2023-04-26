@@ -45,14 +45,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static SqlConnectionEncryptOption Parse(bool value)
         {
-            if (TryParse(value, out SqlConnectionEncryptOption result))
-            {
-                return result;
-            }
-            else
-            {
-                throw ADP.InvalidConnectionOptionValue(SqlConnectionString.KEY.Encrypt);
-            }
+            return value ? Mandatory : Optional;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/TryParse/*' />
@@ -82,19 +75,6 @@ namespace Microsoft.Data.SqlClient
                 default:
                     result = null;
                     return false;
-            }
-        }
-
-        internal static bool TryParse(bool value, out SqlConnectionEncryptOption result)
-        {
-            switch(value)
-            {
-                case true:
-                    result = Mandatory;
-                    return true;
-                        case false:
-                    result = Optional;
-                    return true;
             }
         }
 
