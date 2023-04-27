@@ -406,19 +406,12 @@ namespace Microsoft.Data.SqlClient.Tests
         public void EncryptParserValidValuesPropertyIndexerForEncryptionOption()
         {
             SqlConnectionStringBuilder builder = new();
-            try
-            {
-                builder["Encrypt"] = SqlConnectionEncryptOption.Strict;
-                CheckEncryptType(builder, SqlConnectionEncryptOption.Strict);
-                builder["Encrypt"] = SqlConnectionEncryptOption.Optional;
-                CheckEncryptType(builder, SqlConnectionEncryptOption.Optional);
-                builder["Encrypt"] = SqlConnectionEncryptOption.Mandatory;
-                CheckEncryptType(builder, SqlConnectionEncryptOption.Mandatory);
-            }
-            catch (SqlException ex)
-            {
-                Assert.Fail(ex.Message);
-            }
+            builder["Encrypt"] = SqlConnectionEncryptOption.Strict;
+            CheckEncryptType(builder, SqlConnectionEncryptOption.Strict);
+            builder["Encrypt"] = SqlConnectionEncryptOption.Optional;
+            CheckEncryptType(builder, SqlConnectionEncryptOption.Optional);
+            builder["Encrypt"] = SqlConnectionEncryptOption.Mandatory;
+            CheckEncryptType(builder, SqlConnectionEncryptOption.Mandatory);
         }
 
         [Theory]
@@ -438,22 +431,8 @@ namespace Microsoft.Data.SqlClient.Tests
         public void EncryptParserValidValuesPropertyIndexerForBoolean(bool value)
         {
             SqlConnectionStringBuilder builder = new();
-            try
-            {
-                builder["Encrypt"] = value;
-                if(value == true)
-                {
-                    CheckEncryptType(builder, SqlConnectionEncryptOption.Mandatory);
-                }
-                else
-                {
-                    CheckEncryptType(builder, SqlConnectionEncryptOption.Optional);
-                }
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.Message);
-            }
+            builder["Encrypt"] = value;
+            CheckEncryptType(builder, value ? SqlConnectionEncryptOption.Mandatory : SqlConnectionEncryptOption.Optional);
         }
 
         [Theory]
@@ -511,7 +490,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        internal void CheckEncryptType(SqlConnectionStringBuilder builder, SqlConnectionEncryptOption expectedValue)
+        internal static void CheckEncryptType(SqlConnectionStringBuilder builder, SqlConnectionEncryptOption expectedValue)
         {
             Assert.IsType<SqlConnectionEncryptOption>(builder.Encrypt);
             Assert.Equal(expectedValue, builder.Encrypt);
