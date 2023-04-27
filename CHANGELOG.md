@@ -479,6 +479,14 @@ This update brings the below changes over the previous release:
 
 - Modified column encryption key store provider registrations to give built-in system providers precedence over providers registered on connection and command instances. [#1101](https://github.com/dotnet/SqlClient/pull/1101)
 
+## [Stable Release 2.1.6] - 2023-04-27
+
+### Fixed
+
+- Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`.[#1986](https://github.com/dotnet/SqlClient/pull/1986)
+- Fixed Default UTF8 collation conflict. [#1989](https://github.com/dotnet/SqlClient/pull/1989)
+- Fixed async deadlock issue when sending attention fails due to network failure. [#1767](https://github.com/dotnet/SqlClient/pull/1767)
+
 ## [Stable Release 2.1.5] - 2022-08-30
 
 ### Fixed
