@@ -43,6 +43,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal static SqlConnectionEncryptOption Parse(bool value)
+        {
+            return value ? Mandatory : Optional;
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/TryParse/*' />
         public static bool TryParse(string value, out SqlConnectionEncryptOption result)
         {
