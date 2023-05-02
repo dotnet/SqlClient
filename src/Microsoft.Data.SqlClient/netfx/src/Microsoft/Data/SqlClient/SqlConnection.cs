@@ -742,9 +742,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        ///
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessTokenCallback/*' />
         public Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback
         {
             get { return _accessTokenCallback; }
