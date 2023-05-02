@@ -12,4 +12,4 @@ csharp_style_implicit_object_creation_when_type_is_apparent = false
 csharp_prefer_simple_using_statement = false
 
 # SYSLIB0039: Type or member is obsolete
-dotnet_diagnostic.SYSLIB0039.severity = none
+dotnet_diagnostic.SYSLIB0039.severity = suggestion
