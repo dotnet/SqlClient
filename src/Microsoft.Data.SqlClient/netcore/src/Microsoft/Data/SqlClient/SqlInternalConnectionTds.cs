@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient
         // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
-        internal readonly Func<AzureADTokenRequestContext,CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
+        internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
         private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
@@ -447,7 +447,7 @@ namespace Microsoft.Data.SqlClient
             bool applyTransientFaultHandling = false,
             string accessToken = null,
             DbConnectionPool pool = null,
-            Func<AzureADTokenRequestContext, CancellationToken,
+            Func<SqlAuthenticationParameters, CancellationToken,
             Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
 
         {
@@ -2470,7 +2470,7 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     cts.CancelAfter((int)_timeout.MillisecondsRemaining);
                                 }
-                                _fedAuthToken = Task.Run(async () => await _accessTokenCallback(new AzureADTokenRequestContext(parameters.Resource), cts.Token)).GetAwaiter().GetResult().ToSqlFedAuthToken();
+                                _fedAuthToken = Task.Run(async () => await _accessTokenCallback(parameters, cts.Token)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;

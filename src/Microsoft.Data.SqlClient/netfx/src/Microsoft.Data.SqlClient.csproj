@@ -89,9 +89,6 @@
   </ItemGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
   <ItemGroup>
-    <Compile Include="..\..\netcore\src\Microsoft\Data\SqlClient\AzureADTokenRequestContext.cs">
-      <Link>Microsoft\Data\SqlClient\AzureADTokenRequestContext.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
     </Compile>

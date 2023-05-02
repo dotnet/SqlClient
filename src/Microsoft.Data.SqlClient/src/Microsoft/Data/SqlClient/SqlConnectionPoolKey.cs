@@ -17,11 +17,11 @@ namespace Microsoft.Data.SqlClient
         private int _hashValue;
         private readonly SqlCredential _credential;
         private readonly string _accessToken;
-        private Func<AzureADTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+        private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         internal SqlCredential Credential => _credential;
         internal string AccessToken => _accessToken;
-        internal Func<AzureADTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback => _accessTokenCallback;
+        internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback => _accessTokenCallback;
 
         internal override string ConnectionString
         {
@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient
                             ServerCertificateValidationCallback serverCertificateValidationCallback,
                             ClientCertificateRetrievalCallback clientCertificateRetrievalCallback,
                             SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo,
-                            Func<AzureADTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionString)
+                            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionString)
         {
             Debug.Assert(_credential == null || _accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have the value at the same time.");
             _credential = credential;
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 #else
         #region NET Core
-        internal SqlConnectionPoolKey(string connectionString, SqlCredential credential, string accessToken, Func<AzureADTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionString)
+        internal SqlConnectionPoolKey(string connectionString, SqlCredential credential, string accessToken, Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionString)
         {
             Debug.Assert(credential == null || accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have the value at the same time.");
             _credential = credential;
