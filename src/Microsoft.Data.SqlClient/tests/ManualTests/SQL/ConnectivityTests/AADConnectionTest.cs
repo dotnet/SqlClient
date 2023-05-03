@@ -577,7 +577,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
        
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void AccessTokenCallbackDefaultMustPass()
+        public static void AccessTokenCallbackMustPass()
         {
             string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
@@ -588,6 +588,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 conn.AccessTokenCallback = (ctx, cancellationToken) =>
                 {
                     string scope = ctx.Resource.EndsWith(defaultScopeSuffix) ? ctx.Resource : ctx.Resource + defaultScopeSuffix;
+                    var token = cred.GetToken(new TokenRequestContext(new[] { scope }), cancellationToken);
+                    return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
+                };
+                conn.Open();
+            }
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void AccessTokenCallbackReceivesUsernameAndPassword()
+        {
+            var userId = "someuser";
+            var pwd = "somepassword";
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                 $"User ID={userId}; Password={pwd}";
+            var cred = new DefaultAzureCredential();
+            const string defaultScopeSuffix = "/.default";
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.AccessTokenCallback = (parms, cancellationToken) =>
+                {
+                    Assert.Equal(userId, parms.UserId);
+                    Assert.Equal(pwd, parms.Password);
+                    string scope = parms.Resource.EndsWith(defaultScopeSuffix) ? parms.Resource : parms.Resource + defaultScopeSuffix;
                     var token = cred.GetToken(new TokenRequestContext(new[] { scope }), cancellationToken);
                     return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
                 };

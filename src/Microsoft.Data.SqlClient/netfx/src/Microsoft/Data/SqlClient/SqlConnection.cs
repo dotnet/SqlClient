@@ -1264,11 +1264,6 @@ namespace Microsoft.Data.SqlClient
         //  This is to be used setter of ConnectionString and AccessTokenCallback properties
         private void CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(SqlConnectionString connectionOptions)
         {
-            if (UsesClearUserIdOrPassword(connectionOptions))
-            {
-                throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword();
-            }
-
             if (UsesIntegratedSecurity(connectionOptions))
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity();
