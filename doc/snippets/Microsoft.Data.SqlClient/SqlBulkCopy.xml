@@ -503,15 +503,37 @@ and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 				property.
 			</value>
 			<remarks>
-				<format type="text/markdown"><![CDATA[
+				<format type="text/markdown">
+  <![CDATA[
 
 ## Remarks
 This value is incremented during the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event and does not imply that this number of rows has been sent to the server or committed.
 
 This value can be accessed during or after the execution of a bulk copy operation.
+
+This value will wrap around and become negative if the number of rows exceeds int.MaxValue. Consider using the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.RowsCopied64> property.
 ]]></format>
 			</remarks>
 		</RowsCopied>
+    <RowsCopied64>
+      <summary>
+        The number of rows processed in the ongoing bulk copy operation.
+      </summary>
+      <value>
+        The long value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.RowsCopied64" /> property.
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+
+## Remarks
+This value is incremented during the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event and does not imply that this number of rows has been sent to the server or committed.
+
+This value can be accessed during or after the execution of a bulk copy operation.
+]]>
+        </format>
+      </remarks>
+    </RowsCopied64>
 		<System.IDisposable.Dispose>
 			<summary>
 				Releases all resources used by the current instance of the

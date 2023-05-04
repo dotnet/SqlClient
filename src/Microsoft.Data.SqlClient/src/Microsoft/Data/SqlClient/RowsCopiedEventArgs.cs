@@ -8,34 +8,19 @@ namespace Microsoft.Data.SqlClient
     public class SqlRowsCopiedEventArgs : System.EventArgs
     {
         private bool _abort;
-        private long _rowsCopied;
+        private readonly long _rowsCopied;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml' path='docs/members[@name="SqlRowsCopiedEventArgs"]/ctor/*' />
-        public SqlRowsCopiedEventArgs(long rowsCopied)
-        {
-            _rowsCopied = rowsCopied;
-        }
+        public SqlRowsCopiedEventArgs(long rowsCopied) => _rowsCopied = rowsCopied;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml' path='docs/members[@name="SqlRowsCopiedEventArgs"]/Abort/*' />
         public bool Abort
         {
-            get
-            {
-                return _abort;
-            }
-            set
-            {
-                _abort = value;
-            }
+            get => _abort;
+            set => _abort = value;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml' path='docs/members[@name="SqlRowsCopiedEventArgs"]/RowsCopied/*' />
-        public long RowsCopied
-        {
-            get
-            {
-                return _rowsCopied;
-            }
-        }
+        public long RowsCopied => unchecked((int)_rowsCopied);
     }
 }

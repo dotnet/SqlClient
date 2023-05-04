@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlBulkCopyOptions _copyOptions;
         private int _timeout = DefaultCommandTimeout;
         private string _destinationTableName;
-        private int _rowsCopied;
+        private long _rowsCopied;
         private int _notifyAfter;
         private int _rowsUntilNotification;
         private bool _insideRowsCopiedEvent;
@@ -222,8 +222,8 @@ namespace Microsoft.Data.SqlClient
         private TdsParserStateObject _stateObj;
         private List<_ColumnMapping> _sortedColumnMappings;
 
-        private static int _objectTypeCount; // EventSource Counter
-        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource Counter
+        internal readonly int _objectID = Interlocked.Increment(ref s_objectTypeCount);
 
         // Newly added member variables for Async modification, m = member variable to bcp.
         private int _savedBatchSize = 0; // Save the batchsize so that changes are not affected unexpectedly.
@@ -376,7 +376,10 @@ namespace Microsoft.Data.SqlClient
         internal int ObjectID => _objectID;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied/*'/>
-        public int RowsCopied => _rowsCopied;
+        public int RowsCopied => unchecked((int)_rowsCopied);
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied64/*'/>
+        public long RowsCopied64 => _rowsCopied;
 
         internal SqlStatistics Statistics
         {
