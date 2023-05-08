@@ -4,6 +4,7 @@
 
 using System.Net.Security;
 using System.Runtime.InteropServices;
+using Microsoft.Data;
 
 namespace System.Net
 {

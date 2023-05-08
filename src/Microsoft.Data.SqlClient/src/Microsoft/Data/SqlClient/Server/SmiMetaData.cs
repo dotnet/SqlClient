@@ -586,7 +586,7 @@ namespace Microsoft.Data.SqlClient.Server
             _clrType = null;
             _isMultiValued = false;
             _fieldMetaData = s_emptyFieldList;
-            _extendedProperties = SmiMetaDataPropertyCollection.EmptyInstance;
+            _extendedProperties = SmiMetaDataPropertyCollection.s_emptyInstance;
         }
 
         // static array of default-valued metadata ordered by corresponding SqlDbType.

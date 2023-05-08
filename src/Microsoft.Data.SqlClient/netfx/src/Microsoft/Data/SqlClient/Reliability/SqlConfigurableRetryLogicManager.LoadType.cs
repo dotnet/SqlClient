@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Resolved type if it could resolve the type; otherwise, the `SqlConfigurableRetryFactory` type.</returns>
         private static Type LoadType(string fullyQualifiedName)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(LoadType);
 
             var result = Type.GetType(fullyQualifiedName);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The '{2}' type is resolved."

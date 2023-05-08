@@ -19,7 +19,7 @@ namespace System {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Strings {
@@ -57,6 +57,15 @@ namespace System {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Connection timed out while retrieving an access token using &apos;{0}&apos; authentication method. Last error: {1}: {2}.
+        /// </summary>
+        internal static string AAD_Token_Retrieving_Timeout {
+            get {
+                return ResourceManager.GetString("AAD_Token_Retrieving_Timeout", resourceCulture);
             }
         }
         
@@ -331,7 +340,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The value&apos;s length for key &apos;{0}&apos; exceeds it&apos;s limit of &apos;{1}&apos;..
+        ///   Looks up a localized string similar to The value&apos;s length for key &apos;{0}&apos; exceeds its limit of &apos;{1}&apos;..
         /// </summary>
         internal static string ADP_InvalidConnectionOptionValueLength {
             get {
@@ -941,7 +950,7 @@ namespace System {
                 return ResourceManager.GetString("Data_InvalidOffsetLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services..
         /// </summary>
@@ -1416,15 +1425,6 @@ namespace System {
         internal static string NullSchemaTableDataTypeNotSupported {
             get {
                 return ResourceManager.GetString("NullSchemaTableDataTypeNotSupported", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Microsoft.Data.SqlClient is not supported on this platform..
-        /// </summary>
-        internal static string PlatformNotSupported_DataSqlClient {
-            get {
-                return ResourceManager.GetString("PlatformNotSupported_DataSqlClient", resourceCulture);
             }
         }
         
@@ -1911,6 +1911,15 @@ namespace System {
         internal static string SNI_ERROR_9 {
             get {
                 return ResourceManager.GetString("SNI_ERROR_9", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Incorrect physicalConnection type.
+        /// </summary>
+        internal static string SNI_IncorrectPhysicalConnectionType {
+            get {
+                return ResourceManager.GetString("SNI_IncorrectPhysicalConnectionType", resourceCulture);
             }
         }
         
@@ -2797,15 +2806,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
-        /// </summary>
-        internal static string SQL_NonInteractiveWithPassword {
-            get {
-                return ResourceManager.GetString("SQL_NonInteractiveWithPassword", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The connection does not support MultipleActiveResultSets..
         /// </summary>
         internal static string SQL_MarsUnsupportedOnConnection {
@@ -2833,7 +2833,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error code 0x{0}; state {1}.
+        ///   Looks up a localized string similar to Error code 0x{0}.
         /// </summary>
         internal static string SQL_MSALInnerException {
             get {
@@ -2865,6 +2865,15 @@ namespace System {
         internal static string SQL_NonCharColumn {
             get {
                 return ResourceManager.GetString("SQL_NonCharColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_NonInteractiveWithPassword {
+            get {
+                return ResourceManager.GetString("SQL_NonInteractiveWithPassword", resourceCulture);
             }
         }
         
@@ -3234,6 +3243,15 @@ namespace System {
         internal static string SQL_StreamWriteNotSupported {
             get {
                 return ResourceManager.GetString("SQL_StreamWriteNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Encrypt=Strict is not supported when targeting .NET Standard 2.0. Use .NET Standard 2.1, .NET Framework, or .NET..
+        /// </summary>
+        internal static string SQL_TDS8_NotSupported_Netstandard2_0 {
+            get {
+                return ResourceManager.GetString("SQL_TDS8_NotSupported_Netstandard2.0", resourceCulture);
             }
         }
         
@@ -4451,12 +4469,15 @@ namespace System {
                 return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        ///   Looks up a localized string similar to Specifies an IP address preference when connecting to SQL instances.
+        ///   Looks up a localized string similar to Specifies an IP address preference when connecting to SQL instances..
         /// </summary>
-        internal static string TCE_DbConnectionString_IPAddressPreference
-            => ResourceManager.GetString("TCE_DbConnectionString_IPAddressPreference", resourceCulture);
+        internal static string TCE_DbConnectionString_IPAddressPreference {
+            get {
+                return ResourceManager.GetString("TCE_DbConnectionString_IPAddressPreference", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Decryption failed. The last 10 bytes of the encrypted column encryption key are: &apos;{0}&apos;. The first 10 bytes of ciphertext are: &apos;{1}&apos;..
@@ -4981,7 +5002,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The column encryption key has been successfully decrypted but it&apos;s length: {1} does not match the length: {2} for algorithm &apos;{0}&apos;. Verify the encrypted value of the column encryption key in the database..
+        ///   Looks up a localized string similar to The column encryption key has been successfully decrypted but its length: {1} does not match the length: {2} for algorithm &apos;{0}&apos;. Verify the encrypted value of the column encryption key in the database..
         /// </summary>
         internal static string TCE_InvalidKeySize {
             get {

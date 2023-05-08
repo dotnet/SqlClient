@@ -298,197 +298,6 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlCollation
-    {
-        // First 20 bits of info field represent the lcid, bits 21-25 are compare options
-        private const uint IgnoreCase = 1 << 20; // bit 21 - IgnoreCase
-        private const uint IgnoreNonSpace = 1 << 21; // bit 22 - IgnoreNonSpace / IgnoreAccent
-        private const uint IgnoreWidth = 1 << 22; // bit 23 - IgnoreWidth
-        private const uint IgnoreKanaType = 1 << 23; // bit 24 - IgnoreKanaType
-        private const uint BinarySort = 1 << 24; // bit 25 - BinarySort
-
-        internal const uint MaskLcid = 0xfffff;
-        private const int LcidVersionBitOffset = 28;
-        private const uint MaskLcidVersion = unchecked((uint)(0xf << LcidVersionBitOffset));
-        private const uint MaskCompareOpt = IgnoreCase | IgnoreNonSpace | IgnoreWidth | IgnoreKanaType | BinarySort;
-
-        internal uint info;
-        internal byte sortId;
-
-        static int FirstSupportedCollationVersion(int lcid)
-        {
-            // NOTE: switch-case works ~3 times faster in this case than search with Dictionary
-            switch (lcid)
-            {
-                case 1044:
-                    return 2; // Norwegian_100_BIN
-                case 1047:
-                    return 2; // Romansh_100_BIN
-                case 1056:
-                    return 2; // Urdu_100_BIN
-                case 1065:
-                    return 2; // Persian_100_BIN
-                case 1068:
-                    return 2; // Azeri_Latin_100_BIN
-                case 1070:
-                    return 2; // Upper_Sorbian_100_BIN
-                case 1071:
-                    return 1; // Macedonian_FYROM_90_BIN
-                case 1081:
-                    return 1; // Indic_General_90_BIN
-                case 1082:
-                    return 2; // Maltese_100_BIN
-                case 1083:
-                    return 2; // Sami_Norway_100_BIN
-                case 1087:
-                    return 1; // Kazakh_90_BIN
-                case 1090:
-                    return 2; // Turkmen_100_BIN
-                case 1091:
-                    return 1; // Uzbek_Latin_90_BIN
-                case 1092:
-                    return 1; // Tatar_90_BIN
-                case 1093:
-                    return 2; // Bengali_100_BIN
-                case 1101:
-                    return 2; // Assamese_100_BIN
-                case 1105:
-                    return 2; // Tibetan_100_BIN
-                case 1106:
-                    return 2; // Welsh_100_BIN
-                case 1107:
-                    return 2; // Khmer_100_BIN
-                case 1108:
-                    return 2; // Lao_100_BIN
-                case 1114:
-                    return 1; // Syriac_90_BIN
-                case 1121:
-                    return 2; // Nepali_100_BIN
-                case 1122:
-                    return 2; // Frisian_100_BIN
-                case 1123:
-                    return 2; // Pashto_100_BIN
-                case 1125:
-                    return 1; // Divehi_90_BIN
-                case 1133:
-                    return 2; // Bashkir_100_BIN
-                case 1146:
-                    return 2; // Mapudungan_100_BIN
-                case 1148:
-                    return 2; // Mohawk_100_BIN
-                case 1150:
-                    return 2; // Breton_100_BIN
-                case 1152:
-                    return 2; // Uighur_100_BIN
-                case 1153:
-                    return 2; // Maori_100_BIN
-                case 1155:
-                    return 2; // Corsican_100_BIN
-                case 1157:
-                    return 2; // Yakut_100_BIN
-                case 1164:
-                    return 2; // Dari_100_BIN
-                case 2074:
-                    return 2; // Serbian_Latin_100_BIN
-                case 2092:
-                    return 2; // Azeri_Cyrillic_100_BIN
-                case 2107:
-                    return 2; // Sami_Sweden_Finland_100_BIN
-                case 2143:
-                    return 2; // Tamazight_100_BIN
-                case 3076:
-                    return 1; // Chinese_Hong_Kong_Stroke_90_BIN
-                case 3098:
-                    return 2; // Serbian_Cyrillic_100_BIN
-                case 5124:
-                    return 2; // Chinese_Traditional_Pinyin_100_BIN
-                case 5146:
-                    return 2; // Bosnian_Latin_100_BIN
-                case 8218:
-                    return 2; // Bosnian_Cyrillic_100_BIN
-
-                default:
-                    return 0;   // other LCIDs have collation with version 0
-            }
-        }
-
-        internal int LCID
-        {
-            // First 20 bits of info field represent the lcid
-            get
-            {
-                return unchecked((int)(info & MaskLcid));
-            }
-            set
-            {
-                int lcid = value & (int)MaskLcid;
-                Debug.Assert(lcid == value, "invalid set_LCID value");
-
-                // VSTFDEVDIV 479474: some new Katmai LCIDs do not have collation with version = 0
-                // since user has no way to specify collation version, we set the first (minimal) supported version for these collations
-                int versionBits = FirstSupportedCollationVersion(lcid) << LcidVersionBitOffset;
-                Debug.Assert((versionBits & MaskLcidVersion) == versionBits, "invalid version returned by FirstSupportedCollationVersion");
-
-                // combine the current compare options with the new locale ID and its first supported version
-                info = (info & MaskCompareOpt) | unchecked((uint)lcid) | unchecked((uint)versionBits);
-            }
-        }
-
-        internal SqlCompareOptions SqlCompareOptions
-        {
-            get
-            {
-                SqlCompareOptions options = SqlCompareOptions.None;
-                if (0 != (info & IgnoreCase))
-                    options |= SqlCompareOptions.IgnoreCase;
-                if (0 != (info & IgnoreNonSpace))
-                    options |= SqlCompareOptions.IgnoreNonSpace;
-                if (0 != (info & IgnoreWidth))
-                    options |= SqlCompareOptions.IgnoreWidth;
-                if (0 != (info & IgnoreKanaType))
-                    options |= SqlCompareOptions.IgnoreKanaType;
-                if (0 != (info & BinarySort))
-                    options |= SqlCompareOptions.BinarySort;
-                return options;
-            }
-            set
-            {
-                Debug.Assert((value & SqlTypeWorkarounds.SqlStringValidSqlCompareOptionMask) == value, "invalid set_SqlCompareOptions value");
-                uint tmp = 0;
-                if (0 != (value & SqlCompareOptions.IgnoreCase))
-                    tmp |= IgnoreCase;
-                if (0 != (value & SqlCompareOptions.IgnoreNonSpace))
-                    tmp |= IgnoreNonSpace;
-                if (0 != (value & SqlCompareOptions.IgnoreWidth))
-                    tmp |= IgnoreWidth;
-                if (0 != (value & SqlCompareOptions.IgnoreKanaType))
-                    tmp |= IgnoreKanaType;
-                if (0 != (value & SqlCompareOptions.BinarySort))
-                    tmp |= BinarySort;
-                info = (info & MaskLcid) | tmp;
-            }
-        }
-
-        internal string TraceString()
-        {
-            return String.Format(/*IFormatProvider*/ null, "(LCID={0}, Opts={1})", this.LCID, (int)this.SqlCompareOptions);
-        }
-
-        static internal bool AreSame(SqlCollation a, SqlCollation b)
-        {
-            if (a == null || b == null)
-            {
-                return a == b;
-            }
-            else
-            {
-                return a.info == b.info && a.sortId == b.sortId;
-            }
-
-        }
-
-    }
-
     internal class RoutingInfo
     {
         internal byte Protocol { get; private set; }
@@ -501,23 +310,6 @@ namespace Microsoft.Data.SqlClient
             Port = port;
             ServerName = servername;
         }
-    }
-
-    sealed internal class SqlEnvChange
-    {
-        internal byte type;
-        internal byte oldLength;
-        internal int newLength; // 7206 TDS changes makes this length an int
-        internal int length;
-        internal string newValue;
-        internal string oldValue;
-        internal byte[] newBinValue;
-        internal byte[] oldBinValue;
-        internal long newLongValue;
-        internal long oldLongValue;
-        internal SqlCollation newCollation;
-        internal SqlCollation oldCollation;
-        internal RoutingInfo newRoutingInfo;
     }
 
     sealed internal class SqlLogin
@@ -688,7 +480,7 @@ namespace Microsoft.Data.SqlClient
             flags = value ? flags | flag : flags & ~flag;
         }
 
-        internal bool IsNewKatmaiDateTimeType
+        internal bool Is2008DateTimeType
         {
             get
             {
@@ -719,43 +511,55 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class _SqlMetaDataSet : ICloneable
+    sealed internal class _SqlMetaDataSet 
     {
         internal ushort id;             // for altrow-columns only
-        internal int[] indexMap;
-        internal int visibleColumns;
-        internal DataTable schemaTable;
+        internal DataTable _schemaTable;
         internal readonly SqlTceCipherInfoTable cekTable; // table of "column encryption keys" used for this metadataset
-        internal readonly _SqlMetaData[] metaDataArray;
+        internal readonly _SqlMetaData[] _metaDataArray;
+        private int _hiddenColumnCount;
+        private int[] _visibleColumnMap;
 
         internal _SqlMetaDataSet(int count, SqlTceCipherInfoTable cipherTable)
         {
+            _hiddenColumnCount = -1;
             cekTable = cipherTable;
-            metaDataArray = new _SqlMetaData[count];
-            for (int i = 0; i < metaDataArray.Length; ++i)
+            _metaDataArray = new _SqlMetaData[count];
+            for (int i = 0; i < _metaDataArray.Length; ++i)
             {
-                metaDataArray[i] = new _SqlMetaData(i);
+                _metaDataArray[i] = new _SqlMetaData(i);
             }
         }
 
         private _SqlMetaDataSet(_SqlMetaDataSet original)
         {
-            this.id = original.id;
-            // although indexMap is not immutable, in practice it is initialized once and then passed around
-            this.indexMap = original.indexMap;
-            this.visibleColumns = original.visibleColumns;
-            this.schemaTable = original.schemaTable;
-            if (original.metaDataArray == null)
+            id = original.id;
+            _hiddenColumnCount = original._hiddenColumnCount;
+            _visibleColumnMap = original._visibleColumnMap;
+            _schemaTable = original._schemaTable;
+            if (original._metaDataArray == null)
             {
-                metaDataArray = null;
+                _metaDataArray = null;
             }
             else
             {
-                metaDataArray = new _SqlMetaData[original.metaDataArray.Length];
-                for (int idx = 0; idx < metaDataArray.Length; idx++)
+                _metaDataArray = new _SqlMetaData[original._metaDataArray.Length];
+                for (int idx = 0; idx < _metaDataArray.Length; idx++)
                 {
-                    metaDataArray[idx] = (_SqlMetaData)original.metaDataArray[idx].Clone();
+                    _metaDataArray[idx] = (_SqlMetaData)original._metaDataArray[idx].Clone();
                 }
+            }
+        }
+
+        internal int VisibleColumnCount
+        {
+            get
+            {
+                if (_hiddenColumnCount == -1)
+                {
+                    SetupHiddenColumns();
+                }
+                return Length - _hiddenColumnCount;
             }
         }
 
@@ -763,7 +567,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return metaDataArray.Length;
+                return _metaDataArray.Length;
             }
         }
 
@@ -771,20 +575,65 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return metaDataArray[index];
+                return _metaDataArray[index];
             }
             set
             {
                 Debug.Assert(null == value, "used only by SqlBulkCopy");
-                metaDataArray[index] = value;
+                _metaDataArray[index] = value;
             }
         }
 
-        public object Clone()
+        public int GetVisibleColumnIndex(int index)
+        {
+            if (_hiddenColumnCount == -1)
+            {
+                SetupHiddenColumns();
+            }
+            if (_visibleColumnMap is null)
+            {
+                return index;
+            }
+            else
+            {
+                return _visibleColumnMap[index];
+            }
+        }
+
+        public _SqlMetaDataSet Clone()
         {
             return new _SqlMetaDataSet(this);
         }
+
+        private void SetupHiddenColumns()
+        {
+            int hiddenColumnCount = 0;
+            for (int index = 0; index < Length; index++)
+            {
+                if (_metaDataArray[index].IsHidden)
+                {
+                    hiddenColumnCount += 1;
+                }
+            }
+
+            if (hiddenColumnCount > 0)
+            {
+                int[] visibleColumnMap = new int[Length - hiddenColumnCount];
+                int mapIndex = 0;
+                for (int metaDataIndex = 0; metaDataIndex < Length; metaDataIndex++)
+                {
+                    if (!_metaDataArray[metaDataIndex].IsHidden)
+                    {
+                        visibleColumnMap[mapIndex] = metaDataIndex;
+                        mapIndex += 1;
+                    }
+                }
+                _visibleColumnMap = visibleColumnMap;
+            }
+            _hiddenColumnCount = hiddenColumnCount;
+        }
     }
+
 
     sealed internal class _SqlMetaDataSetCollection : ICloneable
     {
@@ -830,10 +679,10 @@ namespace Microsoft.Data.SqlClient
         public object Clone()
         {
             _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection();
-            result.metaDataSet = metaDataSet == null ? null : (_SqlMetaDataSet)metaDataSet.Clone();
+            result.metaDataSet = metaDataSet == null ? null : metaDataSet.Clone();
             foreach (_SqlMetaDataSet set in altMetaDataSetArray)
             {
-                result.altMetaDataSetArray.Add((_SqlMetaDataSet)set.Clone());
+                result.altMetaDataSetArray.Add(set.Clone());
             }
             return result;
         }
@@ -1309,11 +1158,16 @@ namespace Microsoft.Data.SqlClient
     sealed internal class _SqlRPC
     {
         internal string rpcName;
-        internal string databaseName; // Used for UDTs
         internal ushort ProcID;       // Used instead of name
         internal ushort options;
-        internal SqlParameter[] parameters;
-        internal byte[] paramoptions;
+
+        internal SqlParameter[] systemParams;
+        internal byte[] systemParamOptions;
+        internal int systemParamCount;
+
+        internal SqlParameterCollection userParams;
+        internal long[] userParamMap;
+        internal int userParamCount;
 
         internal int? recordsAffected;
         internal int cumulativeRecordsAffected;
@@ -1326,24 +1180,43 @@ namespace Microsoft.Data.SqlClient
         internal int warningsIndexEnd;
         internal SqlErrorCollection warnings;
         internal bool needsFetchParameterEncryptionMetadata;
+
         internal string GetCommandTextOrRpcName()
         {
             if (TdsEnums.RPC_PROCID_EXECUTESQL == ProcID)
             {
                 // Param 0 is the actual sql executing
-                return (string)parameters[0].Value;
+                return (string)systemParams[0].Value;
             }
             else
             {
                 return rpcName;
             }
         }
+
+        internal SqlParameter GetParameterByIndex(int index, out byte options)
+        {
+            SqlParameter retval;
+            if (index < systemParamCount)
+            {
+                retval = systemParams[index];
+                options = systemParamOptions[index];
+            }
+            else
+            {
+                long data = userParamMap[index - systemParamCount];
+                int paramIndex = (int)(data & int.MaxValue);
+                options = (byte)((data >> 32) & 0xFF);
+                retval = userParams[paramIndex];
+            }
+            return retval;
+        }
     }
 
     sealed internal class SqlReturnValue : SqlMetaDataPriv
     {
 
-        internal ushort parmIndex;      //Yukon or later only
+        internal ushort parmIndex;      //2005 or later only
         internal string parameter;
         internal readonly SqlBuffer value;
 

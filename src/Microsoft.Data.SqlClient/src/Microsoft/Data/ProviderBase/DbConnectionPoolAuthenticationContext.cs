@@ -102,7 +102,9 @@ namespace Microsoft.Data.ProviderBase
         /// <summary>
         /// Release the lock which was obtained through LockToUpdate.
         /// </summary>
+#if !NET6_0_OR_GREATER
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+#endif
         internal void ReleaseLockToUpdate()
         {
             int oldValue = Interlocked.CompareExchange(ref _isUpdateInProgress, STATUS_UNLOCKED, STATUS_LOCKED);

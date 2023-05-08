@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             if (stateObject == null)
                 throw new ArgumentNullException(nameof(stateObject));
             if (!s_tdsParserStateObjectManaged.IsInstanceOfType(stateObject))
-                throw new ArgumentException("Object provided was not a DbConnectionInternal", "internalConnection");
+                throw new ArgumentException("Object provided was not a TdsParserStateObjectManaged", nameof(stateObject));
         }
 
         internal static object GetSessionHandle(object stateObject)

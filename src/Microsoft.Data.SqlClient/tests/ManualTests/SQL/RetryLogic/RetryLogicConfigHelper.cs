@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private const string SqlRetryLogicTypeName = "Microsoft.Data.SqlClient.SqlRetryLogic";
 
-        public const string DefaultTansientErrors = "1204, 1205, 1222, 49918, 49919, 49920, 4060, 4221, 40143, 40613, 40501, 40540, 40197, 10929, 10928, 10060, 10054, 10053, 997, 233, 64, 20, 0, -2, 207, 102, 2812";
+        public const string DefaultTransientErrors = "1204, 1205, 1222, 49918, 49919, 49920, 4060, 4221, 40143, 40613, 40501, 40540, 40197, 42108, 42109, 10929, 10928, 10060, 10054, 10053, 997, 233, 64, 20, 0, -2, 207, 102, 2812";
 
         private static readonly Random s_random = new Random();
 
@@ -91,13 +91,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static SqlRetryLogicBaseProvider GetCommandProvider(object loader)
             => GetValue<SqlRetryLogicBaseProvider>(loader, s_configurationLoaderType, "CommandProvider");
 
-        public static void AssessProvider(SqlRetryLogicBaseProvider provider, RetryLogicConfigs option, bool switchValue)
-        {
-            AssessRetryLogic(provider.RetryLogic, option);
-
-            AppContext.TryGetSwitch(RetryLogicTestHelper.RetryAppContextSwitch, out bool value);
-            Assert.Equal(switchValue, value);
-        }
+        public static void AssessProvider(SqlRetryLogicBaseProvider provider, RetryLogicConfigs option) 
+            => AssessRetryLogic(provider.RetryLogic, option);
 
         public static void AssessRetryLogic(SqlRetryLogicBase retryLogic, RetryLogicConfigs option)
         {
@@ -142,16 +137,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static object ReturnLoaderAndProviders(RetryLogicConfigs cnnCfg, RetryLogicConfigs cmdCfg, bool switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider)
+        public static object ReturnLoaderAndProviders(RetryLogicConfigs cnnCfg, RetryLogicConfigs cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider)
         {
-            ApplyContextSwitchByManager(RetryLogicTestHelper.RetryAppContextSwitch, switchValue);
             var loaderObj = CreateLoader(cnnCfg, cmdCfg);
             cnnProvider = GetConnectionProvider(loaderObj);
             cmdProvider = GetCommandProvider(loaderObj);
             return loaderObj;
         }
 
-        public static RetryLogicConfigs CreateRandomConfig(string method, string authorizedSqlCondition = null, string transientErrors = DefaultTansientErrors)
+        public static RetryLogicConfigs CreateRandomConfig(string method, string authorizedSqlCondition = null, string transientErrors = DefaultTransientErrors)
         {
             TimeSpan start = TimeSpan.Zero;
             TimeSpan end = TimeSpan.FromSeconds(60);

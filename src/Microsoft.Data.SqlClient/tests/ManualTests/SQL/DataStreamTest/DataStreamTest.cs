@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Data;
 using System.Data.SqlTypes;
 using System.IO;
@@ -43,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int packetSize = 514; // force small packet size so we can quickly check multi packet reads
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             builder.PacketSize = 514;
             string connectionString = builder.ToString();
 
@@ -51,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             byte[] outputData = null;
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("data");
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new(connectionString))
             {
                 await connection.OpenAsync();
 
@@ -59,23 +60,45 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     inputData = CreateBinaryTable(connection, tableName, packetSize);
 
-                    using (SqlCommand command = new SqlCommand($"SELECT foo FROM {tableName}", connection))
-                    using (SqlDataReader reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess))
-                    {
-                        await reader.ReadAsync();
+                    using SqlCommand command = new($"SELECT foo FROM {tableName}", connection);
+                    using SqlDataReader reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess);
+                    await reader.ReadAsync();
 
-                        using (Stream stream = reader.GetStream(0))
-                        using (CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
-                        using (MemoryStream memory = new MemoryStream(16 * 1024))
-                        {
-                            await stream.CopyToAsync(memory, 37, cancellationTokenSource.Token); // prime number sized buffer to cause many cross packet partial reads
-                            outputData = memory.ToArray();
-                        }
-                    }
+                    using Stream stream = reader.GetStream(0);
+                    using CancellationTokenSource cancellationTokenSource = new(TimeSpan.FromSeconds(60));
+                    using MemoryStream memory = new(16 * 1024);
+
+                    // prime number sized buffer to cause many cross packet partial reads
+                    await LocalCopyTo(stream, memory, 37, cancellationTokenSource.Token);
+                    outputData = memory.ToArray();
                 }
                 finally
                 {
                     DataTestUtility.DropTable(connection, tableName);
+                }
+            }
+
+            static async Task LocalCopyTo(Stream source, Stream destination, int bufferSize, CancellationToken cancellationToken)
+            {
+                byte[] buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
+                try
+                {
+                    int bytesRead;
+#if NETFRAMEWORK
+                    while ((bytesRead = await source.ReadAsync(buffer, 0, bufferSize, cancellationToken).ConfigureAwait(false)) != 0)
+                    {
+                        await destination.WriteAsync(buffer, 0, bytesRead, cancellationToken).ConfigureAwait(false);
+                    }
+#else
+                    while ((bytesRead = await source.ReadAsync(new Memory<byte>(buffer,0, bufferSize), cancellationToken).ConfigureAwait(false)) != 0)
+                    {
+                        await destination.WriteAsync(new ReadOnlyMemory<byte>(buffer, 0, bytesRead), cancellationToken).ConfigureAwait(false);
+                    }
+#endif 
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(buffer);
                 }
             }
 
@@ -107,7 +130,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             while (position < data.Length)
             {
                 int copyCount = Math.Min(pattern.Length, data.Length - position);
-                Array.Copy(pattern, 0, data, position, copyCount);
+                Buffer.BlockCopy(pattern, 0, data, position, copyCount);
                 position += copyCount;
             }
 
@@ -1532,8 +1555,15 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => stream.Read(null, 0, 1));
                             DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => stream.Read(buffer, -1, 2));
                             DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => stream.Read(buffer, 2, -1));
-                            DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => stream.Read(buffer, buffer.Length, buffer.Length));
-                            DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => stream.Read(buffer, int.MaxValue, int.MaxValue));
+
+                            // Prior to net6 comment:ArgumentException is thrown in net5 and earlier. ArgumentOutOfRangeException in net6 and later
+                            // After adding net6: Running tests against netstandard2.1 still showing ArgumentException, but the rest works fine.
+                            ArgumentException ex = Assert.ThrowsAny<ArgumentException>(() => stream.Read(buffer, buffer.Length, buffer.Length));
+                            Assert.True(ex.GetType() == typeof(ArgumentException) || ex.GetType() == typeof(ArgumentOutOfRangeException),
+                                      "Expected: ArgumentException in net5 and earlier. ArgumentOutOfRangeException in net6 and later.");
+                            ex = Assert.ThrowsAny<ArgumentException>(() => stream.Read(buffer, int.MaxValue, int.MaxValue));
+                            Assert.True(ex.GetType() == typeof(ArgumentException) || ex.GetType() == typeof(ArgumentOutOfRangeException),
+                                      "Expected: ArgumentException in net5 and earlier. ArgumentOutOfRangeException in net6 and later.");
                         }
 
                         // Once Reader is closed

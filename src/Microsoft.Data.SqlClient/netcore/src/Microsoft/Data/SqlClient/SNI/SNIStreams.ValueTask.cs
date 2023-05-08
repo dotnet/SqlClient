@@ -22,6 +22,11 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 return await base.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
             }
+            catch (Exception e)
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                throw;
+            }
             finally
             {
                 _readAsyncSemaphore.Release();
@@ -39,6 +44,11 @@ namespace Microsoft.Data.SqlClient.SNI
             try
             {
                 await base.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                throw;
             }
             finally
             {
@@ -61,6 +71,11 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 return await base.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
             }
+            catch (Exception e)
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                throw;
+            }
             finally
             {
                 _readAsyncSemaphore.Release();
@@ -79,6 +94,11 @@ namespace Microsoft.Data.SqlClient.SNI
             try
             {
                 await base.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                throw;
             }
             finally
             {

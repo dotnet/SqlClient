@@ -1,9 +1,9 @@
-call :pauseOnError msbuild /p:configuration=Release /t:clean
-call :pauseOnError msbuild /p:configuration=Release /t:BuildAllConfigurations
-call :pauseOnError msbuild /p:configuration=Release /t:BuildAKVNetFx
-call :pauseOnError msbuild /p:configuration=Release /t:BuildAKVNetCoreAllOS
-call :pauseOnError msbuild /p:configuration=Release /t:BuildAKVNetStAllOS
-call :pauseOnError msbuild /p:configuration=Release /t:GenerateAKVProviderNugetPackage
+call :pauseOnError msbuild -p:configuration=Release -t:clean
+call :pauseOnError msbuild -p:configuration=Release -t:BuildAllConfigurations
+call :pauseOnError msbuild -p:configuration=Release -t:BuildAKVNetFx
+call :pauseOnError msbuild -p:configuration=Release -t:BuildAKVNetCoreAllOS
+call :pauseOnError msbuild -p:configuration=Release -t:BuildAKVNetStAllOS
+call :pauseOnError msbuild -p:configuration=Release -t:GenerateAKVProviderNugetPackage
 
 goto :eof
 

@@ -349,7 +349,7 @@ namespace Microsoft.SqlServer.TDS
                 if (packetDataToWrite > 0)
                 {
                     // Append new data to the end of the packet data
-                    Array.Copy(buffer, bufferWrittenPosition + offset, _outgoingPacket, OutgoingPacketHeader.Length, packetDataToWrite);
+                    Buffer.BlockCopy(buffer, bufferWrittenPosition + offset, _outgoingPacket, OutgoingPacketHeader.Length, packetDataToWrite);
 
                     // Register that we've written new data
                     bufferWrittenPosition += packetDataToWrite;

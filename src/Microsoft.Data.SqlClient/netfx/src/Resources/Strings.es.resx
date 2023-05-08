@@ -1783,7 +1783,7 @@
     <value>Para poder utilizar la clave '{0}', debe estar presente la clave '{1}'.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>La longitud del valor para la clave '{0}' supera su límite de '{1}'.</value>
+    <value>La longitud del valor para la clave '{0}' supera el límite '{1}'.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Palabra clave no admitida: '{0}'.</value>
@@ -2493,8 +2493,8 @@
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>No se puede usar 'Authentication' con 'Integrated Security'.</value>
   </data>
-  <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
-    <value>No se puede usar "Authentication=Active Directory Integrated" con las palabras clave de cadena de conexión "User ID", "UID", "Password" ni "PWD".</value>
+  <data name="SQL_IntegratedWithPassword" xml:space="preserve">
+    <value>No se puede usar "Authentication=Active Directory Integrated" con las palabras clave de cadena de conexión "Password" o "PWD".</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>No se puede usar "Authentication=Active Directory Interactive" con las palabras clave de cadena de conexión "Password" ni "PWD".</value>
@@ -2563,7 +2563,7 @@
     <value>Error al autenticar el usuario {0} en Active Directory (Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Código de error 0x{0}; estado{1}</value>
+    <value>Código de error 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword requiere SQL Server 9.0 o posterior.</value>
@@ -2872,7 +2872,7 @@
     <value>Las transacciones globales no están habilitadas para esta base de datos SQL de Azure. Para obtener ayuda, póngase en contacto con el soporte técnico de Azure SQL Database.</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>El archivo System.Transactions.dll cargado actualmente no es compatible con las transacciones globales. Actualice a .NET Framework 4.6.1 o posterior.</value>
+    <value>El archivo System.Transactions.dll cargado actualmente no es compatible con las transacciones globales. Actualice a .NET Framework 4.6.2 o posterior.</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>La conexión de contexto no admite la actualización de procesamiento por lotes.</value>
@@ -3224,6 +3224,12 @@
   </data>
   <data name="DbConnectionString_Encrypt" xml:space="preserve">
     <value>Cuando el valor es true, SQL Server utiliza cifrado SSL para todos los datos enviados entre el cliente y el servidor, cuando el servidor tiene instalado un certificado.</value>
+  </data>
+  <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
+    <value>Nombre de host que se espera en el certificado del servidor cuando se negocia el cifrado, si es diferente del valor predeterminado derivado de Dir./Dirección/Servidor.</value>
+  </data>
+  <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
+    <value>Ruta de acceso a un archivo de certificado que debe coincidir con el certificado TLS/SSL de SQL Server.</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Las sesiones de un entorno de Component Services (o MTS, si utiliza Microsoft Windows NT) deben darse de alta automáticamente en una transacción global cuando sea necesario.</value>
@@ -3922,19 +3928,19 @@
     <value>No se puede ubicar la instalación de Local Database Runtime. Compruebe que SQL Server Express se ha instalado correctamente y que se ha habilitado la característica de tiempo de ejecución de la base de datos local.</value>
   </data>
   <data name="SNI_ERROR_53" xml:space="preserve">
-    <value>La configuración del Registro de Local Database Runtime no es válida. Compruebe que SQL Server Express se ha instalado correctamente.</value>
+    <value>La configuración del registro de Local Database Runtime no es válida. Compruebe que SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="SNI_ERROR_54" xml:space="preserve">
-    <value>No se puede encontrar la entrada del Registro para la ruta del archivo SQLUserInstance.dll.Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
+    <value>No se puede encontrar la entrada del registro para la ruta del archivo SQLUserInstance.dll.Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="SNI_ERROR_55" xml:space="preserve">
-    <value>El valor del Registro contiene una ruta de acceso para el archivo SQLUserInstance.dll no válida. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
+    <value>El valor del registro contiene una ruta de acceso para el archivo SQLUserInstance.dll no válida. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="SNI_ERROR_56" xml:space="preserve">
-    <value>No se puede cargar SQLUserInstance.dll desde la ubicación que se especificó en el Registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
+    <value>No se puede cargar SQLUserInstance.dll desde la ubicación que se especificó en el registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="SNI_ERROR_57" xml:space="preserve">
-    <value>SQLUserInstance.dll no válido en la ubicación especificada en el Registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
+    <value>SQLUserInstance.dll no válido en la ubicación especificada en el registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="Snix_Connect" xml:space="preserve">
     <value>Error relacionado con la red o específico de la instancia mientras se establecía una conexión con el servidor SQL Server. No se encontró el servidor o éste no estaba accesible. Compruebe que el nombre de la instancia es correcto y que SQL Server está configurado para admitir conexiones remotas.</value>
@@ -3985,7 +3991,7 @@
     <value>Local Database Runtime: no se puede cargar SQLUserInstance.dll.</value>
   </data>
   <data name="LocalDB_MethodNotFound" xml:space="preserve">
-    <value>SQLUserInstance.dll no válido en la ubicación especificada en el Registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
+    <value>SQLUserInstance.dll no válido en la ubicación especificada en el registro. Compruebe que la característica de Local Database Runtime de SQL Server Express se ha instalado correctamente.</value>
   </data>
   <data name="LocalDB_UnobtainableMessage" xml:space="preserve">
     <value>No se puede obtener el mensaje de error de Local Database Runtime</value>
@@ -4616,5 +4622,17 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>El parámetro “{0}” no puede tener la Dirección de salida ni InputOutput cuando EnableOptimizedParameterBinding está habilitado en el comando primario.</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Se agotó el tiempo de espera de la conexión al recuperar un token de acceso mediante el método de autenticación "{0}". Último error: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>Nombre de entidad de seguridad de servicio (SPN) del asociado de conmutación por error.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>Nombre de entidad de seguridad de servicio (SPN) del servidor.</value>
+  </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>La plataforma '{0}' no se admite cuando el destino es .NET Framework.</value>
   </data>
 </root>

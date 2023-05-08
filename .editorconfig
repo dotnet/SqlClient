@@ -140,6 +140,9 @@ dotnet_diagnostic.CA1063.severity = silent
 # CA2100: Review SQL queries for security vulnerabilities
 dotnet_diagnostic.CA2100.severity = silent
 
+# CA1416: Validate platform compatibility
+dotnet_diagnostic.CA1416.severity = silent
+
 [*.{csproj,vcxproj,vcxproj.filters,proj,nativeproj,locproj}]
 indent_size = 2
 

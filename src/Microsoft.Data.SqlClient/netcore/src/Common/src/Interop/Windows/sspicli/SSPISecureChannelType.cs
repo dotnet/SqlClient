@@ -4,6 +4,7 @@
 
 using System.Net.Security;
 using System.Runtime.InteropServices;
+using Microsoft.Data;
 
 namespace System.Net
 {
@@ -129,7 +130,7 @@ namespace System.Net
                 }
                 else
                 {
-                    throw new ArgumentException(System.StringsHelper.Format(Strings.SSPIInvalidHandleType, handleType.FullName), nameof(handleType));
+                    throw new ArgumentException(StringsHelper.Format(Strings.SSPIInvalidHandleType, handleType.FullName), nameof(handleType));
                 }
             }
             fixed (byte* bufferPtr = buffer)

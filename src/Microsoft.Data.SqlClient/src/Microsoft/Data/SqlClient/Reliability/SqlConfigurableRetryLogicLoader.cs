@@ -3,7 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
 
         private static SqlRetryLogicBaseProvider CreateRetryLogicProvider(string sectionName, ISqlConfigurableRetryConnectionSection configSection)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(CreateRetryLogicProvider);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             try
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
                 // Prepare the transient error lists
                 if (!string.IsNullOrEmpty(configSection.TransientErrors))
                 {
-                    retryOption.TransientErrors = configSection.TransientErrors.Split(',').Select(x => Convert.ToInt32(x)).ToList();
+                    retryOption.TransientErrors = SplitErrorNumberList(configSection.TransientErrors);
                 }
 
                 // Prepare the authorized SQL statement just for SqlCommands
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient
 
         private static SqlRetryLogicBaseProvider ResolveRetryLogicProvider(string configurableRetryType, string retryMethod, SqlRetryLogicOption option)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(ResolveRetryLogicProvider);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             if (string.IsNullOrEmpty(retryMethod))
@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient
 
         private static object CreateInstance(Type type, string retryMethodName, SqlRetryLogicOption option)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(CreateInstance);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             if (type == typeof(SqlConfigurableRetryFactory) || type == null)
@@ -215,11 +215,24 @@ namespace Microsoft.Data.SqlClient
         private static object[] PrepareParamValues(ParameterInfo[] parameterInfos, SqlRetryLogicOption option, string retryMethod)
         {
             // The retry method must have at least one `SqlRetryLogicOption`
-            if (parameterInfos.FirstOrDefault(x => x.ParameterType == typeof(SqlRetryLogicOption)) == null)
+            if (parameterInfos != null && parameterInfos.Length > 0)
             {
-                string message = $"Failed to create {nameof(SqlRetryLogicBaseProvider)} object because of invalid {retryMethod}'s parameters." +
-                    $"{Environment.NewLine}The function must have a paramter of type '{nameof(SqlRetryLogicOption)}'.";
-                throw new InvalidOperationException(message);
+                bool found = false;
+                for (int index = 0; index < parameterInfos.Length; index++)
+                {
+                    if (parameterInfos[index].ParameterType == typeof(SqlRetryLogicOption))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    string message = $"Failed to create {nameof(SqlRetryLogicBaseProvider)} object because of invalid {retryMethod}'s parameters." +
+                        $"{Environment.NewLine}The function must have a paramter of type '{nameof(SqlRetryLogicOption)}'.";
+                    throw new InvalidOperationException(message);
+                }
             }
 
             object[] funcParams = new object[parameterInfos.Length];
@@ -238,9 +251,21 @@ namespace Microsoft.Data.SqlClient
                 // or there isn't another parameter with the same type and without a default value.
                 else if (paramInfo.ParameterType == typeof(SqlRetryLogicOption))
                 {
-                    if (!paramInfo.HasDefaultValue
-                        || (paramInfo.HasDefaultValue
-                            && parameterInfos.FirstOrDefault(x => x != paramInfo && !x.HasDefaultValue && x.ParameterType == typeof(SqlRetryLogicOption)) == null))
+                    bool foundOptionsParamWithNoDefaultValue = false;
+                    for (int index = 0; index < parameterInfos.Length; index++)
+                    {
+                        if (
+                            parameterInfos[index] != paramInfo && 
+                            parameterInfos[index].ParameterType == typeof(SqlRetryLogicOption) &&
+                            !parameterInfos[index].HasDefaultValue
+                        )
+                        {
+                            foundOptionsParamWithNoDefaultValue = true;
+                            break;
+                        }
+                    }
+
+                    if (!paramInfo.HasDefaultValue || (paramInfo.HasDefaultValue && !foundOptionsParamWithNoDefaultValue))
                     {
                         funcParams[i] = option;
                     }
@@ -257,7 +282,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Parameters are prepared to invoke the `{2}.{3}()` method."
-                                                  , TypeName, MethodBase.GetCurrentMethod().Name, typeof(SqlConfigurableRetryFactory).FullName, retryMethod);
+                                                  , TypeName, nameof(PrepareParamValues), typeof(SqlConfigurableRetryFactory).FullName, retryMethod);
             return funcParams;
         }
 
@@ -272,6 +297,27 @@ namespace Microsoft.Data.SqlClient
 
             SqlClientEventSource.Log.TryTraceEvent("{0}, Last exception:<{1}>", msg, lastException.Message);
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<ADV>{0}, Last exception: {1}", msg, lastException);
+        }
+
+        private static ICollection<int> SplitErrorNumberList(string list)
+        {
+            if (!string.IsNullOrEmpty(list))
+            {
+                string[] parts = list.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts != null && parts.Length > 0)
+                {
+                    HashSet<int> set = new HashSet<int>();
+                    for (int index = 0; index < parts.Length; index++)
+                    {
+                        if (int.TryParse(parts[index], System.Globalization.NumberStyles.AllowLeadingWhite | System.Globalization.NumberStyles.AllowTrailingWhite, null, out int value))
+                        {
+                            set.Add(value);
+                        }
+                    }
+                    return set;
+                }
+            }
+            return new HashSet<int>();
         }
     }
 }

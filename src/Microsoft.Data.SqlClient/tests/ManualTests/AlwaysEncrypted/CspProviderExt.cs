@@ -7,7 +7,9 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
-#if NET50_OR_LATER
+using System.Collections.Generic;
+using static Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.CertificateUtilityWin;
+#if NET6_0_OR_GREATER
 using System.Runtime.Versioning;
 #endif
 
@@ -17,13 +19,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// Always Encrypted public CspProvider Manual tests.
     /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
-#if NET50_OR_LATER
+#if NET6_0_OR_GREATER
     [SupportedOSPlatform("windows")]
 #endif
     [PlatformSpecific(TestPlatforms.Windows)]
     public class CspProviderExt
     {
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestKeysFromCertificatesCreatedWithMultipleCryptoProviders(string connectionString)
         {
@@ -51,7 +53,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     certificateName = string.Format(@"AETest - {0}", providerName);
                 }
 
-                CertificateUtilityWin.CreateCertificate(certificateName, StoreLocation.CurrentUser.ToString(), providerName, providerType);
+                var extensions = new List<Tuple<string, string, string>>();
+                CertificateOption certOption = new()
+                {
+                    Subject = certificateName,
+                    KeyExportPolicy = "Exportable",
+                    CertificateStoreLocation = $"{StoreLocation.CurrentUser}\\My",
+                    Provider = providerName,
+                    Type = providerType,
+                };
+                CreateCertificate(certOption);
                 SQLSetupStrategyCspExt sqlSetupStrategyCsp = null;
                 try
                 {
@@ -75,37 +86,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlSetupStrategyCsp = new SQLSetupStrategyCspExt(cspPath);
                     string tableName = sqlSetupStrategyCsp.CspProviderTable.Name;
 
-                    using (SqlConnection sqlConn = new SqlConnection(connectionString))
-                    {
-                        sqlConn.Open();
+                    using SqlConnection sqlConn = new(connectionString);
+                    sqlConn.Open();
 
-                        Table.DeleteData(tableName, sqlConn);
+                    Table.DeleteData(tableName, sqlConn);
 
-                        // insert 1 row data
-                        Customer customer = new Customer(45, "Microsoft", "Corporation");
+                    // insert 1 row data
+                    Customer customer = new Customer(45, "Microsoft", "Corporation");
 
-                        DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
+                    DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
 
-                        // Test INPUT parameter on an encrypted parameter
-                        using (SqlCommand sqlCommand = new SqlCommand(@"SELECT CustomerId, FirstName, LastName FROM [@tableName] WHERE FirstName = @firstName",
-                                                                    sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
-                        {
-                            sqlCommand.Parameters.AddWithValue(@"tableName", tableName);
-                            SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
-                            customerFirstParam.Direction = System.Data.ParameterDirection.Input;
+                    // Test INPUT parameter on an encrypted parameter
+                    using SqlCommand sqlCommand = new(@$"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
+                                                                sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled);
+                    SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
+                    customerFirstParam.Direction = System.Data.ParameterDirection.Input;
 
-                            using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
-                            {
-                                ValidateResultSet(sqlDataReader);
-                                Console.WriteLine(@"INFO: Successfully validated using a certificate using provider:{0}", providerName);
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(@"INFO: Failed to validate using a certificate using provider:{0}", providerName);
-                    Console.WriteLine(@"Exception: {0}", e.Message);
+                    using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+                    ValidateResultSet(sqlDataReader);
+                    Console.WriteLine(@"INFO: Successfully validated using a certificate using provider:{0}", providerName);
                 }
                 finally
                 {
@@ -125,7 +124,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string providerType = "24";
 
             string certificateName = string.Format(@"AETest - {0}", providerName);
-            CertificateUtilityWin.CreateCertificate(certificateName, StoreLocation.CurrentUser.ToString(), providerName, providerType);
+            CertificateOption options = new()
+            {
+                Subject = certificateName,
+                CertificateStoreLocation = StoreLocation.CurrentUser.ToString(),
+                Provider = providerName,
+                Type = providerType
+            };
+            CertificateUtilityWin.CreateCertificate(options);
             try
             {
                 X509Certificate2 cert = CertificateUtilityWin.GetCertificate(certificateName, StoreLocation.CurrentUser);
@@ -168,35 +174,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 try
                 {
-                    using (SqlConnection sqlConn = new SqlConnection(connectionString))
-                    {
-                        sqlConn.Open();
+                    using SqlConnection sqlConn = new(connectionString);
+                    sqlConn.Open();
 
-                        Table.DeleteData(tableName, sqlConn);
+                    Table.DeleteData(tableName, sqlConn);
 
-                        // insert 1 row data
-                        Customer customer = new Customer(45, "Microsoft", "Corporation");
+                    // insert 1 row data
+                    Customer customer = new Customer(45, "Microsoft", "Corporation");
 
-                        DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
+                    DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
 
-                        // Test INPUT parameter on an encrypted parameter
-                        using (SqlCommand sqlCommand = new SqlCommand(@"SELECT CustomerId, FirstName, LastName FROM [@tableName] WHERE FirstName = @firstName",
-                                                                    sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
-                        {
-                            sqlCommand.Parameters.AddWithValue(@"tableName", tableName);
-                            SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
-                            customerFirstParam.Direction = System.Data.ParameterDirection.Input;
+                    // Test INPUT parameter on an encrypted parameter
+                    using SqlCommand sqlCommand = new(@$"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
+                                                                sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled);
+                    SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
+                    Console.WriteLine(@"Exception: {0}");
+                    customerFirstParam.Direction = System.Data.ParameterDirection.Input;
 
-                            using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
-                            {
-                                ValidateResultSet(sqlDataReader);
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(@"Exception: {0}", e.Message);
+                    using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+                    ValidateResultSet(sqlDataReader);
                 }
                 finally
                 {

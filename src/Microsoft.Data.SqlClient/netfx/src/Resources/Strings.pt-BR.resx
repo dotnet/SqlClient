@@ -1771,7 +1771,7 @@
     <value>Valores de QuotePrefix e QuoteSuffix especificados não coincidem.</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>O comprimento do argumento '{0}' excede o limite de '{1}'.</value>
+    <value>O comprimento do argumento '{0}' excede seu limite de '{1}'.</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>Esperado o tipo de argumento {1}, mas recebido o tipo {0}.</value>
@@ -1783,7 +1783,7 @@
     <value>O uso da chave '{0}' requer a presença da chave '{1}'.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>O comprimento do argumento para a chave '{0}' excede o limite de '{1}'.</value>
+    <value>O comprimento do valor para a chave '{0}' excede seu limite de '{1}'.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Palavra-chave não suportada: '{0}'.</value>
@@ -2493,8 +2493,8 @@
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>Não é possível usar "Authentication" com "Integrated Security".</value>
   </data>
-  <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
-    <value>Não é possível usar 'Authentication=Active Directory Integrated' com as palavras-chave de cadeia de conexão 'User ID', 'UID', 'Password' ou 'PWD'.</value>
+  <data name="SQL_IntegratedWithPassword" xml:space="preserve">
+    <value>Não é possível usar “Authentication=Active Directory Integrated” com as palavras-chave de cadeia de conexão “Password” ou “PWD”.</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>Não é possível usar 'Authentication=Active Directory Interactive' com as palavras-chave de cadeia de conexão 'Password' ou 'PWD'.</value>
@@ -2563,7 +2563,7 @@
     <value>Falha ao autenticar o usuário {0} no Active Directory (Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Código do erro 0x{0}; estado {1}</value>
+    <value>Código de erro 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword requer SQL Server 9.0 ou posterior.</value>
@@ -2872,7 +2872,7 @@
     <value>As Transações Globais não estão habilitadas para esse Banco de Dados SQL do Azure. Entre em contato com o suporte do Banco de Dados SQL do Azure para obter assistência.</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>O System.Transactions.dll carregado no momento não dá suporte a Transações Globais. Atualize para o .NET Framework 4.6.1 ou posterior.</value>
+    <value>O System.Transactions.dll carregado no momento não dá suporte a Transações Globais. Atualize para o .NET Framework 4.6.2 ou posterior.</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>Não há suporte para as atualizações em lote na conexão de contexto.</value>
@@ -3224,6 +3224,12 @@
   </data>
   <data name="DbConnectionString_Encrypt" xml:space="preserve">
     <value>Se for true, o SQL Server usará criptografia SSL para todos os dados enviados entre cliente e servidor, se o servidor possuir um certificado instalado.</value>
+  </data>
+  <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
+    <value>O nome do host esperado no certificado do servidor quando a criptografia for negociada, se for diferente do valor padrão derivado de endereço/endereço/servidor.</value>
+  </data>
+  <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
+    <value>O caminho para um arquivo de certificado que corresponda ao certificado TLS/SSL do SQL Server.</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Sessões em um ambiente de Component Services (ou MTS, se você estiver usando o Microsoft Windows NT) devem ser inscritos automaticamente em uma transação global sempre que necessário.</value>
@@ -4162,7 +4168,7 @@
     <value>Erro interno. A chave de criptografia da coluna não pode ser nula.</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>A chave de criptografia da coluna criptografada foi descriptografada com sucesso, mas seu comprimento {1} não corresponde ao comprimento {2} do algoritmo '{0}'. Verifique o valor criptografado da chave de criptografia de coluna no banco de dados.</value>
+    <value>A chave de criptografia da coluna foi descriptografada com êxito, mas seu comprimento: {1} não corresponde ao comprimento: {2} para o algoritmo '{0}'. Verifique o valor criptografado da chave de criptografia da coluna no banco de dados.</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
     <value>O tipo de criptografia '{1}' especificado para a coluna no banco de dados é inválido ou está corrompido. Os tipos de criptografia válidos para o algoritmo '{0}' são: {2}.</value>
@@ -4616,5 +4622,17 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>O parâmetro '{0}' não pode ter a saída de direção ou InputOutput quando EnableOptimizedParameterBinding está habilitado no comando pai.</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>A conexão expirou ao recuperar um token de acesso usando o método de autenticação '{0}'. Último erro: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>O nome da entidade de serviço (SPN) do parceiro de failover.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>O nome da entidade de serviço (SPN) do servidor.</value>
+  </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>A plataforma '{0}' não é suportada ao direcionar o .NET Framework.</value>
   </data>
 </root>

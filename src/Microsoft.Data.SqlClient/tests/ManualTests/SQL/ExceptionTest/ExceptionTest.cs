@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
 using System.Threading.Tasks;
 using Xunit;
@@ -251,6 +252,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connectionStringWithAttestationProtocol = DataTestUtility.TCPConnectionString + ";Attestation Protocol = HGS;";
             string connectionStringWithAttestationURL = DataTestUtility.TCPConnectionString + ";Enclave Attestation URL = https://dummyURL;";
             string connectionStringWithEnclave = connectionStringWithAttestationURL + ";Attestation Protocol = HGS;";
+            string connectionStringWithNoneAttestationProtocol = DataTestUtility.TCPConnectionString + ";Attestation Protocol = None;";
 
             InvalidOperationException e1 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithAttestationURL).Open());
             Assert.Contains("You have specified the enclave attestation URL in the connection string", e1.Message);
@@ -260,6 +262,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             InvalidOperationException e3 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithEnclave).Open());
             Assert.Contains("You have specified the enclave attestation URL and attestation protocol in the connection string", e3.Message);
+
+            if (DataTestUtility.EnclaveEnabled)
+            {
+                // connection should work if attestation protocol is None but no attestation url is provided
+                SqlConnection sqlConnection = new(connectionStringWithNoneAttestationProtocol);
+                sqlConnection.Open();
+                Assert.Equal(ConnectionState.Open, sqlConnection.State);
+            }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]

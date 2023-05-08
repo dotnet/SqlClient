@@ -19,6 +19,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private object _spid = null;
 
         /// <summary>
+        /// Is this internal connection enlisted in a distributed transaction?
+        /// </summary>
+        public bool IsEnlistedInTransaction => ConnectionHelper.IsEnlistedInTransaction(_internalConnection);
+
+        /// <summary>
+        /// Is this internal connection the root of a distributed transaction?
+        /// </summary>
+        public bool IsTransactionRoot => ConnectionHelper.IsTransactionRoot(_internalConnection);
+
+        /// <summary>
+        /// True if this connection is the root of a transaction AND it is waiting for the transaction 
+        /// to complete (i.e. it has been 'aged' or 'put into stasis'), otherwise false
+        /// </summary>
+        public bool IsTxRootWaitingForTxEnd => ConnectionHelper.IsTxRootWaitingForTxEnd(_internalConnection);
+
+        /// <summary>
         /// Gets the internal connection associated with the given SqlConnection
         /// </summary>
         /// <param name="connection">Live outer connection to grab the inner connection from</param>

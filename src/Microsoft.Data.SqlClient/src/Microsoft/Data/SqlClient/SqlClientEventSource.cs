@@ -68,11 +68,15 @@ namespace Microsoft.Data.SqlClient
         #endregion
     }
 
+    // Any changes to event writers might be considered as a breaking change.
+    // Other libraries such as OpenTelemetry and ApplicationInsight have based part of their code on BeginExecute and EndExecute arguments number.
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
     internal partial class SqlClientEventSource : SqlClientEventSourceBase
     {
         // Defines the singleton instance for the Resources ETW provider
-        internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
+        internal static readonly SqlClientEventSource Log = new();
+
+        private SqlClientEventSource() { }
 
         private const string NullStr = "null";
         private const string SqlCommand_ClassName = nameof(SqlCommand);
@@ -358,7 +362,7 @@ namespace Microsoft.Data.SqlClient
 
         #region Traces without if statements
         [NonEvent]
-        internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
         }
@@ -508,22 +512,20 @@ namespace Microsoft.Data.SqlClient
 
         #region Execution Trace
         [NonEvent]
-        internal void TryBeginExecuteEvent(int objectId, Guid? connectionId, string commandText, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TryBeginExecuteEvent(int objectId, string dataSource, string database, string commandText, Guid? connectionId, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsExecutionTraceEnabled())
             {
-                BeginExecute(GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO,
-                    string.Format("Object Id {0}, Client Connection Id {1}, Command Text {2}", objectId, connectionId, commandText)));
+                BeginExecute(objectId, dataSource, database, commandText, GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO, $"Object Id {objectId}, Client connection Id {connectionId}, Command Text {commandText}"));
             }
         }
 
         [NonEvent]
-        internal void TryEndExecuteEvent(int objectId, Guid? connectionId, int compositeState, int sqlExceptionNumber, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TryEndExecuteEvent(int objectId, int compositeState, int sqlExceptionNumber, Guid? connectionId, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsExecutionTraceEnabled())
             {
-                EndExecute(GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO,
-                    string.Format("Object Id {0}, Client Connection Id {1}, Composite State {2}, Sql Exception Number {3}", objectId, connectionId, compositeState, sqlExceptionNumber)));
+                EndExecute(objectId, compositeState, sqlExceptionNumber, GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO, $"Object Id {objectId}, Client Connection Id {connectionId}, Composite State {compositeState}, Sql Exception Number {sqlExceptionNumber}"));
             }
         }
         #endregion
@@ -799,6 +801,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
+        internal void TryAdvancedTraceEvent<T0, T1, T2, T3, T4, T5, T6>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 args6)
+        {
+            if (Log.IsAdvancedTraceOn())
+            {
+                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr, args6?.ToString() ?? NullStr));
+            }
+        }
+
+        [NonEvent]
         internal long TryAdvancedScopeEnterEvent<T0>(string message, T0 args0)
         {
             if (Log.IsAdvancedTraceOn())
@@ -973,9 +984,9 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNIScopeEnabled())
             {
-                StringBuilder sb = new StringBuilder(className);
-                sb.Append(".").Append(memberName).Append(" | SNI | INFO | SCOPE | Entering Scope {0}");
-                return SNIScopeEnter(sb.ToString());
+                long scopeId = Interlocked.Increment(ref s_nextSNIScopeId);
+                WriteEvent(SNIScopeEnterId, $"{className}.{memberName}  | SNI | INFO | SCOPE | Entering Scope {scopeId}");
+                return scopeId;
             }
             return 0;
         }
@@ -993,13 +1004,21 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Write Events
+        // Do not change the first 4 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, 
+        // unless you have checked with them and they are able to change their design. Additional items could be added at the end.
         [Event(BeginExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
-        internal void BeginExecute(string message) =>
-            WriteEvent(BeginExecuteEventId, message);
+        internal void BeginExecute(int objectId, string dataSource, string database, string commandText, string message)
+        {
+            WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText, message);
+        }
 
+        // Do not change the first 3 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, 
+        // unless you have checked with them and they are able to change their design. Additional items could be added at the end.
         [Event(EndExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
-        internal void EndExecute(string message) =>
-            WriteEvent(EndExecuteEventId, message);
+        internal void EndExecute(int objectId, int compositestate, int sqlExceptionNumber, string message)
+        {
+            WriteEvent(EndExecuteEventId, objectId, compositestate, sqlExceptionNumber, message);
+        }
 
         [Event(TraceEventId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
         internal void Trace(string message) =>
@@ -1104,15 +1123,45 @@ namespace Microsoft.Data.SqlClient
         public const string INFO = " | INFO | ";
         public const string ERR = " | ERR | ";
     }
-    
-    internal readonly struct SNIEventScope : IDisposable
+
+    internal readonly struct TrySNIEventScope : IDisposable
     {
         private readonly long _scopeId;
 
-        public SNIEventScope(long scopeID) => _scopeId = scopeID;
-        public void Dispose() =>
-            SqlClientEventSource.Log.SNIScopeLeave(string.Format("Exit SNI Scope {0}", _scopeId));
+        public TrySNIEventScope(long scopeID) => _scopeId = scopeID;
+        public void Dispose()
+        {
+            if (_scopeId == 0)
+            {
+                return;
+            }
+            SqlClientEventSource.Log.TrySNIScopeLeaveEvent(_scopeId);
+        }
 
-        public static SNIEventScope Create(string message) => new SNIEventScope(SqlClientEventSource.Log.SNIScopeEnter(message));
+        public static TrySNIEventScope Create(string className, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+            => new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(className, memberName));
+    }
+
+    internal readonly ref struct TryEventScope //: IDisposable
+    {
+        private readonly long _scopeId;
+
+        public TryEventScope(long scopeID) => _scopeId = scopeID;
+
+        public void Dispose()
+        {
+            if (_scopeId != 0)
+            {
+                SqlClientEventSource.Log.TryScopeLeaveEvent(_scopeId);
+            }
+        }
+
+        public static TryEventScope Create<T0>(string message, T0 args0) => new TryEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0));
+
+        public static TryEventScope Create<T0, T1>(string message, T0 args0, T1 args1) => new TryEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0, args1));
+
+        public static TryEventScope Create(string className, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "") => new TryEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(className, memberName));
+
+        public static TryEventScope Create(long scopeId) => new TryEventScope(scopeId);
     }
 }

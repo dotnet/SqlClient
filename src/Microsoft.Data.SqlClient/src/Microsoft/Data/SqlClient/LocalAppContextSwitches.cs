@@ -3,22 +3,20 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace Microsoft.Data.SqlClient
 {
     internal static partial class LocalAppContextSwitches
     {
-        private const string TypeName = nameof(LocalAppContextSwitches);
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
-        // safety switch
-        internal const string EnableRetryLogicSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
+        internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
+        internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
 
-        private static bool _makeReadAsyncBlocking;
-        private static bool? s_LegacyRowVersionNullBehavior;
-        private static bool? s_isRetryEnabled = null;
+        private static bool? s_legacyRowVersionNullBehavior;
+        private static bool? s_suppressInsecureTLSWarning;
+        private static bool s_makeReadAsyncBlocking;
+        private static bool s_useMinimumLoginTimeout;
 
 #if !NETFRAMEWORK
         static LocalAppContextSwitches()
@@ -31,54 +29,86 @@ namespace Microsoft.Data.SqlClient
             catch (Exception e)
             {
                 // Don't throw an exception for an invalid config file
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO>: {2}", TypeName, MethodBase.GetCurrentMethod().Name, e);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.ctor|INFO>: {1}", nameof(LocalAppContextSwitches), e);
             }
         }
 #endif
 
-        internal static bool IsRetryEnabled
+#if NETFRAMEWORK
+        internal const string DisableTNIRByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
+        private static bool s_disableTNIRByDefault;
+
+        /// <summary>
+        /// Transparent Network IP Resolution (TNIR) is a revision of the existing MultiSubnetFailover feature.
+        /// TNIR affects the connection sequence of the driver in the case where the first resolved IP of the hostname
+        /// doesn't respond and there are multiple IPs associated with the hostname.
+        /// 
+        /// TNIR interacts with MultiSubnetFailover to provide the following three connection sequences:
+        /// 0: One IP is attempted, followed by all IPs in parallel
+        /// 1: All IPs are attempted in parallel
+        /// 2: All IPs are attempted one after another
+        /// 
+        /// TransparentNetworkIPResolution is enabled by default. MultiSubnetFailover is disabled by default.
+        /// To disable TNIR, you can enable the app context switch.
+        /// 
+        /// This app context switch defaults to 'false'.
+        /// </summary>
+        public static bool DisableTNIRByDefault
+            => AppContext.TryGetSwitch(DisableTNIRByDefaultString, out s_disableTNIRByDefault) && s_disableTNIRByDefault;
+#endif
+
+        /// <summary>
+        /// When using Encrypt=false in the connection string, a security warning is output to the console if the TLS version is 1.2 or lower.
+        /// This warning can be suppressed by enabling this AppContext switch.
+        /// This app context switch defaults to 'false'.
+        /// </summary>
+        public static bool SuppressInsecureTLSWarning
         {
             get
             {
-                if (s_isRetryEnabled is null)
+                if (s_suppressInsecureTLSWarning is null)
                 {
                     bool result;
-                    result = AppContext.TryGetSwitch(EnableRetryLogicSwitch, out result) ? result : false;
-                    s_isRetryEnabled = result;
+                    result = AppContext.TryGetSwitch(SuppressInsecureTLSWarningString, out result) && result;
+                    s_suppressInsecureTLSWarning = result;
                 }
-                return s_isRetryEnabled.Value;
-            }
-        }
-
-        public static bool MakeReadAsyncBlocking
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out _makeReadAsyncBlocking) ? _makeReadAsyncBlocking : false;
+                return s_suppressInsecureTLSWarning.Value;
             }
         }
 
         /// <summary>
         /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a field with type Timestamp/RowVersion
         /// would return an empty byte array. This switch contols whether to preserve that behaviour on newer versions
-        /// of Microsoft.Data.SqlClient, if this switch returns false an appropriate null value will be returned
+        /// of Microsoft.Data.SqlClient, if this switch returns false an appropriate null value will be returned.
+        /// This app context switch defaults to 'false'.
         /// </summary>
         public static bool LegacyRowVersionNullBehavior
         {
             get
             {
-                if (s_LegacyRowVersionNullBehavior is null)
+                if (s_legacyRowVersionNullBehavior is null)
                 {
-                    bool value = false;
-                    if (AppContext.TryGetSwitch(LegacyRowVersionNullString, out bool providedValue))
-                    {
-                         value = providedValue;
-                    }
-                    s_LegacyRowVersionNullBehavior = value;
+                    bool result;
+                    result = AppContext.TryGetSwitch(LegacyRowVersionNullString, out result) && result;
+                    s_legacyRowVersionNullBehavior = result;
                 }
-                return s_LegacyRowVersionNullBehavior.Value;
+                return s_legacyRowVersionNullBehavior.Value;
             }
         }
+
+        /// <summary>
+        /// When enabled, ReadAsync runs asynchronously and does not block the calling thread.
+        /// This app context switch defaults to 'false'.
+        /// </summary>
+        public static bool MakeReadAsyncBlocking
+            => AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out s_makeReadAsyncBlocking) && s_makeReadAsyncBlocking;
+
+        /// <summary>
+        /// Specifies minimum login timeout to be set to 1 second instead of 0 seconds,
+        /// to prevent a login attempt from waiting indefinitely.
+        /// This app context switch defaults to 'true'.
+        /// </summary>
+        public static bool UseMinimumLoginTimeout
+            => !AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out s_useMinimumLoginTimeout) || s_useMinimumLoginTimeout;
     }
 }

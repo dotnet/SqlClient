@@ -49,8 +49,7 @@ namespace Microsoft.Data.ProviderBase
 
         public void ClearAllPools()
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<prov.DbConnectionFactory.ClearAllPools|API");
-            try
+            using (TryEventScope.Create("<prov.DbConnectionFactory.ClearAllPools|API"))
             {
                 Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
                 foreach (KeyValuePair<DbConnectionPoolKey, DbConnectionPoolGroup> entry in connectionPoolGroups)
@@ -62,17 +61,12 @@ namespace Microsoft.Data.ProviderBase
                     }
                 }
             }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-            }
         }
 
         public void ClearPool(DbConnection connection)
         {
             ADP.CheckArgumentNull(connection, nameof(connection));
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<prov.DbConnectionFactory.ClearPool|API> {0}", GetObjectId(connection));
-            try
+            using (TryEventScope.Create("<prov.DbConnectionFactory.ClearPool|API> {0}", GetObjectId(connection)))
             {
                 DbConnectionPoolGroup poolGroup = GetConnectionPoolGroup(connection);
                 if (null != poolGroup)
@@ -80,29 +74,19 @@ namespace Microsoft.Data.ProviderBase
                     poolGroup.Clear();
                 }
             }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-            }
         }
 
         public void ClearPool(DbConnectionPoolKey key)
         {
             Debug.Assert(key != null, "key cannot be null");
             ADP.CheckArgumentNull(key.ConnectionString, nameof(key) + "." + nameof(key.ConnectionString));
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<prov.DbConnectionFactory.ClearPool|API> connectionString");
-            try
+            using (TryEventScope.Create("<prov.DbConnectionFactory.ClearPool|API> connectionString"))
             {
-                DbConnectionPoolGroup poolGroup;
                 Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
-                if (connectionPoolGroups.TryGetValue(key, out poolGroup))
+                if (connectionPoolGroups.TryGetValue(key, out DbConnectionPoolGroup poolGroup))
                 {
                     poolGroup.Clear();
                 }
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 

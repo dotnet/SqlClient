@@ -85,7 +85,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-
     }
 
     internal interface IAppContextSwitchOverridesSection

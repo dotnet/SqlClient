@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -41,6 +40,28 @@ namespace Microsoft.Data.SqlClient
                     },
                     onFailure: onFailure,
                     connectionToDoom: connectionToDoom
+                );
+                return completion.Task;
+            }
+        }
+
+        internal static Task CreateContinuationTaskWithState(Task task, object state, Action<object> onSuccess, Action<Exception, object> onFailure = null)
+        {
+            if (task == null)
+            {
+                onSuccess(state);
+                return null;
+            }
+            else
+            {
+                TaskCompletionSource<object> completion = new();
+                ContinueTaskWithState(task, completion, state,
+                    onSuccess: (object continueState) =>
+                    {
+                        onSuccess(continueState);
+                        completion.SetResult(null);
+                    },
+                    onFailure: onFailure
                 );
                 return completion.Task;
             }
@@ -108,13 +129,15 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
                                 RuntimeHelpers.PrepareConstrainedRegions();
-                                try {
+                                try
+                                {
                                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                                onSuccess();
+                                    onSuccess();
 #if DEBUG
                                 }
-                                finally {
+                                finally
+                                {
                                     tdsReliabilitySection.Stop();
                                 }
 #endif //DEBUG
@@ -300,7 +323,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                     }
-                }, 
+                },
                 state: state,
                 scheduler: TaskScheduler.Default
             );
@@ -461,9 +484,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_AuthenticationAndIntegratedSecurity));
         }
-        static internal Exception IntegratedWithUserIDAndPassword()
+        static internal Exception IntegratedWithPassword()
         {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithUserIDAndPassword));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithPassword));
         }
         static internal Exception InteractiveWithPassword()
         {
@@ -553,7 +576,7 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_ChangePasswordConflictsWithSSPI));
         }
-        static internal Exception ChangePasswordRequiresYukon()
+        static internal Exception ChangePasswordRequires2005()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordRequiresYukon));
         }
@@ -654,10 +677,15 @@ namespace Microsoft.Data.SqlClient
             return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_DeviceFlow_Authentication);
         }
 
+        internal static Exception ActiveDirectoryTokenRetrievingTimeout(string authenticaton, string errorCode, Exception exception)
+        {
+            return ADP.TimeoutException(StringsHelper.GetString(Strings.AAD_Token_Retrieving_Timeout, authenticaton, errorCode, exception?.Message), exception);
+        }
+
         //
         // SQL.DataCommand
         //
-        static internal Exception NotificationsRequireYukon()
+        static internal Exception NotificationsRequire2005()
         {
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_NotificationsRequireYukon));
         }
@@ -670,16 +698,17 @@ namespace Microsoft.Data.SqlClient
         static internal ArgumentOutOfRangeException NotSupportedCommandType(CommandType value)
         {
 #if DEBUG
-            switch(value) {
-            case CommandType.Text:
-            case CommandType.StoredProcedure:
-                Debug.Fail("valid CommandType " + value.ToString());
-                break;
-            case CommandType.TableDirect:
-                break;
-            default:
-                Debug.Fail("invalid CommandType " + value.ToString());
-                break;
+            switch (value)
+            {
+                case CommandType.Text:
+                case CommandType.StoredProcedure:
+                    Debug.Fail("valid CommandType " + value.ToString());
+                    break;
+                case CommandType.TableDirect:
+                    break;
+                default:
+                    Debug.Fail("invalid CommandType " + value.ToString());
+                    break;
             }
 #endif
             return NotSupportedEnumerationValue(typeof(CommandType), (int)value);
@@ -687,20 +716,21 @@ namespace Microsoft.Data.SqlClient
         static internal ArgumentOutOfRangeException NotSupportedIsolationLevel(IsolationLevel value)
         {
 #if DEBUG
-            switch(value) {
-            case IsolationLevel.Unspecified:
-            case IsolationLevel.ReadCommitted:
-            case IsolationLevel.ReadUncommitted:
-            case IsolationLevel.RepeatableRead:
-            case IsolationLevel.Serializable:
-            case IsolationLevel.Snapshot:
-                Debug.Fail("valid IsolationLevel " + value.ToString());
-                break;
-            case IsolationLevel.Chaos:
-                break;
-            default:
-                Debug.Fail("invalid IsolationLevel " + value.ToString());
-                break;
+            switch (value)
+            {
+                case IsolationLevel.Unspecified:
+                case IsolationLevel.ReadCommitted:
+                case IsolationLevel.ReadUncommitted:
+                case IsolationLevel.RepeatableRead:
+                case IsolationLevel.Serializable:
+                case IsolationLevel.Snapshot:
+                    Debug.Fail("valid IsolationLevel " + value.ToString());
+                    break;
+                case IsolationLevel.Chaos:
+                    break;
+                default:
+                    Debug.Fail("invalid IsolationLevel " + value.ToString());
+                    break;
             }
 #endif
             return NotSupportedEnumerationValue(typeof(IsolationLevel), (int)value);
@@ -1608,11 +1638,15 @@ namespace Microsoft.Data.SqlClient
         static internal Exception InvalidEncryptionType(string algorithmName, SqlClientEncryptionType encryptionType, params SqlClientEncryptionType[] validEncryptionTypes)
         {
             const string valueSeparator = @", ";
-            return ADP.Argument(StringsHelper.GetString(
-                                Strings.TCE_InvalidEncryptionType,
-                                algorithmName,
-                                encryptionType.ToString(),
-                                string.Join(valueSeparator, validEncryptionTypes.Select((validEncryptionType => @"'" + validEncryptionType + @"'")))), TdsEnums.TCE_PARAM_ENCRYPTIONTYPE);
+            return ADP.Argument(
+                StringsHelper.GetString(
+                    Strings.TCE_InvalidEncryptionType,
+                    algorithmName,
+                    encryptionType.ToString(),
+                    string.Join(valueSeparator, Map(validEncryptionTypes, static validEncryptionType => $"'{validEncryptionType:G}'"))
+                ), 
+                TdsEnums.TCE_PARAM_ENCRYPTIONTYPE
+            );
         }
 
         static internal Exception NullPlainText()
@@ -1700,8 +1734,8 @@ namespace Microsoft.Data.SqlClient
         static internal Exception InvalidKeyStoreProviderName(string providerName, List<string> systemProviders, List<string> customProviders)
         {
             const string valueSeparator = @", ";
-            string systemProviderStr = string.Join(valueSeparator, systemProviders.Select(provider => $"'{provider}'"));
-            string customProviderStr = string.Join(valueSeparator, customProviders.Select(provider => $"'{provider}'"));
+            string systemProviderStr = string.Join(valueSeparator, Map(systemProviders, static provider => $"'{provider}'"));
+            string customProviderStr = string.Join(valueSeparator, Map(customProviders, static provider => $"'{provider}'"));
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
         }
 
@@ -1761,6 +1795,20 @@ namespace Microsoft.Data.SqlClient
         static internal Exception ColumnEncryptionKeysNotFound()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_ColumnEncryptionKeysNotFound));
+        }
+
+        internal static SqlException AttestationFailed(string errorMessage, Exception innerException = null)
+        {
+            SqlErrorCollection errors = new();
+            errors.Add(new SqlError(
+                infoNumber: 0,
+                errorState: 0,
+                errorClass: 0,
+                server: null,
+                errorMessage,
+                procedure: string.Empty,
+                lineNumber: 0));
+            return SqlException.CreateException(errors, serverVersion: string.Empty, Guid.Empty, innerException);
         }
 
         //
@@ -1911,8 +1959,8 @@ namespace Microsoft.Data.SqlClient
         static internal Exception UnrecognizedKeyStoreProviderName(string providerName, List<string> systemProviders, List<string> customProviders)
         {
             const string valueSeparator = @", ";
-            string systemProviderStr = string.Join(valueSeparator, systemProviders.Select(provider => @"'" + provider + @"'"));
-            string customProviderStr = string.Join(valueSeparator, customProviders.Select(provider => @"'" + provider + @"'"));
+            string systemProviderStr = string.Join(valueSeparator, Map(systemProviders, static provider => @"'" + provider + @"'"));
+            string customProviderStr = string.Join(valueSeparator, Map(customProviders, static provider => @"'" + provider + @"'"));
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_UnrecognizedKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
         }
 
@@ -2361,6 +2409,24 @@ namespace Microsoft.Data.SqlClient
         // constant strings
         internal const string Transaction = "Transaction";
         internal const string Connection = "Connection";
+
+        private static IEnumerable<string> Map<T>(IEnumerable<T> source, Func<T, string> selector)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (selector == null)
+            {
+                throw new ArgumentNullException(nameof(selector));
+            }
+
+            foreach (T element in source)
+            {
+                yield return selector(element);
+            }
+        }
     }
 
     sealed internal class SQLMessage

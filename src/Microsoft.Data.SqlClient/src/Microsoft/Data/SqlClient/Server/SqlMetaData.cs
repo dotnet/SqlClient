@@ -428,8 +428,7 @@ namespace Microsoft.Data.SqlClient.Server
                     Construct(name, dbType, userDefinedType, string.Empty, useServerDefault, isUniqueKey, columnSortOrder, sortOrdinal);
                     break;
                 default:
-                    SQL.InvalidSqlDbTypeForConstructor(dbType);
-                    break;
+                    throw SQL.InvalidSqlDbTypeForConstructor(dbType);
             }
         }
 
@@ -813,7 +812,7 @@ namespace Microsoft.Data.SqlClient.Server
             _sortOrdinal = sortOrdinal;
         }
 
-        // Construction for Decimal type and new Katmai Date/Time types
+        // Construction for Decimal type and new 2008 Date/Time types
         private void Construct(
             string name, 
             SqlDbType dbType, 
@@ -1286,7 +1285,7 @@ namespace Microsoft.Data.SqlClient.Server
                     {
                         byte[] rgbValue = value.Value;
                         byte[] rgbNewValue = new byte[MaxLength];
-                        Array.Copy(rgbValue, rgbNewValue, rgbValue.Length);
+                        Buffer.BlockCopy(rgbValue, 0, rgbNewValue, 0, rgbValue.Length);
                         Array.Clear(rgbNewValue, rgbValue.Length, rgbNewValue.Length - rgbValue.Length);
                         return new SqlBinary(rgbNewValue);
                     }
@@ -1308,7 +1307,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 byte[] rgbValue = value.Value;
                 byte[] rgbNewValue = new byte[MaxLength];
-                Array.Copy(rgbValue, rgbNewValue, (int)MaxLength);
+                Buffer.BlockCopy(rgbValue,0, rgbNewValue,0, (int)MaxLength);
                 value = new SqlBinary(rgbNewValue);
             }
 
@@ -1400,7 +1399,7 @@ namespace Microsoft.Data.SqlClient.Server
                         if (value.MaxLength < MaxLength)
                         {
                             byte[] rgbNew = new byte[MaxLength];
-                            Array.Copy(value.Buffer, rgbNew, (int)oldLength);
+                            Buffer.BlockCopy(value.Buffer, 0,rgbNew,0, (int)oldLength);
                             value = new SqlBytes(rgbNew);
                         }
 
@@ -1929,7 +1928,7 @@ namespace Microsoft.Data.SqlClient.Server
                     if (value.Length < MaxLength)
                     {
                         byte[] rgbNewValue = new byte[MaxLength];
-                        Array.Copy(value, rgbNewValue, value.Length);
+                        Buffer.BlockCopy(value, 0, rgbNewValue, 0, value.Length);
                         Array.Clear(rgbNewValue, value.Length, (int)rgbNewValue.Length - value.Length);
                         return rgbNewValue;
                     }
@@ -1950,7 +1949,7 @@ namespace Microsoft.Data.SqlClient.Server
             if (value.Length > MaxLength && Max != MaxLength)
             {
                 byte[] rgbNewValue = new byte[MaxLength];
-                Array.Copy(value, rgbNewValue, (int)MaxLength);
+                Buffer.BlockCopy(value, 0, rgbNewValue, 0, (int)MaxLength);
                 value = rgbNewValue;
             }
 

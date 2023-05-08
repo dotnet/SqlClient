@@ -14,8 +14,7 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         public override int Read(byte[] buffer, int offset, int count)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
-            try
+            using (TrySNIEventScope.Create(nameof(SslOverTdsStream)))
             {
                 if (!_encapsulate)
                 {
@@ -66,16 +65,11 @@ namespace Microsoft.Data.SqlClient.SNI
                     return packetBytesRead;
                 }
             }
-            finally
-            {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);                
-            }
         }
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
-            try
+            using (TrySNIEventScope.Create(nameof(SslOverTdsStream)))
             {
                 if (!_encapsulate)
                 {
@@ -126,16 +120,11 @@ namespace Microsoft.Data.SqlClient.SNI
                     return packetBytesRead;
                 }
             }
-            finally
-            {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);                
-            }
         }
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
-            try
+            using (TrySNIEventScope.Create(nameof(SslOverTdsStream)))
             {
                 // During the SSL negotiation phase, SSL is tunnelled over TDS packet type 0x12. After
                 // negotiation, the underlying socket only sees SSL frames.
@@ -179,16 +168,11 @@ namespace Microsoft.Data.SqlClient.SNI
                     ArrayPool<byte>.Shared.Return(packetBuffer, clearArray: true);
                 }
             }
-            finally
-            {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);                
-            }
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
-            try
+            using (TrySNIEventScope.Create(nameof(SslOverTdsStream)))
             {
                 if (!_encapsulate)
                 {
@@ -233,10 +217,6 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     ArrayPool<byte>.Shared.Return(packetBuffer, clearArray: true);
                 }
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);                
             }
         }
     }

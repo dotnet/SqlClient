@@ -1771,7 +1771,7 @@
     <value>Die für QuotePrefix und QuoteSuffix angegebenen Werte stimmen nicht überein.</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>Die Länge des Arguments '{0}' überschreitet dessen Grenzwert '{1}'.</value>
+    <value>Die Länge des Arguments '{0}' überschreitet dessen Grenzwert von '{1}'.</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>Erwartet wird ein Argument vom Typ {1}, empfangen wurde jedoch Typ {0}.</value>
@@ -1783,7 +1783,7 @@
     <value>Für die Verwendung des Schlüssels '{0}' muss der Schlüssel '{1}' vorhanden sein.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>Die Wertlänge des Schlüssels '{0}' überschreitet dessen Grenzwert '{1}'.</value>
+    <value>Die Länge des Werts für Taste '{0}' überschreitet dessen Grenzwert von '{1}'.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Schlüsselwort wird nicht unterstützt: '{0}'.</value>
@@ -2493,8 +2493,8 @@
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>"Authentication" kann nicht mit "Integrated Security" verwendet werden.</value>
   </data>
-  <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
-    <value>"Authentication=Active Directory Integrated" kann nicht mit den Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
+  <data name="SQL_IntegratedWithPassword" xml:space="preserve">
+    <value>"Authentication=Active Directory Integrated" kann nicht mit den Schlüsselwörtern "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>"Authentication=Active Directory Interactive" kann nicht mit den Schlüsselwörtern "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
@@ -2563,7 +2563,7 @@
     <value>Fehler beim Authentifizieren des Benutzers "{0}" in Active Directory (Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Fehlercode 0x{0}; Status {1}</value>
+    <value>Fehlercodecode 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword erfordert SQL Server 9.0 oder höher.</value>
@@ -2872,7 +2872,7 @@
     <value>Globale Transaktionen sind für diese Azure SQL-Datenbank-Instanz nicht aktiviert. Wenden Sie sich an den Azure SQL-Datenbank-Support, um Unterstützung zu erhalten.</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>Die aktuell geladene Datei "System.Transactions.dll" unterstützt keine globalen Transaktionen. Führen Sie ein Upgrade auf .NET Framework 4.6.1 oder höher durch.</value>
+    <value>Die aktuell geladene System.Transactions.dll unterstützt keine globalen Transaktionen. Bitte aktualisieren Sie auf .NET Framework 4.6.2 oder höher.</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>Batchupdates werden bei der Kontextverbindung nicht unterstützt.</value>
@@ -3224,6 +3224,12 @@
   </data>
   <data name="DbConnectionString_Encrypt" xml:space="preserve">
     <value>Falls wahr, verwendet SQL Server die SSL-Verschlüsselung für alle Daten, die zwischen Client und Server gesendet werden, wenn auf dem Server ein Zertifikat installiert ist.</value>
+  </data>
+  <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
+    <value>Der Hostname, der im Serverzertifikat erwartet werden soll, wenn die Verschlüsselung ausgehandelt wird, wenn er sich vom Standardwert unterscheidet, der von Addr/Address/Server abgeleitet wird.</value>
+  </data>
+  <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
+    <value>Der Pfad zu einer Zertifikatdatei, die mit dem SQL Server TLS/SSL-Zertifikat übereinstimmt.</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Sitzungen in einer Component Services-Umgebung (oder MTS-Umgebung, wenn Sie mit Microsoft Windows NT arbeiten) müssen den Anforderungen entsprechend automatisch in eine globale Transaktion eingetragen werden.</value>
@@ -3925,16 +3931,16 @@
     <value>Es wurde eine ungültige Registrierungskonfiguration für die Local Database Runtime gefunden. Überprüfen Sie, ob SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="SNI_ERROR_54" xml:space="preserve">
-    <value>Der Registrierungseintrag für den Dateipfad zur Datei "SQLUserInstance.dll" wurde nicht gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
+    <value>Der Registrierungseintrag für den Dateipfad zur Datei SQLUserInstance.dll wurde nicht gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="SNI_ERROR_55" xml:space="preserve">
-    <value>Der Registrierungswert enthält einen ungültigen Dateipfad für "SQLUserInstance.dll". Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
+    <value>Der Registrierungswert enthält einen ungültigen Dateipfad für SQLUserInstance.dll. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="SNI_ERROR_56" xml:space="preserve">
-    <value>"SQLUserInstance.dll" kann nicht von dem in der Registrierung angegebenen Ort geladen werden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
+    <value>SQLUserInstance.dll kann nicht von dem in der Registrierung angegebenen Ort geladen werden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="SNI_ERROR_57" xml:space="preserve">
-    <value>An dem Ort, der in der Registrierung angegeben ist, wurde eine ungültige "SQLUserInstance.dll" gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
+    <value>An dem Ort, der in der Registrierung angegeben ist, wurde eine ungültige SQLUserInstance.dll gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="Snix_Connect" xml:space="preserve">
     <value>Netzwerkbezogener oder instanzspezifischer Fehler beim Herstellen einer Verbindung mit SQL Server. Der Server wurde nicht gefunden, oder auf ihn kann nicht zugegriffen werden. Überprüfen Sie, ob der Instanzname richtig ist und ob SQL Server Remoteverbindungen zulässt.</value>
@@ -3985,7 +3991,7 @@
     <value>Local Database Runtime: "SQLUserInstance.dll" kann nicht geladen werden.</value>
   </data>
   <data name="LocalDB_MethodNotFound" xml:space="preserve">
-    <value>An dem Ort, der in der Registrierung angegeben ist, wurde eine ungültige "SQLUserInstance.dll" gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
+    <value>An dem Ort, der in der Registrierung angegeben ist, wurde eine ungültige SQLUserInstance.dll gefunden. Überprüfen Sie, ob die Funktion Local Database Runtime von SQL Server Express richtig installiert ist.</value>
   </data>
   <data name="LocalDB_UnobtainableMessage" xml:space="preserve">
     <value>Fehlermeldung von Local Database Runtime konnte nicht abgerufen werden.</value>
@@ -4162,7 +4168,7 @@
     <value>Interner Fehler. Spaltenverschlüsselungsschlüssel darf nicht NULL sein.</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>Der Spaltenverschlüsselungsschlüssel wurde erfolgreich entschlüsselt. Seine Länge von {1} entspricht jedoch nicht der Länge von {2} für den Algorithmus '{0}'. Prüfen Sie den verschlüsselten Wert des Spaltenverschlüsselungsschlüssels in der Datenbank.</value>
+    <value>Der Spaltenverschlüsselungstaste wurde erfolgreich entschlüsselt. Ihre Länge von {1} entspricht jedoch nicht der Länge von {2} für den Algorithmus '{0}'. Prüfen Sie den verschlüsselten Wert der Spaltenverschlüsselungstaste in der Datenbank.</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
     <value>Der für die Spalte in der Datenbank festgelegte Verschlüsselungstyp '{1}' ist entweder ungültig oder beschädigt. Gültige Verschlüsselungstypen für den Algorithmus '{0}' sind: {2}.</value>
@@ -4616,5 +4622,17 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Der Parameter "{0}" kann keine Ausgaberichtung oder InputOutput aufweisen, wenn EnableOptimizedParameterBinding für den übergeordneten Befehl aktiviert ist.</value>
+  </data>
+  <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
+    <value>Timeout bei der Verbindung beim Abrufen eines Zugriffstokens mithilfe der Authentifizierungsmethode "{0}". Letzter Fehler: {1}: {2}</value>
+  </data>
+  <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
+    <value>Der Dienstprinzipalname (SPN) des Failoverpartners.</value>
+  </data>
+  <data name="DbConnectionString_ServerSPN" xml:space="preserve">
+    <value>Der Dienstprinzipalname (SPN) des Servers.</value>
+  </data>
+  <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
+    <value>Die Plattform "{0}" wird bei .NET Framework nicht unterstützt.</value>
   </data>
 </root>
