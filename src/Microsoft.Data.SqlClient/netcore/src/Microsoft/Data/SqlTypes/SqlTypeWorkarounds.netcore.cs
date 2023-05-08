@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 
 namespace Microsoft.Data.SqlTypes
 {
-#if !NET8_0_OR_GREATER
     /// <summary>
     /// This type provides workarounds for the separation between System.Data.Common
     /// and Microsoft.Data.SqlClient.  The latter wants to access internal members of the former, and
@@ -124,5 +123,4 @@ namespace Microsoft.Data.SqlTypes
         }
         #endregion
     }
-#endif
 }
