@@ -5531,5 +5531,11 @@ namespace System {
                 return ResourceManager.GetString("VerifyHealthCertificateChainFormat", resourceCulture);
             }
         }
+        
+        internal static string SQL_SocketDidNotThrow {
+            get {
+                return ResourceManager.GetString("SQL_SocketDidNotThrow", resourceCulture);
+            }
+        }
     }
 }

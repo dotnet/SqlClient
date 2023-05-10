@@ -426,9 +426,8 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         socket.Connect(ipAddress, port);
                         if (!isInfiniteTimeout)
-                            throw new InternalException(
-                                $"Call to {nameof(Socket.Connect)} must throw {nameof(SocketException)} " +
-                                $"with {SocketError.WouldBlock.ToString()} error code");
+                            throw SQL.SocketDidNotThrow();
+                        
                         isConnected = true;
                     }
                     catch (SocketException socketException) when (!isInfiniteTimeout &&
