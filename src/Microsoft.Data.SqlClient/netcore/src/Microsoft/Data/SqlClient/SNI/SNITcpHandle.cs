@@ -353,7 +353,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <summary>
         /// Returns array of IP addresses for the given server name, sorted according to the given preference.
         /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException">Thrown when <see cref="ipPreference"/> is not supported</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when ipPreference is not supported</exception>
         private static IEnumerable<IPAddress> GetHostAddressesSortedByPreference(string serverName, SqlConnectionIPAddressPreference ipPreference)
         {
             IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);
