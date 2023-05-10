@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -350,7 +349,45 @@ namespace Microsoft.Data.SqlClient.SNI
             availableSocket = connectTask.Result;
             return availableSocket;
         }
+        
+        /// <summary>
+        /// Returns array of IP addresses for the given server name, sorted according to the given preference.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when <see cref="ipPreference"/> is not supported</exception>
+        private static IEnumerable<IPAddress> GetHostAddressesSortedByPreference(string serverName, SqlConnectionIPAddressPreference ipPreference)
+        {
+            IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);
+            AddressFamily? prioritiesFamily = ipPreference switch
+            {
+                SqlConnectionIPAddressPreference.IPv4First => AddressFamily.InterNetwork,
+                SqlConnectionIPAddressPreference.IPv6First => AddressFamily.InterNetworkV6,
+                SqlConnectionIPAddressPreference.UsePlatformDefault => null,
+                _ => throw ADP.NotSupportedEnumerationValue(typeof(SqlConnectionIPAddressPreference), ipPreference.ToString(), nameof(GetHostAddressesSortedByPreference))
+            };
 
+            // Return addresses of the preferred family first
+            if (prioritiesFamily != null)
+                foreach (IPAddress ipAddress in ipAddresses)
+                {
+                    if (ipAddress.AddressFamily == prioritiesFamily)
+                    {
+                        yield return ipAddress;
+                    }
+                }
+
+            // Return addresses of the other family
+            foreach (IPAddress ipAddress in ipAddresses)
+            {
+                if (ipAddress.AddressFamily is AddressFamily.InterNetwork or AddressFamily.InterNetworkV6)
+                {
+                    if (prioritiesFamily == null || ipAddress.AddressFamily != prioritiesFamily)
+                    {
+                        yield return ipAddress;
+                    }
+                }
+            }
+        }
+        
         // Connect to server with hostName and port.
         // The IP information will be collected temporarily as the pendingDNSInfo but is not stored in the DNS cache at this point.
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
@@ -360,19 +397,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             Stopwatch timeTaken = Stopwatch.StartNew();
 
-            IEnumerable<IPAddress> ipAddresses = Dns.GetHostAddresses(serverName).Where(address =>
-                address.AddressFamily is AddressFamily.InterNetwork or AddressFamily.InterNetworkV6);
-
-            ipAddresses = ipPreference switch
-            {
-                SqlConnectionIPAddressPreference.IPv4First => ipAddresses.OrderByDescending(address =>
-                    address.AddressFamily == AddressFamily.InterNetwork),
-                SqlConnectionIPAddressPreference.IPv6First => ipAddresses.OrderByDescending(address =>
-                    address.AddressFamily == AddressFamily.InterNetworkV6),
-                SqlConnectionIPAddressPreference.UsePlatformDefault => ipAddresses,
-                _ => throw ADP.NotSupportedEnumerationValue(typeof(SqlConnectionIPAddressPreference),
-                    ipPreference.ToString(), nameof(Connect))
-            };
+            IEnumerable<IPAddress> ipAddresses = GetHostAddressesSortedByPreference(serverName, ipPreference);
 
             foreach (IPAddress ipAddress in ipAddresses)
             {
