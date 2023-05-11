@@ -403,7 +403,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             foreach (IPAddress ipAddress in ipAddresses)
             {
-                var socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
+                Socket socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
                 {
                     Blocking = isInfiniteTimeout
                 };
