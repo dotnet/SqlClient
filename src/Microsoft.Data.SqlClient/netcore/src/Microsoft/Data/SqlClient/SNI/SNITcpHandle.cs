@@ -367,6 +367,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             // Return addresses of the preferred family first
             if (prioritiesFamily != null)
+            {
                 foreach (IPAddress ipAddress in ipAddresses)
                 {
                     if (ipAddress.AddressFamily == prioritiesFamily)
@@ -374,6 +375,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         yield return ipAddress;
                     }
                 }
+            }
 
             // Return addresses of the other family
             foreach (IPAddress ipAddress in ipAddresses)
