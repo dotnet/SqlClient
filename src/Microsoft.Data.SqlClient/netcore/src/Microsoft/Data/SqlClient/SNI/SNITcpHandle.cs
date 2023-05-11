@@ -426,7 +426,9 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         socket.Connect(ipAddress, port);
                         if (!isInfiniteTimeout)
+                        {
                             throw SQL.SocketDidNotThrow();
+                        }
                         
                         isConnected = true;
                     }
