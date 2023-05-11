@@ -474,10 +474,14 @@ namespace Microsoft.Data.SqlClient.SNI
                         socket.Blocking = true;
                         string iPv4String = null;
                         string iPv6String = null;
-                        string ipAddressString = ipAddress.ToString();
                         if (socket.AddressFamily == AddressFamily.InterNetwork)
-                            iPv4String = ipAddressString;
-                        else iPv6String = ipAddressString;
+                        {
+                            iPv4String = ipAddress.ToString();
+                        }
+                        else
+                        {
+                            iPv6String = ipAddress.ToString();
+                        }
                         pendingDNSInfo = new SQLDNSInfo(cachedFQDN, iPv4String, iPv6String, port.ToString());
                         isSocketSelected = true;
                         return socket;
