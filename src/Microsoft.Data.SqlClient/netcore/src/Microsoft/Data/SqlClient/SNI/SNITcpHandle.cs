@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         // than int.MaxValue microseconds because of https://github.com/dotnet/SqlClient/pull/1029#issuecomment-875364044
                         do
                         {
-                            var timeLeft = timeout - timeTaken.Elapsed;
+                            TimeSpan timeLeft = timeout - timeTaken.Elapsed;
 
                             if (timeLeft <= TimeSpan.Zero)
                                 return null;
