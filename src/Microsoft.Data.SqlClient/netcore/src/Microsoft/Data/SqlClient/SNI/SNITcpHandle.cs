@@ -418,7 +418,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     ipAddress.AddressFamily, 
                     isInfiniteTimeout);
 
-
                 try
                 {
                     bool isConnected;
