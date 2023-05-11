@@ -403,25 +403,26 @@ namespace Microsoft.Data.SqlClient.SNI
 
             foreach (IPAddress ipAddress in ipAddresses)
             {
-                Socket socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
-                {
-                    Blocking = isInfiniteTimeout
-                };
-
                 bool isSocketSelected = false;
-
-                // enable keep-alive on socket
-                SetKeepAliveValues(ref socket);
-
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                    "Connecting to IP address {0} and port {1} using {2} address family. Is infinite timeout: {3}",
-                    ipAddress,
-                    port, 
-                    ipAddress.AddressFamily, 
-                    isInfiniteTimeout);
+                Socket socket = null;
 
                 try
                 {
+                    socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
+                    {
+                        Blocking = isInfiniteTimeout
+                    };
+
+                    // enable keep-alive on socket
+                    SetKeepAliveValues(ref socket);
+
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
+                        "Connecting to IP address {0} and port {1} using {2} address family. Is infinite timeout: {3}",
+                        ipAddress,
+                        port,
+                        ipAddress.AddressFamily,
+                        isInfiniteTimeout);
+                
                     bool isConnected;
                     try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
                     {
@@ -438,11 +439,14 @@ namespace Microsoft.Data.SqlClient.SNI
                                                                   SocketError.WouldBlock)
                     {
                         // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
+                        // Socket.Select is used because it supports timeouts, while Socket.Connect does not
 
                         List<Socket> checkReadLst; List<Socket> checkWriteLst; List<Socket> checkErrorLst;
 
                         // Repeating Socket.Select several times if our timeout is greater
-                        // than int.MaxValue microseconds because of https://github.com/dotnet/SqlClient/pull/1029#issuecomment-875364044
+                        // than int.MaxValue microseconds because of 
+                        // https://github.com/dotnet/SqlClient/pull/1029#issuecomment-875364044
+                        // which states that Socket.Select can't handle timeouts greater than int.MaxValue microseconds
                         do
                         {
                             TimeSpan timeLeft = timeout - timeTaken.Elapsed;
@@ -488,7 +492,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 finally
                 {
                     if (!isSocketSelected)
-                        socket.Dispose();
+                        socket?.Dispose();
                 }
             }
 
