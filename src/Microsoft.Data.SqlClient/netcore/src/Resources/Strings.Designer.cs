@@ -3175,6 +3175,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Socket did not throw expected &apos;{0}&apos; with error code &apos;{1}&apos;..
+        /// </summary>
+        internal static string SQL_SocketDidNotThrow {
+            get {
+                return ResourceManager.GetString("SQL_SocketDidNotThrow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to SqlCommand.DeriveParameters failed because the SqlCommand.CommandText property value is an invalid multipart name.
         /// </summary>
         internal static string SQL_SqlCommandCommandText {

@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -376,6 +378,10 @@ namespace Microsoft.Data.SqlClient
         internal static Exception SynchronousCallMayNotPend()
         {
             return new Exception(StringsHelper.GetString(Strings.Sql_InternalError));
+        }
+        internal static Exception SocketDidNotThrow()
+        {
+            return new InternalException(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
         }
         internal static Exception ConnectionLockedForBcpEvent()
         {
