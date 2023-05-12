@@ -1947,13 +1947,7 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>Cannot set the AccessTokenCallback property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if 'UserID', 'UID', 'Password', or 'PWD' has been specified in connection string.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfActiveDirectoryDefaultTokenAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfCredentialAndAccessTokenCallback" xml:space="preserve">
-    <value>Cannot set the Credential property if the AccessTokenCallback property is already set.</value>
+  <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
+    <value>Cannot set the AccessTokenCallback property if 'Authentication' has been specified in the connection string.</value>
   </data>
 </root>

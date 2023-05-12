@@ -457,20 +457,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if &apos;UserID&apos;, &apos;UID&apos;, &apos;Password&apos;, or &apos;PWD&apos; has been specified in connection string..
+        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if &apos;Authentication&apos; has been specified in the connection string..
         /// </summary>
-        internal static string ADP_InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword {
+        internal static string ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback {
             get {
-                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if &apos;Authentication=Active Directory Default&apos; has been specified in the connection string..
-        /// </summary>
-        internal static string ADP_InvalidMixedUsageOfActiveDirectoryDefaultTokenAndTokenCallback {
-            get {
-                return ResourceManager.GetString("ADP_InvalidMixedUsageOfActiveDirectoryDefaultTokenAndTokenCallback", resourceCulture);
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback", resourceCulture);
             }
         }
         
@@ -480,15 +471,6 @@ namespace System {
         internal static string ADP_InvalidMixedUsageOfCredentialAndAccessToken {
             get {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfCredentialAndAccessToken", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot set the Credential property if the AccessTokenCallback property is already set..
-        /// </summary>
-        internal static string ADP_InvalidMixedUsageOfCredentialAndAccessTokenCallback {
-            get {
-                return ResourceManager.GetString("ADP_InvalidMixedUsageOfCredentialAndAccessTokenCallback", resourceCulture);
             }
         }
         
