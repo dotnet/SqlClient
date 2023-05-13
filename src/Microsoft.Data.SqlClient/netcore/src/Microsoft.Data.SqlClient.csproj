@@ -18,7 +18,7 @@
     <DocumentationFile>$(OutputPath)\$(TargetFramework)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Product>Core $(BaseProduct)</Product>
-    <EnableTrimAnalyzer Condition="$(TargetFramework)=='net6.0'">true</EnableTrimAnalyzer>
+    <EnableTrimAnalyzer Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">true</EnableTrimAnalyzer>
     <NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
