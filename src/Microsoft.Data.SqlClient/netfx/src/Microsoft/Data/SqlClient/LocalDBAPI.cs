@@ -262,8 +262,7 @@ namespace Microsoft.Data
         }
 
         static object s_configLock = new object();
-        static Dictionary<string, InstanceInfo> s_configurableInstances = null;
-
+    
         internal static void DemandLocalDBPermissions()
         {
             if (!_partialTrustAllowed)
@@ -295,71 +294,5 @@ namespace Microsoft.Data
         }
 
 
-        internal static void CreateLocalDBInstance(string instance)
-        {
-            DemandLocalDBPermissions();
-            if (s_configurableInstances == null)
-            {
-                // load list of instances from configuration, mark them as not created
-                bool lockTaken = false;
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    Monitor.Enter(s_configLock, ref lockTaken);
-                    if (s_configurableInstances == null)
-                    {
-                        Dictionary<string, InstanceInfo> tempConfigurableInstances = new Dictionary<string, InstanceInfo>(StringComparer.OrdinalIgnoreCase);
-                        object section = ConfigurationManager.GetSection("system.data.localdb");
-                        if (section != null) // if no section just skip creation
-                        {
-                            // validate section type
-                            LocalDBConfigurationSection configSection = section as LocalDBConfigurationSection;
-                            if (configSection == null)
-                                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_BadConfigSectionType"));
-                            foreach (LocalDBInstanceElement confElement in configSection.LocalDbInstances)
-                            {
-                                Debug.Assert(confElement.Name != null && confElement.Version != null, "Both name and version should not be null");
-                                tempConfigurableInstances.Add(confElement.Name.Trim(), new InstanceInfo(confElement.Version.Trim()));
-                            }
-                        }
-                        else
-                        {
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.CreateLocalDBInstance> No system.data.localdb section found in configuration");
-                        }
-                        s_configurableInstances = tempConfigurableInstances;
-                    }
-                }
-                finally
-                {
-                    if (lockTaken)
-                        Monitor.Exit(s_configLock);
-                }
-            }
-
-            InstanceInfo instanceInfo = null;
-
-            if (!s_configurableInstances.TryGetValue(instance, out instanceInfo))
-                return; // instance name was not in the config
-
-            if (instanceInfo.created)
-                return; // instance has already been created
-
-            Debug.Assert(!instance.Contains("\0"), "Instance name should contain embedded nulls");
-
-            if (instanceInfo.version.Contains("\0"))
-                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_InvalidVersion"), instance: instance);
-
-            // LocalDBCreateInstance is thread- and cross-process safe method, it is OK to call from two threads simultaneously
-            int hr = LocalDBCreateInstance(instanceInfo.version, instance, flags: 0);
-            SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.CreateLocalDBInstance> Starting creation of instance {0} version {1}", instance, instanceInfo.version);
-
-            if (hr < 0)
-            {
-                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_CreateFailed"), instance: instance, localDbError: hr);
-            }
-
-            SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.CreateLocalDBInstance> Finished creation of instance {0}", instance);
-            instanceInfo.created = true; // mark instance as created
-        } // CreateLocalDbInstance
     }
 }

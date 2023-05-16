@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -93,9 +94,43 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, serverSPN,
-                flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
-                hostNameInCertificate, serverCertificateFilename);
+            SNIHandle? sessionHandle;
+            instanceName = new byte[1];
+
+            bool errorWithLocalDBProcessing = false;
+            string? localDBDataSource = null;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                localDBDataSource = LocalDB.GetLocalDBDataSource(serverName, out errorWithLocalDBProcessing);
+            }
+            if (errorWithLocalDBProcessing)
+            {
+                sessionHandle = null;
+            }
+            else
+            {
+                // If a localDB Data source is available, we need to use it.
+                serverName = localDBDataSource ?? serverName;
+                DataSource? details = null;
+                try
+                {
+                   details = DataSource.ParseServerName(serverName);
+                }
+                catch(Exception ex)
+                {
+                    AddError(new SqlError(TdsEnums.MIN_ERROR_CLASS, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, ex.Message, "", 0, ex));
+                }
+                if (details == null)
+                {
+                    sessionHandle = null;
+                }
+                else
+                {
+                    sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, serverSPN,
+                    flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
+                    hostNameInCertificate, serverCertificateFilename, details);
+                }
+            }
 
             if (sessionHandle is not null)
             {

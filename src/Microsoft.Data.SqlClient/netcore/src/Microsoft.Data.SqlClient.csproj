@@ -89,7 +89,7 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs</Link>
-    </Compile>    
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlNotificationRequest.cs">
       <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
     </Compile>
@@ -107,6 +107,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\DataSource.cs">
+      <Link>Microsoft\Data\SqlClient\DataSource.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
       <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
@@ -517,7 +520,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' == 'netstandard2.0'">
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.Task.cs" />    
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.Task.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
@@ -749,7 +752,9 @@
     <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Windows.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\LocalDB.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\LocalDB.Windows.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
   </ItemGroup>

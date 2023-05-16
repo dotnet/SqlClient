@@ -537,7 +537,8 @@ namespace Microsoft.Data.SqlClient
             //Create LocalDB instance if necessary
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
-                LocalDBAPI.CreateLocalDBInstance(connHandler.ConnectionOptions.LocalDBInstance);
+                bool errorWithLocalDBProcessing = false;
+                LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, out errorWithLocalDBProcessing);
                 if (encrypt == SqlConnectionEncryptOption.Mandatory)
                 {
                     // Encryption is not supported on SQL Local DB - disable it for current session.
@@ -1934,13 +1935,6 @@ namespace Microsoft.Data.SqlClient
                 // SNI error. Replace the entire message
                 //
                 errorMessage = SQL.GetSNIErrorMessage((int)sniError.sniError);
-
-                // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
-                if (sniError.sniError == (int)SNINativeMethodWrapper.SniSpecialErrors.LocalDBErrorCode)
-                {
-                    errorMessage += LocalDBAPI.GetLocalDBMessage((int)sniError.nativeError);
-                    win32ErrorCode = 0;
-                }
             }
             errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
                 sqlContextInfo, providerName, (int)sniError.sniError, errorMessage);

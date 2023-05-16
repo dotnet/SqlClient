@@ -12,5 +12,9 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // LocalDB is not available for Unix and hence it cannot be supported.
         }
+        internal static string GetLocalDBDataSource(string fullServerName, out bool error)
+        {
+            throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // No Registry support on Unix
+        }
     }
 }
