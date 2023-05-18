@@ -89,6 +89,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             string serverSPN,
+            DataSource details,
             bool isIntegratedSecurity,
             bool tlsFirst,
             string hostNameInCertificate,
@@ -97,29 +98,6 @@ namespace Microsoft.Data.SqlClient.SNI
             SNIHandle? sessionHandle;
             instanceName = new byte[1];
 
-            bool errorWithLocalDBProcessing = false;
-            string? localDBDataSource = null;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                localDBDataSource = LocalDB.GetLocalDBDataSource(serverName, out errorWithLocalDBProcessing);
-            }
-            if (errorWithLocalDBProcessing)
-            {
-                sessionHandle = null;
-            }
-            else
-            {
-                // If a localDB Data source is available, we need to use it.
-                serverName = localDBDataSource ?? serverName;
-                DataSource? details = null;
-                try
-                {
-                   details = DataSource.ParseServerName(serverName);
-                }
-                catch(Exception ex)
-                {
-                    AddError(new SqlError(TdsEnums.MIN_ERROR_CLASS, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, ex.Message, "", 0, ex));
-                }
                 if (details == null)
                 {
                     sessionHandle = null;
@@ -130,8 +108,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                     hostNameInCertificate, serverCertificateFilename, details);
                 }
-            }
-
+            
             if (sessionHandle is not null)
             {
                 _sessionHandle = sessionHandle;

@@ -76,7 +76,6 @@ namespace Microsoft.Data.SqlClient
             {
                 if (TdsEnums.SNI_SUCCESS == _sniStatus)
                 {
-                    LocalDBAPI.ReleaseDLLHandles();
                     SNINativeMethodWrapper.SNITerminate();
                 }
                 base.handle = IntPtr.Zero;

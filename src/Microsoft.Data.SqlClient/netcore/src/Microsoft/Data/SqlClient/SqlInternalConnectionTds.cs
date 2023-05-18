@@ -10,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading;
@@ -1911,7 +1912,19 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information 
+            bool errorWithLocalDBProcessing = false;
+            string localDBDataSource = null;
 
+            if (ConnectionOptions.LocalDBInstance != null)
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    localDBDataSource = LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, out errorWithLocalDBProcessing);
+                }
+            }
+            string serverName = localDBDataSource ?? serverInfo.UserServerName;
+
+            DataSource details = DataSource.ParseServerName(serverName);
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
             _parser.Connect(serverInfo,
@@ -1919,7 +1932,7 @@ namespace Microsoft.Data.SqlClient
                             ignoreSniOpenTimeout,
                             timeout.LegacyTimerExpire,
                             ConnectionOptions,
-                            withFailover);
+                            withFailover,details);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);

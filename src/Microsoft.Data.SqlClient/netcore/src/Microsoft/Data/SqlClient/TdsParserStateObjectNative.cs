@@ -151,6 +151,7 @@ namespace Microsoft.Data.SqlClient
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             string serverSPN,
+            DataSource dataSource,
             bool isIntegratedSecurity,
             bool tlsFirst,
             string hostNameInCertificate,

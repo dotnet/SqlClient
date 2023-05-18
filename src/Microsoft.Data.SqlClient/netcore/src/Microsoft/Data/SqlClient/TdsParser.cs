@@ -364,7 +364,8 @@ namespace Microsoft.Data.SqlClient
             bool ignoreSniOpenTimeout,
             long timerExpire,
             SqlConnectionString connectionOptions,
-            bool withFailover)
+            bool withFailover,
+            DataSource details)
         {
             SqlConnectionEncryptOption encrypt = connectionOptions.Encrypt;
             bool isTlsFirst = (encrypt == SqlConnectionEncryptOption.Strict);
@@ -456,6 +457,7 @@ namespace Microsoft.Data.SqlClient
                 FQDNforDNSCache,
                 ref _connHandler.pendingSQLDNSObject,
                 serverInfo.ServerSPN,
+                details,
                 integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated,
                 isTlsFirst,
                 hostNameInCertificate,
@@ -554,6 +556,7 @@ namespace Microsoft.Data.SqlClient
                     FQDNforDNSCache,
                     ref _connHandler.pendingSQLDNSObject,
                     serverInfo.ServerSPN,
+                    details,
                     integratedSecurity,
                     isTlsFirst,
                     hostNameInCertificate,
@@ -1532,12 +1535,6 @@ namespace Microsoft.Data.SqlClient
                         //
                         errorMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
 
-                        // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
-                        if (details.sniErrorNumber == (int)SNINativeMethodWrapper.SniSpecialErrors.LocalDBErrorCode)
-                        {
-                            errorMessage += LocalDBAPI.GetLocalDBMessage((int)details.nativeError);
-                            win32ErrorCode = 0;
-                        }
                     }
                 }
                 errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",

@@ -208,6 +208,7 @@ namespace Microsoft.Data.SqlClient
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             string serverSPN,
+            DataSource dataSourceDetails,
             bool isIntegratedSecurity = false,
             bool tlsFirst = false,
             string hostNameInCertificate = "",
