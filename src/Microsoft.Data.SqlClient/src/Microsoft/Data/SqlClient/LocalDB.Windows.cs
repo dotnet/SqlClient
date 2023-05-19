@@ -226,7 +226,6 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.ERR, "User instance DLL path is invalid. DLL path = {0}", dllPath);
                         throw new Exception(Strings.SNI_ERROR_55);
-
                     }
 
                     // Load the dll
@@ -247,7 +246,6 @@ namespace Microsoft.Data.SqlClient
                         SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.ERR, "Was not able to load the PROC from DLL. Bad Runtime.");
                         libraryHandle.Dispose();
                         throw new Exception(Strings.SNI_ERROR_57);
-
                     }
 
                     // Set the delegate the invoke.
