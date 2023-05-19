@@ -33,7 +33,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
                 connection.Close();
 
-                if (builder.Encrypt != SqlConnectionEncryptOption.Strict)
+                if (builder.Encrypt != SqlConnectionEncryptOption.Strict &&
+                        (!builder.IntegratedSecurity || hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                         hostname.Equals(DataTestUtility.GetMachineFQDN(hostname), StringComparison.OrdinalIgnoreCase)))
                 {
                     // Exercise the IP address-specific code in SSRP
                     IPAddress[] addresses = Dns.GetHostAddresses(hostname);
@@ -64,7 +66,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName))
             {
                 builder.DataSource = hostname + "\\" + instanceName;
-                
                 using SqlConnection connection = new(builder.ConnectionString);
                 connection.Open();
             }
