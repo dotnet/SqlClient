@@ -95,19 +95,10 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SNIHandle? sessionHandle;
-            instanceName = new byte[1];
-
-                if (details == null)
-                {
-                    sessionHandle = null;
-                }
-                else
-                {
-                    sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, serverSPN,
+            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, serverSPN,
                     flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                     hostNameInCertificate, serverCertificateFilename, details);
-                }
+                
             
             if (sessionHandle is not null)
             {

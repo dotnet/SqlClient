@@ -49,8 +49,9 @@ namespace Microsoft.Data.SqlClient
             {
                 return Instance.LoadUserInstanceDll() ? Instance.GetConnectionString(localDbInstance) : null;
             }
-            catch
+            catch(Exception ex)
             {
+                SqlClientEventSource.Log.TryTraceEvent(s_className, EventType.ERR,ex?.Message);
                 SqlClientEventSource.Log.TryTraceEvent(s_className, EventType.INFO, "Falling back to use SqlLocalDB.exe.");
 
                 // The old logic to load the SqlUserInstance.dll did not quite work possibly because
