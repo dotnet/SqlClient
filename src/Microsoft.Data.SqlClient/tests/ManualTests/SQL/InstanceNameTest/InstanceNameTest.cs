@@ -33,6 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
                 connection.Close();
 
+                // We can only connect via IP address if we aren't doing remote Kerberos or strict TLS
                 if (builder.Encrypt != SqlConnectionEncryptOption.Strict &&
                         (!builder.IntegratedSecurity || hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
                          hostname.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase)))

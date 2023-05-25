@@ -351,6 +351,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             return DataTestUtility.AreConnStringSetupForAE()
 #if NET6_0_OR_GREATER
+                // AE tests on Windows will use the Cert Store. On non-Windows, they require AKV.
                 && (OperatingSystem.IsWindows() || DataTestUtility.IsAKVSetupAvailable())
 #endif
                 ;
