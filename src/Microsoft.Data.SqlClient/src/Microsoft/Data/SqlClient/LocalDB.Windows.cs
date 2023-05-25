@@ -9,7 +9,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 
@@ -21,7 +23,6 @@ namespace Microsoft.Data.SqlClient
         private const string s_className = nameof(LocalDB);
         //HKEY_LOCAL_MACHINE
         private const string LocalDBInstalledVersionRegistryKey = "SOFTWARE\\Microsoft\\Microsoft SQL Server Local DB\\Installed Versions\\";
-        private static readonly Regex regex = new Regex("(np:.+)\r", RegexOptions.Compiled | RegexOptions.CultureInvariant);
         private const string InstanceAPIPathValueName = "InstanceAPIPath";
         private const string ProcLocalDBStartInstance = "LocalDBStartInstance";
         private const int MAX_LOCAL_DB_CONNECTION_STRING_SIZE = 260;
@@ -43,11 +44,11 @@ namespace Microsoft.Data.SqlClient
 
         private LocalDB() { }
 
-        internal static string GetLocalDBConnectionString(string localDbInstance)
+        internal static string GetLocalDBConnectionString(string localDbInstance, TimeoutTimer timeout)
         {
             try
             {
-                return Instance.LoadUserInstanceDll() ? Instance.GetConnectionString(localDbInstance) : null;
+               return Instance.LoadUserInstanceDll() ? Instance.GetConnectionString(localDbInstance) : null;
             }
             catch(Exception ex)
             {
@@ -59,7 +60,7 @@ namespace Microsoft.Data.SqlClient
                 // installed on the machine is an AMD64 process).
                 // We try to figure out what we need by asking SqlLocalDB.exe (out of proc).
 
-                if (!TryGetLocalDBConnectionStringUsingSqlLocalDBExe(localDbInstance, out string connString))
+                if (!TryGetLocalDBConnectionStringUsingSqlLocalDBExe(localDbInstance, timeout, out string connString))
                 {
                     SqlClientEventSource.Log.TryTraceEvent(s_className, EventType.ERR, "Unable to to use SqlLocalDB.exe to get the ConnectionString.");
                     throw;
@@ -114,9 +115,10 @@ namespace Microsoft.Data.SqlClient
             localDBStartInstanceFunc(localDbInstance, 0, localDBConnectionString, ref sizeOfbuffer);
             return localDBConnectionString.ToString();
         }
-        private static bool TryGetLocalDBConnectionStringUsingSqlLocalDBExe(string localDbInstance, out string connString)
+        private static bool TryGetLocalDBConnectionStringUsingSqlLocalDBExe(string localDbInstance, TimeoutTimer timeout, out string connString)
         {
-            connString = null;
+           Regex regex = new Regex("(np:.+)\r", RegexOptions.Compiled | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(timeout.MillisecondsRemaining));
+           connString = null;
             try
             {
                 // Make sure the instance is running first. If it is, this call won't do any harm, aside from
@@ -131,7 +133,7 @@ namespace Microsoft.Data.SqlClient
 
                 var proc = Process.Start(psi);
 
-                proc.WaitForExit(milliseconds: 5000);
+                proc.WaitForExit(milliseconds: (int)timeout.MillisecondsRemaining);
 
                 psi = new ProcessStartInfo(s_sqlLocalDBExe.Value, $"i \"{localDbInstance}\"")
                 {
@@ -143,41 +145,26 @@ namespace Microsoft.Data.SqlClient
 
                 proc = Process.Start(psi);
 
-                proc.WaitForExit(milliseconds: 5000);
+                proc.WaitForExit(milliseconds: (int)timeout.MillisecondsRemaining);
 
                 var alllines = proc.StandardOutput.ReadToEnd();
 
                 SqlClientEventSource.Log.TryTraceEvent(s_className, EventType.INFO, $"Called: {s_sqlLocalDBExe.Value} \"{localDbInstance}\"");
 
-                var lines = alllines.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-                var task = Task.Run(() =>
+                Match match = regex.Match(alllines);
+                if (match.Success)
                 {
-                    string res = null;
-                    // Iterate over all the lines in the stdout looking for something that is a named pipe: that would be
-                    // the connection string we are looking for!
-                    foreach (var line in lines)
-                    {
-                        var match = regex.Match(line);
-
-                        if (match.Success)
-                        {
-                            res = match.Captures[0].Value;
-                            return res;
-                        }
-                    }
-                    return res;
-                });
-                bool isCompletedSuccessfully = task.Wait(TimeSpan.FromMilliseconds(3000));
-
-                if (isCompletedSuccessfully)
-                {
-                    connString = task.Result;
+                    connString = match.Value.Trim();
                     return true;
                 }
                 else
                 {
-                    SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.ERR, "Unable to retrieve named pipe SqlLocalDB.exe process stdout, it took longer than the maximum time allowed.");
+                    SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.INFO, "No match found for named pipe SqlLocalDB.exe process stdout.");
                 }
+            }
+            catch(RegexMatchTimeoutException ex)
+            {
+                SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.ERR, "Unable to retrieve named pipe SqlLocalDB.exe process stdout, it took longer than the maximum time allowed."+ex?.Message);
             }
             catch
             {
@@ -269,9 +256,10 @@ namespace Microsoft.Data.SqlClient
         /// Gets the Local db Named pipe data source if the input is a localDB server.
         /// </summary>
         /// <param name="fullServerName">The data source</param>
+        /// <param name="timeout for getting LocalDB instance name from SqlLocalDB.exe Proc"></param>
         /// <param name="error">Set true when an error occurred while getting LocalDB up</param>
         /// <returns></returns>
-        internal static string GetLocalDBDataSource(string fullServerName, out bool error)
+        internal static string GetLocalDBDataSource(string fullServerName, TimeoutTimer timeout, out bool error)
         {
             string localDBConnectionString = null;
             string localDBInstance = DataSource.GetLocalDBInstance(fullServerName, out bool isBadLocalDBDataSource);
@@ -286,7 +274,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // We have successfully received a localDBInstance which is valid.
                 Debug.Assert(!string.IsNullOrWhiteSpace(localDBInstance), "Local DB Instance name cannot be empty.");
-                localDBConnectionString = LocalDB.GetLocalDBConnectionString(localDBInstance);
+                localDBConnectionString = LocalDB.GetLocalDBConnectionString(localDBInstance, timeout);
 
                 if (fullServerName == null)
                 {

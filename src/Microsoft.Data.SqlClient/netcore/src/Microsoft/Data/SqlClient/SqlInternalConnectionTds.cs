@@ -1919,18 +1919,18 @@ namespace Microsoft.Data.SqlClient
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    localDBDataSource = LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, out errorWithLocalDBProcessing);
+                    localDBDataSource = LocalDB.GetLocalDBDataSource(serverInfo.UserServerName,timeout, out errorWithLocalDBProcessing);
                 }
             }
             string serverName = localDBDataSource ?? serverInfo.UserServerName;
-
             DataSource details = DataSource.ParseServerName(serverName);
+            
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
             _parser.Connect(serverInfo,
                             this,
                             ignoreSniOpenTimeout,
-                            timeout.LegacyTimerExpire,
+                            timeout,
                             ConnectionOptions,
                             withFailover,
                             details);

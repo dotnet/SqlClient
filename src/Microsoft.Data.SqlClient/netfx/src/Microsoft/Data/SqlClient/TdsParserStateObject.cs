@@ -12,6 +12,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -281,7 +282,7 @@ namespace Microsoft.Data.SqlClient
         internal void CreatePhysicalSNIHandle(
             string serverName,
             bool ignoreSniOpenTimeout,
-            long timerExpire,
+            TimeoutTimer timerExpire,
             out byte[] instanceName,
             byte[] spnBuffer,
             bool flushCache,
@@ -297,13 +298,13 @@ namespace Microsoft.Data.SqlClient
 
             // Translate to SNI timeout values (Int32 milliseconds)
             long timeout;
-            if (long.MaxValue == timerExpire)
+            if (long.MaxValue == timerExpire.LegacyTimerExpire)
             {
                 timeout = int.MaxValue;
             }
             else
             {
-                timeout = ADP.TimerRemainingMilliseconds(timerExpire);
+                timeout = ADP.TimerRemainingMilliseconds(timerExpire.LegacyTimerExpire);
                 if (timeout > int.MaxValue)
                 {
                     timeout = int.MaxValue;

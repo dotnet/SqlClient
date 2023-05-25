@@ -2298,7 +2298,7 @@ namespace Microsoft.Data.SqlClient
             _parser.Connect(serverInfo,
                             this,
                             ignoreSniOpenTimeout,
-                            timeout.LegacyTimerExpire,
+                            timeout,
                             ConnectionOptions,
                             withFailover,
                             isFirstTransparentAttempt,

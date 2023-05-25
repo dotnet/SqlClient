@@ -24,6 +24,7 @@ using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -495,7 +496,7 @@ namespace Microsoft.Data.SqlClient
         internal void Connect(ServerInfo serverInfo,
                               SqlInternalConnectionTds connHandler,
                               bool ignoreSniOpenTimeout,
-                              long timerExpire,
+                              TimeoutTimer timerExpire,
                               SqlConnectionString connectionOptions,
                               bool withFailover,
                               bool isFirstTransparentAttempt,
@@ -538,7 +539,7 @@ namespace Microsoft.Data.SqlClient
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
                 bool errorWithLocalDBProcessing = false;
-                LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, out errorWithLocalDBProcessing);
+                LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, timerExpire, out errorWithLocalDBProcessing);
                 if (encrypt == SqlConnectionEncryptOption.Mandatory)
                 {
                     // Encryption is not supported on SQL Local DB - disable it for current session.
@@ -682,7 +683,7 @@ namespace Microsoft.Data.SqlClient
             }
             _state = TdsParserState.OpenNotLoggedIn;
             _physicalStateObj.SniContext = SniContext.Snix_PreLoginBeforeSuccessfulWrite; // SQL BU DT 376766
-            _physicalStateObj.TimeoutTime = timerExpire;
+            _physicalStateObj.TimeoutTime = timerExpire.LegacyTimerExpire;
 
             bool marsCapable = false;
 
