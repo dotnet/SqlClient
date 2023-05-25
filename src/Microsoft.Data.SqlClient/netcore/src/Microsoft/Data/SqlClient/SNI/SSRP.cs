@@ -345,9 +345,37 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
                 }
             }
+            catch (AggregateException ae)
+            {
+                if (ae.InnerExceptions.Count > 0)
+                {
+                    // Log all errors
+                    foreach (Exception e in ae.InnerExceptions)
+                    {
+                        // Favor SocketException for returned error
+                        if (e is SocketException)
+                        {
+                            result.Error = e;
+                        }
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
+                            "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: e.Message);
+                    }
+
+                    // Return first error if we didn't find a SocketException
+                    result.Error = result.Error == null ? ae.InnerExceptions[0] : result.Error;
+                }
+                else
+                {
+                    result.Error = ae;
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
+                        "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: ae.Message);
+                }
+            }
             catch (Exception e)
             {
                 result.Error = e;
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
+                    "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: e.Message);
             }
 
             return result;
