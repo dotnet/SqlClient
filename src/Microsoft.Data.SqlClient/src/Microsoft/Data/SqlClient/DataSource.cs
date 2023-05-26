@@ -2,10 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.IO;
 using System.Text;
-using System;
-using System.Configuration.Provider;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -253,7 +252,7 @@ namespace Microsoft.Data.SqlClient
                 // Bad Data Source like "server, "
                 if (string.IsNullOrEmpty(parameter))
                 {
-                    throw new Exception(Strings.SNI_ERROR_25);
+                    throw new Exception(LocalDBErrorFormat(ProviderEnum.INVALID_PROV));
                 }
 
                 // For Tcp and Only Tcp are parameters allowed.
@@ -293,13 +292,13 @@ namespace Microsoft.Data.SqlClient
                 if (string.IsNullOrWhiteSpace(InstanceName))
                 {
                     IsBadDataSource= true;
-                    throw new Exception(ProviderEnum.INVALID_PROV.ToString());
+                    throw new Exception(LocalDBErrorFormat(ProviderEnum.INVALID_PROV));
                 }
 
                 if (DefaultSqlServerInstanceName.Equals(InstanceName))
                 {
                     IsBadDataSource= true;
-                    throw new Exception(ProviderEnum.INVALID_PROV.ToString());
+                    throw new Exception(LocalDBErrorFormat(ProviderEnum.INVALID_PROV));
                 }
 
                 IsSsrpRequired = true;

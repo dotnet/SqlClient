@@ -1922,7 +1922,7 @@ namespace Microsoft.Data.SqlClient
                     localDBDataSource = LocalDB.GetLocalDBDataSource(serverInfo.UserServerName,timeout, out errorWithLocalDBProcessing);
                 }
             }
-            string serverName = localDBDataSource ?? serverInfo.UserServerName;
+            string serverName = localDBDataSource ?? serverInfo.ExtendedServerName;
             DataSource details = DataSource.ParseServerName(serverName);
             
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
