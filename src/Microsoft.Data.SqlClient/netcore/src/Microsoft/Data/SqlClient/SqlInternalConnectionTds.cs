@@ -1912,14 +1912,13 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information 
-            bool errorWithLocalDBProcessing = false;
             string localDBDataSource = null;
 
             if (ConnectionOptions.LocalDBInstance != null)
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    localDBDataSource = LocalDB.GetLocalDBDataSource(serverInfo.UserServerName,timeout, out errorWithLocalDBProcessing);
+                    localDBDataSource = LocalDB.GetLocalDBDataSource(serverInfo.UserServerName,timeout);
                 }
             }
             string serverName = localDBDataSource ?? serverInfo.ExtendedServerName;

@@ -102,29 +102,17 @@ namespace Microsoft.Data.SqlClient
                 if (_connectionProtocol == Protocol.None)
                 {
                     IsBadDataSource = true;
-                    SqlErrorCollection errors = new SqlErrorCollection
-                    {
-                        new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.INVALID_PROV), null, 0)
-                    };
-                    throw SqlException.CreateException(errors, "");
+                    throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.INVALID_PROV, ServerName), "");
                 }
                 else if (_connectionProtocol == Protocol.NP)
                 {
                     IsBadDataSource = true;
-                    SqlErrorCollection errors = new SqlErrorCollection
-                    {
-                        new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.NP_PROV), null, 0)
-                    };
-                    throw SqlException.CreateException(errors, "");
+                    throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.NP_PROV, ServerName), "");
                 }
                 else if (_connectionProtocol == Protocol.TCP)
                 {
                     IsBadDataSource = true;
-                    SqlErrorCollection errors = new SqlErrorCollection
-                    {
-                        new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.TCP_PROV), null, 0)
-                    };
-                    throw SqlException.CreateException(errors, "");
+                    throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.TCP_PROV, ServerName), "");
                 }
             }
         }
@@ -202,11 +190,13 @@ namespace Microsoft.Data.SqlClient
 
             return instanceName;
         }
-        private static string LocalDBErrorFormat(ProviderEnum providerName)
+        private static SqlErrorCollection LocalDBErrorFormat(ProviderEnum providerName, string ServerName)
         {
-            return string.Format("(provider: {0}, error: {1} - {2})",
-                    providerName, InvalidConnStringError ,Strings.SNI_ERROR_25);
-
+            return new SqlErrorCollection
+                    {
+                        new SqlError(InvalidConnStringError, 0, TdsEnums.MIN_ERROR_CLASS, ServerName, string.Format("(provider: {0}, error: {1} - {2})",
+                    providerName, InvalidConnStringError, Strings.SNI_ERROR_25), null, 0)
+                    };
         }
 
         internal static DataSource ParseServerName(string dataSource)
@@ -268,11 +258,7 @@ namespace Microsoft.Data.SqlClient
                 // Bad Data Source like "server, "
                 if (string.IsNullOrEmpty(parameter))
                 {
-                    SqlErrorCollection errors = new SqlErrorCollection
-                    {
-                        new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.INVALID_PROV), null, 0)
-                    };
-                    throw SqlException.CreateException(errors, "");
+                    throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.INVALID_PROV, ServerName), "");
                 }
 
                 // For Tcp and Only Tcp are parameters allowed.
@@ -284,33 +270,21 @@ namespace Microsoft.Data.SqlClient
                 {
                     IsBadDataSource = true;
                     // Parameter has been specified for non-TCP protocol. This is not allowed.
-                    SqlErrorCollection errors = new SqlErrorCollection
-                    {
-                        new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.INVALID_PROV), null, 0)
-                    };
-                    throw SqlException.CreateException(errors, "");
+                    throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.INVALID_PROV, ServerName), "");
                 }
 
                 int port;
                 if (!int.TryParse(parameter, out port))
                 {
                     IsBadDataSource = true;
-                    SqlErrorCollection errors = new SqlErrorCollection
-                    {
-                        new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.TCP_PROV), null, 0)
-                    };
-                    throw SqlException.CreateException(errors, "");
+                    throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.TCP_PROV, ServerName), "");
                 }
 
                 // If the user explicitly specified a invalid port in the connection string.
                 if (port < 1)
                 {
                     IsBadDataSource = true;
-                    SqlErrorCollection errors = new SqlErrorCollection
-                    {
-                        new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.TCP_PROV), null, 0)
-                    };
-                    throw SqlException.CreateException(errors, "");
+                    throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.TCP_PROV, ServerName), "");
                 }
 
                 Port = port;
@@ -323,22 +297,14 @@ namespace Microsoft.Data.SqlClient
 
                 if (string.IsNullOrWhiteSpace(InstanceName))
                 {
-                    IsBadDataSource= true;
-                    SqlErrorCollection errors = new SqlErrorCollection
-                    {
-                        new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.INVALID_PROV), null, 0)
-                    };
-                    throw SqlException.CreateException(errors, "");
+                    IsBadDataSource = true;
+                    throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.INVALID_PROV, ServerName), "");
                 }
 
                 if (DefaultSqlServerInstanceName.Equals(InstanceName))
                 {
-                    IsBadDataSource= true;
-                    SqlErrorCollection errors = new SqlErrorCollection
-                    {
-                        new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.INVALID_PROV), null, 0)
-                    };
-                    throw SqlException.CreateException(errors, "");
+                    IsBadDataSource = true;
+                    throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.INVALID_PROV, ServerName), "");
                 }
 
                 IsSsrpRequired = true;
@@ -373,11 +339,7 @@ namespace Microsoft.Data.SqlClient
                     if (tokensByBackSlash.Length < 6)
                     {
                         IsBadDataSource = true;
-                        SqlErrorCollection errors = new SqlErrorCollection
-                        {
-                            new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.NP_PROV), null, 0)
-                        };
-                        throw SqlException.CreateException(errors, "");
+                        throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.NP_PROV, ServerName), "");
                     }
 
                     string host = tokensByBackSlash[2];
@@ -385,22 +347,14 @@ namespace Microsoft.Data.SqlClient
                     if (string.IsNullOrEmpty(host))
                     {
                         IsBadDataSource = true;
-                        SqlErrorCollection errors = new SqlErrorCollection
-                        {
-                            new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.NP_PROV), null, 0)
-                        };
-                        throw SqlException.CreateException(errors, "");
+                        throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.NP_PROV, ServerName), "");
                     }
 
                     //Check if the "pipe" keyword is the first part of path
                     if (!PipeToken.Equals(tokensByBackSlash[3]))
                     {
                         IsBadDataSource = true;
-                        SqlErrorCollection errors = new SqlErrorCollection
-                        {
-                            new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.NP_PROV), null, 0)
-                        };
-                        throw SqlException.CreateException(errors, "");
+                        throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.NP_PROV, ServerName), "");
                     }
 
                     if (tokensByBackSlash[4].StartsWith(NamedPipeInstanceNameHeader))
@@ -432,11 +386,7 @@ namespace Microsoft.Data.SqlClient
                 catch (UriFormatException)
                 {
                     IsBadDataSource = true;
-                    SqlErrorCollection errors = new SqlErrorCollection
-                    {
-                        new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.NP_PROV), null, 0)
-                    };
-                    throw SqlException.CreateException(errors, "");
+                    throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.NP_PROV, ServerName), "");
                 }
 
                 // DataSource is something like "\\pipename"
@@ -448,11 +398,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     IsBadDataSource = true;
                     // In case the path began with a "\\" and protocol was not Named Pipes
-                    SqlErrorCollection errors = new SqlErrorCollection
-                    {
-                        new SqlError(InvalidConnStringError, 0, TdsEnums.FATAL_ERROR_CLASS, ServerName, LocalDBErrorFormat(ProviderEnum.NP_PROV), null, 0)
-                    };
-                    throw SqlException.CreateException(errors, "");
+                    throw SqlException.CreateException(LocalDBErrorFormat(ProviderEnum.NP_PROV, ServerName), "");
                 }
                 return true;
             }

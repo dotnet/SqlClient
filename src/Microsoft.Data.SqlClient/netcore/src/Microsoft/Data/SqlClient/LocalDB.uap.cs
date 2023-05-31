@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
             throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // No Registry support on UAP
         }
 
-        internal static string GetLocalDBDataSource(string fullServerName, TimeoutTimer timeout, out bool error)
+        internal static string GetLocalDBDataSource(string fullServerName, TimeoutTimer timeout)
         {
             throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // No Registry support on UAP
         }

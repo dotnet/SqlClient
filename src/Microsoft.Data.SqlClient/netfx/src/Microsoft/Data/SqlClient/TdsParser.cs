@@ -538,8 +538,7 @@ namespace Microsoft.Data.SqlClient
             //Create LocalDB instance if necessary
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
-                bool errorWithLocalDBProcessing = false;
-                LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, timerExpire, out errorWithLocalDBProcessing);
+                LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, timerExpire);
                 if (encrypt == SqlConnectionEncryptOption.Mandatory)
                 {
                     // Encryption is not supported on SQL Local DB - disable it for current session.

@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient
         {
             throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // LocalDB is not available for Unix and hence it cannot be supported.
         }
-        internal static string GetLocalDBDataSource(string fullServerName, TimeoutTimer timeout, out bool error)
+        internal static string GetLocalDBDataSource(string fullServerName, TimeoutTimer timeout)
         {
             throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // No Registry support on Unix
         }

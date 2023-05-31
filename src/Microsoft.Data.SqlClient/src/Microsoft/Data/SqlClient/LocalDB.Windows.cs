@@ -257,16 +257,14 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="fullServerName">The data source</param>
         /// <param name="timeout for getting LocalDB instance name from SqlLocalDB.exe Proc"></param>
-        /// <param name="error">Set true when an error occurred while getting LocalDB up</param>
         /// <returns></returns>
-        internal static string GetLocalDBDataSource(string fullServerName, TimeoutTimer timeout, out bool error)
+        internal static string GetLocalDBDataSource(string fullServerName, TimeoutTimer timeout)
         {
             string localDBConnectionString = null;
             string localDBInstance = DataSource.GetLocalDBInstance(fullServerName, out bool isBadLocalDBDataSource);
 
             if (isBadLocalDBDataSource)
             {
-                error = true;
                 return null;
             }
 
@@ -279,12 +277,10 @@ namespace Microsoft.Data.SqlClient
                 if (fullServerName == null)
                 {
                     // The Last error is set in LocalDB.GetLocalDBConnectionString. We don't need to set Last here.
-                    error = true;
-                    return null;
+                   return null;
                 }
             }
-            error = false;
-            return localDBConnectionString;
+           return localDBConnectionString;
         }
 
         /// <summary>
