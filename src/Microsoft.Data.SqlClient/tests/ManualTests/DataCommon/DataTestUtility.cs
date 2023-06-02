@@ -347,6 +347,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
         }
 
+        public static bool IsTargetReadyForAeWithKeyStore()
+        {
+            return DataTestUtility.AreConnStringSetupForAE()
+#if NET6_0_OR_GREATER
+                // AE tests on Windows will use the Cert Store. On non-Windows, they require AKV.
+                && (OperatingSystem.IsWindows() || DataTestUtility.IsAKVSetupAvailable())
+#endif
+                ;
+        }
+
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
 
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
@@ -937,15 +947,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Resolves the machine's fully qualified domain name if it is applicable.
         /// </summary>
         /// <returns>Returns FQDN if the client was domain joined otherwise the machine name.</returns>
-        public static string GetMachineFQDN()
+        public static string GetMachineFQDN(string hostname)
         {
             IPGlobalProperties machineInfo = IPGlobalProperties.GetIPGlobalProperties();
             StringBuilder fqdn = new();
-            fqdn.Append(machineInfo.HostName);
-            if (!string.IsNullOrEmpty(machineInfo.DomainName))
+            if (hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                hostname.Equals(machineInfo.HostName, StringComparison.OrdinalIgnoreCase))
             {
-                fqdn.Append(".");
-                fqdn.Append(machineInfo.DomainName);
+                fqdn.Append(machineInfo.HostName);
+                if (!string.IsNullOrEmpty(machineInfo.DomainName))
+                {
+                    fqdn.Append(".");
+                    fqdn.Append(machineInfo.DomainName);
+                }
+            }
+            else
+            {
+                IPHostEntry host = Dns.GetHostEntry(hostname);
+                fqdn.Append(host.HostName);
             }
             return fqdn.ToString();
         }

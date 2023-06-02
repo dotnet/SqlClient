@@ -46,7 +46,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             builder.IntegratedSecurity = true;
-            builder.ServerSPN = $"MSSQLSvc/{DataTestUtility.GetMachineFQDN()}";
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out int port, out string instanceName));
+            // Build the SPN for the server we are connecting to
+            builder.ServerSPN = $"MSSQLSvc/{DataTestUtility.GetMachineFQDN(hostname)}";
+            if (!string.IsNullOrWhiteSpace(instanceName))
+            {
+                builder.ServerSPN += ":" + instanceName;
+            }
             TryOpenConnectionWithIntegratedAuthentication(builder.ConnectionString);
         }
 

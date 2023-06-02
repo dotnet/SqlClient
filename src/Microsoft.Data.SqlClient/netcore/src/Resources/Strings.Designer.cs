@@ -3193,15 +3193,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot connect to SQL Server Browser. Ensure SQL Server Browser has been started..
-        /// </summary>
-        internal static string SQL_SqlServerBrowserNotAccessible {
-            get {
-                return ResourceManager.GetString("SQL_SqlServerBrowserNotAccessible", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Failed to generate SSPI context..
         /// </summary>
         internal static string SQL_SSPIGenerateError {
