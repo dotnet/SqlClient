@@ -1326,7 +1326,8 @@ namespace Microsoft.Data.SqlClient
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
-                || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
+                || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired)
+                || _accessTokenCallback != null)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 _federatedAuthenticationInfoRequested = true;
@@ -1350,18 +1351,6 @@ namespace Microsoft.Data.SqlClient
                 };
                 // No need any further info from the server for token based authentication. So set _federatedAuthenticationRequested to true
                 _federatedAuthenticationRequested = true;
-            }
-
-            if (_accessTokenCallback != null)
-            {
-                requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
-                _fedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
-                {
-                    libraryType = TdsEnums.FedAuthLibrary.SecurityTokenCallback,
-                    fedAuthRequiredPreLoginResponse = _fedAuthRequired,
-                };
-                // No need any further info from the server for token based authentication. So set _federatedAuthenticationRequested to true
-                _federatedAuthenticationInfoRequested = true;
             }
 
             // The GLOBALTRANSACTIONS, DATACLASSIFICATION, TCE, and UTF8 support features are implicitly requested
@@ -2462,8 +2451,16 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                authParamsBuilder.WithUserId(ConnectionOptions.UserID);
-                                authParamsBuilder.WithPassword(ConnectionOptions.Password);
+                                if (_credential != null)
+                                {
+                                    username = _credential.UserId;
+                                    authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
+                                }
+                                else
+                                {
+                                    authParamsBuilder.WithUserId(ConnectionOptions.UserID);
+                                    authParamsBuilder.WithPassword(ConnectionOptions.Password);
+                                }
                                 SqlAuthenticationParameters parameters = authParamsBuilder;
                                 CancellationTokenSource cts = new();
                                 // Use Connection timeout value to cancel token acquire request after certain period of time.(int)
@@ -2664,7 +2661,6 @@ namespace Microsoft.Data.SqlClient
 
                         switch (_fedAuthFeatureExtensionData.libraryType)
                         {
-                            case TdsEnums.FedAuthLibrary.SecurityTokenCallback:
                             case TdsEnums.FedAuthLibrary.MSAL:
                             case TdsEnums.FedAuthLibrary.SecurityToken:
                                 // The server shouldn't have sent any additional data with the ack (like a nonce)

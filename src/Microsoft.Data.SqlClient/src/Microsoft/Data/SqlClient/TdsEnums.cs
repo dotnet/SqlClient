@@ -255,7 +255,6 @@ namespace Microsoft.Data.SqlClient
         public const byte FEDAUTHLIB_LIVEID = 0X00;
         public const byte FEDAUTHLIB_SECURITYTOKEN = 0x01;
         public const byte FEDAUTHLIB_MSAL = 0x02;
-        public const byte FEDAUTHLIB_SECURITYTOKEN_CALLBACK = 0x03;
         public const byte FEDAUTHLIB_RESERVED = 0X7F;
 
         public enum FedAuthLibrary : byte
@@ -263,8 +262,7 @@ namespace Microsoft.Data.SqlClient
             LiveId = FEDAUTHLIB_LIVEID,
             SecurityToken = FEDAUTHLIB_SECURITYTOKEN,
             MSAL = FEDAUTHLIB_MSAL,
-            Default = FEDAUTHLIB_RESERVED,
-            SecurityTokenCallback = FEDAUTHLIB_SECURITYTOKEN_CALLBACK
+            Default = FEDAUTHLIB_RESERVED
         }
 
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD = 0x01;

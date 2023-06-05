@@ -8656,7 +8656,7 @@ namespace Microsoft.Data.SqlClient
         internal int WriteFedAuthFeatureRequest(FederatedAuthenticationFeatureExtensionData fedAuthFeatureData,
                                                 bool write /* if false just calculates the length */)
         {
-            Debug.Assert(fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.MSAL || fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.SecurityToken || fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.SecurityTokenCallback,
+            Debug.Assert(fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.MSAL || fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.SecurityToken,
                 "only fed auth library type MSAL and Security Token are supported in writing feature request");
 
             int dataLen = 0;
@@ -8665,7 +8665,6 @@ namespace Microsoft.Data.SqlClient
             // set dataLen and totalLen
             switch (fedAuthFeatureData.libraryType)
             {
-                case TdsEnums.FedAuthLibrary.SecurityTokenCallback:
                 case TdsEnums.FedAuthLibrary.MSAL:
                     dataLen = 2;  // length of feature data = 1 byte for library and echo + 1 byte for workflow
                     break;
@@ -8691,7 +8690,6 @@ namespace Microsoft.Data.SqlClient
                 // set upper 7 bits of options to indicate fed auth library type
                 switch (fedAuthFeatureData.libraryType)
                 {
-                    case TdsEnums.FedAuthLibrary.SecurityTokenCallback:
                     case TdsEnums.FedAuthLibrary.MSAL:
                         Debug.Assert(_connHandler._federatedAuthenticationInfoRequested == true, "_federatedAuthenticationInfoRequested field should be true");
                         options |= TdsEnums.FEDAUTHLIB_MSAL << 1;
@@ -8742,7 +8740,14 @@ namespace Microsoft.Data.SqlClient
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
                                 break;
                             default:
-                                Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
+                                if (_connHandler._accessTokenCallback != null)
+                                {
+                                    workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYTOKENCREDENTIAL;
+                                }
+                                else
+                                {
+                                    Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
+                                }
                                 break;
                         }
 
@@ -8751,9 +8756,6 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.FedAuthLibrary.SecurityToken:
                         WriteInt(fedAuthFeatureData.accessToken.Length, _physicalStateObj);
                         _physicalStateObj.WriteByteArray(fedAuthFeatureData.accessToken, fedAuthFeatureData.accessToken.Length, 0);
-                        break;
-                    case TdsEnums.FedAuthLibrary.SecurityTokenCallback:
-                        _physicalStateObj.WriteByte(TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYTOKENCREDENTIAL);
                         break;
                     default:
                         Debug.Assert(false, "Unrecognized FedAuthLibrary type for feature extension request");

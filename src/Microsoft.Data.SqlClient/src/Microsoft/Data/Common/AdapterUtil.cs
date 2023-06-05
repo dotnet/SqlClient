@@ -1273,19 +1273,10 @@ namespace Microsoft.Data.Common
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback));
 
         internal static Exception InvalidMixedUsageOfAccessTokenCallbackAndAuthentication()
-            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback));
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback));
 
         internal static Exception InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity));
-
-        internal static Exception InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword()
-            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenCallbackAndUserIDPassword));
-
-        internal static Exception InvalidMixedUsageOfCredentialAndAccessTokenCallback()
-            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfCredentialAndAccessTokenCallback));
-
-        internal static Exception InvalidMixedUsageOfActiveDirectoryDefaultTokenAndTokenCallback()
-            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfActiveDirectoryDefaultTokenAndTokenCallback));
         #endregion
 
         internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
