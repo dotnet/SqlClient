@@ -4,6 +4,49 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 5.2.0-preview1.23109.1] - 2023-04-20
+
+This update brings the below changes over the previous release:
+
+### Added
+
+- Added support of `SqlDiagnosticListener` on **.NET Standard**. [#1931](https://github.com/dotnet/SqlClient/pull/1931)
+
+### Fixed
+
+- Fixed AE enclave retry logic for async queries. [#1988](https://github.com/dotnet/SqlClient/pull/1988)
+- Fixed activity correlator to continue use of same GUID for connection activity. [#1997](https://github.com/dotnet/SqlClient/pull/1997)
+- Fixed behavior when error class is greater than 20 on connection retry. [#1953](https://github.com/dotnet/SqlClient/pull/1953)
+- Fixed error message when symmetric key decryption failed using Always Encrypted. [#1948](https://github.com/dotnet/SqlClient/pull/1948)
+- Fixed TransactionScope connection issue when Enlist is enable, Pooling is disabled and network connection type is Redirect. [#1960](https://github.com/dotnet/SqlClient/pull/1960)
+- Fixed TDS RPC error on large queries in SqlCommand.ExecuteReaderAsync. [#1936](https://github.com/dotnet/SqlClient/pull/1936)
+- Fixed throttling of token requests by calling AcquireTokenSilent. [#1925](https://github.com/dotnet/SqlClient/pull/1925)
+- Fixed Linux code coverage result in Build proj. [#1950](https://github.com/dotnet/SqlClient/pull/1950)
+- Fixed NullReferenceException in GetBytesAsync. [#1906](https://github.com/dotnet/SqlClient/pull/1906)
+- Fixed Transient fault handling issue with OpenAsync. [#1983](https://github.com/dotnet/SqlClient/pull/1983)
+- Fixed invariant mode checks. [#1917](https://github.com/dotnet/SqlClient/pull/1917)
+- Fixed GC behavior in TdsParser by adding array rental capability in TryReadPlpUnicodeChars. [#1866](https://github.com/dotnet/SqlClient/pull/1866)
+
+### Changed
+
+- Updated Azure Identity version from 1.7.0 to 1.8.0. [#1921](https://github.com/dotnet/SqlClient/pull/1921)
+- Improved parsing buffered characters in `TdsParser`. [#1544](https://github.com/dotnet/SqlClient/pull/1544)
+- Removed reference to Microsoft.Win32.Registry since it's shipped starting with .NET 6.0. [#1974](https://github.com/dotnet/SqlClient/pull/1974)
+- Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
+- Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
+
+## [Stable release 5.1.1] - 2023-03-28
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed an incorrect exception when a symmetric key fails to decrypt a column using Always Encrypted. [#1968](https://github.com/dotnet/SqlClient/pull/1968)
+- Fixed `TransactionScope` connection issue when `Enlist` is `enabled`, `Pooling` is `disabled`, and `Network Connection Type` is set to `Redirect`. [#1967](https://github.com/dotnet/SqlClient/pull/1967)
+- Fixed throttling of token requests by calling `AcquireTokenSilent`. [#1966](https://github.com/dotnet/SqlClient/pull/1966)
+- Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`. [#1965](https://github.com/dotnet/SqlClient/pull/1965)
+- Fixed `NullReferenceException` in `GetBytesAsync`. [#1964](https://github.com/dotnet/SqlClient/pull/1964)
+
 ## [Stable release 5.1.0] - 2023-01-19
 
 This update brings the below changes over the previous release:
@@ -69,6 +112,16 @@ This update brings the below changes over the previous release:
 ### Known issues
 
 - When using `Encrypt=Strict` with TLS v1.3, the TLS handshake occurs twice on initial connection on .NET Framework due to a timeout during the TLS handshake and a retry helper re-establishes the connection; however, on .NET Core, it will throw a `System.ComponentModel.Win32Exception (258): The wait operation timed out.` and is being investigated. If you're using Microsoft.Data.SqlClient with .NET Core on Windows 11, you will need to enable the managed SNI on Windows context switch using following statement `AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);` to use TLS v1.3 or disabling TLS 1.3 from the registry by assigning `0` to the following `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.3\Client\Enabled` registry key and it'll use TLS v1.2 for the connection. This will be fixed in a future release.
+
+## [Stable release 5.0.2] - 2023-03-31
+
+### Fixed
+
+- Fixed memory leak regression from [#1785](https://github.com/dotnet/SqlClient/pull/1785) using a `DisposableTemporaryOnStack` struct. [#1980](https://github.com/dotnet/SqlClient/pull/1980)
+- Fixed `TransactionScope` connection issue when `Enlist` is `enabled`, `Pooling` is `disabled`, and `Network Connection Type` is set to `Redirect`. [#1978](https://github.com/dotnet/SqlClient/pull/1978)
+- Fixed an incorrect exception when a symmetric key fails to decrypt a column using Always Encrypted. [#1977](https://github.com/dotnet/SqlClient/pull/1977)
+- Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`. [#1976](https://github.com/dotnet/SqlClient/pull/1976)
+- Fixed deadlock when using SinglePhaseCommit with distributed transactions. [#1975](https://github.com/dotnet/SqlClient/pull/1975)
 
 ## [Stable release 5.0.1] - 2022-10-07
 
@@ -217,6 +270,13 @@ This update brings the below changes over the previous release:
 
 - Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1419](https://github.com/dotnet/SqlClient/pull/1419) [#1425](https://github.com/dotnet/SqlClient/pull/1425)
 
+## [Stable release 4.0.3] - 2023-04-20
+
+### Fixed
+
+- Fixed throttling of token requests by calling AcquireTokenSilent in AAD Integrated/Password flows when the account is already cached.[#1995](https://github.com/dotnet/SqlClient/pull/1995)
+- Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`.[#1987](https://github.com/dotnet/SqlClient/pull/1987)
+
 ## [Stable release 4.0.2] - 2022-09-13
 
 ### Fixed
@@ -350,6 +410,13 @@ This update brings the below changes over the previous release:
 - Optimized async method allocations in .NET Framework by porting changes from .NET Core. [#1084](https://github.com/dotnet/SqlClient/pull/1084)
 - Various code improvements [#902](https://github.com/dotnet/SqlClient/pull/902) [#925](https://github.com/dotnet/SqlClient/pull/925) [#933](https://github.com/dotnet/SqlClient/pull/933) [#934](https://github.com/dotnet/SqlClient/pull/934) [#1024](https://github.com/dotnet/SqlClient/pull/1024) [#1057](https://github.com/dotnet/SqlClient/pull/1057) [#1122](https://github.com/dotnet/SqlClient/pull/1122) [#1133](https://github.com/dotnet/SqlClient/pull/1133) [#1134](https://github.com/dotnet/SqlClient/pull/1134) [#1141](https://github.com/dotnet/SqlClient/pull/1141) [#1187](https://github.com/dotnet/SqlClient/pull/1187) [#1188](https://github.com/dotnet/SqlClient/pull/1188) [#1223](https://github.com/dotnet/SqlClient/pull/1223) [#1225](https://github.com/dotnet/SqlClient/pull/1225)  [#1226](https://github.com/dotnet/SqlClient/pull/1226)
 
+## [Stable release 3.1.3] - 2023-03-10
+
+### Fixed
+
+- Fixed throttling of token requests by calling AcquireTokenSilent in AAD Integrated/Password flows when the account is already cached.[#1926](https://github.com/dotnet/SqlClient/pull/1926)
+- Fixed TDS RPC error on large queries in SqlCommand.ExecuteReaderAsync.[#1939](https://github.com/dotnet/SqlClient/pull/1939)
+
 ## [Stable release 3.1.2] - 2023-02-03
 
 ### Added
@@ -411,6 +478,14 @@ This update brings the below changes over the previous release:
 ### Breaking Changes
 
 - Modified column encryption key store provider registrations to give built-in system providers precedence over providers registered on connection and command instances. [#1101](https://github.com/dotnet/SqlClient/pull/1101)
+
+## [Stable Release 2.1.6] - 2023-04-27
+
+### Fixed
+
+- Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`.[#1986](https://github.com/dotnet/SqlClient/pull/1986)
+- Fixed Default UTF8 collation conflict. [#1989](https://github.com/dotnet/SqlClient/pull/1989)
+- Fixed async deadlock issue when sending attention fails due to network failure. [#1767](https://github.com/dotnet/SqlClient/pull/1767)
 
 ## [Stable Release 2.1.5] - 2022-08-30
 

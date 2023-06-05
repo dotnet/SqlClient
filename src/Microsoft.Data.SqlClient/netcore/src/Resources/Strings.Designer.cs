@@ -3202,20 +3202,20 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Socket did not throw expected &apos;{0}&apos; with error code &apos;{1}&apos;..
+        /// </summary>
+        internal static string SQL_SocketDidNotThrow {
+            get {
+                return ResourceManager.GetString("SQL_SocketDidNotThrow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to SqlCommand.DeriveParameters failed because the SqlCommand.CommandText property value is an invalid multipart name.
         /// </summary>
         internal static string SQL_SqlCommandCommandText {
             get {
                 return ResourceManager.GetString("SQL_SqlCommandCommandText", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot connect to SQL Server Browser. Ensure SQL Server Browser has been started..
-        /// </summary>
-        internal static string SQL_SqlServerBrowserNotAccessible {
-            get {
-                return ResourceManager.GetString("SQL_SqlServerBrowserNotAccessible", resourceCulture);
             }
         }
         

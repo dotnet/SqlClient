@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient
             // Iterate over all the parameters and try to get their cipher MD.
             foreach (SqlParameter param in sqlCommand.Parameters)
             {
-                bool found = cipherMetadataDictionary.TryGetValue(param.ParameterNameFixed, out SqlCipherMetadata paramCiperMetadata);
+                bool found = cipherMetadataDictionary.TryGetValue(param.GetPrefixedParameterName(), out SqlCipherMetadata paramCiperMetadata);
 
                 // If we failed to identify the encryption for a specific parameter, clear up the cipher MD of all parameters and exit.
                 if (!found)
@@ -211,7 +211,7 @@ namespace Microsoft.Data.SqlClient
                 // Cached cipher MD should never have an initialized algorithm since this would contain the key.
                 Debug.Assert(cipherMdCopy is null || !cipherMdCopy.IsAlgorithmInitialized());
 
-                cipherMetadataDictionary.Add(param.ParameterNameFixed, cipherMdCopy);
+                cipherMetadataDictionary.Add(param.GetPrefixedParameterName(), cipherMdCopy);
             }
 
             // If the size of the cache exceeds the threshold, set that we are in trimming and trim the cache accordingly.

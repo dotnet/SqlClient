@@ -4,9 +4,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Runtime.Serialization.Json;
 using System.Security.Cryptography.X509Certificates;
@@ -135,15 +134,14 @@ namespace Microsoft.Data.SqlClient
             int enclaveReportSize = BitConverter.ToInt32(attestationInfo, offset);
             offset += sizeof(uint);
 
-            byte[] identityBuffer = attestationInfo.Skip(offset).Take(identitySize).ToArray();
+            byte[] identityBuffer = EnclaveHelpers.TakeBytesAndAdvance(attestationInfo, ref offset, identitySize);
             Identity = new EnclavePublicKey(identityBuffer);
-            offset += identitySize;
 
-            byte[] healthReportBuffer = attestationInfo.Skip(offset).Take(healthReportSize).ToArray();
+            byte[] healthReportBuffer = EnclaveHelpers.TakeBytesAndAdvance(attestationInfo, ref offset, healthReportSize);
             HealthReport = new HealthReport(healthReportBuffer);
-            offset += healthReportSize;
 
-            byte[] enclaveReportBuffer = attestationInfo.Skip(offset).Take(enclaveReportSize).ToArray();
+            byte[] enclaveReportBuffer = new byte[enclaveReportSize];
+            Buffer.BlockCopy(attestationInfo, offset, enclaveReportBuffer, 0, enclaveReportSize);
             EnclaveReportPackage = new EnclaveReportPackage(enclaveReportBuffer);
             offset += EnclaveReportPackage.GetSizeInPayload();
 
@@ -153,10 +151,10 @@ namespace Microsoft.Data.SqlClient
             SessionId = BitConverter.ToInt64(attestationInfo, offset);
             offset += sizeof(long);
 
-            int secureSessionBufferSize = Convert.ToInt32(secureSessionInfoResponseSize) - sizeof(uint);
-            byte[] secureSessionBuffer = attestationInfo.Skip(offset).Take(secureSessionBufferSize).ToArray();
-            EnclaveDHInfo = new EnclaveDiffieHellmanInfo(secureSessionBuffer);
+            EnclaveDHInfo = new EnclaveDiffieHellmanInfo(attestationInfo, offset);
             offset += Convert.ToInt32(EnclaveDHInfo.Size);
+
+            Debug.Assert(offset == attestationInfo.Length);
         }
     }
 
@@ -200,11 +198,11 @@ namespace Microsoft.Data.SqlClient
             Size = payload.Length;
 
             int offset = 0;
-            PackageHeader = new EnclaveReportPackageHeader(payload.Skip(offset).ToArray());
-            offset += PackageHeader.GetSizeInPayload();
+            byte[] headerBuffer = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, EnclaveReportPackageHeader.SizeInPayload);
+            PackageHeader = new EnclaveReportPackageHeader(headerBuffer);
 
-            Report = new EnclaveReport(payload.Skip(offset).ToArray());
-            offset += Report.GetSizeInPayload();
+            byte[] reportBuffer = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, EnclaveReport.SizeInPayload);
+            Report = new EnclaveReport(reportBuffer);
 
             // Modules are not used for anything currently, ignore parsing for now
             //
@@ -220,14 +218,13 @@ namespace Microsoft.Data.SqlClient
 
             // Moving the offset back to the start of the report,
             // we need the report as a byte buffer for signature verification.
-            offset = PackageHeader.GetSizeInPayload();
+            offset = EnclaveReportPackageHeader.SizeInPayload;
+
             int dataToHashSize = Convert.ToInt32(PackageHeader.SignedStatementSize);
-            ReportAsBytes = payload.Skip(offset).Take(dataToHashSize).ToArray();
-            offset += dataToHashSize;
+            ReportAsBytes = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, dataToHashSize);
 
             int signatureSize = Convert.ToInt32(PackageHeader.SignatureSize);
-            SignatureBlob = payload.Skip(offset).Take(signatureSize).ToArray();
-            offset += signatureSize;
+            SignatureBlob = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, signatureSize);
         }
 
         public int GetSizeInPayload()
@@ -274,17 +271,14 @@ namespace Microsoft.Data.SqlClient
             offset += sizeof(uint);
         }
 
-        public int GetSizeInPayload()
-        {
-            return 6 * sizeof(uint);
-        }
+        public static int SizeInPayload => 6 * sizeof(uint);
     }
 
     // A managed model of struct VBS_ENCLAVE_REPORT
     // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844255(v=vs.85).aspx
     internal class EnclaveReport
     {
-        private int Size { get; set; }
+        private const int EnclaveDataLength = 64;
 
         public uint ReportSize { get; set; }
 
@@ -292,14 +286,10 @@ namespace Microsoft.Data.SqlClient
 
         public byte[] EnclaveData { get; set; }
 
-        private const int EnclaveDataLength = 64;
-
         public EnclaveIdentity Identity { get; set; }
 
         public EnclaveReport(byte[] payload)
         {
-            Size = payload.Length;
-
             int offset = 0;
 
             ReportSize = BitConverter.ToUInt32(payload, offset);
@@ -308,38 +298,31 @@ namespace Microsoft.Data.SqlClient
             ReportVersion = BitConverter.ToUInt32(payload, offset);
             offset += sizeof(uint);
 
-            EnclaveData = payload.Skip(offset).Take(EnclaveDataLength).ToArray();
-            offset += EnclaveDataLength;
+            EnclaveData = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, EnclaveDataLength);
 
-            Identity = new EnclaveIdentity(payload.Skip(offset).ToArray());
-            offset += Identity.GetSizeInPayload();
+            Identity = new EnclaveIdentity(EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, EnclaveIdentity.SizeInPayload));
         }
 
-        public int GetSizeInPayload()
-        {
-            return sizeof(uint) * 2 + sizeof(byte) * 64 + Identity.GetSizeInPayload();
-        }
+        public static int SizeInPayload => sizeof(uint) * 2 + sizeof(byte) * 64 + EnclaveIdentity.SizeInPayload;
     }
 
     // A managed model of struct ENCLAVE_IDENTITY
     // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844239(v=vs.85).aspx
     internal class EnclaveIdentity
     {
-        private int Size { get; set; }
+        private const int ImageEnclaveLongIdLength = 32;
 
-        private static readonly int ImageEnclaveLongIdLength = 32;
+        private const int ImageEnclaveShortIdLength = 16;
 
-        private static readonly int ImageEnclaveShortIdLength = 16;
+        public byte[] OwnerId;
 
-        public byte[] OwnerId = new byte[ImageEnclaveLongIdLength];
+        public byte[] UniqueId;
 
-        public byte[] UniqueId = new byte[ImageEnclaveLongIdLength];
+        public byte[] AuthorId;
 
-        public byte[] AuthorId = new byte[ImageEnclaveLongIdLength];
+        public byte[] FamilyId;
 
-        public byte[] FamilyId = new byte[ImageEnclaveShortIdLength];
-
-        public byte[] ImageId = new byte[ImageEnclaveShortIdLength];
+        public byte[] ImageId;
 
         public uint EnclaveSvn { get; set; }
 
@@ -357,29 +340,17 @@ namespace Microsoft.Data.SqlClient
 
         public EnclaveIdentity(byte[] payload)
         {
-            Size = payload.Length;
-
             int offset = 0;
 
-            int ownerIdLength = ImageEnclaveLongIdLength;
-            OwnerId = payload.Skip(offset).Take(ownerIdLength).ToArray();
-            offset += ownerIdLength;
+            OwnerId = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, ImageEnclaveLongIdLength);
 
-            int uniqueIdLength = ImageEnclaveLongIdLength;
-            UniqueId = payload.Skip(offset).Take(uniqueIdLength).ToArray();
-            offset += uniqueIdLength;
+            UniqueId = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, ImageEnclaveLongIdLength);
 
-            int authorIdLength = ImageEnclaveLongIdLength;
-            AuthorId = payload.Skip(offset).Take(authorIdLength).ToArray();
-            offset += authorIdLength;
+            AuthorId = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, ImageEnclaveLongIdLength);
 
-            int familyIdLength = ImageEnclaveShortIdLength;
-            FamilyId = payload.Skip(offset).Take(familyIdLength).ToArray();
-            offset += familyIdLength;
+            FamilyId = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, ImageEnclaveShortIdLength);
 
-            int imageIdLength = ImageEnclaveShortIdLength;
-            ImageId = payload.Skip(offset).Take(imageIdLength).ToArray();
-            offset += imageIdLength;
+            ImageId = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, ImageEnclaveShortIdLength);
 
             EnclaveSvn = BitConverter.ToUInt32(payload, offset);
             offset += sizeof(uint);
@@ -400,10 +371,8 @@ namespace Microsoft.Data.SqlClient
             offset += sizeof(uint);
         }
 
-        public int GetSizeInPayload()
-        {
-            return sizeof(byte) * ImageEnclaveLongIdLength * 3 + sizeof(byte) * ImageEnclaveShortIdLength * 2 + sizeof(uint) * 6;
-        }
+        public static int SizeInPayload => sizeof(byte) * ImageEnclaveLongIdLength * 3 + sizeof(byte) * ImageEnclaveShortIdLength * 2 + sizeof(uint) * 6;
+        
     }
 
     // A managed model of struct VBS_ENCLAVE_REPORT_VARDATA_HEADER
@@ -424,29 +393,26 @@ namespace Microsoft.Data.SqlClient
             offset += sizeof(uint);
         }
 
-        public int GetSizeInPayload()
-        {
-            return 2 * sizeof(uint);
-        }
+        public static int SizeInPayload => 2 * sizeof(uint);
     }
 
     // A managed model of struct VBS_ENCLAVE_REPORT_MODULE
     // https://msdn.microsoft.com/en-us/library/windows/desktop/mt844256(v=vs.85).aspx
     internal class EnclaveReportModule
     {
-        private static readonly int ImageEnclaveLongIdLength = 32;
+        private const int ImageEnclaveLongIdLength = 32;
 
-        private static readonly int ImageEnclaveShortIdLength = 16;
+        private const int ImageEnclaveShortIdLength = 16;
 
         public EnclaveReportModuleHeader Header { get; set; }
 
-        public byte[] UniqueId = new byte[ImageEnclaveLongIdLength];
+        public byte[] UniqueId;
 
-        public byte[] AuthorId = new byte[ImageEnclaveLongIdLength];
+        public byte[] AuthorId;
 
-        public byte[] FamilyId = new byte[ImageEnclaveShortIdLength];
+        public byte[] FamilyId;
 
-        public byte[] ImageId = new byte[ImageEnclaveShortIdLength];
+        public byte[] ImageId;
 
         public uint Svn { get; set; }
 
@@ -456,35 +422,26 @@ namespace Microsoft.Data.SqlClient
         {
             int offset = 0;
             Header = new EnclaveReportModuleHeader(payload);
-            offset += Convert.ToInt32(Header.GetSizeInPayload());
+            offset += EnclaveReportModuleHeader.SizeInPayload;
 
-            int uniqueIdLength = ImageEnclaveLongIdLength;
-            UniqueId = payload.Skip(offset).Take(uniqueIdLength).ToArray();
-            offset += uniqueIdLength;
+            UniqueId = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, ImageEnclaveLongIdLength);
 
-            int authorIdLength = ImageEnclaveLongIdLength;
-            AuthorId = payload.Skip(offset).Take(authorIdLength).ToArray();
-            offset += authorIdLength;
+            AuthorId = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, ImageEnclaveLongIdLength);
 
-            int familyIdLength = ImageEnclaveShortIdLength;
-            FamilyId = payload.Skip(offset).Take(familyIdLength).ToArray();
-            offset += familyIdLength;
+            FamilyId = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, ImageEnclaveShortIdLength);
 
-            int imageIdLength = ImageEnclaveShortIdLength;
-            ImageId = payload.Skip(offset).Take(familyIdLength).ToArray();
-            offset += imageIdLength;
+            ImageId = EnclaveHelpers.TakeBytesAndAdvance(payload, ref offset, ImageEnclaveShortIdLength);
 
             Svn = BitConverter.ToUInt32(payload, offset);
             offset += sizeof(uint);
 
-            int strLen = Convert.ToInt32(Header.ModuleSize) - offset;
             ModuleName = BitConverter.ToString(payload, offset, 1);
             offset += sizeof(char) * 1;
         }
 
         public int GetSizeInPayload()
         {
-            return Header.GetSizeInPayload() + Convert.ToInt32(Header.ModuleSize);
+            return EnclaveReportModuleHeader.SizeInPayload + Convert.ToInt32(Header.ModuleSize);
         }
     }
 
@@ -499,4 +456,15 @@ namespace Microsoft.Data.SqlClient
     }
 
     #endregion
+
+    internal static class EnclaveHelpers
+    {
+        public static byte[] TakeBytesAndAdvance(byte[] input, ref int offset, int count)
+        {
+            byte[] output = new byte[count];
+            Buffer.BlockCopy(input, offset, output, 0, count);
+            offset += count;
+            return output;
+        }
+    }
 }

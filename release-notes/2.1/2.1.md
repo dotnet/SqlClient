@@ -4,6 +4,7 @@ The following Microsoft.Data.SqlClient 2.1 stable releases have been shipped:
 
 | Release Date | Version | Notes |
 | :-- | :-- | :--: |
+| 2023/04/27 | 2.1.6 | [release notes](2.1.6.md) |
 | 2022/08/30 | 2.1.5 | [release notes](2.1.5.md) |
 | 2021/09/20 | 2.1.4 | [release notes](2.1.4.md) |
 | 2021/05/21 | 2.1.3 | [release notes](2.1.3.md) |

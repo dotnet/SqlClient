@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
@@ -3333,8 +3332,18 @@ namespace Microsoft.Data.SqlClient
 
             internal void PushBuffer(byte[] buffer, int read)
             {
-                Debug.Assert(!_snapshotInBuffs.Any(b => object.ReferenceEquals(b, buffer)));
-
+#if DEBUG
+                if (_snapshotInBuffs != null && _snapshotInBuffs.Count > 0)
+                {
+                    foreach (PacketData packet in _snapshotInBuffs)
+                    {
+                        if (object.ReferenceEquals(packet.Buffer, buffer))
+                        {
+                            Debug.Assert(false,"buffer is already present in packet list");
+                        }
+                    }
+                }
+#endif
                 PacketData packetData = new PacketData();
                 packetData.Buffer = buffer;
                 packetData.Read = read;

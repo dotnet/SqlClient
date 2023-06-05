@@ -18,23 +18,21 @@ namespace Microsoft.Data.SqlClient
 
     internal class EnclaveDiffieHellmanInfo
     {
-        public int Size { get; private set; }
+        public int Size => sizeof(int) + sizeof(int) + PublicKey?.Length ?? 0 + PublicKeySignature?.Length ?? 0;
 
         public byte[] PublicKey { get; private set; }
 
         public byte[] PublicKeySignature { get; private set; }
 
-        public EnclaveDiffieHellmanInfo(byte[] payload)
+        public EnclaveDiffieHellmanInfo(byte[] payload, int offset)
         {
-            Size = payload.Length;
-
-            int publicKeySize = BitConverter.ToInt32(payload, 0);
-            int publicKeySignatureSize = BitConverter.ToInt32(payload, 4);
+            int publicKeySize = BitConverter.ToInt32(payload, offset + 0);
+            int publicKeySignatureSize = BitConverter.ToInt32(payload, offset + 4);
 
             PublicKey = new byte[publicKeySize];
             PublicKeySignature = new byte[publicKeySignatureSize];
-            Buffer.BlockCopy(payload, 8, PublicKey, 0, publicKeySize);
-            Buffer.BlockCopy(payload, 8 + publicKeySize, PublicKeySignature, 0, publicKeySignatureSize);
+            Buffer.BlockCopy(payload, offset + 8, PublicKey, 0, publicKeySize);
+            Buffer.BlockCopy(payload, offset + 8 + publicKeySize, PublicKeySignature, 0, publicKeySignatureSize);
         }
     }
 

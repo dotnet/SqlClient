@@ -8,7 +8,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -377,6 +378,10 @@ namespace Microsoft.Data.SqlClient
         internal static Exception SynchronousCallMayNotPend()
         {
             return new Exception(StringsHelper.GetString(Strings.Sql_InternalError));
+        }
+        internal static Exception SocketDidNotThrow()
+        {
+            return new InternalException(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
         }
         internal static Exception ConnectionLockedForBcpEvent()
         {
@@ -1509,7 +1514,15 @@ namespace Microsoft.Data.SqlClient
         internal static Exception InvalidEncryptionType(string algorithmName, SqlClientEncryptionType encryptionType, params SqlClientEncryptionType[] validEncryptionTypes)
         {
             const string valueSeparator = @", ";
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidEncryptionType, algorithmName, encryptionType.ToString(), string.Join(valueSeparator, validEncryptionTypes.Select((validEncryptionType => @"'" + validEncryptionType + @"'")))), TdsEnums.TCE_PARAM_ENCRYPTIONTYPE);
+            return ADP.Argument(
+                StringsHelper.GetString(
+                    Strings.TCE_InvalidEncryptionType, 
+                    algorithmName, 
+                    encryptionType.ToString(), 
+                    string.Join(valueSeparator, Map(validEncryptionTypes, static validEncryptionType => $"'{validEncryptionType:G}'"))
+                ), 
+                TdsEnums.TCE_PARAM_ENCRYPTIONTYPE
+            );
         }
 
         internal static Exception InvalidCipherTextSize(int actualSize, int minimumSize)
@@ -1577,8 +1590,8 @@ namespace Microsoft.Data.SqlClient
         internal static Exception InvalidKeyStoreProviderName(string providerName, List<string> systemProviders, List<string> customProviders)
         {
             const string valueSeparator = @", ";
-            string systemProviderStr = string.Join(valueSeparator, systemProviders.Select(provider => $"'{provider}'"));
-            string customProviderStr = string.Join(valueSeparator, customProviders.Select(provider => $"'{provider}'"));
+            string systemProviderStr = string.Join(valueSeparator, Map(systemProviders, static provider => $"'{provider}'"));
+            string customProviderStr = string.Join(valueSeparator, Map(customProviders, static provider => $"'{provider}'"));
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
         }
 
@@ -1797,8 +1810,8 @@ namespace Microsoft.Data.SqlClient
         internal static Exception UnrecognizedKeyStoreProviderName(string providerName, List<string> systemProviders, List<string> customProviders)
         {
             const string valueSeparator = @", ";
-            string systemProviderStr = string.Join(valueSeparator, systemProviders.Select(provider => @"'" + provider + @"'"));
-            string customProviderStr = string.Join(valueSeparator, customProviders.Select(provider => @"'" + provider + @"'"));
+            string systemProviderStr = string.Join(valueSeparator, Map(systemProviders, static provider => @"'" + provider + @"'"));
+            string customProviderStr = string.Join(valueSeparator, Map(customProviders, static provider => @"'" + provider + @"'"));
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_UnrecognizedKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
         }
 
@@ -1941,6 +1954,24 @@ namespace Microsoft.Data.SqlClient
         internal const int SqlDependencyServerTimeout = 5 * 24 * 3600; // 5 days - used to compute default TTL of the dependency
         internal const string SqlNotificationServiceDefault = "SqlQueryNotificationService";
         internal const string SqlNotificationStoredProcedureDefault = "SqlQueryNotificationStoredProcedure";
+
+        private static IEnumerable<string> Map<T>(IEnumerable<T> source, Func<T, string> selector)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (selector == null)
+            {
+                throw new ArgumentNullException(nameof(selector));
+            }
+
+            foreach (T element in source)
+            {
+                yield return selector(element);
+            }
+        }
     }
 
     sealed internal class SQLMessage
@@ -1983,10 +2014,6 @@ namespace Microsoft.Data.SqlClient
         internal static string SSPIGenerateError()
         {
             return StringsHelper.GetString(Strings.SQL_SSPIGenerateError);
-        }
-        internal static string SqlServerBrowserNotAccessible()
-        {
-            return StringsHelper.GetString(Strings.SQL_SqlServerBrowserNotAccessible);
         }
         internal static string KerberosTicketMissingError()
         {

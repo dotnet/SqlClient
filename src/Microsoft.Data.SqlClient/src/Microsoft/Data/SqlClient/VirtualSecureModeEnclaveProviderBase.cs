@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Linq;
 using System.Runtime.Caching;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -86,9 +85,9 @@ namespace Microsoft.Data.SqlClient
 
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
-        internal override void GetEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
+        internal override void GetEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, bool isRetry, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
-            GetEnclaveSessionHelper(enclaveSessionParameters, false, out sqlEnclaveSession, out counter, out customData, out customDataLength);
+            GetEnclaveSessionHelper(enclaveSessionParameters, false, isRetry, out sqlEnclaveSession, out counter, out customData, out customDataLength);
         }
 
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
@@ -220,7 +219,17 @@ namespace Microsoft.Data.SqlClient
         // Checks if any certificates in the collection are expired
         private bool AnyCertificatesExpired(X509Certificate2Collection certificates)
         {
-            return certificates.OfType<X509Certificate2>().Any(c => c.NotAfter < DateTime.Now);
+            if (certificates != null)
+            {
+                foreach (object item in certificates)
+                {
+                    if (item is X509Certificate2 certificate && certificate.NotAfter < DateTime.Now)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         // Verifies that a chain of trust can be built from the health report provided
@@ -285,7 +294,7 @@ namespace Microsoft.Data.SqlClient
         private void VerifyEnclaveReportSignature(EnclaveReportPackage enclaveReportPackage, X509Certificate2 healthReportCert)
         {
             // Check if report is formatted correctly
-            uint calculatedSize = Convert.ToUInt32(enclaveReportPackage.PackageHeader.GetSizeInPayload()) + enclaveReportPackage.PackageHeader.SignedStatementSize + enclaveReportPackage.PackageHeader.SignatureSize;
+            uint calculatedSize = Convert.ToUInt32(EnclaveReportPackageHeader.SizeInPayload) + enclaveReportPackage.PackageHeader.SignedStatementSize + enclaveReportPackage.PackageHeader.SignatureSize;
 
             if (calculatedSize != enclaveReportPackage.PackageHeader.PackageSize)
             {
@@ -325,7 +334,31 @@ namespace Microsoft.Data.SqlClient
         // Verifies a byte[] enclave policy property
         private void VerifyEnclavePolicyProperty(string property, byte[] actual, byte[] expected)
         {
-            if (!actual.SequenceEqual(expected))
+            bool different = false;
+            if (actual == null || expected == null)
+            {
+                different = true;
+            }
+            else
+            {
+                if (actual.Length != expected.Length)
+                {
+                    different = true;
+                }
+                else
+                {
+                    for (int index = 0; index < actual.Length; index++)
+                    {
+                        if (actual[index] != expected[index])
+                        {
+                            different = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (different)
             {
                 string exceptionMessage = String.Format(Strings.VerifyEnclavePolicyFailedFormat, property, BitConverter.ToString(actual), BitConverter.ToString(expected));
                 throw new ArgumentException(exceptionMessage);

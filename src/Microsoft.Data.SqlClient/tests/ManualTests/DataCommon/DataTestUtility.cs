@@ -60,6 +60,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public static readonly string UserManagedIdentityClientId = null;
+        public static readonly string AliasName = null;
 
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
@@ -117,6 +118,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             KerberosDomainUser = c.KerberosDomainUser;
             ManagedIdentitySupported = c.ManagedIdentitySupported;
             IsManagedInstance = c.IsManagedInstance;
+            AliasName = c.AliasName;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -300,6 +302,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
         }
 
+        public static bool IsSQLAliasSetup()
+        {
+            return !string.IsNullOrEmpty(AliasName);
+        }
         public static bool IsTCPConnStringSetup()
         {
             return !string.IsNullOrEmpty(TCPConnectionString);
@@ -339,6 +345,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsAKVSetupAvailable()
         {
             return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+        }
+
+        public static bool IsTargetReadyForAeWithKeyStore()
+        {
+            return DataTestUtility.AreConnStringSetupForAE()
+#if NET6_0_OR_GREATER
+                // AE tests on Windows will use the Cert Store. On non-Windows, they require AKV.
+                && (OperatingSystem.IsWindows() || DataTestUtility.IsAKVSetupAvailable())
+#endif
+                ;
         }
 
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
@@ -931,15 +947,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Resolves the machine's fully qualified domain name if it is applicable.
         /// </summary>
         /// <returns>Returns FQDN if the client was domain joined otherwise the machine name.</returns>
-        public static string GetMachineFQDN()
+        public static string GetMachineFQDN(string hostname)
         {
             IPGlobalProperties machineInfo = IPGlobalProperties.GetIPGlobalProperties();
             StringBuilder fqdn = new();
-            fqdn.Append(machineInfo.HostName);
-            if (!string.IsNullOrEmpty(machineInfo.DomainName))
+            if (hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                hostname.Equals(machineInfo.HostName, StringComparison.OrdinalIgnoreCase))
             {
-                fqdn.Append(".");
-                fqdn.Append(machineInfo.DomainName);
+                fqdn.Append(machineInfo.HostName);
+                if (!string.IsNullOrEmpty(machineInfo.DomainName))
+                {
+                    fqdn.Append(".");
+                    fqdn.Append(machineInfo.DomainName);
+                }
+            }
+            else
+            {
+                IPHostEntry host = Dns.GetHostEntry(hostname);
+                fqdn.Append(host.HostName);
             }
             return fqdn.ToString();
         }

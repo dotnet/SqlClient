@@ -816,9 +816,17 @@ namespace Microsoft.Data.Common
             {
                 return DbConnectionStringDefaults.Encrypt;
             }
+            else if(value is SqlConnectionEncryptOption eValue)
+            {
+                return eValue;
+            }
             else if (value is string sValue)
             {
                 return SqlConnectionEncryptOption.Parse(sValue);
+            }
+            else if(value is bool bValue)
+            {
+                return SqlConnectionEncryptOption.Parse(bValue);
             }
 
             throw ADP.InvalidConnectionOptionValue(keyword);

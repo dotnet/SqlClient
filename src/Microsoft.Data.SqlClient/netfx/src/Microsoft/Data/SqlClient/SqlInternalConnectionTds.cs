@@ -1508,7 +1508,7 @@ namespace Microsoft.Data.SqlClient
 
             // for non-pooled connections, enlist in a distributed transaction
             // if present - and user specified to enlist
-            if (enlistOK && ConnectionOptions.Enlist)
+            if (enlistOK && ConnectionOptions.Enlist && _routingInfo == null)
             {
                 _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
                 SysTx.Transaction tx = ADP.GetCurrentTransaction();
@@ -1538,10 +1538,11 @@ namespace Microsoft.Data.SqlClient
                 if (t == 0 && LocalAppContextSwitches.UseMinimumLoginTimeout)
                 {
                     // Take 1 as the minimum value, since 0 is treated as an infinite timeout
+                    // to allow 1 second more for login to complete, since it should take only a few milliseconds.
                     t = 1;
                 }
 
-                if ((long)Int32.MaxValue > t)
+                if (int.MaxValue > t)
                 {
                     timeoutInSeconds = (int)t;
                 }

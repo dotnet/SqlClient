@@ -332,7 +332,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool? SetLegacyRowVersionNullBehavior(bool? value)
         {
             Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-            FieldInfo switchField = switchesType.GetField("s_LegacyRowVersionNullBehavior", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            FieldInfo switchField = switchesType.GetField("s_legacyRowVersionNullBehavior", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             bool? originalValue = (bool?)switchField.GetValue(null);
             switchField.SetValue(null, value);
             return originalValue;

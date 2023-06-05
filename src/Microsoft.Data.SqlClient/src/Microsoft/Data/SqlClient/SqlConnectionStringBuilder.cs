@@ -13,7 +13,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
 using Microsoft.Data.Common;
 
@@ -640,15 +639,21 @@ namespace Microsoft.Data.SqlClient
         private Exception UnsupportedKeyword(string keyword)
         {
 #if !NETFRAMEWORK
-            if (s_notSupportedKeywords.Contains(keyword, StringComparer.OrdinalIgnoreCase))
+            for (int index = 0; index < s_notSupportedKeywords.Length; index++)
             {
-                return SQL.UnsupportedKeyword(keyword);
+                if (string.Equals(keyword, s_notSupportedKeywords[index], StringComparison.OrdinalIgnoreCase))
+                {
+                    return SQL.UnsupportedKeyword(keyword);
+                }
             }
-            else if (s_notSupportedNetworkLibraryKeywords.Contains(keyword, StringComparer.OrdinalIgnoreCase))
+
+            for (int index = 0; index < s_notSupportedNetworkLibraryKeywords.Length; index++)
             {
-                return SQL.NetworkLibraryKeywordNotSupported();
+                if (string.Equals(keyword, s_notSupportedNetworkLibraryKeywords[index], StringComparison.OrdinalIgnoreCase))
+                {
+                    return SQL.NetworkLibraryKeywordNotSupported();
+                }
             }
-            else
 #endif
             return ADP.KeywordNotSupported(keyword);
         }

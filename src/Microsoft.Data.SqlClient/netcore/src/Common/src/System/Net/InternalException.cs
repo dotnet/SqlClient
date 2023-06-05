@@ -4,11 +4,20 @@
 
 namespace System.Net
 {
+    [Serializable]
     internal class InternalException : Exception
     {
-        internal InternalException()
+        public InternalException() : this("InternalException thrown.")
         {
-            NetEventSource.Fail(this, "InternalException thrown.");
+        }
+
+        public InternalException(string message) : this(message, null)
+        {
+        }
+
+        public InternalException(string message, Exception innerException) : base(message, innerException)
+        {
+            NetEventSource.Fail(this, message);
         }
     }
 }

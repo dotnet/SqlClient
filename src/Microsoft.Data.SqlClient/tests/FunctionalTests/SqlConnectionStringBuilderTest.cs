@@ -253,7 +253,7 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData("AttachDBFilename","somefile.db")]
+        [InlineData("AttachDBFilename", "somefile.db")]
         public void SetKeyword(string keyword, string value)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
@@ -380,7 +380,7 @@ namespace Microsoft.Data.SqlClient.Tests
             builder.Encrypt = false;
             Assert.Equal("Encrypt=False", builder.ConnectionString);
             Assert.False(builder.Encrypt);
-            
+
             builder.Encrypt = true;
             Assert.Equal("Encrypt=True", builder.ConnectionString);
             Assert.True(builder.Encrypt);
@@ -402,6 +402,18 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.True(builder.Encrypt);
         }
 
+        [Fact]
+        public void EncryptParserValidValuesPropertyIndexerForEncryptionOption()
+        {
+            SqlConnectionStringBuilder builder = new();
+            builder["Encrypt"] = SqlConnectionEncryptOption.Strict;
+            CheckEncryptType(builder, SqlConnectionEncryptOption.Strict);
+            builder["Encrypt"] = SqlConnectionEncryptOption.Optional;
+            CheckEncryptType(builder, SqlConnectionEncryptOption.Optional);
+            builder["Encrypt"] = SqlConnectionEncryptOption.Mandatory;
+            CheckEncryptType(builder, SqlConnectionEncryptOption.Mandatory);
+        }
+
         [Theory]
         [InlineData("true", "True")]
         [InlineData("mandatory", "True")]
@@ -412,6 +424,16 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("strict", "Strict")]
         public void EncryptParserValidValuesParsesSuccessfully(string value, string expectedValue)
             => Assert.Equal(expectedValue, SqlConnectionEncryptOption.Parse(value).ToString());
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void EncryptParserValidValuesPropertyIndexerForBoolean(bool value)
+        {
+            SqlConnectionStringBuilder builder = new();
+            builder["Encrypt"] = value;
+            CheckEncryptType(builder, value ? SqlConnectionEncryptOption.Mandatory : SqlConnectionEncryptOption.Optional);
+        }
 
         [Theory]
         [InlineData("something")]
@@ -466,6 +488,12 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 Assert.NotNull(connection);
             }
+        }
+
+        internal static void CheckEncryptType(SqlConnectionStringBuilder builder, SqlConnectionEncryptOption expectedValue)
+        {
+            Assert.IsType<SqlConnectionEncryptOption>(builder.Encrypt);
+            Assert.Equal(expectedValue, builder.Encrypt);
         }
     }
 }

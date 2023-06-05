@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -14,6 +15,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -347,7 +349,47 @@ namespace Microsoft.Data.SqlClient.SNI
             availableSocket = connectTask.Result;
             return availableSocket;
         }
+        
+        /// <summary>
+        /// Returns array of IP addresses for the given server name, sorted according to the given preference.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when ipPreference is not supported</exception>
+        private static IEnumerable<IPAddress> GetHostAddressesSortedByPreference(string serverName, SqlConnectionIPAddressPreference ipPreference)
+        {
+            IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);
+            AddressFamily? prioritiesFamily = ipPreference switch
+            {
+                SqlConnectionIPAddressPreference.IPv4First => AddressFamily.InterNetwork,
+                SqlConnectionIPAddressPreference.IPv6First => AddressFamily.InterNetworkV6,
+                SqlConnectionIPAddressPreference.UsePlatformDefault => null,
+                _ => throw ADP.NotSupportedEnumerationValue(typeof(SqlConnectionIPAddressPreference), ipPreference.ToString(), nameof(GetHostAddressesSortedByPreference))
+            };
 
+            // Return addresses of the preferred family first
+            if (prioritiesFamily != null)
+            {
+                foreach (IPAddress ipAddress in ipAddresses)
+                {
+                    if (ipAddress.AddressFamily == prioritiesFamily)
+                    {
+                        yield return ipAddress;
+                    }
+                }
+            }
+
+            // Return addresses of the other family
+            foreach (IPAddress ipAddress in ipAddresses)
+            {
+                if (ipAddress.AddressFamily is AddressFamily.InterNetwork or AddressFamily.InterNetworkV6)
+                {
+                    if (prioritiesFamily == null || ipAddress.AddressFamily != prioritiesFamily)
+                    {
+                        yield return ipAddress;
+                    }
+                }
+            }
+        }
+        
         // Connect to server with hostName and port.
         // The IP information will be collected temporarily as the pendingDNSInfo but is not stored in the DNS cache at this point.
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
@@ -355,141 +397,110 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "IP preference : {0}", Enum.GetName(typeof(SqlConnectionIPAddressPreference), ipPreference));
 
-            IPAddress[] ipAddresses = SNICommon.GetDnsIpAddresses(serverName);
+            Stopwatch timeTaken = Stopwatch.StartNew();
 
-            string IPv4String = null;
-            string IPv6String = null;
+            IEnumerable<IPAddress> ipAddresses = GetHostAddressesSortedByPreference(serverName, ipPreference);
 
-            // Returning null socket is handled by the caller function.
-            if (ipAddresses == null || ipAddresses.Length == 0)
+            foreach (IPAddress ipAddress in ipAddresses)
             {
-                return null;
-            }
+                bool isSocketSelected = false;
+                Socket socket = null;
 
-            Socket[] sockets = new Socket[ipAddresses.Length];
-            AddressFamily[] preferedIPFamilies = new AddressFamily[2];
-
-            if (ipPreference == SqlConnectionIPAddressPreference.IPv4First)
-            {
-                preferedIPFamilies[0] = AddressFamily.InterNetwork;
-                preferedIPFamilies[1] = AddressFamily.InterNetworkV6;
-            }
-            else if (ipPreference == SqlConnectionIPAddressPreference.IPv6First)
-            {
-                preferedIPFamilies[0] = AddressFamily.InterNetworkV6;
-                preferedIPFamilies[1] = AddressFamily.InterNetwork;
-            }
-            // else -> UsePlatformDefault
-
-            CancellationTokenSource cts = null;
-
-            if (!isInfiniteTimeout)
-            {
-                cts = new CancellationTokenSource(timeout);
-                cts.Token.Register(Cancel);
-            }
-
-            Socket availableSocket = null;
-            try
-            {
-                // We go through the IP list twice.
-                // In the first traversal, we only try to connect with the preferedIPFamilies[0].
-                // In the second traversal, we only try to connect with the preferedIPFamilies[1].
-                // For UsePlatformDefault preference, we do traversal once.
-                for (int i = 0; i < preferedIPFamilies.Length; ++i)
+                try
                 {
-                    for (int n = 0; n < ipAddresses.Length; n++)
+                    socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
                     {
-                        IPAddress ipAddress = ipAddresses[n];
-                        try
+                        Blocking = isInfiniteTimeout
+                    };
+
+                    // enable keep-alive on socket
+                    SetKeepAliveValues(ref socket);
+
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
+                        "Connecting to IP address {0} and port {1} using {2} address family. Is infinite timeout: {3}",
+                        ipAddress,
+                        port,
+                        ipAddress.AddressFamily,
+                        isInfiniteTimeout);
+                
+                    bool isConnected;
+                    try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
+                    {
+                        socket.Connect(ipAddress, port);
+                        if (!isInfiniteTimeout)
                         {
-                            if (ipAddress != null)
-                            {
-                                if (ipAddress.AddressFamily != preferedIPFamilies[i] && ipPreference != SqlConnectionIPAddressPreference.UsePlatformDefault)
-                                {
-                                    continue;
-                                }
-
-                                sockets[n] = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-                                // enable keep-alive on socket
-                                SetKeepAliveValues(ref sockets[n]);
-
-                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connecting to IP address {0} and port {1} using {2} address family.",
-                                                                          args0: ipAddress,
-                                                                          args1: port,
-                                                                          args2: ipAddress.AddressFamily);
-                                sockets[n].Connect(ipAddress, port);
-                                if (sockets[n] != null) // sockets[n] can be null if cancel callback is executed during connect()
-                                {
-                                    if (sockets[n].Connected)
-                                    {
-                                        availableSocket = sockets[n];
-                                        if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
-                                        {
-                                            IPv4String = ipAddress.ToString();
-                                        }
-                                        else if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
-                                        {
-                                            IPv6String = ipAddress.ToString();
-                                        }
-
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        sockets[n].Dispose();
-                                        sockets[n] = null;
-                                    }
-                                }
-                            }
+                            throw SQL.SocketDidNotThrow();
                         }
-                        catch (Exception e)
+                        
+                        isConnected = true;
+                    }
+                    catch (SocketException socketException) when (!isInfiniteTimeout &&
+                                                                  socketException.SocketErrorCode ==
+                                                                  SocketError.WouldBlock)
+                    {
+                        // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
+                        // Socket.Select is used because it supports timeouts, while Socket.Connect does not
+
+                        List<Socket> checkReadLst; List<Socket> checkWriteLst; List<Socket> checkErrorLst;
+
+                        // Repeating Socket.Select several times if our timeout is greater
+                        // than int.MaxValue microseconds because of 
+                        // https://github.com/dotnet/SqlClient/pull/1029#issuecomment-875364044
+                        // which states that Socket.Select can't handle timeouts greater than int.MaxValue microseconds
+                        do
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
-                            SqlClientEventSource.Log.TryAdvancedTraceEvent($"{nameof(SNITCPHandle)}.{System.Reflection.MethodBase.GetCurrentMethod().Name}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
-                        }
+                            TimeSpan timeLeft = timeout - timeTaken.Elapsed;
+
+                            if (timeLeft <= TimeSpan.Zero)
+                                return null;
+
+                            int socketSelectTimeout =
+                                checked((int)(Math.Min(timeLeft.TotalMilliseconds, int.MaxValue / 1000) * 1000));
+
+                            checkReadLst = new List<Socket>(1) { socket };
+                            checkWriteLst = new List<Socket>(1) { socket };
+                            checkErrorLst = new List<Socket>(1) { socket };
+
+                            Socket.Select(checkReadLst, checkWriteLst, checkErrorLst, socketSelectTimeout);
+                            // nothing selected means timeout
+                        } while (checkReadLst.Count == 0 && checkWriteLst.Count == 0 && checkErrorLst.Count == 0);
+
+                        // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
+                        isConnected = socket.Connected && checkErrorLst.Count == 0;
                     }
 
-                    // If we have already got a valid Socket, or the platform default was prefered
-                    // we won't do the second traversal.
-                    if (availableSocket is not null || ipPreference == SqlConnectionIPAddressPreference.UsePlatformDefault)
+                    if (isConnected)
                     {
-                        break;
+                        socket.Blocking = true;
+                        string iPv4String = null;
+                        string iPv6String = null;
+                        if (socket.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            iPv4String = ipAddress.ToString();
+                        }
+                        else
+                        {
+                            iPv6String = ipAddress.ToString();
+                        }
+                        pendingDNSInfo = new SQLDNSInfo(cachedFQDN, iPv4String, iPv6String, port.ToString());
+                        isSocketSelected = true;
+                        return socket;
                     }
                 }
-            }
-            finally
-            {
-                cts?.Dispose();
-            }
-
-            // we only record the ip we can connect with successfully.
-            if (IPv4String != null || IPv6String != null)
-            {
-                pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
-            }
-
-            return availableSocket;
-
-            void Cancel()
-            {
-                for (int i = 0; i < sockets.Length; ++i)
+                catch (SocketException e)
                 {
-                    try
-                    {
-                        if (sockets[i] != null && !sockets[i].Connected)
-                        {
-                            sockets[i].Dispose();
-                            sockets[i] = null;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
-                    }
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"{nameof(SNITCPHandle)}.{nameof(Connect)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
+                }
+                finally
+                {
+                    if (!isSocketSelected)
+                        socket?.Dispose();
                 }
             }
+
+            return null;
         }
 
         private static Task<Socket> ParallelConnectAsync(IPAddress[] serverAddresses, int port)

@@ -6,11 +6,9 @@ namespace Microsoft.Data.Common
 {
 
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Data;
     using System.Diagnostics;
-    using System.Linq;
     using System.Text;
     using Microsoft.Data.SqlClient;
 
@@ -311,7 +309,12 @@ namespace Microsoft.Data.Common
                         // Component==Allow, Combined==Allow
                         // All values in the Combined Set should also be in the Component Set
                         // Combined - Component == null
-                        Debug.Assert(combinedSet._restrictionValues.Except(componentSet._restrictionValues).Count() == 0, "Combined set allows values not allowed by component set");
+#if DEBUG
+                        HashSet<string> combined = new HashSet<string>(combinedSet._restrictionValues);
+                        HashSet<string> component = new HashSet<string>(componentSet._restrictionValues);
+                        combined.ExceptWith(component);
+                        Debug.Assert(combined.Count == 0, "Combined set allows values not allowed by component set");
+#endif 
                     }
                     else if (combinedSet._behavior == KeyRestrictionBehavior.PreventUsage)
                     {
@@ -330,14 +333,24 @@ namespace Microsoft.Data.Common
                         // Component==PreventUsage, Combined==Allow
                         // There shouldn't be any of the values from the Component Set in the Combined Set
                         // Intersect(Component, Combined) == null
-                        Debug.Assert(combinedSet._restrictionValues.Intersect(componentSet._restrictionValues).Count() == 0, "Combined values allows values prevented by component set");
+#if DEBUG
+                        HashSet<string> combined = new HashSet<string>(combinedSet._restrictionValues);
+                        HashSet<string> component = new HashSet<string>(componentSet._restrictionValues);
+                        combined.IntersectWith(component);
+                        Debug.Assert(combined.Count == 0, "Combined values allows values prevented by component set");
+#endif 
                     }
                     else if (combinedSet._behavior == KeyRestrictionBehavior.PreventUsage)
                     {
                         // Component==PreventUsage, Combined==PreventUsage
                         // All values in the Component Set should also be in the Combined Set
                         // Component - Combined == null
-                        Debug.Assert(componentSet._restrictionValues.Except(combinedSet._restrictionValues).Count() == 0, "Combined values does not prevent all of the values prevented by the component set");
+#if DEBUG
+                        HashSet<string> combined = new HashSet<string>(combinedSet._restrictionValues);
+                        HashSet<string> component = new HashSet<string>(componentSet._restrictionValues);
+                        component.IntersectWith(combined);
+                        Debug.Assert(component.Count == 0, "Combined values does not prevent all of the values prevented by the component set");
+#endif 
                     }
                     else
                     {

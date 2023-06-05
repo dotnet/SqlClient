@@ -6,7 +6,7 @@
     <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
     <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 4.0.0.0 -->
     <AssemblyVersion>5.0.0.0</AssemblyVersion>
-    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">5.1.0-dev</NugetPackageVersion>
+    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">5.2.0-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>
   <PropertyGroup>
@@ -25,7 +25,7 @@
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
     <AzureIdentityVersion>1.8.0</AzureIdentityVersion>
-    <MicrosoftIdentityClientVersion>4.47.2</MicrosoftIdentityClientVersion>
+    <MicrosoftIdentityClientVersion>4.53.0</MicrosoftIdentityClientVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.24.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>6.24.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
@@ -38,7 +38,6 @@
     <MicrosoftDataSqlClientSNIRuntimeVersion>5.1.0</MicrosoftDataSqlClientSNIRuntimeVersion>
     <SystemConfigurationConfigurationManagerVersion>6.0.1</SystemConfigurationConfigurationManagerVersion>
     <MicrosoftSqlServerServerVersion>1.0.0</MicrosoftSqlServerServerVersion>
-    <SystemDiagnosticsDiagnosticSourceVersion>6.0.0</SystemDiagnosticsDiagnosticSourceVersion>
     <SystemDiagnosticsPerformanceCounterVersion>6.0.1</SystemDiagnosticsPerformanceCounterVersion>
     <SystemRuntimeCachingVersion>6.0.0</SystemRuntimeCachingVersion>
     <SystemSecurityCryptographyCngVersion>5.0.0</SystemSecurityCryptographyCngVersion>
@@ -49,6 +48,7 @@
   <!-- NetStandard project dependencies -->
   <PropertyGroup>
     <SystemRuntimeLoaderVersion>4.3.0</SystemRuntimeLoaderVersion>
+    <SystemDiagnosticsDiagnosticSourceVersion>6.0.0</SystemDiagnosticsDiagnosticSourceVersion>
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>

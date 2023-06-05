@@ -6,7 +6,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -192,7 +191,7 @@ namespace Microsoft.Data.SqlClient
             if (!manualCancellation)
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|ERR|THROW> Exiting retry scope (exceeded the max allowed attempts = {2}).",
-                                                       TypeName, MethodBase.GetCurrentMethod().Name, retryLogic.NumberOfTries);
+                                                       TypeName, nameof(CreateException), retryLogic.NumberOfTries);
             }
             _retryLogicPool.Add(retryLogic);
             return result;
@@ -200,7 +199,7 @@ namespace Microsoft.Data.SqlClient
 
         private void ApplyRetryingEvent(object sender, SqlRetryLogicBase retryLogic, TimeSpan intervalTime, List<Exception> exceptions, Exception lastException)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(ApplyRetryingEvent);
             if (Retrying != null)
             {
                 var retryEventArgs = new SqlRetryingEventArgs(retryLogic.Current, intervalTime, exceptions);

@@ -1242,7 +1242,7 @@ namespace Microsoft.Data.SqlClient
 
             // for non-pooled connections, enlist in a distributed transaction
             // if present - and user specified to enlist
-            if (enlistOK && ConnectionOptions.Enlist)
+            if (enlistOK && ConnectionOptions.Enlist && RoutingInfo == null)
             {
                 _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
                 Transaction tx = ADP.GetCurrentTransaction();
@@ -1270,7 +1270,14 @@ namespace Microsoft.Data.SqlClient
             if (!timeout.IsInfinite)
             {
                 long t = timeout.MillisecondsRemaining / 1000;
-                if ((long)int.MaxValue > t)
+                if (t == 0 && LocalAppContextSwitches.UseMinimumLoginTimeout)
+                {
+                    // Take 1 as the minimum value, since 0 is treated as an infinite timeout
+                    // to allow 1 second more for login to complete, since it should take only a few milliseconds.
+                    t = 1;
+                }
+
+                if (int.MaxValue > t)
                 {
                     timeoutInSeconds = (int)t;
                 }
@@ -1286,7 +1293,8 @@ namespace Microsoft.Data.SqlClient
 
             login.language = _currentLanguage;
             if (!login.userInstance)
-            { // Do not send attachdbfilename or database to SSE primary instance
+            {
+                // Do not send attachdbfilename or database to SSE primary instance
                 login.database = CurrentDatabase;
                 login.attachDBFilename = ConnectionOptions.AttachDBFilename;
             }
