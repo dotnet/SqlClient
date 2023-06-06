@@ -132,7 +132,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
         <AccessTokenCallback>
           <summary>Gets or sets the access token callback for the connection.</summary>
           <value>
-            The Func that takes a <see cref="SqlAuthenticationParameters" /> and <see cref="CancellationToken" /> and returns a <see cref="SqlAuthenticationToken" />.</value>
+            The Func that takes a <see cref="SqlAuthenticationParameters" /> and <see cref="System.Threading.CancellationToken" /> and returns a <see cref="SqlAuthenticationToken" />.</value>
           <remarks>
             <format type="text/markdown"><![CDATA[
 
