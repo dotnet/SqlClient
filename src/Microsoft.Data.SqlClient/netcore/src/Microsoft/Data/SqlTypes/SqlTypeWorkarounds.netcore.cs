@@ -122,31 +122,5 @@ namespace Microsoft.Data.SqlTypes
             internal SqlBinaryLookalike Fake;
         }
         #endregion
-
-        #region Work around inability to access SqlGuid.ctor(byte[], bool)
-        internal static SqlGuid SqlGuidCtor(byte[] value, bool ignored)
-        {
-            // Construct a SqlGuid without allocating/copying the byte[].  This provides
-            // the same behavior as SqlGuid.ctor(byte[], bool).
-            var c = default(SqlGuidCaster);
-            c.Fake._value = value;
-            return c.Real;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct SqlGuidLookalike
-        {
-            internal byte[] _value;
-        }
-
-        [StructLayout(LayoutKind.Explicit)]
-        private struct SqlGuidCaster
-        {
-            [FieldOffset(0)]
-            internal SqlGuid Real;
-            [FieldOffset(0)]
-            internal SqlGuidLookalike Fake;
-        }
-        #endregion
     }
 }
