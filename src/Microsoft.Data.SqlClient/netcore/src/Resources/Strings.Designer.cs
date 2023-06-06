@@ -457,7 +457,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if &apos;Authentication&apos; has been specified in the connection string..
+        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if &apos;Authentication=Active Directory Default&apos; has been specified in the connection string..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback {
             get {
