@@ -1948,6 +1948,6 @@
     <value>Cannot set the AccessTokenCallback property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if 'Authentication' has been specified in the connection string.</value>
+    <value>Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.</value>
   </data>
 </root>

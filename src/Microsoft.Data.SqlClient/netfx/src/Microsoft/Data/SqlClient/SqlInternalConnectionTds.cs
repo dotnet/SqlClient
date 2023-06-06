@@ -490,10 +490,7 @@ namespace Microsoft.Data.SqlClient
                 _accessTokenInBytes = System.Text.Encoding.Unicode.GetBytes(accessToken);
             }
 
-            if (accessTokenCallback != null)
-            {
-                _accessTokenCallback = accessTokenCallback;
-            }
+            _accessTokenCallback = accessTokenCallback;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
             _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;

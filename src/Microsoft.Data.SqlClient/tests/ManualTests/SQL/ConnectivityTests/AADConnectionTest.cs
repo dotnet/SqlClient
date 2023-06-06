@@ -568,7 +568,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         Task.FromResult(new SqlAuthenticationToken("my token", DateTimeOffset.MaxValue));
                     conn.Open();
 
-                    Assert.True(conn.State == System.Data.ConnectionState.Open);
+                    Assert.NotEqual(System.Data.ConnectionState.Open, conn.State);
                 }
             });
 
@@ -588,7 +588,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 conn.AccessTokenCallback = (ctx, cancellationToken) =>
                 {
                     string scope = ctx.Resource.EndsWith(defaultScopeSuffix) ? ctx.Resource : ctx.Resource + defaultScopeSuffix;
-                    var token = cred.GetToken(new TokenRequestContext(new[] { scope }), cancellationToken);
+                    AccessToken token = cred.GetToken(new TokenRequestContext(new[] { scope }), cancellationToken);
                     return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
                 };
                 conn.Open();
@@ -612,7 +612,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.Equal(userId, parms.UserId);
                     Assert.Equal(pwd, parms.Password);
                     string scope = parms.Resource.EndsWith(defaultScopeSuffix) ? parms.Resource : parms.Resource + defaultScopeSuffix;
-                    var token = cred.GetToken(new TokenRequestContext(new[] { scope }), cancellationToken);
+                    AccessToken token = cred.GetToken(new TokenRequestContext(new[] { scope }), cancellationToken);
                     return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
                 };
                 conn.Open();
