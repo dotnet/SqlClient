@@ -1,0 +1,51 @@
+﻿<?xml version="1.0"?>
+<docs>
+  <members name="SqlConnectionEncryptOptionConverter">
+    <SqlConnectionEncryptOption>
+      <summary>Converts a string Sql Connection Encrypt option into SqlConnectionEncryptOption object</summary>
+      <remarks>
+        <para>
+          ## Remarks  
+Implicit conversions have been added to maintain backwards compatibility with boolean behahavior for the <see cref="Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property. When converting from a boolean, a value of `true` converts to <see cref="Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> and a value of `false` converts to <see cref="Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional"/>. When converting to a boolean, <see cref="Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory"/>, <see cref="Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict"/> , and `null` convert to `true` and <see cref="Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional"/> converts `false`.
+        </para>
+      </remarks>
+    </SqlConnectionEncryptOption>
+    <CanConvertFrom>
+      <summary>
+        If the source type is a string then conversion is allowed <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/>.
+      </summary>
+      <param name="value">A string containing the value to convert.</param>
+      <returns>
+        <see langword="true" /> if the <paramref name="value"/> parameter can be converted successfully; otherwise, <see langword="false" />.
+      </returns>
+      <remarks>This method does not throw an exception.</remarks>
+    </CanConvertFrom>
+    <ConvertFrom>
+      <summary>
+        Converts the specified string representation of a logical value to its <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> equivalent.
+      </summary>
+      <param name="value">A string containing the value to convert.</param>
+      <param name="result">
+        An object that is equivalent to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/>.
+      </param>
+      <returns>
+        An object that is equivalent to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> with value of <paramref name="value"/> if conversion was successful;
+        otherwise, an exception is thrown.
+      </returns>
+      <remarks>This method throws an exception if conversion fails.</remarks>
+    </ConvertFrom>
+    <ConvertTo>
+      <summary>
+        Converts an object <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> value to its string representation.
+      </summary>
+      <param name="value">An object <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/> containing the value to convert.</param>
+      <param name="result">
+        A string representation of the value of <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/>.
+      </param>
+      <returns>
+        A string representation of the value of <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption"/>.
+      </returns>
+      <remarks>This method does not throw an exception if conversion fails.</remarks>
+    </ConvertTo>
+  </members>
+</docs>
