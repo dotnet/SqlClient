@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 5.2.0-preview2.x] - 2023-06-08
+
+This update brings the below changes over the previous release:
+
+### Added
+
+- Added SQL Types compatibility with **.NET 8**. [1934](https://github.com/dotnet/SqlClient/pull/1934)
+- Added support for **.NET 7.0**. [#1981](https://github.com/dotnet/SqlClient/pull/1981)
+- Added new property `RowsCopied64` to `SqlBulkCopy`. [#2004](https://github.com/dotnet/SqlClient/pull/2004)
+- Added minimum login timeout as 1 second as the default behavior on **.NET Core**. [#2012](https://github.com/dotnet/SqlClient/pull/2012)
+
+### Fixed
+
+- Fixed the mixed synchronization issue in managed SNI. [#1029](https://github.com/dotnet/SqlClient/pull/1029)
+- Fixed the issue with `SqlConnectionStringBuilder` property indexer not supporting non-string values. [#2018](https://github.com/dotnet/SqlClient/pull/2018)
+
+### Changed
+
+- Updated `Microsoft.Identity.Client` version from 4.47.2 to 4.53.0. [#2031](https://github.com/dotnet/SqlClient/pull/2031), [#2055](https://github.com/dotnet/SqlClient/pull/2055) 
+- Code health improvements: [#1985](https://github.com/dotnet/SqlClient/pull/1985)
+
 ## [Preview Release 5.2.0-preview1.23109.1] - 2023-04-20
 
 This update brings the below changes over the previous release:
