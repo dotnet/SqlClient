@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 5.2.0-preview2.x] - 2023-06-08
+## [Preview Release 5.2.0-preview2.23159.1] - 2023-06-08
 
 This update brings the below changes over the previous release:
 
