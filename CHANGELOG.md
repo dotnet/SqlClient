@@ -10,18 +10,17 @@ This update brings the below changes over the previous release:
 
 ### Added
 
-- Added SQL Types compatibility with **.NET 8**. [1934](https://github.com/dotnet/SqlClient/pull/1934)
-- Added support for **.NET 7.0**. [#1981](https://github.com/dotnet/SqlClient/pull/1981)
 - Added new property `RowsCopied64` to `SqlBulkCopy`. [#2004](https://github.com/dotnet/SqlClient/pull/2004)
-- Added minimum login timeout as 1 second as the default behavior on **.NET Core**. [#2012](https://github.com/dotnet/SqlClient/pull/2012)
 
 ### Fixed
 
-- Fixed the mixed synchronization issue in managed SNI. [#1029](https://github.com/dotnet/SqlClient/pull/1029)
-- Fixed the issue with `SqlConnectionStringBuilder` property indexer not supporting non-string values. [#2018](https://github.com/dotnet/SqlClient/pull/2018)
+- Fixed mixed synchronization issue in managed SNI. [#1029](https://github.com/dotnet/SqlClient/pull/1029)
+- Fixed issue with `SqlConnectionStringBuilder` property indexer not supporting non-string values. [#2018](https://github.com/dotnet/SqlClient/pull/2018)
 
 ### Changed
 
+- Moved to new System.Data.SqlTypes APIs in **.NET 7** and **.NET 8**. [1934](https://github.com/dotnet/SqlClient/pull/1934) and [#1981](https://github.com/dotnet/SqlClient/pull/1981)
+- Changed **[UseOneSecFloorInTimeoutCalculationDuringLogin](https://learn.microsoft.com/sql/connect/ado-net/appcontext-switches#enable-a-minimum-timeout-during-login)** App Context switch default to **true** and extended its effect to .NET and .NET Standard. [#2012](https://github.com/dotnet/SqlClient/pull/2012)
 - Updated `Microsoft.Identity.Client` version from 4.47.2 to 4.53.0. [#2031](https://github.com/dotnet/SqlClient/pull/2031), [#2055](https://github.com/dotnet/SqlClient/pull/2055) 
 - Code health improvements: [#1985](https://github.com/dotnet/SqlClient/pull/1985)
 
