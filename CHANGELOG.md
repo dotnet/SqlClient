@@ -14,7 +14,7 @@ This update brings the below changes over the previous release:
 
 ### Fixed
 
-- Fixed mixed synchronization issue in managed SNI. [#1029](https://github.com/dotnet/SqlClient/pull/1029)
+- Fixed socket synchronization issue during connect in managed SNI. [#1029](https://github.com/dotnet/SqlClient/pull/1029)
 - Fixed issue with `SqlConnectionStringBuilder` property indexer not supporting non-string values. [#2018](https://github.com/dotnet/SqlClient/pull/2018)
 
 ### Changed
