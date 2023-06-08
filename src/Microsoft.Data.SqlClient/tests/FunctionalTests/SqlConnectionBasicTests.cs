@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(42108)]
         [InlineData(42109)]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public async Task TransientFaultDisabledTestAsync(uint errorCode)
+        public void TransientFaultDisabledTestAsync(uint errorCode)
         {
             using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
             SqlConnectionStringBuilder builder = new()
@@ -99,17 +99,9 @@ namespace Microsoft.Data.SqlClient.Tests
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                await connection.OpenAsync();
-                Assert.False(true, "Connection should not have opened.");
-            }
-            catch (SqlException e)
-            {
-                // FATAL Error, should result in closed connection.
-                Assert.Equal(20, e.Class);
-                Assert.Equal(ConnectionState.Closed, connection.State);
-            }
+            Task<SqlException> e = Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
+            Assert.Equal(20, e.Result.Class);
+            Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
         [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
@@ -129,17 +121,9 @@ namespace Microsoft.Data.SqlClient.Tests
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            try
-            {
-                connection.Open();
-                Assert.False(true, "Connection should not have opened.");
-            }
-            catch (SqlException e)
-            {
-                // FATAL Error, should result in closed connection.
-                Assert.Equal(20, e.Class);
-                Assert.Equal(ConnectionState.Closed, connection.State);
-            }
+            SqlException e = Assert.Throws<SqlException>(() => connection.Open());
+            Assert.Equal(20, e.Class);
+            Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
         [Fact]
