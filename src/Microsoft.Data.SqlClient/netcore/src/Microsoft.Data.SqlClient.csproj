@@ -649,6 +649,9 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
+  </ItemGroup>
+  <!--This will exclude SqlTypeWorkarounds.netcore.cs from Net7 and greater versions-->
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND !$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netcore.cs" />
   </ItemGroup>
   <!-- Windows only -->
