@@ -588,5 +588,4 @@ namespace Microsoft.Data.SqlClient.Tests
             return UserComponents!.ConnectionString;
         }
     }
-    
 }
