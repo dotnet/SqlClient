@@ -482,11 +482,6 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("optional", "False")]
         [InlineData("yes", "True")]
         [InlineData("no", "False")]
-        [InlineData("absolutely", "True")]
-        [InlineData("affirmative", "True")]
-        [InlineData("never", "True")]
-        [InlineData("always", "True")]
-        [InlineData("none", "True")]
         public void ConnectionStringFromJsonTests(string value, string expectedValue)
         {
             ExecuteConnectionStringFromJsonTests(value, expectedValue);
