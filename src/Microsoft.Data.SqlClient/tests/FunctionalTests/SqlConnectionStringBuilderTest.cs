@@ -527,19 +527,19 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(expectedValue, builder.Encrypt);
         }
 
-        internal void ExecuteConnectionStringFromJsonTests(string encryptOption, string result)
+        static internal void ExecuteConnectionStringFromJsonTests(string encryptOption, string result)
         {
-            var settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>(encryptOption);
-            var connectionString = settings!.UserDb!.ToString();
+            UserDbConnectionStringSettings settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>(encryptOption);
+            string connectionString = settings!.UserDb!.ToString();
             Assert.Contains($"Encrypt={result}", connectionString, StringComparison.InvariantCultureIgnoreCase);
         }
 
-        internal void ExecuteConnectionStringFromJsonThrowsException(string encryptOption)
+        static internal void ExecuteConnectionStringFromJsonThrowsException(string encryptOption)
         {
             Assert.Throws<System.InvalidOperationException>(() => LoadSettingsFromJsonStream<UserDbConnectionStringSettings>(encryptOption));
         }
 
-        TSettings LoadSettingsFromJsonStream<TSettings>(string encryptOption) where TSettings : class
+        static TSettings LoadSettingsFromJsonStream<TSettings>(string encryptOption) where TSettings : class
         {
             TSettings settingsOut = null;
 
