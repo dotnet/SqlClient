@@ -30,7 +30,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       <group targetFramework="net462">
         <dependency id="Microsoft.Data.SqlClient.SNI" version="5.1.0" />
         <dependency id="Azure.Identity" version="1.8.0" />
-        <dependency id="Microsoft.Identity.Client" version="4.47.2" />
+        <dependency id="Microsoft.Identity.Client" version="4.53.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.24.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.24.0" />
         <dependency id="System.Buffers" version="4.5.1" />
@@ -41,7 +41,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       <group targetFramework="net7.0">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.1.0" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.8.0" />
-        <dependency id="Microsoft.Identity.Client" version="4.47.2" exclude="Compile"/>
+        <dependency id="Microsoft.Identity.Client" version="4.53.0" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.24.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.24.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
@@ -56,7 +56,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       <group targetFramework="net6.0">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.1.0" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.8.0" />
-        <dependency id="Microsoft.Identity.Client" version="4.47.2" exclude="Compile"/>
+        <dependency id="Microsoft.Identity.Client" version="4.53.0" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.24.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.24.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
@@ -70,7 +70,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       <group targetFramework="netstandard2.0">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.1.0" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.8.0" />
-        <dependency id="Microsoft.Identity.Client" version="4.47.2" exclude="Compile"/>
+        <dependency id="Microsoft.Identity.Client" version="4.53.0" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.24.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.24.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
@@ -88,7 +88,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       <group targetFramework="netstandard2.1">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.1.0" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.8.0" />
-        <dependency id="Microsoft.Identity.Client" version="4.47.2" exclude="Compile"/>
+        <dependency id="Microsoft.Identity.Client" version="4.53.0" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.24.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.24.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
