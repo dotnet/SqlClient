@@ -9,8 +9,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
@@ -23,6 +21,13 @@ namespace Microsoft.Data.SqlClient
         private const string s_className = nameof(LocalDB);
         //HKEY_LOCAL_MACHINE
         private const string LocalDBInstalledVersionRegistryKey = "SOFTWARE\\Microsoft\\Microsoft SQL Server Local DB\\Installed Versions\\";
+
+        // Set a non-infinite timeout on the regex to ensure we never hang. 10 seconds should
+        // be more than enough as a fail-safe for the small amount of text that is going to be processed. Since
+        // we can't set the timeout on each Match() call, this prioritizes perf (RegexOptions.Compiled) over
+        // the small possiblity that we might go a little over a connect timeout during extremely high load.
+        private static readonly Regex regex = new Regex("(np:.+)\r", RegexOptions.Compiled | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(10));
+
         private const string InstanceAPIPathValueName = "InstanceAPIPath";
         private const string ProcLocalDBStartInstance = "LocalDBStartInstance";
         private const int MAX_LOCAL_DB_CONNECTION_STRING_SIZE = 260;
@@ -117,7 +122,6 @@ namespace Microsoft.Data.SqlClient
         }
         private static bool TryGetLocalDBConnectionStringUsingSqlLocalDBExe(string localDbInstance, TimeoutTimer timeout, out string connString)
         {
-           Regex regex = new Regex("(np:.+)\r", RegexOptions.Compiled | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(timeout.MillisecondsRemaining));
            connString = null;
             try
             {
@@ -133,33 +137,35 @@ namespace Microsoft.Data.SqlClient
 
                 var proc = Process.Start(psi);
 
-                proc.WaitForExit(milliseconds: (int)timeout.MillisecondsRemaining);
-
-                psi = new ProcessStartInfo(s_sqlLocalDBExe.Value, $"i \"{localDbInstance}\"")
+                if (proc.WaitForExit(milliseconds: timeout.MillisecondsRemainingInt))
                 {
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                };
+                    psi = new ProcessStartInfo(s_sqlLocalDBExe.Value, $"i \"{localDbInstance}\"")
+                    {
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        CreateNoWindow = true,
+                        WindowStyle = ProcessWindowStyle.Hidden
+                    };
 
-                proc = Process.Start(psi);
+                    proc = Process.Start(psi);
 
-                proc.WaitForExit(milliseconds: (int)timeout.MillisecondsRemaining);
+                    if (proc.WaitForExit(milliseconds: timeout.MillisecondsRemainingInt))
+                    {
+                        var alllines = proc.StandardOutput.ReadToEnd();
 
-                var alllines = proc.StandardOutput.ReadToEnd();
+                        SqlClientEventSource.Log.TryTraceEvent(s_className, EventType.INFO, $"Called: {s_sqlLocalDBExe.Value} \"{localDbInstance}\"");
 
-                SqlClientEventSource.Log.TryTraceEvent(s_className, EventType.INFO, $"Called: {s_sqlLocalDBExe.Value} \"{localDbInstance}\"");
-
-                Match match = regex.Match(alllines);
-                if (match.Success)
-                {
-                    connString = match.Value.Trim();
-                    return true;
-                }
-                else
-                {
-                    SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.INFO, "No match found for named pipe SqlLocalDB.exe process stdout.");
+                        Match match = regex.Match(alllines);
+                        if (match.Success)
+                        {
+                            connString = match.Value.Trim();
+                            return true;
+                        }
+                        else
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.INFO, "No match found for named pipe SqlLocalDB.exe process stdout.");
+                        }
+                    }
                 }
             }
             catch(RegexMatchTimeoutException ex)
