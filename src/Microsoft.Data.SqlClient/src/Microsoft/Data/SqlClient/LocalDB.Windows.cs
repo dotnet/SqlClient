@@ -184,78 +184,78 @@ namespace Microsoft.Data.SqlClient
         {
             NO_INSTALLATION, INVALID_CONFIG, NO_SQLUSERINSTANCEDLL_PATH, INVALID_SQLUSERINSTANCEDLL_PATH, NONE
         }
-      
+
         /// <summary>
         /// Loads the User Instance dll.
         /// </summary>
         private bool LoadUserInstanceDll()
         {
-                // Check in a non thread-safe way if the handle is already set for performance.
+            // Check in a non thread-safe way if the handle is already set for performance.
+            if (_sqlUserInstanceLibraryHandle != null)
+            {
+                return true;
+            }
+
+            lock (this)
+            {
                 if (_sqlUserInstanceLibraryHandle != null)
                 {
                     return true;
                 }
+                //Get UserInstance Dll path
+                LocalDBErrorState registryQueryErrorState;
 
-                lock (this)
+                // Get the LocalDB instance dll path from the registry
+                string dllPath = GetUserInstanceDllPath(out registryQueryErrorState);
+
+                // If there was no DLL path found, then there is an error.
+                if (dllPath == null)
                 {
-                    if (_sqlUserInstanceLibraryHandle != null)
-                    {
-                        return true;
-                    }
-                    //Get UserInstance Dll path
-                    LocalDBErrorState registryQueryErrorState;
+                    SqlClientEventSource.Log.TraceEvent(nameof(LocalDB), EventType.ERR, "User instance DLL path is null.");
+                    throw new Exception(MapLocalDBErrorStateToErrorMessage(registryQueryErrorState));
+                }
 
-                    // Get the LocalDB instance dll path from the registry
-                    string dllPath = GetUserInstanceDllPath(out registryQueryErrorState);
+                // In case the registry had an empty path for dll
+                if (string.IsNullOrWhiteSpace(dllPath))
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.ERR, "User instance DLL path is invalid. DLL path = {0}", dllPath);
+                    throw new Exception(Strings.SNI_ERROR_55);
+                }
 
-                    // If there was no DLL path found, then there is an error.
-                    if (dllPath == null)
-                    {
-                        SqlClientEventSource.Log.TraceEvent(nameof(LocalDB), EventType.ERR, "User instance DLL path is null.");
-                        throw new Exception(MapLocalDBErrorStateToErrorMessage(registryQueryErrorState));
-                    }
+                // Load the dll
+                SafeLibraryHandle libraryHandle = Interop.Kernel32.LoadLibraryExW(dllPath.Trim(), IntPtr.Zero, 0);
 
-                    // In case the registry had an empty path for dll
-                    if (string.IsNullOrWhiteSpace(dllPath))
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.ERR, "User instance DLL path is invalid. DLL path = {0}", dllPath);
-                        throw new Exception(Strings.SNI_ERROR_55);
-                    }
+                if (libraryHandle.IsInvalid)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.ERR, "Library Handle is invalid. Could not load the dll.");
+                    libraryHandle.Dispose();
+                    throw new Exception(Strings.SNI_ERROR_56);
+                }
 
-                    // Load the dll
-                    SafeLibraryHandle libraryHandle = Interop.Kernel32.LoadLibraryExW(dllPath.Trim(), IntPtr.Zero, 0);
+                // Load the procs from the DLLs
+                _startInstanceHandle = Interop.Kernel32.GetProcAddress(libraryHandle, ProcLocalDBStartInstance);
 
-                    if (libraryHandle.IsInvalid)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.ERR, "Library Handle is invalid. Could not load the dll.");
-                        libraryHandle.Dispose();
-                        throw new Exception(Strings.SNI_ERROR_56);
-                    }
+                if (_startInstanceHandle == IntPtr.Zero)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.ERR, "Was not able to load the PROC from DLL. Bad Runtime.");
+                    libraryHandle.Dispose();
+                    throw new Exception(Strings.SNI_ERROR_57);
+                }
 
-                    // Load the procs from the DLLs
-                    _startInstanceHandle = Interop.Kernel32.GetProcAddress(libraryHandle, ProcLocalDBStartInstance);
+                // Set the delegate the invoke.
+                localDBStartInstanceFunc = (LocalDBStartInstance)Marshal.GetDelegateForFunctionPointer(_startInstanceHandle, typeof(LocalDBStartInstance));
 
-                    if (_startInstanceHandle == IntPtr.Zero)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.ERR, "Was not able to load the PROC from DLL. Bad Runtime.");
-                        libraryHandle.Dispose();
-                        throw new Exception(Strings.SNI_ERROR_57);
-                    }
+                if (localDBStartInstanceFunc == null)
+                {
+                    libraryHandle.Dispose();
+                    _startInstanceHandle = IntPtr.Zero;
+                    throw new Exception(Strings.SNI_ERROR_57);
+                }
 
-                    // Set the delegate the invoke.
-                    localDBStartInstanceFunc = (LocalDBStartInstance)Marshal.GetDelegateForFunctionPointer(_startInstanceHandle, typeof(LocalDBStartInstance));
-
-                    if (localDBStartInstanceFunc == null)
-                    {
-                        libraryHandle.Dispose();
-                        _startInstanceHandle = IntPtr.Zero;
-                        throw new Exception(Strings.SNI_ERROR_57);
-                    }
-
-                    _sqlUserInstanceLibraryHandle = libraryHandle;
-                    SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.INFO, "User Instance DLL was loaded successfully.");
-                    return true;
-                }            
+                _sqlUserInstanceLibraryHandle = libraryHandle;
+                SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.INFO, "User Instance DLL was loaded successfully.");
+                return true;
+            }
         }
 
         /// <summary>

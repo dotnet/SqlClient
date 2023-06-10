@@ -408,5 +408,4 @@ namespace Microsoft.Data.SqlClient
         private static bool IsLocalHost(string serverName)
             => ".".Equals(serverName) || "(local)".Equals(serverName) || "localhost".Equals(serverName);
     }
-
 }
