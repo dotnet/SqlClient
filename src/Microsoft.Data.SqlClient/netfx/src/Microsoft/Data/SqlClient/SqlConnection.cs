@@ -762,10 +762,6 @@ namespace Microsoft.Data.SqlClient
                     // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
                     CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
                 }
-                else
-                {
-                    throw new ArgumentNullException(nameof(AccessTokenCallback));
-                }
 
                 ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo, value));
                 _accessTokenCallback = value;

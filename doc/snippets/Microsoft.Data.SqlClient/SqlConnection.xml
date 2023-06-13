@@ -143,6 +143,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
   
  ]]></format>
             </remarks>
+            <exception cref="T:System.InvalidOperationException">The AccessTokenCallback is combined with other conflicting authentication configurations.</exception>
         </AccessTokenCallback>
         <BeginDbTransaction>
             <param name="isolationLevel">To be added.</param>
