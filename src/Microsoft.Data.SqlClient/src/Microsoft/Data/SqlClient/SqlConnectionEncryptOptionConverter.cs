@@ -9,7 +9,7 @@ using System.Drawing;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOptionConverter.xml' path='docs/members[@name="SqlConnectionEncryptOptionConverter"]/SqlConnectionEncryptOptionConverter/*'/>
-    public class SqlConnectionEncryptOptionConverter : TypeConverter
+    internal class SqlConnectionEncryptOptionConverter : TypeConverter
     {
         // Overrides the CanConvertFrom method of TypeConverter.
         // The ITypeDescriptorContext interface provides the context for the
