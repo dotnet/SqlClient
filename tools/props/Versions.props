@@ -31,7 +31,6 @@
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
     <MicrosoftSourceLinkGitHubVersion>1.1.0</MicrosoftSourceLinkGitHubVersion>
-	<MicrosoftExtensionsHosting>6.0.0</MicrosoftExtensionsHosting>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>
@@ -75,6 +74,7 @@
     <MicrosoftSqlServerTypesVersionNet>160.1000.6</MicrosoftSqlServerTypesVersionNet>
     <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
+	<MicrosoftExtensionsHosting>6.0.0</MicrosoftExtensionsHosting>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>

@@ -4,7 +4,6 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
-using System.Drawing;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -28,17 +27,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOptionConverter.xml' path='docs/members[@name="SqlConnectionEncryptOptionConverter"]/SqlConnectionEncryptOptionConverter/ConvertFrom/*'/>
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
-            if (value is string)
-            {
-                return SqlConnectionEncryptOption.Parse(value.ToString());
-            }
-            throw new Exception("Value to convert must be of string type!");
+            return SqlConnectionEncryptOption.Parse(value.ToString());
         }
-        // Overrides the ConvertTo method of TypeConverter.
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOptionConverter.xml' path='docs/members[@name="SqlConnectionEncryptOptionConverter"]/SqlConnectionEncryptOptionConverter/ConvertTo/*'/>
-        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
-        {
-            return base.ConvertTo(context, culture, value, destinationType);
-        }
+
     }
 }

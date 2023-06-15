@@ -474,17 +474,30 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(result);
         }
 
-        [Theory]
-        [InlineData("false","False")]
-        [InlineData("true", "True")]
-        [InlineData("strict", "Strict")]
-        [InlineData("mandatory","True")]
-        [InlineData("optional", "False")]
-        [InlineData("yes", "True")]
-        [InlineData("no", "False")]
-        public void ConnectionStringFromJsonTests(string value, string expectedValue)
+        #region ConnectionStringFromJson
+        [Fact]
+        public void ConnectionStringFromJsonTests()
         {
-            ExecuteConnectionStringFromJsonTests(value, expectedValue);
+            UserDbConnectionStringSettings settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("false");
+            Assert.Equal(SqlConnectionEncryptOption.Optional, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("true");
+            Assert.Equal(SqlConnectionEncryptOption.Mandatory, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("strict");
+            Assert.Equal(SqlConnectionEncryptOption.Strict, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("mandatory");
+            Assert.Equal(SqlConnectionEncryptOption.Mandatory, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("optional");
+            Assert.Equal(SqlConnectionEncryptOption.Optional, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("yes");
+            Assert.Equal(SqlConnectionEncryptOption.Mandatory, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("no");
+            Assert.Equal(SqlConnectionEncryptOption.Optional, settings.UserDb.UserComponents.Encrypt);
         }
 
         [Theory]
@@ -498,6 +511,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             ExecuteConnectionStringFromJsonThrowsException(value);
         }
+        #endregion
 
         internal void ExecuteConnectionStringTests(string connectionString)
         {
@@ -527,19 +541,12 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(expectedValue, builder.Encrypt);
         }
 
-        static internal void ExecuteConnectionStringFromJsonTests(string encryptOption, string result)
+        internal static void ExecuteConnectionStringFromJsonThrowsException(string encryptOption)
         {
-            UserDbConnectionStringSettings settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>(encryptOption);
-            string connectionString = settings!.UserDb!.ToString();
-            Assert.Contains($"Encrypt={result}", connectionString, StringComparison.InvariantCultureIgnoreCase);
+            Assert.Throws<InvalidOperationException>(() => LoadSettingsFromJsonStream<UserDbConnectionStringSettings>(encryptOption));
         }
 
-        static internal void ExecuteConnectionStringFromJsonThrowsException(string encryptOption)
-        {
-            Assert.Throws<System.InvalidOperationException>(() => LoadSettingsFromJsonStream<UserDbConnectionStringSettings>(encryptOption));
-        }
-
-        static TSettings LoadSettingsFromJsonStream<TSettings>(string encryptOption) where TSettings : class
+        private static TSettings LoadSettingsFromJsonStream<TSettings>(string encryptOption) where TSettings : class
         {
             TSettings settingsOut = null;
 
@@ -567,6 +574,7 @@ namespace Microsoft.Data.SqlClient.Tests
         }
     }
 
+    #region ConnectionStringFromJsonRequiredClasses
     // These 2 classes will be used by ConnectionStringFromJsonTests only
     internal class UserDbConnectionStringSettings
     {
@@ -583,4 +591,5 @@ namespace Microsoft.Data.SqlClient.Tests
             return UserComponents!.ConnectionString;
         }
     }
+    #endregion
 }
