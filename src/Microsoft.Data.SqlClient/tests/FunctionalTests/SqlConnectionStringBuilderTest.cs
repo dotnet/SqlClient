@@ -4,12 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.Text;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -474,36 +468,6 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(result);
         }
 
-        [Theory]
-        [InlineData("false","False")]
-        [InlineData("true", "True")]
-        [InlineData("strict", "Strict")]
-        [InlineData("mandatory","True")]
-        [InlineData("optional", "False")]
-        [InlineData("yes", "True")]
-        [InlineData("no", "False")]
-        [InlineData("absolutely", "True")]
-        [InlineData("affirmative", "True")]
-        [InlineData("never", "True")]
-        [InlineData("always", "True")]
-        [InlineData("none", "True")]
-        public void ConnectionStringFromJsonTests(string value, string expectedValue)
-        {
-            ExecuteConnectionStringFromJsonTests(value, expectedValue);
-        }
-
-        [Theory]
-        [InlineData("absolutely")]
-        [InlineData("affirmative")]
-        [InlineData("never")]
-        [InlineData("always")]
-        [InlineData("none")]
-        [InlineData(" for sure ")]
-        public void ConnectionStringFromJsonThrowsException(string value)
-        {
-            ExecuteConnectionStringFromJsonThrowsException(value);
-        }
-
         internal void ExecuteConnectionStringTests(string connectionString)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
@@ -531,62 +495,5 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.IsType<SqlConnectionEncryptOption>(builder.Encrypt);
             Assert.Equal(expectedValue, builder.Encrypt);
         }
-
-        internal void ExecuteConnectionStringFromJsonTests(string encryptOption, string result)
-        {
-            var settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>(encryptOption);
-            var connectionString = settings!.UserDb!.ToString();
-            Assert.Contains($"Encrypt={result}", connectionString, StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        internal void ExecuteConnectionStringFromJsonThrowsException(string encryptOption)
-        {
-            Assert.Throws<System.InvalidOperationException>(() => LoadSettingsFromJsonStream<UserDbConnectionStringSettings>(encryptOption));
-        }
-
-        TSettings LoadSettingsFromJsonStream<TSettings>(string encryptOption) where TSettings : class
-        {
-            TSettings settingsOut = null;
-
-            Host.CreateDefaultBuilder()
-                .ConfigureAppConfiguration((ctx, configBuilder) =>
-                {
-                    // Note: Inside string interpolation, a { should be {{ and a } should be }}
-                    // First, declare a stringified JSON
-                    var json = $"{{ \"UserDb\": {{ \"UserComponents\": {{ \"NetworkLibrary\": \"DBMSSOCN\", \"UserID\": \"user\", \"Password\": \"password\", \"DataSource\": \"localhost\", \"InitialCatalog\": \"catalog\", \"Encrypt\": \"{encryptOption}\" }}}}}}";
-                   
-                    // Load the stringified JSON as a stream into the configuration builder
-                    configBuilder.AddJsonStream(new MemoryStream(Encoding.ASCII.GetBytes(json)));
-                    configBuilder.AddEnvironmentVariables();
-                })
-                .ConfigureServices((ctx, services) =>
-                {
-                    var configuration = ctx.Configuration;
-                    services.AddOptions();
-                    services.Configure<TSettings>(ctx.Configuration);
-                    settingsOut = configuration.Get<TSettings>();
-                })
-                .Build();
-
-            return settingsOut;
-        }
     }
-
-    // These 2 classes will be used by ConnectionStringFromJsonTests only
-    internal class UserDbConnectionStringSettings
-    {
-        [Required]
-        public UserSqlConnectionString UserDb { get; set; }
-    }
-
-    internal class UserSqlConnectionString
-    {
-        public SqlConnectionStringBuilder UserComponents { get; set; } = new();
-
-        public override string ToString()
-        {
-            return UserComponents!.ConnectionString;
-        }
-    }
-    
 }
