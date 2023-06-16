@@ -556,7 +556,6 @@ namespace Microsoft.Data.SqlClient.Tests
                     // Note: Inside string interpolation, a { should be {{ and a } should be }}
                     // First, declare a stringified JSON
                     var json = $"{{ \"UserDb\": {{ \"UserComponents\": {{ \"NetworkLibrary\": \"DBMSSOCN\", \"UserID\": \"user\", \"Password\": \"password\", \"DataSource\": \"localhost\", \"InitialCatalog\": \"catalog\", \"Encrypt\": \"{encryptOption}\" }}}}}}";
-                   
                     // Load the stringified JSON as a stream into the configuration builder
                     configBuilder.AddJsonStream(new MemoryStream(Encoding.ASCII.GetBytes(json)));
                     configBuilder.AddEnvironmentVariables();
