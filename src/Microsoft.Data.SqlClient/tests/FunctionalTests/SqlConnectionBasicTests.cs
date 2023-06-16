@@ -32,18 +32,27 @@ namespace Microsoft.Data.SqlClient.Tests
             CultureInfo currentCulture = Thread.CurrentThread.CurrentCulture;
             CultureInfo currentUICulture = Thread.CurrentThread.CurrentUICulture;
 
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("th-TH");
-            Thread.CurrentThread.CurrentUICulture = new CultureInfo("th-TH");
+            try
+            {
+                Thread.CurrentThread.CurrentCulture = new CultureInfo("th-TH");
+                Thread.CurrentThread.CurrentUICulture = new CultureInfo("th-TH");
 
-            using TestTdsServer server = TestTdsServer.StartTestServer();
-            using SqlConnection connection = new SqlConnection(server.ConnectionString);
-            connection.Open();
+                using TestTdsServer server = TestTdsServer.StartTestServer();
+                using SqlConnection connection = new SqlConnection(server.ConnectionString);
+                connection.Open();
+                Assert.Equal(ConnectionState.Open, connection.State);
+            }
+            catch (Exception e)
+            {
+                Assert.False(true, e.Message);
+            }
+            finally
+            {
+                // Restore saved cultures
+                Thread.CurrentThread.CurrentCulture = currentCulture;
+                Thread.CurrentThread.CurrentUICulture = currentUICulture;
+            }
 
-            // Restore saved cultures
-            Thread.CurrentThread.CurrentCulture = currentCulture;
-            Thread.CurrentThread.CurrentUICulture = currentUICulture;
-
-            Assert.Equal(ConnectionState.Open, connection.State);
         }
 
         [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
