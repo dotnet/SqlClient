@@ -1538,6 +1538,7 @@ namespace Microsoft.Data.SqlClient
                     AttemptOneLogin(serverInfo,
                                     newPassword,
                                     newSecurePassword,
+                                    !connectionOptions.MultiSubnetFailover,    // ignore timeout for SniOpen call unless MSF
                                     connectionOptions.MultiSubnetFailover ? intervalTimer : timeout);
 
                     if (connectionOptions.MultiSubnetFailover && null != ServerProvidedFailOverPartner)
@@ -1776,6 +1777,7 @@ namespace Microsoft.Data.SqlClient
                             currentServerInfo,
                             newPassword,
                             newSecurePassword,
+                            false,          // Use timeout in SniOpen
                             intervalTimer,
                             withFailover: true
                             );
@@ -1903,6 +1905,7 @@ namespace Microsoft.Data.SqlClient
                                 ServerInfo serverInfo,
                                 string newPassword,
                                 SecureString newSecurePassword,
+                                bool ignoreSniOpenTimeout,
                                 TimeoutTimer timeout,
                                 bool withFailover = false)
         {
@@ -1913,6 +1916,7 @@ namespace Microsoft.Data.SqlClient
 
             _parser.Connect(serverInfo,
                             this,
+                            ignoreSniOpenTimeout,
                             timeout.LegacyTimerExpire,
                             ConnectionOptions,
                             withFailover);

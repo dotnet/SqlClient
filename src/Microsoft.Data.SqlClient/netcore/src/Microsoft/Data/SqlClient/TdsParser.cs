@@ -361,6 +361,7 @@ namespace Microsoft.Data.SqlClient
         internal void Connect(
             ServerInfo serverInfo,
             SqlInternalConnectionTds connHandler,
+            bool ignoreSniOpenTimeout,
             long timerExpire,
             SqlConnectionString connectionOptions,
             bool withFailover)
@@ -444,6 +445,7 @@ namespace Microsoft.Data.SqlClient
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(
                 serverInfo.ExtendedServerName,
+                ignoreSniOpenTimeout,
                 timerExpire,
                 out instanceName,
                 ref _sniSpnBuffer,
@@ -542,6 +544,7 @@ namespace Microsoft.Data.SqlClient
 
                 _physicalStateObj.CreatePhysicalSNIHandle(
                     serverInfo.ExtendedServerName,
+                    ignoreSniOpenTimeout,
                     timerExpire, out instanceName,
                     ref _sniSpnBuffer,
                     true,

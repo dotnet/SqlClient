@@ -248,57 +248,5 @@ namespace Microsoft.Data.SqlClient.Tests
 
             Assert.Equal(sqlCredential, conn.Credential);
         }
-
-        [Theory]
-        [InlineData(60)]
-        [InlineData(30)]
-        [InlineData(15)]
-        [InlineData(10)]
-        [InlineData(5)]
-        [InlineData(1)]
-        public void ConnectionTimeoutTest(int timeout)
-        {
-            // Start a server with connection timeout from the inline data.
-            using TestTdsServer server = TestTdsServer.StartTestServer(false, false, timeout);
-            using SqlConnection connection = new SqlConnection(server.ConnectionString);
-
-            // Dispose the server to force connection timeout 
-            server.Dispose();
-
-            // Measure the actual time it took to timeout and compare it with configured timeout
-            var start = DateTime.Now;
-            var end = start;
-
-            // Open a connection with the server disposed.
-            try
-            {
-                connection.Open();
-            }
-            catch (Exception)
-            {
-                end = DateTime.Now;
-            }
-
-            // Calculate actual duration of timeout
-            TimeSpan s = end - start;
-            // Did not time out?
-            if (s.TotalSeconds == 0)
-                Assert.True(s.TotalSeconds == 0);
-
-            // Is actual time out the same as configured timeout or within an additional 3 second threshold because of overhead?
-            if (s.TotalSeconds > 0)
-                Assert.True(s.TotalSeconds <= timeout + 3);
-        }
-
-        [Theory]
-        [InlineData(-5)]
-        public void ConnectionInvalidTimeoutTest(int timeout)
-        {
-            // Start a server with connection timeout from the inline data.
-            Assert.Throws<ArgumentException>(() =>
-            {
-                using TestTdsServer server = TestTdsServer.StartTestServer(false, false, timeout);
-            });
-        }
     }
 }
