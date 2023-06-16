@@ -29,8 +29,8 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ConnectionTestWithCultureTH()
         {
             // Save current cultures
-            CultureInfo currentCulture = Thread.CurrentThread.CurrentCulture;
-            CultureInfo currentUICulture = Thread.CurrentThread.CurrentUICulture;
+            CultureInfo savedCulture = Thread.CurrentThread.CurrentCulture;
+            CultureInfo savedUICulture = Thread.CurrentThread.CurrentUICulture;
 
             try
             {
@@ -49,10 +49,9 @@ namespace Microsoft.Data.SqlClient.Tests
             finally
             {
                 // Restore saved cultures
-                Thread.CurrentThread.CurrentCulture = currentCulture;
-                Thread.CurrentThread.CurrentUICulture = currentUICulture;
+                if (Thread.CurrentThread.CurrentCulture != savedCulture)  Thread.CurrentThread.CurrentCulture = savedCulture;
+                if (Thread.CurrentThread.CurrentUICulture != savedUICulture) Thread.CurrentThread.CurrentUICulture = savedUICulture;
             }
-
         }
 
         [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
