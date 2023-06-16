@@ -105,11 +105,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 // so we don't need to check for a GssApiException here.
                 if (statusCode.ErrorCode == SecurityStatusPalErrorCode.InternalError)
                 {
-                    throw new InvalidOperationException(SQLMessage.KerberosTicketMissingError() + "\n" + statusCode);
+                    throw new InvalidOperationException(SQLMessage.KerberosTicketMissingError() + Environment.NewLine + statusCode);
                 }
                 else
                 {
-                    throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + "\n" + statusCode);
+                    throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + Environment.NewLine + statusCode);
                 }
             }
         }

@@ -401,7 +401,7 @@ namespace Microsoft.Data.SqlClient.SNI
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}, StatusCode={1}", _sessionHandle?.ConnectionId, statusCode);
             if (statusCode is not NegotiateAuthenticationStatusCode.Completed and not NegotiateAuthenticationStatusCode.ContinueNeeded)
             {
-                throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + "\n" + statusCode);
+                throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + Environment.NewLine + statusCode);
             }
 #else
             _sspiClientContextStatus ??= new SspiClientContextStatus();
