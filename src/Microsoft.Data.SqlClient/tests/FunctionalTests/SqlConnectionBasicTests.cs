@@ -5,8 +5,10 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using System.Reflection;
 using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
@@ -21,6 +23,27 @@ namespace Microsoft.Data.SqlClient.Tests
             using TestTdsServer server = TestTdsServer.StartTestServer();
             using SqlConnection connection = new SqlConnection(server.ConnectionString);
             connection.Open();
+        }
+
+        [Fact]
+        public void ConnectionTestWithCultureTH()
+        {
+            // Save current cultures
+            CultureInfo currentCulture = Thread.CurrentThread.CurrentCulture;
+            CultureInfo currentUICulture = Thread.CurrentThread.CurrentUICulture;
+
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("th-TH");
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo("th-TH");
+
+            using TestTdsServer server = TestTdsServer.StartTestServer();
+            using SqlConnection connection = new SqlConnection(server.ConnectionString);
+            connection.Open();
+
+            // Restore saved cultures
+            Thread.CurrentThread.CurrentCulture = currentCulture;
+            Thread.CurrentThread.CurrentUICulture = currentUICulture;
+
+            Assert.Equal(ConnectionState.Open, connection.State);
         }
 
         [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
