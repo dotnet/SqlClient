@@ -575,9 +575,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string expectedMessage = "Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.";
             Assert.Contains(expectedMessage, e.Message);
         }
-       
+
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void AccessTokenCallbackMustPass()
+        public static void AccessTokenCallbackMustOpenPassAndChangePropertyFail()
         {
             string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
@@ -592,6 +592,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
                 };
                 conn.Open();
+                Assert.Equal(System.Data.ConnectionState.Open, conn.State);
+
+                InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => conn.AccessTokenCallback = null);
+                string expectedMessage = "Not allowed to change the 'AccessTokenCallback' property. The connection's current state is open.";
+                Assert.Contains(expectedMessage, ex.Message);
             }
         }
 

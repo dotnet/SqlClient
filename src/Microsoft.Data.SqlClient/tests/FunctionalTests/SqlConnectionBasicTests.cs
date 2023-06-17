@@ -282,10 +282,12 @@ namespace Microsoft.Data.SqlClient.Tests
             using (var conn = new SqlConnection(cleartextCredsConnStr))
             {
                 conn.AccessTokenCallback = callback;
+                conn.AccessTokenCallback = null;
             }
 
             using (var conn = new SqlConnection(string.Empty, sqlCredential))
             {
+                conn.AccessTokenCallback = null;
                 conn.AccessTokenCallback = callback;
             }
 
