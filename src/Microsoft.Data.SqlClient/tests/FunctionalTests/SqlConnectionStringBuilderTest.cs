@@ -578,7 +578,22 @@ namespace Microsoft.Data.SqlClient.Tests
             // Use the same converter to try convert to bad data types
             Assert.Throws<ArgumentException>(() => converter.ConvertTo(SqlConnectionEncryptOption.Parse("false"), typeof(int)));
             Assert.Throws<ArgumentException>(() => converter.ConvertTo(SqlConnectionEncryptOption.Parse("false"), typeof(bool)));
-        } 
+        }
+        internal class UserDbConnectionStringSettings
+        {
+            [Required]
+            public UserSqlConnectionString UserDb { get; set; }
+        }
+
+        internal class UserSqlConnectionString
+        {
+            public SqlConnectionStringBuilder UserComponents { get; set; } = new();
+
+            public override string ToString()
+            {
+                return UserComponents!.ConnectionString;
+            }
+        }
         #endregion
 
         internal void ExecuteConnectionStringTests(string connectionString)
@@ -611,12 +626,8 @@ namespace Microsoft.Data.SqlClient.Tests
 
         internal static void ExecuteConnectionStringFromJsonThrowsException(string encryptOption)
         {
-            Assert.Throws<InvalidOperationException>(() => LoadSettingsFromJsonStream<UserDbConnectionStringSettings>(encryptOption));
-        }
-
-        internal static void ExecuteConnectionStringFromBadJsonThrowsException(int encryptOption)
-        {
-            Assert.Throws<InvalidOperationException>(() => LoadSettingsFromBadJsonStream<UserDbConnectionStringSettings>(encryptOption));
+            var exception = Assert.Throws<InvalidOperationException>(() => LoadSettingsFromJsonStream<UserDbConnectionStringSettings>(encryptOption));
+            Assert.Contains("Failed to convert configuration", exception.Message, StringComparison.Ordinal);
         }
 
         private static TSettings LoadSettingsFromJsonStream<TSettings>(string encryptOption) where TSettings : class
@@ -674,20 +685,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
     #region ConnectionStringFromJsonRequiredClasses
     // These 2 classes will be used by ConnectionStringFromJsonTests only
-    internal class UserDbConnectionStringSettings
-    {
-        [Required]
-        public UserSqlConnectionString UserDb { get; set; }
-    }
 
-    internal class UserSqlConnectionString
-    {
-        public SqlConnectionStringBuilder UserComponents { get; set; } = new();
-
-        public override string ToString()
-        {
-            return UserComponents!.ConnectionString;
-        }
-    }
     #endregion
 }
