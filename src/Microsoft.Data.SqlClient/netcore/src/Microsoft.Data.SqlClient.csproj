@@ -838,33 +838,6 @@
   </ItemGroup>
   <!-- Unix dependencies for Managed_SNI build-->
   <ItemGroup Condition="'$(TargetsWindows)' != 'true' AND '$(OSGroup)' != 'AnyOS'">
-    <Compile Include="$(CommonPath)\Interop\Unix\Interop.Libraries.cs">
-      <Link>Common\Interop\Unix\Interop.Libraries.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.cs">
-      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.cs">
-      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.cs">
-      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Microsoft\Win32\SafeHandles\GssSafeHandles.cs">
-      <Link>Common\Microsoft\Win32\SafeHandles\GssSafeHandles.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeDeleteContext.cs">
-      <Link>Common\System\Net\Security\Unix\SafeDeleteContext.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeDeleteNegoContext.cs">
-      <Link>Common\System\Net\Security\Unix\SafeDeleteNegoContext.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeFreeCredentials.cs">
-      <Link>Common\System\Net\Security\Unix\SafeFreeCredentials.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeFreeNegoCredentials.cs">
-      <Link>Common\System\Net\Security\Unix\SafeFreeNegoCredentials.cs</Link>
-    </Compile>
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs" />
@@ -877,7 +850,6 @@
   </ItemGroup>
   <!-- Windows dependencies for Integrated Authentication (SSPI) and MANAGED_SNI build before .NET 7.0-->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ($(TargetGroup)=='netstandard' OR '$(TargetFramework)' == 'net6.0')">
-    <!--<ItemGroup Condition="'$(TargetsWindows)' == 'true'">-->
     <Compile Include="$(CommonPath)\System\Net\ContextFlagsAdapterPal.Windows.cs">
       <Link>Common\System\Net\ContextFlagsAdapterPal.Windows.cs</Link>
     </Compile>
@@ -942,6 +914,33 @@
   </ItemGroup>
   <!-- Unix dependencies for Integrated Authentication (SSPI) and MANAGED_SNI build before .NET 7.0-->
   <ItemGroup Condition="'$(TargetsWindows)' != 'true' AND '$(OSGroup)' != 'AnyOS' AND ($(TargetGroup)=='netstandard' OR '$(TargetFramework)' == 'net6.0')">
+    <Compile Include="$(CommonPath)\Interop\Unix\Interop.Libraries.cs">
+      <Link>Common\Interop\Unix\Interop.Libraries.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.cs">
+      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.cs">
+      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.cs">
+      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\Microsoft\Win32\SafeHandles\GssSafeHandles.cs">
+      <Link>Common\Microsoft\Win32\SafeHandles\GssSafeHandles.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeDeleteContext.cs">
+      <Link>Common\System\Net\Security\Unix\SafeDeleteContext.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeDeleteNegoContext.cs">
+      <Link>Common\System\Net\Security\Unix\SafeDeleteNegoContext.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeFreeCredentials.cs">
+      <Link>Common\System\Net\Security\Unix\SafeFreeCredentials.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeFreeNegoCredentials.cs">
+      <Link>Common\System\Net\Security\Unix\SafeFreeNegoCredentials.cs</Link>
+    </Compile>
     <Compile Include="$(CommonPath)\System\Net\ContextFlagsAdapterPal.Unix.cs">
       <Link>Common\System\Net\ContextFlagsAdapterPal.Unix.cs</Link>
     </Compile>
