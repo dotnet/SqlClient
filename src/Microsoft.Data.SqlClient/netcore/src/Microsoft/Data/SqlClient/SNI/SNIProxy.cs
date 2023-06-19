@@ -130,7 +130,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Create a SNI connection handle
         /// </summary>
         /// <param name="fullServerName">Full server name from connection string</param>
-        /// <param name="ignoreSniOpenTimeout">Ignore open timeout</param>
         /// <param name="timerExpire">Timer expiration</param>
         /// <param name="instanceName">Instance name</param>
         /// <param name="spnBuffer">SPN</param>
@@ -148,7 +147,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI handle</returns>
         internal static SNIHandle CreateConnectionHandle(
             string fullServerName,
-            bool ignoreSniOpenTimeout,
             long timerExpire,
             out byte[] instanceName,
             ref byte[][] spnBuffer,
