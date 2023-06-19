@@ -579,6 +579,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<ArgumentException>(() => converter.ConvertTo(SqlConnectionEncryptOption.Parse("false"), typeof(int)));
             Assert.Throws<ArgumentException>(() => converter.ConvertTo(SqlConnectionEncryptOption.Parse("false"), typeof(bool)));
         }
+
         internal class UserDbConnectionStringSettings
         {
             [Required]
