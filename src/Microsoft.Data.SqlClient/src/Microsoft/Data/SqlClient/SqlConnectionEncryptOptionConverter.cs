@@ -23,12 +23,37 @@ namespace Microsoft.Data.SqlClient
             }
             return base.CanConvertFrom(context, sourceType);
         }
+
+        // Overrides the CanConvertTo method of TypeConverter.
+        public override bool CanConvertTo(ITypeDescriptorContext context, Type sourceType)
+        {
+            if (sourceType == typeof(string))
+            {
+                return true;
+            }
+            return base.CanConvertTo(context, sourceType);
+        }
+
         // Overrides the ConvertFrom method of TypeConverter.
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOptionConverter.xml' path='docs/members[@name="SqlConnectionEncryptOptionConverter"]/SqlConnectionEncryptOptionConverter/ConvertFrom/*'/>
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
-            return SqlConnectionEncryptOption.Parse(value.ToString());
+            if (value is string)
+            {
+                return SqlConnectionEncryptOption.Parse(value.ToString());
+            }
+            throw new ArgumentException(StringsHelper.GetString(Strings.SqlConvert_ConvertFailed, value.GetType().FullName, typeof(SqlConnectionEncryptOption).FullName));
         }
 
+        // Overrides the ConvertTo method of TypeConverter.
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOptionConverter.xml' path='docs/members[@name="SqlConnectionEncryptOptionConverter"]/SqlConnectionEncryptOptionConverter/ConvertTo/*'/>
+        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        {
+            if (destinationType == typeof(string))
+            {
+                return base.ConvertTo(context, culture, value, destinationType);
+            }
+            throw new ArgumentException(StringsHelper.GetString(Strings.SqlConvert_ConvertFailed, value.GetType().FullName, typeof(SqlConnectionEncryptOption).FullName));
+        }
     }
 }
