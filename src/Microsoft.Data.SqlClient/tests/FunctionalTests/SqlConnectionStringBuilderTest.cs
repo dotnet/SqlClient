@@ -11,7 +11,6 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
