@@ -4,6 +4,7 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -39,7 +40,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return SqlConnectionEncryptOption.Parse(value.ToString());
             }
-            throw new ArgumentException(StringsHelper.GetString(Strings.SqlConvert_ConvertFailed, value.GetType().FullName, typeof(SqlConnectionEncryptOption).FullName));
+            throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionEncryptOption), null);
         }
 
         // Overrides the ConvertTo method of TypeConverter.
@@ -49,7 +50,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return base.ConvertTo(context, culture, value, destinationType);
             }
-            throw new ArgumentException(StringsHelper.GetString(Strings.SqlConvert_ConvertFailed, value.GetType().FullName, typeof(SqlConnectionEncryptOption).FullName));
+            throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionEncryptOption), null);
         }
     }
 }
