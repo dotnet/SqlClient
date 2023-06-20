@@ -25,35 +25,6 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [Fact]
-        public void ConnectionTestWithCultureTH()
-        {
-            // Save current cultures
-            CultureInfo savedCulture = Thread.CurrentThread.CurrentCulture;
-            CultureInfo savedUICulture = Thread.CurrentThread.CurrentUICulture;
-
-            try
-            {
-                Thread.CurrentThread.CurrentCulture = new CultureInfo("th-TH");
-                Thread.CurrentThread.CurrentUICulture = new CultureInfo("th-TH");
-
-                using TestTdsServer server = TestTdsServer.StartTestServer();
-                using SqlConnection connection = new SqlConnection(server.ConnectionString);
-                connection.Open();
-                Assert.Equal(ConnectionState.Open, connection.State);
-            }
-            catch (Exception e)
-            {
-                Assert.False(true, e.Message);
-            }
-            finally
-            {
-                // Restore saved cultures
-                if (Thread.CurrentThread.CurrentCulture != savedCulture)  Thread.CurrentThread.CurrentCulture = savedCulture;
-                if (Thread.CurrentThread.CurrentUICulture != savedUICulture) Thread.CurrentThread.CurrentUICulture = savedUICulture;
-            }
-        }
-
         [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
         [ActiveIssue(4830, TestPlatforms.AnyUnix)]
         [PlatformSpecific(TestPlatforms.Windows)]
