@@ -7,14 +7,12 @@ using System.Globalization;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOptionConverter.xml' path='docs/members[@name="SqlConnectionEncryptOptionConverter"]/SqlConnectionEncryptOptionConverter/*'/>
     internal class SqlConnectionEncryptOptionConverter : TypeConverter
     {
         // Overrides the CanConvertFrom method of TypeConverter.
         // The ITypeDescriptorContext interface provides the context for the
         // conversion. Typically, this interface is used at design time to 
         // provide information about the design-time container.
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOptionConverter.xml' path='docs/members[@name="SqlConnectionEncryptOptionConverter"]/SqlConnectionEncryptOptionConverter/CanConvertFrom/*'/>
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
             if (sourceType == typeof(string))
@@ -35,7 +33,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Overrides the ConvertFrom method of TypeConverter.
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOptionConverter.xml' path='docs/members[@name="SqlConnectionEncryptOptionConverter"]/SqlConnectionEncryptOptionConverter/ConvertFrom/*'/>
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
             if (value is string)
@@ -46,7 +43,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Overrides the ConvertTo method of TypeConverter.
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOptionConverter.xml' path='docs/members[@name="SqlConnectionEncryptOptionConverter"]/SqlConnectionEncryptOptionConverter/ConvertTo/*'/>
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
             if (destinationType == typeof(string))

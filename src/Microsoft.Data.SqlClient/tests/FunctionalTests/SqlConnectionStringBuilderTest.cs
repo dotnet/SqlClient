@@ -595,35 +595,6 @@ namespace Microsoft.Data.SqlClient.Tests
                 return UserComponents!.ConnectionString;
             }
         }
-        #endregion
-
-        internal void ExecuteConnectionStringTests(string connectionString)
-        {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
-            string retrievedString = builder.ConnectionString;
-            SqlConnectionStringBuilder builder2 = new SqlConnectionStringBuilder(retrievedString);
-
-            Assert.Equal(builder, builder2);
-            Assert.NotNull(builder.Values);
-            Assert.True(builder.Values.Count > 0);
-            foreach (string key in builder2.Keys)
-            {
-                Assert.True(builder.TryGetValue(key, out object valueBuilder1));
-                Assert.True(builder2.TryGetValue(key, out object valueBuilder2));
-                Assert.Equal(valueBuilder1, valueBuilder2);
-                Assert.True(builder2.ContainsKey(key));
-            }
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                Assert.NotNull(connection);
-            }
-        }
-
-        internal static void CheckEncryptType(SqlConnectionStringBuilder builder, SqlConnectionEncryptOption expectedValue)
-        {
-            Assert.IsType<SqlConnectionEncryptOption>(builder.Encrypt);
-            Assert.Equal(expectedValue, builder.Encrypt);
-        }
 
         internal static void ExecuteConnectionStringFromJsonThrowsException(string encryptOption)
         {
@@ -656,36 +627,35 @@ namespace Microsoft.Data.SqlClient.Tests
 
             return settingsOut;
         }
+        #endregion
 
-        private static TSettings LoadSettingsFromBadJsonStream<TSettings>(int encryptOption) where TSettings : class
+        internal void ExecuteConnectionStringTests(string connectionString)
         {
-            TSettings settingsOut = null;
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
+            string retrievedString = builder.ConnectionString;
+            SqlConnectionStringBuilder builder2 = new SqlConnectionStringBuilder(retrievedString);
 
-            Host.CreateDefaultBuilder()
-                .ConfigureAppConfiguration((ctx, configBuilder) =>
-                {
-                    // Note: Inside string interpolation, a { should be {{ and a } should be }}
-                    // First, declare a stringified JSON
-                    var json = $"{{ \"UserDb\": {{ \"UserComponents\": {{ \"NetworkLibrary\": \"DBMSSOCN\", \"UserID\": \"user\", \"Password\": \"password\", \"DataSource\": \"localhost\", \"InitialCatalog\": \"catalog\", \"Encrypt\": {encryptOption} }}}}}}";
-                    // Load the stringified JSON as a stream into the configuration builder
-                    configBuilder.AddJsonStream(new MemoryStream(Encoding.ASCII.GetBytes(json)));
-                    configBuilder.AddEnvironmentVariables();
-                })
-                .ConfigureServices((ctx, services) =>
-                {
-                    var configuration = ctx.Configuration;
-                    services.AddOptions();
-                    services.Configure<TSettings>(ctx.Configuration);
-                    settingsOut = configuration.Get<TSettings>();
-                })
-                .Build();
-
-            return settingsOut;
+            Assert.Equal(builder, builder2);
+            Assert.NotNull(builder.Values);
+            Assert.True(builder.Values.Count > 0);
+            foreach (string key in builder2.Keys)
+            {
+                Assert.True(builder.TryGetValue(key, out object valueBuilder1));
+                Assert.True(builder2.TryGetValue(key, out object valueBuilder2));
+                Assert.Equal(valueBuilder1, valueBuilder2);
+                Assert.True(builder2.ContainsKey(key));
+            }
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                Assert.NotNull(connection);
+            }
         }
+
+        internal static void CheckEncryptType(SqlConnectionStringBuilder builder, SqlConnectionEncryptOption expectedValue)
+        {
+            Assert.IsType<SqlConnectionEncryptOption>(builder.Encrypt);
+            Assert.Equal(expectedValue, builder.Encrypt);
+        }
+
     }
-
-    #region ConnectionStringFromJsonRequiredClasses
-    // These 2 classes will be used by ConnectionStringFromJsonTests only
-
-    #endregion
 }
