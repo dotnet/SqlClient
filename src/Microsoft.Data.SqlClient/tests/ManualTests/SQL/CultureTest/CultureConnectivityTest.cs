@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(IsUsingManagedSNI))]
         public void ConnectionTestWithCultureTH()
         {
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
+            //AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true); // Used this only when testing locally
             // Save current cultures
             CultureInfo savedCulture = Thread.CurrentThread.CurrentCulture;
             CultureInfo savedUICulture = Thread.CurrentThread.CurrentUICulture;
@@ -40,6 +40,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Thread.CurrentThread.CurrentUICulture = savedUICulture;
             }
         }
-
     }
 }
