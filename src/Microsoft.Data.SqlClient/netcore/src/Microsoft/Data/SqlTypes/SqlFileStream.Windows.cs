@@ -453,7 +453,7 @@ namespace Microsoft.Data.SqlTypes
             }
 
             // make sure path is not DOS device path
-            if (!path.StartsWith(@"\\") && !System.IO.PathInternal.IsDevice(path.AsSpan()))
+            if (!path.StartsWith(@"\\", StringComparison.Ordinal) && !System.IO.PathInternal.IsDevice(path.AsSpan()))
             {
                 throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
             }
