@@ -595,35 +595,6 @@ namespace Microsoft.Data.SqlClient.Tests
                 return UserComponents!.ConnectionString;
             }
         }
-        #endregion
-
-        internal void ExecuteConnectionStringTests(string connectionString)
-        {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
-            string retrievedString = builder.ConnectionString;
-            SqlConnectionStringBuilder builder2 = new SqlConnectionStringBuilder(retrievedString);
-
-            Assert.Equal(builder, builder2);
-            Assert.NotNull(builder.Values);
-            Assert.True(builder.Values.Count > 0);
-            foreach (string key in builder2.Keys)
-            {
-                Assert.True(builder.TryGetValue(key, out object valueBuilder1));
-                Assert.True(builder2.TryGetValue(key, out object valueBuilder2));
-                Assert.Equal(valueBuilder1, valueBuilder2);
-                Assert.True(builder2.ContainsKey(key));
-            }
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                Assert.NotNull(connection);
-            }
-        }
-
-        internal static void CheckEncryptType(SqlConnectionStringBuilder builder, SqlConnectionEncryptOption expectedValue)
-        {
-            Assert.IsType<SqlConnectionEncryptOption>(builder.Encrypt);
-            Assert.Equal(expectedValue, builder.Encrypt);
-        }
 
         internal static void ExecuteConnectionStringFromJsonThrowsException(string encryptOption)
         {
@@ -656,6 +627,35 @@ namespace Microsoft.Data.SqlClient.Tests
 
             return settingsOut;
         }
+        #endregion
+
+        internal void ExecuteConnectionStringTests(string connectionString)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
+            string retrievedString = builder.ConnectionString;
+            SqlConnectionStringBuilder builder2 = new SqlConnectionStringBuilder(retrievedString);
+
+            Assert.Equal(builder, builder2);
+            Assert.NotNull(builder.Values);
+            Assert.True(builder.Values.Count > 0);
+            foreach (string key in builder2.Keys)
+            {
+                Assert.True(builder.TryGetValue(key, out object valueBuilder1));
+                Assert.True(builder2.TryGetValue(key, out object valueBuilder2));
+                Assert.Equal(valueBuilder1, valueBuilder2);
+                Assert.True(builder2.ContainsKey(key));
+            }
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                Assert.NotNull(connection);
+            }
+        }
+
+        internal static void CheckEncryptType(SqlConnectionStringBuilder builder, SqlConnectionEncryptOption expectedValue)
+        {
+            Assert.IsType<SqlConnectionEncryptOption>(builder.Encrypt);
+            Assert.Equal(expectedValue, builder.Encrypt);
+        }
 
         private static TSettings LoadSettingsFromBadJsonStream<TSettings>(int encryptOption) where TSettings : class
         {
@@ -683,9 +683,4 @@ namespace Microsoft.Data.SqlClient.Tests
             return settingsOut;
         }
     }
-
-    #region ConnectionStringFromJsonRequiredClasses
-    // These 2 classes will be used by ConnectionStringFromJsonTests only
-
-    #endregion
 }
