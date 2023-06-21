@@ -250,5 +250,36 @@ namespace Microsoft.Data.SqlClient.Tests
 
             Assert.Equal(sqlCredential, conn.Credential);
         }
+
+        [Fact]
+        public void ConnectionTestWithCultureTH()
+        {
+            CultureInfo savedCulture = Thread.CurrentThread.CurrentCulture;
+            CultureInfo savedUICulture = Thread.CurrentThread.CurrentUICulture;
+
+            try
+            {
+                Thread.CurrentThread.CurrentCulture = new CultureInfo("th-TH");
+                Thread.CurrentThread.CurrentUICulture = new CultureInfo("th-TH");
+
+                using TestTdsServer server = TestTdsServer.StartTestServer();
+                using SqlConnection connection = new SqlConnection(server.ConnectionString);
+                connection.Open();
+                Assert.Equal(ConnectionState.Open, connection.State);
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                // Restore saved cultures
+                if (Thread.CurrentThread.CurrentCulture != savedCulture)
+                    Thread.CurrentThread.CurrentCulture = savedCulture;
+                if (Thread.CurrentThread.CurrentUICulture != savedUICulture)
+                    Thread.CurrentThread.CurrentUICulture = savedUICulture;
+            }
+        }
+
     }
 }
