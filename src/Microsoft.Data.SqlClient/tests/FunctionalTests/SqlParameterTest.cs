@@ -1155,7 +1155,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(typeof(ArgumentOutOfRangeException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("666") != -1);
+                Assert.True(ex.Message.IndexOf("666", StringComparison.Ordinal) != -1);
                 Assert.Equal("SqlDbType", ex.ParamName);
             }
         }

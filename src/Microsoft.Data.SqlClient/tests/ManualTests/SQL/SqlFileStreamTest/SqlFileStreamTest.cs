@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (fileStreamDir != null)
                 {
-                    if (!fileStreamDir.EndsWith("\\"))
+                    if (!fileStreamDir.EndsWith("\\", StringComparison.Ordinal))
                     {
                         fileStreamDir += "\\";
                     }
