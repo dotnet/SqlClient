@@ -267,10 +267,6 @@ namespace Microsoft.Data.SqlClient.Tests
                 connection.Open();
                 Assert.Equal(ConnectionState.Open, connection.State);
             }
-            catch
-            {
-                throw;
-            }
             finally
             {
                 // Restore saved cultures
