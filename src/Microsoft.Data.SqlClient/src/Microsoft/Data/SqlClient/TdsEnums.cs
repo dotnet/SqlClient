@@ -272,6 +272,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW = 0x03; // Using the Interactive byte as that is the closest we have
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY = 0x03; // Using the Interactive byte as that's supported for Identity based authentication
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT = 0x03; // Using the Interactive byte as that is the closest we have to non-password based authentication modes
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYTOKENCREDENTIAL = 0x03; // Using the Interactive byte as that is the closest we have to non-password based authentication modes
 
         public enum ActiveDirectoryWorkflow : byte
         {

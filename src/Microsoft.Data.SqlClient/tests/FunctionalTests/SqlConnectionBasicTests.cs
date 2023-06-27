@@ -277,5 +277,85 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
+        [Fact]
+        public void ConnectionTestAccessTokenCallbackCombinations()
+        {
+            var cleartextCredsConnStr = "User=test;Password=test;";
+            var sspiConnStr = "Integrated Security=true;";
+            var authConnStr = "Authentication=ActiveDirectoryPassword";
+            var testPassword = new SecureString();
+            testPassword.MakeReadOnly();
+            var sqlCredential = new SqlCredential(string.Empty, testPassword);
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback = (ctx, token) =>
+                    Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+            // Successes
+            using (var conn = new SqlConnection(cleartextCredsConnStr))
+            {
+                conn.AccessTokenCallback = callback;
+                conn.AccessTokenCallback = null;
+            }
+
+            using (var conn = new SqlConnection(string.Empty, sqlCredential))
+            {
+                conn.AccessTokenCallback = null;
+                conn.AccessTokenCallback = callback;
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                conn.Credential = sqlCredential;
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                conn.ConnectionString = cleartextCredsConnStr;
+            }
+
+            //Failures
+            using (var conn = new SqlConnection(sspiConnStr))
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.AccessTokenCallback = callback;
+                });
+            }
+
+            using (var conn = new SqlConnection(authConnStr))
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.AccessTokenCallback = callback;
+                });
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.ConnectionString = sspiConnStr;
+                });
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.ConnectionString = authConnStr;
+                });
+            }
+        }
     }
 }
