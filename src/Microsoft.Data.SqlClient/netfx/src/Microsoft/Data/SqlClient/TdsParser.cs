@@ -9002,7 +9002,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(SniContext.Snix_Login == _physicalStateObj.SniContext, $"Unexpected SniContext. Expecting Snix_Login, actual value is '{_physicalStateObj.SniContext}'");
                     _physicalStateObj.SniContext = SniContext.Snix_LoginSspi;
                     SSPIData(null, 0, outSSPIBuff, ref outSSPILength);
-                    if (outSSPILength > Int32.MaxValue)
+                    if (outSSPILength > int.MaxValue)
                     {
                         throw SQL.InvalidSSPIPacketSize();  // SqlBu 332503
                     }
@@ -9010,56 +9010,74 @@ namespace Microsoft.Data.SqlClient
 
                     checked
                     {
-                        length += (Int32)outSSPILength;
+                        length += (int)outSSPILength;
                     }
                 }
             }
 
             int feOffset = length;
+            // calculate and reserve the required bytes for the featureEx
+            length = ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length);
 
-            if (useFeatureExt)
+            WriteLoginData(rec,
+                           requestedFeatures,
+                           recoverySessionData,
+                           fedAuthFeatureExtensionData,
+                           encrypt,
+                           encryptedPassword,
+                           encryptedChangePassword,
+                           encryptedPasswordLengthInBytes,
+                           encryptedChangePasswordLengthInBytes,
+                           useFeatureExt,
+                           userName,
+                           length,
+                           feOffset,
+                           clientInterfaceName,
+                           outSSPIBuff,
+                           outSSPILength);
+
+            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
+            _physicalStateObj.ResetSecurePasswordsInfomation();     // Password information is needed only from Login process; done with writing login packet and should clear information
+            _physicalStateObj._pendingData = true;
+            _physicalStateObj._messageStatus = 0;
+
+            // Remvove CTAIP Provider after login record is sent.
+            //
+            if (originalNetworkAddressInfo != null)
             {
-                checked
+                UInt32 error = SNINativeMethodWrapper.SNIRemoveProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.CTAIP_PROV);
+                if (error != TdsEnums.SNI_SUCCESS)
                 {
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
-                    {
-                        length += WriteSessionRecoveryFeatureRequest(recoverySessionData, false);
-                    };
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
-                    {
-                        Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
-                        length += WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: false);
-                    }
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
-                    {
-                        length += WriteTceFeatureRequest(false);
-                    }
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
-                    {
-                        length += WriteGlobalTransactionsFeatureRequest(false);
-                    }
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLSupport) != 0)
-                    {
-                        length += WriteAzureSQLSupportFeatureRequest(false);
-                    }
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
-                    {
-                        length += WriteDataClassificationFeatureRequest(false);
-                    }
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
-                    {
-                        length += WriteUTF8SupportFeatureRequest(false);
-                    }
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
 
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
-                    {
-                        length += WriteSQLDNSCachingFeatureRequest(false);
-                    }
-
-                    length++; // for terminator
+                try
+                { } // EmptyTry/Finally to avoid FXCop violation
+                finally
+                {
+                    _physicalStateObj.ClearAllWritePackets();
                 }
             }
+        }// tdsLogin
 
+        private void WriteLoginData(SqlLogin rec,
+                                    TdsEnums.FeatureExtension requestedFeatures,
+                                    SessionData recoverySessionData,
+                                    FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
+                                    SqlConnectionEncryptOption encrypt,
+                                    byte[] encryptedPassword,
+                                    byte[] encryptedChangePassword,
+                                    int encryptedPasswordLengthInBytes,
+                                    int encryptedChangePasswordLengthInBytes,
+                                    bool useFeatureExt,
+                                    string userName,
+                                    int length,
+                                    int featureExOffset,
+                                    string clientInterfaceName,
+                                    byte[] outSSPIBuff,
+                                    uint outSSPILength)
+        {
             try
             {
                 WriteInt(length, _physicalStateObj);
@@ -9275,7 +9293,12 @@ namespace Microsoft.Data.SqlClient
                 // write ibFeatureExtLong
                 if (useFeatureExt)
                 {
-                    WriteInt(feOffset, _physicalStateObj);
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request");
+                    }
+
+                    WriteInt(featureExOffset, _physicalStateObj);
                 }
 
                 WriteString(clientInterfaceName, _physicalStateObj);
@@ -9302,46 +9325,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                if (useFeatureExt)
-                {
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
-                    {
-                        WriteSessionRecoveryFeatureRequest(recoverySessionData, true);
-                    };
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request");
-                        Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
-                        WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: true);
-                    };
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
-                    {
-                        WriteTceFeatureRequest(true);
-                    };
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
-                    {
-                        WriteGlobalTransactionsFeatureRequest(true);
-                    };
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLSupport) != 0)
-                    {
-                        WriteAzureSQLSupportFeatureRequest(true);
-                    }
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
-                    {
-                        WriteDataClassificationFeatureRequest(true);
-                    }
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
-                    {
-                        WriteUTF8SupportFeatureRequest(true);
-                    }
-
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
-                    {
-                        WriteSQLDNSCachingFeatureRequest(true);
-                    }
-
-                    _physicalStateObj.WriteByte(0xFF); // terminator
-                }
+                ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length, true);
             } // try
             catch (Exception e)
             {
@@ -9355,31 +9339,65 @@ namespace Microsoft.Data.SqlClient
 
                 throw;
             }
+        }
 
-            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
-            _physicalStateObj.ResetSecurePasswordsInfomation();     // Password information is needed only from Login process; done with writing login packet and should clear information
-            _physicalStateObj._pendingData = true;
-            _physicalStateObj._messageStatus = 0;
-
-            // Remvove CTAIP Provider after login record is sent.
-            //
-            if (originalNetworkAddressInfo != null)
+        private int ApplyFeatureExData(TdsEnums.FeatureExtension requestedFeatures,
+                                       SessionData recoverySessionData,
+                                       FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
+                                       bool useFeatureExt,
+                                       int length,
+                                       bool write = false)
+        {
+            if (useFeatureExt)
             {
-                UInt32 error = SNINativeMethodWrapper.SNIRemoveProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.CTAIP_PROV);
-                if (error != TdsEnums.SNI_SUCCESS)
+                checked
                 {
-                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                    ThrowExceptionAndWarning(_physicalStateObj);
-                }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
+                    {
+                        length += WriteSessionRecoveryFeatureRequest(recoverySessionData, write);
+                    };
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request & wirte = {0}", write);
+                        Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
+                        length += WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
+                    {
+                        length += WriteTceFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
+                    {
+                        length += WriteGlobalTransactionsFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLSupport) != 0)
+                    {
+                        length += WriteAzureSQLSupportFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
+                    {
+                        length += WriteDataClassificationFeatureRequest(write);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
+                    {
+                        length += WriteUTF8SupportFeatureRequest(write);
+                    }
 
-                try
-                { } // EmptyTry/Finally to avoid FXCop violation
-                finally
-                {
-                    _physicalStateObj.ClearAllWritePackets();
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
+                    {
+                        length += WriteSQLDNSCachingFeatureRequest(write);
+                    }
+
+                    length++; // for terminator
+                    if (write)
+                    {
+                        _physicalStateObj.WriteByte(0xFF); // terminator
+                    }
                 }
             }
-        }// tdsLogin
+
+            return length;
+        }
 
         /// <summary>
         /// Send the access token to the server.
