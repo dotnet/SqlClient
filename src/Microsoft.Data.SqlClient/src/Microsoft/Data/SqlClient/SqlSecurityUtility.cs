@@ -406,7 +406,7 @@ namespace Microsoft.Data.SqlClient
         private static bool ShouldUseInstanceLevelProviderFlow(string keyStoreName, SqlConnection connection, SqlCommand command)
         {
             return InstanceLevelProvidersAreRegistered(connection, command) &&
-                !keyStoreName.StartsWith(ADP.ColumnEncryptionSystemProviderNamePrefix);
+                !keyStoreName.StartsWith(ADP.ColumnEncryptionSystemProviderNamePrefix, StringComparison.Ordinal);
         }
 
         private static bool InstanceLevelProvidersAreRegistered(SqlConnection connection, SqlCommand command) =>

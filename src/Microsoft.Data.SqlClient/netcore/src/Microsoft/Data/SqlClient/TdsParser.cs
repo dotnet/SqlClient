@@ -434,7 +434,7 @@ namespace Microsoft.Data.SqlClient
 
             FQDNforDNSCache = serverInfo.ResolvedServerName;
 
-            int commaPos = FQDNforDNSCache.IndexOf(",");
+            int commaPos = FQDNforDNSCache.IndexOf(",", StringComparison.Ordinal);
             if (commaPos != -1)
             {
                 FQDNforDNSCache = FQDNforDNSCache.Substring(0, commaPos);

@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cn.Site);
             Assert.Equal(ConnectionState.Closed, cn.State);
             Assert.False(cn.StatisticsEnabled);
-            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, true) == 0);
+            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, StringComparison.OrdinalIgnoreCase) == 0);
         }
 
         [Fact]
@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cn.Site);
             Assert.Equal(ConnectionState.Closed, cn.State);
             Assert.False(cn.StatisticsEnabled);
-            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, true) == 0);
+            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, StringComparison.OrdinalIgnoreCase) == 0);
 
             cn = new SqlConnection((string)null);
             Assert.Equal(string.Empty, cn.ConnectionString);
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cn.Site);
             Assert.Equal(ConnectionState.Closed, cn.State);
             Assert.False(cn.StatisticsEnabled);
-            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, true) == 0);
+            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, StringComparison.OrdinalIgnoreCase) == 0);
         }
 
         [Fact]
@@ -201,7 +201,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.NotNull(ex.ParamName);
-            Assert.True(ex.ParamName.IndexOf("'newPassword'") != -1);
+            Assert.True(ex.ParamName.IndexOf("'newPassword'", StringComparison.Ordinal) != -1);
         }
 
         [Fact]
@@ -212,8 +212,8 @@ namespace Microsoft.Data.SqlClient.Tests
             // its limit of '128'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'newPassword'") != -1);
-            Assert.True(ex.Message.IndexOf("128") != -1);
+            Assert.True(ex.Message.IndexOf("'newPassword'", StringComparison.Ordinal) != -1);
+            Assert.True(ex.Message.IndexOf("128", StringComparison.Ordinal) != -1);
             Assert.Null(ex.ParamName);
         }
 
@@ -224,7 +224,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.NotNull(ex.ParamName);
-            Assert.True(ex.ParamName.IndexOf("'newPassword'") != -1);
+            Assert.True(ex.ParamName.IndexOf("'newPassword'", StringComparison.Ordinal) != -1);
         }
 
         [Fact]
@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(string.Empty, cn.Database);
             Assert.Equal(string.Empty, cn.DataSource);
             Assert.Equal(8000, cn.PacketSize);
-            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, true) == 0);
+            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, StringComparison.OrdinalIgnoreCase) == 0);
             Assert.Equal(ConnectionState.Closed, cn.State);
             cn.Dispose();
 
