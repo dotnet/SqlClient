@@ -369,7 +369,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="keyIdentifier">Key identifier inside the CNG provider</param>
         private void GetCngProviderAndKeyId(string keyPath, bool isSystemOp, out string cngProvider, out string keyIdentifier)
         {
-            int indexOfSlash = keyPath.IndexOf(@"/");
+            int indexOfSlash = keyPath.IndexOf(@"/", StringComparison.Ordinal);
             if (indexOfSlash == -1)
             {
                 throw SQL.InvalidCngPath(keyPath, isSystemOp);
