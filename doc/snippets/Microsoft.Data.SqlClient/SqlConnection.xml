@@ -129,6 +129,22 @@ using (SqlConnection connection = new SqlConnection(connectionString))
             <value>The access token for the connection.</value>
             <remarks>To be added.</remarks>
         </AccessToken>
+        <AccessTokenCallback>
+          <summary>Gets or sets the access token callback for the connection.</summary>
+          <value>
+            The Func that takes a <see cref="SqlAuthenticationParameters" /> and <see cref="System.Threading.CancellationToken" /> and returns a <see cref="SqlAuthenticationToken" />.</value>
+          <remarks>
+            <format type="text/markdown"><![CDATA[
+
+## Examples  
+ The following example demonstrates how to define and set an <xref:Microsoft.Data.SqlClient.AccessTokenCallback>.  
+  
+ [!code-csharp[SqlConnection_AccessTokenCallback Example#1](~/../sqlclient/doc/samples/SqlConnection_AccessTokenCallback.cs#1)]
+  
+ ]]></format>
+            </remarks>
+            <exception cref="T:System.InvalidOperationException">The AccessTokenCallback is combined with other conflicting authentication configurations.</exception>
+        </AccessTokenCallback>
         <BeginDbTransaction>
             <param name="isolationLevel">To be added.</param>
             <summary>To be added.</summary>

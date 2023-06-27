@@ -1487,7 +1487,10 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
-                            bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || ((authType != SqlAuthenticationMethod.NotSpecified || _connHandler._accessTokenInBytes != null) && !trustServerCert);
+                             bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
+                             ((authType != SqlAuthenticationMethod.NotSpecified || (_connHandler._accessTokenInBytes != null || 
+                            _connHandler._accessTokenCallback != null))
+                            && !trustServerCert);
 
                             UInt32 info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                                 | (is2005OrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
@@ -1551,7 +1554,7 @@ namespace Microsoft.Data.SqlClient
                         // Or AccessToken is not null, mean token based authentication is used.
                         if ((_connHandler.ConnectionOptions != null
                             && _connHandler.ConnectionOptions.Authentication != SqlAuthenticationMethod.NotSpecified)
-                            || _connHandler._accessTokenInBytes != null)
+                            || _connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null)
                         {
                             fedAuthRequired = payload[payloadOffset] == 0x01 ? true : false;
                         }
@@ -8744,7 +8747,14 @@ namespace Microsoft.Data.SqlClient
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
                                 break;
                             default:
-                                Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
+                                if (_connHandler._accessTokenCallback != null)
+                                {
+                                    workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYTOKENCREDENTIAL;
+                                }
+                                else
+                                {
+                                    Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
+                                }
                                 break;
                         }
 

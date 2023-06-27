@@ -983,7 +983,7 @@ namespace Microsoft.Data.SqlClient
             {
                 var domainName = "." + IPGlobalProperties.GetIPGlobalProperties().DomainName;
                 var hostName = Dns.GetHostName();
-                if (domainName != "." && !hostName.EndsWith(domainName))
+                if (domainName != "." && !hostName.EndsWith(domainName, StringComparison.Ordinal))
                     hostName += domainName;
                 return hostName;
             }
