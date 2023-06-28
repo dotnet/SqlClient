@@ -520,10 +520,10 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionEncryptOption option = SqlConnectionEncryptOption.Parse("false");
             TypeConverter converter = TypeDescriptor.GetConverter(option.GetType());
             // Use the converter to determine if can convert from string data type
-            Assert.True(converter.CanConvertFrom(null, typeof(string)), "Expected a success to convert from string type.");
+            Assert.True(converter.CanConvertFrom(null, typeof(string)), "Expecting to convert from a string type.");
             // Use the same converter to determine if can convert from int or bool data types
-            Assert.False(converter.CanConvertFrom(null, typeof(int)), "Expected a failure to convert fron integer type.");
-            Assert.False(converter.CanConvertFrom(null, typeof(bool)), "Expected a failure to convert fron boolean type.");
+            Assert.False(converter.CanConvertFrom(null, typeof(int)), "Not expecting to convert from integer type.");
+            Assert.False(converter.CanConvertFrom(null, typeof(bool)), "Not expecting to convert from boolean type.");
         }
 
         [Fact]
@@ -533,10 +533,10 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionEncryptOption option = SqlConnectionEncryptOption.Parse("false");
             TypeConverter converter = TypeDescriptor.GetConverter(option.GetType());
             // Use the converter to check if can convert from stirng
-            Assert.True(converter.CanConvertTo(null, typeof(string)), "Expected a success to convert to string type.");
+            Assert.True(converter.CanConvertTo(null, typeof(string)), "Expecting to convert to a string type.");
             // Use the same convert to check if can convert to int or bool
-            Assert.False(converter.CanConvertTo(null, typeof(int)), "Expected a failure to convert to integer type.");
-            Assert.False(converter.CanConvertTo(null, typeof(bool)), "Expected a failure to convert to boolean type.");
+            Assert.False(converter.CanConvertTo(null, typeof(int)), "Not expecting to convert from integer type.");
+            Assert.False(converter.CanConvertTo(null, typeof(bool)), "Not expecting to convert from boolean type.");
         }
 
         [Fact]
