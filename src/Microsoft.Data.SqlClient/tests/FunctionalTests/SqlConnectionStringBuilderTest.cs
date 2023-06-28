@@ -520,7 +520,7 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionEncryptOption option = SqlConnectionEncryptOption.Parse("false");
             TypeConverter converter = TypeDescriptor.GetConverter(option.GetType());
             // Use the converter to determine if can convert from string data type
-            Assert.True(converter.CanConvertFrom(null, typeof(string)),"Value type to convert must a string.");
+            Assert.True(converter.CanConvertFrom(null, typeof(string)),"Value type to convert must be a string.");
             // Use the same converter to determine if can convert from int or bool data types
             Assert.False(converter.CanConvertFrom(null, typeof(int)));
             Assert.False(converter.CanConvertFrom(null, typeof(bool)));
