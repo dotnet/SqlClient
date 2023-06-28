@@ -520,10 +520,10 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionEncryptOption option = SqlConnectionEncryptOption.Parse("false");
             TypeConverter converter = TypeDescriptor.GetConverter(option.GetType());
             // Use the converter to determine if can convert from string data type
-            Assert.True(converter.CanConvertFrom(null, typeof(string)),"Value type to convert must be a string.");
+            Assert.True(converter.CanConvertFrom(null, typeof(string)), "Value type to convert must be a string.");
             // Use the same converter to determine if can convert from int or bool data types
-            Assert.False(converter.CanConvertFrom(null, typeof(int)));
-            Assert.False(converter.CanConvertFrom(null, typeof(bool)));
+            Assert.False(converter.CanConvertFrom(null, typeof(int)), "Value type to convert must be a string.");
+            Assert.False(converter.CanConvertFrom(null, typeof(bool)), "Value type to convert must be a string.");
         }
 
         [Fact]
@@ -533,10 +533,10 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionEncryptOption option = SqlConnectionEncryptOption.Parse("false");
             TypeConverter converter = TypeDescriptor.GetConverter(option.GetType());
             // Use the converter to check if can convert from stirng
-            Assert.True(converter.CanConvertTo(null, typeof(string)));
+            Assert.True(converter.CanConvertTo(null, typeof(string)), "Destination value type must be a string.");
             // Use the same convert to check if can convert to int or bool
-            Assert.False(converter.CanConvertTo(null, typeof(int)));
-            Assert.False(converter.CanConvertTo(null, typeof(bool)));
+            Assert.False(converter.CanConvertTo(null, typeof(int)), "Destination value type must be a string.");
+            Assert.False(converter.CanConvertTo(null, typeof(bool)), "Destination value type must be a string.");
         }
 
         [Fact]
