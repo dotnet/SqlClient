@@ -964,7 +964,7 @@ namespace Microsoft.Data.SqlClient
             {
                 session = _sessionPool.GetSession(owner);
 
-                Debug.Assert(!session._pendingData, "pending data on a pooled MARS session");
+                Debug.Assert(!session.HasPendingData, "pending data on a pooled MARS session");
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.GetSession|ADV> {0} getting session {1} from pool", ObjectID, session.ObjectID);
             }
             else
@@ -1601,7 +1601,7 @@ namespace Microsoft.Data.SqlClient
 
             if (!connectionIsDoomed && null != _physicalStateObj)
             {
-                if (_physicalStateObj._pendingData)
+                if (_physicalStateObj.HasPendingData)
                 {
                     DrainData(_physicalStateObj);
                 }
@@ -3012,18 +3012,18 @@ namespace Microsoft.Data.SqlClient
                         break;
                 }
 
-                Debug.Assert(stateObj._pendingData || !dataReady, "dataReady is set, but there is no pending data");
+                Debug.Assert(stateObj.HasPendingData || !dataReady, "dataReady is set, but there is no pending data");
             }
 
             // Loop while data pending & runbehavior not return immediately, OR
             // if in attention case, loop while no more pending data & attention has not yet been
             // received.
-            while ((stateObj._pendingData &&
+            while ((stateObj.HasPendingData &&
                     (RunBehavior.ReturnImmediately != (RunBehavior.ReturnImmediately & runBehavior))) ||
-                (!stateObj._pendingData && stateObj._attentionSent && !stateObj._attentionReceived));
+                (!stateObj.HasPendingData && stateObj._attentionSent && !stateObj.HasReceivedAttention));
 
 #if DEBUG
-            if ((stateObj._pendingData) && (!dataReady))
+            if ((stateObj.HasPendingData) && (!dataReady))
             {
                 byte token;
                 if (!stateObj.TryPeekByte(out token))
@@ -3034,7 +3034,7 @@ namespace Microsoft.Data.SqlClient
             }
 #endif
 
-            if (!stateObj._pendingData)
+            if (!stateObj.HasPendingData)
             {
                 if (null != CurrentTransaction)
                 {
@@ -3044,7 +3044,7 @@ namespace Microsoft.Data.SqlClient
 
             // if we recieved an attention (but this thread didn't send it) then
             // we throw an Operation Cancelled error
-            if (stateObj._attentionReceived)
+            if (stateObj.HasReceivedAttention)
             {
                 // Dev11 #344723: SqlClient stress test suspends System_Data!Tcp::ReadSync via a call to SqlDataReader::Close
                 // Spin until SendAttention has cleared _attentionSending, this prevents a race condition between receiving the attention ACK and setting _attentionSent
@@ -3055,7 +3055,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Reset attention state.
                     stateObj._attentionSent = false;
-                    stateObj._attentionReceived = false;
+                    stateObj.HasReceivedAttention = false;
 
                     if (RunBehavior.Clean != (RunBehavior.Clean & runBehavior) && !stateObj.IsTimeoutStateExpired)
                     {
@@ -3521,7 +3521,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(TdsEnums.DONE_MORE != (status & TdsEnums.DONE_MORE), "Not expecting DONE_MORE when receiving DONE_ATTN");
                 Debug.Assert(stateObj._attentionSent, "Received attention done without sending one!");
-                stateObj._attentionReceived = true;
+                stateObj.HasReceivedAttention = true;
                 Debug.Assert(stateObj._inBytesUsed == stateObj._inBytesRead && stateObj._inBytesPacket == 0, "DONE_ATTN received with more data left on wire");
             }
             if ((null != cmd) && (TdsEnums.DONE_COUNT == (status & TdsEnums.DONE_COUNT)))
@@ -3592,14 +3592,14 @@ namespace Microsoft.Data.SqlClient
                 stateObj._errorTokenReceived = false;
                 if (stateObj._inBytesUsed >= stateObj._inBytesRead)
                 {
-                    stateObj._pendingData = false;
+                    stateObj.HasPendingData = false;
                 }
             }
 
             // _pendingData set by e.g. 'TdsExecuteSQLBatch'
             // _hasOpenResult always set to true by 'WriteMarsHeader'
             //
-            if (!stateObj._pendingData && stateObj._hasOpenResult)
+            if (!stateObj.HasPendingData && stateObj._hasOpenResult)
             {
                 /*
                                 Debug.Assert(!((sqlTransaction != null               && _distributedTransaction != null) ||
@@ -5143,7 +5143,7 @@ namespace Microsoft.Data.SqlClient
             {
                 DrainData(stateObj);
 
-                stateObj._pendingData = false;
+                stateObj.HasPendingData = false;
             }
 
             ThrowExceptionAndWarning(stateObj);
@@ -6892,7 +6892,7 @@ namespace Microsoft.Data.SqlClient
                                 // call to decrypt column keys has failed. The data wont be decrypted.
                                 // Not setting the value to false, forces the driver to look for column value.
                                 // Packet received from Key Vault will throws invalid token header.
-                                stateObj._pendingData = false;
+                                stateObj.HasPendingData = false;
                             }
                             throw SQL.ColumnDecryptionFailed(columnName, null, e);
                         }
@@ -9037,8 +9037,8 @@ namespace Microsoft.Data.SqlClient
                            outSSPILength);
 
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
-            _physicalStateObj.ResetSecurePasswordsInfomation();     // Password information is needed only from Login process; done with writing login packet and should clear information
-            _physicalStateObj._pendingData = true;
+            _physicalStateObj.ResetSecurePasswordsInformation();     // Password information is needed only from Login process; done with writing login packet and should clear information
+            _physicalStateObj.HasPendingData = true;
             _physicalStateObj._messageStatus = 0;
 
             // Remvove CTAIP Provider after login record is sent.
@@ -9424,7 +9424,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.WriteByteArray(accessToken, accessToken.Length, 0);
 
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
-            _physicalStateObj._pendingData = true;
+            _physicalStateObj.HasPendingData = true;
             _physicalStateObj._messageStatus = 0;
 
             _connHandler._federatedAuthenticationRequested = true;
@@ -9736,7 +9736,7 @@ namespace Microsoft.Data.SqlClient
 
                 Task writeTask = stateObj.WritePacket(TdsEnums.HARDFLUSH);
                 Debug.Assert(writeTask == null, "Writes should not pend when writing sync");
-                stateObj._pendingData = true;
+                stateObj.HasPendingData = true;
                 stateObj._messageStatus = 0;
 
                 SqlDataReader dtcReader = null;
@@ -11275,7 +11275,7 @@ namespace Microsoft.Data.SqlClient
             WriteShort(0, stateObj);
             WriteInt(0, stateObj);
 
-            stateObj._pendingData = true;
+            stateObj.HasPendingData = true;
             stateObj._messageStatus = 0;
             return stateObj.WritePacket(TdsEnums.HARDFLUSH);
         }
