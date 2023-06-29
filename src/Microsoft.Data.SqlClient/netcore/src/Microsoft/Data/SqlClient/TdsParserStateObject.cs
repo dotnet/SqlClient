@@ -564,7 +564,7 @@ namespace Microsoft.Data.SqlClient
                 // then use ReadByteArray since the logic is there to take care of that.
 
                 int bytesRead;
-                if (!TryReadByteArray(_bTmp.AsSpan(_bTmpRead), 8 - _bTmpRead, out bytesRead))
+                if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 8 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 8, "Read more data than required");
                     _bTmpRead += bytesRead;
@@ -642,7 +642,7 @@ namespace Microsoft.Data.SqlClient
                 // then use ReadByteArray since the logic is there to take care of that.
 
                 int bytesRead;
-                if (!TryReadByteArray(_bTmp.AsSpan(_bTmpRead), 4 - _bTmpRead, out bytesRead))
+                if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 4 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 4, "Read more data than required");
                     _bTmpRead += bytesRead;
@@ -1896,7 +1896,6 @@ namespace Microsoft.Data.SqlClient
             //    to the outstanding GCRoot until AppDomain.Unload.
             // We live with the above for the time being due to the constraints of the current
             // reliability infrastructure provided by the CLR.
-            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.ReadAsyncCallback | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
 
             TaskCompletionSource<object> source = _networkPacketTaskSource;
 #if DEBUG
@@ -1931,7 +1930,7 @@ namespace Microsoft.Data.SqlClient
                 // synchrnously and then call OnTimeoutSync to force an atomic change of state.
                 if (TimeoutHasExpired)
                 {
-                    OnTimeoutSync(true);
+                    OnTimeoutSync(asyncClose: true);
                 }
 
                 // try to change to the stopped state but only do so if currently in the running state
