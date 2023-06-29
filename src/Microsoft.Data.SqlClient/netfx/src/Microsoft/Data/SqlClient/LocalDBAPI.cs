@@ -3,9 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Runtime.InteropServices;
 using System.Security;
-using System.Text;
 
 namespace Microsoft.Data
 {
@@ -18,7 +16,6 @@ namespace Microsoft.Data
         static PermissionSet _fullTrust = null;
         static bool _partialTrustFlagChecked = false;
         static bool _partialTrustAllowed = false;
-
 
         // check if name is in format (localdb)\<InstanceName - not empty> and return instance name if it is
         internal static string GetLocalDbInstanceNameFromServerName(string serverName)
@@ -40,38 +37,9 @@ namespace Microsoft.Data
                 {
                     return input.ToString();
                 }
-
             }
             return null;
         }
-
-        internal static void ReleaseDLLHandles()
-        {
-            s_userInstanceDLLHandle = IntPtr.Zero;
-        }
-
-
-
-        //This is copy of handle that SNI maintains, so we are responsible for freeing it - therefore there we are not using SafeHandle
-        static IntPtr s_userInstanceDLLHandle = IntPtr.Zero;
-
-        static object s_dllLock = new object();
-
-    
-        [SuppressUnmanagedCodeSecurity]
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate int LocalDBCreateInstanceDelegate([MarshalAs(UnmanagedType.LPWStr)] string version, [MarshalAs(UnmanagedType.LPWStr)] string instance, UInt32 flags);
- 
-
-        [SuppressUnmanagedCodeSecurity]
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-        private delegate int LocalDBFormatMessageDelegate(int hrLocalDB, UInt32 dwFlags, UInt32 dwLanguageId, StringBuilder buffer, ref UInt32 buflen);
-
-      
-
-        const UInt32 const_LOCALDB_TRUNCATE_ERR_MESSAGE = 1;// flag for LocalDBFormatMessage that indicates that message can be truncated if it does not fit in the buffer
-        const int const_ErrorMessageBufferSize = 1024;      // Buffer size for Local DB error message, according to Serverless team, 1K will be enough for all messages
-
 
         private class InstanceInfo
         {
@@ -85,8 +53,6 @@ namespace Microsoft.Data
             internal bool created;
         }
 
-        static object s_configLock = new object();
-    
         internal static void DemandLocalDBPermissions()
         {
             if (!_partialTrustAllowed)
@@ -116,7 +82,5 @@ namespace Microsoft.Data
         {
             _partialTrustAllowed = true;
         }
-
-
     }
 }

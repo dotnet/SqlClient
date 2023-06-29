@@ -78,8 +78,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal string PipeHostName { get; private set; }
 
-        private string _workingDataSource;
-        private string _dataSourceAfterTrimmingProtocol;
+        private readonly string _workingDataSource;
+        private readonly string _dataSourceAfterTrimmingProtocol;
 
         internal bool IsBadDataSource { get; private set; } = false;
 

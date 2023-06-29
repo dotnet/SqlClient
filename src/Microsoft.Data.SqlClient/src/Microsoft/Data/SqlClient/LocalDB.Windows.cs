@@ -3,9 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient
     internal sealed class LocalDB
     {
         private static readonly LocalDB Instance = new LocalDB();
-        private const string s_className = nameof(LocalDB);
+        private const string ClassName = nameof(LocalDB);
         //HKEY_LOCAL_MACHINE
         private const string LocalDBInstalledVersionRegistryKey = "SOFTWARE\\Microsoft\\Microsoft SQL Server Local DB\\Installed Versions\\";
 
@@ -57,8 +57,8 @@ namespace Microsoft.Data.SqlClient
             }
             catch(Exception ex)
             {
-                SqlClientEventSource.Log.TryTraceEvent(s_className, EventType.ERR,ex?.Message);
-                SqlClientEventSource.Log.TryTraceEvent(s_className, EventType.INFO, "Falling back to use SqlLocalDB.exe.");
+                SqlClientEventSource.Log.TryTraceEvent(ClassName, EventType.ERR,ex?.Message);
+                SqlClientEventSource.Log.TryTraceEvent(ClassName, EventType.INFO, "Falling back to use SqlLocalDB.exe.");
 
                 // The old logic to load the SqlUserInstance.dll did not quite work possibly because
                 // of an archiecture mismatch (e.g. we are running in an ARM64 process and SqlLocalDB.exe
@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!TryGetLocalDBConnectionStringUsingSqlLocalDBExe(localDbInstance, timeout, out string connString))
                 {
-                    SqlClientEventSource.Log.TryTraceEvent(s_className, EventType.ERR, "Unable to to use SqlLocalDB.exe to get the ConnectionString.");
+                    SqlClientEventSource.Log.TryTraceEvent(ClassName, EventType.ERR, "Unable to to use SqlLocalDB.exe to get the ConnectionString.");
                     throw;
                 }
 
@@ -84,13 +84,23 @@ namespace Microsoft.Data.SqlClient
                 mssqlRegKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Microsoft SQL Server");
                 if (mssqlRegKey != null)
                 {
-                    foreach (var item in mssqlRegKey.GetSubKeyNames().Where(x => int.TryParse(x, out var _)).OrderByDescending(_ => _))
+                    string[] alphaNumnericKeys = mssqlRegKey.GetSubKeyNames();
+                    List<int> intKeys =new List<int>();
+                    for(int i =0;i<alphaNumnericKeys.Length;i++)
                     {
-                        using (var sk = mssqlRegKey.OpenSubKey($@"{item}\Tools\\ClientSetup", writable: false))
+                       if(int.TryParse(alphaNumnericKeys[i], out int intKey))
+                        {
+                            intKeys.Add(intKey);
+                        }
+                    }
+
+                    for(int item =intKeys.Count-1;item>=0;item--)
+                    {
+                        using (RegistryKey sk = mssqlRegKey.OpenSubKey($@"{intKeys[item]}\Tools\\ClientSetup", writable: false))
                         {
                             if (sk.GetValue("Path") is string value)
                             {
-                                var path = Path.Combine(value, "SqlLocalDB.exe");
+                                string path = Path.Combine(value, "SqlLocalDB.exe");
                                 if (File.Exists(path))
                                 {
                                     return path;
@@ -98,12 +108,11 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                     }
-
                 }
             }
             catch
             {
-                SqlClientEventSource.Log.TryTraceEvent(s_className, EventType.ERR, "No File path exist for SqlLocalDB.exe under Registry key.");               
+                SqlClientEventSource.Log.TryTraceEvent(ClassName, EventType.ERR, "No File path exist for SqlLocalDB.exe under Registry key.");               
             }
             finally
             {
@@ -153,7 +162,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         var alllines = proc.StandardOutput.ReadToEnd();
 
-                        SqlClientEventSource.Log.TryTraceEvent(s_className, EventType.INFO, $"Called: {s_sqlLocalDBExe.Value} \"{localDbInstance}\"");
+                        SqlClientEventSource.Log.TryTraceEvent(ClassName, EventType.INFO, $"Called: {s_sqlLocalDBExe.Value} \"{localDbInstance}\"");
 
                         Match match = regex.Match(alllines);
                         if (match.Success)

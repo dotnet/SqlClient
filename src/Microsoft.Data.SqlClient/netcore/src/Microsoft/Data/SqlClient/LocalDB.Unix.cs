@@ -4,6 +4,7 @@
 
 using System;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -11,11 +12,12 @@ namespace Microsoft.Data.SqlClient
     {
         internal static string GetLocalDBConnectionString(string localDbInstance)
         {
-            throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // LocalDB is not available for Unix and hence it cannot be supported.
+            throw ADP.LocalDBNotSUpportedException();
         }
+
         internal static string GetLocalDBDataSource(string fullServerName, TimeoutTimer timeout)
         {
-            throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // No Registry support on Unix
+            throw ADP.LocalDBNotSUpportedException();
         }
     }
 }
