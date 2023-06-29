@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 DummyKeyStoreProvider.Name, _lastTenBytesCek);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
         public void TestSqlTransactionCommitRollbackWithTransparentInsert(string connection, bool isCommitted)
         {
@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlTransactionRollbackToSavePoint(string connection)
         {
@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void SqlParameterProperties(string connection)
         {
@@ -351,7 +351,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlDataAdapterFillDataTable(string connection)
         {
@@ -424,7 +424,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithSchemaType))]
         public void TestSqlDataAdapterFillSchema(string connection, SchemaType schemaType)
         {
@@ -471,7 +471,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Equal(typeof(string), dataColumns[2].DataType);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
         public void TestExecuteNonQuery(string connection, bool isAsync)
         {
@@ -539,7 +539,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
         public void TestExecuteScalar(string connection, bool isAsync)
         {
@@ -591,7 +591,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithIntegers))]
         public void TestSqlDataAdapterBatchUpdate(string connection, int numberofRows)
         {
@@ -636,7 +636,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestExecuteReader(string connection)
         {
@@ -690,7 +690,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public async void TestExecuteReaderAsyncWithLargeQuery(string connectionString)
         {
@@ -743,7 +743,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet1))]
         public void TestExecuteReaderWithCommandBehavior(string connection, CommandBehavior commandBehavior)
         {
@@ -868,7 +868,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestEnclaveStoredProceduresWithAndWithoutParameters(string connectionString)
         {
@@ -915,7 +915,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestPrepareWithExecuteNonQuery(string connection)
         {
@@ -964,7 +964,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestAsyncWriteDelayWithExecuteNonQueryAsync(string connection)
         {
@@ -1018,7 +1018,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestAsyncWriteDelayWithExecuteReaderAsync(string connection)
         {
@@ -1085,7 +1085,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestPrepareWithExecuteNonQueryAsync(string connection)
         {
@@ -1140,7 +1140,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
         public void TestPrepareWithExecuteReaderAsync(string connection, CommandBehavior commandBehavior)
         {
@@ -1202,7 +1202,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlDataReaderAPIs(string connection)
         {
@@ -1399,7 +1399,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlDataReaderAPIsWithSequentialAccess(string connection)
         {
@@ -1827,7 +1827,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
         public void TestSqlCommandSequentialAccessCodePaths(string connection, CommandBehavior value)
         {
@@ -1871,7 +1871,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestExecuteXmlReader(string connection)
         {
@@ -2126,7 +2126,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithCancellationTime))]
         public void TestSqlCommandCancellationToken(string connection, int initalValue, int cancellationTime)
         {
@@ -2194,7 +2194,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestConnectionCustomKeyStoreProviderDuringAeQuery(string connectionString)
         {
@@ -2249,7 +2249,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestCommandCustomKeyStoreProviderDuringAeQuery(string connectionString)
         {
@@ -2300,7 +2300,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         // On Windows, "_fixture" will be type SQLSetupStrategyCertStoreProvider
         // On non-Windows, "_fixture" will be type SQLSetupStrategyAzureKeyVault
         // Test will pass on both but only SQLSetupStrategyCertStoreProvider is a system provider
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSystemProvidersHavePrecedenceOverInstanceLevelProviders(string connectionString)
         {
@@ -2383,6 +2383,92 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
                 reader.Close();
             }
+
+            // revert the CEK change to the CustomerId column
+            cmd.Parameters.Clear();
+            cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey1.Name);
+            cmd.ExecuteNonQuery();
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.EnclaveEnabled))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestRetryWhenAEEnclaveCacheIsStale(string connectionString)
+        {
+            CleanUpTable(connectionString, _tableName);
+
+            const int customerId = 50;
+            IList<object> values = GetValues(dataHint: customerId);
+            InsertRows(tableName: _tableName, numberofRows: 1, values: values, connection: connectionString);
+
+            ApiTestTable table = _fixture.ApiTestTable as ApiTestTable;
+            string enclaveSelectQuery = $@"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE CustomerId > @CustomerId";
+            string alterCekQueryFormatString = "ALTER TABLE [{0}] " +
+                "ALTER COLUMN [CustomerId] [int]  " +
+                "ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{1}], " +
+                "ENCRYPTION_TYPE = Randomized, " +
+                "ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256'); " +
+                "ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE;";
+
+            using SqlConnection sqlConnection = new(connectionString);
+            sqlConnection.Open();
+
+            // change the CEK and encryption type to randomized for the CustomerId column to ensure enclaves are used
+            using SqlCommand cmd = new SqlCommand(
+                string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey2.Name),
+                sqlConnection,
+                null,
+                SqlCommandColumnEncryptionSetting.Enabled);
+            cmd.ExecuteNonQuery();
+
+            // execute the select query to create the cache entry
+            cmd.CommandText = enclaveSelectQuery;
+            cmd.Parameters.AddWithValue("@CustomerId", 0);
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            }
+
+            CommandHelper.InvalidateEnclaveSession(cmd);
+
+            // Execute again to exercise the session retry logic
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            }
+
+            CommandHelper.InvalidateEnclaveSession(cmd);
+
+            // Execute again to exercise the async session retry logic
+            Task readAsyncTask = ReadAsync(cmd, values, CommandBehavior.Default);
+            readAsyncTask.GetAwaiter().GetResult();
+
+#if DEBUG
+            CommandHelper.ForceThrowDuringGenerateEnclavePackage(cmd);
+
+            // Execute again to exercise the session retry logic
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            }
+
+            CommandHelper.ForceThrowDuringGenerateEnclavePackage(cmd);
+
+            // Execute again to exercise the async session retry logic
+            Task readAsyncTask2 = ReadAsync(cmd, values, CommandBehavior.Default);
+            readAsyncTask2.GetAwaiter().GetResult();
+#endif
 
             // revert the CEK change to the CustomerId column
             cmd.Parameters.Clear();

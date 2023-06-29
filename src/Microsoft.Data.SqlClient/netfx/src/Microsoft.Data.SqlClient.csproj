@@ -621,7 +621,6 @@
     <Compile Include="Microsoft\Data\RelationshipConverter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.Cng.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\LocalAppContextSwitches.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBConfig.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.LoadType.cs" />

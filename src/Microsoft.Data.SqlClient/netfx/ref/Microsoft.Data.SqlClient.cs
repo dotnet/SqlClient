@@ -4,6 +4,7 @@
 
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
+
 [assembly: System.CLSCompliant(true)]
 [assembly: System.Resources.NeutralResourcesLanguageAttribute("en-US")]
 namespace Microsoft.Data
@@ -215,6 +216,8 @@ namespace Microsoft.Data.SqlClient
         public int NotifyAfter { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied/*'/>
         public int RowsCopied { get { throw null; } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied64/*'/>
+        public long RowsCopied64 { get { throw null; } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlRowsCopied/*'/>
         public event Microsoft.Data.SqlClient.SqlRowsCopiedEventHandler SqlRowsCopied { add { } remove { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/Close/*'/>
@@ -765,6 +768,8 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public string AccessToken { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessTokenCallback/*' />
+        public System.Func<SqlAuthenticationParameters, System.Threading.CancellationToken, System.Threading.Tasks.Task<SqlAuthenticationToken>> AccessTokenCallback { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClientConnectionId/*'/>
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public System.Guid ClientConnectionId { get { throw null; } }

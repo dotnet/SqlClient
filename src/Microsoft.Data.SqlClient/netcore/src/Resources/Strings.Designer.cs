@@ -430,11 +430,38 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessToken property if the AccessTokenCallback has been set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessToken property if &apos;UserID&apos;, &apos;UID&apos;, &apos;Password&apos;, or &apos;PWD&apos; has been specified in connection string..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword {
             get {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if the &apos;Integrated Security&apos; connection string keyword has been set to &apos;true&apos; or &apos;SSPI&apos;..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if &apos;Authentication=Active Directory Default&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback", resourceCulture);
             }
         }
         
@@ -950,7 +977,7 @@ namespace System {
                 return ResourceManager.GetString("Data_InvalidOffsetLength", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services..
         /// </summary>
@@ -1915,7 +1942,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Incorrect physicalConnection type.
+        ///   Looks up a localized string similar to Incorrect physicalConnection type..
         /// </summary>
         internal static string SNI_IncorrectPhysicalConnectionType {
             get {
@@ -3175,20 +3202,20 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Socket did not throw expected &apos;{0}&apos; with error code &apos;{1}&apos;..
+        /// </summary>
+        internal static string SQL_SocketDidNotThrow {
+            get {
+                return ResourceManager.GetString("SQL_SocketDidNotThrow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to SqlCommand.DeriveParameters failed because the SqlCommand.CommandText property value is an invalid multipart name.
         /// </summary>
         internal static string SQL_SqlCommandCommandText {
             get {
                 return ResourceManager.GetString("SQL_SqlCommandCommandText", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot connect to SQL Server Browser. Ensure SQL Server Browser has been started..
-        /// </summary>
-        internal static string SQL_SqlServerBrowserNotAccessible {
-            get {
-                return ResourceManager.GetString("SQL_SqlServerBrowserNotAccessible", resourceCulture);
             }
         }
         

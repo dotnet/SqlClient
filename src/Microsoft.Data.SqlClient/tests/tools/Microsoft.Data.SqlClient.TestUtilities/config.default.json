@@ -30,5 +30,6 @@
     "EnclaveAzureDatabaseConnString": "",
     "ManagedIdentitySupported": true,
     "UserManagedIdentityClientId": "",
-    "PowerShellPath": ""
+    "PowerShellPath": "",
+    "AliasName": ""
 }

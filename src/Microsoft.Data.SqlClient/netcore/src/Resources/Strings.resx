@@ -537,9 +537,6 @@
   <data name="SQL_KerberosTicketMissingError" xml:space="preserve">
     <value>Cannot authenticate using Kerberos. Ensure Kerberos has been initialized on the client with 'kinit' and a Service Principal Name has been registered for the SQL Server to allow Kerberos authentication.</value>
   </data>
-  <data name="SQL_SqlServerBrowserNotAccessible" xml:space="preserve">
-    <value>Cannot connect to SQL Server Browser. Ensure SQL Server Browser has been started.</value>
-  </data>
   <data name="SQL_InvalidSSPIPacketSize" xml:space="preserve">
     <value>Invalid SSPI packet size.</value>
   </data>
@@ -1940,5 +1937,17 @@
   </data>
   <data name="SQL_TDS8_NotSupported_Netstandard2.0" xml:space="preserve">
     <value>Encrypt=Strict is not supported when targeting .NET Standard 2.0. Use .NET Standard 2.1, .NET Framework, or .NET.</value>
+  </data>
+  <data name="SQL_SocketDidNotThrow" xml:space="preserve">
+    <value>Socket did not throw expected '{0}' with error code '{1}'.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
+    <value>Cannot set the AccessToken property if the AccessTokenCallback has been set.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
+    <value>Cannot set the AccessTokenCallback property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
+    <value>Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.</value>
   </data>
 </root>

@@ -10,7 +10,6 @@
     <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType.Contains('Package')) AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
     <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);NETCOREAPP</DefineConstants>
     <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFRAMEWORK</DefineConstants>
-    <DefineConstants Condition="'$(TargetGroup)' == 'netcoreapp' AND !$(TargetFramework.StartsWith('netcoreapp'))">$(DefineConstants);NET50_OR_LATER</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
@@ -278,9 +277,6 @@
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
-    <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
-      <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">

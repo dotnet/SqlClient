@@ -17,6 +17,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string sqlsvrBadConn = "A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections.";
         private const string execReaderFailedMessage = "ExecuteReader requires an open and available Connection. The connection's current state is closed.";
         private const string orderIdQuery = "select orderid from orders where orderid < 10250";
+        private static bool IsNotKerberos() => DataTestUtility.IsKerberosTest != true;
+
+        [ConditionalFact(nameof(IsNotKerberos))]
+        public void TestConnectionStateWithErrorClass20()
+        {
+            using TestTdsServer server = TestTdsServer.StartTestServer();
+            using SqlConnection conn = new(server.ConnectionString);
+
+            conn.Open();
+            SqlCommand cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT 1";
+            int result = cmd.ExecuteNonQuery();
+
+            Assert.Equal(-1, result);
+            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
+
+            server.Dispose();
+            try
+            {
+                int result2 = cmd.ExecuteNonQuery();
+            }
+            catch (SqlException ex)
+            {
+                Assert.Equal(11, ex.Class);
+                Assert.NotNull(ex.InnerException);
+                SqlException innerEx = Assert.IsType<SqlException>(ex.InnerException);
+                Assert.Equal(20, innerEx.Class);
+                Assert.StartsWith("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible.", innerEx.Message);
+                // Since the server is not accessible driver can close the close the connection
+                // It is user responsibilty to maintain the connection.
+                Assert.Equal(System.Data.ConnectionState.Closed, conn.State);
+            }
+        }
 
         [Fact]
         public void ExceptionTests()

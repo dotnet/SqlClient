@@ -7,6 +7,8 @@ using System.Data;
 using System.Data.Common;
 using System.Reflection;
 using System.Security;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -39,6 +41,26 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(42108)]
         [InlineData(42109)]
         [PlatformSpecific(TestPlatforms.Windows)]
+        public async Task TransientFaultTestAsync(uint errorCode)
+        {
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.Port,
+                IntegratedSecurity = true,
+                Encrypt = SqlConnectionEncryptOption.Optional
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            await connection.OpenAsync();
+            Assert.Equal(ConnectionState.Open, connection.State);
+        }
+
+        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultTest(uint errorCode)
         {
             using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
@@ -57,12 +79,52 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (Exception e)
             {
-                if (null != connection)
-                {
-                    Assert.Equal(ConnectionState.Closed, connection.State);
-                }
                 Assert.False(true, e.Message);
             }
+        }
+
+        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void TransientFaultDisabledTestAsync(uint errorCode)
+        {
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.Port,
+                IntegratedSecurity = true,
+                ConnectRetryCount = 0,
+                Encrypt = SqlConnectionEncryptOption.Optional
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            Task<SqlException> e = Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
+            Assert.Equal(20, e.Result.Class);
+            Assert.Equal(ConnectionState.Closed, connection.State);
+        }
+
+        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [InlineData(40613)]
+        [InlineData(42108)]
+        [InlineData(42109)]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void TransientFaultDisabledTest(uint errorCode)
+        {
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.Port,
+                IntegratedSecurity = true,
+                ConnectRetryCount = 0,
+                Encrypt = SqlConnectionEncryptOption.Optional
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            SqlException e = Assert.Throws<SqlException>(() => connection.Open());
+            Assert.Equal(20, e.Class);
+            Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
         [Fact]
@@ -186,6 +248,87 @@ namespace Microsoft.Data.SqlClient.Tests
             var conn = new SqlConnection(string.Empty, sqlCredential);
 
             Assert.Equal(sqlCredential, conn.Credential);
+        }
+
+        [Fact]
+        public void ConnectionTestAccessTokenCallbackCombinations()
+        {
+            var cleartextCredsConnStr = "User=test;Password=test;";
+            var sspiConnStr = "Integrated Security=true;";
+            var authConnStr = "Authentication=ActiveDirectoryPassword";
+            var testPassword = new SecureString();
+            testPassword.MakeReadOnly();
+            var sqlCredential = new SqlCredential(string.Empty, testPassword);
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback = (ctx, token) =>
+                    Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+            // Successes
+            using (var conn = new SqlConnection(cleartextCredsConnStr))
+            {
+                conn.AccessTokenCallback = callback;
+                conn.AccessTokenCallback = null;
+            }
+
+            using (var conn = new SqlConnection(string.Empty, sqlCredential))
+            {
+                conn.AccessTokenCallback = null;
+                conn.AccessTokenCallback = callback;
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                conn.Credential = sqlCredential;
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                conn.ConnectionString = cleartextCredsConnStr;
+            }
+
+            //Failures
+            using (var conn = new SqlConnection(sspiConnStr))
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.AccessTokenCallback = callback;
+                });
+            }
+
+            using (var conn = new SqlConnection(authConnStr))
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.AccessTokenCallback = callback;
+                });
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.ConnectionString = sspiConnStr;
+                });
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.ConnectionString = authConnStr;
+                });
+            }
         }
     }
 }

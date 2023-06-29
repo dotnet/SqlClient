@@ -3158,7 +3158,11 @@ namespace Microsoft.Data.SqlClient.Server
 
             long temp = getters.GetInt64(sink, ordinal);
             sink.ProcessMessagesAndThrow();
+#if NETCOREAPP && NET7_0_OR_GREATER
+            return SqlMoney.FromTdsValue(temp);
+#else
             return SqlTypeWorkarounds.SqlMoneyCtor(temp, 1 /* ignored */ );
+#endif
         }
 
         private static SqlXml GetSqlXml_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiContext context)
@@ -3638,7 +3642,11 @@ namespace Microsoft.Data.SqlClient.Server
                     sink.ProcessMessagesAndThrow();
                 }
 
+#if NET7_0_OR_GREATER
+                setters.SetInt64(sink, ordinal, value.GetTdsValue());
+#else
                 setters.SetInt64(sink, ordinal, SqlTypeWorkarounds.SqlMoneyToSqlInternalRepresentation(value));
+#endif
             }
             sink.ProcessMessagesAndThrow();
         }

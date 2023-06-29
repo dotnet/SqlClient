@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.Identity.Client;
 using Xunit;
 
@@ -26,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
             {
                 string s_defaultScopeSuffix = "/.default";
-                string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
+                string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix, StringComparison.Ordinal) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
 
                 _ = parameters.ServerName;
                 _ = parameters.DatabaseName;
@@ -549,6 +551,77 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string expectedMessage = "Cannot use 'Authentication=Active Directory Default' with 'Password' or 'PWD' connection string keywords.";
             Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryDefaultWithAccessTokenCallbackMustFail()
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=ActiveDirectoryDefault";
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
+            {
+                using (SqlConnection conn = new SqlConnection(connStrWithNoCred))
+                {
+                    conn.AccessTokenCallback = (ctx, token) =>
+                        Task.FromResult(new SqlAuthenticationToken("my token", DateTimeOffset.MaxValue));
+                    conn.Open();
+
+                    Assert.NotEqual(System.Data.ConnectionState.Open, conn.State);
+                }
+            });
+
+            string expectedMessage = "Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void AccessTokenCallbackMustOpenPassAndChangePropertyFail()
+        {
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
+            var cred = new DefaultAzureCredential();
+            const string defaultScopeSuffix = "/.default";
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.AccessTokenCallback = (ctx, cancellationToken) =>
+                {
+                    string scope = ctx.Resource.EndsWith(defaultScopeSuffix) ? ctx.Resource : ctx.Resource + defaultScopeSuffix;
+                    AccessToken token = cred.GetToken(new TokenRequestContext(new[] { scope }), cancellationToken);
+                    return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
+                };
+                conn.Open();
+                Assert.Equal(System.Data.ConnectionState.Open, conn.State);
+
+                InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => conn.AccessTokenCallback = null);
+                string expectedMessage = "Not allowed to change the 'AccessTokenCallback' property. The connection's current state is open.";
+                Assert.Contains(expectedMessage, ex.Message);
+            }
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void AccessTokenCallbackReceivesUsernameAndPassword()
+        {
+            var userId = "someuser";
+            var pwd = "somepassword";
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                 $"User ID={userId}; Password={pwd}";
+            var cred = new DefaultAzureCredential();
+            const string defaultScopeSuffix = "/.default";
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.AccessTokenCallback = (parms, cancellationToken) =>
+                {
+                    Assert.Equal(userId, parms.UserId);
+                    Assert.Equal(pwd, parms.Password);
+                    string scope = parms.Resource.EndsWith(defaultScopeSuffix) ? parms.Resource : parms.Resource + defaultScopeSuffix;
+                    AccessToken token = cred.GetToken(new TokenRequestContext(new[] { scope }), cancellationToken);
+                    return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
+                };
+                conn.Open();
+            }
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]

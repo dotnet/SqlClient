@@ -47,8 +47,14 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (SocketException se)
                 {
+                    // A SocketException is possible for an instance name that doesn't exist.
+                    // If there are multiple IP addresses and one of them fails with a SocketException but
+                    // others simply don't respond because the instance name is invalid, we want to return
+                    // the same error as if the response was empty. The higher error suits all scenarios.
+                    // But log it, just in case there is a different, underlying issue that support needs
+                    // to troubleshoot.
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.ERR, "SocketException Message = {0}", args0: se?.Message);
-                    throw new Exception(SQLMessage.SqlServerBrowserNotAccessible(), se);
+                    throw;
                 }
 
                 const byte SvrResp = 0x05;
@@ -345,9 +351,37 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
                 }
             }
+            catch (AggregateException ae)
+            {
+                if (ae.InnerExceptions.Count > 0)
+                {
+                    // Log all errors
+                    foreach (Exception e in ae.InnerExceptions)
+                    {
+                        // Favor SocketException for returned error
+                        if (e is SocketException)
+                        {
+                            result.Error = e;
+                        }
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
+                            "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: e.Message);
+                    }
+
+                    // Return first error if we didn't find a SocketException
+                    result.Error = result.Error == null ? ae.InnerExceptions[0] : result.Error;
+                }
+                else
+                {
+                    result.Error = ae;
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
+                        "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: ae.Message);
+                }
+            }
             catch (Exception e)
             {
                 result.Error = e;
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
+                    "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: e.Message);
             }
 
             return result;

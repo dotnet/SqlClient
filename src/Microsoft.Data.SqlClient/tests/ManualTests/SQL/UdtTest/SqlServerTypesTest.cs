@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DataTestUtility.AssertEqualsWithDescription($"{db}.sys.hierarchyid".ToUpper(), dataTypeName.ToUpper(), "Unexpected data type name.");
 
                     string udtAssemblyName = (string)schemaTable.Rows[0][schemaTable.Columns["UdtAssemblyQualifiedName"]];
-                    Assert.True(udtAssemblyName?.StartsWith("Microsoft.SqlServer.Types.SqlHierarchyId"), "Unexpected UDT assembly name: " + udtAssemblyName);
+                    Assert.True(udtAssemblyName?.StartsWith("Microsoft.SqlServer.Types.SqlHierarchyId", StringComparison.Ordinal), "Unexpected UDT assembly name: " + udtAssemblyName);
                 }
             }
         }
@@ -252,6 +252,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 41: Incorrect syntax near 'hierarchyid'.
+        [ActiveIssue(25421, TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSchemaMetadata()
         {
@@ -269,21 +270,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // Validate Microsoft.SqlServer.Types.SqlHierarchyId, Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91
                     column = columns[0];
                     Assert.Equal("col0", column.ColumnName);
-                    Assert.True(column.DataTypeName.EndsWith(".hierarchyid"), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
+                    Assert.True(column.DataTypeName.EndsWith(".hierarchyid", StringComparison.Ordinal), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
                     Assert.NotNull(column.UdtAssemblyQualifiedName);
                     AssertSqlUdtAssemblyQualifiedName(column.UdtAssemblyQualifiedName, "Microsoft.SqlServer.Types.SqlHierarchyId");
 
                     // Validate Microsoft.SqlServer.Types.SqlGeometry, Microsoft.SqlServer.Types, Version = 11.0.0.0, Culture = neutral, PublicKeyToken = 89845dcd8080cc91
                     column = columns[1];
                     Assert.Equal("col1", column.ColumnName);
-                    Assert.True(column.DataTypeName.EndsWith(".geometry"), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
+                    Assert.True(column.DataTypeName.EndsWith(".geometry", StringComparison.Ordinal), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
                     Assert.NotNull(column.UdtAssemblyQualifiedName);
                     AssertSqlUdtAssemblyQualifiedName(column.UdtAssemblyQualifiedName, "Microsoft.SqlServer.Types.SqlGeometry");
 
                     // Validate Microsoft.SqlServer.Types.SqlGeography, Microsoft.SqlServer.Types, Version = 11.0.0.0, Culture = neutral, PublicKeyToken = 89845dcd8080cc91
                     column = columns[2];
                     Assert.Equal("col2", column.ColumnName);
-                    Assert.True(column.DataTypeName.EndsWith(".geography"), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
+                    Assert.True(column.DataTypeName.EndsWith(".geography", StringComparison.Ordinal), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
                     Assert.NotNull(column.UdtAssemblyQualifiedName);
                     AssertSqlUdtAssemblyQualifiedName(column.UdtAssemblyQualifiedName, "Microsoft.SqlServer.Types.SqlGeography");
                 }

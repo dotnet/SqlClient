@@ -4635,4 +4635,13 @@
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
     <value>The '{0}' platform is not supported when targeting .NET Framework.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
+    <value>Cannot set the AccessToken property if the AccessTokenCallback has been set.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
+    <value>Cannot set the AccessTokenCallback property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
+    <value>Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.</value>
+  </data>
 </root>

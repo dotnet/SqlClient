@@ -373,7 +373,7 @@ namespace Microsoft.Data.Common
             {
                 for (int i = 0; i < l; i++)
                 {
-                    if (s_supportedAuthenticationModes[i].CompareTo(names[i]) != 0)
+                    if (string.Compare(s_supportedAuthenticationModes[i], names[i], StringComparison.Ordinal) != 0)
                     {
                         listValid = false;
                     }
@@ -816,9 +816,17 @@ namespace Microsoft.Data.Common
             {
                 return DbConnectionStringDefaults.Encrypt;
             }
+            else if(value is SqlConnectionEncryptOption eValue)
+            {
+                return eValue;
+            }
             else if (value is string sValue)
             {
                 return SqlConnectionEncryptOption.Parse(sValue);
+            }
+            else if(value is bool bValue)
+            {
+                return SqlConnectionEncryptOption.Parse(bValue);
             }
 
             throw ADP.InvalidConnectionOptionValue(keyword);

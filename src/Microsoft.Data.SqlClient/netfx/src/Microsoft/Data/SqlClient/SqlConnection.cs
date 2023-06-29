@@ -71,6 +71,8 @@ namespace Microsoft.Data.SqlClient
         /// Instance-level list of custom key store providers. It can be set more than once by the user.
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
+        private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
             _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
 
@@ -739,7 +741,30 @@ namespace Microsoft.Data.SqlClient
 
                 _accessToken = value;
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo, null));
+            }
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessTokenCallback/*' />
+        public Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback
+        {
+            get { return _accessTokenCallback; }
+            set
+            {
+                // If a connection is connecting or is ever opened, AccessToken callback cannot be set
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(AccessTokenCallback), InnerConnection.State);
+                }
+
+                if (value != null)
+                {
+                    // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
+                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
+                }
+
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo, value));
+                _accessTokenCallback = value;
             }
         }
 
@@ -776,7 +801,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (_credential != null || _accessToken != null)
+                if (_credential != null || _accessToken != null || _accessTokenCallback != null)
                 {
                     SqlConnectionString connectionOptions = new SqlConnectionString(value);
                     if (_credential != null)
@@ -812,12 +837,18 @@ namespace Microsoft.Data.SqlClient
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
                     }
-                    else if (_accessToken != null)
+
+                    if (_accessToken != null)
                     {
                         CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken(connectionOptions);
                     }
+
+                    if (_accessTokenCallback != null)
+                    {
+                        CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(connectionOptions);
+                    }
                 }
-                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
+                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo, _accessTokenCallback));
                 _connectionString = value;  // Change _connectionString value only after value is validated
                 CacheConnectionStringProperties();
             }
@@ -1154,17 +1185,17 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
+
                     if (_accessToken != null)
                     {
                         throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();
                     }
-
                 }
 
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo, _accessTokenCallback));
             }
         }
 
@@ -1220,6 +1251,33 @@ namespace Microsoft.Data.SqlClient
             if (_credential != null)
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndCredential();
+            }
+
+            if (_accessTokenCallback != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
+            }
+        }
+
+        // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback: check if the usage of AccessTokenCallback has any conflict
+        //  with the keys used in connection string and credential
+        //  If there is any conflict, it throws InvalidOperationException
+        //  This is to be used setter of ConnectionString and AccessTokenCallback properties
+        private void CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(SqlConnectionString connectionOptions)
+        {
+            if (UsesIntegratedSecurity(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity();
+            }
+
+            if (UsesAuthentication(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndAuthentication();
+            }
+
+            if (_accessToken != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
             }
         }
 
@@ -1731,6 +1789,12 @@ namespace Microsoft.Data.SqlClient
                         if (attempt == retryCount - 1)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID {0} - give up reconnection", _originalConnectionId);
+                            if (e.Class >= TdsEnums.FATAL_ERROR_CLASS)
+                            {
+                                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID {0} - Fatal Error occured. Error Class: {1}", _originalConnectionId, e.Class);
+                                // Error Class: 20-25, usually terminates the database connection
+                                InnerConnection.CloseConnection(InnerConnection.Owner, ConnectionFactory);
+                            }
                             throw SQL.CR_AllAttemptsFailed(e, _originalConnectionId);
                         }
                         if (timeout > 0 && ADP.TimerRemaining(commandTimeoutExpiration) < ADP.TimerFromSeconds(ConnectRetryInterval))
@@ -2062,7 +2126,7 @@ namespace Microsoft.Data.SqlClient
 
             bool result = false;
 
-            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
+            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
 
             if (connectionOptions != null &&
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
@@ -2105,7 +2169,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Set future transient fault handling based on connection options
-            _applyTransientFaultHandling = (retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
+            _applyTransientFaultHandling = connectionOptions != null && connectionOptions.ConnectRetryCount > 0;
 
             return result;
         }
@@ -2693,7 +2757,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength("newPassword", TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null, accessTokenCallback: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
@@ -2749,7 +2813,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength("newSecurePassword", TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null, accessTokenCallback: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
 
@@ -2794,20 +2858,56 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.ChangePasswordRequires2005();
                 }
             }
-            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
+            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null, accessTokenCallback: null);
 
             SqlConnectionFactory.SingletonInstance.ClearPool(key);
         }
 
-        internal void RegisterForConnectionCloseNotification<T>(ref Task<T> outerTask, object value, int tag)
+        internal Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask, object value, int tag)
         {
             // Connection exists,  schedule removal, will be added to ref collection after calling ValidateAndReconnect
-            outerTask = outerTask.ContinueWith(task =>
+
+            object state = null;
+            if (outerTask.AsyncState == this)
             {
-                RemoveWeakReference(value);
-                return task;
-            }, TaskScheduler.Default).Unwrap();
+                // if the caller created the TaskCompletionSource for outerTask with this connection
+                // as the state parameter (which is immutable) we can use task.AsyncState and state
+                // to carry the two pieces of state that we need into the continuation avoiding the
+                // allocation of a new state object to carry them
+                state = value;
+            }
+            else
+            {
+                // otherwise we need to create a Tuple to carry the two pieces of state
+                state = Tuple.Create(this, value);
+            }
+
+            return outerTask.ContinueWith(
+                continuationFunction: static (task, state) =>
+                {
+                    SqlConnection connection = null;
+                    object obj = null;
+                    if (state is Tuple<SqlConnection, object> tuple)
+                    {
+                        // special state tuple, unpack it
+                        connection = tuple.Item1;
+                        obj = tuple.Item2;
+                    }
+                    else
+                    {
+                        // use state on task and state object
+                        connection = (SqlConnection)task.AsyncState;
+                        obj = state;
+                    }
+
+                    connection.RemoveWeakReference(obj);
+                    return task;
+                },
+                state: state,
+                scheduler: TaskScheduler.Default
+           ).Unwrap();
         }
+
 
         // updates our context with any changes made to the memory-mapped data by an external process
         static private void RefreshMemoryMappedData(SqlDebugContext sdc)

@@ -10,3 +10,9 @@ csharp_style_implicit_object_creation_when_type_is_apparent = false
 
 # IDE0063: Use simple 'using' statement
 csharp_prefer_simple_using_statement = false
+
+# SYSLIB0039: Type or member is obsolete
+dotnet_diagnostic.SYSLIB0039.severity = suggestion
+
+# CA1310: Specify StringComparison for correctness
+dotnet_diagnostic.CA1310.severity = error

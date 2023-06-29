@@ -304,7 +304,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // The CommandType enumeration value, 666, is invalid
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("666") != -1);
+            Assert.True(ex.Message.IndexOf("666", StringComparison.Ordinal) != -1);
             Assert.Equal("CommandType", ex.ParamName);
         }
 
@@ -334,7 +334,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // closed.
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("ExecuteNonQuery") != -1);
+            Assert.True(ex.Message.IndexOf("ExecuteNonQuery", StringComparison.Ordinal) != -1);
         }
 
         [Fact]
@@ -364,7 +364,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // closed.
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("ExecuteReader") != -1);
+            Assert.True(ex.Message.IndexOf("ExecuteReader", StringComparison.Ordinal) != -1);
         }
 
         [Fact]
@@ -395,7 +395,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // closed.
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("ExecuteScalar") != -1);
+            Assert.True(ex.Message.IndexOf("ExecuteScalar", StringComparison.Ordinal) != -1);
         }
 
         [Fact] // bug #412584
@@ -449,7 +449,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // is Closed
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("Prepare") != -1);
+            Assert.True(ex.Message.IndexOf("Prepare", StringComparison.Ordinal) != -1);
 
             // Text, parameters cleared
             cmd = new SqlCommand("select count(*) from whatever", cn);
