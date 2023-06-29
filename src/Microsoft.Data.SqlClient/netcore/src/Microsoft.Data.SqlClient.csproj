@@ -89,7 +89,7 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs</Link>
-    </Compile>    
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlNotificationRequest.cs">
       <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
     </Compile>
@@ -517,7 +517,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' == 'netstandard2.0'">
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.Task.cs" />    
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.Task.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
@@ -622,7 +622,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNITcpHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNICommon.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SspiClientContextStatus.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SSRP.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
@@ -768,8 +767,35 @@
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Common.cs" />
   </ItemGroup>
-  <!-- Windows dependencies for Integrated Authentication for MANAGED_SNI build -->
+  <!-- Windows dependencies for MANAGED_SNI build -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
+    <Compile Include="$(CommonPath)\Interop\Windows\Interop.Libraries.cs">
+      <Link>Common\Interop\Windows\Interop.Libraries.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <!-- Common (Windows and Unix) dependencies for MANAGED_SNI build -->
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
+    <Compile Include="$(CommonPath)\System\Net\InternalException.cs">
+      <Link>Common\System\Net\InternalException.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\Logging\NetEventSource.Common.cs">
+      <Link>Common\System\Net\Logging\NetEventSource.Common.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <!-- Unix dependencies for Managed_SNI build-->
+  <ItemGroup Condition="'$(TargetsWindows)' != 'true' AND '$(OSGroup)' != 'AnyOS'">
+    <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
+    <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
+    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Unix.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Unix.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Unix.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Unix.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Managed.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
+  </ItemGroup>
+  <!-- Windows dependencies for Integrated Authentication (SSPI) and MANAGED_SNI build before .NET 7.0-->
+  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ($(TargetGroup)=='netstandard' OR '$(TargetFramework)' == 'net6.0')">
     <Compile Include="$(CommonPath)\CoreLib\Interop\Windows\Kernel32\Interop.CloseHandle.cs">
       <Link>Common\CoreLib\Interop\Windows\Kernel32\Interop.CloseHandle.cs</Link>
     </Compile>
@@ -779,9 +805,6 @@
     <Compile Include="$(CommonPath)\Interop\Windows\Crypt32\Interop.certificates_types.cs">
       <Link>Common\Interop\Windows\Crypt32\Interop.certificates_types.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\Interop.Libraries.cs">
-      <Link>Common\Interop\Windows\Interop.Libraries.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.cs">
       <Link>Common\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.cs</Link>
     </Compile>
@@ -790,6 +813,30 @@
     </Compile>
     <Compile Include="$(CommonPath)\Interop\Windows\SChannel\SecPkgContext_ConnectionInfo.cs">
       <Link>Common\Interop\Windows\SChannel\SecPkgContext_ConnectionInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Collections\Generic\BidirectionalDictionary.cs">
+      <Link>Common\System\Collections\Generic\BidirectionalDictionary.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\ContextFlagsAdapterPal.Windows.cs">
+      <Link>Common\System\Net\ContextFlagsAdapterPal.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\DebugCriticalHandleZeroOrMinusOneIsInvalid.cs">
+      <Link>Common\System\Net\DebugCriticalHandleZeroOrMinusOneIsInvalid.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\Security\SecurityContextTokenHandle.cs">
+      <Link>Common\System\Net\Security\SecurityContextTokenHandle.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\SecurityStatusAdapterPal.Windows.cs">
+      <Link>Common\System\Net\SecurityStatusAdapterPal.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\Security\NegotiateStreamPal.Windows.cs">
+      <Link>Common\System\Net\Security\NegotiateStreamPal.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\Security\NetEventSource.Security.cs">
+      <Link>Common\System\Net\Security\NetEventSource.Security.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\Security\NetEventSource.Security.Windows.cs">
+      <Link>Common\System\Net\Security\NetEventSource.Security.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\Interop\Windows\sspicli\GlobalSSPI.cs">
       <Link>Common\Interop\Windows\sspicli\GlobalSSPI.cs</Link>
@@ -836,33 +883,9 @@
     <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SSPIWrapper.cs">
       <Link>Common\Interop\Windows\sspicli\SSPIWrapper.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\System\Collections\Generic\BidirectionalDictionary.cs">
-      <Link>Common\System\Collections\Generic\BidirectionalDictionary.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\ContextFlagsAdapterPal.Windows.cs">
-      <Link>Common\System\Net\ContextFlagsAdapterPal.Windows.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\DebugCriticalHandleZeroOrMinusOneIsInvalid.cs">
-      <Link>Common\System\Net\DebugCriticalHandleZeroOrMinusOneIsInvalid.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\NegotiateStreamPal.Windows.cs">
-      <Link>Common\System\Net\Security\NegotiateStreamPal.Windows.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\NetEventSource.Security.cs">
-      <Link>Common\System\Net\Security\NetEventSource.Security.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\NetEventSource.Security.Windows.cs">
-      <Link>Common\System\Net\Security\NetEventSource.Security.Windows.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\SecurityContextTokenHandle.cs">
-      <Link>Common\System\Net\Security\SecurityContextTokenHandle.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\SecurityStatusAdapterPal.Windows.cs">
-      <Link>Common\System\Net\SecurityStatusAdapterPal.Windows.cs</Link>
-    </Compile>
   </ItemGroup>
-  <!-- Common (Windows and Unix) dependencies for MANAGED_SNI build -->
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
+  <!-- Common (Windows and Unix) dependencies for Integrated Authentication (SSPI) and MANAGED_SNI build before .NET 7.0-->
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND ($(TargetGroup)=='netstandard' OR '$(TargetFramework)' == 'net6.0')">
     <Compile Include="$(CommonPath)\System\Net\ContextFlagsPal.cs">
       <Link>Common\System\Net\ContextFlagsPal.cs</Link>
     </Compile>
@@ -872,14 +895,8 @@
     <Compile Include="$(CommonPath)\System\Net\DebugSafeHandle.cs">
       <Link>Common\System\Net\DebugSafeHandle.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\System\Net\InternalException.cs">
-      <Link>Common\System\Net\InternalException.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)\System\Net\Logging\DebugThreadTracking.cs">
       <Link>Common\System\Net\Logging\DebugThreadTracking.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Logging\NetEventSource.Common.cs">
-      <Link>Common\System\Net\Logging\NetEventSource.Common.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\System\Net\NegotiationInfoClass.cs">
       <Link>Common\System\Net\NegotiationInfoClass.cs</Link>
@@ -893,8 +910,10 @@
     <Compile Include="$(CommonPath)\System\Net\SecurityStatusPal.cs">
       <Link>Common\System\Net\SecurityStatusPal.cs</Link>
     </Compile>
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SspiClientContextStatus.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWindows)' != 'true' AND '$(OSGroup)' != 'AnyOS'">
+  <!-- Unix dependencies for Integrated Authentication (SSPI) and MANAGED_SNI build before .NET 7.0-->
+  <ItemGroup Condition="'$(TargetsWindows)' != 'true' AND '$(OSGroup)' != 'AnyOS' AND ($(TargetGroup)=='netstandard' OR '$(TargetFramework)' == 'net6.0')">
     <Compile Include="$(CommonPath)\Interop\Unix\Interop.Libraries.cs">
       <Link>Common\Interop\Unix\Interop.Libraries.cs</Link>
     </Compile>
@@ -910,12 +929,6 @@
     <Compile Include="$(CommonPath)\Microsoft\Win32\SafeHandles\GssSafeHandles.cs">
       <Link>Common\Microsoft\Win32\SafeHandles\GssSafeHandles.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\System\Net\ContextFlagsAdapterPal.Unix.cs">
-      <Link>Common\System\Net\ContextFlagsAdapterPal.Unix.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\NegotiateStreamPal.Unix.cs">
-      <Link>Common\System\Net\Security\NegotiateStreamPal.Unix.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeDeleteContext.cs">
       <Link>Common\System\Net\Security\Unix\SafeDeleteContext.cs</Link>
     </Compile>
@@ -928,15 +941,12 @@
     <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeFreeNegoCredentials.cs">
       <Link>Common\System\Net\Security\Unix\SafeFreeNegoCredentials.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
-    <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Unix.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Unix.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Unix.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Unix.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Managed.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
+    <Compile Include="$(CommonPath)\System\Net\ContextFlagsAdapterPal.Unix.cs">
+      <Link>Common\System\Net\ContextFlagsAdapterPal.Unix.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonPath)\System\Net\Security\NegotiateStreamPal.Unix.cs">
+      <Link>Common\System\Net\Security\NegotiateStreamPal.Unix.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(IsUAPAssembly)' == 'true'">
     <Reference Include="System.Collections.NonGeneric" />

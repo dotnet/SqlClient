@@ -7,7 +7,9 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Security;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -18,8 +20,11 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         private SNIMarsConnection? _marsConnection;
         private SNIHandle? _sessionHandle;
+#if NET7_0_OR_GREATER
+        private NegotiateAuthentication? _negotiateAuth = null;
+#else
         private SspiClientContextStatus? _sspiClientContextStatus;
-
+#endif
         public TdsParserStateObjectManaged(TdsParser parser) : base(parser) { }
 
         internal TdsParserStateObjectManaged(TdsParser parser, TdsParserStateObject physicalConnection, bool async) :
@@ -384,15 +389,26 @@ namespace Microsoft.Data.SqlClient.SNI
             return TdsEnums.SNI_SUCCESS;
         }
 
-        internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer)
+        internal override uint GenerateSspiClientContext(byte[] receivedBuff,
+                                                         uint receivedLength,
+                                                         ref byte[] sendBuff,
+                                                         ref uint sendLength,
+                                                         byte[][] _sniSpnBuffer)
         {
-            if (_sspiClientContextStatus is null)
+#if NET7_0_OR_GREATER
+            _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = Encoding.Unicode.GetString(_sniSpnBuffer[0]) });
+            sendBuff = _negotiateAuth.GetOutgoingBlob(receivedBuff, out NegotiateAuthenticationStatusCode statusCode)!;
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}, StatusCode={1}", _sessionHandle?.ConnectionId, statusCode);
+            if (statusCode is not NegotiateAuthenticationStatusCode.Completed and not NegotiateAuthenticationStatusCode.ContinueNeeded)
             {
-                _sspiClientContextStatus = new SspiClientContextStatus();
+                throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + Environment.NewLine + statusCode);
             }
+#else
+            _sspiClientContextStatus ??= new SspiClientContextStatus();
 
             SNIProxy.GenSspiClientContext(_sspiClientContextStatus, receivedBuff, ref sendBuff, _sniSpnBuffer);
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}", _sessionHandle?.ConnectionId);
+#endif            
             sendLength = (uint)(sendBuff != null ? sendBuff.Length : 0);
             return 0;
         }
