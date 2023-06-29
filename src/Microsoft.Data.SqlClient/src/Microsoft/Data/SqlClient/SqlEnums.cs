@@ -26,6 +26,9 @@ namespace Microsoft.Data.SqlClient
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         internal readonly Type ClassType;   // com+ type
+#if NET6_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
         internal readonly Type SqlType;
 
         internal readonly int FixedLength; // fixed length size in bytes (-1 for variable)
@@ -63,7 +66,11 @@ namespace Microsoft.Data.SqlClient
 #if NET6_0_OR_GREATER
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
-            Type classType, Type sqlType, SqlDbType sqldbType, DbType dbType, byte propBytes)
+            Type classType,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+            Type sqlType, SqlDbType sqldbType, DbType dbType, byte propBytes)
         {
             Precision = precision;
             Scale = scale;
