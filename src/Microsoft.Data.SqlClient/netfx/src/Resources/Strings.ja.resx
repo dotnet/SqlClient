@@ -4636,12 +4636,12 @@
     <value>.NET Framework を対象とする場合、'{0}' プラットフォームはサポートされません。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessToken property if the AccessTokenCallback has been set.</value>
+    <value>AccessTokenCallback が設定されている場合は、AccessToken プロパティを設定できません。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
+    <value>'Integrated Security' 接続文字列キーワードが 'true' または 'SSPI' に設定されている場合、AccessTokenCallback プロパティを設定できません。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.</value>
+    <value>接続文字列に 'Authentication=Active Directory Default' が指定されている場合、AccessTokenCallback プロパティを設定できません。</value>
   </data>
 </root>

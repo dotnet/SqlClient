@@ -4636,12 +4636,12 @@
     <value>Die Plattform "{0}" wird bei .NET Framework nicht unterstützt.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessToken property if the AccessTokenCallback has been set.</value>
+    <value>Die Eigenschaft AccessToken kann nicht festgelegt werden, wenn AccessTokenCallback festgelegt wurde.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
+    <value>AccessTokenCallback-Eigenschaft kann nicht festgelegt werden, wenn das Schlüsselwort für Verbindungszeichenfolgen 'Integrated Security' auf 'true' oder 'SSPI' gesetzt wurde.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.</value>
+    <value>Die Eigenschaft AccessTokenCallback kann nicht festgelegt werden, wenn in der Verbindungszeichenfolge "Authentication=Active Directory Default" angegeben wurde.</value>
   </data>
 </root>
