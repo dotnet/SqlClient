@@ -4,6 +4,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -468,6 +475,159 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(result);
         }
 
+        #region SqlConnectionEncryptOptionCoverterTests
+        [Fact]
+        public void ConnectionStringFromJsonTests()
+        {
+            UserDbConnectionStringSettings settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("false");
+            Assert.Equal(SqlConnectionEncryptOption.Optional, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("true");
+            Assert.Equal(SqlConnectionEncryptOption.Mandatory, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("strict");
+            Assert.Equal(SqlConnectionEncryptOption.Strict, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("mandatory");
+            Assert.Equal(SqlConnectionEncryptOption.Mandatory, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("optional");
+            Assert.Equal(SqlConnectionEncryptOption.Optional, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("yes");
+            Assert.Equal(SqlConnectionEncryptOption.Mandatory, settings.UserDb.UserComponents.Encrypt);
+
+            settings = LoadSettingsFromJsonStream<UserDbConnectionStringSettings>("no");
+            Assert.Equal(SqlConnectionEncryptOption.Optional, settings.UserDb.UserComponents.Encrypt);
+        }
+
+        [Theory]
+        [InlineData("absolutely")]
+        [InlineData("affirmative")]
+        [InlineData("never")]
+        [InlineData("always")]
+        [InlineData("none")]
+        [InlineData(" for sure ")]
+        public void ConnectionStringFromJsonThrowsException(string value)
+        {
+            ExecuteConnectionStringFromJsonThrowsException(value);
+        }
+
+        [Fact]
+        public void SqlConnectionEncryptOptionConverterCanConvertFromTest()
+        {
+            // Get a converter
+            SqlConnectionEncryptOption option = SqlConnectionEncryptOption.Parse("false");
+            TypeConverter converter = TypeDescriptor.GetConverter(option.GetType());
+            // Use the converter to determine if can convert from string data type
+            Assert.True(converter.CanConvertFrom(null, typeof(string)), "Expecting to convert from a string type.");
+            // Use the same converter to determine if can convert from int or bool data types
+            Assert.False(converter.CanConvertFrom(null, typeof(int)), "Not expecting to convert from integer type.");
+            Assert.False(converter.CanConvertFrom(null, typeof(bool)), "Not expecting to convert from boolean type.");
+        }
+
+        [Fact]
+        public void SqlConnectionEncryptOptionConverterCanConvertToTest()
+        {
+            // Get a converter
+            SqlConnectionEncryptOption option = SqlConnectionEncryptOption.Parse("false");
+            TypeConverter converter = TypeDescriptor.GetConverter(option.GetType());
+            // Use the converter to check if can convert from stirng
+            Assert.True(converter.CanConvertTo(null, typeof(string)), "Expecting to convert to a string type.");
+            // Use the same convert to check if can convert to int or bool
+            Assert.False(converter.CanConvertTo(null, typeof(int)), "Not expecting to convert from integer type.");
+            Assert.False(converter.CanConvertTo(null, typeof(bool)), "Not expecting to convert from boolean type.");
+        }
+
+        [Fact]
+        public void SqlConnectionEncryptOptionConverterConvertFromTest()
+        {
+            // Create a converter
+            SqlConnectionEncryptOption option = SqlConnectionEncryptOption.Parse("false");
+            TypeConverter converter = TypeDescriptor.GetConverter(option.GetType());
+            // Use the converter to convert all possible valid values
+            Assert.Equal(SqlConnectionEncryptOption.Parse("false"), converter.ConvertFrom("false"));
+            Assert.Equal(SqlConnectionEncryptOption.Parse("true"), converter.ConvertFrom("true"));
+            Assert.Equal(SqlConnectionEncryptOption.Parse("strict"), converter.ConvertFrom("strict"));
+            Assert.Equal(SqlConnectionEncryptOption.Parse("mandatory"), converter.ConvertFrom("mandatory"));
+            Assert.Equal(SqlConnectionEncryptOption.Parse("optional"), converter.ConvertFrom("optional"));
+            Assert.Equal(SqlConnectionEncryptOption.Parse("yes"), converter.ConvertFrom("yes"));
+            Assert.Equal(SqlConnectionEncryptOption.Parse("no"), converter.ConvertFrom("no"));
+            // Use the converter to covert invalid value
+            Assert.Throws<ArgumentException>(() => converter.ConvertFrom("affirmative"));
+            // Use the same converter to convert from bad data types
+            Assert.Throws<ArgumentException>(() => converter.ConvertFrom(1));
+            Assert.Throws<ArgumentException>(() => converter.ConvertFrom(true));
+        }
+
+        [Fact]
+        public void SqlConnectionEncryptOptionConverterConvertToTest()
+        {
+            // Get a converter
+            SqlConnectionEncryptOption option = SqlConnectionEncryptOption.Parse("false");
+            TypeConverter converter = TypeDescriptor.GetConverter(option.GetType());
+            // Use the converter to convert all possible valid values to string
+            Assert.Equal("False", converter.ConvertTo(SqlConnectionEncryptOption.Parse("false"), typeof(string)));
+            Assert.Equal("True", converter.ConvertTo(SqlConnectionEncryptOption.Parse("true"), typeof(string)));
+            Assert.Equal("Strict", converter.ConvertTo(SqlConnectionEncryptOption.Parse("strict"), typeof(string)));
+            Assert.Equal("True", converter.ConvertTo(SqlConnectionEncryptOption.Parse("mandatory"), typeof(string)));
+            Assert.Equal("False", converter.ConvertTo(SqlConnectionEncryptOption.Parse("optional"), typeof(string)));
+            Assert.Equal("True", converter.ConvertTo(SqlConnectionEncryptOption.Parse("yes"), typeof(string)));
+            Assert.Equal("False", converter.ConvertTo(SqlConnectionEncryptOption.Parse("no"), typeof(string)));
+            // Use the same converter to try convert to bad data types
+            Assert.Throws<ArgumentException>(() => converter.ConvertTo(SqlConnectionEncryptOption.Parse("false"), typeof(int)));
+            Assert.Throws<ArgumentException>(() => converter.ConvertTo(SqlConnectionEncryptOption.Parse("false"), typeof(bool)));
+        }
+
+        internal class UserDbConnectionStringSettings
+        {
+            [Required]
+            public UserSqlConnectionString UserDb { get; set; }
+        }
+
+        internal class UserSqlConnectionString
+        {
+            public SqlConnectionStringBuilder UserComponents { get; set; } = new();
+
+            public override string ToString()
+            {
+                return UserComponents!.ConnectionString;
+            }
+        }
+
+        internal static void ExecuteConnectionStringFromJsonThrowsException(string encryptOption)
+        {
+            var exception = Assert.Throws<InvalidOperationException>(() => LoadSettingsFromJsonStream<UserDbConnectionStringSettings>(encryptOption));
+            Assert.Contains("Failed to convert configuration", exception.Message, StringComparison.Ordinal);
+        }
+
+        private static TSettings LoadSettingsFromJsonStream<TSettings>(string encryptOption) where TSettings : class
+        {
+            TSettings settingsOut = null;
+
+            Host.CreateDefaultBuilder()
+                .ConfigureAppConfiguration((ctx, configBuilder) =>
+                {
+                    // Note: Inside string interpolation, a { should be {{ and a } should be }}
+                    // First, declare a stringified JSON
+                    var json = $"{{ \"UserDb\": {{ \"UserComponents\": {{ \"NetworkLibrary\": \"DBMSSOCN\", \"UserID\": \"user\", \"Password\": \"password\", \"DataSource\": \"localhost\", \"InitialCatalog\": \"catalog\", \"Encrypt\": \"{encryptOption}\" }}}}}}";
+                    // Load the stringified JSON as a stream into the configuration builder
+                    configBuilder.AddJsonStream(new MemoryStream(Encoding.ASCII.GetBytes(json)));
+                    configBuilder.AddEnvironmentVariables();
+                })
+                .ConfigureServices((ctx, services) =>
+                {
+                    var configuration = ctx.Configuration;
+                    services.AddOptions();
+                    services.Configure<TSettings>(ctx.Configuration);
+                    settingsOut = configuration.Get<TSettings>();
+                })
+                .Build();
+
+            return settingsOut;
+        }
+        #endregion
+
         internal void ExecuteConnectionStringTests(string connectionString)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
@@ -495,5 +655,6 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.IsType<SqlConnectionEncryptOption>(builder.Encrypt);
             Assert.Equal(expectedValue, builder.Encrypt);
         }
+
     }
 }
