@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
         {
-            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;
+            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).GetAwaiter().GetResult();
         }
 
         private static Task<string> AcquireTokenAsync(string authorityURL, string userID, string password) => Task.Run(() =>
@@ -803,7 +803,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         foreach (var key in keys)
                         {
-                            if (cp.Trim().ToLower().StartsWith(key.Trim().ToLower()))
+                            if (cp.Trim().ToLower().StartsWith(key.Trim().ToLower(), StringComparison.Ordinal))
                             {
                                 return cp.Substring(cp.IndexOf('=') + 1);
                             }
@@ -828,7 +828,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         bool removeKey = false;
                         foreach (var keyToRemove in keysToRemove)
                         {
-                            if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower()))
+                            if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower(), StringComparison.Ordinal))
                             {
                                 removeKey = true;
                                 break;
@@ -857,7 +857,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         if (!string.IsNullOrEmpty(key.Trim()))
                         {
-                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
+                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower(), StringComparison.Ordinal))
                             {
                                 res = key.Substring(key.IndexOf('=') + 1).Trim();
                                 break;
@@ -880,22 +880,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (dataSource.Contains(":"))
             {
-                dataSource = dataSource.Substring(dataSource.IndexOf(":") + 1);
+                dataSource = dataSource.Substring(dataSource.IndexOf(":", StringComparison.Ordinal) + 1);
             }
 
             if (dataSource.Contains(","))
             {
-                if (!Int32.TryParse(dataSource.Substring(dataSource.LastIndexOf(",") + 1), out port))
+                if (!Int32.TryParse(dataSource.Substring(dataSource.LastIndexOf(",",StringComparison.Ordinal) + 1), out port))
                 {
                     return false;
                 }
-                dataSource = dataSource.Substring(0, dataSource.IndexOf(",") - 1);
+                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal) - 1);
             }
 
             if (dataSource.Contains("\\"))
             {
-                instanceName = dataSource.Substring(dataSource.LastIndexOf("\\") + 1);
-                dataSource = dataSource.Substring(0, dataSource.LastIndexOf("\\"));
+                instanceName = dataSource.Substring(dataSource.LastIndexOf("\\", StringComparison.Ordinal) + 1);
+                dataSource = dataSource.Substring(0, dataSource.LastIndexOf("\\", StringComparison.Ordinal));
             }
 
             hostname = dataSource;
@@ -922,7 +922,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
-                if (eventSource.Name.StartsWith(Name))
+                if (eventSource.Name.StartsWith(Name, StringComparison.Ordinal))
                 {
                     // Collect all traces for better code coverage
                     EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.All);

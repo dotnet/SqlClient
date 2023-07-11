@@ -98,8 +98,9 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
 
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap received, column count = {1}", stateObj._objectID, columnsCount);
-                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, Null Bitmap length {1}, NBCROW bitmap data: {2}", stateObj._objectID, (ushort)_nullBitmap.Length, _nullBitmap);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap data. Null Bitmap {1}, Null bitmap length: {2}", stateObj.ObjectID, _nullBitmap, (ushort)_nullBitmap.Length);
+
                 return true;
             }
         }
@@ -483,7 +484,7 @@ namespace Microsoft.Data.SqlClient
 
             AssertValidState();
             value = (char)((buffer[1] << 8) + buffer[0]);
-            
+
             return true;
         }
 
@@ -542,7 +543,6 @@ namespace Microsoft.Data.SqlClient
             AssertValidState();
             value = (buffer[3] << 24) + (buffer[2] << 16) + (buffer[1] << 8) + buffer[0];
             return true;
-
         }
 
         // This method is safe to call when doing async without snapshot
@@ -563,7 +563,7 @@ namespace Microsoft.Data.SqlClient
                 // then use ReadByteArray since the logic is there to take care of that.
 
                 int bytesRead;
-                if (!TryReadByteArray(_bTmp.AsSpan(_bTmpRead), 8 - _bTmpRead, out bytesRead))
+                if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 8 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 8, "Read more data than required");
                     _bTmpRead += bytesRead;
@@ -641,7 +641,7 @@ namespace Microsoft.Data.SqlClient
                 // then use ReadByteArray since the logic is there to take care of that.
 
                 int bytesRead;
-                if (!TryReadByteArray(_bTmp.AsSpan(_bTmpRead), 4 - _bTmpRead, out bytesRead))
+                if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 4 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 4, "Read more data than required");
                     _bTmpRead += bytesRead;
@@ -1827,13 +1827,13 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     SniReadStatisticsAndTracing();
-
+                    SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.ReadNetworkPacketAsyncCallback | INFO | ADV | State Object Id {0}, Packet read. In Buffer {1}, In Bytes Read: {2}", ObjectID, _inBuff, (ushort)_inBytesRead);
 
                     AssertValidState();
                 }
                 else
                 {
-                    throw SQL.ParsingError();
+                    throw SQL.ParsingError(ParsingErrorState.ProcessSniPacketFailed);
                 }
             }
         }
@@ -1895,7 +1895,6 @@ namespace Microsoft.Data.SqlClient
             //    to the outstanding GCRoot until AppDomain.Unload.
             // We live with the above for the time being due to the constraints of the current
             // reliability infrastructure provided by the CLR.
-            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.ReadAsyncCallback | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
 
             TaskCompletionSource<object> source = _networkPacketTaskSource;
 #if DEBUG
@@ -1918,7 +1917,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(CheckPacket(packet, source) && source != null, "AsyncResult null on callback");
 
                 if (_parser.MARSOn)
-                { 
+                {
                     // Only take reset lock on MARS and Async.
                     CheckSetResetConnectionState(error, CallbackType.Read);
                 }
@@ -1927,10 +1926,10 @@ namespace Microsoft.Data.SqlClient
 
                 // The timer thread may be unreliable under high contention scenarios. It cannot be
                 // assumed that the timeout has happened on the timer thread callback. Check the timeout
-                // synchrnously and then call OnTimeoutSync to force an atomic change of state. 
+                // synchrnously and then call OnTimeoutSync to force an atomic change of state.
                 if (TimeoutHasExpired)
                 {
-                    OnTimeoutSync(true);
+                    OnTimeoutSync(asyncClose: true);
                 }
 
                 // try to change to the stopped state but only do so if currently in the running state
@@ -2124,6 +2123,13 @@ namespace Microsoft.Data.SqlClient
         /////////////////////////////////////////
         // Network/Packet Writing & Processing //
         /////////////////////////////////////////
+
+        //
+        // Takes a secure string and offsets and saves them for a write latter when the information is written out to SNI Packet
+        //  This method is provided to better handle the life cycle of the clear text of the secure string
+        //  This method also ensures that the clear text is not held in the unpined managed buffer so that it avoids getting moved around by CLR garbage collector
+        //  TdsParserStaticMethods.EncryptPassword operation is also done in the unmanaged buffer for the clear text later
+        //
         internal void WriteSecureString(SecureString secureString)
         {
             Debug.Assert(_securePasswords[0] == null || _securePasswords[1] == null, "There are more than two secure passwords");
@@ -2362,11 +2368,11 @@ namespace Microsoft.Data.SqlClient
                 // However, since we don't know the version prior to login Is2005OrNewer was always false prior to login
                 // So removing the Is2005OrNewer check causes issues since the login packet happens to meet the rest of the conditions below
                 // So we need to avoid this check prior to login completing
-                state == TdsParserState.OpenLoggedIn &&
-                !_bulkCopyOpperationInProgress && // ignore the condition checking for bulk copy
-                    _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen))
+                state == TdsParserState.OpenLoggedIn
+                    && !_bulkCopyOpperationInProgress // ignore the condition checking for bulk copy
+                    && _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen))
                     && _outputPacketCount == 0
-                || _outBytesUsed == _outputHeaderLen
+                    || _outBytesUsed == _outputHeaderLen
                     && _outputPacketCount == 0)
             {
                 return null;
@@ -2419,6 +2425,7 @@ namespace Microsoft.Data.SqlClient
                 // If we have been canceled, then ensure that we write the ATTN packet as well
                 task = AsyncHelper.CreateContinuationTask(task, CancelWritePacket);
             }
+
             return task;
         }
 
@@ -2442,7 +2449,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#pragma warning disable 0420 // a reference to a volatile field will not be treated as volatile
+#pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
 
         private Task SNIWritePacket(PacketHandle packet, out uint sniError, bool canAccumulate, bool callerHasConnectionLock, bool asyncClose = false)
         {
@@ -2455,9 +2462,7 @@ namespace Microsoft.Data.SqlClient
 
             Task task = null;
             _writeCompletionSource = null;
-
             PacketHandle packetPointer = EmptyReadPacket;
-
             bool sync = !_parser._asyncWrite;
             if (sync && _asyncWriteCount > 0)
             { // for example, SendAttention while there are writes pending
@@ -2492,7 +2497,7 @@ namespace Microsoft.Data.SqlClient
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
             {
-                Debug.Assert(!sync, "Completion should be handled in SniManagedWwrapper");
+                Debug.Assert(!sync, "Completion should be handled in SniManagedWrapper");
                 Interlocked.Increment(ref _asyncWriteCount);
                 Debug.Assert(_asyncWriteCount >= 0);
                 if (!canAccumulate)
@@ -2638,7 +2643,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 #if DEBUG
-                }
+                    }
 #endif
 
                     SetTimeoutSeconds(AttentionTimeoutSeconds); // Initialize new attention timeout of 5 seconds.

@@ -5,8 +5,10 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using System.Reflection;
 using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
@@ -249,6 +251,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(sqlCredential, conn.Credential);
         }
 
+
         [Theory]
         [InlineData(60)]
         [InlineData(30)]
@@ -339,6 +342,112 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 using TestTdsServer server = TestTdsServer.StartTestServer(false, false, -5);
             });
+
+        [Fact]
+        public void ConnectionTestWithCultureTH()
+        {
+            CultureInfo savedCulture = Thread.CurrentThread.CurrentCulture;
+            CultureInfo savedUICulture = Thread.CurrentThread.CurrentUICulture;
+
+            try
+            {
+                Thread.CurrentThread.CurrentCulture = new CultureInfo("th-TH");
+                Thread.CurrentThread.CurrentUICulture = new CultureInfo("th-TH");
+
+                using TestTdsServer server = TestTdsServer.StartTestServer();
+                using SqlConnection connection = new SqlConnection(server.ConnectionString);
+                connection.Open();
+                Assert.Equal(ConnectionState.Open, connection.State);
+            }
+            finally
+            {
+                // Restore saved cultures if necessary
+                if (Thread.CurrentThread.CurrentCulture != savedCulture)
+                    Thread.CurrentThread.CurrentCulture = savedCulture;
+                if (Thread.CurrentThread.CurrentUICulture != savedUICulture)
+                    Thread.CurrentThread.CurrentUICulture = savedUICulture;
+            }
+        }
+
+        [Fact]
+        public void ConnectionTestAccessTokenCallbackCombinations()
+        {
+            var cleartextCredsConnStr = "User=test;Password=test;";
+            var sspiConnStr = "Integrated Security=true;";
+            var authConnStr = "Authentication=ActiveDirectoryPassword";
+            var testPassword = new SecureString();
+            testPassword.MakeReadOnly();
+            var sqlCredential = new SqlCredential(string.Empty, testPassword);
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback = (ctx, token) =>
+                    Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+            // Successes
+            using (var conn = new SqlConnection(cleartextCredsConnStr))
+            {
+                conn.AccessTokenCallback = callback;
+                conn.AccessTokenCallback = null;
+            }
+
+            using (var conn = new SqlConnection(string.Empty, sqlCredential))
+            {
+                conn.AccessTokenCallback = null;
+                conn.AccessTokenCallback = callback;
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                conn.Credential = sqlCredential;
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                conn.ConnectionString = cleartextCredsConnStr;
+            }
+
+            //Failures
+            using (var conn = new SqlConnection(sspiConnStr))
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.AccessTokenCallback = callback;
+                });
+            }
+
+            using (var conn = new SqlConnection(authConnStr))
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.AccessTokenCallback = callback;
+                });
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.ConnectionString = sspiConnStr;
+                });
+            }
+
+            using (var conn = new SqlConnection()
+            {
+                AccessTokenCallback = callback
+            })
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    conn.ConnectionString = authConnStr;
+                });
+            }
         }
     }
 }
