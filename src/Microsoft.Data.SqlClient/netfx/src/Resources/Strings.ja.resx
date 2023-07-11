@@ -4635,4 +4635,13 @@
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
     <value>.NET Framework を対象とする場合、'{0}' プラットフォームはサポートされません。</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
+    <value>AccessTokenCallback が設定されている場合は、AccessToken プロパティを設定できません。</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
+    <value>'Integrated Security' 接続文字列キーワードが 'true' または 'SSPI' に設定されている場合、AccessTokenCallback プロパティを設定できません。</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
+    <value>接続文字列に 'Authentication=Active Directory Default' が指定されている場合、AccessTokenCallback プロパティを設定できません。</value>
+  </data>
 </root>

@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ClassData(typeof(ConnectionStringsProvider))]
         public void IsKerBerosSetupTestAsync(string connectionStr)
         {
-            KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser);
+            KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser, DataTestUtility.KerberosDomainPassword);
             using SqlConnection conn = new(connectionStr);
 
             conn.Open();

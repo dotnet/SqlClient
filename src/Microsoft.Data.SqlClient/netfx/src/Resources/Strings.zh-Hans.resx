@@ -4635,4 +4635,13 @@
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
     <value>面向 .NET Framework 时，不支持 "{0}" 平台。</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
+    <value>如果已设置 AccessTokenCallback，则无法设置 AccessToken 属性。</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
+    <value>如果 "Integrated Security" 连接字符串关键字设置为 "true" 或 "SSPI"，则无法设置 AccessTokenCallback 属性。</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
+    <value>如果在连接字符串中指定了 "Authentication=Active Directory Default"，则无法设置 AccessTokenCallback 属性。</value>
+  </data>
 </root>

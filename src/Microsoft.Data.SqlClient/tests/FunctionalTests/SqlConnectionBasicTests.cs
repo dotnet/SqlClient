@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using System.Reflection;
 using System.Security;
 using System.Threading;
@@ -248,6 +249,32 @@ namespace Microsoft.Data.SqlClient.Tests
             var conn = new SqlConnection(string.Empty, sqlCredential);
 
             Assert.Equal(sqlCredential, conn.Credential);
+        }
+
+        [Fact]
+        public void ConnectionTestWithCultureTH()
+        {
+            CultureInfo savedCulture = Thread.CurrentThread.CurrentCulture;
+            CultureInfo savedUICulture = Thread.CurrentThread.CurrentUICulture;
+
+            try
+            {
+                Thread.CurrentThread.CurrentCulture = new CultureInfo("th-TH");
+                Thread.CurrentThread.CurrentUICulture = new CultureInfo("th-TH");
+
+                using TestTdsServer server = TestTdsServer.StartTestServer();
+                using SqlConnection connection = new SqlConnection(server.ConnectionString);
+                connection.Open();
+                Assert.Equal(ConnectionState.Open, connection.State);
+            }
+            finally
+            {
+                // Restore saved cultures if necessary
+                if (Thread.CurrentThread.CurrentCulture != savedCulture)
+                    Thread.CurrentThread.CurrentCulture = savedCulture;
+                if (Thread.CurrentThread.CurrentUICulture != savedUICulture)
+                    Thread.CurrentThread.CurrentUICulture = savedUICulture;
+            }
         }
 
         [Fact]

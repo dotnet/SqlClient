@@ -4635,4 +4635,13 @@
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
     <value>.NET Framework를 대상으로 지정할 때는 '{0}' 플랫폼이 지원되지 않습니다.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
+    <value>AccessTokenCallback이 설정된 경우 AccessToken 속성을 설정할 수 없습니다.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
+    <value>'Integrated Security' 연결 문자열 키워드가 'true' 또는 'SSPI'로 설정된 경우 AccessTokenCallback 속성을 설정할 수 없습니다.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
+    <value>연결 문자열에 'Authentication=Active Directory Default'가 지정된 경우 AccessTokenCallback 속성을 설정할 수 없습니다.</value>
+  </data>
 </root>
