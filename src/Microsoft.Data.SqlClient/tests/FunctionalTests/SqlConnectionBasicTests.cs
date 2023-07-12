@@ -343,6 +343,8 @@ namespace Microsoft.Data.SqlClient.Tests
                 using TestTdsServer server = TestTdsServer.StartTestServer(false, false, -5);
             });
 
+        }
+
         [Fact]
         public void ConnectionTestWithCultureTH()
         {
