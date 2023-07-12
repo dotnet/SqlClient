@@ -337,7 +337,6 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void ConnectionInvalidTimeoutTest()
         {
-            // Start a server with connection timeout from the inline data.
             Assert.Throws<ArgumentException>(() =>
             {
                 using TestTdsServer server = TestTdsServer.StartTestServer(false, false, -5);
