@@ -15,7 +15,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #endif
     public class SqlDataSourceEnumeratorTest
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows))]
+        private static bool IsEnvironmentAvailable()
+        {
+            ServiceController[] services = ServiceController.GetServices(Environment.MachineName);
+            ServiceController service = services.FirstOrDefault(s => s.ServiceName == "SQLBrowser");
+
+            return DataTestUtility.IsNotUsingManagedSNIOnWindows() &&
+                service != null &&
+                service.Status == ServiceControllerStatus.Running;
+        }
+
+        [ConditionalFact(nameof(IsEnvironmentAvailable))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void SqlDataSourceEnumerator_NativeSNI()
         {

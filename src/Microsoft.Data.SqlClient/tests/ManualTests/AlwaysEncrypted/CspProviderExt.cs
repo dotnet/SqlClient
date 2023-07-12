@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 using (Microsoft.Win32.RegistryKey providerKey = defaultCryptoProvidersRegistryKey.OpenSubKey(subKeyName))
                 {
                     // Get Provider Name and its type
-                    providerName = providerKey.Name.Substring(providerKey.Name.LastIndexOf(@"\") + 1);
+                    providerName = providerKey.Name.Substring(providerKey.Name.LastIndexOf(@"\", StringComparison.Ordinal) + 1);
                     providerType = providerKey.GetValue(@"Type").ToString();
 
                     // Create a certificate from that provider

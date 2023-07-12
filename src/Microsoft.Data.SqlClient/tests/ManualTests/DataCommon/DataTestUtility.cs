@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
         {
-            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;
+            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).GetAwaiter().GetResult();
         }
 
         private static Task<string> AcquireTokenAsync(string authorityURL, string userID, string password) => Task.Run(() =>
@@ -345,6 +345,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsAKVSetupAvailable()
         {
             return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+        }
+
+        public static bool IsTargetReadyForAeWithKeyStore()
+        {
+            return DataTestUtility.AreConnStringSetupForAE()
+#if NET6_0_OR_GREATER
+                // AE tests on Windows will use the Cert Store. On non-Windows, they require AKV.
+                && (OperatingSystem.IsWindows() || DataTestUtility.IsAKVSetupAvailable())
+#endif
+                ;
         }
 
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
@@ -793,7 +803,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         foreach (var key in keys)
                         {
-                            if (cp.Trim().ToLower().StartsWith(key.Trim().ToLower()))
+                            if (cp.Trim().ToLower().StartsWith(key.Trim().ToLower(), StringComparison.Ordinal))
                             {
                                 return cp.Substring(cp.IndexOf('=') + 1);
                             }
@@ -818,7 +828,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         bool removeKey = false;
                         foreach (var keyToRemove in keysToRemove)
                         {
-                            if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower()))
+                            if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower(), StringComparison.Ordinal))
                             {
                                 removeKey = true;
                                 break;
@@ -847,7 +857,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         if (!string.IsNullOrEmpty(key.Trim()))
                         {
-                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
+                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower(), StringComparison.Ordinal))
                             {
                                 res = key.Substring(key.IndexOf('=') + 1).Trim();
                                 break;
@@ -870,22 +880,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (dataSource.Contains(":"))
             {
-                dataSource = dataSource.Substring(dataSource.IndexOf(":") + 1);
+                dataSource = dataSource.Substring(dataSource.IndexOf(":", StringComparison.Ordinal) + 1);
             }
 
             if (dataSource.Contains(","))
             {
-                if (!Int32.TryParse(dataSource.Substring(dataSource.LastIndexOf(",") + 1), out port))
+                if (!Int32.TryParse(dataSource.Substring(dataSource.LastIndexOf(",",StringComparison.Ordinal) + 1), out port))
                 {
                     return false;
                 }
-                dataSource = dataSource.Substring(0, dataSource.IndexOf(",") - 1);
+                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal) - 1);
             }
 
             if (dataSource.Contains("\\"))
             {
-                instanceName = dataSource.Substring(dataSource.LastIndexOf("\\") + 1);
-                dataSource = dataSource.Substring(0, dataSource.LastIndexOf("\\"));
+                instanceName = dataSource.Substring(dataSource.LastIndexOf("\\", StringComparison.Ordinal) + 1);
+                dataSource = dataSource.Substring(0, dataSource.LastIndexOf("\\", StringComparison.Ordinal));
             }
 
             hostname = dataSource;
@@ -912,7 +922,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
-                if (eventSource.Name.StartsWith(Name))
+                if (eventSource.Name.StartsWith(Name, StringComparison.Ordinal))
                 {
                     // Collect all traces for better code coverage
                     EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.All);
@@ -937,15 +947,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Resolves the machine's fully qualified domain name if it is applicable.
         /// </summary>
         /// <returns>Returns FQDN if the client was domain joined otherwise the machine name.</returns>
-        public static string GetMachineFQDN()
+        public static string GetMachineFQDN(string hostname)
         {
             IPGlobalProperties machineInfo = IPGlobalProperties.GetIPGlobalProperties();
             StringBuilder fqdn = new();
-            fqdn.Append(machineInfo.HostName);
-            if (!string.IsNullOrEmpty(machineInfo.DomainName))
+            if (hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                hostname.Equals(machineInfo.HostName, StringComparison.OrdinalIgnoreCase))
             {
-                fqdn.Append(".");
-                fqdn.Append(machineInfo.DomainName);
+                fqdn.Append(machineInfo.HostName);
+                if (!string.IsNullOrEmpty(machineInfo.DomainName))
+                {
+                    fqdn.Append(".");
+                    fqdn.Append(machineInfo.DomainName);
+                }
+            }
+            else
+            {
+                IPHostEntry host = Dns.GetHostEntry(hostname);
+                fqdn.Append(host.HostName);
             }
             return fqdn.ToString();
         }

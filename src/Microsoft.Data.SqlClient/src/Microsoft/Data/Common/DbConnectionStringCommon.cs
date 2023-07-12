@@ -373,7 +373,7 @@ namespace Microsoft.Data.Common
             {
                 for (int i = 0; i < l; i++)
                 {
-                    if (s_supportedAuthenticationModes[i].CompareTo(names[i]) != 0)
+                    if (string.Compare(s_supportedAuthenticationModes[i], names[i], StringComparison.Ordinal) != 0)
                     {
                         listValid = false;
                     }

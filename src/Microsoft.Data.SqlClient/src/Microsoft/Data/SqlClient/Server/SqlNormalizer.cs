@@ -5,6 +5,7 @@
 using System;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -47,12 +48,20 @@ namespace Microsoft.Data.SqlClient.Server
 #if NETFRAMEWORK
         [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
 #endif
-        private FieldInfo[] GetFields(Type t)
+        private FieldInfo[] GetFields(
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)]
+#endif
+            Type t)
         {
             return t.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         }
 
-        internal BinaryOrderedUdtNormalizer(Type t, bool isTopLevelUdt)
+        internal BinaryOrderedUdtNormalizer(
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
+#endif
+            Type t, bool isTopLevelUdt)
         {
             _skipNormalize = false;
             if (_skipNormalize)
@@ -121,11 +130,19 @@ namespace Microsoft.Data.SqlClient.Server
         internal void NormalizeTopObject(object udt, Stream s) => Normalize(null, udt, s);
 
         // Denormalize a top-level udt and return it
-        internal object DeNormalizeTopObject(Type t, Stream s) => DeNormalizeInternal(t, s);
+        internal object DeNormalizeTopObject(
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
+            Type t, Stream s) => DeNormalizeInternal(t, s);
 
         // Prevent inlining so that reflection calls are not moved to caller that may be in a different assembly that may have a different grant set.
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private object DeNormalizeInternal(Type t, Stream s)
+        private object DeNormalizeInternal(
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
+            Type t, Stream s)
         {
             object result = null;
             //if nullable and not the top object, read the null marker
@@ -210,7 +227,11 @@ namespace Microsoft.Data.SqlClient.Server
     {
         protected bool _skipNormalize;
 
-        internal static Normalizer GetNormalizer(Type t)
+        internal static Normalizer GetNormalizer(
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
+#endif
+            Type t)
         {
             Normalizer n = null;
             if (t.IsPrimitive)

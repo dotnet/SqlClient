@@ -12,7 +12,7 @@ namespace System
 {
     public static class AssertExtensions
     {
-        private static bool IsFullFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework");
+        private static bool IsFullFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework", StringComparison.Ordinal);
 
         public static void Throws<T>(Action action, string message)
             where T : Exception
@@ -35,7 +35,7 @@ namespace System
                 IsFullFramework ?
                 netFxParamName : netCoreParamName;
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
+            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native", StringComparison.Ordinal))
                 Assert.Equal(expectedParamName, exception.ParamName);
         }
 
@@ -54,7 +54,7 @@ namespace System
                 IsFullFramework ?
                 netFxParamName : netCoreParamName;
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
+            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native", StringComparison.Ordinal))
                 Assert.Equal(expectedParamName, exception.ParamName);
         }
 
@@ -63,7 +63,7 @@ namespace System
         {
             T exception = Assert.Throws<T>(action);
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
+            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native", StringComparison.Ordinal))
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;
@@ -82,7 +82,7 @@ namespace System
         {
             T exception = Assert.Throws<T>(testCode);
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
+            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native", StringComparison.Ordinal))
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;
@@ -93,7 +93,7 @@ namespace System
         {
             T exception = await Assert.ThrowsAsync<T>(testCode);
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
+            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native", StringComparison.Ordinal))
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;

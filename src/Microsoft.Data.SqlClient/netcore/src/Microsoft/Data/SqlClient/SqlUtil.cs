@@ -2015,10 +2015,6 @@ namespace Microsoft.Data.SqlClient
         {
             return StringsHelper.GetString(Strings.SQL_SSPIGenerateError);
         }
-        internal static string SqlServerBrowserNotAccessible()
-        {
-            return StringsHelper.GetString(Strings.SQL_SqlServerBrowserNotAccessible);
-        }
         internal static string KerberosTicketMissingError()
         {
             return StringsHelper.GetString(Strings.SQL_KerberosTicketMissingError);

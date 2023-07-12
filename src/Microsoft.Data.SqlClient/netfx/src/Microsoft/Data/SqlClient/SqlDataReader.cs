@@ -860,7 +860,7 @@ namespace Microsoft.Data.SqlClient
             }
 
 #if DEBUG
-            if (_stateObj._pendingData)
+            if (_stateObj.HasPendingData)
             {
                 byte token;
                 if (!_stateObj.TryPeekByte(out token))
@@ -1067,7 +1067,7 @@ namespace Microsoft.Data.SqlClient
 #else
                 {
 #endif //DEBUG
-                    if ((!_isClosed) && (parser != null) && (stateObj != null) && (stateObj._pendingData))
+                    if ((!_isClosed) && (parser != null) && (stateObj != null) && (stateObj.HasPendingData))
                     {
 
                         // It is possible for this to be called during connection close on a
@@ -1333,7 +1333,7 @@ namespace Microsoft.Data.SqlClient
         {
             // warning:  Don't check the MetaData property within this function
             // warning:  as it will be a reentrant call
-            while (_parser != null && _stateObj != null && _stateObj._pendingData && !_metaDataConsumed)
+            while (_parser != null && _stateObj != null && _stateObj.HasPendingData && !_metaDataConsumed)
             {
                 if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
                 {
@@ -3473,7 +3473,7 @@ namespace Microsoft.Data.SqlClient
 
                 Debug.Assert(null != _command, "unexpected null command from the data reader!");
 
-                while (_stateObj._pendingData)
+                while (_stateObj.HasPendingData)
                 {
                     byte token;
                     if (!_stateObj.TryPeekByte(out token))
@@ -3563,7 +3563,7 @@ namespace Microsoft.Data.SqlClient
                         moreRows = false;
                         return true;
                 }
-                if (_stateObj._pendingData)
+                if (_stateObj.HasPendingData)
                 {
                     // Consume error's, info's, done's on HasMoreRows, so user obtains error on Read.
                     // Previous bug where Read() would return false with error on the wire in the case
@@ -3620,7 +3620,7 @@ namespace Microsoft.Data.SqlClient
                             moreRows = false;
                             return false;
                         }
-                        if (_stateObj._pendingData)
+                        if (_stateObj.HasPendingData)
                         {
                             if (!_stateObj.TryPeekByte(out b))
                             {
@@ -3964,7 +3964,7 @@ namespace Microsoft.Data.SqlClient
                                 if (moreRows)
                                 {
                                     // read the row from the backend (unless it's an altrow were the marker is already inside the altrow ...)
-                                    while (_stateObj._pendingData)
+                                    while (_stateObj.HasPendingData)
                                     {
                                         if (_altRowStatus != ALTROWSTATUS.AltRow)
                                         {
@@ -3996,7 +3996,7 @@ namespace Microsoft.Data.SqlClient
                                     }
                                 }
 
-                                if (!_stateObj._pendingData)
+                                if (!_stateObj.HasPendingData)
                                 {
                                     if (!TryCloseInternal(false /*closeReader*/))
                                     {
@@ -4020,7 +4020,7 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     // if we are in SingleRow mode, and we've read the first row,
                                     // read the rest of the rows, if any
-                                    while (_stateObj._pendingData && !_sharedState._dataReady)
+                                    while (_stateObj.HasPendingData && !_sharedState._dataReady)
                                     {
                                         if (!_parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady))
                                         {
@@ -4061,7 +4061,7 @@ namespace Microsoft.Data.SqlClient
                         more = false;
 
 #if DEBUG
-                        if ((!_sharedState._dataReady) && (_stateObj._pendingData))
+                        if ((!_sharedState._dataReady) && (_stateObj.HasPendingData))
                         {
                             byte token;
                             if (!_stateObj.TryPeekByte(out token))

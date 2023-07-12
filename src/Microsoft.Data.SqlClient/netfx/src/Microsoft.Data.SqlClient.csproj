@@ -428,6 +428,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionEncryptOption.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionEncryptOption.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionEncryptOptionConverter.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionEncryptOptionConverter.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolGroupProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionPoolGroupProviderInfo.cs</Link>
     </Compile>
