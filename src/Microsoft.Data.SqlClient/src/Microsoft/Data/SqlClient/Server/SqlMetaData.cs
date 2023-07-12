@@ -7,6 +7,7 @@ using System.Data;
 using System.Globalization;
 using System.Data.SqlTypes;
 using Microsoft.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -237,14 +238,22 @@ namespace Microsoft.Data.SqlClient.Server
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedType/*' />
         // udt ctor without tvp extended properties
-        public SqlMetaData(string name, SqlDbType dbType, Type userDefinedType)
+        public SqlMetaData(string name, SqlDbType dbType,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
+            Type userDefinedType)
         {
             Construct(name, dbType, userDefinedType, null, DefaultUseServerDefault, DefaultIsUniqueKey, DefaultColumnSortOrder, DefaultSortOrdinal);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedTypeServerTypeName/*' />
         // udt ctor without tvp extended properties
-        public SqlMetaData(string name, SqlDbType dbType, Type userDefinedType, string serverTypeName)
+        public SqlMetaData(string name, SqlDbType dbType,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
+            Type userDefinedType, string serverTypeName)
         {
             Construct(name, dbType, userDefinedType, serverTypeName, DefaultUseServerDefault, DefaultIsUniqueKey, DefaultColumnSortOrder, DefaultSortOrdinal);
         }
@@ -253,7 +262,10 @@ namespace Microsoft.Data.SqlClient.Server
         // udt ctor
         public SqlMetaData(
             string name, 
-            SqlDbType dbType, 
+            SqlDbType dbType,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType, 
             string serverTypeName,
             bool useServerDefault, 
@@ -345,6 +357,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale, 
             long locale, 
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType
         ) : this(
             name, 
@@ -373,6 +388,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale, 
             long localeId, 
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType, 
             bool useServerDefault,
             bool isUniqueKey, 
@@ -874,7 +892,10 @@ namespace Microsoft.Data.SqlClient.Server
         // Construction for Udt type
         private void Construct(
             string name, 
-            SqlDbType dbType, 
+            SqlDbType dbType,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType, 
             string serverTypeName, 
             bool useServerDefault,
