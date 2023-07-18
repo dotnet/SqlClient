@@ -7000,6 +7000,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Localization Testing of Pipeline.
+        /// </summary>
+        internal static string Localization_Testing {
+            get {
+                return ResourceManager.GetString("Localization Testing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The collection name &apos;{0}&apos; matches at least two collections with the same name but with different case, but does not match any of them exactly..
         /// </summary>
         internal static string MDF_AmbiguousCollectionName {
