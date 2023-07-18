@@ -38,7 +38,8 @@ namespace System {
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
-                if (object.ReferenceEquals(resourceMan, null)) {
+                if (object.ReferenceEquals(resourceMan, null))
+                {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", typeof(Strings).Assembly);
                     resourceMan = temp;
                 }
@@ -6262,6 +6263,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} returned {1}..
+        /// </summary>
+        internal static string event_OperationReturnedSomething {
+            get {
+                return ResourceManager.GetString("event_OperationReturnedSomething", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed. The token received from SQL Server is expired. Contact Customer Support Services..
         /// </summary>
         internal static string ExpiredAttestationToken {
@@ -6982,6 +6992,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to LocalDB is not supported on this platform..
+        /// </summary>
+        internal static string LocalDBNotSupported {
+            get {
+                return ResourceManager.GetString("LocalDBNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The collection name &apos;{0}&apos; matches at least two collections with the same name but with different case, but does not match any of them exactly..
         /// </summary>
         internal static string MDF_AmbiguousCollectionName {
@@ -7171,11 +7190,119 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Protocol error: A received message contains a valid signature but it was not encrypted as required by the effective Protection Level..
+        /// </summary>
+        internal static string net_auth_message_not_encrypted {
+            get {
+                return ResourceManager.GetString("net_auth_message_not_encrypted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Insufficient buffer space. Required: {0} Actual: {1}..
+        /// </summary>
+        internal static string net_context_buffer_too_small {
+            get {
+                return ResourceManager.GetString("net_context_buffer_too_small", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to GSSAPI operation failed with status: {0} (Minor status: {1})..
+        /// </summary>
+        internal static string net_gssapi_operation_failed {
+            get {
+                return ResourceManager.GetString("net_gssapi_operation_failed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to GSSAPI operation failed with error - {0} ({1})..
+        /// </summary>
+        internal static string net_gssapi_operation_failed_detailed {
+            get {
+                return ResourceManager.GetString("net_gssapi_operation_failed_detailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified value is not valid in the &apos;{0}&apos; enumeration..
         /// </summary>
         internal static string net_invalid_enum {
             get {
                 return ResourceManager.GetString("net_invalid_enum", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} failed with error {1}..
+        /// </summary>
+        internal static string net_log_operation_failed_with_error {
+            get {
+                return ResourceManager.GetString("net_log_operation_failed_with_error", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This method is not implemented by this class..
+        /// </summary>
+        internal static string net_MethodNotImplementedException {
+            get {
+                return ResourceManager.GetString("net_MethodNotImplementedException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No support for channel binding on operating systems other than Windows..
+        /// </summary>
+        internal static string net_nego_channel_binding_not_supported {
+            get {
+                return ResourceManager.GetString("net_nego_channel_binding_not_supported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Target name should be non empty if default credentials are passed..
+        /// </summary>
+        internal static string net_nego_not_supported_empty_target_with_defaultcreds {
+            get {
+                return ResourceManager.GetString("net_nego_not_supported_empty_target_with_defaultcreds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Requested protection level is not supported with the GSSAPI implementation currently installed..
+        /// </summary>
+        internal static string net_nego_protection_level_not_supported {
+            get {
+                return ResourceManager.GetString("net_nego_protection_level_not_supported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Server implementation is not supported..
+        /// </summary>
+        internal static string net_nego_server_not_supported {
+            get {
+                return ResourceManager.GetString("net_nego_server_not_supported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to NTLM authentication is not possible with default credentials on this platform..
+        /// </summary>
+        internal static string net_ntlm_not_possible_default_cred {
+            get {
+                return ResourceManager.GetString("net_ntlm_not_possible_default_cred", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The requested security package is not supported..
+        /// </summary>
+        internal static string net_securitypackagesupport {
+            get {
+                return ResourceManager.GetString("net_securitypackagesupport", resourceCulture);
             }
         }
         
@@ -8704,6 +8831,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Incorrect physicalConnection type..
+        /// </summary>
+        internal static string SNI_IncorrectPhysicalConnectionType {
+            get {
+                return ResourceManager.GetString("SNI_IncorrectPhysicalConnectionType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The &apos;{0}&apos; platform is not supported when targeting .NET Framework..
         /// </summary>
         internal static string SNI_PlatformNotSupportedNetFx {
@@ -9397,6 +9533,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Type {0} is not supported on this platform..
+        /// </summary>
+        internal static string SQL_DbTypeNotSupportedOnThisPlatform {
+            get {
+                return ResourceManager.GetString("SQL_DbTypeNotSupportedOnThisPlatform", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
         /// </summary>
         internal static string SQL_DeviceFlowWithUsernamePassword {
@@ -9537,6 +9682,15 @@ namespace System {
         internal static string SQL_FatalTimeout {
             get {
                 return ResourceManager.GetString("SQL_FatalTimeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Globalization Invariant Mode is not supported..
+        /// </summary>
+        internal static string SQL_GlobalizationInvariantModeNotSupported {
+            get {
+                return ResourceManager.GetString("SQL_GlobalizationInvariantModeNotSupported", resourceCulture);
             }
         }
         
@@ -9721,6 +9875,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot authenticate using Kerberos. Ensure Kerberos has been initialized on the client with &apos;kinit&apos; and a Service Principal Name has been registered for the SQL Server to allow Kerberos authentication..
+        /// </summary>
+        internal static string SQL_KerberosTicketMissingError {
+            get {
+                return ResourceManager.GetString("SQL_KerberosTicketMissingError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The connection does not support MultipleActiveResultSets..
         /// </summary>
         internal static string SQL_MarsUnsupportedOnConnection {
@@ -9771,6 +9934,15 @@ namespace System {
         internal static string SQL_NestedTransactionScopesNotSupported {
             get {
                 return ResourceManager.GetString("SQL_NestedTransactionScopesNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The keyword &apos;Network Library&apos; is not supported on this platform, prefix the &apos;Data Source&apos; with the protocol desired instead (&apos;tcp:&apos; for a TCP connection, or &apos;np:&apos; for a Named Pipe connection)..
+        /// </summary>
+        internal static string SQL_NetworkLibraryNotSupported {
+            get {
+                return ResourceManager.GetString("SQL_NetworkLibraryNotSupported", resourceCulture);
             }
         }
         
@@ -10153,6 +10325,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Socket did not throw expected &apos;{0}&apos; with error code &apos;{1}&apos;..
+        /// </summary>
+        internal static string SQL_SocketDidNotThrow {
+            get {
+                return ResourceManager.GetString("SQL_SocketDidNotThrow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to SqlCommand.DeriveParameters failed because the SqlCommand.CommandText property value is an invalid multipart name.
         /// </summary>
         internal static string SQL_SqlCommandCommandText {
@@ -10293,6 +10474,15 @@ namespace System {
         internal static string SQL_StreamWriteNotSupported {
             get {
                 return ResourceManager.GetString("SQL_StreamWriteNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Not supported in .Net Standard 2.0..
+        /// </summary>
+        internal static string SQL_TDS8_NotSupported_Netstandard2_0 {
+            get {
+                return ResourceManager.GetString("SQL_TDS8_NotSupported_Netstandard2_0", resourceCulture);
             }
         }
         
@@ -10522,11 +10712,47 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The server is attempting to use a feature that is not supported on this platform..
+        /// </summary>
+        internal static string SQL_UnsupportedFeature {
+            get {
+                return ResourceManager.GetString("SQL_UnsupportedFeature", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The keyword &apos;{0}&apos; is not supported on this platform..
+        /// </summary>
+        internal static string SQL_UnsupportedKeyword {
+            get {
+                return ResourceManager.GetString("SQL_UnsupportedKeyword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to SQL authentication method &apos;{0}&apos; is not supported..
         /// </summary>
         internal static string SQL_UnsupportedSqlAuthenticationMethod {
             get {
                 return ResourceManager.GetString("SQL_UnsupportedSqlAuthenticationMethod", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The currently loaded System.Transactions.dll does not support Global Transactions..
+        /// </summary>
+        internal static string SQL_UnsupportedSysTxVersion {
+            get {
+                return ResourceManager.GetString("SQL_UnsupportedSysTxVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Received an unsupported token &apos;{0}&apos; while reading data from the server..
+        /// </summary>
+        internal static string SQL_UnsupportedToken {
+            get {
+                return ResourceManager.GetString("SQL_UnsupportedToken", resourceCulture);
             }
         }
         
@@ -10572,6 +10798,15 @@ namespace System {
         internal static string SQL_XmlReaderNotSupportOnColumnType {
             get {
                 return ResourceManager.GetString("SQL_XmlReaderNotSupportOnColumnType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exception occurred while trying to set the AppContext Switch &apos;{0}&apos;={1}..
+        /// </summary>
+        internal static string SqlAppContextSwitchManager_InvalidValue {
+            get {
+                return ResourceManager.GetString("SqlAppContextSwitchManager_InvalidValue", resourceCulture);
             }
         }
         
@@ -11022,6 +11257,15 @@ namespace System {
         internal static string SqlFileStream_InvalidPath {
             get {
                 return ResourceManager.GetString("SqlFileStream_InvalidPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SqlFileStream is not supported on this platform..
+        /// </summary>
+        internal static string SqlFileStream_NotSupported {
+            get {
+                return ResourceManager.GetString("SqlFileStream_NotSupported", resourceCulture);
             }
         }
         
@@ -11976,6 +12220,15 @@ namespace System {
         internal static string SqlUdtReason_TypeNotPublic {
             get {
                 return ResourceManager.GetString("SqlUdtReason_TypeNotPublic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;{0}&apos; is not a supported handle type..
+        /// </summary>
+        internal static string SSPIInvalidHandleType {
+            get {
+                return ResourceManager.GetString("SSPIInvalidHandleType", resourceCulture);
             }
         }
         

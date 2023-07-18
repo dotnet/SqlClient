@@ -44,7 +44,7 @@
     <SqlServerSourceCode>$(ProjectDir)Microsoft.SqlServer.Server\</SqlServerSourceCode>
     <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
     <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
-    <NetFxResources>$(ManagedSourceCode)netfx\src\Resources\</NetFxResources>
+    <NetFxResources>$(ManagedSourceCode)src\Resources\</NetFxResources>
     <AddOnsPath>$(ManagedSourceCode)add-ons\</AddOnsPath>
     <SqlServerSource>$(RepoRoot)src\Microsoft.SqlServer.Server\</SqlServerSource>
     <ObjFolder>$(Artifacts)obj\</ObjFolder>
