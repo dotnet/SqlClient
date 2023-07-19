@@ -4734,4 +4734,7 @@
   <data name="ZZZ_Test2" xml:space="preserve">
     <value>Test string 2</value>
   </data>
+  <data name="ZZZ_Test3" xml:space="preserve">
+    <value>Test string 3</value>
+  </data>
 </root>
