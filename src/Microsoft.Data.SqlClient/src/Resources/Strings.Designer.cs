@@ -13895,5 +13895,14 @@ namespace System {
                 return ResourceManager.GetString("ZZZ_Test", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Test string 2.
+        /// </summary>
+        internal static string ZZZ_Test2 {
+            get {
+                return ResourceManager.GetString("ZZZ_Test2", resourceCulture);
+            }
+        }
     }
 }
