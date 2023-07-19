@@ -4728,7 +4728,7 @@
   <data name="net_ntlm_not_possible_default_cred" xml:space="preserve">
     <value>NTLM authentication is not possible with default credentials on this platform.</value>
   </data>
-  <data name="Localization Testing" xml:space="preserve">
-    <value>Localization Testing of Pipeline</value>
+  <data name="ZZZ_Test" xml:space="preserve">
+    <value>Test string</value>
   </data>
 </root>
