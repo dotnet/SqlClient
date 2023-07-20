@@ -150,7 +150,6 @@ namespace Microsoft.Data.SqlClient
             SNINativeMethodWrapper.ConsumerInfo myInfo,
             string serverName,
             byte[] spnBuffer,
-            bool ignoreSniOpenTimeout,
             int timeout,
             out byte[] instanceName,
             bool flushCache,
@@ -174,13 +173,14 @@ namespace Microsoft.Data.SqlClient
             {
                 _fSync = fSync;
                 instanceName = new byte[256]; // Size as specified by netlibs.
-                if (ignoreSniOpenTimeout)
-                {
-                    // UNDONE: ITEM12001110 (DB Mirroring Reconnect) Old behavior of not truly honoring timeout presevered 
-                    //  for non-failover scenarios to avoid breaking changes as part of a QFE.  Consider fixing timeout
-                    //  handling in next full release and removing ignoreSniOpenTimeout parameter.
-                    timeout = Timeout.Infinite; // -1 == native SNIOPEN_TIMEOUT_VALUE / INFINITE
-                }
+                // Option ignoreSniOpenTimeout is no longer available
+                //if (ignoreSniOpenTimeout)
+                //{
+                //    // UNDONE: ITEM12001110 (DB Mirroring Reconnect) Old behavior of not truly honoring timeout presevered 
+                //    //  for non-failover scenarios to avoid breaking changes as part of a QFE.  Consider fixing timeout
+                //    //  handling in next full release and removing ignoreSniOpenTimeout parameter.
+                //    timeout = Timeout.Infinite; // -1 == native SNIOPEN_TIMEOUT_VALUE / INFINITE
+                //}
 
 #if NETFRAMEWORK
                 int transparentNetworkResolutionStateNo = (int)transparentNetworkResolutionState;

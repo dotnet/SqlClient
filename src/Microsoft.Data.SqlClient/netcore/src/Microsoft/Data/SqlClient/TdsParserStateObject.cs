@@ -198,7 +198,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void CreatePhysicalSNIHandle(
             string serverName,
-            bool ignoreSniOpenTimeout,
             long timerExpire,
             out byte[] instanceName,
             ref byte[][] spnBuffer,
