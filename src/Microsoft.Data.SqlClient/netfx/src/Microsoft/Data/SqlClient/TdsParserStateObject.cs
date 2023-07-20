@@ -163,60 +163,38 @@ namespace Microsoft.Data.SqlClient
         // cancel request.
         internal void Cancel(int objectID)
         {
-            bool hasLock = false;
-            try
+            // only change state if it is Unset, so don't check the return value
+            Interlocked.CompareExchange(ref _cancelState, CancelState.Cancelled, CancelState.Unset);
+
+            // don't allow objectID -1 since it is reserved for 'not associated with a command'
+            // yes, the 2^32-1 comand won't cancel - but it also won't cancel when we don't want it
+            if ((_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken)
+                && (objectID == _allowObjectID) && (objectID != -1) && _pendingData && !_attentionSent)
             {
-                // Keep looping until we either grabbed the lock (and therefore sent attention) or the connection closes\breaks
-                while ((!hasLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
+                bool hasParserLock = false;
+                // Keep looping until we have the parser lock (and so are allowed to write), or the connection closes\breaks
+                while ((!hasParserLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
                 {
-                    Monitor.TryEnter(this, WaitForCancellationLockPollTimeout, ref hasLock);
-                    if (hasLock)
-                    { // Lock for the time being - since we need to synchronize the attention send.
-                      // This lock is also protecting against concurrent close and async continuations
-
-                        // don't allow objectID -1 since it is reserved for 'not associated with a command'
-                        // yes, the 2^32-1 comand won't cancel - but it also won't cancel when we don't want it
-                        if ((!_cancelled) && (objectID == _allowObjectID) && (objectID != -1))
+                    try
+                    {
+                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false, timeout: WaitForCancellationLockPollTimeout, lockTaken: ref hasParserLock);
+                        if (hasParserLock)
                         {
-                            _cancelled = true;
-
-                            if (HasPendingData && !_attentionSent)
-                            {
-                                bool hasParserLock = false;
-                                // Keep looping until we have the parser lock (and so are allowed to write), or the connection closes\breaks
-                                while ((!hasParserLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
-                                {
-                                    try
-                                    {
-                                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false, timeout: WaitForCancellationLockPollTimeout, lockTaken: ref hasParserLock);
-                                        if (hasParserLock)
-                                        {
-                                            _parser.Connection.ThreadHasParserLockForClose = true;
-                                            SendAttention();
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        if (hasParserLock)
-                                        {
-                                            if (_parser.Connection.ThreadHasParserLockForClose)
-                                            {
-                                                _parser.Connection.ThreadHasParserLockForClose = false;
-                                            }
-                                            _parser.Connection._parserLock.Release();
-                                        }
-                                    }
-                                }
-                            }
+                            _parser.Connection.ThreadHasParserLockForClose = true;
+                            SendAttention();
                         }
                     }
-                }
-            }
-            finally
-            {
-                if (hasLock)
-                {
-                    Monitor.Exit(this);
+                    finally
+                    {
+                        if (hasParserLock)
+                        {
+                            if (_parser.Connection.ThreadHasParserLockForClose)
+                            {
+                                _parser.Connection.ThreadHasParserLockForClose = false;
+                            }
+                            _parser.Connection._parserLock.Release();
+                        }
+                    }
                 }
             }
         }
@@ -229,7 +207,7 @@ namespace Microsoft.Data.SqlClient
             lock (this)
             {
                 // Reset cancel state.
-                _cancelled = false;
+                _cancelState = CancelState.Unset;
                 _allowObjectID = -1;
 
                 if (_attentionSent)
@@ -2443,7 +2421,7 @@ namespace Microsoft.Data.SqlClient
             byte packetNumber = _outputPacketNumber;
 
             // Set Status byte based whether this is end of message or not
-            bool willCancel = (_cancelled) && (_parser._asyncWrite);
+            bool willCancel = (_cancelState != CancelState.Unset) && (_parser._asyncWrite);
             if (willCancel)
             {
                 status = TdsEnums.ST_EOM | TdsEnums.ST_IGNORE;
@@ -2492,7 +2470,7 @@ namespace Microsoft.Data.SqlClient
 
         private void CancelWritePacket()
         {
-            Debug.Assert(_cancelled, "Should not call CancelWritePacket if _cancelled is not set");
+            Debug.Assert(_cancelState != CancelState.Unset, "Should not call CancelWritePacket if _cancelled is not set");
 
             _parser.Connection.ThreadHasParserLockForClose = true;      // In case of error, let the connection know that we are holding the lock
             try
@@ -3164,7 +3142,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(_delayedWriteAsyncCallbackException == null, "StateObj has an unobserved exceptions from an async write");
                 // Attention\Cancellation\Timeouts
                 Debug.Assert(!HasReceivedAttention && !_attentionSent && !_attentionSending, $"StateObj is still dealing with attention: Sent: {_attentionSent}, Received: {HasReceivedAttention}, Sending: {_attentionSending}");
-                Debug.Assert(!_cancelled, "StateObj still has cancellation set");
+                Debug.Assert(_cancelState == CancelState.Unset, "StateObj still has cancellation set");
                 Debug.Assert(_timeoutState == TimeoutState.Stopped, "StateObj still has internal timeout set");
                 // Errors and Warnings
                 Debug.Assert(!_hasErrorOrWarning, "StateObj still has stored errors or warnings");

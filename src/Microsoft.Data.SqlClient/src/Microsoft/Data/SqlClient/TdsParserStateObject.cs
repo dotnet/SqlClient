@@ -23,6 +23,15 @@ namespace Microsoft.Data.SqlClient
         private static int s_objectTypeCount; // EventSource counter
         internal readonly int _objectID = Interlocked.Increment(ref s_objectTypeCount);
 
+        private static class CancelState
+        {
+            public const int Unset = 0;
+            public const int Closed = 1;
+            public const int Cancelled = 2;
+        }
+
+        private int _cancelState;
+
         [Flags]
         internal enum SnapshottedStateFlags : byte
         {
@@ -158,7 +167,6 @@ namespace Microsoft.Data.SqlClient
         // 2) post first packet write, but before session return - a call to cancel will send an
         //    attention to the server
         // 3) post session close - no attention is allowed
-        private bool _cancelled;
         private const int WaitForCancellationLockPollTimeout = 100;
 
         // Cache the transaction for which this command was executed so upon completion we can
@@ -787,10 +795,10 @@ namespace Microsoft.Data.SqlClient
         {
             lock (this)
             {
-                if (_cancelled && 1 == _outputPacketNumber)
+                if (_cancelState != CancelState.Unset && 1 == _outputPacketNumber)
                 {
                     ResetBuffer();
-                    _cancelled = false;
+                    _cancelState = CancelState.Unset;
                     throw SQL.OperationCancelled();
                 }
                 else
