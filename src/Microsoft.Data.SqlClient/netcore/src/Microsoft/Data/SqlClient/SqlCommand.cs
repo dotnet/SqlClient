@@ -97,6 +97,30 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal sealed class ExecuteXmlReaderAsyncCallContext : AAsyncCallContext<SqlCommand, XmlReader, CancellationTokenRegistration>
+        {
+            public Guid OperationID;
+
+            public SqlCommand Command => _owner;
+            public TaskCompletionSource<XmlReader> TaskCompletionSource => _source;
+
+            public void Set(SqlCommand command, TaskCompletionSource<XmlReader> source, CancellationTokenRegistration disposable, Guid operationID)
+            {
+                base.Set(command, source, disposable);
+                OperationID = operationID;
+            }
+
+            protected override void Clear()
+            {
+                OperationID = default;
+            }
+
+            protected override void AfterCleared(SqlCommand owner)
+            {
+                owner?.SetCachedCommandExecuteXmlReaderContext(this);
+            }
+        }
+
         private CommandType _commandType;
         private int? _commandTimeout;
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
@@ -2779,6 +2803,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private void SetCachedCommandExecuteXmlReaderContext(ExecuteXmlReaderAsyncCallContext instance)
+        {
+            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext, instance, null);
+            }
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken) =>
             // Do not use retry logic here as internal call to ExecuteReaderAsync handles retry logic.
@@ -2907,35 +2939,44 @@ namespace Microsoft.Data.SqlClient
                 registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
             }
 
+            ExecuteXmlReaderAsyncCallContext context = null;
+            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                context = Interlocked.Exchange(ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext, null);
+            }
+            if (context is null)
+            {
+                context = new ExecuteXmlReaderAsyncCallContext();
+            }
+            context.Set(this, source, registration, operationId);
+
+
             Task<XmlReader> returnedTask = source.Task;
             try
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
-                Task<XmlReader>.Factory.FromAsync(BeginExecuteXmlReaderAsync, EndExecuteXmlReaderAsync, null)
-                    .ContinueWith((Task<XmlReader> task) =>
+                Task<XmlReader>.Factory.FromAsync(
+                    beginMethod: static (AsyncCallback callback, object stateObject) => // with c# 10/NET6 add [StackTraceHidden] to this
                     {
-                        registration.Dispose();
-                        if (task.IsFaulted)
-                        {
-                            Exception e = task.Exception.InnerException;
-                            s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                            source.SetException(e);
-                        }
-                        else
-                        {
-                            s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                            if (task.IsCanceled)
-                            {
-                                source.SetCanceled();
-                            }
-                            else
-                            {
-                                source.SetResult(task.Result);
-                            }
- 
-                        }
-                    }, 
+                        return ((ExecuteXmlReaderAsyncCallContext)stateObject).Command.BeginExecuteXmlReaderAsync(callback, stateObject);
+                    },
+                    endMethod: static (IAsyncResult asyncResult) => // with c# 10/NET6 add [StackTraceHidden] to this
+                    {
+                        return ((ExecuteXmlReaderAsyncCallContext)asyncResult.AsyncState).Command.EndExecuteXmlReaderAsync(asyncResult);
+                    },
+                    state: context
+                ).ContinueWith(
+                    static (Task<XmlReader> task) =>
+                    {
+                        ExecuteXmlReaderAsyncCallContext context = (ExecuteXmlReaderAsyncCallContext)task.AsyncState;
+                        SqlCommand command = context.Command;
+                        Guid operationId = context.OperationID;
+                        TaskCompletionSource<XmlReader> source = context.TaskCompletionSource;
+                        context.Dispose();
+
+                        command.CleanupAfterExecuteXmlReaderAsync(task, source, operationId);
+                    },
                     TaskScheduler.Default
                 );
             }
@@ -2946,6 +2987,28 @@ namespace Microsoft.Data.SqlClient
             }
 
             return returnedTask;
+        }
+
+        private void CleanupAfterExecuteXmlReaderAsync(Task<XmlReader> task, TaskCompletionSource<XmlReader> source, Guid operationId)
+        {
+            if (task.IsFaulted)
+            {
+                Exception e = task.Exception.InnerException;
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                source.SetException(e);
+            }
+            else
+            {
+                if (task.IsCanceled)
+                {
+                    source.SetCanceled();
+                }
+                else
+                {
+                    source.SetResult(task.Result);
+                }
+                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RegisterColumnEncryptionKeyStoreProvidersOnCommand/*' />
