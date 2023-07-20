@@ -18,11 +18,12 @@ This update brings the below changes over the previous release:
 
 - Fixed `SqlDataAdapter.Fill` and configurable retry logic issue on .NET Framework. [#2084](https://github.com/dotnet/SqlClient/pull/2084)
 - Fixed `SqlConnectionEncryptOption` type conversion by introducing the `SqlConnectionEncryptOptionConverter` attribute using **appsettings.json** files. [#2057](https://github.com/dotnet/SqlClient/pull/2057)
-- Fixed th-TH culture info issue on Managed SNI. [#2066](https://github.com/dotnet/SqlClient/pull/2066), [#2068](https://github.com/dotnet/SqlClient/pull/2068)
+- Fixed th-TH culture info issue on Managed SNI. [#2066](https://github.com/dotnet/SqlClient/pull/2066)
 
 ### Changed
 
 - Removed `ignoreSniOpenTimeout` in open connection process on Windows. [#2067](https://github.com/dotnet/SqlClient/pull/2067)
+- Enforcing ordinal for `StringComparison`. [#2068](https://github.com/dotnet/SqlClient/pull/2068)
 - Code health improvements: [#1959](https://github.com/dotnet/SqlClient/pull/1959), [#2071](https://github.com/dotnet/SqlClient/pull/2071), [#2073](https://github.com/dotnet/SqlClient/pull/2073), [#2088](https://github.com/dotnet/SqlClient/pull/2088)
 
 ## [Preview Release 5.2.0-preview2.23159.1] - 2023-06-08
