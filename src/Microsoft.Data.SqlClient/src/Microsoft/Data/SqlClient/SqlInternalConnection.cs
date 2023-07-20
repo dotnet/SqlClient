@@ -29,6 +29,7 @@ namespace Microsoft.Data.SqlClient
 
 #if NETCOREAPP || NETSTANDARD
         internal SqlCommand.ExecuteReaderAsyncCallContext CachedCommandExecuteReaderAsyncContext;
+        internal SqlCommand.ExecuteNonQueryAsyncCallContext CachedCommandExecuteNonQueryAsyncContext;
         internal SqlDataReader.Snapshot CachedDataReaderSnapshot;
         internal SqlDataReader.IsDBNullAsyncCallContext CachedDataReaderIsDBNullContext;
         internal SqlDataReader.ReadAsyncCallContext CachedDataReaderReadAsyncContext;

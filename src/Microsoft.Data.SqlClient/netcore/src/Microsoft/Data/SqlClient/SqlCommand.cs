@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient
 
             protected override void AfterCleared(SqlCommand owner)
             {
-            
+                owner?.SetCachedCommandExecuteNonQueryAsyncContext(this);
             }
         }
 
@@ -2597,41 +2597,27 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 Task<int>.Factory.FromAsync(
-                    static (AsyncCallback callback, object stateObject) => ((ExecuteNonQueryAsyncCallContext)stateObject).Command.BeginExecuteNonQueryAsync(callback, stateObject),
-                    static (IAsyncResult result) => ((ExecuteNonQueryAsyncCallContext)result.AsyncState).Command.EndExecuteNonQueryAsync(result),
-                    state: context
-                ).ContinueWith(
-                    static (Task<int> task, object state) =>
+                    beginMethod: static (AsyncCallback callback, object stateObject) => // with c# 10/NET6 add [StackTraceHidden] to this
                     {
-                        ExecuteNonQueryAsyncCallContext context = (ExecuteNonQueryAsyncCallContext)state;
-
-                        Guid operationId = context.OperationID;
-                        SqlCommand command = context.Command;
-                        TaskCompletionSource<int> source = context.TaskCompletionSource;
-
-                        context.Dispose();
-                        context = null;
-
-                        if (task.IsFaulted)
-                        {
-                            Exception e = task.Exception.InnerException;
-                            s_diagnosticListener.WriteCommandError(operationId, command, command._transaction, e);
-                            source.SetException(e);
-                        }
-                        else
-                        {
-                            if (task.IsCanceled)
-                            {
-                                source.SetCanceled();
-                            }
-                            else
-                            {
-                                source.SetResult(task.Result);
-                            }
-                            s_diagnosticListener.WriteCommandAfter(operationId, command, command._transaction);
-                        }
+                        return ((ExecuteNonQueryAsyncCallContext)stateObject).Command.BeginExecuteNonQueryAsync(callback, stateObject);
                     },
-                    state: context,
+                    endMethod: static (IAsyncResult asyncResult) => // with c# 10/NET6 add [StackTraceHidden] to this
+                    {
+                        return ((ExecuteNonQueryAsyncCallContext)asyncResult.AsyncState).Command.EndExecuteNonQueryAsync(asyncResult);
+                    },
+                    state: context
+                )
+                .ContinueWith(
+                    static (Task<int> task) => // with c# 10/NET6 add [StackTraceHidden] to this
+                    {
+                        ExecuteNonQueryAsyncCallContext context = (ExecuteNonQueryAsyncCallContext)task.AsyncState;
+                        SqlCommand command = context.Command;
+                        Guid operationId = context.OperationID;
+                        TaskCompletionSource<int> source = context.TaskCompletionSource;
+                        context.Dispose();
+
+                        command.CleanupAfterExecuteNonQueryAsync(task, source, operationId);
+                    },
                     scheduler: TaskScheduler.Default
                 );
             }
@@ -2643,6 +2629,28 @@ namespace Microsoft.Data.SqlClient
             }
 
             return returnedTask;
+        }
+
+        private void CleanupAfterExecuteNonQueryAsync(Task<int> task, TaskCompletionSource<int> source, Guid operationId)
+        {
+            if (task.IsFaulted)
+            {
+                Exception e = task.Exception.InnerException;
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                source.SetException(e);
+            }
+            else
+            {
+                if (task.IsCanceled)
+                {
+                    source.SetCanceled();
+                }
+                else
+                {
+                    source.SetResult(task.Result);
+                }
+                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
@@ -2760,6 +2768,14 @@ namespace Microsoft.Data.SqlClient
             if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
             {
                 Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext, instance, null);
+            }
+        }
+
+        private void SetCachedCommandExecuteNonQueryAsyncContext(ExecuteNonQueryAsyncCallContext instance)
+        {
+            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteNonQueryAsyncContext, instance, null);
             }
         }
 
