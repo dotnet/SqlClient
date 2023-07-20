@@ -36,12 +36,6 @@ namespace Microsoft.Data.SqlClient
         private const int MaxRPCNameLength = 1046;
         internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount); private string _commandText;
 
-        private static readonly Func<SqlCommand, IAsyncResult, bool, string, object> s_internalEndExecuteNonQuery = InternalEndExecuteNonQueryCallback;
-        private static readonly Func<SqlCommand, IAsyncResult, bool, string, object> s_internalEndExecuteReader = InternalEndExecuteReaderCallback;
-        private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteReaderInternal = BeginExecuteReaderInternalCallback;
-        private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteXmlReaderInternal = BeginExecuteXmlReaderInternalCallback;
-        private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteNonQueryInternal = BeginExecuteNonQueryInternalCallback;
-
         internal sealed class ExecuteReaderAsyncCallContext : AAsyncCallContext<SqlCommand, SqlDataReader, CancellationTokenRegistration>
         {
             public Guid OperationID;
@@ -1328,7 +1322,27 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, s_internalEndExecuteNonQuery, s_beginExecuteNonQueryInternal, nameof(EndExecuteNonQuery)))
+                if (
+                    !TriggerInternalEndAndRetryIfNecessary(
+                        behavior, 
+                        stateObject, 
+                        timeout, 
+                        usedCache, 
+                        inRetry, 
+                        asyncWrite, 
+                        globalCompletion, 
+                        localCompletion,
+                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
+                        {
+                            return command.InternalEndExecuteNonQuery(asyncResult, isInternal, endMethod);
+                        },
+                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite) =>
+                        {
+                            return command.BeginExecuteNonQueryInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
+                        },
+                        nameof(EndExecuteNonQuery)
+                    )
+                )
                 {
                     globalCompletion = localCompletion;
                 }
@@ -1337,7 +1351,7 @@ namespace Microsoft.Data.SqlClient
                 if (callback != null)
                 {
                     globalCompletion.Task.ContinueWith(
-                        static (task, state) => ((AsyncCallback)state)(task),
+                        static (Task<object> task, object state) => ((AsyncCallback)state)(task),
                         state: callback
                     );
                 }
@@ -1838,7 +1852,27 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, s_internalEndExecuteReader, s_beginExecuteXmlReaderInternal, endMethod: nameof(EndExecuteXmlReader)))
+                if (
+                    !TriggerInternalEndAndRetryIfNecessary(
+                        behavior, 
+                        stateObject, 
+                        timeout, 
+                        usedCache, 
+                        inRetry, 
+                        asyncWrite, 
+                        globalCompletion, 
+                        localCompletion,
+                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
+                        {
+                            return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
+                        },
+                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite) =>
+                        {
+                            return command.BeginExecuteXmlReaderInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
+                        },
+                        endMethod: nameof(EndExecuteXmlReader)
+                    )
+                )
                 {
                     globalCompletion = localCompletion;
                 }
@@ -1847,7 +1881,7 @@ namespace Microsoft.Data.SqlClient
                 if (callback != null)
                 {
                     localCompletion.Task.ContinueWith(
-                        static (task, state) => ((AsyncCallback)state)(task),
+                        static (Task<object> task, object state) => ((AsyncCallback)state)(task),
                         state: callback
                     );
                 }
@@ -2264,7 +2298,27 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, s_internalEndExecuteReader, s_beginExecuteReaderInternal, nameof(EndExecuteReader)))
+                if (
+                    !TriggerInternalEndAndRetryIfNecessary(
+                        behavior, 
+                        stateObject, 
+                        timeout, 
+                        usedCache, 
+                        inRetry, 
+                        asyncWrite, 
+                        globalCompletion, 
+                        localCompletion,
+                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
+                        {
+                            return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
+                        },
+                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite) =>
+                        {
+                            return command.BeginExecuteReaderInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
+                        },
+                        nameof(EndExecuteReader)
+                    )
+                )
                 {
                     globalCompletion = localCompletion;
                 }
@@ -2273,7 +2327,7 @@ namespace Microsoft.Data.SqlClient
                 if (callback != null)
                 {
                     globalCompletion.Task.ContinueWith(
-                        static (task, state) => ((AsyncCallback)state)(task),
+                        static (Task<object> task, object state) => ((AsyncCallback)state)(task),
                         state: callback
                     );
                 }
@@ -2284,42 +2338,6 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
             }
-        }
-
-        /// <summary>
-        /// used to convert an invocation through a cached static delegate back to an instance call
-        /// </summary>
-        private static SqlDataReader InternalEndExecuteReaderCallback(SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod)
-        {
-            return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
-        }
-        /// <summary>
-        /// used to convert an invocation through a cached static delegate back to an instance call
-        /// </summary>
-        private static IAsyncResult BeginExecuteReaderInternalCallback(SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite)
-        {
-            return command.BeginExecuteReaderInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
-        }
-        /// <summary>
-        /// used to convert an invocation through a cached static delegate back to an instance call
-        /// </summary>
-        private static IAsyncResult BeginExecuteXmlReaderInternalCallback(SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite)
-        {
-            return command.BeginExecuteXmlReaderInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
-        }
-        /// <summary>
-        /// used to convert an invocation through a cached static delegate back to an instance call
-        /// </summary>
-        private static object InternalEndExecuteNonQueryCallback(SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod)
-        {
-            return command.InternalEndExecuteNonQuery(asyncResult, isInternal, endMethod);
-        }
-        /// <summary>
-        /// used to convert an invocation through a cached static delegate back to an instance call
-        /// </summary>
-        private static IAsyncResult BeginExecuteNonQueryInternalCallback(SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite)
-        {
-            return command.BeginExecuteNonQueryInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
         }
 
         private bool TriggerInternalEndAndRetryIfNecessary(
