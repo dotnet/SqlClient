@@ -36,9 +36,6 @@ namespace Microsoft.Data.SqlClient
         private const int MaxRPCNameLength = 1046;
         internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount); private string _commandText;
 
-        private static readonly Func<AsyncCallback, object, IAsyncResult> s_beginExecuteReaderAsync = BeginExecuteReaderAsyncCallback;
-        private static readonly Func<IAsyncResult, SqlDataReader> s_endExecuteReaderAsync = EndExecuteReaderAsyncCallback;
-        private static readonly Action<Task<SqlDataReader>> s_cleanupExecuteReaderAsync = CleanupExecuteReaderAsyncCallback;
         private static readonly Func<SqlCommand, IAsyncResult, bool, string, object> s_internalEndExecuteNonQuery = InternalEndExecuteNonQueryCallback;
         private static readonly Func<SqlCommand, IAsyncResult, bool, string, object> s_internalEndExecuteReader = InternalEndExecuteReaderCallback;
         private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteReaderInternal = BeginExecuteReaderInternalCallback;
@@ -2203,29 +2200,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static IAsyncResult BeginExecuteReaderAsyncCallback(AsyncCallback callback, object stateObject)
-        {
-            ExecuteReaderAsyncCallContext args = (ExecuteReaderAsyncCallContext)stateObject;
-            return args.Command.BeginExecuteReaderInternal(args.CommandBehavior, callback, stateObject, args.Command.CommandTimeout, inRetry: false, asyncWrite: true);
-        }
-
-        private static SqlDataReader EndExecuteReaderAsyncCallback(IAsyncResult asyncResult)
-        {
-            ExecuteReaderAsyncCallContext args = (ExecuteReaderAsyncCallContext)asyncResult.AsyncState;
-            return args.Command.EndExecuteReaderAsync(asyncResult);
-        }
-
-        private static void CleanupExecuteReaderAsyncCallback(Task<SqlDataReader> task)
-        {
-            ExecuteReaderAsyncCallContext context = (ExecuteReaderAsyncCallContext)task.AsyncState;
-            SqlCommand command = context.Command;
-            Guid operationId = context.OperationID;
-            TaskCompletionSource<SqlDataReader> source = context.TaskCompletionSource;
-            context.Dispose();
-
-            command.CleanupExecuteReaderAsync(task, source, operationId);
-        }
-
         private IAsyncResult BeginExecuteReaderInternal(CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite = false)
         {
             TaskCompletionSource<object> globalCompletion = new TaskCompletionSource<object>(stateObject);
@@ -2765,12 +2739,29 @@ namespace Microsoft.Data.SqlClient
                 context.Set(this, source, registration, behavior, operationId);
 
                 Task<SqlDataReader>.Factory.FromAsync(
-                    beginMethod: s_beginExecuteReaderAsync,
-                    endMethod: s_endExecuteReaderAsync,
+                    beginMethod: static (AsyncCallback callback, object stateObject) =>
+                    {
+                        ExecuteReaderAsyncCallContext args = (ExecuteReaderAsyncCallContext)stateObject;
+                        return args.Command.BeginExecuteReaderInternal(args.CommandBehavior, callback, stateObject, args.Command.CommandTimeout, inRetry: false, asyncWrite: true);
+                    },
+                    endMethod: static (IAsyncResult asyncResult) =>
+                    {
+                        ExecuteReaderAsyncCallContext args = (ExecuteReaderAsyncCallContext)asyncResult.AsyncState;
+                        return args.Command.EndExecuteReaderAsync(asyncResult);
+                    },
                     state: context
                 ).ContinueWith(
-                    continuationAction: s_cleanupExecuteReaderAsync,
-                    TaskScheduler.Default
+                    continuationAction: static (Task<SqlDataReader> task) =>
+                    {
+                        ExecuteReaderAsyncCallContext context = (ExecuteReaderAsyncCallContext)task.AsyncState;
+                        SqlCommand command = context.Command;
+                        Guid operationId = context.OperationID;
+                        TaskCompletionSource<SqlDataReader> source = context.TaskCompletionSource;
+                        context.Dispose();
+
+                        command.CleanupExecuteReaderAsync(task, source, operationId);
+                    },
+                    scheduler: TaskScheduler.Default
                 );
             }
             catch (Exception e)
