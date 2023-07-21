@@ -538,7 +538,17 @@ namespace Microsoft.Data.SqlClient
             //Create LocalDB instance if necessary
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
-                LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, timerExpire);
+                //do not get np result if data source is already np
+                string[] splitByColon = serverInfo.UserServerName.Split(':');
+                if (!splitByColon[0].Trim().Equals("np", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    string localDBDataSource = LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, timerExpire);
+                    string serverName = localDBDataSource ?? serverInfo.ExtendedServerName;
+                    //re-writing serverinfo 
+                    ServerInfo original = serverInfo;
+                    serverInfo = new ServerInfo(connectionOptions, serverName, original.ServerSPN);
+                    serverInfo.SetDerivedNames(original.UserProtocol, serverName);
+                }
                 if (encrypt == SqlConnectionEncryptOption.Mandatory)
                 {
                     // Encryption is not supported on SQL Local DB - disable it for current session.

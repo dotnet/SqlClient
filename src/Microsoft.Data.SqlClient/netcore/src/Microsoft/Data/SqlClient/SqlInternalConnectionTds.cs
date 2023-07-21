@@ -1918,16 +1918,26 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information 
             string localDBDataSource = null;
+            DataSource details = null;
 
             if (ConnectionOptions.LocalDBInstance != null)
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    localDBDataSource = LocalDB.GetLocalDBDataSource(serverInfo.UserServerName,timeout);
-                }
+                    //do not get np result if data source is already np
+                    string[] splitByColon = serverInfo.UserServerName.Split(':');
+                    if (!splitByColon[0].Trim().Equals("np", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        localDBDataSource = LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, timeout);
+                        //re-writing serverinfo to make NP as servername
+                        ServerInfo original = serverInfo;
+                        serverInfo = new ServerInfo(ConnectionOptions, localDBDataSource, original.ServerSPN);
+                        serverInfo.SetDerivedNames(original.UserProtocol, localDBDataSource);
+                    }
+                }            
             }
             string serverName = localDBDataSource ?? serverInfo.ExtendedServerName;
-            DataSource details = DataSource.ParseServerName(serverName);
+             details = DataSource.ParseServerName(serverName);
             
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
