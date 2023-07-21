@@ -495,7 +495,6 @@ namespace Microsoft.Data.SqlClient
 
         internal void Connect(ServerInfo serverInfo,
                               SqlInternalConnectionTds connHandler,
-                              bool ignoreSniOpenTimeout,
                               TimeoutTimer timerExpire,
                               SqlConnectionString connectionOptions,
                               bool withFailover,
@@ -651,7 +650,6 @@ namespace Microsoft.Data.SqlClient
 
             _physicalStateObj.CreatePhysicalSNIHandle(
                 serverInfo.ExtendedServerName,
-                ignoreSniOpenTimeout,
                 timerExpire,
                 out instanceName,
                 _sniSpnBuffer,
@@ -757,7 +755,6 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
                 _physicalStateObj.CreatePhysicalSNIHandle(
                     serverInfo.ExtendedServerName,
-                    ignoreSniOpenTimeout,
                     timerExpire,
                     out instanceName,
                     _sniSpnBuffer,

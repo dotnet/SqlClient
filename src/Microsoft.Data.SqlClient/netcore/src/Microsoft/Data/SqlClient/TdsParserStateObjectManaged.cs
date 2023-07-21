@@ -83,7 +83,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal override void CreatePhysicalSNIHandle(
             string serverName,
-            bool ignoreSniOpenTimeout,
             TimeoutTimer timerExpire,
             out byte[] instanceName,
             ref byte[][] spnBuffer,
@@ -100,7 +99,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire.LegacyTimerExpire, out instanceName, ref spnBuffer, serverSPN,
+            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timerExpire.LegacyTimerExpire, out instanceName, ref spnBuffer, serverSPN,
                     flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                     hostNameInCertificate, serverCertificateFilename, details);
                 

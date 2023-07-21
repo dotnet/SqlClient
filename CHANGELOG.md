@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 5.2.0-preview3.23201.1] - 2023-07-20
+
+This update brings the below changes over the previous release:
+
+### Added
+
+- Added support of the new .NET [NegotiateAuthentication](https://learn.microsoft.com/en-us/dotnet/api/system.net.security.negotiateauthentication?view=net-7.0) API for .NET 7.0 and above against SSPI token using ManagedSNI. [#2063](https://github.com/dotnet/SqlClient/pull/2063)
+- Added new `AccessTokenCallBack` API to `SqlConnection`. [#1260](https://github.com/dotnet/SqlClient/pull/1260)
+- Added support `SuperSocketNetLib` registry option for Encrypt on NetCore Windows. [#2047](https://github.com/dotnet/SqlClient/pull/2047)
+
+### Fixed
+
+- Fixed `SqlDataAdapter.Fill` and configurable retry logic issue on .NET Framework. [#2084](https://github.com/dotnet/SqlClient/pull/2084)
+- Fixed `SqlConnectionEncryptOption` type conversion by introducing the `SqlConnectionEncryptOptionConverter` attribute using **appsettings.json** files. [#2057](https://github.com/dotnet/SqlClient/pull/2057)
+- Fixed th-TH culture info issue on Managed SNI. [#2066](https://github.com/dotnet/SqlClient/pull/2066)
+
+### Changed
+
+- Removed `ignoreSniOpenTimeout` in open connection process on Windows. [#2067](https://github.com/dotnet/SqlClient/pull/2067)
+- Enforcing ordinal for `StringComparison`. [#2068](https://github.com/dotnet/SqlClient/pull/2068)
+- Code health improvements: [#1959](https://github.com/dotnet/SqlClient/pull/1959), [#2071](https://github.com/dotnet/SqlClient/pull/2071), [#2073](https://github.com/dotnet/SqlClient/pull/2073), [#2088](https://github.com/dotnet/SqlClient/pull/2088)
+
 ## [Preview Release 5.2.0-preview2.23159.1] - 2023-06-08
 
 This update brings the below changes over the previous release:
