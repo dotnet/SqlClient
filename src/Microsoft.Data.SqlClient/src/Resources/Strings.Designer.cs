@@ -13913,5 +13913,14 @@ namespace System {
                 return ResourceManager.GetString("ZZZ_Test3", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Localization Task Test.
+        /// </summary>
+        internal static string ZZZ_Test4 {
+            get {
+                return ResourceManager.GetString("ZZZ_Test4", resourceCulture);
+            }
+        }
     }
 }

@@ -4737,4 +4737,7 @@
   <data name="ZZZ_Test3" xml:space="preserve">
     <value>Test string 3</value>
   </data>
+  <data name="ZZZ_Test4" xml:space="preserve">
+    <value>Localization Task Test</value>
+  </data>
 </root>
