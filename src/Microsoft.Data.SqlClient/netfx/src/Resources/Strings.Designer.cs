@@ -39,7 +39,7 @@ namespace System {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", typeof(Strings).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SqlClient.Resources.Strings", typeof(Strings).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -6969,6 +6969,15 @@ namespace System {
         internal static string LocalDB_MethodNotFound {
             get {
                 return ResourceManager.GetString("LocalDB_MethodNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQLUserInstanceDLL is not supported on current plaform. Install SqlLocalDB as an alternate option to connect to LocalDB..
+        /// </summary>
+        internal static string LocalDB_SQLUserInstanceDLL {
+            get {
+                return ResourceManager.GetString("LocalDB_SQLUserInstanceDLL", resourceCulture);
             }
         }
         

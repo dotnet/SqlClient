@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient
         private const int MAX_LOCAL_DB_CONNECTION_STRING_SIZE = 260;
         private IntPtr _startInstanceHandle = IntPtr.Zero;
         private static Lazy<string> s_sqlLocalDBExe = new Lazy<string>(() => GetPathToSqlLocalDB());
-       
+      
         // Local Db api doc https://msdn.microsoft.com/en-us/library/hh217143.aspx
         // HRESULT LocalDBStartInstance( [Input ] PCWSTR pInstanceName, [Input ] DWORD dwFlags,[Output] LPWSTR wszSqlConnection,[Input/Output] LPDWORD lpcchSqlConnection);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -65,12 +65,15 @@ namespace Microsoft.Data.SqlClient
                 // installed on the machine is an AMD64 process).
                 // We try to figure out what we need by asking SqlLocalDB.exe (out of proc).
 
-                if (!TryGetLocalDBConnectionStringUsingSqlLocalDBExe(localDbInstance, timeout, out string connString))
+                if (!TryGetLocalDBConnectionStringUsingSqlLocalDBExe(localDbInstance, timeout, out string connString, out string error))
                 {
                     SqlClientEventSource.Log.TryTraceEvent(ClassName, EventType.ERR, "Unable to to use SqlLocalDB.exe to get the ConnectionString.");
-                    throw;
+                    //errors from localdb.exe
+                    if (error != null)
+                        throw new Exception(error, ex);
+                    else
+                        throw new Exception(StringsHelper.LocalDB_SQLUserInstanceDLL, ex);
                 }
-
                 return connString;
             }
         }
@@ -129,9 +132,10 @@ namespace Microsoft.Data.SqlClient
             localDBStartInstanceFunc(localDbInstance, 0, localDBConnectionString, ref sizeOfbuffer);
             return localDBConnectionString.ToString();
         }
-        private static bool TryGetLocalDBConnectionStringUsingSqlLocalDBExe(string localDbInstance, TimeoutTimer timeout, out string connString)
+        private static bool TryGetLocalDBConnectionStringUsingSqlLocalDBExe(string localDbInstance, TimeoutTimer timeout, out string connString, out string error)
         {
            connString = null;
+           error = null;
             try
             {
                 // Make sure the instance is running first. If it is, this call won't do any harm, aside from
@@ -172,6 +176,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
+                            error = alllines;
                             SqlClientEventSource.Log.TryTraceEvent(nameof(LocalDB), EventType.INFO, "No match found for named pipe SqlLocalDB.exe process stdout.");
                         }
                     }
