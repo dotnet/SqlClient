@@ -123,6 +123,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #endregion
 
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
+        [Fact]
+        public static void SqlLocalDbNotSupportedException()
+        {
+            Assert.Throws<NotSupportedException>(() =>
+            {
+                using SqlConnection connection = new(s_localDbConnectionString);
+                connection.Open();
+            });
+        }
+
         private static void ConnectionWithMarsTest(string connectionString)
         {
             SqlConnectionStringBuilder builder = new(connectionString)

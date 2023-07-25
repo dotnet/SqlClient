@@ -1931,7 +1931,11 @@ namespace Microsoft.Data.SqlClient
                         serverInfo = new ServerInfo(ConnectionOptions, localDBDataSource, original.ServerSPN);
                         serverInfo.SetDerivedNames(original.UserProtocol, localDBDataSource);
                     }
-                }            
+                }
+                else
+                {
+                    throw new NotSupportedException();
+                }
             }
             string serverName = localDBDataSource ?? serverInfo.ExtendedServerName;
              details = DataSource.ParseServerName(serverName);
