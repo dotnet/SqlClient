@@ -41,6 +41,49 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void CheckIsConnectionAlivewithOpen()
+        {
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                Assert.True(!sqlConnection.IsConnectionAlive());
+                sqlConnection.Open();
+                Assert.True(sqlConnection.IsConnectionAlive());
+                sqlConnection.Close();
+                Assert.True(!sqlConnection.IsConnectionAlive());
+            }
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.NPConnectionString))
+            {
+                Assert.True(!sqlConnection.IsConnectionAlive());
+                sqlConnection.Open();
+                Assert.True(sqlConnection.IsConnectionAlive());
+                sqlConnection.Close();
+                Assert.True(!sqlConnection.IsConnectionAlive());
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public async Task CheckIsConnectionAlivewithOpenAsync()
+        {
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                Assert.True(!sqlConnection.IsConnectionAlive());
+                await sqlConnection.OpenAsync();
+                Assert.True(sqlConnection.IsConnectionAlive());
+                sqlConnection.Close();
+                Assert.True(!sqlConnection.IsConnectionAlive());
+            }
+
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.NPConnectionString))
+            {
+                Assert.True(!sqlConnection.IsConnectionAlive());
+                await sqlConnection.OpenAsync();
+                Assert.True(sqlConnection.IsConnectionAlive());
+                sqlConnection.Close();
+                Assert.True(!sqlConnection.IsConnectionAlive());
+            }
+        }
+
         private async Task<bool> VerifyConnectionBehaviorCloseAsync(SqlConnection sqlConnection)
         {
             using (SqlCommand command = new SqlCommand("SELECT '1'", sqlConnection))
