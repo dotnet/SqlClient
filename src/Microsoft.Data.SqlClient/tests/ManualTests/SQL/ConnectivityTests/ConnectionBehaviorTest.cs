@@ -10,6 +10,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class ConnectionBehaviorTest
     {
+        private static bool IsLocalDBEnvironmentSet() => DataTestUtility.IsLocalDBInstalled();
+        private static readonly string s_localDbConnectionString = @$"server=(localdb)\{DataTestUtility.LocalDbAppName}";
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ConnectionBehaviorClose()
         {
@@ -86,6 +89,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public async Task CheckIsActiveWithNamedPipeAndOpenAsync()
         {
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.NPConnectionString))
+            {
+                Assert.True(!sqlConnection.IsActive());
+                await sqlConnection.OpenAsync();
+                Assert.True(sqlConnection.IsActive());
+                sqlConnection.Close();
+                Assert.True(!sqlConnection.IsActive());
+            }
+        }
+
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public async Task CheckIsActiveWithLocalDBAndOpenAsync()
+        {
+            SqlConnectionStringBuilder builder = new(s_localDbConnectionString)
+            {
+                IntegratedSecurity = true,
+                MultipleActiveResultSets = true,
+                ConnectTimeout = 2
+            };
+            using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
             {
                 Assert.True(!sqlConnection.IsActive());
                 await sqlConnection.OpenAsync();
