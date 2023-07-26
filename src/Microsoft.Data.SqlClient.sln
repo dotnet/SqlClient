@@ -205,6 +205,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4F3CD363-B1E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.SqlServer.Server", "Microsoft.SqlServer.Server\Microsoft.SqlServer.Server.csproj", "{A314812A-7820-4565-A2A8-ABBE391C11E4}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InconsistentTextReaders", "..\..\InconsistentTextReaders\InconsistentTextReaders.csproj", "{A098FB23-A9A7-471E-8B9E-A61416BFF39F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IncostentTextReadersNetFx", "..\..\IncostentTextReadersNetFx\IncostentTextReadersNetFx.csproj", "{0026C565-2DFD-4163-975C-0930823E746F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -489,6 +493,30 @@ Global
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x64.Build.0 = Release|Any CPU
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.ActiveCfg = Release|Any CPU
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.Build.0 = Release|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Debug|x64.Build.0 = Debug|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Debug|x86.Build.0 = Debug|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Release|x64.ActiveCfg = Release|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Release|x64.Build.0 = Release|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Release|x86.ActiveCfg = Release|Any CPU
+		{A098FB23-A9A7-471E-8B9E-A61416BFF39F}.Release|x86.Build.0 = Release|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Debug|x64.Build.0 = Debug|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Debug|x86.Build.0 = Debug|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Release|x64.ActiveCfg = Release|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Release|x64.Build.0 = Release|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Release|x86.ActiveCfg = Release|Any CPU
+		{0026C565-2DFD-4163-975C-0930823E746F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

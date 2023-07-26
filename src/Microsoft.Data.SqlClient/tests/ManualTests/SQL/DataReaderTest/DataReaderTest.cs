@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -326,6 +327,172 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     SetLegacyRowVersionNullBehavior(originalValue);
                 }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReader_CommandBehavior_Default_Test1()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            using var reader = cmd.ExecuteReader(CommandBehavior.Default);
+            {
+                reader.Read();
+                using var tr1 = reader.GetTextReader(0);
+                {
+                    reader.GetValue(1);
+
+                    int value2 =  tr1.Read();
+
+                    Assert.True(value2 > -1, "Expected to read a value successfully.");
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async void ExecuteReader_CommandBehavior_Default_Async_Test2()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            using var reader = cmd.ExecuteReader(CommandBehavior.Default);
+            {
+                reader.Read();
+                using var tr1 = reader.GetTextReader(0);
+                {
+                    reader.GetValue(1);
+
+                    char[] value = new char[1];
+                    int value2 = await tr1.ReadAsync(value, 0, 1);
+
+                    Assert.True(value2 > -1, "Expected to read a value successfully.");
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReader_CommandBehavior_Default_Test3()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            using var reader = cmd.ExecuteReader(CommandBehavior.Default);
+            {
+                reader.Read();
+                using var tr1 = reader.GetTextReader(0);
+                using var tr2 = reader.GetTextReader(1);
+
+                tr2.Read();
+                int value2 = tr1.Read();
+                Assert.True(value2 > -1, "Expected to read a value successfully.");
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReader_CommandBehavior_Default_Async_Test4()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            using var reader = cmd.ExecuteReader(CommandBehavior.Default);
+            {
+                reader.Read();
+                using var tr1 = reader.GetTextReader(0);
+                using var tr2 = reader.GetTextReader(1);
+
+                char[] value2 = new char[1];
+                tr2.ReadAsync(value2, 0 ,1);
+                char[] value1 = new char[1];
+                tr1.ReadAsync(value1, 0, 1);
+                Assert.True(value1[0] > -1, "Expected to read a value successfully.");
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReader_CommandBehavior_SequentialAccess_Test5()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+            {
+                reader.Read();
+                using var tr1 = reader.GetTextReader(0);
+                {
+                    reader.GetValue(1);
+                    Assert.Throws<ObjectDisposedException>(() => tr1.Read());
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async void ExecuteReader_CommandBehavior_SequentialAccess_Async_Test6()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+            {
+                reader.Read();
+                using var tr1 = reader.GetTextReader(0);
+                {
+                    reader.GetValue(1);
+                    char[] value = new char[1];
+                    await Assert.ThrowsAsync<ObjectDisposedException>(() => tr1.ReadAsync(value, 0, 1));
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReader_CommandBehavior_SequentialAccess_Test7()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+            {
+                reader.Read();
+                using var tr1 = reader.GetTextReader(0);
+                using var tr2 = reader.GetTextReader(1);
+
+                tr2.Read();
+                Assert.Throws<ObjectDisposedException>(() => tr1.Read());
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async void ExecuteReader_CommandBehavior_SequentialAccess_Async_Test8()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+            {
+                reader.Read();
+                using var tr1 = reader.GetTextReader(0);
+                using var tr2 = reader.GetTextReader(1);
+
+                char[] value2 = new char[1];
+                await tr2.ReadAsync(value2, 0, 1);
+                char[] value1 = new char[1];
+                await Assert.ThrowsAsync<ObjectDisposedException>(() => tr1.ReadAsync(value1, 0, 1));
             }
         }
 

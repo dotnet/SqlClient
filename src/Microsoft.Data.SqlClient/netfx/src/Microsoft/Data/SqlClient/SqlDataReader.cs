@@ -84,6 +84,7 @@ namespace Microsoft.Data.SqlClient
         private string _resetOptionsString;
 
         private int _lastColumnWithDataChunkRead;
+        private int _lastColumnRead;             // index of last column read 
         private long _columnDataBytesRead;       // last byte read by user
         private long _columnDataCharsRead;       // last char read by user
         private char[] _columnDataChars;
@@ -125,6 +126,7 @@ namespace Microsoft.Data.SqlClient
             _cancelAsyncOnCloseTokenSource = new CancellationTokenSource();
             _cancelAsyncOnCloseToken = _cancelAsyncOnCloseTokenSource.Token;
             _columnDataCharsIndex = -1;
+            _lastColumnRead = -1;
         }
 
         internal bool BrowseModeInfoConsumed
@@ -2130,6 +2132,16 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(index + length <= buffer.Length, "Buffer too small");
 
             bytesRead = 0;
+
+            // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
+            bool isSequentialAccess = IsCommandBehavior(CommandBehavior.SequentialAccess);
+            if (isSequentialAccess)
+            {
+                // Track the index of the last column read used to enforce sequential access.
+                if (i > _lastColumnRead)
+                    _lastColumnRead = i;
+            }
+            // End of GitHub Issue# 2087 fix
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -4309,6 +4321,18 @@ namespace Microsoft.Data.SqlClient
                         (_metaData[i].type == SqlDbType.Timestamp),                                                     // Or Dev11 Bug #336820, Dev10 Bug #479607 (SqlClient: IsDBNull always returns false for timestamp datatype)
                                                                                                                         //    Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the check
                         "Gone past column, be we have no data stored for it");
+
+                    // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
+                    if (IsCommandBehavior(CommandBehavior.SequentialAccess))
+                    {
+                        if (i < _lastColumnRead)
+                        {
+                            CloseActiveSequentialStreamAndTextReader();
+                            throw ADP.ObjectDisposed(this);
+                        }
+                    }
+                    // End GitHub Issue# 2087 fix
+
                     return true;
                 }
             }
@@ -5038,6 +5062,13 @@ namespace Microsoft.Data.SqlClient
                 source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("GetBytesAsync")));
                 return source.Task;
             }
+
+            // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
+            if (columnIndex < _lastColumnRead)
+            {
+                return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.ObjectDisposed(this)));
+            }
+            // End GitHub Issue# 2087 fix
 
             if (_currentTask != null)
             {

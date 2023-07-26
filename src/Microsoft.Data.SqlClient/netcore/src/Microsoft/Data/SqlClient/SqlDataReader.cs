@@ -81,6 +81,7 @@ namespace Microsoft.Data.SqlClient
         private string _resetOptionsString;
 
         private int _lastColumnWithDataChunkRead;
+        private int _lastColumnRead;             // index of last column read 
         private long _columnDataBytesRead;       // last byte read by user
         private long _columnDataCharsRead;       // last char read by user
         private char[] _columnDataChars;
@@ -117,6 +118,7 @@ namespace Microsoft.Data.SqlClient
             _cancelAsyncOnCloseTokenSource = new CancellationTokenSource();
             _cancelAsyncOnCloseToken = _cancelAsyncOnCloseTokenSource.Token;
             _columnDataCharsIndex = -1;
+            _lastColumnRead = -1;
         }
 
         internal bool BrowseModeInfoConsumed
@@ -1891,6 +1893,16 @@ namespace Microsoft.Data.SqlClient
 
             bytesRead = 0;
 
+            // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
+            bool isSequentialAccess = IsCommandBehavior(CommandBehavior.SequentialAccess);
+            if (isSequentialAccess)
+            {
+                // Track the index of the last column read used to enforce sequential access.
+                if (i > _lastColumnRead)
+                    _lastColumnRead = i;
+            }
+            // End of GitHub Issue# 2087 fix
+
             if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
             {
                 // No data left or nothing requested, return 0
@@ -2954,7 +2966,7 @@ namespace Microsoft.Data.SqlClient
                 // Stream is only for Binary, Image, VarBinary, Udt, Xml and Timestamp(RowVersion) types
                 MetaType metaType = metaData.metaType;
                 if (
-                    (!metaType.IsBinType || metaType.SqlDbType == SqlDbType.Timestamp) && 
+                    (!metaType.IsBinType || metaType.SqlDbType == SqlDbType.Timestamp) &&
                     metaType.SqlDbType != SqlDbType.Variant
                 )
                 {
@@ -3790,8 +3802,20 @@ namespace Microsoft.Data.SqlClient
                         ((i + 1 < _sharedState._nextColumnDataToRead) && (IsCommandBehavior(CommandBehavior.SequentialAccess))) ||   // Or we're in sequential mode and we've read way past the column (i.e. it was not the last column we read)
                         (!_data[i].IsEmpty || _data[i].IsNull) ||                                                       // Or we should have data stored for the column (unless the column was null)
                         (_metaData[i].type == SqlDbType.Timestamp),                                                     // Or SqlClient: IsDBNull always returns false for timestamp datatype
+                                                                                                                        // Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the check 
+                    "Gone past column, be we have no data stored for it");
 
-                        "Gone past column, be we have no data stored for it");
+                    // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
+                    if (IsCommandBehavior(CommandBehavior.SequentialAccess))
+                    {
+                        if (i < _lastColumnRead)
+                        {
+                            CloseActiveSequentialStreamAndTextReader();
+                            throw ADP.ObjectDisposed(this);
+                        }
+                    }
+                    // End GitHub Issue# 2087 fix
+
                     return true;
                 }
             }
@@ -4498,6 +4522,13 @@ namespace Microsoft.Data.SqlClient
                 return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
             }
 
+            // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
+            if (columnIndex < _lastColumnRead)
+            {
+                return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.ObjectDisposed(this)));
+            }
+            // End GitHub Issue# 2087 fix
+
             if (_currentTask != null)
             {
                 return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
@@ -5109,7 +5140,7 @@ namespace Microsoft.Data.SqlClient
                     var metaData = _metaData;
                     if ((data != null) && (metaData != null))
                     {
-                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i], isAsync:false));
+                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i], isAsync: false));
                     }
                     else
                     {
@@ -5149,7 +5180,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _stateObj._shouldHaveEnoughData = true;
 #endif
-                        return Task.FromResult(GetFieldValueInternal<T>(i, isAsync:true));
+                        return Task.FromResult(GetFieldValueInternal<T>(i, isAsync: true));
 #if DEBUG
                     }
                     finally
@@ -5223,7 +5254,7 @@ namespace Microsoft.Data.SqlClient
 
             if (reader.TryReadColumn(columnIndex, setTimeout: false))
             {
-                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync:false));
+                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: false));
             }
             else
             {
@@ -5252,7 +5283,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 #endif
-        
+
         internal abstract class SqlDataReaderBaseAsyncCallContext<T> : AAsyncBaseCallContext<SqlDataReader, T>
         {
             internal static readonly Action<Task<T>, object> s_completeCallback = CompleteAsyncCallCallback;
