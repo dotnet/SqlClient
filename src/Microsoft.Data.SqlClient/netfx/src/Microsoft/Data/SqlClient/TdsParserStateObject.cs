@@ -1698,10 +1698,10 @@ namespace Microsoft.Data.SqlClient
         /// NOTE: This will mark the connection as broken if it is found to be dead
         /// </summary>
         /// <param name="throwOnException">If true then an exception will be thrown if the connection is found to be dead, otherwise no exception will be thrown</param>
-        /// <returns>True if the connection is still alive, otherwise false</returns>
-        internal bool IsConnectionAlive(bool throwOnException)
+        /// <returns>True if the connection is still active, otherwise false</returns>
+        internal bool IsActive(bool throwOnException)
         {
-            Debug.Assert(_parser.Connection == null || _parser.Connection.Pool != null, "Shouldn't be calling IsConnectionAlive on non-pooled connections");
+            Debug.Assert(_parser.Connection == null || _parser.Connection.Pool != null, "Shouldn't be calling IsActive on non-pooled connections");
             bool isAlive = true;
 
             if (DateTime.UtcNow.Ticks - _lastSuccessfulIOTimer._value > CheckConnectionWindow)
@@ -1718,7 +1718,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // This connection is currently in use, assume that the connection is 'alive'
                     // NOTE: SNICheckConnection is not currently supported for connections that are in use
-                    Debug.Assert(true, "Call to IsConnectionAlive while connection is in use");
+                    Debug.Assert(true, "Call to IsActive while connection is in use");
                 }
                 else
                 {
@@ -1728,7 +1728,7 @@ namespace Microsoft.Data.SqlClient
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
-                        TdsParser.ReliabilitySection.Assert("unreliable call to IsConnectionAlive");  // you need to setup for a thread abort somewhere before you call this method
+                        TdsParser.ReliabilitySection.Assert("unreliable call to IsActive");  // you need to setup for a thread abort somewhere before you call this method
 
 
                         SniContext = SniContext.Snix_Connect;
@@ -1737,7 +1737,7 @@ namespace Microsoft.Data.SqlClient
                         if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                         {
                             // Connection is dead
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.IsConnectionAlive|Info> received error {0} on idle connection", (int)error);
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.IsActive|Info> received error {0} on idle connection", (int)error);
 
                             isAlive = false;
                             if (throwOnException)

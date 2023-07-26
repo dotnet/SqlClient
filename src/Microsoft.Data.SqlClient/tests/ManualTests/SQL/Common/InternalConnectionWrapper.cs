@@ -98,9 +98,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// NOTE: Do NOT use this on a connection that is currently in use (There is a Debug.Assert and it will always return true)
         /// NOTE: If the connection is dead, it will be marked as 'broken'
         /// </summary>
-        public bool IsConnectionAlive()
+        public bool IsActive()
         {
-            return ConnectionHelper.IsConnectionAlive(_internalConnection);
+            return ConnectionHelper.IsActive(_internalConnection);
         }
 
         /// <summary>

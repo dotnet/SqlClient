@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             conn3.Close();
             internalConnection3.KillConnection();
             Assert.Equal(1, connectionPool.ConnectionCount);
-            Assert.False(internalConnection3.IsConnectionAlive(), "Connection should not be alive");
+            Assert.False(internalConnection3.IsActive(), "Connection should not be active");
 
             connectionPool.Cleanup();
             Assert.Equal(1, connectionPool.ConnectionCount);

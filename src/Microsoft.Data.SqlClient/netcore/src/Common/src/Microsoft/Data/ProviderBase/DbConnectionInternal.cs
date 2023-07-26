@@ -441,12 +441,12 @@ namespace Microsoft.Data.ProviderBase
         }
 
         /// <summary>
-        /// When overridden in a derived class, will check if the underlying connection is still actually alive
+        /// When overridden in a derived class, will check if the underlying connection is still actually active
         /// </summary>
         /// <param name="throwOnException">If true an exception will be thrown if the connection is dead instead of returning true\false
         /// (this allows the caller to have the real reason that the connection is not alive (e.g. network error, etc))</param>
-        /// <returns>True if the connection is still alive, otherwise false (If not overridden, then always true)</returns>
-        internal virtual bool IsConnectionAlive(bool throwOnException = false)
+        /// <returns>True if the connection is still active, otherwise false</returns>
+        internal virtual bool IsActive(bool throwOnException = false)
         {
             return false;
         }

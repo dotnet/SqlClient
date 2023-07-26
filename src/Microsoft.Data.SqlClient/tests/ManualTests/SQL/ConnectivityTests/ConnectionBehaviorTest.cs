@@ -46,11 +46,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
-                Assert.True(!sqlConnection.IsConnectionAlive());
+                Assert.True(!sqlConnection.IsActive());
                 sqlConnection.Open();
-                Assert.True(sqlConnection.IsConnectionAlive());
+                Assert.True(sqlConnection.IsActive());
                 sqlConnection.Close();
-                Assert.True(!sqlConnection.IsConnectionAlive());
+                Assert.True(!sqlConnection.IsActive());
             }
         }
 
@@ -60,11 +60,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.NPConnectionString))
             {
-                Assert.True(!sqlConnection.IsConnectionAlive());
+                Assert.True(!sqlConnection.IsActive());
                 sqlConnection.Open();
-                Assert.True(sqlConnection.IsConnectionAlive());
+                Assert.True(sqlConnection.IsActive());
                 sqlConnection.Close();
-                Assert.True(!sqlConnection.IsConnectionAlive());
+                Assert.True(!sqlConnection.IsActive());
             }
         }
 
@@ -73,11 +73,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
-                Assert.True(!sqlConnection.IsConnectionAlive());
+                Assert.True(!sqlConnection.IsActive());
                 await sqlConnection.OpenAsync();
-                Assert.True(sqlConnection.IsConnectionAlive());
+                Assert.True(sqlConnection.IsActive());
                 sqlConnection.Close();
-                Assert.True(!sqlConnection.IsConnectionAlive());
+                Assert.True(!sqlConnection.IsActive());
             }
         }
 
@@ -87,11 +87,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.NPConnectionString))
             {
-                Assert.True(!sqlConnection.IsConnectionAlive());
+                Assert.True(!sqlConnection.IsActive());
                 await sqlConnection.OpenAsync();
-                Assert.True(sqlConnection.IsConnectionAlive());
+                Assert.True(sqlConnection.IsActive());
                 sqlConnection.Close();
-                Assert.True(!sqlConnection.IsConnectionAlive());
+                Assert.True(!sqlConnection.IsActive());
             }
         }
 

@@ -1606,16 +1606,16 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="throwOnException">If true then an exception will be thrown if the connection is found to be dead, otherwise no exception will be thrown</param>
         /// <returns>True if the connection is still alive, otherwise false</returns>
-        internal bool IsConnectionAlive(bool throwOnException)
+        internal bool IsActive(bool throwOnException)
         {
-            Debug.Assert(_parser.Connection == null || _parser.Connection.Pool != null, "Shouldn't be calling IsConnectionAlive on non-pooled connections");
-            bool isAlive = true;
+            Debug.Assert(_parser.Connection == null || _parser.Connection.Pool != null, "Shouldn't be calling IsActive on non-pooled connections");
+            bool IsActive = true;
 
             if (DateTime.UtcNow.Ticks - _lastSuccessfulIOTimer._value > CheckConnectionWindow)
             {
                 if ((_parser == null) || ((_parser.State == TdsParserState.Broken) || (_parser.State == TdsParserState.Closed)))
                 {
-                    isAlive = false;
+                    IsActive = false;
                     if (throwOnException)
                     {
                         throw SQL.ConnectionDoomed();
@@ -1625,7 +1625,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // This connection is currently in use, assume that the connection is 'alive'
                     // NOTE: SNICheckConnection is not currently supported for connections that are in use
-                    Debug.Assert(true, "Call to IsConnectionAlive while connection is in use");
+                    Debug.Assert(true, "Call to IsActive while connection is in use");
                 }
                 else
                 {
@@ -1636,8 +1636,8 @@ namespace Microsoft.Data.SqlClient
                     if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                     {
                         // Connection is dead
-                        SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.IsConnectionAlive | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
-                        isAlive = false;
+                        SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.IsActive | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
+                        IsActive = false;
                         if (throwOnException)
                         {
                             // Get the error from SNI so that we can throw the correct exception
@@ -1652,7 +1652,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            return isAlive;
+            return IsActive;
         }
 
         /// <summary>

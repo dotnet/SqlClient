@@ -979,9 +979,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override bool IsConnectionAlive(bool throwOnException)
+        internal override bool IsActive(bool throwOnException)
         {
-            bool isAlive = false;
+            bool IsActive = false;
 #if DEBUG
             TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
@@ -991,7 +991,7 @@ namespace Microsoft.Data.SqlClient
                 tdsReliabilitySection.Start();
 #endif //DEBUG
 
-                isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
+                IsActive = _parser._physicalStateObj.IsActive(throwOnException);
 
 #if DEBUG
             }
@@ -1000,7 +1000,7 @@ namespace Microsoft.Data.SqlClient
                 tdsReliabilitySection.Stop();
             }
 #endif //DEBUG
-            return isAlive;
+            return IsActive;
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////

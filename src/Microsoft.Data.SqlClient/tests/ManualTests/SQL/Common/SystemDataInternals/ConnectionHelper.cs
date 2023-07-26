@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static Type s_SQLDNSInfo = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SQLDNSInfo");
         private static PropertyInfo s_sqlConnectionInternalConnection = s_sqlConnection.GetProperty("InnerConnection", BindingFlags.Instance | BindingFlags.NonPublic);
         private static PropertyInfo s_dbConnectionInternalPool = s_dbConnectionInternal.GetProperty("Pool", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static MethodInfo s_dbConnectionInternalIsConnectionAlive = s_dbConnectionInternal.GetMethod("IsConnectionAlive", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static MethodInfo s_dbConnectionInternalIsActive = s_dbConnectionInternal.GetMethod("IsActive", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo s_sqlInternalConnectionTdsParser = s_sqlInternalConnectionTds.GetField("_parser", BindingFlags.Instance | BindingFlags.NonPublic);
         private static PropertyInfo s_innerConnectionProperty = s_sqlConnection.GetProperty("InnerConnection", BindingFlags.Instance | BindingFlags.NonPublic);
         private static PropertyInfo s_tdsParserProperty = s_sqlInternalConnectionTds.GetProperty("Parser", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -50,10 +50,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             return internalConnection;
         }
 
-        public static bool IsConnectionAlive(object internalConnection)
+        public static bool IsActive(object internalConnection)
         {
             VerifyObjectIsInternalConnection(internalConnection);
-            return (bool)s_dbConnectionInternalIsConnectionAlive.Invoke(internalConnection, new object[] { false });
+            return (bool)s_dbConnectionInternalIsActive.Invoke(internalConnection, new object[] { false });
         }
 
         private static void VerifyObjectIsInternalConnection(object internalConnection)

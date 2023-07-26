@@ -1630,10 +1630,10 @@ namespace Microsoft.Data.SqlClient
             Open(SqlConnectionOverrides.None);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/IsConnectionAlive/*' />
-        public bool IsConnectionAlive()
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/IsActive/*' />
+        public bool IsActive()
         {
-            bool isAlive = InnerConnection.IsConnectionAlive();
+            bool isAlive = InnerConnection.IsActive();
             return isAlive;
         }
 

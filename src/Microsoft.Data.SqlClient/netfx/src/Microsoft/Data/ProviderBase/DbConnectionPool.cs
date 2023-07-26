@@ -907,7 +907,7 @@ namespace Microsoft.Data.ProviderBase
                 }
 
                 // Close associated Parser if connection already established.
-                if (newObj?.IsConnectionAlive() == true)
+                if (newObj?.IsActive() == true)
                 {
                     newObj.Dispose();
                 }
@@ -1456,7 +1456,7 @@ namespace Microsoft.Data.ProviderBase
                                 Interlocked.Decrement(ref _waitCount);
                                 obj = GetFromGeneralPool();
 
-                                if ((obj != null) && (!obj.IsConnectionAlive()))
+                                if ((obj != null) && (!obj.IsActive()))
                                 {
                                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Connection {1}, found dead and removed.", ObjectID, obj.ObjectID);
                                     DestroyObject(obj);
@@ -1649,7 +1649,7 @@ namespace Microsoft.Data.ProviderBase
                     {
                         try
                         {
-                            obj.IsConnectionAlive(true);
+                            obj.IsActive(true);
                         }
                         catch
                         {
@@ -1658,7 +1658,7 @@ namespace Microsoft.Data.ProviderBase
                             throw;
                         }
                     }
-                    else if (!obj.IsConnectionAlive())
+                    else if (!obj.IsActive())
                     {
                         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.", ObjectID, obj.ObjectID);
                         DestroyObject(obj);

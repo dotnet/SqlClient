@@ -859,11 +859,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override bool IsConnectionAlive(bool throwOnException)
+        internal override bool IsActive(bool throwOnException)
         {
-            bool isAlive = false;
-            isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
-            return isAlive;
+            bool IsActive = false;
+            IsActive = _parser._physicalStateObj.IsActive(throwOnException);
+            return IsActive;
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////
