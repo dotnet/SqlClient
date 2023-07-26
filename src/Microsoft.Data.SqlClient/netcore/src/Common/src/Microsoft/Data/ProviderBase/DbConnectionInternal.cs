@@ -448,7 +448,7 @@ namespace Microsoft.Data.ProviderBase
         /// <returns>True if the connection is still alive, otherwise false (If not overridden, then always true)</returns>
         internal virtual bool IsConnectionAlive(bool throwOnException = false)
         {
-            return true;
+            return false;
         }
     }
 }

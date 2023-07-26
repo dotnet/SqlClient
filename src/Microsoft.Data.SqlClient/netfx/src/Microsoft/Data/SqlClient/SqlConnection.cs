@@ -1630,6 +1630,13 @@ namespace Microsoft.Data.SqlClient
             Open(SqlConnectionOverrides.None);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/IsConnectionAlive/*' />
+        public bool IsConnectionAlive()
+        {
+            bool isAlive = InnerConnection.IsConnectionAlive();
+            return isAlive;
+        }
+
         private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides)
             => RetryLogicProvider.Execute(this, () => TryOpen(retry, overrides));
 

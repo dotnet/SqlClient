@@ -1358,6 +1358,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/IsConnectionAlive/*' />
+        public bool IsConnectionAlive()
+        {
+            bool isAlive = InnerConnection.IsConnectionAlive();
+            return isAlive;
+        }
+
         internal void RegisterWaitingForReconnect(Task waitingTask)
         {
             if (((SqlConnectionString)ConnectionOptions).MARS)
