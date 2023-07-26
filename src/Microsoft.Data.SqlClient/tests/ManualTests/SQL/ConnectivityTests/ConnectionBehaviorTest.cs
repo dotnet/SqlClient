@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void CheckIsConnectionAlivewithOpen()
+        public void CheckIsActiveWitTCPAndOpen()
         {
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -52,6 +52,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 sqlConnection.Close();
                 Assert.True(!sqlConnection.IsConnectionAlive());
             }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void CheckIsActiveNamedPipeAndOpen()
+        {
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.NPConnectionString))
             {
                 Assert.True(!sqlConnection.IsConnectionAlive());
@@ -63,7 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public async Task CheckIsConnectionAlivewithOpenAsync()
+        public async Task CheckIsActiveWithTCPAndOpenAsync()
         {
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -73,7 +79,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 sqlConnection.Close();
                 Assert.True(!sqlConnection.IsConnectionAlive());
             }
+        }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public async Task CheckIsActiveWithNamedPipeAndOpenAsync()
+        {
             using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.NPConnectionString))
             {
                 Assert.True(!sqlConnection.IsConnectionAlive());
