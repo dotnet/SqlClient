@@ -2,7 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -14,9 +17,11 @@ namespace Microsoft.Data.SqlClient
         private int _hashValue;
         private readonly SqlCredential _credential;
         private readonly string _accessToken;
+        private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         internal SqlCredential Credential => _credential;
         internal string AccessToken => _accessToken;
+        internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback => _accessTokenCallback;
 
         internal override string ConnectionString
         {
@@ -48,11 +53,13 @@ namespace Microsoft.Data.SqlClient
                             string accessToken,
                             ServerCertificateValidationCallback serverCertificateValidationCallback,
                             ClientCertificateRetrievalCallback clientCertificateRetrievalCallback,
-                            SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo) : base(connectionString)
+                            SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo,
+                            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionString)
         {
-            Debug.Assert(_credential == null || _accessToken == null, "Credential and AccessToken can't have the value at the same time.");
+            Debug.Assert(_credential == null || _accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have a value at the same time.");
             _credential = credential;
             _accessToken = accessToken;
+            _accessTokenCallback = accessTokenCallback;
             _serverCertificateValidationCallback = serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = clientCertificateRetrievalCallback;
             _originalNetworkAddressInfo = originalNetworkAddressInfo;
@@ -61,11 +68,12 @@ namespace Microsoft.Data.SqlClient
         #endregion
 #else
         #region NET Core
-        internal SqlConnectionPoolKey(string connectionString, SqlCredential credential, string accessToken) : base(connectionString)
+        internal SqlConnectionPoolKey(string connectionString, SqlCredential credential, string accessToken, Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback) : base(connectionString)
         {
-            Debug.Assert(_credential == null || _accessToken == null, "Credential and AccessToken can't have the value at the same time.");
+            Debug.Assert(credential == null || accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have a value at the same time.");
             _credential = credential;
             _accessToken = accessToken;
+            _accessTokenCallback = accessTokenCallback;
             CalculateHashCode();
         }
         #endregion
@@ -75,6 +83,7 @@ namespace Microsoft.Data.SqlClient
         {
             _credential = key.Credential;
             _accessToken = key.AccessToken;
+            _accessTokenCallback = key._accessTokenCallback;
 #if NETFRAMEWORK
             _serverCertificateValidationCallback = key._serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = key._clientCertificateRetrievalCallback;
@@ -92,6 +101,7 @@ namespace Microsoft.Data.SqlClient
             return (obj is SqlConnectionPoolKey key
                 && _credential == key._credential
                 && ConnectionString == key.ConnectionString
+                && _accessTokenCallback == key._accessTokenCallback
                 && string.CompareOrdinal(_accessToken, key._accessToken) == 0
 #if NETFRAMEWORK
                 && _serverCertificateValidationCallback == key._serverCertificateValidationCallback
@@ -122,6 +132,13 @@ namespace Microsoft.Data.SqlClient
                 unchecked
                 {
                     _hashValue = _hashValue * 17 + _accessToken.GetHashCode();
+                }
+            }
+            else if (_accessTokenCallback != null)
+            {
+                unchecked
+                {
+                    _hashValue = _hashValue * 17 + _accessTokenCallback.GetHashCode();
                 }
             }
 

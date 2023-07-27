@@ -130,6 +130,7 @@ namespace Microsoft.Data.SqlClient
         // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
+        internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
         private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
@@ -434,19 +435,20 @@ namespace Microsoft.Data.SqlClient
         // the new Login7 packet will always write out the new password (or a length of zero and no bytes if not present)
         //
         internal SqlInternalConnectionTds(
-                DbConnectionPoolIdentity identity,
-                SqlConnectionString connectionOptions,
-                SqlCredential credential,
-                object providerInfo,
-                string newPassword,
-                SecureString newSecurePassword,
-                bool redirectedUserInstance,
-                SqlConnectionString userConnectionOptions = null, // NOTE: userConnectionOptions may be different to connectionOptions if the connection string has been expanded (see SqlConnectionString.Expand)
-                SessionData reconnectSessionData = null,
-                bool applyTransientFaultHandling = false,
-                string accessToken = null,
-                DbConnectionPool pool = null
-                ) : base(connectionOptions)
+            DbConnectionPoolIdentity identity,
+            SqlConnectionString connectionOptions,
+            SqlCredential credential,
+            object providerInfo,
+            string newPassword,
+            SecureString newSecurePassword,
+            bool redirectedUserInstance,
+            SqlConnectionString userConnectionOptions = null, // NOTE: userConnectionOptions may be different to connectionOptions if the connection string has been expanded (see SqlConnectionString.Expand)
+            SessionData reconnectSessionData = null,
+            bool applyTransientFaultHandling = false,
+            string accessToken = null,
+            DbConnectionPool pool = null,
+            Func<SqlAuthenticationParameters, CancellationToken,
+            Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
 
         {
 #if DEBUG
@@ -478,6 +480,8 @@ namespace Microsoft.Data.SqlClient
             {
                 _accessTokenInBytes = System.Text.Encoding.Unicode.GetBytes(accessToken);
             }
+
+            _accessTokenCallback = accessTokenCallback;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
             _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
@@ -1327,7 +1331,8 @@ namespace Microsoft.Data.SqlClient
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
-                || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
+                || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired)
+                || _accessTokenCallback != null)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 _federatedAuthenticationInfoRequested = true;
@@ -1538,7 +1543,6 @@ namespace Microsoft.Data.SqlClient
                     AttemptOneLogin(serverInfo,
                                     newPassword,
                                     newSecurePassword,
-                                    !connectionOptions.MultiSubnetFailover,    // ignore timeout for SniOpen call unless MSF
                                     connectionOptions.MultiSubnetFailover ? intervalTimer : timeout);
 
                     if (connectionOptions.MultiSubnetFailover && null != ServerProvidedFailOverPartner)
@@ -1777,7 +1781,6 @@ namespace Microsoft.Data.SqlClient
                             currentServerInfo,
                             newPassword,
                             newSecurePassword,
-                            false,          // Use timeout in SniOpen
                             intervalTimer,
                             withFailover: true
                             );
@@ -1905,7 +1908,6 @@ namespace Microsoft.Data.SqlClient
                                 ServerInfo serverInfo,
                                 string newPassword,
                                 SecureString newSecurePassword,
-                                bool ignoreSniOpenTimeout,
                                 TimeoutTimer timeout,
                                 bool withFailover = false)
         {
@@ -1916,7 +1918,6 @@ namespace Microsoft.Data.SqlClient
 
             _parser.Connect(serverInfo,
                             this,
-                            ignoreSniOpenTimeout,
                             timeout.LegacyTimerExpire,
                             ConnectionOptions,
                             withFailover);
@@ -2152,6 +2153,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert((ConnectionOptions._hasUserIdKeyword && ConnectionOptions._hasPasswordKeyword)
                          || _credential != null
+                         || _accessTokenCallback != null
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
@@ -2354,7 +2356,7 @@ namespace Microsoft.Data.SqlClient
             string username = null;
 
             var authProvider = _sqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
-            if (authProvider == null)
+            if (authProvider == null && _accessTokenCallback == null)
                 throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
 
             // retry getting access token once if MsalException.error_code is unknown_error.
@@ -2365,11 +2367,11 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     var authParamsBuilder = new SqlAuthenticationParameters.Builder(
-                        authenticationMethod: ConnectionOptions.Authentication,
-                        resource: fedAuthInfo.spn,
-                        authority: fedAuthInfo.stsurl,
-                        serverName: ConnectionOptions.DataSource,
-                        databaseName: ConnectionOptions.InitialCatalog)
+                            authenticationMethod: ConnectionOptions.Authentication,
+                            resource: fedAuthInfo.spn,
+                            authority: fedAuthInfo.stsurl,
+                            serverName: ConnectionOptions.DataSource,
+                            databaseName: ConnectionOptions.InitialCatalog)
                         .WithConnectionId(_clientConnectionId)
                         .WithConnectionTimeout(ConnectionOptions.ConnectTimeout);
                     switch (ConnectionOptions.Authentication)
@@ -2439,7 +2441,38 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         default:
-                            throw SQL.UnsupportedAuthenticationSpecified(ConnectionOptions.Authentication);
+                            if (_accessTokenCallback == null)
+                            {
+                                throw SQL.UnsupportedAuthenticationSpecified(ConnectionOptions.Authentication);
+                            }
+
+                            if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
+                            {
+                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                            }
+                            else
+                            {
+                                if (_credential != null)
+                                {
+                                    username = _credential.UserId;
+                                    authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
+                                }
+                                else
+                                {
+                                    authParamsBuilder.WithUserId(ConnectionOptions.UserID);
+                                    authParamsBuilder.WithPassword(ConnectionOptions.Password);
+                                }
+                                SqlAuthenticationParameters parameters = authParamsBuilder;
+                                CancellationTokenSource cts = new();
+                                // Use Connection timeout value to cancel token acquire request after certain period of time.(int)
+                                if (_timeout.MillisecondsRemaining < Int32.MaxValue)
+                                {
+                                    cts.CancelAfter((int)_timeout.MillisecondsRemaining);
+                                }
+                                _fedAuthToken = Task.Run(async () => await _accessTokenCallback(parameters, cts.Token)).GetAwaiter().GetResult().ToSqlFedAuthToken();
+                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
+                            }
+                            break;
                     }
 
                     Debug.Assert(_fedAuthToken.accessToken != null, "AccessToken should not be null.");
@@ -2488,17 +2521,21 @@ namespace Microsoft.Data.SqlClient
                 // Deal with normal MsalExceptions.
                 catch (MsalException msalException)
                 {
-                    if (MsalError.UnknownError != msalException.ErrorCode
-                        || _timeout.IsExpired
-                        || _timeout.MillisecondsRemaining <= sleepInterval)
+                    if (MsalError.UnknownError != msalException.ErrorCode || _timeout.IsExpired || _timeout.MillisecondsRemaining <= sleepInterval)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken.MSALException error:> {0}", msalException.ErrorCode);
 
                         throw ADP.CreateSqlException(msalException, ConnectionOptions, this, username);
                     }
 
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, sleeping {1}[Milliseconds]", ObjectID, sleepInterval);
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, remaining {1}[Milliseconds]", ObjectID, _timeout.MillisecondsRemaining);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        "<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, sleeping {1}[Milliseconds]",
+                        ObjectID,
+                        sleepInterval);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        "<sc.SqlInternalConnectionTds.GetFedAuthToken|ADV> {0}, remaining {1}[Milliseconds]",
+                        ObjectID,
+                        _timeout.MillisecondsRemaining);
 
                     Thread.Sleep(sleepInterval);
                     sleepInterval *= 2;
@@ -2506,7 +2543,21 @@ namespace Microsoft.Data.SqlClient
                 // All other exceptions from MSAL/Azure Identity APIs
                 catch (Exception e)
                 {
-                    throw SqlException.CreateException(new() { new(0, (byte)0x00, (byte)TdsEnums.FATAL_ERROR_CLASS, ConnectionOptions.DataSource, e.Message, ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0) }, "", this, e);
+                    throw SqlException.CreateException(
+                        new()
+                        {
+                            new(
+                                0,
+                                (byte)0x00,
+                                (byte)TdsEnums.FATAL_ERROR_CLASS,
+                                ConnectionOptions.DataSource,
+                                e.Message,
+                                ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName,
+                                0)
+                        },
+                        "",
+                        this,
+                        e);
                 }
             }
 

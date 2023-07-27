@@ -4635,4 +4635,13 @@
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
     <value>A plataforma '{0}' não é suportada ao direcionar o .NET Framework.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
+    <value>Não é possível definir a propriedade AccessToken se AccessTokenCallback tiver sido definido.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
+    <value>Não é possível definir a propriedade AccessTokenCallback se a palavra-chave da cadeia de conexão 'Integrated Security' tiver sido definida como 'true' ou 'SSPI'.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
+    <value>Não é possível definir a propriedade AccessTokenCallback se 'Authentication=Active Directory Default' tiver sido especificado na cadeia de conexão.</value>
+  </data>
 </root>

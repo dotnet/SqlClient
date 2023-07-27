@@ -68,22 +68,90 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SimpleFillTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlDataAdapter adapter = new SqlDataAdapter("SELECT EmployeeID, LastName, FirstName, Title, Address, City, Region, PostalCode, Country FROM Employees", conn))
+            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            using SqlDataAdapter adapter = new("SELECT EmployeeID, LastName, FirstName, Title, Address, City, Region, PostalCode, Country FROM Employees", conn);
+
+            DataSet employeesSet = new();
+            DataTestUtility.AssertEqualsWithDescription(0, employeesSet.Tables.Count, "Unexpected tables count before fill.");
+            adapter.Fill(employeesSet, "Employees");
+
+            DataTestUtility.AssertEqualsWithDescription(1, employeesSet.Tables.Count, "Unexpected tables count after fill.");
+            DataTestUtility.AssertEqualsWithDescription("Employees", employeesSet.Tables[0].TableName, "Unexpected table name.");
+
+            DataTestUtility.AssertEqualsWithDescription(9, employeesSet.Tables["Employees"].Columns.Count, "Unexpected columns count.");
+            employeesSet.Tables["Employees"].Columns.Remove("LastName");
+            employeesSet.Tables["Employees"].Columns.Remove("FirstName");
+            employeesSet.Tables["Employees"].Columns.Remove("Title");
+            DataTestUtility.AssertEqualsWithDescription(6, employeesSet.Tables["Employees"].Columns.Count, "Unexpected columns count after column removal.");
+
+            DataSet dataSet = new();
+            adapter.Fill(dataSet);
+            DataTestUtility.AssertEqualsWithDescription(1, dataSet.Tables.Count, "Unexpected tables count after fill.");
+            DataTestUtility.AssertEqualsWithDescription(9, dataSet.Tables[0].Columns.Count, "Unexpected column after fill.");
+
+            DataSet dataSet2 = new();
+            adapter.Fill(dataSet2, 0, 2, "Employees");
+            DataTestUtility.AssertEqualsWithDescription(1, dataSet2.Tables.Count, "Unexpected tables count after fill.");
+            DataTestUtility.AssertEqualsWithDescription(2, dataSet2.Tables[0].Rows.Count, "Unexpected row count after fill.");
+            DataTestUtility.AssertEqualsWithDescription(9, dataSet2.Tables[0].Columns.Count, "Unexpected column after fill.");
+
+            DataTable table = new();
+            adapter.Fill(table);
+            DataTestUtility.AssertEqualsWithDescription(9, table.Columns.Count, "Unexpected columns count.");
+
+            DataTable table2 = new();
+            adapter.Fill(0, 2, table2);
+            DataTestUtility.AssertEqualsWithDescription(9, table2.Columns.Count, "Unexpected columns count.");
+            DataTestUtility.AssertEqualsWithDescription(2, table2.Rows.Count, "Unexpected rows count.");
+        }
+
+        // TODO Synapse: Remove Northwind dependency by creating required tables in setup.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void FillShouldAllowRetryLogicProviderToBeInvoked()
+        {
+            int maxRetries = 3;
+            int expectedAttempts = maxRetries - 1;
+            int retryCount = 0;
+
+            SqlRetryLogicOption options = new()
             {
-                DataSet employeesSet = new DataSet();
-                DataTestUtility.AssertEqualsWithDescription(0, employeesSet.Tables.Count, "Unexpected tables count before fill.");
-                adapter.Fill(employeesSet, "Employees");
+                NumberOfTries = maxRetries,
+                DeltaTime = TimeSpan.FromMilliseconds(100),
+                MaxTimeInterval = TimeSpan.FromMilliseconds(500),
+                TransientErrors = new int[] { 26, 4060, 233, -1, 17142, -2, 2812 }
+            };
+            SqlRetryLogicBaseProvider provider = SqlConfigurableRetryFactory.CreateFixedRetryProvider(options);
 
-                DataTestUtility.AssertEqualsWithDescription(1, employeesSet.Tables.Count, "Unexpected tables count after fill.");
-                DataTestUtility.AssertEqualsWithDescription("Employees", employeesSet.Tables[0].TableName, "Unexpected table name.");
+            string query = "WAITFOR DELAY '00:00:02';SELECT 1";
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            {
+                ConnectTimeout = 1
+            };
 
-                DataTestUtility.AssertEqualsWithDescription(9, employeesSet.Tables["Employees"].Columns.Count, "Unexpected columns count.");
-                employeesSet.Tables["Employees"].Columns.Remove("LastName");
-                employeesSet.Tables["Employees"].Columns.Remove("FirstName");
-                employeesSet.Tables["Employees"].Columns.Remove("Title");
-                DataTestUtility.AssertEqualsWithDescription(6, employeesSet.Tables["Employees"].Columns.Count, "Unexpected columns count after column removal.");
-            }
+            using var connection = new SqlConnection(builder.ConnectionString);
+            using SqlCommand command = new(query, connection);
+            command.CommandTimeout = 1;
+            command.RetryLogicProvider = provider;
+            command.RetryLogicProvider.Retrying += (object sender, SqlRetryingEventArgs e) =>
+            {
+                retryCount = e.RetryCount;
+                Assert.Equal(e.RetryCount, e.Exceptions.Count);
+                Assert.NotEqual(TimeSpan.Zero, e.Delay);
+            };
+
+            connection.Open();
+
+            AggregateException exception = Assert.Throws<AggregateException>(() =>
+            {
+                DataTable dt = new();
+                using (SqlDataAdapter adapter = new(command))
+                {
+                    adapter.Fill(dt);
+                }
+            });
+
+            Assert.Contains($"The number of retries has exceeded the maximum of {maxRetries} attempt(s)", exception.Message);
+            Assert.Equal(expectedAttempts, retryCount);
         }
 
         // TODO Synapse: Remove Northwind dependency by creating required tables in setup.

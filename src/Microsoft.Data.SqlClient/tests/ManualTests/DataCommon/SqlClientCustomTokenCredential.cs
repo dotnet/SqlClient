@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string trimmedChallenge = challenge.Trim();
 
-            if (!trimmedChallenge.StartsWith(Bearer))
+            if (!trimmedChallenge.StartsWith(Bearer, StringComparison.Ordinal))
                 throw new ArgumentException("Challenge is not Bearer", nameof(challenge));
 
             return trimmedChallenge.Substring(Bearer.Length);

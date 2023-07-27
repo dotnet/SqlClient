@@ -4635,4 +4635,13 @@
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
     <value>Платформа "{0}" не поддерживается, если целью является .NET Framework.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
+    <value>Если задано свойство AccessTokenCallback, свойство AccessToken задать не удастся.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
+    <value>Если ключевому слову строки подключения "Integrated Security" задано значение "true" или "SSPI", свойство "AccessTokenCallback" задать не удастся.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
+    <value>Если в строке подключения указан параметр "Authentication=Active Directory Default", свойство AccessTokenCallback задать не удастся.</value>
+  </data>
 </root>

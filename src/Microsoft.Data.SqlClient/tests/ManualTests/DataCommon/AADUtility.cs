@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (response.IsSuccessStatusCode)
                 {
                     string jsonResponse = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    int accessTokenStartIndex = jsonResponse.IndexOf(AccessToken) + AccessToken.Length + 3;
+                    int accessTokenStartIndex = jsonResponse.IndexOf(AccessToken, StringComparison.Ordinal) + AccessToken.Length + 3;
                     return jsonResponse.Substring(accessTokenStartIndex, jsonResponse.IndexOf('"', accessTokenStartIndex) - accessTokenStartIndex);
                 }
 

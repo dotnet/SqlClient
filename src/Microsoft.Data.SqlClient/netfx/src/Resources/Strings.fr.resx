@@ -4635,4 +4635,13 @@
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
     <value>La plateforme '{0}' n’est pas prise en charge lors du ciblage de .NET Framework.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
+    <value>Impossible de définir la propriété AccessToken si l’AccessTokenCallback a été défini.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
+    <value>Impossible de définir la propriété AccessTokenCallback si le mot clé de chaîne de connexion « Sécurité intégrée » a été défini sur « true » ou « SSPI ».</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
+    <value>Impossible de définir la propriété AccessTokenCallback si 'Authentication=Active Directory Default' a été spécifié dans la chaîne de connexion.</value>
+  </data>
 </root>

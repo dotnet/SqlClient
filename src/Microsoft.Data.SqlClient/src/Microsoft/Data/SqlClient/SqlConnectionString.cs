@@ -426,18 +426,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (_encrypt == SqlConnectionEncryptOption.Optional)
-            {    // Support legacy registry encryption settings
-                const string folder = "Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib";
-                const string value = "Encrypt";
-
-                object obj = ADP.LocalMachineRegistryValue(folder, value);
-                if ((obj is int iObj) && (iObj == 1))
-                {         // If the registry key exists
-                    _encrypt = SqlConnectionEncryptOption.Mandatory;
-                }
-            }
-
             if (null != _networkLibrary)
             { // MDAC 83525
                 string networkLibrary = _networkLibrary.Trim().ToLower(CultureInfo.InvariantCulture);
@@ -453,6 +441,18 @@ namespace Microsoft.Data.SqlClient
                 _networkLibrary = DEFAULT.Network_Library;
             }
 #endif // NETFRAMEWORK
+
+            if (_encrypt == SqlConnectionEncryptOption.Optional)
+            {    // Support legacy registry encryption settings
+                const string folder = "Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib";
+                const string value = "Encrypt";
+
+                object obj = ADP.LocalMachineRegistryValue(folder, value);
+                if ((obj is int iObj) && (iObj == 1))
+                {         // If the registry key exists
+                    _encrypt = SqlConnectionEncryptOption.Mandatory;
+                }
+            }
 
             ValidateValueLength(_applicationName, TdsEnums.MAXLEN_APPNAME, KEY.Application_Name);
             ValidateValueLength(_currentLanguage, TdsEnums.MAXLEN_LANGUAGE, KEY.Current_Language);
@@ -983,7 +983,7 @@ namespace Microsoft.Data.SqlClient
             {
                 var domainName = "." + IPGlobalProperties.GetIPGlobalProperties().DomainName;
                 var hostName = Dns.GetHostName();
-                if (domainName != "." && !hostName.EndsWith(domainName))
+                if (domainName != "." && !hostName.EndsWith(domainName, StringComparison.Ordinal))
                     hostName += domainName;
                 return hostName;
             }

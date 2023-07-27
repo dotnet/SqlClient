@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -154,7 +155,11 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
-        private static object CreateInstance(Type type, string retryMethodName, SqlRetryLogicOption option)
+        private static object CreateInstance(
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicMethods)]
+#endif
+            Type type, string retryMethodName, SqlRetryLogicOption option)
         {
             string methodName = nameof(CreateInstance);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
