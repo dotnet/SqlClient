@@ -119,6 +119,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public async Task CheckIsActiveDuringRead()
+        {
+            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                using (SqlCommand command = new SqlCommand("SELECT '1'", sqlConnection))
+                {
+                    Assert.True(!sqlConnection.IsActive());
+                    await sqlConnection.OpenAsync();
+                    Assert.True(sqlConnection.IsActive());
+                    using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                    {
+                        while (reader.Read())
+                        {
+                            Assert.True(sqlConnection.IsActive());
+                            string result = reader[0].ToString();
+                        }
+                    }
+                    Assert.True(sqlConnection.IsActive());
+                }
+                sqlConnection.Close();
+                Assert.True(!sqlConnection.IsActive());
+            }
+        }
+
         private async Task<bool> VerifyConnectionBehaviorCloseAsync(SqlConnection sqlConnection)
         {
             using (SqlCommand command = new SqlCommand("SELECT '1'", sqlConnection))
