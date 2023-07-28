@@ -496,6 +496,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReader_CommandBehavior_SequentialAccess_Test9()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+            {
+                reader.Read();
+                using var tr1 = reader.GetTextReader(0);
+                {
+                    int value2 = tr1.Read();
+                    Assert.Throws<InvalidOperationException>(() => reader.GetValue(0));
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReader_CommandBehavior_SequentialAccess_Test10()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+            {
+                reader.Read();
+                reader.GetValue(1);
+                Assert.Throws<InvalidOperationException>(() => reader.GetValue(0));
+            }
+        }
+
         private static bool? SetLegacyRowVersionNullBehavior(bool? value)
         {
             Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
