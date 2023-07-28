@@ -189,13 +189,17 @@ namespace Microsoft.Data.SqlClient.SNI
                 TimeSpan ts = default;
                 // In case the Timeout is Infinite, we will receive the max value of Int64 as the tick count
                 // The infinite Timeout is a function of ConnectionString Timeout=0
-                if (long.MaxValue != timerExpire)
+                bool isInfiniteTimeout = long.MaxValue == timerExpire;
+                if (!isInfiniteTimeout)
                 {
                     ts = DateTime.FromFileTime(timerExpire) - DateTime.Now;
                     ts = ts.Ticks < 0 ? TimeSpan.FromTicks(0) : ts;
                 }
 
-                IPAddress[] ipAddresses = SNICommon.GetDnsIpAddresses(browserHostname);
+                IPAddress[] ipAddresses = isInfiniteTimeout
+                    ? SNICommon.GetDnsIpAddresses(browserHostname)
+                    : SNICommon.GetDnsIpAddresses(browserHostname, ref ts);
+
                 Debug.Assert(ipAddresses.Length > 0, "DNS should throw if zero addresses resolve");
                 IPAddress[] ipv4Addresses = null;
                 IPAddress[] ipv6Addresses = null;

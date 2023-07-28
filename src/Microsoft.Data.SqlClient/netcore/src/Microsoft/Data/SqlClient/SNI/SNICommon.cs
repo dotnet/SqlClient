@@ -3,9 +3,12 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -194,7 +197,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 return true;
             }
         }
-        
+
         /// <summary>
         /// We validate the provided certificate provided by the client with the one from the server to see if it matches.
         /// Certificate validation and chain trust validations are done by SSLStream class [System.Net.Security.SecureChannel.VerifyRemoteCertificate method]
@@ -236,6 +239,23 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "certificate subject {0}, Client certificate validated successfully.", args0: clientCert.Subject);
                 return true;
+            }
+        }
+
+        internal static IPAddress[] GetDnsIpAddresses(string serverName, ref TimeSpan timeout)
+        {
+            using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "Getting DNS host entries for serverName {0} with {1} timeout.", args0: serverName, args1: timeout);
+                using CancellationTokenSource cts = new CancellationTokenSource(timeout);
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                // using this overload to support netstandard
+                Task<IPAddress[]> task = Dns.GetHostAddressesAsync(serverName);
+                task.ConfigureAwait(false);
+                task.Wait(cts.Token);
+                timeout -= stopwatch.Elapsed;
+                stopwatch.Stop();
+                return task.Result;
             }
         }
 

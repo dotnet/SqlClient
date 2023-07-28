@@ -164,6 +164,8 @@ namespace Microsoft.Data.SqlClient.SNI
                         ts = ts.Ticks < 0 ? TimeSpan.FromTicks(0) : ts;
                     }
 
+                    Stopwatch stopwatch = Stopwatch.StartNew();
+
                     bool reportError = true;
 
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Connecting to serverName {1} and port {2}", args0: _connectionId, args1: serverName, args2: port);
@@ -183,6 +185,11 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
                     catch (Exception ex)
                     {
+                        TimeSpan timeLeft = ts - stopwatch.Elapsed;
+                        if (!isInfiniteTimeOut && timeLeft <= TimeSpan.Zero)
+                        {
+                            throw;
+                        }
                         // Retry with cached IP address
                         if (ex is SocketException || ex is ArgumentException || ex is AggregateException)
                         {
@@ -214,26 +221,31 @@ namespace Microsoft.Data.SqlClient.SNI
                                 {
                                     if (parallel)
                                     {
-                                        _socket = TryConnectParallel(firstCachedIP, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
+                                        _socket = TryConnectParallel(firstCachedIP, portRetry, timeLeft, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
                                     }
                                     else
                                     {
-                                        _socket = Connect(firstCachedIP, portRetry, ts, isInfiniteTimeOut, ipPreference, cachedFQDN, ref pendingDNSInfo);
+                                        _socket = Connect(firstCachedIP, portRetry, timeLeft, isInfiniteTimeOut, ipPreference, cachedFQDN, ref pendingDNSInfo);
                                     }
                                 }
                                 catch (Exception exRetry)
                                 {
+                                    timeLeft = ts - stopwatch.Elapsed;
+                                    if (!isInfiniteTimeOut && timeLeft <= TimeSpan.Zero)
+                                    {
+                                        throw;
+                                    }
                                     if (exRetry is SocketException || exRetry is ArgumentNullException
                                         || exRetry is ArgumentException || exRetry is ArgumentOutOfRangeException || exRetry is AggregateException)
                                     {
                                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Retrying exception {1}", args0: _connectionId, args1: exRetry?.Message);
                                         if (parallel)
                                         {
-                                            _socket = TryConnectParallel(secondCachedIP, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
+                                            _socket = TryConnectParallel(secondCachedIP, portRetry, timeLeft, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
                                         }
                                         else
                                         {
-                                            _socket = Connect(secondCachedIP, portRetry, ts, isInfiniteTimeOut, ipPreference, cachedFQDN, ref pendingDNSInfo);
+                                            _socket = Connect(secondCachedIP, portRetry, timeLeft, isInfiniteTimeOut, ipPreference, cachedFQDN, ref pendingDNSInfo);
                                         }
                                     }
                                     else
@@ -248,6 +260,10 @@ namespace Microsoft.Data.SqlClient.SNI
                         {
                             throw;
                         }
+                    }
+                    finally
+                    {
+                        stopwatch.Stop();
                     }
 
                     if (_socket == null || !_socket.Connected)
@@ -304,8 +320,11 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             Socket availableSocket = null;
             Task<Socket> connectTask;
+            TimeSpan timeout = ts;
 
-            IPAddress[] serverAddresses = SNICommon.GetDnsIpAddresses(hostName);
+            IPAddress[] serverAddresses = isInfiniteTimeOut
+                    ? SNICommon.GetDnsIpAddresses(hostName)
+                    : SNICommon.GetDnsIpAddresses(hostName, ref timeout);
 
             if (serverAddresses.Length > MaxParallelIpAddresses)
             {
@@ -338,7 +357,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             connectTask = ParallelConnectAsync(serverAddresses, port);
 
-            if (!(isInfiniteTimeOut ? connectTask.Wait(-1) : connectTask.Wait(ts)))
+            if (!(isInfiniteTimeOut ? connectTask.Wait(-1) : connectTask.Wait(timeout)))
             {
                 callerReportError = false;
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0} Connection timed out, Exception: {1}", args0: _connectionId, args1: Strings.SNI_ERROR_40);
@@ -349,7 +368,7 @@ namespace Microsoft.Data.SqlClient.SNI
             availableSocket = connectTask.Result;
             return availableSocket;
         }
-        
+
         /// <summary>
         /// Returns array of IP addresses for the given server name, sorted according to the given preference.
         /// </summary>
@@ -389,7 +408,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
             }
         }
-        
+
         // Connect to server with hostName and port.
         // The IP information will be collected temporarily as the pendingDNSInfo but is not stored in the DNS cache at this point.
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
@@ -422,26 +441,44 @@ namespace Microsoft.Data.SqlClient.SNI
                         port,
                         ipAddress.AddressFamily,
                         isInfiniteTimeout);
-                
+
                     bool isConnected;
                     try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
                     {
-                        socket.Connect(ipAddress, port);
-                        if (!isInfiniteTimeout)
+                        if (isInfiniteTimeout)
                         {
+                            socket.Connect(ipAddress, port);
+                        }
+                        else
+                        {
+                            TimeSpan timeLeft = timeout - timeTaken.Elapsed;
+                            if (timeLeft <= TimeSpan.Zero)
+                            {
+                                return null;
+                            }
+                            // Socket.Connect does not support infinite timeouts, so we use Task to simulate it
+                            Task socketConnectTask = new Task(() => socket.Connect(ipAddress, port));
+                            socketConnectTask.ConfigureAwait(false);
+                            socketConnectTask.Start();
+                            if (!socketConnectTask.Wait(timeLeft))
+                            {
+                                throw ADP.TimeoutException($"The socket couldn't connect during the expected {timeLeft} remaining time to connect.");
+                            }
                             throw SQL.SocketDidNotThrow();
                         }
-                        
+
                         isConnected = true;
                     }
-                    catch (SocketException socketException) when (!isInfiniteTimeout &&
-                                                                  socketException.SocketErrorCode ==
-                                                                  SocketError.WouldBlock)
+                    catch (AggregateException aggregateException) when (!isInfiniteTimeout
+                                                                        && aggregateException.InnerException is SocketException socketException
+                                                                        && socketException.SocketErrorCode == SocketError.WouldBlock)
                     {
                         // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
                         // Socket.Select is used because it supports timeouts, while Socket.Connect does not
 
-                        List<Socket> checkReadLst; List<Socket> checkWriteLst; List<Socket> checkErrorLst;
+                        List<Socket> checkReadLst;
+                        List<Socket> checkWriteLst;
+                        List<Socket> checkErrorLst;
 
                         // Repeating Socket.Select several times if our timeout is greater
                         // than int.MaxValue microseconds because of 
@@ -450,9 +487,10 @@ namespace Microsoft.Data.SqlClient.SNI
                         do
                         {
                             TimeSpan timeLeft = timeout - timeTaken.Elapsed;
-
-                            if (timeLeft <= TimeSpan.Zero)
+                            if (!isInfiniteTimeout && timeLeft <= TimeSpan.Zero)
+                            {
                                 return null;
+                            }
 
                             int socketSelectTimeout =
                                 checked((int)(Math.Min(timeLeft.TotalMilliseconds, int.MaxValue / 1000) * 1000));
@@ -487,11 +525,15 @@ namespace Microsoft.Data.SqlClient.SNI
                         return socket;
                     }
                 }
-                catch (SocketException e)
+                catch (AggregateException aggregateException) when (aggregateException.InnerException is SocketException socketException)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: socketException?.Message);
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"{nameof(SNITCPHandle)}.{nameof(Connect)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
+                        $"{nameof(SNITCPHandle)}.{nameof(Connect)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {socketException}");
+                }
+                catch (AggregateException aggregateException) when (aggregateException.InnerException is TimeoutException timeoutException)
+                {
+                    Console.WriteLine(timeoutException); // temporary for testing
                 }
                 finally
                 {
@@ -675,7 +717,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: _connectionId);
                 return true;
             }
-            
+
             string serverNameToValidate;
             if (!string.IsNullOrEmpty(_hostNameInCertificate))
             {
