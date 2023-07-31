@@ -13886,50 +13886,5 @@ namespace System {
                 return ResourceManager.GetString("Xml_ValueOutOfRange", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Test string.
-        /// </summary>
-        internal static string ZZZ_Test {
-            get {
-                return ResourceManager.GetString("ZZZ_Test", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Test string 2.
-        /// </summary>
-        internal static string ZZZ_Test2 {
-            get {
-                return ResourceManager.GetString("ZZZ_Test2", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Test string 3.
-        /// </summary>
-        internal static string ZZZ_Test3 {
-            get {
-                return ResourceManager.GetString("ZZZ_Test3", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Localization Task Test.
-        /// </summary>
-        internal static string ZZZ_Test4 {
-            get {
-                return ResourceManager.GetString("ZZZ_Test4", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Please work this time..
-        /// </summary>
-        internal static string ZZZ_Test5 {
-            get {
-                return ResourceManager.GetString("ZZZ_Test5", resourceCulture);
-            }
-        }
     }
 }
