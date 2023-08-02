@@ -10,6 +10,7 @@ using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -37,7 +38,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
         private readonly Guid _connectionId = Guid.NewGuid();
 
-        public SNINpHandle(string serverName, string pipeName, long timerExpire, bool tlsFirst)
+        public SNINpHandle(string serverName, string pipeName, TimeoutTimer timeout, bool tlsFirst)
         {
             using (TrySNIEventScope.Create(nameof(SNINpHandle)))
             {
@@ -54,17 +55,25 @@ namespace Microsoft.Data.SqlClient.SNI
                         PipeDirection.InOut,
                         PipeOptions.Asynchronous | PipeOptions.WriteThrough);
 
-                    bool isInfiniteTimeOut = long.MaxValue == timerExpire;
-                    if (isInfiniteTimeOut)
+                    if (timeout.IsInfinite)
                     {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO,
+                                                                  "Connection Id {0}, Setting server name = {1}, pipe name = {2}. Connecting with infinite timeout.",
+                                                                  args0: _connectionId,
+                                                                  args1: serverName,
+                                                                  args2: pipeName);
                         _pipeStream.Connect(Timeout.Infinite);
                     }
                     else
                     {
-                        TimeSpan ts = DateTime.FromFileTime(timerExpire) - DateTime.Now;
-                        ts = ts.Ticks < 0 ? TimeSpan.FromTicks(0) : ts;
-
-                        _pipeStream.Connect((int)ts.TotalMilliseconds);
+                        int timeoutMilliseconds = timeout.MillisecondsRemainingInt;
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO,
+                                                                  "Connection Id {0}, Setting server name = {1}, pipe name = {2}. Connecting within the {3} sepecified milliseconds.",
+                                                                  args0: _connectionId,
+                                                                  args1: serverName,
+                                                                  args2: pipeName,
+                                                                  args3: timeoutMilliseconds);
+                        _pipeStream.Connect(timeoutMilliseconds);
                     }
                 }
                 catch (TimeoutException te)
