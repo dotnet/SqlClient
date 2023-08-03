@@ -285,7 +285,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 ex = e;
             }
 
-            Assert.False(timer.IsRunning, "Timer must stopped.");
+            Assert.False(timer.IsRunning, "Timer must be stopped.");
             Assert.NotNull(ex);
             Assert.True(timer.Elapsed.TotalSeconds <= timeout + 3,
                 $"The actual timeout {timer.Elapsed.TotalSeconds} is expected to be less than {timeout} plus 3 seconds additional threshold." +
@@ -326,7 +326,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 ex = e;
             }
 
-            Assert.False(timer.IsRunning, "Timer must stopped.");
+            Assert.False(timer.IsRunning, "Timer must be stopped.");
             Assert.NotNull(ex);
             Assert.True(timer.Elapsed.TotalSeconds <= timeout + 3,
                 $"The actual timeout {timer.Elapsed.TotalSeconds} is expected to be less than {timeout} plus 3 seconds additional threshold." +
