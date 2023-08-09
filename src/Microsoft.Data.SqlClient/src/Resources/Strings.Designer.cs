@@ -11710,6 +11710,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to When used by DataAdapter.Update, the parameter value is changed from DBNull.Value into (Int32)1 or (Int32)0 if non-null..
+        /// </summary>
+        internal static string SqlParameter_SourceColumnNullMapping {
+            get {
+                return ResourceManager.GetString("SqlParameter_SourceColumnNullMapping", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The parameter native type..
         /// </summary>
         internal static string SqlParameter_SqlDbType {

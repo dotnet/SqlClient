@@ -6,9 +6,6 @@
     <RootNamespace>Microsoft.Data.SqlClient</RootNamespace>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <EnableLocalAppContext>true</EnableLocalAppContext>
-    <ResxFileName>Strings</ResxFileName>
-    <ResourceFileName>SqlClient.Resources.$(ResxFileName)</ResourceFileName>
-    <GeneratedSourceFileName>$(ResxFileName).ResourceNames.cs</GeneratedSourceFileName>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <OutputPlatform>AnyCPU</OutputPlatform>
     <BinPath>$(BinFolder)$(Configuration).$(OutputPlatform)\</BinPath>
@@ -737,7 +734,7 @@
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(NetFxSource)tools\targets\GenerateResourceStringsSource.targets" />
+  <Import Project="..\..\src\tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyInfo.targets" />
