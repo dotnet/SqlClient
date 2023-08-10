@@ -4,15 +4,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.Common;
 using System.Globalization;
-using System.Reflection;
-using System.Security;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
