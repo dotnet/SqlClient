@@ -1698,6 +1698,11 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 
 ## Remarks
 For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/sql/connect/ado-net/asynchronous-programming).
+
+> [!NOTE]
+>  For long running queries on the server, consider using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A> due to a known issue with canceling queries via a cancellation token. Also, consider canceling execution using the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method.
+
+
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidCastException">
@@ -1986,6 +1991,10 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 
 ## Remarks
 For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/sql/connect/ado-net/asynchronous-programming).
+
+> [!NOTE]
+>  For long running queries on the server, consider using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A> due to a known issue with canceling queries via a cancellation token. Also, consider canceling execution using the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method.
+
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidCastException">
@@ -2466,6 +2475,10 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 
 ## Remarks
 For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/sql/connect/ado-net/asynchronous-programming).
+
+> [!NOTE]
+>  For long running queries on the server, consider using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteScalar%2A> due to a known issue with canceling queries via a cancellation token. Also, consider canceling execution using the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method.
+
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidCastException">
@@ -2657,6 +2670,10 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and t
 ## Remarks
 The **XmlReader** returned by this method does not support asynchronous operations.
 For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/sql/connect/ado-net/asynchronous-programming).
+
+> [!NOTE]
+>  For long running queries on the server, consider using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A> due to a known issue with canceling queries via a cancellation token. Also, consider canceling execution using the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method.
+
 ]]></format>
 			</remarks>
 			<exception cref="T:System.InvalidCastException">
