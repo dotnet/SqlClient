@@ -43,13 +43,13 @@
     <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
     <SqlServerSourceCode>$(ProjectDir)Microsoft.SqlServer.Server\</SqlServerSourceCode>
     <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
-	  <NetCoreResources>$(ManagedSourceCode)src\Resources\</NetCoreResources>
+	<NetCoreResources>$(ManagedSourceCode)src\Resources\</NetCoreResources>
     <ResxFileName>Strings</ResxFileName>
     <ResourceFileName>SqlClient.Resources.$(ResxFileName)</ResourceFileName>
     <GeneratedSourceFileName>$(ResxFileName).ResourceNames.cs</GeneratedSourceFileName>
     <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
     <NetFxResources>$(ManagedSourceCode)src\Resources\</NetFxResources>
-	    <AddOnsPath>$(ManagedSourceCode)add-ons\</AddOnsPath>
+	<AddOnsPath>$(ManagedSourceCode)add-ons\</AddOnsPath>
     <SqlServerSource>$(RepoRoot)src\Microsoft.SqlServer.Server\</SqlServerSource>
     <ObjFolder>$(Artifacts)obj\</ObjFolder>
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
