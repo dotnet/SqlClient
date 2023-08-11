@@ -77,6 +77,5 @@ namespace Microsoft.Data.SqlClient.Tests
 
             return localized;
         }
-
     }
 }
