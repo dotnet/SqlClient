@@ -646,7 +646,7 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
   </ItemGroup>
   <!--This will exclude SqlTypeWorkarounds.netcore.cs from Net7 and greater versions-->

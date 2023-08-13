@@ -665,7 +665,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netfx.cs" />
