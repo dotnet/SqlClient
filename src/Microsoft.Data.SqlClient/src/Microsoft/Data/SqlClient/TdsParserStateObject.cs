@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient
         // Out buffer variables
         internal byte[] _outBuff;                         // internal write buffer - initialize on login
         internal int _outBytesUsed = TdsEnums.HEADER_LEN; // number of bytes used in internal write buffer - initialize past header
-        
+
         // In buffer variables
 
         /// <summary>
@@ -988,7 +988,7 @@ namespace Microsoft.Data.SqlClient
             _outputPacketNumber = 1;
             _outputPacketCount = 0;
         }
-        
+
         internal bool SetPacketSize(int size)
         {
             if (size > TdsEnums.MAX_PACKET_SIZE)
@@ -1101,5 +1101,63 @@ namespace Microsoft.Data.SqlClient
             }
         }
         */
+
+        sealed partial class StateSnapshot
+        {
+            private int _snapshotInBuffCurrent;
+            private int _snapshotInBytesUsed;
+            private int _snapshotInBytesPacket;
+
+            private byte _snapshotMessageStatus;
+
+            private NullBitmap _snapshotNullBitmapInfo;
+            private _SqlMetaDataSet _snapshotCleanupMetaData;
+            private _SqlMetaDataSetCollection _snapshotCleanupAltMetaDataSetArray;
+
+            private TdsParserStateObject _stateObj;
+
+#if DEBUG
+            private int _rollingPend = 0;
+            private int _rollingPendCount = 0;
+
+            internal bool DoPend()
+            {
+                if (s_failAsyncPends || !s_forceAllPends)
+                {
+                    return false;
+                }
+
+                if (_rollingPendCount == _rollingPend)
+                {
+                    _rollingPend++;
+                    _rollingPendCount = 0;
+                    return true;
+                }
+
+                _rollingPendCount++;
+                return false;
+            }
+#endif
+            internal void CloneNullBitmapInfo()
+            {
+                if (_stateObj._nullBitmapInfo.ReferenceEquals(_snapshotNullBitmapInfo))
+                {
+                    _stateObj._nullBitmapInfo = _stateObj._nullBitmapInfo.Clone();
+                }
+            }
+
+            internal void CloneCleanupAltMetaDataSetArray()
+            {
+                if (_stateObj._cleanupAltMetaDataSetArray != null && object.ReferenceEquals(_snapshotCleanupAltMetaDataSetArray, _stateObj._cleanupAltMetaDataSetArray))
+                {
+                    _stateObj._cleanupAltMetaDataSetArray = (_SqlMetaDataSetCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
+                }
+            }
+
+            internal void PrepareReplay()
+            {
+                ResetSnapshotState();
+            }
+        }
     }
 }

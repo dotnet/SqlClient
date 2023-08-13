@@ -3098,7 +3098,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private sealed class StateSnapshot
+        sealed partial class StateSnapshot
         {
             private sealed class PLPData
             {
@@ -3144,45 +3144,19 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            private int _rollingPend = 0;
-            private int _rollingPendCount = 0;
+
 #endif
             private PacketData _snapshotInBuffList;
             private PacketData _sparePacket;
-            private NullBitmap _snapshotNullBitmapInfo;
-            private _SqlMetaDataSet _snapshotCleanupMetaData;
-            private _SqlMetaDataSetCollection _snapshotCleanupAltMetaDataSetArray;
 
             internal byte[] _plpBuffer;
             private PLPData _plpData;
-            private TdsParserStateObject _stateObj;
 
             private int _snapshotInBuffCount;
-            private int _snapshotInBuffCurrent;
-            private int _snapshotInBytesUsed;
-            private int _snapshotInBytesPacket;
+
             private SnapshottedStateFlags _state;
-            private byte _snapshotMessageStatus;
 
 #if DEBUG
-            internal bool DoPend()
-            {
-                if (s_failAsyncPends || !s_forceAllPends)
-                {
-                    return false;
-                }
-
-                if (_rollingPendCount == _rollingPend)
-                {
-                    _rollingPend++;
-                    _rollingPendCount = 0;
-                    return true;
-                }
-
-                _rollingPendCount++;
-                return false;
-            }
-
             internal void AssertCurrent()
             {
                 Debug.Assert(_snapshotInBuffCurrent == _snapshotInBuffCount, "Should not be reading new packets when not replaying last packet");
@@ -3201,22 +3175,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 #endif
-            internal void CloneNullBitmapInfo()
-            {
-                if (_stateObj._nullBitmapInfo.ReferenceEquals(_snapshotNullBitmapInfo))
-                {
-                    _stateObj._nullBitmapInfo = _stateObj._nullBitmapInfo.Clone();
-                }
-            }
-
-            internal void CloneCleanupAltMetaDataSetArray()
-            {
-                if (_stateObj._cleanupAltMetaDataSetArray != null && object.ReferenceEquals(_snapshotCleanupAltMetaDataSetArray, _stateObj._cleanupAltMetaDataSetArray))
-                {
-                    _stateObj._cleanupAltMetaDataSetArray = (_SqlMetaDataSetCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
-                }
-            }
-
             internal void PushBuffer(byte[] buffer, int read)
             {
 #if DEBUG
@@ -3337,11 +3295,6 @@ namespace Microsoft.Data.SqlClient
                 _stateObj._snapshotReplay = true;
 
                 _stateObj.AssertValidState();
-            }
-
-            internal void PrepareReplay()
-            {
-                ResetSnapshotState();
             }
 
             internal void Clear()
