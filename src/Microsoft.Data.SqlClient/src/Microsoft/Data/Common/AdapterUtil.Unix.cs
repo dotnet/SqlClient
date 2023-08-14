@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+
 namespace Microsoft.Data.Common
 {
     /// <summary>
@@ -20,5 +22,8 @@ namespace Microsoft.Data.Common
             // No registry in non-Windows environments
             return null;
         }
+
+        internal static PlatformNotSupportedException LocalDBNotSUpportedException() => 
+            new PlatformNotSupportedException(Strings.LocalDBNotSupported); // LocalDB is not available for Unix and hence it cannot be supported.
     }
 }

@@ -13,7 +13,6 @@ namespace Microsoft.Data
         private const string LocalDbPrefix = @"(localdb)\";
         private const string LocalDbPrefix_NP = @"np:\\.\pipe\LOCALDB#";
 
-
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         private delegate int LocalDBFormatMessageDelegate(int hrLocalDB, uint dwFlags, uint dwLanguageId, StringBuilder buffer, ref uint buflen);
 
@@ -38,7 +37,6 @@ namespace Microsoft.Data
                 {
                     return input.ToString();
                 }
-
             }
             return null;
         }

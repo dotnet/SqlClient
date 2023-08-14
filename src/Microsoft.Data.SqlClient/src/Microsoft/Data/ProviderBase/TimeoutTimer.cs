@@ -2,9 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
 using System;
 using System.Diagnostics;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.ProviderBase
 {
@@ -180,6 +180,42 @@ namespace Microsoft.Data.ProviderBase
                 return milliseconds;
             }
         }
+
+        // Returns milliseconds remaining trimmed to zero for none remaining
+        internal int MillisecondsRemainingInt
+        {
+            get
+            {
+                //-------------------
+                // Method Body
+                int milliseconds;
+                if (_isInfiniteTimeout)
+                {
+                    milliseconds = int.MaxValue;
+                }
+                else
+                {
+                    long longMilliseconds = ADP.TimerRemainingMilliseconds(_timerExpire);
+                    if (0 > longMilliseconds)
+                    {
+                        milliseconds = 0;
+                    }
+                    else if (longMilliseconds > int.MaxValue)
+                    {
+                        milliseconds = int.MaxValue;
+                    }
+                    else
+                    {
+                        milliseconds = (int)longMilliseconds;
+                    }
+                }
+
+                //--------------------
+                // Postconditions
+                Debug.Assert(0 <= milliseconds);
+
+                return milliseconds;
+            }
+        }
     }
 }
-

@@ -2,13 +2,22 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.Data.SqlClient.SNI
+using System;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.Common;
+
+namespace Microsoft.Data.SqlClient
 {
     internal class LocalDB
     {
         internal static string GetLocalDBConnectionString(string localDbInstance)
         {
-            throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // No Registry support on UAP
+            throw ADP.LocalDBNotSUpportedException();
+        }
+
+        internal static string GetLocalDBDataSource(string fullServerName, TimeoutTimer timeout)
+        {
+            throw ADP.LocalDBNotSUpportedException();
         }
     }
 }

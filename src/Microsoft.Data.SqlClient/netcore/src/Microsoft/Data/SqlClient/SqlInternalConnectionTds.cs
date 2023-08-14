@@ -10,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading;
@@ -1913,14 +1914,40 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information 
+            string localDBDataSource = null;
+            DataSource details = null;
 
+            if (ConnectionOptions.LocalDBInstance != null)
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    //do not get np result if data source is already np
+                    string[] splitByColon = serverInfo.UserServerName.Split(':');
+                    if (!splitByColon[0].Trim().Equals("np", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        localDBDataSource = LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, timeout);
+                        //re-writing serverinfo to make NP as servername
+                        ServerInfo original = serverInfo;
+                        serverInfo = new ServerInfo(ConnectionOptions, localDBDataSource, original.ServerSPN);
+                        serverInfo.SetDerivedNames(original.UserProtocol, localDBDataSource);
+                    }
+                }
+                else
+                {
+                    throw new NotSupportedException();
+                }
+            }
+            string serverName = localDBDataSource ?? serverInfo.ExtendedServerName;
+             details = DataSource.ParseServerName(serverName);
+            
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
             _parser.Connect(serverInfo,
                             this,
-                            timeout.LegacyTimerExpire,
+                            timeout,
                             ConnectionOptions,
-                            withFailover);
+                            withFailover,
+                            details);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);

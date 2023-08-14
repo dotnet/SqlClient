@@ -6973,6 +6973,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to SQLUserInstanceDLL is not supported on current plaform. Install SqlLocalDB as an alternate option to connect to LocalDB..
+        /// </summary>
+        internal static string LocalDB_SQLUserInstanceDLL {
+            get {
+                return ResourceManager.GetString("LocalDB_SQLUserInstanceDLL", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot obtain Local Database Runtime error message.
         /// </summary>
         internal static string LocalDB_UnobtainableMessage {

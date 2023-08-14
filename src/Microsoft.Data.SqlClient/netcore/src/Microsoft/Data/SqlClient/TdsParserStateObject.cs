@@ -9,6 +9,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -198,7 +199,7 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void CreatePhysicalSNIHandle(
             string serverName,
-            long timerExpire,
+            TimeoutTimer timerExpire,
             out byte[] instanceName,
             ref byte[][] spnBuffer,
             bool flushCache,
@@ -208,6 +209,7 @@ namespace Microsoft.Data.SqlClient
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             string serverSPN,
+            DataSource dataSourceDetails,
             bool isIntegratedSecurity = false,
             bool tlsFirst = false,
             string hostNameInCertificate = "",

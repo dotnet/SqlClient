@@ -10,6 +10,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -17,8 +18,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
-using System.Net;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
@@ -494,7 +495,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Connect(ServerInfo serverInfo,
                               SqlInternalConnectionTds connHandler,
-                              long timerExpire,
+                              TimeoutTimer timerExpire,
                               SqlConnectionString connectionOptions,
                               bool withFailover,
                               bool isFirstTransparentAttempt,
@@ -536,7 +537,17 @@ namespace Microsoft.Data.SqlClient
             //Create LocalDB instance if necessary
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
-                LocalDBAPI.CreateLocalDBInstance(connHandler.ConnectionOptions.LocalDBInstance);
+                //do not get np result if data source is already np
+                string[] splitByColon = serverInfo.UserServerName.Split(':');
+                if (!splitByColon[0].Trim().Equals("np", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    string localDBDataSource = LocalDB.GetLocalDBDataSource(serverInfo.UserServerName, timerExpire);
+                    string serverName = localDBDataSource ?? serverInfo.ExtendedServerName;
+                    //re-writing serverinfo 
+                    ServerInfo original = serverInfo;
+                    serverInfo = new ServerInfo(connectionOptions, serverName, original.ServerSPN);
+                    serverInfo.SetDerivedNames(original.UserProtocol, serverName);
+                }
                 if (encrypt == SqlConnectionEncryptOption.Mandatory)
                 {
                     // Encryption is not supported on SQL Local DB - disable it for current session.
@@ -679,7 +690,7 @@ namespace Microsoft.Data.SqlClient
             }
             _state = TdsParserState.OpenNotLoggedIn;
             _physicalStateObj.SniContext = SniContext.Snix_PreLoginBeforeSuccessfulWrite; // SQL BU DT 376766
-            _physicalStateObj.TimeoutTime = timerExpire;
+            _physicalStateObj.TimeoutTime = timerExpire.LegacyTimerExpire;
 
             bool marsCapable = false;
 
@@ -1934,13 +1945,6 @@ namespace Microsoft.Data.SqlClient
                 // SNI error. Replace the entire message
                 //
                 errorMessage = SQL.GetSNIErrorMessage((int)sniError.sniError);
-
-                // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
-                if (sniError.sniError == (int)SNINativeMethodWrapper.SniSpecialErrors.LocalDBErrorCode)
-                {
-                    errorMessage += LocalDBAPI.GetLocalDBMessage((int)sniError.nativeError);
-                    win32ErrorCode = 0;
-                }
             }
             errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
                 sqlContextInfo, providerName, (int)sniError.sniError, errorMessage);

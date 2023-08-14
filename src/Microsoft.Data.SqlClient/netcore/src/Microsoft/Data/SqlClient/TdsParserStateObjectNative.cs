@@ -5,12 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
-using System.Net;
-using System.Text;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -140,7 +141,7 @@ namespace Microsoft.Data.SqlClient
 
         internal override void CreatePhysicalSNIHandle(
             string serverName,
-            long timerExpire,
+            TimeoutTimer timerExpire,
             out byte[] instanceName,
             ref byte[][] spnBuffer,
             bool flushCache,
@@ -150,6 +151,7 @@ namespace Microsoft.Data.SqlClient
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             string serverSPN,
+            DataSource dataSource,
             bool isIntegratedSecurity,
             bool tlsFirst,
             string hostNameInCertificate,
@@ -178,13 +180,13 @@ namespace Microsoft.Data.SqlClient
 
             // Translate to SNI timeout values (Int32 milliseconds)
             long timeout;
-            if (long.MaxValue == timerExpire)
+            if (long.MaxValue == timerExpire.LegacyTimerExpire)
             {
                 timeout = int.MaxValue;
             }
             else
             {
-                timeout = ADP.TimerRemainingMilliseconds(timerExpire);
+                timeout = ADP.TimerRemainingMilliseconds(timerExpire.LegacyTimerExpire);
                 if (timeout > int.MaxValue)
                 {
                     timeout = int.MaxValue;

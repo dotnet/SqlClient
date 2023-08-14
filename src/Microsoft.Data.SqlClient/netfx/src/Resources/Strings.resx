@@ -4644,4 +4644,7 @@
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.</value>
   </data>
+  <data name="LocalDB_SQLUserInstanceDLL" xml:space="preserve">
+    <value>SQLUserInstanceDLL is not supported on current plaform. Install SqlLocalDB as an alternate option to connect to LocalDB.</value>
+  </data>
 </root>
