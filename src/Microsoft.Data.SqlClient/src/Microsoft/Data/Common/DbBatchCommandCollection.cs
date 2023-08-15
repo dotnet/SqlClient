@@ -5,7 +5,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace System.Data.Common
+namespace Microsoft.Data.Common
 {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public abstract class DbBatchCommandCollection : IList<DbBatchCommand>

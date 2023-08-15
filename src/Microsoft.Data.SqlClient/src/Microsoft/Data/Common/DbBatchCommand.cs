@@ -2,7 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace System.Data.Common
+using System.Data;
+using System.Data.Common;
+
+namespace Microsoft.Data.Common
 {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public abstract class DbBatchCommand

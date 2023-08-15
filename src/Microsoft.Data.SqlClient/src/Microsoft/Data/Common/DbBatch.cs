@@ -2,13 +2,16 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Data;
+using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace System.Data.Common
+namespace Microsoft.Data.Common
 {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-    public abstract class DbBatch : IDisposable, IAsyncDisposable
+    public abstract partial class DbBatch : IDisposable
     {
         public DbBatchCommandCollection BatchCommands => DbBatchCommands;
 
@@ -66,12 +69,6 @@ namespace System.Data.Common
         protected abstract DbBatchCommand CreateDbBatchCommand();
 
         public virtual void Dispose() { }
-
-        public virtual ValueTask DisposeAsync()
-        {
-            Dispose();
-            return default;
-        }
     }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }
