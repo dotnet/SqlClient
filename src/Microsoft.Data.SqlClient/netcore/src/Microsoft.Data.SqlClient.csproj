@@ -525,7 +525,7 @@
       <Link>Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NotSupported.cs</Link>
     </Compile>
   </ItemGroup>
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard' AND ('$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1')">
     <Compile Include="..\..\src\Microsoft\Data\Common\DbBatch.cs">
       <Link>Microsoft\Data\Common\DbBatch.cs</Link>
     </Compile>
@@ -538,7 +538,9 @@
     <Compile Include="..\..\src\Microsoft\Data\Common\DbBatchCommandCollection.cs">
       <Link>Microsoft\Data\Common\DbBatchCommandCollection.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.Task.cs" />    
+  </ItemGroup>
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' == 'netstandard2.0'">
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.Task.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
@@ -597,7 +599,7 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
-    </Compile>
+    </Compile>  
     <EmbeddedResource Include="..\..\src\Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
@@ -976,6 +978,9 @@
     <Compile Include="$(CommonPath)\System\Net\Security\NegotiateStreamPal.Unix.cs">
       <Link>Common\System\Net\Security\NegotiateStreamPal.Unix.cs</Link>
     </Compile>
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(IsUAPAssembly)' == 'true'">
     <Reference Include="System.Collections.NonGeneric" />

@@ -114,13 +114,17 @@ namespace Microsoft.Data.SqlClient
         protected override DbBatchCommand DbBatchCommand => BatchCommand;
 
         public new SqlBatchCommand BatchCommand
-#else
-        public SqlBatchCommand BatchCommand
-#endif 
         {
             get => _batchCommand;
             internal set => _batchCommand = value;
         }
+#else
+        internal SqlBatchCommand BatchCommand
+        {
+            get => _batchCommand;
+            set => _batchCommand = value;
+        }
+#endif
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member       
         
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
