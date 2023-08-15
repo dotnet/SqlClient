@@ -24,15 +24,17 @@ namespace Microsoft.Data.SqlClient
         private readonly int _win32ErrorCode;
         [System.Runtime.Serialization.OptionalField(VersionAdded = 5)]
         private readonly Exception _exception;
+        [System.Runtime.Serialization.OptionalField(VersionAdded = 6)]
+        private readonly int _batchIndex;
 
-        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, uint win32ErrorCode, Exception exception = null)
-            : this(infoNumber, errorState, errorClass, server, errorMessage, procedure, lineNumber, exception)
+        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, uint win32ErrorCode, Exception exception = null, int batchIndex = -1)
+            : this(infoNumber, errorState, errorClass, server, errorMessage, procedure, lineNumber, exception, batchIndex)
         {
             _server = server;
             _win32ErrorCode = (int)win32ErrorCode;
         }
 
-        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, Exception exception = null)
+        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, Exception exception = null, int batchIndex = -1)
         {
             _number = infoNumber;
             _state = errorState;
@@ -43,9 +45,10 @@ namespace Microsoft.Data.SqlClient
             _lineNumber = lineNumber;
             _win32ErrorCode = 0;
             _exception = exception;
+            _batchIndex = batchIndex;
             if (errorClass != 0)
             {
-                SqlClientEventSource.Log.TryTraceEvent("SqlError.ctor | ERR | Info Number {0}, Error State {1}, Error Class {2}, Error Message '{3}', Procedure '{4}', Line Number {5}", infoNumber, (int)errorState, (int)errorClass, errorMessage, procedure ?? "None", (int)lineNumber);
+                SqlClientEventSource.Log.TryTraceEvent("SqlError.ctor | ERR | Info Number {0}, Error State {1}, Error Class {2}, Error Message '{3}', Procedure '{4}', Line Number {5}, Batch Index {6}", infoNumber, (int)errorState, (int)errorClass, errorMessage, procedure ?? "None", (int)lineNumber, batchIndex);
             }
         }
 
@@ -87,5 +90,7 @@ namespace Microsoft.Data.SqlClient
         internal int Win32ErrorCode  => _win32ErrorCode;
 
         internal Exception Exception => _exception;
+
+        internal int BatchIndex => _batchIndex;
     }
 }

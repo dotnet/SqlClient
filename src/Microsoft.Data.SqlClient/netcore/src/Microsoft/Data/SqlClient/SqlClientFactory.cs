@@ -51,5 +51,26 @@ namespace Microsoft.Data.SqlClient
         {
             return new SqlParameter();
         }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateBatch/*'/>
+        public
+#if NET6_0_OR_GREATER
+        override 
+#endif
+        bool CanCreateBatch => true;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatch/*'/>
+        public
+#if NET6_0_OR_GREATER
+        override
+#endif
+        DbBatch CreateBatch() => new SqlBatch();
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatchCommand/*'/>
+        public
+#if NET6_0_OR_GREATER
+        override
+#endif
+        DbBatchCommand CreateBatchCommand() => new SqlBatchCommand();
     }
 }

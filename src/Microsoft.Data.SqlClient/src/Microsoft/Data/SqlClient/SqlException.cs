@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.ComponentModel;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Serialization;
@@ -25,6 +26,15 @@ namespace Microsoft.Data.SqlClient
         [System.Runtime.Serialization.OptionalFieldAttribute(VersionAdded = 4)]
 #endif
         private Guid _clientConnectionId = Guid.Empty;
+#if NETFRAMEWORK
+        [System.Runtime.Serialization.IgnoreDataMember]
+#endif
+        private SqlBatchCommand _batchCommand;
+#if NETFRAMEWORK
+        [System.Runtime.Serialization.IgnoreDataMember]
+#endif
+        // Do not serialize this field! It is used to indicate that no reconnection attempts are required
+        internal bool _doNotReconnect = false;
 
         private SqlException(string message, SqlErrorCollection errorCollection, Exception innerException, Guid conId) : base(message, innerException)
         {
@@ -99,6 +109,20 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
         override public string Source => TdsEnums.SQL_PROVIDER_NAME;
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+#if NET6_0_OR_GREATER
+        protected override DbBatchCommand DbBatchCommand => SqlBatchCommand;
+#else
+        public DbBatchCommand BatchCommand => SqlBatchCommand;
+#endif
+
+        public SqlBatchCommand SqlBatchCommand
+        {
+            get => _batchCommand;
+            internal set => _batchCommand = value;
+        }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member       
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
         public override string ToString()
         {
@@ -130,15 +154,15 @@ namespace Microsoft.Data.SqlClient
             return sb.ToString();
         }
 
-        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion)
+        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlBatchCommand batchCommand = null)
         {
-            return CreateException(errorCollection, serverVersion, Guid.Empty);
+            return CreateException(errorCollection, serverVersion, Guid.Empty, innerException: null, batchCommand: batchCommand);
         }
 
-        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlInternalConnectionTds internalConnection, Exception innerException = null)
+        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlInternalConnectionTds internalConnection, Exception innerException = null, SqlBatchCommand batchCommand = null)
         {
             Guid connectionId = (internalConnection == null) ? Guid.Empty : internalConnection._clientConnectionId;
-            SqlException exception = CreateException(errorCollection, serverVersion, connectionId, innerException);
+            SqlException exception = CreateException(errorCollection, serverVersion, connectionId, innerException, batchCommand);
 
             if (internalConnection != null)
             {
@@ -156,7 +180,7 @@ namespace Microsoft.Data.SqlClient
             return exception;
         }
 
-        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null)
+        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null, SqlBatchCommand batchCommand = null)
         {
             Debug.Assert(null != errorCollection && errorCollection.Count > 0, "no errorCollection?");
 
@@ -176,9 +200,8 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlException exception = new(message.ToString(), errorCollection, innerException, conId);
-
+            exception.SqlBatchCommand = batchCommand;
             exception.Data.Add("HelpLink.ProdName", "Microsoft SQL Server");
-
             if (!string.IsNullOrEmpty(serverVersion))
             {
                 exception.Data.Add("HelpLink.ProdVer", serverVersion);
@@ -201,12 +224,9 @@ namespace Microsoft.Data.SqlClient
                     exception.Data.Add(entry.Key, entry.Value);
                 }
             }
-
+            exception._batchCommand = _batchCommand;
             exception._doNotReconnect = _doNotReconnect;
             return exception;
         }
-
-        // Do not serialize this field! It is used to indicate that no reconnection attempts are required
-        internal bool _doNotReconnect = false;
     }
 }
