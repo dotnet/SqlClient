@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 false,
                 BindingFlags.Instance | BindingFlags.NonPublic,
                 null,
-                new object[] { 100, (byte)0x00, FATAL_ERROR_CLASS, "ServerName", msg, "ProcedureName", 10, null },
+                new object[] { 100, (byte)0x00, FATAL_ERROR_CLASS, "ServerName", msg, "ProcedureName", 10, null, -1 },
                 null,
                 null);
 
