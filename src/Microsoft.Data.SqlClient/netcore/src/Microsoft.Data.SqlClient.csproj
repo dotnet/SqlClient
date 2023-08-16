@@ -982,6 +982,11 @@
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">
     <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.NetCoreApp.cs" />
   </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBatchCommand.Net8OrGreater.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBatchCommand.Net8OrGreater.cs</Link>
+    </Compile>
+  </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(IsUAPAssembly)' == 'true'">
     <Reference Include="System.Collections.NonGeneric" />
     <Reference Include="System.Memory" />

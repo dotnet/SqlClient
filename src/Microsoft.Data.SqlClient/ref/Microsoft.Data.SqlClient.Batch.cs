@@ -68,12 +68,7 @@ namespace Microsoft.Data.SqlClient
     }
     public sealed partial class SqlException
     {
-        public
-#if NET6_0_OR_GREATER
-        new
-#endif 
-        Microsoft.Data.SqlClient.SqlBatchCommand BatchCommand { get { throw null; } }
-
+        public new Microsoft.Data.SqlClient.SqlBatchCommand BatchCommand { get { throw null; } }
     }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }

@@ -252,7 +252,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         Connection = connection,
                         Transaction = transaction,
-                        BatchCommands = { new SqlBatchCommand($"RAISERROR ( 'an intentional error occured.', 15, 1)") }
+                        BatchCommands = { new SqlBatchCommand("RAISERROR ( 'an intentional error occured.', 15, 1)") }
                     }
                     )
                     {
@@ -272,7 +272,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
 
-            //Assert.NotNull(exception);
+            Assert.NotNull(exception);
             Assert.NotNull(exception.BatchCommand);
         }
 
@@ -285,7 +285,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
-                using (var command = new SqlCommand($"DELETE FROM Orders WHERE CustomerID='VINET'", connection, transaction))
+                using (var command = new SqlCommand("RAISERROR ( 'an intentional error occured.', 15, 1)", connection, transaction))
                 {
                     try
                     {
