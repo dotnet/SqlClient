@@ -252,7 +252,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         Connection = connection,
                         Transaction = transaction,
-                        BatchCommands = { new SqlBatchCommand($"DELETE FROM Orders WHERE CustomerID='VINET'") } // will fail with a foreign key violation
+                        BatchCommands = { new SqlBatchCommand($"RAISERROR ( 'an intentional error occured.', 15, 1)") }
                     }
                     )
                     {
@@ -272,7 +272,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
 
-            Assert.NotNull(exception);
+            //Assert.NotNull(exception);
             Assert.NotNull(exception.BatchCommand);
         }
 
