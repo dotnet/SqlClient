@@ -4644,4 +4644,91 @@
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>如果在连接字符串中指定了 "Authentication=Active Directory Default"，则无法设置 AccessTokenCallback 属性。</value>
   </data>
+  <data name="event_OperationReturnedSomething" xml:space="preserve">
+    <value>{0} 返回了 {1}。</value>
+  </data>
+  <data name="net_auth_message_not_encrypted" xml:space="preserve">
+    <value>协议错误: 接收的消息中包含有效的签名，但是没有按照有效的保护级别的要求对消息进行加密。</value>
+  </data>
+  <data name="net_log_operation_failed_with_error" xml:space="preserve">
+    <value>{0} 失败，出现错误 {1}。</value>
+  </data>
+  <data name="net_MethodNotImplementedException" xml:space="preserve">
+    <value>此类未实现此方法。</value>
+  </data>
+  <data name="net_securitypackagesupport" xml:space="preserve">
+    <value>不支持请求的安全包。</value>
+  </data>
+  <data name="SNI_IncorrectPhysicalConnectionType" xml:space="preserve">
+    <value>physicalConnection 类型不正确。</value>
+  </data>
+  <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
+    <value>尝试设置 AppContext 交换机“{0}”={1} 时发生异常。</value>
+  </data>
+  <data name="SQL_DbTypeNotSupportedOnThisPlatform" xml:space="preserve">
+    <value>此平台不支持类型 {0}。</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
+    <value>不支持全球化固定模式。</value>
+  </data>
+  <data name="SQL_KerberosTicketMissingError" xml:space="preserve">
+    <value>无法使用 Kerberos 进行身份验证。确保已在客户端上使用“kinit”初始化 Kerberos，并且已为 SQL Server 注册了服务主体名称以允许 Kerberos 身份验证。</value>
+  </data>
+  <data name="SQL_NetworkLibraryNotSupported" xml:space="preserve">
+    <value>此平台不支持关键字“网络库”，而是将“数据源”作为所需协议的前缀(对于 TCP 连接为“tcp:”或对于命名管道连接为“np:”)。</value>
+  </data>
+  <data name="SQL_SocketDidNotThrow" xml:space="preserve">
+    <value>套接字未引发预期的“{0}”，错误代码为“{1}”。</value>
+  </data>
+  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
+    <value>.Net Standard 2.0 不支持。</value>
+  </data>
+  <data name="SQL_UnsupportedFeature" xml:space="preserve">
+    <value>服务器正在尝试使用此平台不支持的功能。</value>
+  </data>
+  <data name="SQL_UnsupportedKeyword" xml:space="preserve">
+    <value>此平台不支持关键字“{0}”。</value>
+  </data>
+  <data name="SQL_UnsupportedSysTxVersion" xml:space="preserve">
+    <value>当前加载的 System.Transactions.dll 不支持全局事务。</value>
+  </data>
+  <data name="SQL_UnsupportedToken" xml:space="preserve">
+    <value>从服务器读取数据时收到不受支持的令牌“{0}”。</value>
+  </data>
+  <data name="SSPIInvalidHandleType" xml:space="preserve">
+    <value>“{0}”是不受支持的句柄类型。</value>
+  </data>
+  <data name="SqlFileStream_NotSupported" xml:space="preserve">
+    <value>此平台不支持 SqlFileStream。</value>
+  </data>
+  <data name="LocalDBNotSupported" xml:space="preserve">
+    <value>此平台不支持 LocalDB。</value>
+  </data>
+  <data name="net_context_buffer_too_small" xml:space="preserve">
+    <value>缓冲区空间不足。必需: {0} 实际: {1}。</value>
+  </data>
+  <data name="net_gssapi_operation_failed" xml:space="preserve">
+    <value>GSSAPI 操作失败，状态为: {0} (次要状态: {1})。</value>
+  </data>
+  <data name="net_gssapi_operation_failed_detailed" xml:space="preserve">
+    <value>GSSAPI 操作失败，出现错误 - {0} ({1})。</value>
+  </data>
+  <data name="net_nego_channel_binding_not_supported" xml:space="preserve">
+    <value>不支持在除 Windows 以外的操作系统上进行通道绑定。</value>
+  </data>
+  <data name="net_nego_not_supported_empty_target_with_defaultcreds" xml:space="preserve">
+    <value>如果传递了默认凭据，则目标名称应为非空。</value>
+  </data>
+  <data name="net_nego_protection_level_not_supported" xml:space="preserve">
+    <value>当前安装的 GSSAPI 实现不支持请求的保护级别。</value>
+  </data>
+  <data name="net_nego_server_not_supported" xml:space="preserve">
+    <value>不支持服务器实现。</value>
+  </data>
+  <data name="net_ntlm_not_possible_default_cred" xml:space="preserve">
+    <value>无法在此平台上使用默认凭据进行 NTLM 身份验证。</value>
+  </data>
+  <data name="SqlParameter_SourceColumnNullMapping" xml:space="preserve">
+    <value>在 DataAdapter.Update 使用时，参数值由 DBNull.Value 更改为 (Int32)1 或 (Int32)0 (如果非空)。</value>
+  </data>
 </root>
