@@ -3267,9 +3267,6 @@ namespace Microsoft.Data.SqlClient
             private bool _snapshotReceivedColumnMetadata = false;
             private bool _snapshotAttentionReceived;
 
-            private ulong _snapshotLongLen;
-            private ulong _snapshotLongLenLeft;
-
             public StateSnapshot(TdsParserStateObject state)
             {
                 _snapshotInBuffs = new List<PacketData>();
@@ -3347,8 +3344,10 @@ namespace Microsoft.Data.SqlClient
                 _snapshotMessageStatus = _stateObj._messageStatus;
                 // _nullBitmapInfo must be cloned before it is updated
                 _snapshotNullBitmapInfo = _stateObj._nullBitmapInfo;
-                _snapshotLongLen = _stateObj._longlen;
-                _snapshotLongLenLeft = _stateObj._longlenleft;
+                if (_stateObj._longlen != 0 || _stateObj._longlenleft != 0)
+                {
+                    _plpData = new PLPData(_stateObj._longlen, _stateObj._longlenleft);
+                }
                 _snapshotCleanupMetaData = _stateObj._cleanupMetaData;
                 // _cleanupAltMetaDataSetArray must be cloned bofore it is updated
                 _snapshotCleanupAltMetaDataSetArray = _stateObj._cleanupAltMetaDataSetArray;
@@ -3401,8 +3400,8 @@ namespace Microsoft.Data.SqlClient
                 _stateObj._partialHeaderBytesRead = 0;
 
                 // reset plp state
-                _stateObj._longlen = _snapshotLongLen;
-                _stateObj._longlenleft = _snapshotLongLenLeft;
+                _stateObj._longlen = _plpData?.SnapshotLongLen ?? 0;
+                _stateObj._longlenleft = _plpData?.SnapshotLongLenLeft ?? 0;
 
                 _stateObj._snapshotReplay = true;
 

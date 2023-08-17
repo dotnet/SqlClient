@@ -3100,18 +3100,6 @@ namespace Microsoft.Data.SqlClient
 
         sealed partial class StateSnapshot
         {
-            private sealed class PLPData
-            {
-                public readonly ulong SnapshotLongLen;
-                public readonly ulong SnapshotLongLenLeft;
-
-                public PLPData(ulong snapshotLongLen, ulong snapshotLongLenLeft)
-                {
-                    SnapshotLongLen = snapshotLongLen;
-                    SnapshotLongLenLeft = snapshotLongLenLeft;
-                }
-            }
-
             private sealed partial class PacketData
             {
                 public byte[] Buffer;
@@ -3150,7 +3138,7 @@ namespace Microsoft.Data.SqlClient
             private PacketData _sparePacket;
 
             internal byte[] _plpBuffer;
-            private PLPData _plpData;
+
 
             private int _snapshotInBuffCount;
 
