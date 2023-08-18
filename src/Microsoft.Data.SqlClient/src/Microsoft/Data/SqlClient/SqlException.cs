@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
         override public string Source => TdsEnums.SQL_PROVIDER_NAME;
 
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
         /// <summary>
         /// Indicates whether the error represented by this <see cref="SqlException" /> could be a transient error, i.e. if retrying the triggering
         /// operation may succeed without any other change. Examples of transient errors include failure to acquire a database lock, networking
