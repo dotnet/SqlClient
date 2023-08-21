@@ -100,11 +100,7 @@ namespace Microsoft.Data.SqlClient
         override public string Source => TdsEnums.SQL_PROVIDER_NAME;
 
 #if NET6_0_OR_GREATER
-        /// <summary>
-        /// Indicates whether the error represented by this <see cref="SqlException" /> could be a transient error, i.e. if retrying the triggering
-        /// operation may succeed without any other change. Examples of transient errors include failure to acquire a database lock, networking
-        /// issues. This allows automatic retry execution strategies to be developed without knowledge of specific database error codes.
-        /// </summary>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="IsTransient"]/Source/*' />
         public override bool IsTransient
         {
             get
