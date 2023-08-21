@@ -109,6 +109,9 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
+                if (Errors.Count == 0)
+                    return false;
+
                 foreach (SqlError err in Errors)
                 {
                     switch (err.Number)
@@ -284,15 +287,19 @@ namespace Microsoft.Data.SqlClient
                         // DBNETLIB Error Code: 20
                         // The instance of SQL Server you attempted to connect to does not support encryption.
                         case 20:
-                            return true;
-                            // This exception can be thrown even if the operation completed successfully, so it's safer to let the application fail.
-                            // DBNETLIB Error Code: -2
-                            // Timeout expired. The timeout period elapsed prior to completion of the operation or the server is not responding. The statement has been terminated.
-                            //case -2:
+                        // This exception can be thrown even if the operation completed successfully, so it's safer to let the application fail.
+                        // DBNETLIB Error Code: -2
+                        // Timeout expired. The timeout period elapsed prior to completion of the operation or the server is not responding. The statement has been terminated.
+                        //case -2:
+                            break;
+
+                        // we don't consider an exception transient on the first non-transient error encountered
+                        default:
+                            return false;
                     }
                 }
 
-                return false;
+                return true; // will be true if all sql errors are transient
             }
         }
 #endif
