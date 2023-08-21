@@ -22,6 +22,7 @@ using Microsoft.Data.SqlClient;
 using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
+using System.Security.Authentication;
 
 #if NETFRAMEWORK
 using Microsoft.Win32;
@@ -326,9 +327,16 @@ namespace Microsoft.Data.Common
             TraceExceptionAsReturnValue(e);
             return e;
         }
-#endregion
 
-#region Helper Functions
+        internal static AuthenticationException SSLCertificateAuthenticationException(string message)
+        {
+            AuthenticationException e = new(message);
+            TraceExceptionAsReturnValue(e);
+            return e;
+        }
+        #endregion
+
+        #region Helper Functions
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, string value, string method)
             => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_NotSupportedEnumerationValue, type.Name, value, method), type.Name);
 
