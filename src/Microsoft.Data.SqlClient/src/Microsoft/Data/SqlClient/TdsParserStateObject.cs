@@ -1104,9 +1104,23 @@ namespace Microsoft.Data.SqlClient
 
         sealed partial class StateSnapshot
         {
+            private sealed class PLPData
+            {
+                public readonly ulong SnapshotLongLen;
+                public readonly ulong SnapshotLongLenLeft;
+
+                public PLPData(ulong snapshotLongLen, ulong snapshotLongLenLeft)
+                {
+                    SnapshotLongLen = snapshotLongLen;
+                    SnapshotLongLenLeft = snapshotLongLenLeft;
+                }
+            }
+
             private int _snapshotInBuffCurrent;
             private int _snapshotInBytesUsed;
             private int _snapshotInBytesPacket;
+
+            private PLPData _plpData;
 
             private byte _snapshotMessageStatus;
 
@@ -1115,7 +1129,6 @@ namespace Microsoft.Data.SqlClient
             private _SqlMetaDataSetCollection _snapshotCleanupAltMetaDataSetArray;
 
             private TdsParserStateObject _stateObj;
-
 #if DEBUG
             private int _rollingPend = 0;
             private int _rollingPendCount = 0;
