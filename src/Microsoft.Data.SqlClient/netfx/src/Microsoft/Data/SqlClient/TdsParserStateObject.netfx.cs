@@ -3239,26 +3239,15 @@ namespace Microsoft.Data.SqlClient
 #endif
         }
 
-        class StateSnapshot
+        sealed partial class StateSnapshot
         {
             private List<PacketData> _snapshotInBuffs;
-            private int _snapshotInBuffCurrent = 0;
-            private int _snapshotInBytesUsed = 0;
-            private int _snapshotInBytesPacket = 0;
+
             private bool _snapshotPendingData = false;
             private bool _snapshotErrorTokenReceived = false;
             private bool _snapshotHasOpenResult = false;
             private bool _snapshotReceivedColumnMetadata = false;
             private bool _snapshotAttentionReceived;
-            private byte _snapshotMessageStatus;
-
-            private NullBitmap _snapshotNullBitmapInfo;
-            private ulong _snapshotLongLen;
-            private ulong _snapshotLongLenLeft;
-            private _SqlMetaDataSet _snapshotCleanupMetaData;
-            private _SqlMetaDataSetCollection _snapshotCleanupAltMetaDataSetArray;
-
-            private readonly TdsParserStateObject _stateObj;
 
             public StateSnapshot(TdsParserStateObject state)
             {
@@ -3267,27 +3256,6 @@ namespace Microsoft.Data.SqlClient
             }
 
 #if DEBUG
-            private int _rollingPend = 0;
-            private int _rollingPendCount = 0;
-
-            internal bool DoPend()
-            {
-                if (s_failAsyncPends || !s_forceAllPends)
-                {
-                    return false;
-                }
-
-                if (_rollingPendCount == _rollingPend)
-                {
-                    _rollingPend++;
-                    _rollingPendCount = 0;
-                    return true;
-                }
-
-                _rollingPendCount++;
-                return false;
-            }
-
             internal void AssertCurrent()
             {
                 Debug.Assert(_snapshotInBuffCurrent == _snapshotInBuffs.Count, "Should not be reading new packets when not replaying last packet");
@@ -3306,21 +3274,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 #endif
-            internal void CloneNullBitmapInfo()
-            {
-                if (_stateObj._nullBitmapInfo.ReferenceEquals(_snapshotNullBitmapInfo))
-                {
-                    _stateObj._nullBitmapInfo = _stateObj._nullBitmapInfo.Clone();
-                }
-            }
-
-            internal void CloneCleanupAltMetaDataSetArray()
-            {
-                if (_stateObj._cleanupAltMetaDataSetArray != null && object.ReferenceEquals(_snapshotCleanupAltMetaDataSetArray, _stateObj._cleanupAltMetaDataSetArray))
-                {
-                    _stateObj._cleanupAltMetaDataSetArray = (_SqlMetaDataSetCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
-                }
-            }
 
             internal void PushBuffer(byte[] buffer, int read)
             {
@@ -3373,8 +3326,10 @@ namespace Microsoft.Data.SqlClient
                 _snapshotMessageStatus = _stateObj._messageStatus;
                 // _nullBitmapInfo must be cloned before it is updated
                 _snapshotNullBitmapInfo = _stateObj._nullBitmapInfo;
-                _snapshotLongLen = _stateObj._longlen;
-                _snapshotLongLenLeft = _stateObj._longlenleft;
+                if (_stateObj._longlen != 0 || _stateObj._longlenleft != 0)
+                {
+                    _plpData = new PLPData(_stateObj._longlen, _stateObj._longlenleft);
+                }
                 _snapshotCleanupMetaData = _stateObj._cleanupMetaData;
                 // _cleanupAltMetaDataSetArray must be cloned bofore it is updated
                 _snapshotCleanupAltMetaDataSetArray = _stateObj._cleanupAltMetaDataSetArray;
@@ -3427,17 +3382,12 @@ namespace Microsoft.Data.SqlClient
                 _stateObj._partialHeaderBytesRead = 0;
 
                 // reset plp state
-                _stateObj._longlen = _snapshotLongLen;
-                _stateObj._longlenleft = _snapshotLongLenLeft;
+                _stateObj._longlen = _plpData?.SnapshotLongLen ?? 0;
+                _stateObj._longlenleft = _plpData?.SnapshotLongLenLeft ?? 0;
 
                 _stateObj._snapshotReplay = true;
 
                 _stateObj.AssertValidState();
-            }
-
-            internal void PrepareReplay()
-            {
-                ResetSnapshotState();
             }
         }
     }

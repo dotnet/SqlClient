@@ -5684,18 +5684,20 @@ namespace Microsoft.Data.SqlClient
                         {
                             char[] cc = null;
                             bool buffIsRented = false;
-                            if (!TryReadPlpUnicodeChars(ref cc, 0, length >> 1, stateObj, out length, supportRentedBuff: true, rentedBuff: ref buffIsRented))
+                            bool result = TryReadPlpUnicodeChars(ref cc, 0, length >> 1, stateObj, out length, supportRentedBuff: true, rentedBuff: ref buffIsRented);
+
+                            if (result)
                             {
-                                return false;
+                                if (length > 0)
+                                {
+                                    s = new string(cc, 0, length);
+                                }
+                                else
+                                {
+                                    s = "";
+                                }
                             }
-                            if (length > 0)
-                            {
-                                s = new string(cc, 0, length);
-                            }
-                            else
-                            {
-                                s = "";
-                            }
+                            
                             if (buffIsRented)
                             {
                                 // do not use clearArray:true on the rented array because it can be massively larger
@@ -5705,6 +5707,11 @@ namespace Microsoft.Data.SqlClient
                                 cc.AsSpan(0, length).Clear();
                                 ArrayPool<char>.Shared.Return(cc, clearArray: false);
                                 cc = null;
+                            }
+
+                            if (!result)
+                            {
+                                return false;
                             }
                         }
                         else
