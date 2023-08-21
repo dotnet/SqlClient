@@ -1515,9 +1515,11 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             // Basic case
                             using (stream = reader.GetStream(0))
                             {
+                                Assert.Equal(0, stream.Position);
                                 stream.Read(smallBuffer, 0, smallBuffer.Length);
                                 stream.Read(buffer, 2, 2);
 
+                                Assert.Equal(4, stream.Position);
                                 // Testing stream properties
                                 stream.Flush();
                                 DataTestUtility.AssertThrowsWrapper<NotSupportedException>(() => stream.SetLength(1));
@@ -1526,15 +1528,13 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 if (behavior == CommandBehavior.SequentialAccess)
                                 {
                                     DataTestUtility.AssertThrowsWrapper<NotSupportedException>(() => stream.Seek(0, SeekOrigin.Begin));
-                                    performOnStream = ((s) => { long i = s.Position; });
-                                    DataTestUtility.AssertThrowsWrapper<NotSupportedException>(() => performOnStream(stream));
                                     performOnStream = ((s) => { long i = s.Length; });
                                     DataTestUtility.AssertThrowsWrapper<NotSupportedException>(() => performOnStream(stream));
                                 }
                                 else
                                 {
                                     stream.Seek(0, SeekOrigin.Begin);
-                                    long position = stream.Position;
+                                    Assert.Equal(0, stream.Position);
                                     long length = stream.Length;
                                 }
                             }
