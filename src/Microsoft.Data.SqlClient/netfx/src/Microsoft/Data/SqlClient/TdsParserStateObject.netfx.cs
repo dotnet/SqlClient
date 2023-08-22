@@ -12,6 +12,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -279,7 +280,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void CreatePhysicalSNIHandle(
             string serverName,
-            long timerExpire,
+            TimeoutTimer timeout,
             out byte[] instanceName,
             byte[] spnBuffer,
             bool flushCache,
@@ -293,31 +294,12 @@ namespace Microsoft.Data.SqlClient
         {
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
 
-            // Translate to SNI timeout values (Int32 milliseconds)
-            long timeout;
-            if (long.MaxValue == timerExpire)
-            {
-                timeout = int.MaxValue;
-            }
-            else
-            {
-                timeout = ADP.TimerRemainingMilliseconds(timerExpire);
-                if (timeout > int.MaxValue)
-                {
-                    timeout = int.MaxValue;
-                }
-                else if (0 > timeout)
-                {
-                    timeout = 0;
-                }
-            }
-
             // serverName : serverInfo.ExtendedServerName
             // may not use this serverName as key
 
             _ = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, checked((int)timeout),
+            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, timeout.MillisecondsRemainingInt,
                 out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
                 ipPreference, cachedDNSInfo, hostNameInCertificate);
         }

@@ -2300,7 +2300,7 @@ namespace Microsoft.Data.SqlClient
 
             _parser.Connect(serverInfo,
                             this,
-                            timeout.LegacyTimerExpire,
+                            timeout,
                             ConnectionOptions,
                             withFailover,
                             isFirstTransparentAttempt,

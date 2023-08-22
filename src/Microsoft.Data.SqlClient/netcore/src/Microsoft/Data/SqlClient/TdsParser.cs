@@ -16,6 +16,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
@@ -361,7 +362,7 @@ namespace Microsoft.Data.SqlClient
         internal void Connect(
             ServerInfo serverInfo,
             SqlInternalConnectionTds connHandler,
-            long timerExpire,
+            TimeoutTimer timeout,
             SqlConnectionString connectionOptions,
             bool withFailover)
         {
@@ -444,7 +445,7 @@ namespace Microsoft.Data.SqlClient
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(
                 serverInfo.ExtendedServerName,
-                timerExpire,
+                timeout,
                 out instanceName,
                 ref _sniSpnBuffer,
                 false,
@@ -487,7 +488,7 @@ namespace Microsoft.Data.SqlClient
             }
             _state = TdsParserState.OpenNotLoggedIn;
             _physicalStateObj.SniContext = SniContext.Snix_PreLoginBeforeSuccessfulWrite;
-            _physicalStateObj.TimeoutTime = timerExpire;
+            _physicalStateObj.TimeoutTime = timeout.LegacyTimerExpire;
 
             bool marsCapable = false;
 
@@ -542,7 +543,7 @@ namespace Microsoft.Data.SqlClient
 
                 _physicalStateObj.CreatePhysicalSNIHandle(
                     serverInfo.ExtendedServerName,
-                    timerExpire, out instanceName,
+                    timeout, out instanceName,
                     ref _sniSpnBuffer,
                     true,
                     true,
