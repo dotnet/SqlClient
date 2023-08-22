@@ -3014,7 +3014,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     return null;
-                };
+                }
             }
         }
 
