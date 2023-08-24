@@ -110,27 +110,27 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <references>
       <group targetFramework="net462">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <!-- <reference file="Microsoft.Data.SqlClient.pdb" /> -->
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="net7.0">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <!-- <reference file="Microsoft.Data.SqlClient.pdb" /> -->
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="net6.0">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <!-- <reference file="Microsoft.Data.SqlClient.pdb" /> -->
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="netstandard2.0">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <!-- <reference file="Microsoft.Data.SqlClient.pdb" /> -->
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="netstandard2.1">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
+          <!-- <reference file="Microsoft.Data.SqlClient.pdb" /> -->
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
     </references>

@@ -20,8 +20,26 @@
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <!-- Repository Url is required for none SDK project even if it is already in nuspec file. -->
+    <RepositoryUrl>https://github.com/dotnet/sqlclient</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>      
+    <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>  
+  <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
+    <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
+  </ItemGroup>  
   <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
@@ -708,7 +726,10 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Condition="$(BuildForRelease) == 'true'" Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>    
     <PackageReference Include="System.Text.Encodings.Web">
       <Version>$(SystemTextEncodingsWebVersion)</Version>
     </PackageReference>
