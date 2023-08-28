@@ -19,19 +19,9 @@
     <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
   </PropertyGroup>
+  <!-- Override debugtype=portable in Directory.Build.props for netfx -->
   <PropertyGroup>
-    <DebugType>portable</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <!-- Repository Url is required for none SDK project even if it is already in nuspec file. -->
-    <RepositoryUrl>https://github.com/dotnet/sqlclient</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>      
-    <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-    <Deterministic>true</Deterministic>
+    <DebugType>full</DebugType>
   </PropertyGroup>  
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>

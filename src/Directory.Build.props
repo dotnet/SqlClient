@@ -71,6 +71,22 @@
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
   </PropertyGroup>
 
+  <!-- Packaging -->
+  <PropertyGroup>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <!-- Repository Url is required for none SDK project even if it is already in nuspec file. -->
+    <RepositoryUrl>https://github.com/dotnet/sqlclient</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>      
+    <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
   <!-- Provides Tool properties -->
