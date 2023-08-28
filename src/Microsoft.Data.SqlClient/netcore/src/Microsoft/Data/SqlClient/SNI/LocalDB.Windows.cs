@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.SNI
             if (result != TdsEnums.SNI_SUCCESS)
             {
                 SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBErrorCode, Strings.SNI_ERROR_50);
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(LocalDB), EventType.ERR, "Unsuccessful 'LocalDBStartInstance' method call with {0} result to start '{1}' localDb instance", result, localDbInstance);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(LocalDB), EventType.ERR, "Unsuccessful 'LocalDBStartInstance' method call with {0} result to start '{1}' localDb instance", args0: result, args1: localDbInstance);
                 localDBConnectionString = null;
             }
             return localDBConnectionString?.ToString();
