@@ -6804,7 +6804,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     errors.Add(rpc.warnings[i]);
                 }
-                result = SqlException.CreateException(errors, Connection.ServerVersion, Connection.ClientConnectionId);
+                result = SqlException.CreateException(errors, Connection.ServerVersion, Connection.ClientConnectionId, innerException: null, batchCommand: null);
             }
             return result;
         }
