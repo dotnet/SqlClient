@@ -27,14 +27,30 @@ namespace Microsoft.Data.SqlClient
         [System.Runtime.Serialization.OptionalField(VersionAdded = 6)]
         private readonly int _batchIndex;
 
-        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, uint win32ErrorCode, Exception exception = null, int batchIndex = -1)
+
+        // NOTE: do not combine the overloads below using an optional parameter
+        //  they must remain ditinct because external projects use private reflection
+        //  to find and invoke the functions, changing the signatures will break many
+        //  things elsewhere
+
+        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, uint win32ErrorCode, Exception exception = null)
+            : this(infoNumber, errorState, errorClass, server, errorMessage, procedure, lineNumber, win32ErrorCode, exception, -1)
+        {
+        }
+
+        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, uint win32ErrorCode, Exception exception, int batchIndex)
             : this(infoNumber, errorState, errorClass, server, errorMessage, procedure, lineNumber, exception, batchIndex)
         {
             _server = server;
             _win32ErrorCode = (int)win32ErrorCode;
         }
 
-        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, Exception exception = null, int batchIndex = -1)
+        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, Exception exception = null)
+            : this(infoNumber, errorState, errorClass, server, errorMessage, procedure, lineNumber, exception, -1)
+        {
+        }
+
+        internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, Exception exception, int batchIndex)
         {
             _number = infoNumber;
             _state = errorState;
