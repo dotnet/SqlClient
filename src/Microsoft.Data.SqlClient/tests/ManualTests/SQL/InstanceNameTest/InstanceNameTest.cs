@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             instanceName = instance;
 
             // Mimic the SNIProxy.InferNamedPipesInformation's logic to initialize the PipeName.  It is private so can not be used here.
-            string pipeName = $"{pathSeparator}{defaultPipeName}";
+            string pipeName = $"{defaultPipeName}";
             if (instanceName != string.Empty)
             {
                 // This is how InferNamedPipesInformation build the pipeName when there's an instance provided. 
