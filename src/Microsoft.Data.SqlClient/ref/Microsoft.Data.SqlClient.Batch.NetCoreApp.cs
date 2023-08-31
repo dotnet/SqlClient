@@ -1,9 +1,9 @@
 ﻿namespace System.Data.Common
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
     public partial class SqlBatchCommand
     {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ColumnEncryptionSetting/*'/>
         public Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting ColumnEncryptionSetting { get { throw null; } set { } }
     }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }

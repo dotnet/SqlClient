@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SqlBatchCommandCollection">
+    <SqlBatchCommandCollection>
+      <summary></summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+ ]]>
+        </format>
+      </remarks>
+    </SqlBatchCommandCollection>
+    <Add>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </Add>
+    <Contains>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </Contains>
+    <CopyTo>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </CopyTo>
+    <IndexOf>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </IndexOf>
+    <Insert>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </Insert>
+    <Remove>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </Remove>
+    <this1>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </this1>
+    <this2>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </this2>
+
+  </members>
+</docs>

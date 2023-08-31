@@ -7,14 +7,13 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Data.Common
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public partial class DbBatch : IAsyncDisposable
     {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.Common/DbBatch.xml' path='docs/members[@name="DbBatch"]/DisposeAsync/*'/>
         public virtual ValueTask DisposeAsync()
         {
             Dispose();
             return default;
         }
     }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }

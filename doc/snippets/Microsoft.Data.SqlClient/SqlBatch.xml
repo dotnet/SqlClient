@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SqlBatch">
+    <SqlBatch>
+      <summary></summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+ ]]>
+        </format>
+      </remarks>
+    </SqlBatch>
+    <ctor1>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </ctor1>
+    <ctor2>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </ctor2>
+    <BatchCommands>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </BatchCommands>
+    <Commands>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </Commands>
+    <Connection>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </Connection>
+    <Transaction>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </Transaction>
+    <ExecuteReader>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </ExecuteReader>
+    <ExecuteReaderAsync>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </ExecuteReaderAsync>
+  </members>
+</docs>

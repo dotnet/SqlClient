@@ -9,8 +9,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
     public partial class SqlBatchCommand : DbBatchCommand
     {
         private string _text;
@@ -20,11 +19,12 @@ namespace Microsoft.Data.SqlClient
         private int _recordsAffected;
         private SqlCommandColumnEncryptionSetting _encryptionSetting;
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ctor1/*'/>
         public SqlBatchCommand()
         {
             _type = CommandType.Text;
         }
-
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ctor2/*'/>
         public SqlBatchCommand(string commandText, CommandType commandType = CommandType.Text, IEnumerable<SqlParameter> parameters = null, SqlCommandColumnEncryptionSetting columnEncryptionSetting = SqlCommandColumnEncryptionSetting.UseConnectionSetting)
         {
             if (string.IsNullOrEmpty(commandText))
@@ -65,16 +65,20 @@ namespace Microsoft.Data.SqlClient
             _parameters = parameterCollection;
         }
 
+        /// <inheritdoc />
         public override string CommandText { get => _text; set => _text = value; }
 
+        /// <inheritdoc />
         public override CommandType CommandType { get => _type; set => SetCommandType(value); }
-
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandBehavior/*'/>
         public CommandBehavior CommandBehavior { get => _behavior; set => _behavior = value; }
 
+        /// <inheritdoc />
         public override int RecordsAffected { get => _recordsAffected; }
 
+        /// <inheritdoc />
         protected override DbParameterCollection DbParameterCollection => Parameters;
-
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/Parameters/*'/>
         public new SqlParameterCollection Parameters
         {
             get
@@ -90,7 +94,7 @@ namespace Microsoft.Data.SqlClient
                 _parameters = value;
             }
         }
-
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ColumnEncryptionSetting/*'/>
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting { get => _encryptionSetting; set => _encryptionSetting = value; }
 
         private void SetCommandType(CommandType value)
@@ -116,5 +120,4 @@ namespace Microsoft.Data.SqlClient
             _recordsAffected = value;
         }
     }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }

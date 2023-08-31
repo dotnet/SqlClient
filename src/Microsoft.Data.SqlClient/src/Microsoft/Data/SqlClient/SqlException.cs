@@ -109,10 +109,12 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
         override public string Source => TdsEnums.SQL_PROVIDER_NAME;
 
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
 #if NET6_0_OR_GREATER
+        /// <inheritdoc />
         protected override DbBatchCommand DbBatchCommand => BatchCommand;
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/BatchCommand/*' />
         public new SqlBatchCommand BatchCommand
         {
             get => _batchCommand;
@@ -124,8 +126,7 @@ namespace Microsoft.Data.SqlClient
             get => _batchCommand;
             set => _batchCommand = value;
         }
-#endif
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member       
+#endif 
         
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
         public override string ToString()

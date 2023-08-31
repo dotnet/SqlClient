@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SqlBatchCommand">
+    <SqlBatchCommand>
+      <summary></summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+ ]]>
+        </format>
+      </remarks>
+    </SqlBatchCommand>
+    <ctor1>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </ctor1>
+    <ctor2>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </ctor2>
+    <Parameters>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </Parameters>
+    <CommandBehavior>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </CommandBehavior>
+    <ColumnEncryptionSetting>
+      <summary>TODO</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[   
+ ]]>
+        </format>
+      </remarks>
+    </ColumnEncryptionSetting>
+  </members>
+</docs>
