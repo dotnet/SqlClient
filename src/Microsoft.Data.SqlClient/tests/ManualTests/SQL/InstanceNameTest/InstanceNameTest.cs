@@ -3,8 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.IO.Pipes;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -13,6 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class InstanceNameTest
     {
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ConnectToSQLWithInstanceNameTest()
         {
@@ -76,10 +79,59 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!IsValidInstance(hostname, instanceName))
             {
                 builder.DataSource = hostname + "\\" + instanceName;
-                
+
                 using SqlConnection connection = new(builder.ConnectionString);
                 SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
                 Assert.Contains("Error Locating Server/Instance Specified", ex.Message);
+            }
+        }
+
+        [PlatformSpecific(TestPlatforms.Windows)]
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData("")]
+        [InlineData("MSSQLSERVER02")]
+        public static void NamedPipeInstanceNormalizedPipePathTest(string instance)
+        {
+            var instancePrefix = "MSSQL$";
+            var pathSeparator = "\\";
+            var defaultPipeName = "sql\\sqlquery";
+
+            SqlConnectionStringBuilder builder = new(DataTestUtility.NPConnectionString); 
+
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
+            instanceName = instance;
+
+            // Mimic the SNIProxy.InferNamedPipesInformation's logic to initialize the PipeName.  It is private so can not be used here.
+            string pipeName = $"{pathSeparator}{defaultPipeName}";
+            if (instanceName != string.Empty)
+            {
+                // This is how InferNamedPipesInformation build the pipeName when there's an instance provided. 
+                pipeName = $"{instancePrefix}{instanceName.ToUpper()}{pathSeparator}{defaultPipeName}";
+            }
+
+            NamedPipeClientStream pipeStream = new NamedPipeClientStream(
+                    hostname,
+                    pipeName,
+                    PipeDirection.InOut,
+                    PipeOptions.Asynchronous | PipeOptions.WriteThrough);
+
+            string normalizedPipePath = pipeStream
+                .GetType()
+                .GetField("m_normalizedPipePath", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(pipeStream).ToString();
+
+            // Check if the normalized pipe path parsed by NamedPipeClientStream object from supplied 
+            // host and pipename has a valid format
+            if (instanceName != string.Empty)
+            {
+                // Secondary NamedPipe Instance normalized pipe path format check
+                Assert.Matches(@"\\\\.*\\pipe\\MSSQL\$.*\\sql\\sqlquery", normalizedPipePath);
+            }
+            else
+            {
+                // Default NamedPipe Instance normalized pipe path format check
+                Assert.Matches(@"\\\\.*\\pipe\\sql\\sqlquery", normalizedPipePath);
             }
         }
 

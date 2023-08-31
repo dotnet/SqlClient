@@ -29,6 +29,12 @@ namespace Microsoft.Data.Common
 #if !NET6_0_OR_GREATER
             (new RegistryPermission(RegistryPermissionAccess.Read, "HKEY_LOCAL_MACHINE\\" + subkey)).Assert(); // MDAC 62028
 #endif
+            // Non-Windows OS do not have registry
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return null;
+            }
+            
             try
             {
                 using (RegistryKey key = Registry.LocalMachine.OpenSubKey(subkey, false))
