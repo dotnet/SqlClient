@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Security;
@@ -269,28 +270,26 @@ namespace Microsoft.Data.SqlClient.Tests
             server.Dispose();
 
             // Measure the actual time it took to timeout and compare it with configured timeout
-            var start = DateTime.Now;
-            var end = start;
+            Stopwatch timer = new();
+            Exception ex = null;
 
             // Open a connection with the server disposed.
             try
             {
+                timer.Start();
                 connection.Open();
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                end = DateTime.Now;
+                timer.Stop();
+                ex = e;
             }
 
-            // Calculate actual duration of timeout
-            TimeSpan s = end - start;
-            // Did not time out?
-            if (s.TotalSeconds == 0)
-                Assert.True(s.TotalSeconds == 0);
-
-            // Is actual time out the same as configured timeout or within an additional 3 second threshold because of overhead?
-            if (s.TotalSeconds > 0)
-                Assert.True(s.TotalSeconds <= timeout + 3);
+            Assert.False(timer.IsRunning, "Timer must be stopped.");
+            Assert.NotNull(ex);
+            Assert.True(timer.Elapsed.TotalSeconds <= timeout + 3,
+                $"The actual timeout {timer.Elapsed.TotalSeconds} is expected to be less than {timeout} plus 3 seconds additional threshold." +
+                $"{Environment.NewLine}{ex}");
         }
 
         [Theory]
@@ -310,28 +309,28 @@ namespace Microsoft.Data.SqlClient.Tests
             server.Dispose();
 
             // Measure the actual time it took to timeout and compare it with configured timeout
-            var start = DateTime.Now;
-            var end = start;
+            Stopwatch timer = new();
+            Exception ex = null;
 
             // Open a connection with the server disposed.
             try
             {
-               await connection.OpenAsync();
+                //an asyn call with a timeout token to cancel the operation after the specific time
+                using CancellationTokenSource cts  = new CancellationTokenSource(timeout * 1000);
+                timer.Start();
+                await connection.OpenAsync(cts.Token).ConfigureAwait(false);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                end = DateTime.Now;
+                timer.Stop();
+                ex = e;
             }
 
-            // Calculate actual duration of timeout
-            TimeSpan s = end - start;
-            // Did not time out?
-            if (s.TotalSeconds == 0)
-                Assert.True(s.TotalSeconds == 0);
-
-            // Is actual time out the same as configured timeout or within an additional 3 second threshold because of overhead?
-            if (s.TotalSeconds > 0)
-                Assert.True(s.TotalSeconds <= timeout + 3);
+            Assert.False(timer.IsRunning, "Timer must be stopped.");
+            Assert.NotNull(ex);
+            Assert.True(timer.Elapsed.TotalSeconds <= timeout + 3,
+                $"The actual timeout {timer.Elapsed.TotalSeconds} is expected to be less than {timeout} plus 3 seconds additional threshold." +
+                $"{Environment.NewLine}{ex}");
         }
 
         [Fact]

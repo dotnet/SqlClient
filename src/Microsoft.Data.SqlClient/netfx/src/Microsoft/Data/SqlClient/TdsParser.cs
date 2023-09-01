@@ -24,6 +24,7 @@ using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -494,7 +495,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Connect(ServerInfo serverInfo,
                               SqlInternalConnectionTds connHandler,
-                              long timerExpire,
+                              TimeoutTimer timeout,
                               SqlConnectionString connectionOptions,
                               bool withFailover,
                               bool isFirstTransparentAttempt,
@@ -639,7 +640,7 @@ namespace Microsoft.Data.SqlClient
 
             _physicalStateObj.CreatePhysicalSNIHandle(
                 serverInfo.ExtendedServerName,
-                timerExpire,
+                timeout,
                 out instanceName,
                 _sniSpnBuffer,
                 false,
@@ -679,7 +680,7 @@ namespace Microsoft.Data.SqlClient
             }
             _state = TdsParserState.OpenNotLoggedIn;
             _physicalStateObj.SniContext = SniContext.Snix_PreLoginBeforeSuccessfulWrite; // SQL BU DT 376766
-            _physicalStateObj.TimeoutTime = timerExpire;
+            _physicalStateObj.TimeoutTime = timeout.LegacyTimerExpire;
 
             bool marsCapable = false;
 
@@ -744,7 +745,7 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
                 _physicalStateObj.CreatePhysicalSNIHandle(
                     serverInfo.ExtendedServerName,
-                    timerExpire,
+                    timeout,
                     out instanceName,
                     _sniSpnBuffer,
                     true,

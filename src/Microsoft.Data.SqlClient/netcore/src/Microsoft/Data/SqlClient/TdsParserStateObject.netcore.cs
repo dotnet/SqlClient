@@ -9,6 +9,7 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -198,7 +199,7 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void CreatePhysicalSNIHandle(
             string serverName,
-            long timerExpire,
+            TimeoutTimer timeout,
             out byte[] instanceName,
             ref byte[][] spnBuffer,
             bool flushCache,
@@ -3100,18 +3101,6 @@ namespace Microsoft.Data.SqlClient
 
         sealed partial class StateSnapshot
         {
-            private sealed class PLPData
-            {
-                public readonly ulong SnapshotLongLen;
-                public readonly ulong SnapshotLongLenLeft;
-
-                public PLPData(ulong snapshotLongLen, ulong snapshotLongLenLeft)
-                {
-                    SnapshotLongLen = snapshotLongLen;
-                    SnapshotLongLenLeft = snapshotLongLenLeft;
-                }
-            }
-
             private sealed partial class PacketData
             {
                 public byte[] Buffer;
@@ -3150,7 +3139,7 @@ namespace Microsoft.Data.SqlClient
             private PacketData _sparePacket;
 
             internal byte[] _plpBuffer;
-            private PLPData _plpData;
+
 
             private int _snapshotInBuffCount;
 

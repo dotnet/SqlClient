@@ -127,7 +127,18 @@ using (SqlConnection connection = new SqlConnection(connectionString))
         <AccessToken>
             <summary>Gets or sets the access token for the connection.</summary>
             <value>The access token for the connection.</value>
-            <remarks>To be added.</remarks>
+            <remarks>
+              <format type="text/markdown">
+                <![CDATA[
+
+## Remarks  
+ The AccessToken is a part of the connection pool key. Care should be taken when using this property to manage your own access token. The application is responsible for knowing when the token expires and connections from the pool should no longer be used.
+ 
+ If you set a minimum pool size > 0 along with AccessToken, you must call <xref:Microsoft.Data.SqlClient.SqlConnection.ClearPool%2A> after the access token expires to ensure the connection pool doesn't maintain those connections indefinitely.
+  
+ ]]>
+              </format>
+            </remarks>
         </AccessToken>
         <AccessTokenCallback>
           <summary>Gets or sets the access token callback for the connection.</summary>
