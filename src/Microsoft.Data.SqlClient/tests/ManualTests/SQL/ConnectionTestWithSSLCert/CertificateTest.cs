@@ -52,11 +52,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public CertificateTest()
         {
-            CreateValidCertificate(s_fullPathToPowershellScript);
-            _thumbprint = Environment.GetEnvironmentVariable(ThumbPrintEnvName, EnvironmentVariableTarget.Machine);
+            if (DataTestUtility.IsAdmin)
+            {
+                CreateValidCertificate(s_fullPathToPowershellScript);
+                _thumbprint = Environment.GetEnvironmentVariable(ThumbPrintEnvName, EnvironmentVariableTarget.Machine);
+            }
+            else
+            {
+                Assert.False(true, "CertificateTest class needs to be run in Admin mode.");
+            }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAdmin), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpenningConnectionWithGoodCertificateTest()
         {
@@ -85,7 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Provided hostname in certificate are:
         // localhost, FQDN, Loopback IPv4: 127.0.0.1, IPv6: ::1
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAdmin), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpeningConnectionWitHNICTest()
         {
@@ -127,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ActiveIssue(26934)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsManagedSNI), nameof(DataTestUtility.IsAdmin), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.UseManagedSNIOnWindows), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void RemoteCertificateNameMismatchErrorTest()
         {

@@ -265,7 +265,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return result.AccessToken;
         });
 
-        public static bool IsManagedSNI => UseManagedSNIOnWindows;
         public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
         public static string GetSqlServerVersion(string connectionString)
