@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.TCP:
                     sniHandle = CreateTcpHandle(details, timeout, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
                         tlsFirst, hostNameInCertificate, serverCertificateFilename);
-                    break;
+                     break;
                 case DataSource.Protocol.NP:
                     sniHandle = CreateNpHandle(details, timeout, parallel, tlsFirst);
                     break;
@@ -391,7 +391,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 Debug.Assert(!string.IsNullOrWhiteSpace(localDBInstance), "Local DB Instance name cannot be empty.");
                 localDBConnectionString = LocalDB.GetLocalDBConnectionString(localDBInstance);
 
-                if (fullServerName == null)
+                if (fullServerName == null || string.IsNullOrEmpty(localDBConnectionString))
                 {
                     // The Last error is set in LocalDB.GetLocalDBConnectionString. We don't need to set Last here.
                     error = true;
@@ -521,7 +521,18 @@ namespace Microsoft.Data.SqlClient.SNI
             ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
             error = false;
             // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
-            if (input.StartsWith(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
+            int index = input.IndexOf(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase);
+            if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
+            {
+                instanceName = input.Trim().ToString();
+            }
+            else if (index > 0)
+            {
+                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIProxy), EventType.ERR, "Incompatible use of prefix with LocalDb: '{0}'", dataSource);
+                error = true;
+            }
+            else if (index == 0)
             {
                 // When netcoreapp support for netcoreapp2.1 is dropped these slice calls could be converted to System.Range\System.Index
                 // Such ad input = input[1..];
@@ -539,10 +550,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
                 }
-            }
-            else if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
-            {
-                instanceName = input.Trim().ToString();
             }
 
             return instanceName;
