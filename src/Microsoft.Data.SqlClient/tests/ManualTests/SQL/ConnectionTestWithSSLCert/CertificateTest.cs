@@ -52,15 +52,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public CertificateTest()
         {
-            if (DataTestUtility.IsAdmin)
-            {
-                CreateValidCertificate(s_fullPathToPowershellScript);
-                _thumbprint = Environment.GetEnvironmentVariable(ThumbPrintEnvName, EnvironmentVariableTarget.Machine);
-            }
-            else
-            {
-                Assert.False(true, "CertificateTest class needs to be run in Admin mode.");
-            }
+            Assert.True(DataTestUtility.IsAdmin, "CertificateTest class needs to be run in Admin mode.");
+
+            CreateValidCertificate(s_fullPathToPowershellScript);
+            _thumbprint = Environment.GetEnvironmentVariable(ThumbPrintEnvName, EnvironmentVariableTarget.Machine);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
