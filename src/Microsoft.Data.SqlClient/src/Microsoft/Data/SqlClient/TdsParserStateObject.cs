@@ -203,6 +203,7 @@ namespace Microsoft.Data.SqlClient
         internal bool _syncOverAsync = true;
         private bool _snapshotReplay;
         private StateSnapshot _snapshot;
+        private StateSnapshot _cachedSnapshot;
         internal ExecutionContext _executionContext;
         internal bool _asyncReadWithoutSnapshot;
 #if DEBUG
@@ -1102,6 +1103,34 @@ namespace Microsoft.Data.SqlClient
         }
         */
 
+        internal void SetSnapshot()
+        {
+            StateSnapshot snapshot = _snapshot;
+            if (snapshot is null)
+            {
+                snapshot = Interlocked.Exchange(ref _cachedSnapshot, null) ?? new StateSnapshot();
+            }
+            else
+            {
+                snapshot.Clear();
+            }
+            _snapshot = snapshot;
+            _snapshot.Snap(this);
+            _snapshotReplay = false;
+        }
+
+        internal void ResetSnapshot()
+        {
+            if (_snapshot != null)
+            {
+                StateSnapshot snapshot = _snapshot;
+                _snapshot = null;
+                snapshot.Clear();
+                Interlocked.CompareExchange(ref _cachedSnapshot, snapshot, null);
+            }
+            _snapshotReplay = false;
+        }
+
         sealed partial class StateSnapshot
         {
             private sealed class PLPData
@@ -1170,6 +1199,24 @@ namespace Microsoft.Data.SqlClient
             internal void PrepareReplay()
             {
                 ResetSnapshotState();
+            }
+
+            internal void ClearCore()
+            {
+                _snapshotInBuffCurrent = 0;
+                _snapshotInBytesUsed = 0;
+                _snapshotInBytesPacket = 0;
+                _snapshotMessageStatus = 0;
+                _snapshotNullBitmapInfo = default;
+                _plpData = null;
+                _snapshotCleanupMetaData = null;
+                _snapshotCleanupAltMetaDataSetArray = null;
+#if DEBUG
+                _rollingPend = 0;
+                _rollingPendCount = 0;
+                _stateObj._lastStack = null;
+#endif
+                _stateObj = null;
             }
         }
     }

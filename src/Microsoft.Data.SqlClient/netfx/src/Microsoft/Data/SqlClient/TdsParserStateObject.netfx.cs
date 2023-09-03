@@ -1191,19 +1191,6 @@ namespace Microsoft.Data.SqlClient
         // Network/Packet Reading & Processing //
         /////////////////////////////////////////
 
-        internal void SetSnapshot()
-        {
-            _snapshot = new StateSnapshot(this);
-            _snapshot.Snap();
-            _snapshotReplay = false;
-        }
-
-        internal void ResetSnapshot()
-        {
-            _snapshot = null;
-            _snapshotReplay = false;
-        }
-
 #if DEBUG
         StackTrace _lastStack;
 #endif
@@ -3249,10 +3236,9 @@ namespace Microsoft.Data.SqlClient
             private bool _snapshotReceivedColumnMetadata = false;
             private bool _snapshotAttentionReceived;
 
-            public StateSnapshot(TdsParserStateObject state)
+            public StateSnapshot()
             {
                 _snapshotInBuffs = new List<PacketData>();
-                _stateObj = state;
             }
 
 #if DEBUG
@@ -3315,8 +3301,9 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
-            internal void Snap()
+            internal void Snap(TdsParserStateObject state)
             {
+                _stateObj = state;
                 _snapshotInBuffs.Clear();
                 _snapshotInBuffCurrent = 0;
                 _snapshotInBytesUsed = _stateObj._inBytesUsed;
@@ -3388,6 +3375,19 @@ namespace Microsoft.Data.SqlClient
                 _stateObj._snapshotReplay = true;
 
                 _stateObj.AssertValidState();
+            }
+
+            internal void Clear()
+            {
+                _snapshotInBuffs.Clear();
+
+                _snapshotPendingData = false;
+                _snapshotErrorTokenReceived = false;
+                _snapshotHasOpenResult = false;
+                _snapshotReceivedColumnMetadata = false;
+                _snapshotAttentionReceived = false;
+
+                ClearCore();
             }
         }
     }
