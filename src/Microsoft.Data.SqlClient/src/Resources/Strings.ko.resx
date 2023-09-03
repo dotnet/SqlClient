@@ -4731,4 +4731,13 @@
   <data name="SqlParameter_SourceColumnNullMapping" xml:space="preserve">
     <value>DataAdapter.Update에서 사용하는 경우 매개 변수 값은 DBNull.Value에서 (Int32)1로 변경되거나 null이 아닌 경우 (Int32)0으로 변경됩니다.</value>
   </data>
+  <data name="SQL_RemoteCertificateChainErrors" xml:space="preserve">
+    <value>Certificate failed chain validation. Error(s): '{0}'.</value>
+  </data>
+  <data name="SQL_RemoteCertificateNameMismatch" xml:space="preserve">
+    <value>Certificate name mismatch. The provided 'DataSource' or 'HostNameInCertificate' does not match the name in the certificate.</value>
+  </data>
+  <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
+    <value>Certificate not available while validating the certificate.</value>
+  </data>
 </root>
