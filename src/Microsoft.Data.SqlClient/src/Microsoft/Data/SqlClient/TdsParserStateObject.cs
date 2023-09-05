@@ -260,7 +260,7 @@ namespace Microsoft.Data.SqlClient
         // remainder of the async operation.
         internal static bool s_forceSyncOverAsyncAfterFirstPend = false;
 
-        // Requests to send attention will be ignored when _skipSendAttention is true.
+        // Requests to send attention will be ignored when s_skipSendAttention is true.
         // This is useful to simulate circumstances where timeouts do not recover.
         internal static bool s_skipSendAttention = false;
 
