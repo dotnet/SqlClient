@@ -4732,12 +4732,12 @@
     <value>Quando usado por DataAdapter.Update, o valor do parâmetro é alterado de DBNull.Value para (Int32)1 ou (Int32)0 se não for nulo.</value>
   </data>
   <data name="SQL_RemoteCertificateChainErrors" xml:space="preserve">
-    <value>Certificate failed chain validation. Error(s): '{0}'.</value>
+    <value>O certificado falhou na validação da cadeia. Erros: '{0}'.</value>
   </data>
   <data name="SQL_RemoteCertificateNameMismatch" xml:space="preserve">
-    <value>Certificate name mismatch. The provided 'DataSource' or 'HostNameInCertificate' does not match the name in the certificate.</value>
+    <value>Incompatibilidade de nome do certificado. O 'DataSource' ou 'HostNameInCertificate' fornecido não corresponde ao nome no certificado.</value>
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
-    <value>Certificate not available while validating the certificate.</value>
+    <value>Certificado não disponível durante a validação do certificado.</value>
   </data>
 </root>

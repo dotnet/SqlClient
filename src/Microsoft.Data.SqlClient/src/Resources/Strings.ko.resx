@@ -4732,12 +4732,12 @@
     <value>DataAdapter.Update에서 사용하는 경우 매개 변수 값은 DBNull.Value에서 (Int32)1로 변경되거나 null이 아닌 경우 (Int32)0으로 변경됩니다.</value>
   </data>
   <data name="SQL_RemoteCertificateChainErrors" xml:space="preserve">
-    <value>Certificate failed chain validation. Error(s): '{0}'.</value>
+    <value>인증서 체인 유효성 검사에 실패했습니다. 오류: '{0}'.</value>
   </data>
   <data name="SQL_RemoteCertificateNameMismatch" xml:space="preserve">
-    <value>Certificate name mismatch. The provided 'DataSource' or 'HostNameInCertificate' does not match the name in the certificate.</value>
+    <value>인증서 이름이 일치하지 않습니다. 제공된 'DataSource' 또는 'HostNameInCertificate'가 인증서의 이름과 일치하지 않습니다.</value>
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
-    <value>Certificate not available while validating the certificate.</value>
+    <value>인증서의 유효성을 검사하는 동안에는 인증서를 사용할 수 없습니다.</value>
   </data>
 </root>

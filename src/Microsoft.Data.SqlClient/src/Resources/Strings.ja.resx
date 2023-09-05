@@ -4732,12 +4732,12 @@
     <value>DataAdapter.Update が使用する場合、パラメーター値は DBNull.Value から (Int32)1 または (Int32)0 (非 Null の場合) に変更されます。</value>
   </data>
   <data name="SQL_RemoteCertificateChainErrors" xml:space="preserve">
-    <value>Certificate failed chain validation. Error(s): '{0}'.</value>
+    <value>証明書のチェーン検証に失敗しました。エラー: '{0}'。</value>
   </data>
   <data name="SQL_RemoteCertificateNameMismatch" xml:space="preserve">
-    <value>Certificate name mismatch. The provided 'DataSource' or 'HostNameInCertificate' does not match the name in the certificate.</value>
+    <value>証明書名が一致しません。指定された 'DataSource' または 'HostNameInCertificate' が証明書内の名前と一致しません。</value>
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
-    <value>Certificate not available while validating the certificate.</value>
+    <value>証明書の検証中は証明書を使用できません。</value>
   </data>
 </root>
