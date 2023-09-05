@@ -506,7 +506,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 XmlResolver = null
             };
-            XmlReader reader = XmlReader.Create(XmlStream, settings);
+            using XmlReader reader = XmlReader.Create(XmlStream, settings);
             _metaDataCollectionsDataSet.ReadXml(reader);
         }
 
