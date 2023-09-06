@@ -723,7 +723,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
+                Assert.Fail("ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -744,7 +744,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
+                Assert.Fail("ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -765,7 +765,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
+                Assert.Fail("ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)

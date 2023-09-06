@@ -8,6 +8,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlConnectionBasicTests
     {
+        private static readonly bool s_isNotArmProcess = RuntimeInformation.ProcessArchitecture != Architecture.Arm;
         [Fact]
         public void ConnectionTest()
         {
@@ -26,8 +28,7 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
-        [ActiveIssue(4830, TestPlatforms.AnyUnix)]
+        [ConditionalFact(nameof(s_isNotArmProcess))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()
         {
@@ -38,7 +39,7 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [ConditionalTheory(nameof(s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -58,7 +59,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Open, connection.State);
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [ConditionalTheory(nameof(s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -81,11 +82,11 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [ConditionalTheory(nameof(s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -107,7 +108,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [ConditionalTheory(nameof(s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]

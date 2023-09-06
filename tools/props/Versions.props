@@ -61,15 +61,16 @@
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
+    <MicrosoftDotNetXUnitExtensionsVersion>8.0.0-beta.23451.1</MicrosoftDotNetXUnitExtensionsVersion>
     <MicrosoftDotNetPlatformAbstractionsVersion>3.1.6</MicrosoftDotNetPlatformAbstractionsVersion>
     <MicrosoftIdentityModelClientsActiveDirectoryVersion>5.2.9</MicrosoftIdentityModelClientsActiveDirectoryVersion>
-    <MicrosoftNETTestSdkVersion>17.4.1</MicrosoftNETTestSdkVersion>
+    <MicrosoftNETTestSdkVersion>17.7.2</MicrosoftNETTestSdkVersion>
     <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
     <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
     <SystemDataOdbcVersion>6.0.1</SystemDataOdbcVersion>
     <SystemIdentityModelTokensJwtVersion>6.24.0</SystemIdentityModelTokensJwtVersion>
-    <XunitVersion>2.4.2</XunitVersion>
-    <xunitrunnervisualstudioVersion>2.4.5</xunitrunnervisualstudioVersion>
+    <XunitVersion>2.5.0</XunitVersion>
+    <xunitrunnervisualstudioVersion>2.5.0</xunitrunnervisualstudioVersion>
     <MicrosoftDotNetRemoteExecutorVersion>7.0.0-beta.22316.1</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
     <MicrosoftSqlServerSqlManagementObjectsVersion>170.8.0</MicrosoftSqlServerSqlManagementObjectsVersion>

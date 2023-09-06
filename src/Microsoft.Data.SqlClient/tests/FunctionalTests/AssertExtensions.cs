@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -12,7 +12,7 @@ namespace System
 {
     public static class AssertExtensions
     {
-        private static bool IsFullFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework", StringComparison.Ordinal);
+        private static bool IsFullFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework");
 
         public static void Throws<T>(Action action, string message)
             where T : Exception
@@ -35,7 +35,7 @@ namespace System
                 IsFullFramework ?
                 netFxParamName : netCoreParamName;
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native", StringComparison.Ordinal))
+            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
                 Assert.Equal(expectedParamName, exception.ParamName);
         }
 
@@ -54,7 +54,7 @@ namespace System
                 IsFullFramework ?
                 netFxParamName : netCoreParamName;
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native", StringComparison.Ordinal))
+            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
                 Assert.Equal(expectedParamName, exception.ParamName);
         }
 
@@ -63,7 +63,7 @@ namespace System
         {
             T exception = Assert.Throws<T>(action);
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native", StringComparison.Ordinal))
+            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;
@@ -82,7 +82,7 @@ namespace System
         {
             T exception = Assert.Throws<T>(testCode);
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native", StringComparison.Ordinal))
+            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;
@@ -93,7 +93,7 @@ namespace System
         {
             T exception = await Assert.ThrowsAsync<T>(testCode);
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native", StringComparison.Ordinal))
+            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;
@@ -298,24 +298,5 @@ namespace System
                 throw new XunitException(AddOptionalUserMessage($"Expected: {actual} to be greater than or equal to {greaterThanOrEqualTo}", userMessage));
         }
 
-        /// <summary>
-        /// Validates that the actual byte array is equal to the expected byte array. XUnit only displays the first 5 values
-        /// of each collection if the test fails. This doesn't display at what point or how the equality assertion failed.
-        /// </summary>
-        /// <param name="expected">The byte array that <paramref name="actual"/> should be equal to.</param>
-        /// <param name="actual"></param>
-        public static void Equal(byte[] expected, byte[] actual)
-        {
-            try
-            {
-                Assert.Equal(expected, actual);
-            }
-            catch (AssertActualExpectedException)
-            {
-                string expectedString = string.Join(", ", expected);
-                string actualString = string.Join(", ", actual);
-                throw new AssertActualExpectedException(expectedString, actualString, null);
-            }
-        }
     }
 }
