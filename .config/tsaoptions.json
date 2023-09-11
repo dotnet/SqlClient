@@ -6,5 +6,6 @@
     "notificationAliases": [ "SqlClient@microsoft.com" ],
     "repositoryName": "SqlClient",
     "codebaseName": "SqlClient",
-    "allTools": true
+    "allTools": true,
+    "template": "MSDATA_RevolutionR"
 }
