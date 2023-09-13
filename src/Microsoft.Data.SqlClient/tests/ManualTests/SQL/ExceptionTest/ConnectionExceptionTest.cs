@@ -175,7 +175,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.DataSource = @"np:" + fakeServerName + @"\pipe\sql\query";
             OpenBadConnection(builder.ConnectionString, invalidConnStringError);
         }
-#if !WINDOWS_UAP
+#if WINDOWS_UAP
         [Fact]
         public static void LocalDBNotSupportedOnUapTest()
         {
