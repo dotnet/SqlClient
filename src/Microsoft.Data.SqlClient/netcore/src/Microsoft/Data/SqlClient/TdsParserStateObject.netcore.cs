@@ -21,7 +21,6 @@ namespace Microsoft.Data.SqlClient
         private readonly WeakReference _cancellationOwner = new WeakReference(null);
 
 		// Async
-        private StateSnapshot _cachedSnapshot;
         private SnapshottedStateFlags _snapshottedState;
 
         //////////////////
@@ -1106,34 +1105,6 @@ namespace Microsoft.Data.SqlClient
         /////////////////////////////////////////
         // Network/Packet Reading & Processing //
         /////////////////////////////////////////
-
-        internal void SetSnapshot()
-        {
-            StateSnapshot snapshot = _snapshot;
-            if (snapshot is null)
-            {
-                snapshot = Interlocked.Exchange(ref _cachedSnapshot, null) ?? new StateSnapshot();
-            }
-            else
-            {
-                snapshot.Clear();
-            }
-            _snapshot = snapshot;
-            _snapshot.Snap(this);
-            _snapshotReplay = false;
-        }
-
-        internal void ResetSnapshot()
-        {
-            if (_snapshot != null)
-            {
-                StateSnapshot snapshot = _snapshot;
-                _snapshot = null;
-                snapshot.Clear();
-                Interlocked.CompareExchange(ref _cachedSnapshot, snapshot, null);
-            }
-            _snapshotReplay = false;
-        }
 
 #if DEBUG
         private string _lastStack;
@@ -3291,24 +3262,13 @@ namespace Microsoft.Data.SqlClient
                 PacketData packet = _snapshotInBuffList;
                 _snapshotInBuffList = null;
                 _snapshotInBuffCount = 0;
-                _snapshotInBuffCurrent = 0;
-                _snapshotInBytesUsed = 0;
-                _snapshotInBytesPacket = 0;
-                _snapshotMessageStatus = 0;
-                _snapshotNullBitmapInfo = default;
-                _plpData = null;
-                _snapshotCleanupMetaData = null;
-                _snapshotCleanupAltMetaDataSetArray = null;
+                
                 _state = SnapshottedStateFlags.None;
-#if DEBUG
-                _rollingPend = 0;
-                _rollingPendCount = 0;
-                _stateObj._lastStack = null;
-#endif
-                _stateObj = null;
 
                 packet.Clear();
                 _sparePacket = packet;
+
+                ClearCore();
             }
         }
     }
