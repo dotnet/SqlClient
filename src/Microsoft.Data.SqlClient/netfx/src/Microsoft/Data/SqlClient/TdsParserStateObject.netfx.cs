@@ -3298,45 +3298,6 @@ namespace Microsoft.Data.SqlClient
                 PushBuffer(_stateObj._inBuff, _stateObj._inBytesRead);
             }
 
-            internal void ResetSnapshotState()
-            {
-                // go back to the beginning
-                _snapshotInBuffCurrent = 0;
-
-                Replay();
-
-                _stateObj._inBytesUsed = _snapshotInBytesUsed;
-                _stateObj._inBytesPacket = _snapshotInBytesPacket;
-                _stateObj._messageStatus = _snapshotMessageStatus;
-                _stateObj._nullBitmapInfo = _snapshotNullBitmapInfo;
-                _stateObj._cleanupMetaData = _snapshotCleanupMetaData;
-                _stateObj._cleanupAltMetaDataSetArray = _snapshotCleanupAltMetaDataSetArray;
-
-                // Make sure to go through the appropriate increment/decrement methods if changing HasOpenResult
-                if (!_stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) == SnapshottedStateFlags.OpenResult))
-                {
-                    _stateObj.IncrementAndObtainOpenResultCount(_stateObj._executedUnderTransaction);
-                }
-                else if (_stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) != SnapshottedStateFlags.OpenResult))
-                {
-                    _stateObj.DecrementOpenResultCount();
-                }
-                //else _stateObj._hasOpenResult is already == _snapshotHasOpenResult
-                _stateObj._snapshottedState = _state;
-
-                // Reset partially read state (these only need to be maintained if doing async without snapshot)
-                _stateObj._bTmpRead = 0;
-                _stateObj._partialHeaderBytesRead = 0;
-
-                // reset plp state
-                _stateObj._longlen = _plpData?.SnapshotLongLen ?? 0;
-                _stateObj._longlenleft = _plpData?.SnapshotLongLenLeft ?? 0;
-
-                _stateObj._snapshotReplay = true;
-
-                _stateObj.AssertValidState();
-            }
-
             internal void Clear()
             {
                 _snapshotInBuffs.Clear();
