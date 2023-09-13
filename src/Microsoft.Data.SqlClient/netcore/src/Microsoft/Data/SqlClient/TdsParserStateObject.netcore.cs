@@ -21,7 +21,6 @@ namespace Microsoft.Data.SqlClient
         private readonly WeakReference _cancellationOwner = new WeakReference(null);
 
 		// Async
-        private SnapshottedStateFlags _snapshottedState;
 
         //////////////////
         // Constructors //
@@ -277,53 +276,6 @@ namespace Microsoft.Data.SqlClient
         internal void StartSession(object cancellationOwner)
         {
             _cancellationOwner.Target = cancellationOwner;
-        }
-
-        private void SetSnapshottedState(SnapshottedStateFlags flag, bool value)
-        {
-            if (value)
-            {
-                _snapshottedState |= flag;
-            }
-            else
-            {
-                _snapshottedState &= ~flag;
-            }
-        }
-
-        private bool GetSnapshottedState(SnapshottedStateFlags flag)
-        {
-            return (_snapshottedState & flag) == flag;
-        }
-
-        internal bool HasOpenResult
-        {
-            get => GetSnapshottedState(SnapshottedStateFlags.OpenResult);
-            set => SetSnapshottedState(SnapshottedStateFlags.OpenResult, value);
-        }
-
-        internal bool HasPendingData
-        {
-            get => GetSnapshottedState(SnapshottedStateFlags.PendingData);
-            set => SetSnapshottedState(SnapshottedStateFlags.PendingData, value);
-        }
-
-        internal bool HasReceivedError
-        {
-            get => GetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived);
-            set => SetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived, value);
-        }
-
-        internal bool HasReceivedAttention
-        {
-            get => GetSnapshottedState(SnapshottedStateFlags.AttentionReceived);
-            set => SetSnapshottedState(SnapshottedStateFlags.AttentionReceived, value);
-        }
-
-        internal bool HasReceivedColumnMetadata
-        {
-            get => GetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived);
-            set => SetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived, value);
         }
 
         ///////////////////////////////////////
@@ -3113,8 +3065,6 @@ namespace Microsoft.Data.SqlClient
 
 
             private int _snapshotInBuffCount;
-
-            private SnapshottedStateFlags _state;
 
 #if DEBUG
             internal void AssertCurrent()

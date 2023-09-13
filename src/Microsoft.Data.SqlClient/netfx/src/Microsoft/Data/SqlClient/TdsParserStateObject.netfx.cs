@@ -20,9 +20,6 @@ namespace Microsoft.Data.SqlClient
     {
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
-        private bool _pendingData = false;
-        internal bool _errorTokenReceived = false;               // Keep track of whether an error was received for the result.
-                                                                 // This is reset upon each done token - there can be
         // SNI variables                                                     // multiple resultsets in one batch.
         private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
@@ -32,24 +29,17 @@ namespace Microsoft.Data.SqlClient
         // Async variables
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
 
-        // Timeout variables
-        private bool _attentionReceived = false;               // NOTE: Received is not volatile as it is only ever accessed\modified by TryRun its callees (i.e. single threaded access)
-
         // This variable is used to prevent sending an attention by another thread that is not the
         // current owner of the stateObj.  I currently do not know how this can happen.  Mark added
         // the code but does not remember either.  At some point, we need to research killing this
         // logic.
         private volatile int _allowObjectID;
 
-        internal bool _hasOpenResult = false;
-
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
         internal int _tracePasswordLength = 0;
         internal int _traceChangePasswordOffset = 0;
         internal int _traceChangePasswordLength = 0;
-
-        internal bool _receivedColMetaData;      // Used to keep track of when to fire StatementCompleted  event.
 
         //////////////////
         // Constructors //
@@ -99,18 +89,6 @@ namespace Microsoft.Data.SqlClient
             {
                 return _sessionHandle;
             }
-        }
-
-        internal bool HasOpenResult
-        {
-            get => _hasOpenResult;
-            set => _hasOpenResult = value;
-        }
-        
-        internal bool HasPendingData
-        {
-            get => _pendingData;
-            set => _pendingData = value;
         }
         
         internal uint Status
@@ -392,12 +370,6 @@ namespace Microsoft.Data.SqlClient
         internal void StartSession(int objectID)
         {
             _allowObjectID = objectID;
-        }
-
-        internal bool HasReceivedAttention
-        {
-            get => _attentionReceived;
-            set => _attentionReceived = value;
         }
 
         ///////////////////////////////////////
@@ -3230,11 +3202,6 @@ namespace Microsoft.Data.SqlClient
         {
             private List<PacketData> _snapshotInBuffs;
 
-            private bool _snapshotPendingData = false;
-            private bool _snapshotErrorTokenReceived = false;
-            private bool _snapshotHasOpenResult = false;
-            private bool _snapshotReceivedColumnMetadata = false;
-            private bool _snapshotAttentionReceived;
 
             public StateSnapshot()
             {
@@ -3308,8 +3275,6 @@ namespace Microsoft.Data.SqlClient
                 _snapshotInBuffCurrent = 0;
                 _snapshotInBytesUsed = _stateObj._inBytesUsed;
                 _snapshotInBytesPacket = _stateObj._inBytesPacket;
-                _snapshotPendingData = _stateObj._pendingData;
-                _snapshotErrorTokenReceived = _stateObj._errorTokenReceived;
                 _snapshotMessageStatus = _stateObj._messageStatus;
                 // _nullBitmapInfo must be cloned before it is updated
                 _snapshotNullBitmapInfo = _stateObj._nullBitmapInfo;
@@ -3320,9 +3285,8 @@ namespace Microsoft.Data.SqlClient
                 _snapshotCleanupMetaData = _stateObj._cleanupMetaData;
                 // _cleanupAltMetaDataSetArray must be cloned bofore it is updated
                 _snapshotCleanupAltMetaDataSetArray = _stateObj._cleanupAltMetaDataSetArray;
-                _snapshotHasOpenResult = _stateObj._hasOpenResult;
-                _snapshotReceivedColumnMetadata = _stateObj._receivedColMetaData;
-                _snapshotAttentionReceived = _stateObj._attentionReceived;
+
+                _state = _stateObj._snapshottedState;
 #if DEBUG
                 _rollingPend = 0;
                 _rollingPendCount = 0;
@@ -3343,26 +3307,22 @@ namespace Microsoft.Data.SqlClient
 
                 _stateObj._inBytesUsed = _snapshotInBytesUsed;
                 _stateObj._inBytesPacket = _snapshotInBytesPacket;
-                _stateObj._pendingData = _snapshotPendingData;
-                _stateObj._errorTokenReceived = _snapshotErrorTokenReceived;
                 _stateObj._messageStatus = _snapshotMessageStatus;
                 _stateObj._nullBitmapInfo = _snapshotNullBitmapInfo;
                 _stateObj._cleanupMetaData = _snapshotCleanupMetaData;
                 _stateObj._cleanupAltMetaDataSetArray = _snapshotCleanupAltMetaDataSetArray;
 
                 // Make sure to go through the appropriate increment/decrement methods if changing HasOpenResult
-                if (!_stateObj._hasOpenResult && _snapshotHasOpenResult)
+                if (!_stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) == SnapshottedStateFlags.OpenResult))
                 {
                     _stateObj.IncrementAndObtainOpenResultCount(_stateObj._executedUnderTransaction);
                 }
-                else if (_stateObj._hasOpenResult && !_snapshotHasOpenResult)
+                else if (_stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) != SnapshottedStateFlags.OpenResult))
                 {
                     _stateObj.DecrementOpenResultCount();
                 }
                 //else _stateObj._hasOpenResult is already == _snapshotHasOpenResult
-
-                _stateObj._receivedColMetaData = _snapshotReceivedColumnMetadata;
-                _stateObj._attentionReceived = _snapshotAttentionReceived;
+                _stateObj._snapshottedState = _state;
 
                 // Reset partially read state (these only need to be maintained if doing async without snapshot)
                 _stateObj._bTmpRead = 0;
@@ -3380,12 +3340,6 @@ namespace Microsoft.Data.SqlClient
             internal void Clear()
             {
                 _snapshotInBuffs.Clear();
-
-                _snapshotPendingData = false;
-                _snapshotErrorTokenReceived = false;
-                _snapshotHasOpenResult = false;
-                _snapshotReceivedColumnMetadata = false;
-                _snapshotAttentionReceived = false;
 
                 ClearCore();
             }

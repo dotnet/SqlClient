@@ -64,6 +64,7 @@ namespace Microsoft.Data.SqlClient
         private readonly WeakReference<object> _owner = new(null);   // the owner of this session, used to track when it's been orphaned
         internal SqlDataReader.SharedState _readerState;                    // susbset of SqlDataReader state (if it is the owner) necessary for parsing abandoned results in TDS
         private int _activateCount;                     // 0 when we're in the pool, 1 when we're not, all others are an error
+        private SnapshottedStateFlags _snapshottedState;
 
         // Two buffers exist in tdsparser, an in buffer and an out buffer.  For the out buffer, only
         // one bookkeeping variable is needed, the number of bytes used in the buffer.  For the in buffer,
@@ -296,6 +297,53 @@ namespace Microsoft.Data.SqlClient
             // be released.
             IncrementPendingCallbacks();
             _lastSuccessfulIOTimer = new LastIOTimer();
+        }
+
+        private void SetSnapshottedState(SnapshottedStateFlags flag, bool value)
+        {
+            if (value)
+            {
+                _snapshottedState |= flag;
+            }
+            else
+            {
+                _snapshottedState &= ~flag;
+            }
+        }
+
+        private bool GetSnapshottedState(SnapshottedStateFlags flag)
+        {
+            return (_snapshottedState & flag) == flag;
+        }
+
+        internal bool HasOpenResult
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.OpenResult);
+            set => SetSnapshottedState(SnapshottedStateFlags.OpenResult, value);
+        }
+
+        internal bool HasPendingData
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.PendingData);
+            set => SetSnapshottedState(SnapshottedStateFlags.PendingData, value);
+        }
+
+        internal bool HasReceivedError
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived, value);
+        }
+
+        internal bool HasReceivedAttention
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.AttentionReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.AttentionReceived, value);
+        }
+
+        internal bool HasReceivedColumnMetadata
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived, value);
         }
 
         ////////////////
@@ -1158,6 +1206,8 @@ namespace Microsoft.Data.SqlClient
             private _SqlMetaDataSetCollection _snapshotCleanupAltMetaDataSetArray;
 
             private TdsParserStateObject _stateObj;
+            private SnapshottedStateFlags _state;
+
 #if DEBUG
             private int _rollingPend = 0;
             private int _rollingPendCount = 0;
@@ -1211,6 +1261,7 @@ namespace Microsoft.Data.SqlClient
                 _plpData = null;
                 _snapshotCleanupMetaData = null;
                 _snapshotCleanupAltMetaDataSetArray = null;
+                _state = SnapshottedStateFlags.None;
 #if DEBUG
                 _rollingPend = 0;
                 _rollingPendCount = 0;
