@@ -1156,7 +1156,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
             if (s_failAsyncPends)
             {
-                throw new InvalidOperationException("Attempted to pend a read when _failAsyncPends test hook was enabled");
+                throw new InvalidOperationException("Attempted to pend a read when s_failAsyncPends test hook was enabled");
             }
             if (s_forceSyncOverAsyncAfterFirstPend)
             {
