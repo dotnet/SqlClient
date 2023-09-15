@@ -1193,20 +1193,92 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
+            private sealed class StateObjectData
+            {
+                private int _inBytesUsed;
+                private int _inBytesPacket;
+                private PLPData _plpData;
+                private byte _messageStatus;
+                internal NullBitmap _nullBitmapInfo;
+                private _SqlMetaDataSet _cleanupMetaData;
+                internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
+                private SnapshottedStateFlags _state;
+
+                internal void Capture(TdsParserStateObject stateObj, bool trackStack = true)
+                {
+                    _inBytesUsed = stateObj._inBytesUsed;
+                    _inBytesPacket = stateObj._inBytesPacket;
+                    _messageStatus = stateObj._messageStatus;
+                    _nullBitmapInfo = stateObj._nullBitmapInfo; // _nullBitmapInfo must be cloned before it is updated
+                    if (stateObj._longlen != 0 || stateObj._longlenleft != 0)
+                    {
+                        _plpData = new PLPData(stateObj._longlen, stateObj._longlenleft);
+                    }
+                    _cleanupMetaData = stateObj._cleanupMetaData;
+                    _cleanupAltMetaDataSetArray = stateObj._cleanupAltMetaDataSetArray; // _cleanupAltMetaDataSetArray must be cloned before it is updated
+                    _state = stateObj._snapshottedState;
+#if DEBUG
+                    if (trackStack)
+                    {
+                        stateObj._lastStack = null;
+                    }
+                    Debug.Assert(stateObj._bTmpRead == 0, "Has partially read data when snapshot taken");
+                    Debug.Assert(stateObj._partialHeaderBytesRead == 0, "Has partially read header when snapshot taken");
+#endif
+                }
+
+                internal void Clear(TdsParserStateObject stateObj, bool trackStack = true)
+                {
+                    _inBytesUsed = 0;
+                    _inBytesPacket = 0;
+                    _messageStatus = 0;
+                    _nullBitmapInfo = default;
+                    _plpData = null;
+                    _cleanupMetaData = null;
+                    _cleanupAltMetaDataSetArray = null;
+                    _state = SnapshottedStateFlags.None;
+#if DEBUG
+                    if (trackStack)
+                    {
+                        stateObj._lastStack = null;
+                    }
+#endif 
+                }
+
+                internal void Restore(TdsParserStateObject stateObj)
+                {
+                    stateObj._inBytesUsed = _inBytesUsed;
+                    stateObj._inBytesPacket = _inBytesPacket;
+                    stateObj._messageStatus = _messageStatus;
+                    stateObj._nullBitmapInfo = _nullBitmapInfo;
+                    stateObj._cleanupMetaData = _cleanupMetaData;
+                    stateObj._cleanupAltMetaDataSetArray = _cleanupAltMetaDataSetArray;
+
+                    // Make sure to go through the appropriate increment/decrement methods if changing HasOpenResult
+                    if (!stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) == SnapshottedStateFlags.OpenResult))
+                    {
+                        stateObj.IncrementAndObtainOpenResultCount(stateObj._executedUnderTransaction);
+                    }
+                    else if (stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) != SnapshottedStateFlags.OpenResult))
+                    {
+                        stateObj.DecrementOpenResultCount();
+                    }
+                    //else _stateObj._hasOpenResult is already == _snapshotHasOpenResult
+                    stateObj._snapshottedState = _state;
+
+                    // Reset partially read state (these only need to be maintained if doing async without snapshot)
+                    stateObj._bTmpRead = 0;
+                    stateObj._partialHeaderBytesRead = 0;
+
+                    // reset plp state
+                    stateObj._longlen = _plpData?.SnapshotLongLen ?? 0;
+                    stateObj._longlenleft = _plpData?.SnapshotLongLenLeft ?? 0;
+                }
+            }
+
             private int _snapshotInBuffCurrent;
-            private int _snapshotInBytesUsed;
-            private int _snapshotInBytesPacket;
-
-            private PLPData _plpData;
-
-            private byte _snapshotMessageStatus;
-
-            private NullBitmap _snapshotNullBitmapInfo;
-            private _SqlMetaDataSet _snapshotCleanupMetaData;
-            private _SqlMetaDataSetCollection _snapshotCleanupAltMetaDataSetArray;
-
             private TdsParserStateObject _stateObj;
-            private SnapshottedStateFlags _state;
+            private StateObjectData _replayStateData;
 
 #if DEBUG
             private int _rollingPend = 0;
@@ -1232,7 +1304,7 @@ namespace Microsoft.Data.SqlClient
 #endif
             internal void CloneNullBitmapInfo()
             {
-                if (_stateObj._nullBitmapInfo.ReferenceEquals(_snapshotNullBitmapInfo))
+                if (_stateObj._nullBitmapInfo.ReferenceEquals(_replayStateData?._nullBitmapInfo ?? default))
                 {
                     _stateObj._nullBitmapInfo = _stateObj._nullBitmapInfo.Clone();
                 }
@@ -1240,7 +1312,7 @@ namespace Microsoft.Data.SqlClient
 
             internal void CloneCleanupAltMetaDataSetArray()
             {
-                if (_stateObj._cleanupAltMetaDataSetArray != null && object.ReferenceEquals(_snapshotCleanupAltMetaDataSetArray, _stateObj._cleanupAltMetaDataSetArray))
+                if (_stateObj._cleanupAltMetaDataSetArray != null && object.ReferenceEquals(_replayStateData?._cleanupAltMetaDataSetArray ?? default, _stateObj._cleanupAltMetaDataSetArray))
                 {
                     _stateObj._cleanupAltMetaDataSetArray = (_SqlMetaDataSetCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
                 }
@@ -1253,32 +1325,7 @@ namespace Microsoft.Data.SqlClient
 
                 Replay();
 
-                _stateObj._inBytesUsed = _snapshotInBytesUsed;
-                _stateObj._inBytesPacket = _snapshotInBytesPacket;
-                _stateObj._messageStatus = _snapshotMessageStatus;
-                _stateObj._nullBitmapInfo = _snapshotNullBitmapInfo;
-                _stateObj._cleanupMetaData = _snapshotCleanupMetaData;
-                _stateObj._cleanupAltMetaDataSetArray = _snapshotCleanupAltMetaDataSetArray;
-
-                // Make sure to go through the appropriate increment/decrement methods if changing HasOpenResult
-                if (!_stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) == SnapshottedStateFlags.OpenResult))
-                {
-                    _stateObj.IncrementAndObtainOpenResultCount(_stateObj._executedUnderTransaction);
-                }
-                else if (_stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) != SnapshottedStateFlags.OpenResult))
-                {
-                    _stateObj.DecrementOpenResultCount();
-                }
-                //else _stateObj._hasOpenResult is already == _snapshotHasOpenResult
-                _stateObj._snapshottedState = _state;
-
-                // Reset partially read state (these only need to be maintained if doing async without snapshot)
-                _stateObj._bTmpRead = 0;
-                _stateObj._partialHeaderBytesRead = 0;
-
-                // reset plp state
-                _stateObj._longlen = _plpData?.SnapshotLongLen ?? 0;
-                _stateObj._longlenleft = _plpData?.SnapshotLongLenLeft ?? 0;
+                _replayStateData.Restore(_stateObj);
 
                 _stateObj._snapshotReplay = true;
 
@@ -1290,17 +1337,27 @@ namespace Microsoft.Data.SqlClient
                 ResetSnapshotState();
             }
 
+            internal void CaptureAsStart(TdsParserStateObject stateObj)
+            {
+                _stateObj = stateObj;
+                _replayStateData ??= new StateObjectData();
+                _replayStateData.Capture(stateObj);
+
+#if DEBUG
+                _rollingPend = 0;
+                _rollingPendCount = 0;
+                stateObj._lastStack = null;
+                Debug.Assert(stateObj._bTmpRead == 0, "Has partially read data when snapshot taken");
+                Debug.Assert(stateObj._partialHeaderBytesRead == 0, "Has partially read header when snapshot taken");
+#endif
+
+                PushBuffer(stateObj._inBuff, stateObj._inBytesRead);
+            }
+
             internal void ClearCore()
             {
                 _snapshotInBuffCurrent = 0;
-                _snapshotInBytesUsed = 0;
-                _snapshotInBytesPacket = 0;
-                _snapshotMessageStatus = 0;
-                _snapshotNullBitmapInfo = default;
-                _plpData = null;
-                _snapshotCleanupMetaData = null;
-                _snapshotCleanupAltMetaDataSetArray = null;
-                _state = SnapshottedStateFlags.None;
+                _replayStateData.Clear(_stateObj);
 #if DEBUG
                 _rollingPend = 0;
                 _rollingPendCount = 0;
