@@ -22,14 +22,13 @@ namespace Microsoft.Data
                         if (s_userInstanceDLLHandle == IntPtr.Zero)
                         {
                             SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
-                            if(s_userInstanceDLLHandle != IntPtr.Zero)
+                            if (s_userInstanceDLLHandle != IntPtr.Zero)
                             {
                                 SqlClientEventSource.Log.TryTraceEvent("LocalDBAPI.UserInstanceDLLHandle | LocalDB - handle obtained");
                             }
                             else
                             {
-                                SNINativeMethodWrapper.SNI_Error sniError;
-                                SNINativeMethodWrapper.SNIGetLastError(out sniError);
+                                SNINativeMethodWrapper.SNIGetLastError(out SNINativeMethodWrapper.SNI_Error sniError);
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: (int)sniError.sniError);
                             }
                         }

@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient
         private static int _objectTypeCount; // EventSource Counter
         internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*' />
         public SqlConnection() : base()
         {
             GC.SuppressFinalize(this);
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (!flag)
             {
-                throw ADP.OpenConnectionPropertySet(ADP.ConnectionString, connectionInternal.State);
+                throw ADP.OpenConnectionPropertySet(nameof(ConnectionString), connectionInternal.State);
             }
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
@@ -197,22 +197,16 @@ namespace Microsoft.Data.SqlClient
             InnerConnection.AddWeakReference(value, tag);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
         override protected DbCommand CreateDbCommand()
         {
-            DbCommand command = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID);
-            try
+            using (TryEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
             {
                 DbProviderFactory providerFactory = ConnectionFactory.ProviderFactory;
-                command = providerFactory.CreateCommand();
+                DbCommand command = providerFactory.CreateCommand();
                 command.Connection = this;
+                return command;
             }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-            }
-            return command;
         }
 
         private static System.Security.CodeAccessPermission CreateExecutePermission()
@@ -222,7 +216,7 @@ namespace Microsoft.Data.SqlClient
             return p;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
         override protected void Dispose(bool disposing)
         {
             if (disposing)
@@ -268,7 +262,7 @@ namespace Microsoft.Data.SqlClient
             GC.KeepAlive(this);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
         override public void EnlistTransaction(SysTx.Transaction transaction)
         {
             SqlConnection.ExecutePermission.Demand();
@@ -318,19 +312,19 @@ namespace Microsoft.Data.SqlClient
             return GetMetaDataFactory(internalConnection);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchema2/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchema2/*' />
         override public DataTable GetSchema()
         {
             return this.GetSchema(DbMetaDataCollectionNames.MetaDataCollections, null);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*' />
         override public DataTable GetSchema(string collectionName)
         {
             return this.GetSchema(collectionName, null);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*' />
         override public DataTable GetSchema(string collectionName, string[] restrictionValues)
         {
             // NOTE: This is virtual because not all providers may choose to support

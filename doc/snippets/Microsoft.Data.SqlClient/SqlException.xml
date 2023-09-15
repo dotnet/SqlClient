@@ -105,7 +105,7 @@ catch (Exception ex) {
             <altmember cref="P:Microsoft.Data.SqlClient.SqlException.LineNumber" />
         </Class>
         <ClientConnectionId>
-            <summary>Represents the client connection ID. For more information, see <see href="https://docs.microsoft.com/dotnet/framework/data/adonet/data-tracing">Data Tracing in ADO.NET</see>.</summary>
+            <summary>Represents the client connection ID. For more information, see <see href="https://docs.microsoft.com/sql/connect/ado-net/data-tracing">Data Tracing in ADO.NET</see>.</summary>
             <value>The client connection ID.</value>
             <remarks>
             <format type="text/markdown"><![CDATA[  

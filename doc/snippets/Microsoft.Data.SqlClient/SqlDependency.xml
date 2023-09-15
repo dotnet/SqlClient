@@ -14,7 +14,7 @@
 > [!NOTE]
 > <xref:Microsoft.Data.SqlClient.SqlDependency> was designed to be used in ASP.NET or middle-tier services where there is a relatively small number of servers having dependencies active against the database. It was not designed for use in client applications, where hundreds or thousands of client computers would have <xref:Microsoft.Data.SqlClient.SqlDependency> objects set up for a single database server. If you are developing an application where you need reliable sub-second notifications when data changes, review the sections [Planning an Efficient Query Notifications Strategy](https://docs.microsoft.com/previous-versions/sql/sql-server-2008-r2/ms187528(v=sql.105)#planning-an-efficient-query-notifications-strategy) and [Alternatives to Query Notifications](https://docs.microsoft.com/previous-versions/sql/sql-server-2008-r2/ms187528(v=sql.105)#alternatives-to-query-notifications) in the [Planning for Notifications](https://docs.microsoft.com/previous-versions/sql/sql-server-2008-r2/ms187528(v%3dsql.105)) article.
   
- For more information, see [Query Notifications in SQL Server](/dotnet/framework/data/adonet/sql/query-notifications-in-sql-server) and [Building Notification Solutions](https://docs.microsoft.com/previous-versions/sql/sql-server-2005/ms171065(v%3dsql.90)).  
+ For more information, see [Query Notifications in SQL Server](/sql/connect/ado-net/sql/query-notifications-sql-server) and [Building Notification Solutions](https://docs.microsoft.com/previous-versions/sql/sql-server-2005/ms171065(v%3dsql.90)).  
   
 > [!NOTE]
 >  The <xref:Microsoft.Data.SqlClient.SqlDependency.OnChange> event may be generated on a different thread from the thread that initiated command execution.  
@@ -206,7 +206,7 @@
             <altmember cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" />
         </StartConnectionStringQueue>
         <Stop>
-            <summary>Stops a listener for a connection specified in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start" /> call.</summary>
+            <summary>Stops a listener for a connection specified in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start(System.String)" /> call.</summary>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
@@ -218,7 +218,7 @@
         </Stop>
         <StopConnectionString>
             <param name="connectionString">Connection string for the instance of SQL Server that was used in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start(System.String)" /> call.</param>
-            <summary>Stops a listener for a connection specified in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start" /> call.</summary>
+            <summary>Stops a listener for a connection specified in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start(System.String)" /> call.</summary>
             <returns>
             <see langword="true" /> if the listener was completely stopped; <see langword="false" /> if the <see cref="T:System.AppDomain" /> was unbound from the listener, but there are is at least one other <see cref="T:System.AppDomain" /> using the same listener.</returns>
             <remarks>
@@ -237,7 +237,7 @@
         <StopConnectionStringQueue>
             <param name="connectionString">Connection string for the instance of SQL Server that was used in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start(System.String,System.String)" /> call.</param>
             <param name="queue">The SQL Server Service Broker queue that was used in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start(System.String,System.String)" /> call.</param>
-            <summary>Stops a listener for a connection specified in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start" /> call.</summary>
+            <summary>Stops a listener for a connection specified in a previous <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start(System.String,System.String)" /> call.</summary>
             <returns>
             <see langword="true" /> if the listener was completely stopped; <see langword="false" /> if the <see cref="T:System.AppDomain" /> was unbound from the listener, but there is at least one other <see cref="T:System.AppDomain" /> using the same listener.</returns>
             <remarks>

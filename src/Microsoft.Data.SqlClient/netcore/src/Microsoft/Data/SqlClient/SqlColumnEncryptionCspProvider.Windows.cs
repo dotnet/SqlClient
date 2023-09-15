@@ -395,7 +395,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="keyIdentifier">output containing the key name</param>
         private void GetCspProviderAndKeyName(string keyPath, bool isSystemOp, out string cspProviderName, out string keyIdentifier)
         {
-            int indexOfSlash = keyPath.IndexOf(@"/");
+            int indexOfSlash = keyPath.IndexOf(@"/", StringComparison.Ordinal);
             if (indexOfSlash == -1)
             {
                 throw SQL.InvalidCspPath(keyPath, isSystemOp);

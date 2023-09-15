@@ -306,7 +306,7 @@ namespace Microsoft.Data.ProviderBase
                             // this is safe since we're about to dispose the
                             // object and it won't have an owner after that for
                             // certain.
-                            _owningObject.Target = null;
+                            _owningObject.SetTarget(null);
 
                             if (IsTransactionRoot)
                             {
@@ -359,7 +359,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 pool.PutObjectFromTransactedPool(this);
             }
-            else if (-1 == _pooledCount && !_owningObject.IsAlive)
+            else if (-1 == _pooledCount && !_owningObject.TryGetTarget(out DbConnection _))
             {
                 // When _pooledCount is -1 and the owning object no longer exists,
                 // it indicates a closed (or leaked), non-pooled connection so 

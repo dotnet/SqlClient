@@ -1315,6 +1315,49 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             new SqlSmallDateTimeTypeInfo(),
         };
 
+        private static readonly SqlRandomTypeInfo[] s_variantSubTypesSynapse =
+        {
+            // var types
+            new SqlVarBinaryTypeInfo(),
+            new SqlVarCharTypeInfo(),
+            new SqlNVarCharTypeInfo(),
+
+            // integer data types
+            new SqlBigIntTypeInfo(),
+            new SqlIntTypeInfo(),
+            new SqlSmallIntTypeInfo(),
+            new SqlTinyIntTypeInfo(),
+
+            // fixed length blobs
+            new SqlCharTypeInfo(),
+            new SqlNCharTypeInfo(),
+            new SqlBinaryTypeInfo(),
+
+            // large blobs
+            new SqlImageTypeInfo(),
+
+            // bit
+            new SqlBitTypeInfo(),
+
+            // decimal
+            new SqlDecimalTypeInfo(),
+
+            // money types
+            new SqlMoneyTypeInfo(),
+            new SqlSmallMoneyTypeInfo(),
+
+            // float types
+            new SqRealTypeInfo(),
+            new SqFloatTypeInfo(),
+            
+            // unique identifier (== guid)
+            new SqlUniqueIdentifierTypeInfo(),
+
+            // date/time types
+            new SqlDateTimeTypeInfo(),
+            new SqlSmallDateTimeTypeInfo(),
+        };
+
         public SqlVariantTypeInfo()
             : base(SqlDbType.Variant)
         {
@@ -1338,7 +1381,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         protected override object CreateRandomValueInternal(SqlRandomizer rand, SqlRandomTableColumn columnInfo)
         {
-            SqlRandomTypeInfo subType = s_variantSubTypes[rand.NextIntInclusive(0, maxValueInclusive: s_variantSubTypes.Length - 1)];
+            SqlRandomTypeInfo subType = DataTestUtility.IsNotAzureSynapse() ? s_variantSubTypes[rand.NextIntInclusive(0, maxValueInclusive: s_variantSubTypes.Length - 1)] : s_variantSubTypesSynapse[rand.NextIntInclusive(0, maxValueInclusive: s_variantSubTypesSynapse.Length - 1)];
+            
             object val = subType.CreateRandomValue(rand, new SqlRandomTableColumn(subType, SqlRandomColumnOptions.None, 8000));
             char[] cval = val as char[];
             if (cval != null)

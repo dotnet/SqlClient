@@ -8,6 +8,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
@@ -26,52 +27,74 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private readonly string _tableName;
 
+        private Dictionary<string, SqlColumnEncryptionKeyStoreProvider> _requiredProvider = new()
+        {
+            { DummyKeyStoreProvider.Name, new DummyKeyStoreProvider() }
+        };
+
+        private const string NotRequiredProviderName = "DummyProvider2";
+        private Dictionary<string, SqlColumnEncryptionKeyStoreProvider> _notRequiredProvider = new()
+        {
+            { NotRequiredProviderName, new DummyKeyStoreProvider() }
+        };
+
+        private string _failedToDecryptMessage;
+        private string _providerNotFoundMessage = string.Format(
+            SystemDataResourceManager.Instance.TCE_UnrecognizedKeyStoreProviderName,
+            DummyKeyStoreProvider.Name,
+            "'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', 'MSSQL_CSP_PROVIDER'",
+            $"'{NotRequiredProviderName}'");
+
         public ApiShould(PlatformSpecificTestContext context)
         {
             _fixture = context.Fixture;
             _tableName = _fixture.ApiTestTable.Name;
+
+            ApiTestTable _customKeyStoreProviderTable = _fixture.CustomKeyStoreProviderTestTable as ApiTestTable;
+            byte[] encryptedCek = _customKeyStoreProviderTable.columnEncryptionKey1.EncryptedValue;
+            string _lastTenBytesCek = BitConverter.ToString(encryptedCek, encryptedCek.Length - 10, 10);
+            _failedToDecryptMessage = string.Format(SystemDataResourceManager.Instance.TCE_KeyDecryptionFailed,
+                DummyKeyStoreProvider.Name, _lastTenBytesCek);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
         public void TestSqlTransactionCommitRollbackWithTransparentInsert(string connection, bool isCommitted)
         {
             CleanUpTable(connection, _tableName);
 
-            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            using SqlConnection sqlConnection = new(connection);
+            sqlConnection.Open();
+
+            Customer customer = new Customer(40, "Microsoft", "Corporation");
+
+            // Start a transaction and either commit or rollback based on the test variation.
+            using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction())
             {
-                sqlConnection.Open();
+                DatabaseHelper.InsertCustomerData(sqlConnection, sqlTransaction, _tableName, customer);
 
-                Customer customer = new Customer(40, "Microsoft", "Corporation");
-
-                // Start a transaction and either commit or rollback based on the test variation.
-                using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction())
-                {
-                    InsertCustomerRecord(sqlConnection, sqlTransaction, customer);
-
-                    if (isCommitted)
-                    {
-                        sqlTransaction.Commit();
-                    }
-                    else
-                    {
-                        sqlTransaction.Rollback();
-                    }
-                }
-
-                // Data should be available on select if committed else, data should not be available.
                 if (isCommitted)
                 {
-                    VerifyRecordPresent(sqlConnection, customer);
+                    sqlTransaction.Commit();
                 }
                 else
                 {
-                    VerifyRecordAbsent(sqlConnection, customer);
+                    sqlTransaction.Rollback();
                 }
+            }
+
+            // Data should be available on select if committed else, data should not be available.
+            if (isCommitted)
+            {
+                DatabaseHelper.VerifyRecordPresent(sqlConnection, customer, _tableName);
+            }
+            else
+            {
+                DatabaseHelper.VerifyRecordAbsent(sqlConnection, customer, _tableName);
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlTransactionRollbackToSavePoint(string connection)
         {
@@ -85,39 +108,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted))
                 {
                     // Insert row no:1 and Save the state of the transaction to a named check point.
-                    Customer customer1 = new Customer(50, "Microsoft2", "Corporation2");
-                    InsertCustomerRecord(sqlConnection, sqlTransaction, customer1);
+                    Customer customer1 = new(50, "Microsoft2", "Corporation2");
+                    DatabaseHelper.InsertCustomerData(sqlConnection, sqlTransaction, _tableName, customer1);
                     sqlTransaction.Save(@"checkpoint");
 
                     // Insert row no:2
-                    Customer customer2 = new Customer(60, "Microsoft3", "Corporation3");
-                    InsertCustomerRecord(sqlConnection, sqlTransaction, customer2);
+                    Customer customer2 = new(60, "Microsoft3", "Corporation3");
+                    DatabaseHelper.InsertCustomerData(sqlConnection, sqlTransaction, _tableName, customer2);
 
                     // Read the data that was just inserted, both Row no:2 and Row no:1 should be available.
-                    VerifyRecordPresent(sqlConnection, customer1, sqlTransaction);
+                    DatabaseHelper.VerifyRecordPresent(sqlConnection, customer1, _tableName, sqlTransaction);
 
                     // Try to read the just inserted record under read-uncommitted mode.
-                    VerifyRecordPresent(sqlConnection, customer2, sqlTransaction);
+                    DatabaseHelper.VerifyRecordPresent(sqlConnection, customer2, _tableName, sqlTransaction);
 
                     // Rollback the transaction to the saved checkpoint, to lose the row no:2.
                     sqlTransaction.Rollback(@"checkpoint");
 
                     // Row no:2 should not be available.
-                    VerifyRecordAbsent(sqlConnection, customer2, sqlTransaction);
+                    DatabaseHelper.VerifyRecordAbsent(sqlConnection, customer2, _tableName, sqlTransaction);
 
                     // Row no:1 should still be available.
-                    VerifyRecordPresent(sqlConnection, customer1, sqlTransaction);
+                    DatabaseHelper.VerifyRecordPresent(sqlConnection, customer1, _tableName, sqlTransaction);
 
                     // Completely rollback the transaction.
                     sqlTransaction.Rollback();
 
                     // Now even row no:1 should not be available.
-                    VerifyRecordAbsent(sqlConnection, customer1, sqlTransaction);
+                    DatabaseHelper.VerifyRecordAbsent(sqlConnection, customer1, _tableName, sqlTransaction);
                 }
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void SqlParameterProperties(string connection)
         {
@@ -328,69 +351,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        private void VerifyRecordAbsent(SqlConnection sqlConnection, Customer customer, SqlTransaction sqlTransaction = null)
-        {
-            using (SqlCommand sqlCommand = new SqlCommand(
-                cmdText: $"SELECT * FROM [{_tableName}] WHERE CustomerId = @CustomerId and FirstName = @FirstName;",
-                connection: sqlConnection,
-                transaction: sqlTransaction,
-                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
-            {
-                sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
-                sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
-
-                using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
-                {
-                    Assert.False(sqlDataReader.HasRows);
-                }
-            }
-        }
-
-        private void VerifyRecordPresent(SqlConnection sqlConnection, Customer customer, SqlTransaction sqlTransaction = null)
-        {
-            using (SqlCommand sqlCommand = new SqlCommand(
-                cmdText: $"SELECT * FROM [{_tableName}] WHERE CustomerId = @CustomerId and FirstName = @FirstName;",
-                connection: sqlConnection,
-                transaction: sqlTransaction,
-                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
-            {
-                sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
-                sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
-
-                using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
-                {
-                    Assert.True(sqlDataReader.HasRows);
-                    while (sqlDataReader.Read())
-                    {
-                        Assert.True(string.Equals(sqlDataReader.GetDataTypeName(0), @"int", StringComparison.OrdinalIgnoreCase), "unexpected data type");
-                        Assert.True(string.Equals(sqlDataReader.GetDataTypeName(1), @"nvarchar", StringComparison.InvariantCultureIgnoreCase), "unexpected data type");
-                        Assert.True(string.Equals(sqlDataReader.GetDataTypeName(2), @"nvarchar", StringComparison.InvariantCultureIgnoreCase), "unexpected data type");
-
-                        Assert.Equal(customer.Id, sqlDataReader.GetInt32(0));
-                        Assert.Equal(customer.FirstName, sqlDataReader.GetString(1));
-                        Assert.Equal(customer.LastName, sqlDataReader.GetString(2));
-                    }
-                }
-            }
-        }
-
-        private void InsertCustomerRecord(SqlConnection sqlConnection, SqlTransaction sqlTransaction, Customer customer)
-        {
-            using (SqlCommand sqlCommand = new SqlCommand(
-                $"INSERT INTO [{_tableName}] (CustomerId, FirstName, LastName) VALUES (@CustomerId, @FirstName, @LastName);",
-                connection: sqlConnection,
-                transaction: sqlTransaction,
-                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
-            {
-                sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
-                sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
-                sqlCommand.Parameters.AddWithValue(@"LastName", customer.LastName);
-
-                sqlCommand.ExecuteNonQuery();
-            }
-        }
-
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlDataAdapterFillDataTable(string connection)
         {
@@ -463,7 +424,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithSchemaType))]
         public void TestSqlDataAdapterFillSchema(string connection, SchemaType schemaType)
         {
@@ -510,7 +471,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Equal(typeof(string), dataColumns[2].DataType);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
         public void TestExecuteNonQuery(string connection, bool isAsync)
         {
@@ -578,7 +539,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
         public void TestExecuteScalar(string connection, bool isAsync)
         {
@@ -630,7 +591,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithIntegers))]
         public void TestSqlDataAdapterBatchUpdate(string connection, int numberofRows)
         {
@@ -675,7 +636,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestExecuteReader(string connection)
         {
@@ -729,7 +690,60 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public async void TestExecuteReaderAsyncWithLargeQuery(string connectionString)
+        {
+            string randomName = DataTestUtility.GetUniqueName(Guid.NewGuid().ToString().Replace("-", ""), false);
+            if (randomName.Length > 50)
+            {
+                randomName = randomName.Substring(0, 50);
+            }
+            string tableName = $"VeryLong_{randomName}_TestTableName";
+            int columnsCount = 50;
+
+            // Arrange - drops the table with long name and re-creates it with 52 columns (ID, name, ColumnName0..49)
+            try
+            {
+                CreateTable(connectionString, tableName, columnsCount);
+                string name = "nobody";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    // This creates a "select top 100" query that has over 40k characters
+                    using (SqlCommand sqlCommand = new SqlCommand(GenerateSelectQuery(tableName, columnsCount, 10, "WHERE Name = @FirstName AND ID = @CustomerId"),
+                        connection,
+                        transaction: null,
+                        columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                    {
+                        sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
+                        sqlCommand.Parameters.Add(@"FirstName", SqlDbType.VarChar, name.Length);
+
+                        sqlCommand.Parameters[0].Value = 0;
+                        sqlCommand.Parameters[1].Value = name;
+
+                        // Act and Assert
+                        // Test that execute reader async does not throw an exception.
+                        // The table is empty so there should be no results; however, the bug previously found is that it causes a TDS RPC exception on enclave.
+                        using (SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync())
+                        {
+                            Assert.False(sqlDataReader.HasRows, "The table should be empty");
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                DropTableIfExists(connectionString, tableName);
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet1))]
         public void TestExecuteReaderWithCommandBehavior(string connection, CommandBehavior commandBehavior)
         {
@@ -854,7 +868,54 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestEnclaveStoredProceduresWithAndWithoutParameters(string connectionString)
+        {
+            using SqlConnection sqlConnection = new(connectionString);
+            sqlConnection.Open();
+
+            using SqlCommand sqlCommand = new("", sqlConnection, transaction: null,
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
+
+            string procWithoutParams = DataTestUtility.GetUniqueName("EnclaveWithoutParams", withBracket: false);
+            string procWithParam = DataTestUtility.GetUniqueName("EnclaveWithParams", withBracket: false);
+
+            try
+            {
+                sqlCommand.CommandText = $"CREATE PROCEDURE {procWithoutParams} AS SELECT FirstName, LastName  FROM [{_tableName}];";
+                sqlCommand.ExecuteNonQuery();
+                sqlCommand.CommandText = $"CREATE PROCEDURE {procWithParam} @id INT AS SELECT FirstName, LastName FROM [{_tableName}] WHERE CustomerId = @id";
+                sqlCommand.ExecuteNonQuery();
+                int expectedFields = 2;
+
+                sqlCommand.CommandText = procWithoutParams;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                using (SqlDataReader reader = sqlCommand.ExecuteReader())
+                {
+                    Assert.Equal(expectedFields, reader.VisibleFieldCount);
+                }
+
+                sqlCommand.CommandText = procWithParam;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                Exception ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteReader());
+                string expectedMsg = $"Procedure or function '{procWithParam}' expects parameter '@id', which was not supplied.";
+
+                Assert.Equal(expectedMsg, ex.Message);
+
+                sqlCommand.Parameters.AddWithValue("@id", 0);
+                using (SqlDataReader reader = sqlCommand.ExecuteReader())
+                {
+                    Assert.Equal(expectedFields, reader.VisibleFieldCount);
+                }
+            }
+            finally
+            {
+                DropHelperProcedures(new[] { procWithoutParams, procWithParam }, connectionString);
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestPrepareWithExecuteNonQuery(string connection)
         {
@@ -903,7 +964,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestAsyncWriteDelayWithExecuteNonQueryAsync(string connection)
         {
@@ -957,7 +1018,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestAsyncWriteDelayWithExecuteReaderAsync(string connection)
         {
@@ -1024,7 +1085,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestPrepareWithExecuteNonQueryAsync(string connection)
         {
@@ -1079,7 +1140,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
         public void TestPrepareWithExecuteReaderAsync(string connection, CommandBehavior commandBehavior)
         {
@@ -1141,7 +1202,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlDataReaderAPIs(string connection)
         {
@@ -1338,7 +1399,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlDataReaderAPIsWithSequentialAccess(string connection)
         {
@@ -1766,7 +1827,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
         public void TestSqlCommandSequentialAccessCodePaths(string connection, CommandBehavior value)
         {
@@ -1810,7 +1871,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestExecuteXmlReader(string connection)
         {
@@ -2065,7 +2126,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithCancellationTime))]
         public void TestSqlCommandCancellationToken(string connection, int initalValue, int cancellationTime)
         {
@@ -2115,42 +2176,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSGXEnclaveConnStringSetup))]
+        public void TestNoneAttestationProtocolWithSGXEnclave()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringAASSGX);
+            builder.AttestationProtocol = SqlConnectionAttestationProtocol.None;
+            builder.EnclaveAttestationUrl = string.Empty;
+
+            using (SqlConnection connection = new(builder.ConnectionString))
+            {
+                InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => connection.Open());
+                string expectedErrorMessage = string.Format(
+                    SystemDataResourceManager.Instance.TCE_AttestationProtocolNotSupportEnclaveType,
+                    SqlConnectionAttestationProtocol.None.ToString(), "SGX");
+                Assert.Contains(expectedErrorMessage, ex.Message);
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public void TestCustomKeyStoreProviderDuringAeQuery(string connectionString)
+        public void TestConnectionCustomKeyStoreProviderDuringAeQuery(string connectionString)
         {
             if (!SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
             {
                 SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
-                    new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
+                    new(new SqlClientCustomTokenCredential());
                 SQLSetupStrategyAzureKeyVault.RegisterGlobalProviders(sqlColumnEncryptionAzureKeyVaultProvider);
             }
 
-            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> requiredProvider =
-                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
-                {
-                    { DummyKeyStoreProvider.Name, new DummyKeyStoreProvider() }
-                };
-
-            string notRequiredProviderName = "DummyProvider2";
-            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> notRequiredProvider =
-                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
-                {
-                    { notRequiredProviderName, new DummyKeyStoreProvider() }
-                };
-
-            ApiTestTable customKeyStoreProviderTable = _fixture.CustomKeyStoreProviderTestTable as ApiTestTable;
-            byte[] encryptedCek = customKeyStoreProviderTable.columnEncryptionKey1.EncryptedValue;
-            string lastTenBytesCek = BitConverter.ToString(encryptedCek, encryptedCek.Length - 10, 10);
-
-            string failedToDecryptMessage = string.Format(SystemDataResourceManager.Instance.TCE_KeyDecryptionFailed,
-                DummyKeyStoreProvider.Name, lastTenBytesCek);
-            string providerNotFoundMessage = string.Format(SystemDataResourceManager.Instance.TCE_UnrecognizedKeyStoreProviderName,
-                DummyKeyStoreProvider.Name,
-                "'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', 'MSSQL_CSP_PROVIDER'",
-                $"'{notRequiredProviderName}'");
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new(connectionString))
             {
                 connection.Open();
 
@@ -2158,43 +2213,299 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // provider will be found but it will throw when its methods are called
                 Exception ex = Assert.Throws<SqlException>(
                       () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Contains(failedToDecryptMessage, ex.Message);
-                Assert.True(ex.InnerException is NotImplementedException);
+                AssertExceptionCausedByFailureToDecrypt(ex);
 
                 // not required provider in instance cache
                 // it should not fall back to the global cache so the right provider will not be found
-                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(notRequiredProvider);
+                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(_notRequiredProvider);
                 ex = Assert.Throws<ArgumentException>(
                      () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Equal(providerNotFoundMessage, ex.Message);
+                Assert.Equal(_providerNotFoundMessage, ex.Message);
 
                 // required provider in instance cache
                 // if the instance cache is not empty, it is always checked for the provider.
                 // => if the provider is found, it must have been retrieved from the instance cache and not the global cache
-                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(requiredProvider);
+                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(_requiredProvider);
                 ex = Assert.Throws<SqlException>(
                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Contains(failedToDecryptMessage, ex.Message);
-                Assert.True(ex.InnerException is NotImplementedException);
+                AssertExceptionCausedByFailureToDecrypt(ex);
 
                 // not required provider will replace the previous entry so required provider will not be found 
-                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(notRequiredProvider);
+                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(_notRequiredProvider);
                 ex = Assert.Throws<ArgumentException>(
                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Equal(providerNotFoundMessage, ex.Message);
+                Assert.Equal(_providerNotFoundMessage, ex.Message);
             }
 
-            void ExecuteQueryThatRequiresCustomKeyStoreProvider(SqlConnection connection)
+            using (SqlConnection connection = new(connectionString))
             {
-                using (SqlCommand command = new SqlCommand(
-                    null, connection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                connection.Open();
+
+                // new connection instance should have an empty cache and query will fall back to global cache
+                // which contains the required provider
+                Exception ex = Assert.Throws<SqlException>(
+                      () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
+                AssertExceptionCausedByFailureToDecrypt(ex);
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestCommandCustomKeyStoreProviderDuringAeQuery(string connectionString)
+        {
+            if (!SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
+            {
+                SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
+                    new(new SqlClientCustomTokenCredential());
+                SQLSetupStrategyAzureKeyVault.RegisterGlobalProviders(sqlColumnEncryptionAzureKeyVaultProvider);
+            }
+
+            using (SqlConnection connection = new(connectionString))
+            {
+                connection.Open();
+                using (SqlCommand command = CreateCommandThatRequiresCustomKeyStoreProvider(connection))
                 {
-                    command.CommandText =
-                        $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id";
-                    command.Parameters.AddWithValue(@"id", 9);
-                    command.ExecuteReader();
+                    // will use DummyProvider in global cache
+                    // provider will be found but it will throw when its methods are called
+                    Exception ex = Assert.Throws<SqlException>(() => command.ExecuteReader());
+                    AssertExceptionCausedByFailureToDecrypt(ex);
+
+                    // required provider will be found in command cache
+                    command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(_requiredProvider);
+                    ex = Assert.Throws<SqlException>(() => command.ExecuteReader());
+                    AssertExceptionCausedByFailureToDecrypt(ex);
+
+                    // not required provider in command cache
+                    command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(_notRequiredProvider);
+                    ex = Assert.Throws<ArgumentException>(() => command.ExecuteReader());
+                    Assert.Equal(_providerNotFoundMessage, ex.Message);
+
+                    // not required provider in command cache, required provider in connection cache
+                    // should not fall back to connection cache or global cache
+                    connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(_requiredProvider);
+                    ex = Assert.Throws<ArgumentException>(() => command.ExecuteReader());
+                    Assert.Equal(_providerNotFoundMessage, ex.Message);
+
+                    using (SqlCommand command2 = CreateCommandThatRequiresCustomKeyStoreProvider(connection))
+                    {
+                        // new command instance should have an empty cache and query will fall back to connection cache
+                        // which contains the required provider
+                        ex = Assert.Throws<SqlException>(() => command2.ExecuteReader());
+                        AssertExceptionCausedByFailureToDecrypt(ex);
+                    }
                 }
             }
+        }
+
+        // On Windows, "_fixture" will be type SQLSetupStrategyCertStoreProvider
+        // On non-Windows, "_fixture" will be type SQLSetupStrategyAzureKeyVault
+        // Test will pass on both but only SQLSetupStrategyCertStoreProvider is a system provider
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestSystemProvidersHavePrecedenceOverInstanceLevelProviders(string connectionString)
+        {
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customKeyStoreProviders = new()
+            {
+                {
+                    SqlColumnEncryptionAzureKeyVaultProvider.ProviderName,
+                    new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential())
+                }
+            };
+
+            using (SqlConnection connection = new(connectionString))
+            {
+                connection.Open();
+                using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);
+                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(customKeyStoreProviders);
+                SqlDataReader reader = command.ExecuteReader();
+                Assert.Equal(3, reader.VisibleFieldCount);
+            }
+
+            using (SqlConnection connection = new(connectionString))
+            {
+                connection.Open();
+                using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);
+                command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customKeyStoreProviders);
+                SqlDataReader reader = command.ExecuteReader();
+                Assert.Equal(3, reader.VisibleFieldCount);
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.EnclaveEnabled))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestRetryWhenAEParameterMetadataCacheIsStale(string connectionString)
+        {
+            CleanUpTable(connectionString, _tableName);
+
+            const int customerId = 50;
+            IList<object> values = GetValues(dataHint: customerId);
+            InsertRows(tableName: _tableName, numberofRows: 1, values: values, connection: connectionString);
+
+            ApiTestTable table = _fixture.ApiTestTable as ApiTestTable;
+            string enclaveSelectQuery = $@"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE CustomerId > @CustomerId";
+            string alterCekQueryFormatString = "ALTER TABLE [{0}] " +
+                "ALTER COLUMN [CustomerId] [int]  " +
+                "ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{1}], " +
+                "ENCRYPTION_TYPE = Randomized, " +
+                "ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256'); " +
+                "ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE;";
+
+            using SqlConnection sqlConnection = new(connectionString);
+            sqlConnection.Open();
+
+            // execute the select query to add its parameter metadata and enclave-required CEKs to the cache
+            using SqlCommand cmd = new SqlCommand(enclaveSelectQuery, sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled);
+            cmd.Parameters.AddWithValue("CustomerId", 0);
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            };
+
+            // change the CEK for the CustomerId column from ColumnEncryptionKey1 to ColumnEncryptionKey2
+            // this will render the select query's cache entry stale
+            cmd.Parameters.Clear();
+            cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey2.Name);
+            cmd.ExecuteNonQuery();
+
+            // execute the select query again. it will attempt to use the stale cache entry, receive 
+            // a retryable error from the server, remove the stale cache entry, retry and succeed
+            cmd.CommandText = enclaveSelectQuery;
+            cmd.Parameters.AddWithValue("@CustomerId", 0);
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            }
+
+            // revert the CEK change to the CustomerId column
+            cmd.Parameters.Clear();
+            cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey1.Name);
+            cmd.ExecuteNonQuery();
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.EnclaveEnabled))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestRetryWhenAEEnclaveCacheIsStale(string connectionString)
+        {
+            CleanUpTable(connectionString, _tableName);
+
+            const int customerId = 50;
+            IList<object> values = GetValues(dataHint: customerId);
+            InsertRows(tableName: _tableName, numberofRows: 1, values: values, connection: connectionString);
+
+            ApiTestTable table = _fixture.ApiTestTable as ApiTestTable;
+            string enclaveSelectQuery = $@"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE CustomerId > @CustomerId";
+            string alterCekQueryFormatString = "ALTER TABLE [{0}] " +
+                "ALTER COLUMN [CustomerId] [int]  " +
+                "ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{1}], " +
+                "ENCRYPTION_TYPE = Randomized, " +
+                "ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256'); " +
+                "ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE;";
+
+            using SqlConnection sqlConnection = new(connectionString);
+            sqlConnection.Open();
+
+            // change the CEK and encryption type to randomized for the CustomerId column to ensure enclaves are used
+            using SqlCommand cmd = new SqlCommand(
+                string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey2.Name),
+                sqlConnection,
+                null,
+                SqlCommandColumnEncryptionSetting.Enabled);
+            cmd.ExecuteNonQuery();
+
+            // execute the select query to create the cache entry
+            cmd.CommandText = enclaveSelectQuery;
+            cmd.Parameters.AddWithValue("@CustomerId", 0);
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            }
+
+            CommandHelper.InvalidateEnclaveSession(cmd);
+
+            // Execute again to exercise the session retry logic
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            }
+
+            CommandHelper.InvalidateEnclaveSession(cmd);
+
+            // Execute again to exercise the async session retry logic
+            Task readAsyncTask = ReadAsync(cmd, values, CommandBehavior.Default);
+            readAsyncTask.GetAwaiter().GetResult();
+
+#if DEBUG
+            CommandHelper.ForceThrowDuringGenerateEnclavePackage(cmd);
+
+            // Execute again to exercise the session retry logic
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            }
+
+            CommandHelper.ForceThrowDuringGenerateEnclavePackage(cmd);
+
+            // Execute again to exercise the async session retry logic
+            Task readAsyncTask2 = ReadAsync(cmd, values, CommandBehavior.Default);
+            readAsyncTask2.GetAwaiter().GetResult();
+#endif
+
+            // revert the CEK change to the CustomerId column
+            cmd.Parameters.Clear();
+            cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey1.Name);
+            cmd.ExecuteNonQuery();
+        }
+
+        private void ExecuteQueryThatRequiresCustomKeyStoreProvider(SqlConnection connection)
+        {
+            using (SqlCommand command = CreateCommandThatRequiresCustomKeyStoreProvider(connection))
+            {
+                command.ExecuteReader();
+            }
+        }
+
+        private SqlCommand CreateCommandThatRequiresCustomKeyStoreProvider(SqlConnection connection)
+        {
+            SqlCommand command = new(
+                $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id",
+                connection, null, SqlCommandColumnEncryptionSetting.Enabled);
+            command.Parameters.AddWithValue("id", 9);
+            return command;
+        }
+
+        private SqlCommand CreateCommandThatRequiresSystemKeyStoreProvider(SqlConnection connection)
+        {
+            SqlCommand command = new(
+                    $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE FirstName = @firstName",
+                    connection, null, SqlCommandColumnEncryptionSetting.Enabled);
+            command.Parameters.AddWithValue("firstName", "abc");
+            return command;
+        }
+
+        private void AssertExceptionCausedByFailureToDecrypt(Exception ex)
+        {
+            Assert.Contains(_failedToDecryptMessage, ex.Message);
+            Assert.True(ex.InnerException is NotImplementedException);
         }
 
         private SqlDataAdapter CreateSqlDataAdapter(SqlConnection sqlConnection)
@@ -2635,6 +2946,75 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        private static void CreateTable(string connString, string tableName, int columnsCount)
+            => DataTestUtility.RunNonQuery(connString, GenerateCreateQuery(tableName, columnsCount));
+        /// <summary>
+        /// Drops the table if the specified table exists
+        /// </summary>
+        /// <param name="connString">The connection string to the database</param>
+        /// <param name="tableName">The name of the table to be dropped</param>
+        private static void DropTableIfExists(string connString, string tableName)
+        {
+            using var sqlConnection = new SqlConnection(connString);
+            sqlConnection.Open();
+            DataTestUtility.DropTable(sqlConnection, tableName);
+        }
+
+        /// <summary>
+        /// Generates the query for creating a table with the number of bit columns specified.
+        /// </summary>
+        /// <param name="tableName">The name of the table</param>
+        /// <param name="columnsCount">The number of columns for the table</param>
+        /// <returns></returns>
+        private static string GenerateCreateQuery(string tableName, int columnsCount)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.Append(string.Format("CREATE TABLE [dbo].[{0}]", tableName));
+            builder.Append('(');
+            builder.AppendLine("[ID][bigint] NOT NULL,");
+            builder.AppendLine("[Name] [varchar] (200) NOT NULL");
+            for (int i = 0; i < columnsCount; i++)
+            {
+                builder.Append(',');
+                builder.Append($"[ColumnName{i}][bit] NULL");
+            }
+            builder.Append(");");
+
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Generates the large query with the select top 100 of all the columns repeated multiple times.
+        /// </summary>
+        /// <param name="tableName">The name of the table</param>
+        /// <param name="columnsCount">The number of columns to be explicitly included</param>
+        /// <param name="repeat">The number of times the select query is repeated</param>
+        /// <param name="where">A where clause for additional filters</param>
+        /// <returns></returns>
+        private static string GenerateSelectQuery(string tableName, int columnsCount, int repeat = 10, string where = "")
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine($"SELECT TOP 100");
+            builder.AppendLine($"[{tableName}].[ID],");
+            builder.AppendLine($"[{tableName}].[Name]");
+            for (int i = 0; i < columnsCount; i++)
+            {
+                builder.Append(",");
+                builder.AppendLine($"[{tableName}].[ColumnName{i}]");
+            }
+
+            string extra = string.IsNullOrEmpty(where) ? $"(NOLOCK) [{tableName}]" : where;
+            builder.AppendLine($"FROM [{tableName}] {extra};");
+
+            StringBuilder builder2 = new StringBuilder();
+            for (int i = 0; i < repeat; i++)
+            {
+                builder2.AppendLine(builder.ToString());
+            }
+
+            return builder2.ToString();
+        }
+
         /// <summary>
         /// An helper method to test the cancellation of the command using cancellationToken to async SqlCommand APIs.
         /// </summary>
@@ -2773,7 +3153,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
     }
 
-    struct Customer
+    public struct Customer
     {
         public Customer(int id, string firstName, string lastName)
         {

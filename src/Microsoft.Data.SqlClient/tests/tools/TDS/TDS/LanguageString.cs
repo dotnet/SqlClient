@@ -16,7 +16,7 @@ namespace Microsoft.SqlServer.TDS
         private const string French = "Fran\u00E7ais";
         private const string Japanese = "\u65E5\u672C\u8A9E";
         private const string Danish = "Dansk";
-        private const string Spanish = "Espa\u00F1o";
+        private const string Spanish = "Espa\u00F1ol";
         private const string Italian = "Italiano";
         private const string Dutch = "Nederlands";
         private const string Norwegian = "Norsk";

@@ -5,8 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -37,6 +35,7 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/SqlConfigurableRetryFactory/*' />
     public sealed class SqlConfigurableRetryFactory
     {
+        private readonly static object s_syncObject = new();
         /// Default known transient error numbers.
         private static readonly HashSet<int> s_defaultTransientErrors
             = new HashSet<int>
@@ -54,11 +53,11 @@ namespace Microsoft.Data.SqlClient
                     40501,  // The service is currently busy. Retry the request after 10 seconds. Incident ID: %ls. Code: %d.
                     40540,  // The service has encountered an error processing your request. Please try again.
                     40197,  // The service has encountered an error processing your request. Please try again. Error code %d.
+                    42108,  // Can not connect to the SQL pool since it is paused. Please resume the SQL pool and try again.
+                    42109,  // The SQL pool is warming up. Please try again.
                     10929,  // Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. However, the server is currently too busy to support requests greater than %d for this database. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637. Otherwise, please try again later.
                     10928,  // Resource ID: %d. The %s limit for the database is %d and has been reached. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637.
                     10060,  // An error has occurred while establishing a connection to the server. When connecting to SQL Server, this failure may be caused by the fact that under the default settings SQL Server does not allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.) (Microsoft SQL Server, Error: 10060)
-                    10054,  // The data value for one or more columns overflowed the type used by the provider.
-                    10053,  // Could not convert the data value due to reasons other than sign mismatch or overflow.
                     997,    // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Named Pipes Provider, error: 0 - Overlapped I/O operation is in progress)
                     233     // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
                 };
@@ -80,12 +79,11 @@ namespace Microsoft.Data.SqlClient
 
         private static SqlRetryLogicBaseProvider InternalCreateRetryProvider(SqlRetryLogicOption retryLogicOption, SqlRetryIntervalBaseEnumerator enumerator)
         {
-            Debug.Assert(enumerator != null, $"The '{nameof(enumerator)}' mustn't be null.");
-
             if (retryLogicOption == null)
             {
                 throw new ArgumentNullException(nameof(retryLogicOption));
             }
+            Debug.Assert(enumerator != null, $"The '{nameof(enumerator)}' mustn't be null.");
 
             var retryLogic = new SqlRetryLogic(retryLogicOption.NumberOfTries, enumerator,
                                         (e) => TransientErrorsCondition(e, retryLogicOption.TransientErrors ?? s_defaultTransientErrors),
@@ -102,6 +100,12 @@ namespace Microsoft.Data.SqlClient
             return new SqlRetryLogicProvider(retryLogic);
         }
 
+        /// <summary>
+        /// Verifies the provider which is not null and doesn't include SqlNoneIntervalEnumerator enumerator object.
+        /// </summary>
+        internal static bool IsRetriable(SqlRetryLogicBaseProvider provider) 
+            => provider is not null && (provider.RetryLogic is null || provider.RetryLogic.RetryIntervalEnumerator is not SqlNoneIntervalEnumerator);
+
         /// Return true if the exception is a transient fault.
         private static bool TransientErrorsCondition(Exception e, IEnumerable<int> retriableConditions)
         {
@@ -110,9 +114,28 @@ namespace Microsoft.Data.SqlClient
             {
                 foreach (SqlError item in ex.Errors)
                 {
-                    if (retriableConditions.Contains(item.Number))
+                    bool retriable = false;
+                    lock (s_syncObject)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|ERR|CATCH> Found a transient error: number = <{2}>, message = <{3}>", nameof(SqlConfigurableRetryFactory), MethodBase.GetCurrentMethod().Name, item.Number, item.Message);
+                        if (retriableConditions is ICollection<int> collection)
+                        {
+                            retriable = collection.Contains(item.Number);
+                        }
+                        else
+                        {
+                            foreach (int candidate in retriableConditions)
+                            {
+                                if (candidate == item.Number)
+                                {
+                                    retriable = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (retriable)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|ERR|CATCH> Found a transient error: number = <{2}>, message = <{3}>", nameof(SqlConfigurableRetryFactory), nameof(TransientErrorsCondition), item.Number, item.Message);
                         result = true;
                         break;
                     }

@@ -30,6 +30,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TryOpenConnectionWithIntegratedAuthentication(builder.ConnectionString);
         }
 
+        [ActiveIssue(21707)]
+        [ConditionalFact(nameof(IsIntegratedSecurityEnvironmentSet), nameof(AreConnectionStringsSetup))]
+        public static void IntegratedAuthenticationTest_InvalidServerSPN()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            builder.IntegratedSecurity = true;
+            builder.ServerSPN = "InvalidServerSPN";
+            SqlException ex = Assert.Throws<SqlException>(() => TryOpenConnectionWithIntegratedAuthentication(builder.ConnectionString));
+            Assert.Contains("generate SSPI context.", ex.Message);
+        }
+
+        [ConditionalFact(nameof(IsIntegratedSecurityEnvironmentSet), nameof(AreConnectionStringsSetup))]
+        public static void IntegratedAuthenticationTest_ServerSPN()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            builder.IntegratedSecurity = true;
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out int port, out string instanceName));
+            // Build the SPN for the server we are connecting to
+            builder.ServerSPN = $"MSSQLSvc/{DataTestUtility.GetMachineFQDN(hostname)}";
+            if (!string.IsNullOrWhiteSpace(instanceName))
+            {
+                builder.ServerSPN += ":" + instanceName;
+            }
+            TryOpenConnectionWithIntegratedAuthentication(builder.ConnectionString);
+        }
+
         private static void TryOpenConnectionWithIntegratedAuthentication(string connectionString)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))

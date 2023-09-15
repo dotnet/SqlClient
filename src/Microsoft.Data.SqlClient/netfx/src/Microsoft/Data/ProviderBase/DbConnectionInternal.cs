@@ -31,7 +31,7 @@ namespace Microsoft.Data.ProviderBase
         private readonly bool _hidePassword;
         private readonly ConnectionState _state;
 
-        private readonly WeakReference _owningObject = new WeakReference(null, false);  // [usage must be thread safe] the owning object, when not in the pool. (both Pooled and Non-Pooled connections)
+        private readonly WeakReference<DbConnection> _owningObject = new WeakReference<DbConnection>(null, false);  // [usage must be thread safe] the owning object, when not in the pool. (both Pooled and Non-Pooled connections)
 
         private DbConnectionPool _connectionPool;           // the pooler that the connection came from (Pooled connections only)
         private DbConnectionPoolCounters _performanceCounters;      // the performance counters we're supposed to update
@@ -80,8 +80,7 @@ namespace Microsoft.Data.ProviderBase
         {
             get
             {
-                bool flag = (!_connectionIsDoomed && !_cannotBePooled && !_owningObject.IsAlive);
-                return flag;
+                return (!_connectionIsDoomed && !_cannotBePooled && !_owningObject.TryGetTarget(out DbConnection _));
             }
         }
 
@@ -288,8 +287,7 @@ namespace Microsoft.Data.ProviderBase
                 // of the pool and it's owning object is no longer around to
                 // return it.
 
-                bool value = !IsTxRootWaitingForTxEnd && (_pooledCount < 1) && !_owningObject.IsAlive;
-                return value;
+                return !IsTxRootWaitingForTxEnd && (_pooledCount < 1) && !_owningObject.TryGetTarget(out DbConnection _);
             }
         }
 
@@ -310,13 +308,17 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        protected internal object Owner
+        protected internal DbConnection Owner
         {
             // We use a weak reference to the owning object so we can identify when
             // it has been garbage collected without throwing exceptions.
             get
             {
-                return _owningObject.Target;
+                if (_owningObject.TryGetTarget(out DbConnection connection))
+                {
+                    return connection;
+                }
+                return null;
             }
         }
 
@@ -508,7 +510,7 @@ namespace Microsoft.Data.ProviderBase
                             // this is safe since we're about to dispose the
                             // object and it won't have an owner after that for
                             // certain.
-                            _owningObject.Target = null;
+                            _owningObject.SetTarget(null);
 
                             if (IsTransactionRoot)
                             {
@@ -620,7 +622,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 pool.PutObjectFromTransactedPool(this);
             }
-            else if (-1 == _pooledCount && !_owningObject.IsAlive)
+            else if (-1 == _pooledCount && !_owningObject.TryGetTarget(out DbConnection _))
             {
                 // When _pooledCount is -1 and the owning object no longer exists,
                 // it indicates a closed (or leaked), non-pooled connection so 
@@ -692,14 +694,14 @@ namespace Microsoft.Data.ProviderBase
             return metaDataFactory.GetSchema(outerConnection, collectionName, restrictions);
         }
 
-        internal void MakeNonPooledObject(object owningObject, DbConnectionPoolCounters performanceCounters)
+        internal void MakeNonPooledObject(DbConnection owningObject, DbConnectionPoolCounters performanceCounters)
         {
             // Used by DbConnectionFactory to indicate that this object IS NOT part of
             // a connection pool.
 
             _connectionPool = null;
             _performanceCounters = performanceCounters;
-            _owningObject.Target = owningObject;
+            _owningObject.SetTarget(owningObject);
             _pooledCount = -1;
         }
 
@@ -788,14 +790,15 @@ namespace Microsoft.Data.ProviderBase
             // ReclaimEmancipatedObjects.
 
             //3 // The following tests are retail assertions of things we can't allow to happen.
+            bool isAlive = _owningObject.TryGetTarget(out DbConnection connection);
             if (null == expectedOwner)
             {
-                if (null != _owningObject.Target)
+                if (isAlive)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.UnpooledObjectHasOwner);      // new unpooled object has an owner
                 }
             }
-            else if (_owningObject.Target != expectedOwner)
+            else if (isAlive && connection != expectedOwner)
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.UnpooledObjectHasWrongOwner); // unpooled object has incorrect owner
             }
@@ -804,14 +807,13 @@ namespace Microsoft.Data.ProviderBase
                 throw ADP.InternalError(ADP.InternalErrorCode.PushingObjectSecondTime);         // pushing object onto stack a second time
             }
 
-            //DbConnection x = (expectedOwner as DbConnection);
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.PrePush|RES|CPOOL> {0}, Preparing to push into pool, owning connection {1}, pooledCount={2}", ObjectID, 0, _pooledCount);
 
             _pooledCount++;
-            _owningObject.Target = null; // NOTE: doing this and checking for InternalError.PooledObjectHasOwner degrades the close by 2%
+            _owningObject.SetTarget(null); // NOTE: doing this and checking for InternalError.PooledObjectHasOwner degrades the close by 2%
         }
 
-        internal void PostPop(object newOwner)
+        internal void PostPop(DbConnection newOwner)
         {
             // Called by DbConnectionPool right after it pulls this from it's pool, we
             // take this opportunity to ensure ownership and pool counts are legit.
@@ -828,12 +830,11 @@ namespace Microsoft.Data.ProviderBase
             // IMPORTANT NOTE: You must have taken a lock on the object before
             // you call this method to prevent race conditions with Clear and
             // ReclaimEmancipatedObjects.
-
-            if (null != _owningObject.Target)
+            if (_owningObject.TryGetTarget(out DbConnection _))
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.PooledObjectHasOwner);        // pooled connection already has an owner!
             }
-            _owningObject.Target = newOwner;
+            _owningObject.SetTarget(newOwner);
             _pooledCount--;
 
             //DbConnection x = (newOwner as DbConnection);

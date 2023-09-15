@@ -5,7 +5,7 @@
 using System;
 using System.Data.SqlTypes;
 using System.Globalization;
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Samples.SqlServer
 {
@@ -230,7 +230,7 @@ namespace Microsoft.Samples.SqlServer
             if (s.IsNull)
                 return 1;
 
-            return this.ToString().CompareTo(s.ToString());
+            return string.Compare(this.ToString(), s.ToString(), StringComparison.Ordinal);
         }
 
         #endregion

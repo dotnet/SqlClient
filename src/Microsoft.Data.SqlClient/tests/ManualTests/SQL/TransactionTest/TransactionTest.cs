@@ -46,8 +46,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ReadNextQueryAfterTxAbortedPoolEnabled(string connString)
             => ReadNextQueryAfterTxAbortedTest(connString);
 
-        // Azure SQL has no DTC support
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]        
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(PoolDisabledConnectionStrings))]
         public static void ReadNextQueryAfterTxAbortedPoolDisabled(string connString)
             => ReadNextQueryAfterTxAbortedTest(connString);
@@ -89,15 +88,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
 
-                using (SqlConnection sqlConnection = new SqlConnection(connString))
-                using (SqlCommand cmd = new SqlCommand("SELECT TOP(1) 4 Clm0 FROM sysobjects FOR XML AUTO", sqlConnection))
+                if (DataTestUtility.IsNotAzureSynapse())
                 {
-                    sqlConnection.Open();
-                    using (System.Xml.XmlReader reader = cmd.ExecuteXmlReader())
+                    using (SqlConnection sqlConnection = new SqlConnection(connString))
+                    using (SqlCommand cmd = new SqlCommand("SELECT TOP(1) 4 Clm0 FROM sysobjects FOR XML AUTO", sqlConnection))
                     {
-                        bool result = reader.Read();
-                        Assert.True(result);
-                        Assert.Equal("4", reader[0]);
+                        sqlConnection.Open();
+                        using (System.Xml.XmlReader reader = cmd.ExecuteXmlReader())
+                        {
+                            bool result = reader.Read();
+                            Assert.True(result);
+                            Assert.Equal("4", reader[0]);
+                        }
                     }
                 }
             }

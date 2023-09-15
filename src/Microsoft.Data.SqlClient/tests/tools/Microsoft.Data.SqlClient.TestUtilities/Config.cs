@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string NPConnectionString = null;
         public string TCPConnectionStringHGSVBS = null;
         public string TCPConnectionStringAASVBS = null;
+        public string TCPConnectionStringNoneVBS = null;
         public string TCPConnectionStringAASSGX = null;
         public string AADAuthorityURL = null;
         public string AADPasswordConnectionString = null;
@@ -23,11 +24,13 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string AzureKeyVaultTenantId = null;
         public string AzureKeyVaultClientId = null;
         public string AzureKeyVaultClientSecret = null;
+        public string LocalDbAppName = null;
+        public string LocalDbSharedInstanceName = null;
         public bool EnclaveEnabled = false;
         public bool TracingEnabled = false;
         public bool SupportsIntegratedSecurity = false;
-        public bool SupportsLocalDb = false;
-        public bool SupportsFileStream = false;
+        public bool ManagedIdentitySupported = true;
+        public string FileStreamDirectory = null;
         public bool UseManagedSNIOnWindows = false;
         public string DNSCachingConnString = null;
         public string DNSCachingServerCR = null;  // this is for the control ring
@@ -37,7 +40,11 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public string EnclaveAzureDatabaseConnString = null;
         public string UserManagedIdentityClientId = null;
-
+        public string PowerShellPath = null;
+        public string KerberosDomainPassword = null;
+        public string KerberosDomainUser = null;
+        public bool IsManagedInstance = false;
+        public string AliasName = null;
         public static Config Load(string configPath = @"config.json")
         {
             try

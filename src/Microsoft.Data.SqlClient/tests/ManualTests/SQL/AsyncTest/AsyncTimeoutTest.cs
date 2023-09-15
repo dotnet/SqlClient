@@ -25,7 +25,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ExecuteXmlReaderAsync
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: WAITFOR DELAY not supported [Parse error at line: 1, column: 1: Incorrect syntax near 'WAITFOR'.]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [ClassData(typeof(AsyncTimeoutTestVariations))]
         public static void TestDelayedAsyncTimeout(AsyncAPI api, string commonObj, int delayPeriod, bool marsEnabled) =>
             RunTest(api, commonObj, delayPeriod, marsEnabled);

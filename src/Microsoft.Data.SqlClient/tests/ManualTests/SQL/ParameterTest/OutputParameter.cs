@@ -26,22 +26,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
 
                 // Command simply set the outparam
-                using (var command = new SqlCommand("SET @decimal = 1.23", connection))
+                using var command = new SqlCommand("SET @decimal = 1.23", connection);
+
+                // Create valid param
+                var decimalParam = new SqlParameter("decimal", new decimal(2.34)) { SqlDbType = SqlDbType.Decimal, Direction = ParameterDirection.Output, Scale = 2, Precision = 5 };
+                command.Parameters.Add(decimalParam);
+                // Set value of param to invalid value
+                decimalParam.Value = "Not a decimal";
+
+                // Execute
+                command.ExecuteNonQuery();
+                // Validate
+                if (((decimal)decimalParam.Value) != new decimal(1.23))
                 {
-
-                    // Create valid param
-                    var decimalParam = new SqlParameter("decimal", new decimal(2.34)) { SqlDbType = SqlDbType.Decimal, Direction = ParameterDirection.Output, Scale = 2, Precision = 5 };
-                    command.Parameters.Add(decimalParam);
-                    // Set value of param to invalid value
-                    decimalParam.Value = "Not a decimal";
-
-                    // Execute
-                    command.ExecuteNonQuery();
-                    // Validate
-                    if (((decimal)decimalParam.Value) != new decimal(1.23))
-                    {
-                        Console.WriteLine("FAIL: Value is incorrect: {0}", decimalParam.Value);
-                    }
+                    Console.WriteLine("FAIL: Value is incorrect: {0}", decimalParam.Value);
                 }
             }
 

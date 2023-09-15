@@ -6,8 +6,8 @@ using System;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Text;
-using Microsoft.Data.SqlClient.Server;
 using Xunit;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     pName.Value = "john";
 
                     string spInsertCustomerNoBrackets = spInsertCustomer;
-                    if (spInsertCustomer.StartsWith("[") && spInsertCustomer.EndsWith("]"))
+                    if (spInsertCustomer.StartsWith("[", StringComparison.Ordinal) && spInsertCustomer.EndsWith("]", StringComparison.Ordinal))
                         spInsertCustomerNoBrackets = spInsertCustomer.Substring(1, spInsertCustomer.Length - 2);
                     string errorMsg = "Procedure or function '" + spInsertCustomerNoBrackets + "' expects parameter '@addr', which was not supplied.";
 
@@ -570,7 +570,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void TestSqlUserDefinedAggregateAttributeMaxByteSize()
         {
             Func<int, SqlUserDefinedAggregateAttribute> create
-                    = (size) => new SqlUserDefinedAggregateAttribute(Format.UserDefined) { MaxByteSize = size };
+                    = (size) => new(Format.UserDefined) { MaxByteSize = size };
 
             SqlUserDefinedAggregateAttribute attribute1 = create(-1);
             SqlUserDefinedAggregateAttribute attribute2 = create(0);

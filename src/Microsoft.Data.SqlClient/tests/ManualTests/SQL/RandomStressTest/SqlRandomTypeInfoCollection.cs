@@ -10,12 +10,12 @@ using System.Linq;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     /// <summary>
-    /// Defines a collection of types to be used by the test. Tests can start with CreateSql2005Collection or 
+    /// Defines a collection of types to be used by the test. Tests start with 
     /// CreateSql2008Collection and add/remove types, as needed.
     /// </summary>
     public sealed class SqlRandomTypeInfoCollection : System.Collections.ObjectModel.KeyedCollection<SqlDbType, SqlRandomTypeInfo>
     {
-        private static readonly SqlRandomTypeInfo[] s_sql2005Types =
+        private static readonly SqlRandomTypeInfo[] s_sql2008Types =
         {
             // var types
             new SqlVarBinaryTypeInfo(),
@@ -67,11 +67,62 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // xml
             new SqlXmlTypeInfo(),
+            
+            // date/time types
+            new SqlDateTypeInfo(),
+            new SqlDateTime2TypeInfo(),
+            new SqlDateTimeOffsetTypeInfo(),
+            new SqlTimeTypeInfo(),
         };
 
-        // types added in SQL 2008
-        private static readonly SqlRandomTypeInfo[] s_newInSql2008Types =
+        private static readonly SqlRandomTypeInfo[] s_sqlSynapseTypes =
         {
+            // var types
+            new SqlVarBinaryTypeInfo(),
+            new SqlVarCharTypeInfo(),
+            new SqlNVarCharTypeInfo(),
+
+            // integer data types
+            new SqlBigIntTypeInfo(),
+            new SqlIntTypeInfo(),
+            new SqlSmallIntTypeInfo(),
+            new SqlTinyIntTypeInfo(),
+
+            // fixed length blobs
+            new SqlCharTypeInfo(),
+            new SqlNCharTypeInfo(),
+            new SqlBinaryTypeInfo(),
+
+            // large blobs
+            new SqlImageTypeInfo(),
+
+            // bit
+            new SqlBitTypeInfo(),
+
+            // decimal
+            new SqlDecimalTypeInfo(),
+
+            // money types
+            new SqlMoneyTypeInfo(),
+            new SqlSmallMoneyTypeInfo(),
+
+            // float types
+            new SqRealTypeInfo(),
+            new SqFloatTypeInfo(),
+
+            // typestamp (== rowversion)
+            new SqlRowVersionTypeInfo(),
+
+            // unique identifier (== guid)
+            new SqlUniqueIdentifierTypeInfo(),
+
+            // date/time types
+            new SqlDateTimeTypeInfo(),
+            new SqlSmallDateTimeTypeInfo(),
+
+            // variant
+            new SqlVariantTypeInfo(),
+            
             // date/time types
             new SqlDateTypeInfo(),
             new SqlDateTime2TypeInfo(),
@@ -152,19 +203,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
-        /// creates a collection of types supported in SQL 2005
-        /// </summary>
-        public static SqlRandomTypeInfoCollection CreateSql2005Collection()
-        {
-            return new SqlRandomTypeInfoCollection(s_sql2005Types);
-        }
-
-        /// <summary>
-        /// creates a collection of types supported in SQL 2005 and 2008
+        /// creates a collection of types supported in SQL 2008+
         /// </summary>
         public static SqlRandomTypeInfoCollection CreateSql2008Collection()
         {
-            return new SqlRandomTypeInfoCollection(s_sql2005Types, s_newInSql2008Types);
+            return DataTestUtility.IsNotAzureSynapse() ? new SqlRandomTypeInfoCollection(s_sql2008Types) : new SqlRandomTypeInfoCollection(s_sqlSynapseTypes);
         }
 
         /// <summary>

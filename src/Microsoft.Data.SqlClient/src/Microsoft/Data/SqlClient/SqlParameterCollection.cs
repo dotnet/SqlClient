@@ -11,11 +11,12 @@ using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Data.Common;
 
+// NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
+// New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SqlParameterCollection/*' />    
     [
-    Editor("Microsoft.VSDesigner.Data.Design.DBParametersEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
     ListBindable(false)
     ]
     public sealed partial class SqlParameterCollection : DbParameterCollection

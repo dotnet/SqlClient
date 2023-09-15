@@ -41,7 +41,7 @@ The following sample declares a <xref:Microsoft.Data.SqlClient.SqlRetryLogicOpti
         <AuthorizedSqlCondition>
             <summary>Sets a pre-retry validation function on the <see cref="T:Microsoft.Data.SqlClient.SqlCommand.CommandText" /> to only include specific SQL statements.</summary>
             <value>
-            <see cref="T:System.Predicate" /> The pre-retry validation delegate function; <see langword="true" /> if the `CommandText` is authorized to retry the operation.</value>
+            <see cref="T:System.Predicate`1" /> The pre-retry validation delegate function; <see langword="true" /> if the `CommandText` is authorized to retry the operation.</value>
         </AuthorizedSqlCondition>
     </members>
 </docs>

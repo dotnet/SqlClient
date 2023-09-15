@@ -22,7 +22,7 @@
         <TransientPredicate>
             <summary>Delegate to a transient condition predicate. The function that this delegate points to must return a true value when an expected transient exception happens.</summary>
             <value>
-            <see cref="T:System.Predicate" /> value that delegates to a function that receives a <see cref="T:System.Exception" /> input parameter.</value>
+            <see cref="T:System.Predicate`1" /> value that delegates to a function that receives a <see cref="T:System.Exception" /> input parameter.</value>
         </TransientPredicate>
         <RetryCondition>
             <param name="sender">The sender object.</param>

@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.SNI
         public static readonly SNILoadHandle SingletonInstance = new SNILoadHandle();
 
         public readonly EncryptionOptions _encryptionOption = EncryptionOptions.OFF;
-        public ThreadLocal<SNIError> _lastError = new ThreadLocal<SNIError>(() => { return new SNIError(SNIProviders.INVALID_PROV, 0, TdsEnums.SNI_SUCCESS, string.Empty); });
+        public ThreadLocal<SNIError> _lastError = new ThreadLocal<SNIError>(static () => new SNIError(SNIProviders.INVALID_PROV, 0, TdsEnums.SNI_SUCCESS, string.Empty));
 
         private readonly uint _status = TdsEnums.SNI_SUCCESS;
 
@@ -55,5 +55,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 return _encryptionOption;
             }
         }
+
+        /// <summary>
+        /// Verify client encryption possibility
+        /// </summary>
+        // TODO: by adding support ENCRYPT_NOT_SUP, it could be calculated.
+        public bool ClientOSEncryptionSupport => true;
     }
 }

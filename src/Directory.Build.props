@@ -20,12 +20,12 @@
 
       ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" AND "NETSTANDARDPACKAGE" REFERENCE TYPES ***************
       CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION 
-      > msbuild /p:configuration=Release
+      > msbuild -p:configuration=Release
     -->
     <ReferenceType Condition="$(ReferenceType) == ''">Project</ReferenceType>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
-  <PropertyGroup>
+  <PropertyGroup Condition="$(BuildForRelease) == 'true'">
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
@@ -41,10 +41,16 @@
     <Artifacts>$(RepoRoot)artifacts\$(ReferenceType)\</Artifacts>
     <ToolsArtifactsDir Condition="'$(ToolsArtifactsDir)'==''">$(Artifacts)tools\</ToolsArtifactsDir>
     <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
+    <SqlServerSourceCode>$(ProjectDir)Microsoft.SqlServer.Server\</SqlServerSourceCode>
     <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
+    <NetCoreResources>$(ManagedSourceCode)src\Resources\</NetCoreResources>
+    <ResxFileName>Strings</ResxFileName>
+    <ResourceFileName>SqlClient.Resources.$(ResxFileName)</ResourceFileName>
+    <GeneratedSourceFileName>$(ResxFileName).ResourceNames.cs</GeneratedSourceFileName>
     <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
-    <NetFxResources>$(ManagedSourceCode)netfx\src\Resources\</NetFxResources>
+    <NetFxResources>$(ManagedSourceCode)src\Resources\</NetFxResources>
     <AddOnsPath>$(ManagedSourceCode)add-ons\</AddOnsPath>
+    <SqlServerSource>$(RepoRoot)src\Microsoft.SqlServer.Server\</SqlServerSource>
     <ObjFolder>$(Artifacts)obj\</ObjFolder>
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
     <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>

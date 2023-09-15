@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace Microsoft.Data.SqlClient.Server
@@ -228,6 +229,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType
         )
             : this(
@@ -253,6 +257,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldTypes,
@@ -282,6 +289,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string udtAssemblyQualifiedName,
             bool isMultiValued,
@@ -586,7 +596,7 @@ namespace Microsoft.Data.SqlClient.Server
             _clrType = null;
             _isMultiValued = false;
             _fieldMetaData = s_emptyFieldList;
-            _extendedProperties = SmiMetaDataPropertyCollection.EmptyInstance;
+            _extendedProperties = SmiMetaDataPropertyCollection.s_emptyInstance;
         }
 
         // static array of default-valued metadata ordered by corresponding SqlDbType.
@@ -759,6 +769,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string name,
             string typeSpecificNamePart1,
@@ -792,6 +805,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldMetaData,
@@ -829,6 +845,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string udtAssemblyQualifiedName,
             bool isMultiValued,
@@ -903,6 +922,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldMetaData,
@@ -942,6 +964,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string udtAssemblyQualifiedName,
             bool isMultiValued,
@@ -1020,6 +1045,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string name,
             string typeSpecificNamePart1,
@@ -1069,6 +1097,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldMetaData,
@@ -1123,6 +1154,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string udtAssemblyQualifiedName,
             bool isMultiValued,
@@ -1233,6 +1267,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string name,
             string typeSpecificNamePart1,
@@ -1290,6 +1327,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldMetaData,
@@ -1352,6 +1392,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string udtAssemblyQualifiedName,
             bool isMultiValued,

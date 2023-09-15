@@ -54,10 +54,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public AdapterTest()
         {
             // create random name for temp tables
-            _randomGuid = Guid.NewGuid().ToString();
-            _tempTable = Environment.MachineName + "_" + _randomGuid;
+            _tempTable = DataTestUtility.GetUniqueName("AdapterTest");
             _tempTable = _tempTable.Replace('-', '_');
 
+            _randomGuid = Guid.NewGuid().ToString();
             _tempKey = "employee_id_key_" + Environment.TickCount.ToString() + _randomGuid;
             _tempKey = _tempKey.Replace('-', '_');
 
@@ -68,22 +68,90 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SimpleFillTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlDataAdapter adapter = new SqlDataAdapter("SELECT EmployeeID, LastName, FirstName, Title, Address, City, Region, PostalCode, Country FROM Employees", conn))
+            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            using SqlDataAdapter adapter = new("SELECT EmployeeID, LastName, FirstName, Title, Address, City, Region, PostalCode, Country FROM Employees", conn);
+
+            DataSet employeesSet = new();
+            DataTestUtility.AssertEqualsWithDescription(0, employeesSet.Tables.Count, "Unexpected tables count before fill.");
+            adapter.Fill(employeesSet, "Employees");
+
+            DataTestUtility.AssertEqualsWithDescription(1, employeesSet.Tables.Count, "Unexpected tables count after fill.");
+            DataTestUtility.AssertEqualsWithDescription("Employees", employeesSet.Tables[0].TableName, "Unexpected table name.");
+
+            DataTestUtility.AssertEqualsWithDescription(9, employeesSet.Tables["Employees"].Columns.Count, "Unexpected columns count.");
+            employeesSet.Tables["Employees"].Columns.Remove("LastName");
+            employeesSet.Tables["Employees"].Columns.Remove("FirstName");
+            employeesSet.Tables["Employees"].Columns.Remove("Title");
+            DataTestUtility.AssertEqualsWithDescription(6, employeesSet.Tables["Employees"].Columns.Count, "Unexpected columns count after column removal.");
+
+            DataSet dataSet = new();
+            adapter.Fill(dataSet);
+            DataTestUtility.AssertEqualsWithDescription(1, dataSet.Tables.Count, "Unexpected tables count after fill.");
+            DataTestUtility.AssertEqualsWithDescription(9, dataSet.Tables[0].Columns.Count, "Unexpected column after fill.");
+
+            DataSet dataSet2 = new();
+            adapter.Fill(dataSet2, 0, 2, "Employees");
+            DataTestUtility.AssertEqualsWithDescription(1, dataSet2.Tables.Count, "Unexpected tables count after fill.");
+            DataTestUtility.AssertEqualsWithDescription(2, dataSet2.Tables[0].Rows.Count, "Unexpected row count after fill.");
+            DataTestUtility.AssertEqualsWithDescription(9, dataSet2.Tables[0].Columns.Count, "Unexpected column after fill.");
+
+            DataTable table = new();
+            adapter.Fill(table);
+            DataTestUtility.AssertEqualsWithDescription(9, table.Columns.Count, "Unexpected columns count.");
+
+            DataTable table2 = new();
+            adapter.Fill(0, 2, table2);
+            DataTestUtility.AssertEqualsWithDescription(9, table2.Columns.Count, "Unexpected columns count.");
+            DataTestUtility.AssertEqualsWithDescription(2, table2.Rows.Count, "Unexpected rows count.");
+        }
+
+        // TODO Synapse: Remove Northwind dependency by creating required tables in setup.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void FillShouldAllowRetryLogicProviderToBeInvoked()
+        {
+            int maxRetries = 3;
+            int expectedAttempts = maxRetries - 1;
+            int retryCount = 0;
+
+            SqlRetryLogicOption options = new()
             {
-                DataSet employeesSet = new DataSet();
-                DataTestUtility.AssertEqualsWithDescription(0, employeesSet.Tables.Count, "Unexpected tables count before fill.");
-                adapter.Fill(employeesSet, "Employees");
+                NumberOfTries = maxRetries,
+                DeltaTime = TimeSpan.FromMilliseconds(100),
+                MaxTimeInterval = TimeSpan.FromMilliseconds(500),
+                TransientErrors = new int[] { 26, 4060, 233, -1, 17142, -2, 2812 }
+            };
+            SqlRetryLogicBaseProvider provider = SqlConfigurableRetryFactory.CreateFixedRetryProvider(options);
 
-                DataTestUtility.AssertEqualsWithDescription(1, employeesSet.Tables.Count, "Unexpected tables count after fill.");
-                DataTestUtility.AssertEqualsWithDescription("Employees", employeesSet.Tables[0].TableName, "Unexpected table name.");
+            string query = "WAITFOR DELAY '00:00:02';SELECT 1";
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            {
+                ConnectTimeout = 1
+            };
 
-                DataTestUtility.AssertEqualsWithDescription(9, employeesSet.Tables["Employees"].Columns.Count, "Unexpected columns count.");
-                employeesSet.Tables["Employees"].Columns.Remove("LastName");
-                employeesSet.Tables["Employees"].Columns.Remove("FirstName");
-                employeesSet.Tables["Employees"].Columns.Remove("Title");
-                DataTestUtility.AssertEqualsWithDescription(6, employeesSet.Tables["Employees"].Columns.Count, "Unexpected columns count after column removal.");
-            }
+            using var connection = new SqlConnection(builder.ConnectionString);
+            using SqlCommand command = new(query, connection);
+            command.CommandTimeout = 1;
+            command.RetryLogicProvider = provider;
+            command.RetryLogicProvider.Retrying += (object sender, SqlRetryingEventArgs e) =>
+            {
+                retryCount = e.RetryCount;
+                Assert.Equal(e.RetryCount, e.Exceptions.Count);
+                Assert.NotEqual(TimeSpan.Zero, e.Delay);
+            };
+
+            connection.Open();
+
+            AggregateException exception = Assert.Throws<AggregateException>(() =>
+            {
+                DataTable dt = new();
+                using (SqlDataAdapter adapter = new(command))
+                {
+                    adapter.Fill(dt);
+                }
+            });
+
+            Assert.Contains($"The number of retries has exceeded the maximum of {maxRetries} attempt(s)", exception.Message);
+            Assert.Equal(expectedAttempts, retryCount);
         }
 
         // TODO Synapse: Remove Northwind dependency by creating required tables in setup.
@@ -179,15 +247,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void SqlVariantTest()
         {
             string tableName = DataTestUtility.GenerateObjectName();
-            try
+            // good test for null values and unicode strings
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand cmd = new SqlCommand(null, conn))
+            using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
             {
-                ExecuteNonQueryCommand("CREATE TABLE " + tableName + " (c0_bigint bigint, c1_variant sql_variant)");
-
-                // good test for null values and unicode strings
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (SqlCommand cmd = new SqlCommand(null, conn))
-                using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
+                try
                 {
+                    ExecuteNonQueryCommand("CREATE TABLE " + tableName + " (c0_bigint bigint, c1_variant sql_variant)");
+
                     cmd.Connection.Open();
 
                     // the ORDER BY clause tests that we correctly ignore the ORDER token
@@ -263,10 +331,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                     }
                 }
-            }
-            finally
-            {
-                ExecuteNonQueryCommand("DROP TABLE " + tableName);
+                finally
+                {
+                    DataTestUtility.DropTable(conn, tableName);
+                }
             }
         }
 
@@ -659,7 +727,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 finally
                 {
-                    ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
+                    DataTestUtility.DropTable(conn, _tempTable);
                 }
             }
         }
@@ -757,7 +825,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 finally
                 {
-                    ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
+                    DataTestUtility.DropTable(conn, _tempTable);
                 }
             }
         }
@@ -768,25 +836,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UpdateRefreshTest()
         {
+            string identTableName = DataTestUtility.GetUniqueName("ID_");
             string createIdentTable =
-                "CREATE TABLE ID_" + _tempTable + "(id int IDENTITY," +
+                $"CREATE TABLE {identTableName} (id int IDENTITY," +
                 "LastName nvarchar(50) NULL," +
                 "Firstname nvarchar(50) NULL)";
 
+            string spName = DataTestUtility.GetUniqueName("sp_insert", withBracket: false);
             string spCreateInsert =
-                "CREATE PROCEDURE sp_insert" + _tempTable +
+                $"CREATE PROCEDURE {spName}" +
                 "(@FirstName nvarchar(50), @LastName nvarchar(50), @id int OUTPUT) " +
                 "AS INSERT INTO " + _tempTable + " (FirstName, LastName) " +
                 "VALUES (@FirstName, @LastName); " +
                 "SELECT @id=@@IDENTITY";
 
-            string spDropInsert = "DROP PROCEDURE sp_insert" + _tempTable;
+            string spDropInsert = $"DROP PROCEDURE {spName}";
             bool dropSP = false;
 
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand(null, conn))
-            using (SqlCommand temp = new SqlCommand("SELECT id, LastName, FirstName into " + _tempTable + " from ID_" + _tempTable, conn))
+            using (SqlCommand temp = new SqlCommand("SELECT id, LastName, FirstName into " + _tempTable + $" from {identTableName}", conn))
             using (SqlCommand tableClean = new SqlCommand("", conn))
             {
                 ExecuteNonQueryCommand(createIdentTable);
@@ -794,7 +864,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     adapter.InsertCommand = new SqlCommand()
                     {
-                        CommandText = "sp_insert" + _tempTable,
+                        CommandText = spName,
                         CommandType = CommandType.StoredProcedure
                     };
                     adapter.InsertCommand.Parameters.Add(new SqlParameter("@FirstName", SqlDbType.NVarChar, 50, "FirstName"));
@@ -851,9 +921,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     if (dropSP)
                     {
-                        ExecuteNonQueryCommand(spDropInsert);
-                        ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
-                        ExecuteNonQueryCommand("DROP TABLE ID_" + _tempTable);
+                        DataTestUtility.DropStoredProcedure(conn, spName);
+                        DataTestUtility.DropTable(conn, _tempTable);
+                        DataTestUtility.DropTable(conn, identTableName);
                     }
                 }
             }
@@ -873,18 +943,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "VALUES (@val_cvarbin, @val_cimage)";
             bool dropSP = false;
 
-            try
-            {
-                ExecuteNonQueryCommand(createTable);
-                ExecuteNonQueryCommand(createSP);
-                dropSP = true;
 
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
-                using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
-                using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
-                using (SqlDataAdapter adapter = new SqlDataAdapter())
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
+            using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
+            using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
+            using (SqlDataAdapter adapter = new SqlDataAdapter())
+            {
+                try
                 {
+                    ExecuteNonQueryCommand(createTable);
+                    ExecuteNonQueryCommand(createSP);
+                    dropSP = true;
                     conn.Open();
 
                     cmdInsert.CommandType = CommandType.StoredProcedure;
@@ -905,13 +975,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DataTestUtility.AssertEqualsWithDescription(DBNull.Value, ds.Tables[0].Rows[0][0], "Unexpected value.");
                     DataTestUtility.AssertEqualsWithDescription(DBNull.Value, ds.Tables[0].Rows[0][1], "Unexpected value.");
                 }
-            }
-            finally
-            {
-                if (dropSP)
+                finally
                 {
-                    ExecuteNonQueryCommand("DROP PROCEDURE " + procName);
-                    ExecuteNonQueryCommand("DROP TABLE " + tableName);
+                    if (dropSP)
+                    {
+                        DataTestUtility.DropStoredProcedure(conn, procName);
+                        DataTestUtility.DropTable(conn, tableName);
+                    }
                 }
             }
         }
@@ -930,18 +1000,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "VALUES (@val_cvarbin, @val_cimage)";
             bool dropSP = false;
 
-            try
-            {
-                ExecuteNonQueryCommand(createTable);
-                ExecuteNonQueryCommand(createSP);
-                dropSP = true;
 
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
-                using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
-                using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
-                using (SqlDataAdapter adapter = new SqlDataAdapter())
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
+            using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
+            using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
+            using (SqlDataAdapter adapter = new SqlDataAdapter())
+            {
+                try
                 {
+                    ExecuteNonQueryCommand(createTable);
+                    ExecuteNonQueryCommand(createSP);
+                    dropSP = true;
                     conn.Open();
 
                     cmdInsert.CommandType = CommandType.StoredProcedure;
@@ -978,13 +1048,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     val = (byte[])(ds.Tables[0].Rows[0][1]);
                     Assert.True(ByteArraysEqual(expectedBytes2, val), "FAILED: Test 2: Unequal byte arrays.");
                 }
-            }
-            finally
-            {
-                if (dropSP)
+                finally
                 {
-                    ExecuteNonQueryCommand("DROP PROCEDURE " + procName);
-                    ExecuteNonQueryCommand("DROP TABLE " + tableName);
+                    if (dropSP)
+                    {
+                        DataTestUtility.DropStoredProcedure(conn, procName);
+                        DataTestUtility.DropTable(conn, tableName);
+                    }
                 }
             }
         }
@@ -1069,7 +1139,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 finally
                 {
-                    ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
+                    DataTestUtility.DropTable(conn, _tempTable);
                 }
             }
         }
@@ -1078,16 +1148,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void AutoGenErrorTest()
         {
+            string identTableName = DataTestUtility.GetUniqueName("ID_");
             string createIdentTable =
-                "CREATE TABLE ID_" + _tempTable + "(id int IDENTITY," +
+                $"CREATE TABLE {identTableName} (id int IDENTITY," +
                 "LastName nvarchar(50) NULL," +
                 "Firstname nvarchar(50) NULL)";
 
-            try
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand cmd = new SqlCommand($"SELECT * into {_tempTable} from {identTableName}", conn))
+            using (SqlDataAdapter adapter = new SqlDataAdapter())
             {
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (SqlCommand cmd = new SqlCommand("SELECT * into " + _tempTable + " from ID_" + _tempTable, conn))
-                using (SqlDataAdapter adapter = new SqlDataAdapter())
+                try
                 {
                     ExecuteNonQueryCommand(createIdentTable);
 
@@ -1110,11 +1181,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     SqlCommandBuilder builder = new SqlCommandBuilder(adapter);
                     adapter.Update(ds, _tempTable);
                 }
-            }
-            finally
-            {
-                ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
-                ExecuteNonQueryCommand("DROP TABLE ID_" + _tempTable);
+                finally
+                {
+                    DataTestUtility.DropTable(conn, _tempTable);
+                    DataTestUtility.DropTable(conn, identTableName);
+                }
             }
         }
 
@@ -1206,7 +1277,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 finally
                 {
-                    ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
+                    DataTestUtility.DropTable(conn, _tempTable);
                 }
             }
         }
@@ -1313,6 +1384,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {
                             DataTestUtility.AssertEqualsWithDescription(dataColumn.AutoIncrement, expAutoIncrement[dataColumn.ColumnName], "Unexpected AutoIncrement metadata.");
                             DataTestUtility.AssertEqualsWithDescription(dataColumn.ReadOnly, expReadOnly[dataColumn.ColumnName], "Unexpected ReadOnly metadata.");
+                        }
+                    }
+                }
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(nameof(SqlCommandBuilder.GetInsertCommand), null)]
+        [InlineData(nameof(SqlCommandBuilder.GetInsertCommand), true)]
+        [InlineData(nameof(SqlCommandBuilder.GetInsertCommand), false)]
+        [InlineData(nameof(SqlCommandBuilder.GetUpdateCommand), null)]
+        [InlineData(nameof(SqlCommandBuilder.GetUpdateCommand), true)]
+        [InlineData(nameof(SqlCommandBuilder.GetUpdateCommand), false)]
+        [InlineData(nameof(SqlCommandBuilder.GetDeleteCommand), null)]
+        [InlineData(nameof(SqlCommandBuilder.GetDeleteCommand), false)]
+        [InlineData(nameof(SqlCommandBuilder.GetDeleteCommand), true)]
+        public void VerifyGetCommand(string methodName, bool? useColumnsForParameterNames)
+        {
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+                using (SqlDataAdapter dataAdapter = new SqlDataAdapter("SELECT * FROM dbo.Customers", connection))
+                {
+                    using (SqlCommandBuilder commandBuilder = new SqlCommandBuilder(dataAdapter))
+                    {
+                        object[] parameters = null;
+                        Type[] parameterTypes = null;
+                        if (useColumnsForParameterNames != null)
+                        {
+                            parameters = new object[] { useColumnsForParameterNames };
+                            parameterTypes = new Type[] { typeof(bool) };
+                        }
+                        else
+                        {
+                            parameters = new object[] { };
+                            parameterTypes = new Type[] { };
+                        }
+
+                        MethodInfo method = commandBuilder.GetType().GetMethod(methodName, parameterTypes);
+                        using (SqlCommand cmd = (SqlCommand)method.Invoke(commandBuilder, parameters))
+                        {
+                            Assert.NotNull(cmd);
                         }
                     }
                 }

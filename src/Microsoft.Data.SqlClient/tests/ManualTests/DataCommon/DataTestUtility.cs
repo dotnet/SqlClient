@@ -9,12 +9,18 @@ using System.Data.SqlTypes;
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Identity.Client;
 using Microsoft.Data.SqlClient.TestUtilities;
+using Microsoft.Identity.Client;
 using Xunit;
+using System.Net.NetworkInformation;
+using System.Text;
+using System.Security.Principal;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -24,6 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string TCPConnectionString = null;
         public static readonly string TCPConnectionStringHGSVBS = null;
         public static readonly string TCPConnectionStringAASVBS = null;
+        public static readonly string TCPConnectionStringNoneVBS = null;
         public static readonly string TCPConnectionStringAASSGX = null;
         public static readonly string AADAuthorityURL = null;
         public static readonly string AADPasswordConnectionString = null;
@@ -35,16 +42,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AKVTenantId = null;
         public static readonly string AKVClientId = null;
         public static readonly string AKVClientSecret = null;
+        public static readonly string LocalDbAppName = null;
+        public static readonly string LocalDbSharedInstanceName = null;
         public static List<string> AEConnStrings = new List<string>();
         public static List<string> AEConnStringsSetup = new List<string>();
-        public static readonly bool EnclaveEnabled = false;
+        public static bool EnclaveEnabled { get; private set; } = false;
         public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
-        public static readonly bool SupportsLocalDb = false;
-        public static readonly bool SupportsFileStream = false;
         public static readonly bool UseManagedSNIOnWindows = false;
         public static readonly bool IsAzureSynapse = false;
         public static Uri AKVBaseUri = null;
+        public static readonly string PowerShellPath = null;
+        public static string FileStreamDirectory = null;
 
         public static readonly string DNSCachingConnString = null;
         public static readonly string DNSCachingServerCR = null;  // this is for the control ring
@@ -52,19 +61,59 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public static readonly string UserManagedIdentityClientId = null;
+        public static readonly string AliasName = null;
+
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
         public static bool ManagedIdentitySupported = true;
         public static string AADAccessToken = null;
         public static string AADSystemIdentityAccessToken = null;
         public static string AADUserIdentityAccessToken = null;
+        public const string ApplicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
-
+        public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
+        public const string MDSEventSourceName = "Microsoft.Data.SqlClient.EventSource";
+        public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Dictionary<string, bool> AvailableDatabases;
-        private static TraceEventListener TraceListener;
+        private static BaseEventListener TraceListener;
+
+        public static readonly bool IsManagedInstance = false;
+
+        //Kerberos variables
+        public static readonly string KerberosDomainUser = null;
+        internal static readonly string KerberosDomainPassword = null;
+
+        // SQL server Version
+        private static string s_sQLServerVersion = string.Empty;
+        private static bool s_isTDS8Supported;
+
+        public static string SQLServerVersion
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    s_sQLServerVersion ??= GetSqlServerVersion(TCPConnectionString);
+                }
+                return s_sQLServerVersion;
+            }
+        }
+
+        // Is TDS8 supported
+        public static bool IsTDS8Supported
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    s_isTDS8Supported = GetSQLServerStatusOnTDS8(TCPConnectionString);
+                }
+                return s_isTDS8Supported;
+            }
+        }
 
         static DataTestUtility()
         {
@@ -73,14 +122,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionString = c.TCPConnectionString;
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
+            TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
             AADAuthorityURL = c.AADAuthorityURL;
             AADPasswordConnectionString = c.AADPasswordConnectionString;
             AADServicePrincipalId = c.AADServicePrincipalId;
             AADServicePrincipalSecret = c.AADServicePrincipalSecret;
-            SupportsLocalDb = c.SupportsLocalDb;
+            LocalDbAppName = c.LocalDbAppName;
+            LocalDbSharedInstanceName = c.LocalDbSharedInstanceName;
             SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
-            SupportsFileStream = c.SupportsFileStream;
+            FileStreamDirectory = c.FileStreamDirectory;
             EnclaveEnabled = c.EnclaveEnabled;
             TracingEnabled = c.TracingEnabled;
             UseManagedSNIOnWindows = c.UseManagedSNIOnWindows;
@@ -92,12 +143,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
             UserManagedIdentityClientId = c.UserManagedIdentityClientId;
+            PowerShellPath = c.PowerShellPath;
+            KerberosDomainPassword = c.KerberosDomainPassword;
+            KerberosDomainUser = c.KerberosDomainUser;
+            ManagedIdentitySupported = c.ManagedIdentitySupported;
+            IsManagedInstance = c.IsManagedInstance;
+            AliasName = c.AliasName;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
             if (TracingEnabled)
             {
-                TraceListener = new TraceEventListener();
+                TraceListener = new BaseEventListener();
             }
 
             if (UseManagedSNIOnWindows)
@@ -131,6 +188,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStrings.Add(TCPConnectionStringAASVBS);
                 }
 
+                if (!string.IsNullOrEmpty(TCPConnectionStringNoneVBS))
+                {
+                    AEConnStrings.Add(TCPConnectionStringNoneVBS);
+                }
+
                 if (!string.IsNullOrEmpty(TCPConnectionStringAASSGX))
                 {
                     AEConnStrings.Add(TCPConnectionStringAASSGX);
@@ -147,32 +209,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static IEnumerable<string> ConnectionStrings
+        public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
+
+        public static IEnumerable<string> GetConnectionStrings(bool withEnclave)
         {
-            get
+            if (!string.IsNullOrEmpty(TCPConnectionString))
             {
-                if (!string.IsNullOrEmpty(TCPConnectionString))
+                yield return TCPConnectionString;
+            }
+            // Named Pipes are not supported on Unix platform and for Azure DB
+            if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
+            {
+                yield return NPConnectionString;
+            }
+            if (withEnclave && EnclaveEnabled)
+            {
+                foreach (var connStr in AEConnStrings)
                 {
-                    yield return TCPConnectionString;
-                }
-                // Named Pipes are not supported on Unix platform and for Azure DB
-                if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
-                {
-                    yield return NPConnectionString;
-                }
-                if (EnclaveEnabled)
-                {
-                    foreach (var connStr in AEConnStrings)
-                    {
-                        yield return connStr;
-                    }
+                    yield return connStr;
                 }
             }
         }
 
         private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
         {
-            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;
+            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).GetAwaiter().GetResult();
         }
 
         private static Task<string> AcquireTokenAsync(string authorityURL, string userID, string password) => Task.Run(() =>
@@ -198,13 +259,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SecureString securePassword = new SecureString();
 
-            foreach (char c in password)
-                securePassword.AppendChar(c);
             securePassword.MakeReadOnly();
-            result = app.AcquireTokenByUsernamePassword(scopes, userID, securePassword).ExecuteAsync().Result;
+            result = app.AcquireTokenByUsernamePassword(scopes, userID, password).ExecuteAsync().Result;
 
             return result.AccessToken;
         });
+
+        public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
+
+        public static string GetSqlServerVersion(string connectionString)
+        {
+            string version = string.Empty;
+            using SqlConnection conn = new(connectionString);
+            conn.Open();
+            SqlCommand command = conn.CreateCommand();
+            command.CommandText = "SELECT SERVERProperty('ProductMajorVersion')";
+            SqlDataReader reader = command.ExecuteReader();
+            if (reader.Read())
+            {
+                version = reader.GetString(0);
+            }
+            return version;
+        }
+
+        public static bool GetSQLServerStatusOnTDS8(string connectionString)
+        {
+            bool isTDS8Supported = false;
+            SqlConnectionStringBuilder builder = new(connectionString)
+            {
+                [nameof(SqlConnectionStringBuilder.Encrypt)] = SqlConnectionEncryptOption.Strict
+            };
+            try
+            {
+                SqlConnection conn = new(builder.ConnectionString);
+                conn.Open();
+                isTDS8Supported = true;
+            }
+            catch (SqlException)
+            {
+
+            }
+            return isTDS8Supported;
+        }
 
         public static bool IsDatabasePresent(string name)
         {
@@ -224,6 +320,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AvailableDatabases[name] = present;
             }
             return present;
+        }
+
+        public static bool IsAdmin
+        {
+            get
+            {
+#if NET6_0_OR_GREATER
+                System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
+#endif
+                return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+            }
         }
 
         /// <summary>
@@ -271,12 +378,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
         }
 
+        public static bool IsSQL2022() => string.Equals("16", SQLServerVersion.Trim());
+
+        public static bool IsSQL2019() => string.Equals("15", SQLServerVersion.Trim());
+
+        public static bool IsSQL2016() => string.Equals("14", s_sQLServerVersion.Trim());
+
+        public static bool IsSQLAliasSetup()
+        {
+            return !string.IsNullOrEmpty(AliasName);
+        }
+        public static bool IsTCPConnStringSetup()
+        {
+            return !string.IsNullOrEmpty(TCPConnectionString);
+        }
+
         // Synapse: Always Encrypted is not supported with Azure Synapse.
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool AreConnStringSetupForAE()
         {
             return AEConnStrings.Count > 0 && IsNotAzureSynapse();
         }
+
+        public static bool IsSGXEnclaveConnStringSetup() => !string.IsNullOrEmpty(TCPConnectionStringAASSGX);
 
         public static bool IsAADPasswordConnStrSetup()
         {
@@ -305,12 +429,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
         }
 
+        public static bool IsTargetReadyForAeWithKeyStore()
+        {
+            return DataTestUtility.AreConnStringSetupForAE()
+#if NET6_0_OR_GREATER
+                // AE tests on Windows will use the Cert Store. On non-Windows, they require AKV.
+                && (OperatingSystem.IsWindows() || DataTestUtility.IsAKVSetupAvailable())
+#endif
+                ;
+        }
+
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
 
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
 
-        public static bool IsUsingNativeSNI() => !IsUsingManagedSNI();
-
+        public static bool IsUsingNativeSNI() =>
+#if !NETFRAMEWORK
+        DataTestUtility.IsNotUsingManagedSNIOnWindows();
+#else 
+            true;
+#endif
         // Synapse: UTF8 collations are not supported with Azure Synapse.
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/40103791-utf-8-collations-should-be-supported-in-azure-syna
         public static bool IsUTF8Supported()
@@ -341,6 +479,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsTCPConnectionStringPasswordIncluded()
         {
             return RetrieveValueFromConnStr(TCPConnectionString, new string[] { "Password", "PWD" }) != string.Empty;
+        }
+
+        public static bool DoesHostAddressContainBothIPv4AndIPv6()
+        {
+            if (!IsDNSCachingSetup())
+            {
+                return false;
+            }
+            using (var connection = new SqlConnection(DNSCachingConnString))
+            {
+                List<IPAddress> ipAddresses = Dns.GetHostAddresses(connection.DataSource).ToList();
+                return ipAddresses.Exists(ip => ip.AddressFamily == AddressFamily.InterNetwork) &&
+                    ipAddresses.Exists(ip => ip.AddressFamily == AddressFamily.InterNetworkV6);
+            }
         }
 
         /// <summary>
@@ -389,6 +541,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void DropTable(SqlConnection sqlConnection, string tableName)
         {
+            ResurrectConnection(sqlConnection);
             using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), sqlConnection))
             {
                 cmd.ExecuteNonQuery();
@@ -397,6 +550,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void DropUserDefinedType(SqlConnection sqlConnection, string typeName)
         {
+            ResurrectConnection(sqlConnection);
             using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
             {
                 cmd.ExecuteNonQuery();
@@ -405,9 +559,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void DropStoredProcedure(SqlConnection sqlConnection, string spName)
         {
+            ResurrectConnection(sqlConnection);
             using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP PROCEDURE {0}", spName), sqlConnection))
             {
                 cmd.ExecuteNonQuery();
+            }
+        }
+
+        private static void ResurrectConnection(SqlConnection sqlConnection, int counter = 2)
+        {
+            if (sqlConnection.State == ConnectionState.Closed)
+            {
+                sqlConnection.Open();
+            }
+            while (counter-- > 0 && sqlConnection.State == ConnectionState.Connecting)
+            {
+                Thread.Sleep(80);
             }
         }
 
@@ -418,14 +585,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <param name="dbName">Database name without brackets.</param>
         public static void DropDatabase(SqlConnection sqlConnection, string dbName)
         {
-            using (SqlCommand cmd = new SqlCommand(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            ResurrectConnection(sqlConnection);
+            using SqlCommand cmd = new(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection);
+            cmd.ExecuteNonQuery();
         }
 
-        public static bool IsLocalDBInstalled() => SupportsLocalDb;
-
+        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
+        public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
         public static string GetAccessToken()
@@ -473,7 +639,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsUserIdentityTokenSetup() => !string.IsNullOrEmpty(GetUserIdentityAccessToken());
 
-        public static bool IsFileStreamSetup() => SupportsFileStream;
+        public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory) && IsNotAzureServer() && IsNotAzureSynapse();
 
         private static bool CheckException<TException>(Exception ex, string exceptionMessage, bool innerExceptionMustBeNull) where TException : Exception
         {
@@ -711,6 +877,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return paramValue.ToString();
         }
 
+        public static string FetchKeyInConnStr(string connStr, string[] keys)
+        {
+            // tokenize connection string and find matching key
+            if (connStr != null && keys != null)
+            {
+                string[] connProps = connStr.Split(';');
+                foreach (string cp in connProps)
+                {
+                    if (!string.IsNullOrEmpty(cp.Trim()))
+                    {
+                        foreach (var key in keys)
+                        {
+                            if (cp.Trim().ToLower().StartsWith(key.Trim().ToLower(), StringComparison.Ordinal))
+                            {
+                                return cp.Substring(cp.IndexOf('=') + 1);
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         public static string RemoveKeysInConnStr(string connStr, string[] keysToRemove)
         {
             // tokenize connection string and remove input keys.
@@ -725,7 +914,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         bool removeKey = false;
                         foreach (var keyToRemove in keysToRemove)
                         {
-                            if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower()))
+                            if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower(), StringComparison.Ordinal))
                             {
                                 removeKey = true;
                                 break;
@@ -754,7 +943,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         if (!string.IsNullOrEmpty(key.Trim()))
                         {
-                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
+                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower(), StringComparison.Ordinal))
                             {
                                 res = key.Substring(key.IndexOf('=') + 1).Trim();
                                 break;
@@ -766,23 +955,104 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return res;
         }
 
-        public class TraceEventListener : EventListener
+        public static bool ParseDataSource(string dataSource, out string hostname, out int port, out string instanceName)
         {
-            public List<int> IDs = new List<int>();
+            hostname = string.Empty;
+            port = -1;
+            instanceName = string.Empty;
+
+            if (dataSource.Contains(",") && dataSource.Contains("\\"))
+                return false;
+
+            if (dataSource.Contains(":"))
+            {
+                dataSource = dataSource.Substring(dataSource.IndexOf(":", StringComparison.Ordinal) + 1);
+            }
+
+            if (dataSource.Contains(","))
+            {
+                if (!Int32.TryParse(dataSource.Substring(dataSource.LastIndexOf(",", StringComparison.Ordinal) + 1), out port))
+                {
+                    return false;
+                }
+                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal) - 1);
+            }
+
+            if (dataSource.Contains("\\"))
+            {
+                instanceName = dataSource.Substring(dataSource.LastIndexOf("\\", StringComparison.Ordinal) + 1);
+                dataSource = dataSource.Substring(0, dataSource.LastIndexOf("\\", StringComparison.Ordinal));
+            }
+
+            hostname = dataSource;
+
+            return hostname.Length > 0 && hostname.IndexOfAny(new char[] { '\\', ':', ',' }) == -1;
+        }
+
+        public class AKVEventListener : BaseEventListener
+        {
+            public override string Name => AKVEventSourceName;
+        }
+
+        public class MDSEventListener : BaseEventListener
+        {
+            public override string Name => MDSEventSourceName;
+        }
+
+        public class BaseEventListener : EventListener
+        {
+            public readonly List<int> IDs = new();
+            public readonly List<EventWrittenEventArgs> EventData = new();
+
+            public virtual string Name => EventSourcePrefix;
 
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
-                if (eventSource.Name.Equals("Microsoft.Data.SqlClient.EventSource"))
+                if (eventSource.Name.StartsWith(Name, StringComparison.Ordinal))
                 {
-                    //// Collect all traces for better code coverage
-                    EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
+                    // Collect all traces for better code coverage
+                    EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.All);
+                }
+                else
+                {
+                    DisableEvents(eventSource);
                 }
             }
 
             protected override void OnEventWritten(EventWrittenEventArgs eventData)
             {
-                IDs.Add(eventData.EventId);
+                if (Name == eventData.EventSource.Name)
+                {
+                    IDs.Add(eventData.EventId);
+                    EventData.Add(eventData);
+                }
             }
+        }
+
+        /// <summary>
+        /// Resolves the machine's fully qualified domain name if it is applicable.
+        /// </summary>
+        /// <returns>Returns FQDN if the client was domain joined otherwise the machine name.</returns>
+        public static string GetMachineFQDN(string hostname)
+        {
+            IPGlobalProperties machineInfo = IPGlobalProperties.GetIPGlobalProperties();
+            StringBuilder fqdn = new();
+            if (hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                hostname.Equals(machineInfo.HostName, StringComparison.OrdinalIgnoreCase))
+            {
+                fqdn.Append(machineInfo.HostName);
+                if (!string.IsNullOrEmpty(machineInfo.DomainName))
+                {
+                    fqdn.Append(".");
+                    fqdn.Append(machineInfo.DomainName);
+                }
+            }
+            else
+            {
+                IPHostEntry host = Dns.GetHostEntry(hostname);
+                fqdn.Append(host.HostName);
+            }
+            return fqdn.ToString();
         }
     }
 }

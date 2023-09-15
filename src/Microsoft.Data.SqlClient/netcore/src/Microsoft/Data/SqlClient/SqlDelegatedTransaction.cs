@@ -81,7 +81,9 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnection connection = _connection;
             SqlConnection usersConnection = connection.Connection;
             SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Initialize | RES | CPOOL | Object Id {0}, Client Connection Id {1}, delegating transaction.", ObjectID, usersConnection?.ClientConnectionId);
+#if !NET6_0_OR_GREATER           
             RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 if (connection.IsEnlistedInTransaction)
@@ -144,7 +146,9 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Promote | RES | CPOOL | Object Id {0}, Client Connection Id {1}, promoting transaction.", ObjectID, usersConnection?.ClientConnectionId);
+#if !NET6_0_OR_GREATER                 
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
                     lock (connection)
@@ -179,6 +183,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             promoteException = e;
 
+                            ADP.TraceExceptionWithoutRethrow(e);
+
                             // Doom the connection, to make sure that the transaction is
                             // eventually rolled back.
                             // VSTS 144562: doom the connection while having the lock on it to prevent race condition with "Transaction Ended" Event
@@ -187,6 +193,7 @@ namespace Microsoft.Data.SqlClient
                         catch (InvalidOperationException e)
                         {
                             promoteException = e;
+                            ADP.TraceExceptionWithoutRethrow(e);
                             connection.DoomThisConnection();
                         }
                     }
@@ -208,9 +215,22 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 //Throw exception only if Transaction is still active and not yet aborted.
-                if (promoteException != null && Transaction.TransactionInformation.Status != TransactionStatus.Aborted)
+                if (promoteException != null)
                 {
-                    throw SQL.PromotionFailed(promoteException);
+                    try
+                    {
+                        // Safely access Transaction status - as it's possible Transaction is not in right state.
+                        if (Transaction?.TransactionInformation?.Status != TransactionStatus.Aborted)
+                        {
+                            throw SQL.PromotionFailed(promoteException);
+                        }
+                    }
+                    catch (TransactionException te)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Promote | RES | CPOOL | Object Id {0}, Client Connection Id {1}, Transaction exception occurred: {2}.", ObjectID, usersConnection?.ClientConnectionId, te.Message);
+                        // Throw promote exception if transaction state is unknown.
+                        throw SQL.PromotionFailed(promoteException);
+                    }
                 }
                 else
                 {
@@ -236,7 +256,9 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Rollback | RES | CPOOL | Object Id {0}, Client Connection Id {1}, rolling back transaction.", ObjectID, usersConnection?.ClientConnectionId);
+#if !NET6_0_OR_GREATER                
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
                     lock (connection)
@@ -321,9 +343,13 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.SinglePhaseCommit | RES | CPOOL | Object Id {0}, Client Connection Id {1}, committing transaction.", ObjectID, usersConnection?.ClientConnectionId);
+#if !NET6_0_OR_GREATER               
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
+                    Exception commitException = null;
+
                     lock (connection)
                     {
                         // If the connection is doomed, we can be certain that the
@@ -338,7 +364,6 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            Exception commitException;
                             try
                             {
                                 // Now that we've acquired the lock, make sure we still have valid state for this operation.
@@ -348,11 +373,12 @@ namespace Microsoft.Data.SqlClient
                                 _connection = null;   // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
 
                                 connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
-                                commitException = null;
                             }
                             catch (SqlException e)
                             {
                                 commitException = e;
+
+                                ADP.TraceExceptionWithoutRethrow(e);
 
                                 // Doom the connection, to make sure that the transaction is
                                 // eventually rolled back.
@@ -362,6 +388,7 @@ namespace Microsoft.Data.SqlClient
                             catch (InvalidOperationException e)
                             {
                                 commitException = e;
+                                ADP.TraceExceptionWithoutRethrow(e);
                                 connection.DoomThisConnection();
                             }
                             if (commitException != null)
@@ -393,12 +420,13 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
-                            if (commitException == null)
-                            {
-                                // connection.ExecuteTransaction succeeded
-                                enlistment.Committed();
-                            }
                         }
+                    }
+
+                    if (commitException == null)
+                    {
+                        // connection.ExecuteTransaction succeeded
+                        enlistment.Committed();
                     }
                 }
                 catch (System.OutOfMemoryException e)

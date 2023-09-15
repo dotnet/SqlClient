@@ -2,7 +2,7 @@
 <docs>
     <members name="SqlDataRecord">
         <SqlDataRecord>
-            <summary>Represents a single row of data and its metadata. This class cannot be inherited.</summary>
+            <summary>Represents a single row of data and its metadata.</summary>
             <remarks>
                 <format type="text/markdown"><![CDATA[  
   

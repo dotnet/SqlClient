@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Linq;
 using System.Configuration;
 
 namespace Microsoft.Data.SqlClient
@@ -22,6 +21,7 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryDeviceCodeFlow = "active directory device code flow";
         private const string ActiveDirectoryManagedIdentity = "active directory managed identity";
         private const string ActiveDirectoryMSI = "active directory msi";
+        private const string ActiveDirectoryDefault = "active directory default";
 
         static SqlAuthenticationProviderManager()
         {
@@ -51,6 +51,7 @@ namespace Microsoft.Data.SqlClient
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, activeDirectoryAuthProvider);
         }
         public static readonly SqlAuthenticationProviderManager Instance;
 
@@ -164,10 +165,17 @@ namespace Microsoft.Data.SqlClient
             }
 
             var methodName = "SetProvider";
-            if (_authenticationsWithAppSpecifiedProvider.Contains(authenticationMethod))
+
+            if (_authenticationsWithAppSpecifiedProvider.Count > 0)
             {
-                _sqlAuthLogger.LogError(_typeName, methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(_providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
-                return false;
+                foreach (SqlAuthenticationMethod candidateMethod in _authenticationsWithAppSpecifiedProvider)
+                {
+                    if (candidateMethod == authenticationMethod)
+                    {
+                        _sqlAuthLogger.LogError(_typeName, methodName, $"Failed to add provider {GetProviderType(provider)} because a user-defined provider with type {GetProviderType(_providers[authenticationMethod])} already existed for authentication {authenticationMethod}.");
+                        break;
+                    }
+                }
             }
             _providers.AddOrUpdate(authenticationMethod, provider, (key, oldProvider) =>
             {
@@ -221,6 +229,8 @@ namespace Microsoft.Data.SqlClient
                     return SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
                 case ActiveDirectoryMSI:
                     return SqlAuthenticationMethod.ActiveDirectoryMSI;
+                case ActiveDirectoryDefault:
+                    return SqlAuthenticationMethod.ActiveDirectoryDefault;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }

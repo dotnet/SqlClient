@@ -12,26 +12,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void EventSourceTestAll()
         {
-            using (var TraceListener = new DataTestUtility.TraceEventListener())
+            using DataTestUtility.MDSEventListener TraceListener = new();
+            using (SqlConnection connection = new(DataTestUtility.TCPConnectionString))
             {
-                using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                connection.Open();
+                using SqlCommand command = new("SELECT @@VERSION", connection);
+                using SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
                 {
-                    connection.Open();
-                    using (SqlCommand command = new SqlCommand("SELECT @@VERSION", connection))
-                    using (SqlDataReader reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            // Flush data
-                        }
-                    }
+                    // Flush data
                 }
-
-                // Need to investigate better way of validating traces in sequential runs, 
-                // For now we're collecting all traces to improve code coverage.
-
-                Assert.All(TraceListener.IDs, item => { Assert.Contains(item, Enumerable.Range(1, 21)); });
             }
+
+            // Need to investigate better way of validating traces in sequential runs, 
+            // For now we're collecting all traces to improve code coverage.
+
+            Assert.All(TraceListener.IDs, item => { Assert.Contains(item, Enumerable.Range(1, 21)); });
         }
     }
 }

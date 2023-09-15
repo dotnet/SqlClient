@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
   <PropertyGroup Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">
     <!-- Tell ResolveMatchingContract to run and resolve contract to project reference -->
     <ResolveMatchingContract>true</ResolveMatchingContract>
-    <NotSupportedSourceFile>$(IntermediateOutputPath)$(AssemblyName).notsupported.cs</NotSupportedSourceFile>
+    <NotSupportedSourceFile>$(IntermediateOutputPath)\$(TargetFramework)\$(AssemblyName).notsupported.cs</NotSupportedSourceFile>
     <CoreCompileDependsOn>$(CoreCompileDependsOn);GenerateNotSupportedSource</CoreCompileDependsOn>
     <!-- Not supported sources are created from the ref assembly, we currently don't produce finalizers in dummmy assemblies, so we disable ApiCompat to not fail. -->
     <RunApiCompat>false</RunApiCompat>
@@ -21,7 +20,6 @@
        Inputs:
          * A contract assembly
          * Reference assemblies
-
        Generates source for the contract that throws PlatformNotSupportedException
   -->
   <Target Name="GenerateNotSupportedSource"
@@ -42,16 +40,12 @@
       <GenAPIArgs>"%(ResolvedMatchingContract.Identity)"</GenAPIArgs>
       <GenAPIArgs>$(GenAPIArgs) -l:"@(_referencePathDirectories)"</GenAPIArgs>
       <GenAPIArgs>$(GenAPIArgs) -o:"$(NotSupportedSourceFile)"</GenAPIArgs>
-      <DotnetBuildCmd>$(DotNetCmd) dotnet build -c Release"</DotnetBuildCmd>
       <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">$(GenAPIArgs) -t:"$(GeneratePlatformNotSupportedAssemblyMessage)"</GenAPIArgs>
       <GenAPIArgs Condition="'$(GeneratePlatformNotSupportedAssemblyWithGlobalPrefix)' == 'true'">$(GenAPIArgs) -global</GenAPIArgs>
-      <GenAPIPath Condition="'$(MSBuildRuntimeType)' == 'core'"> "$(DotNetCmd) $(ToolsArtifactsDir)netcoreapp2.1\Microsoft.DotNet.GenAPI.dll"</GenAPIPath>
+      <GenAPIPath Condition="'$(MSBuildRuntimeType)' == 'core'"> "$(DotNetCmd) $(ToolsArtifactsDir)$(TargetFramework)\Microsoft.DotNet.GenAPI.dll"</GenAPIPath>
       <GenAPIPath Condition="'$(MSBuildRuntimeType)' != 'core'"> "$(ToolsArtifactsDir)net472\Microsoft.DotNet.GenAPI.exe"</GenAPIPath>
     </PropertyGroup>
-
-    <Exec Command="$(DotnetBuildCmd)" WorkingDirectory="$(GenAPISrcDir)Microsoft.DotNet.GenAPI\" />
-    <Exec Command="$(GenAPIPath) $(GenAPIArgs)" WorkingDirectory="$(ToolRuntimePath)" />
-
+    <Exec Command="$(GenAPIPath) $(GenAPIArgs)" WorkingDirectory="$(ToolRuntimePath)"/>
     <ItemGroup>
       <FileWrites Include="$(NotSupportedSourceFile)" />
       <Compile Include="$(NotSupportedSourceFile)" />

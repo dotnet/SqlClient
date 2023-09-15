@@ -16,24 +16,17 @@ namespace Microsoft.Data.SqlClient
         private static bool shouldUseManagedSNI;
 
         // If the appcontext switch is set then Use Managed SNI based on the value. Otherwise Native SNI.dll will be used by default.
-        public static bool UseManagedSNI { get; } =
+        public static bool UseManagedSNI => 
             AppContext.TryGetSwitch(UseManagedNetworkingOnWindows, out shouldUseManagedSNI) ? shouldUseManagedSNI : false;
 
-        public EncryptionOptions EncryptionOptions
-        {
-            get
-            {
-                return UseManagedSNI ? SNI.SNILoadHandle.SingletonInstance.Options : SNILoadHandle.SingletonInstance.Options;
-            }
-        }
+        public EncryptionOptions EncryptionOptions => UseManagedSNI ? SNI.SNILoadHandle.SingletonInstance.Options : SNILoadHandle.SingletonInstance.Options;
 
-        public uint SNIStatus
-        {
-            get
-            {
-                return UseManagedSNI ? SNI.SNILoadHandle.SingletonInstance.Status : SNILoadHandle.SingletonInstance.Status;
-            }
-        }
+        public uint SNIStatus => UseManagedSNI ? SNI.SNILoadHandle.SingletonInstance.Status : SNILoadHandle.SingletonInstance.Status;
+
+        /// <summary>
+        /// Verify client encryption possibility.
+        /// </summary>
+        public bool ClientOSEncryptionSupport => UseManagedSNI ? SNI.SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport : SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 
         public TdsParserStateObject CreateTdsParserStateObject(TdsParser parser)
         {

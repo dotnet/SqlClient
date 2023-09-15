@@ -10,6 +10,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security;
 using System.Security.Authentication;
@@ -80,195 +81,6 @@ namespace Microsoft.Data.SqlClient
         internal byte[] accessToken;
     }
 
-    internal sealed class SqlCollation
-    {
-        // First 20 bits of info field represent the lcid, bits 21-25 are compare options
-        private const uint IgnoreCase = 1 << 20; // bit 21 - IgnoreCase
-        private const uint IgnoreNonSpace = 1 << 21; // bit 22 - IgnoreNonSpace / IgnoreAccent
-        private const uint IgnoreWidth = 1 << 22; // bit 23 - IgnoreWidth
-        private const uint IgnoreKanaType = 1 << 23; // bit 24 - IgnoreKanaType
-        private const uint BinarySort = 1 << 24; // bit 25 - BinarySort
-
-        internal const uint MaskLcid = 0xfffff;
-        private const int LcidVersionBitOffset = 28;
-        private const uint MaskLcidVersion = unchecked((uint)(0xf << LcidVersionBitOffset));
-        private const uint MaskCompareOpt = IgnoreCase | IgnoreNonSpace | IgnoreWidth | IgnoreKanaType | BinarySort;
-
-        internal uint info;
-        internal byte sortId;
-
-        private static int FirstSupportedCollationVersion(int lcid)
-        {
-            // NOTE: switch-case works ~3 times faster in this case than search with Dictionary
-            switch (lcid)
-            {
-                case 1044:
-                    return 2; // Norwegian_100_BIN
-                case 1047:
-                    return 2; // Romansh_100_BIN
-                case 1056:
-                    return 2; // Urdu_100_BIN
-                case 1065:
-                    return 2; // Persian_100_BIN
-                case 1068:
-                    return 2; // Azeri_Latin_100_BIN
-                case 1070:
-                    return 2; // Upper_Sorbian_100_BIN
-                case 1071:
-                    return 1; // Macedonian_FYROM_90_BIN
-                case 1081:
-                    return 1; // Indic_General_90_BIN
-                case 1082:
-                    return 2; // Maltese_100_BIN
-                case 1083:
-                    return 2; // Sami_Norway_100_BIN
-                case 1087:
-                    return 1; // Kazakh_90_BIN
-                case 1090:
-                    return 2; // Turkmen_100_BIN
-                case 1091:
-                    return 1; // Uzbek_Latin_90_BIN
-                case 1092:
-                    return 1; // Tatar_90_BIN
-                case 1093:
-                    return 2; // Bengali_100_BIN
-                case 1101:
-                    return 2; // Assamese_100_BIN
-                case 1105:
-                    return 2; // Tibetan_100_BIN
-                case 1106:
-                    return 2; // Welsh_100_BIN
-                case 1107:
-                    return 2; // Khmer_100_BIN
-                case 1108:
-                    return 2; // Lao_100_BIN
-                case 1114:
-                    return 1; // Syriac_90_BIN
-                case 1121:
-                    return 2; // Nepali_100_BIN
-                case 1122:
-                    return 2; // Frisian_100_BIN
-                case 1123:
-                    return 2; // Pashto_100_BIN
-                case 1125:
-                    return 1; // Divehi_90_BIN
-                case 1133:
-                    return 2; // Bashkir_100_BIN
-                case 1146:
-                    return 2; // Mapudungan_100_BIN
-                case 1148:
-                    return 2; // Mohawk_100_BIN
-                case 1150:
-                    return 2; // Breton_100_BIN
-                case 1152:
-                    return 2; // Uighur_100_BIN
-                case 1153:
-                    return 2; // Maori_100_BIN
-                case 1155:
-                    return 2; // Corsican_100_BIN
-                case 1157:
-                    return 2; // Yakut_100_BIN
-                case 1164:
-                    return 2; // Dari_100_BIN
-                case 2074:
-                    return 2; // Serbian_Latin_100_BIN
-                case 2092:
-                    return 2; // Azeri_Cyrillic_100_BIN
-                case 2107:
-                    return 2; // Sami_Sweden_Finland_100_BIN
-                case 2143:
-                    return 2; // Tamazight_100_BIN
-                case 3076:
-                    return 1; // Chinese_Hong_Kong_Stroke_90_BIN
-                case 3098:
-                    return 2; // Serbian_Cyrillic_100_BIN
-                case 5124:
-                    return 2; // Chinese_Traditional_Pinyin_100_BIN
-                case 5146:
-                    return 2; // Bosnian_Latin_100_BIN
-                case 8218:
-                    return 2; // Bosnian_Cyrillic_100_BIN
-
-                default:
-                    return 0;   // other LCIDs have collation with version 0
-            }
-        }
-
-        internal int LCID
-        {
-            // First 20 bits of info field represent the lcid
-            get
-            {
-                return unchecked((int)(info & MaskLcid));
-            }
-            set
-            {
-                int lcid = value & (int)MaskLcid;
-                Debug.Assert(lcid == value, "invalid set_LCID value");
-
-                // Some new Katmai LCIDs do not have collation with version = 0
-                // since user has no way to specify collation version, we set the first (minimal) supported version for these collations
-                int versionBits = FirstSupportedCollationVersion(lcid) << LcidVersionBitOffset;
-                Debug.Assert((versionBits & MaskLcidVersion) == versionBits, "invalid version returned by FirstSupportedCollationVersion");
-
-                // combine the current compare options with the new locale ID and its first supported version
-                info = (info & MaskCompareOpt) | unchecked((uint)lcid) | unchecked((uint)versionBits);
-            }
-        }
-
-        internal SqlCompareOptions SqlCompareOptions
-        {
-            get
-            {
-                SqlCompareOptions options = SqlCompareOptions.None;
-                if (0 != (info & IgnoreCase))
-                    options |= SqlCompareOptions.IgnoreCase;
-                if (0 != (info & IgnoreNonSpace))
-                    options |= SqlCompareOptions.IgnoreNonSpace;
-                if (0 != (info & IgnoreWidth))
-                    options |= SqlCompareOptions.IgnoreWidth;
-                if (0 != (info & IgnoreKanaType))
-                    options |= SqlCompareOptions.IgnoreKanaType;
-                if (0 != (info & BinarySort))
-                    options |= SqlCompareOptions.BinarySort;
-                return options;
-            }
-            set
-            {
-                Debug.Assert((value & SqlTypeWorkarounds.SqlStringValidSqlCompareOptionMask) == value, "invalid set_SqlCompareOptions value");
-                uint tmp = 0;
-                if (0 != (value & SqlCompareOptions.IgnoreCase))
-                    tmp |= IgnoreCase;
-                if (0 != (value & SqlCompareOptions.IgnoreNonSpace))
-                    tmp |= IgnoreNonSpace;
-                if (0 != (value & SqlCompareOptions.IgnoreWidth))
-                    tmp |= IgnoreWidth;
-                if (0 != (value & SqlCompareOptions.IgnoreKanaType))
-                    tmp |= IgnoreKanaType;
-                if (0 != (value & SqlCompareOptions.BinarySort))
-                    tmp |= BinarySort;
-                info = (info & MaskLcid) | tmp;
-            }
-        }
-
-        internal string TraceString()
-        {
-            return string.Format(/*IFormatProvider*/ null, "(LCID={0}, Opts={1})", LCID, (int)SqlCompareOptions);
-        }
-
-        internal static bool AreSame(SqlCollation a, SqlCollation b)
-        {
-            if (a == null || b == null)
-            {
-                return a == b;
-            }
-            else
-            {
-                return a.info == b.info && a.sortId == b.sortId;
-            }
-        }
-    }
-
     internal class RoutingInfo
     {
         internal byte Protocol { get; private set; }
@@ -280,70 +92,6 @@ namespace Microsoft.Data.SqlClient
             Protocol = protocol;
             Port = port;
             ServerName = servername;
-        }
-    }
-
-    internal sealed class SqlEnvChange
-    {
-        internal byte type;
-        internal byte oldLength;
-        internal int newLength; // 7206 TDS changes makes this length an int
-        internal int length;
-        internal string newValue;
-        internal string oldValue;
-        /// <summary>
-        /// contains binary data, before using this field check newBinRented to see if you can take the field array or whether you should allocate and copy
-        /// </summary>
-        internal byte[] newBinValue;
-        /// <summary>
-        /// contains binary data, before using this field check newBinRented to see if you can take the field array or whether you should allocate and copy
-        /// </summary>
-        internal byte[] oldBinValue;
-        internal long newLongValue;
-        internal long oldLongValue;
-        internal SqlCollation newCollation;
-        internal SqlCollation oldCollation;
-        internal RoutingInfo newRoutingInfo;
-        internal bool newBinRented;
-        internal bool oldBinRented;
-
-        internal SqlEnvChange Next;
-
-        internal void Clear()
-        {
-            type = 0;
-            oldLength = 0;
-            newLength = 0;
-            length = 0;
-            newValue = null;
-            oldValue = null;
-            if (newBinValue != null)
-            {
-                Array.Clear(newBinValue, 0, newBinValue.Length);
-                if (newBinRented)
-                {
-                    ArrayPool<byte>.Shared.Return(newBinValue);
-                }
-
-                newBinValue = null;
-            }
-            if (oldBinValue != null)
-            {
-                Array.Clear(oldBinValue, 0, oldBinValue.Length);
-                if (oldBinRented)
-                {
-                    ArrayPool<byte>.Shared.Return(oldBinValue);
-                }
-                oldBinValue = null;
-            }
-            newBinRented = false;
-            oldBinRented = false;
-            newLongValue = 0;
-            oldLongValue = 0;
-            newCollation = null;
-            oldCollation = null;
-            newRoutingInfo = null;
-            Next = null;
         }
     }
 
@@ -427,6 +175,11 @@ namespace Microsoft.Data.SqlClient
             this.ordinal = ordinal;
         }
 
+        private bool HasFlag(_SqlMetadataFlags flag)
+        {
+            return (flags & flag) != 0;
+        }
+
         internal string serverName
         {
             get
@@ -459,47 +212,47 @@ namespace Microsoft.Data.SqlClient
         public byte Updatability
         {
             get => (byte)(flags & _SqlMetadataFlags.IsUpdatableMask);
-            set => flags = (_SqlMetadataFlags)((value & 0x3) | ((int)flags & ~0x03));
+            set => flags = (_SqlMetadataFlags)((value & (byte)_SqlMetadataFlags.IsUpdatableMask) | ((int)flags & ~(byte)_SqlMetadataFlags.IsUpdatableMask));
         }
 
         public bool IsReadOnly
         {
-            get => (flags & _SqlMetadataFlags.IsUpdatableMask) == 0;
+            get => !HasFlag(_SqlMetadataFlags.IsUpdatableMask);
         }
 
         public bool IsDifferentName
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsDifferentName);
+            get => HasFlag(_SqlMetadataFlags.IsDifferentName);
             set => Set(_SqlMetadataFlags.IsDifferentName, value);
         }
 
         public bool IsKey
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsKey);
+            get => HasFlag(_SqlMetadataFlags.IsKey);
             set => Set(_SqlMetadataFlags.IsKey, value);
         }
 
         public bool IsHidden
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsHidden);
+            get => HasFlag(_SqlMetadataFlags.IsHidden);
             set => Set(_SqlMetadataFlags.IsHidden, value);
         }
 
         public bool IsExpression
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsExpression);
+            get => HasFlag(_SqlMetadataFlags.IsExpression);
             set => Set(_SqlMetadataFlags.IsExpression, value);
         }
 
         public bool IsIdentity
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsIdentity);
+            get => HasFlag(_SqlMetadataFlags.IsIdentity);
             set => Set(_SqlMetadataFlags.IsIdentity, value);
         }
 
         public bool IsColumnSet
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsColumnSet);
+            get => HasFlag(_SqlMetadataFlags.IsColumnSet);
             set => Set(_SqlMetadataFlags.IsColumnSet, value);
         }
 
@@ -508,7 +261,7 @@ namespace Microsoft.Data.SqlClient
             flags = value ? flags | flag : flags & ~flag;
         }
 
-        internal bool IsNewKatmaiDateTimeType
+        internal bool Is2008DateTimeType
         {
             get
             {
@@ -746,14 +499,19 @@ namespace Microsoft.Data.SqlClient
 
         public bool IsNullable
         {
-            get => flags.HasFlag(SqlMetaDataPrivFlags.IsNullable);
+            get => HasFlag(SqlMetaDataPrivFlags.IsNullable);
             set => Set(SqlMetaDataPrivFlags.IsNullable, value);
         }
 
         public bool IsMultiValued
         {
-            get => flags.HasFlag(SqlMetaDataPrivFlags.IsMultiValued);
+            get => HasFlag(SqlMetaDataPrivFlags.IsMultiValued);
             set => Set(SqlMetaDataPrivFlags.IsMultiValued, value);
+        }
+
+        private bool HasFlag(SqlMetaDataPrivFlags flag)
+        {
+            return (flags & flag) != 0;
         }
 
         private void Set(SqlMetaDataPrivFlags flag, bool value)
@@ -807,6 +565,9 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class SqlMetaDataUdt
     {
+#if NET6_0_OR_GREATER
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
         internal Type Type;
         internal string DatabaseName;
         internal string SchemaName;

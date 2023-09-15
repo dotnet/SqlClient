@@ -65,17 +65,21 @@ namespace Microsoft.Data.SqlTypes
                 Int64 allocationSize
             )
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
-            try
+            using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path)))
+
             {
                 //-----------------------------------------------------------------
                 // precondition validation
 
                 if (transactionContext == null)
+                {
                     throw ADP.ArgumentNull("transactionContext");
+                }
 
                 if (path == null)
+                {
                     throw ADP.ArgumentNull("path");
+                }
 
                 //-----------------------------------------------------------------
 
@@ -87,10 +91,6 @@ namespace Microsoft.Data.SqlTypes
                 // only set internal state once the file has actually been successfully opened
                 this.Name = path;
                 this.TransactionContext = transactionContext;
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -714,7 +714,7 @@ namespace Microsoft.Data.SqlTypes
                 try
                 {
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, " +
-                       "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{ dwCreateOptions}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)shareAccess, dwCreateDisposition);
+                       "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{6}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
 
                     retval = UnsafeNativeMethods.NtCreateFile(out hFile, nDesiredAccess,
                         ref oa, out ioStatusBlock, ref allocationSize,

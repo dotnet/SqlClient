@@ -3,8 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Reflection;
+using System.Threading;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -35,8 +38,8 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(typeof(ArgumentException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("'CatalogLocation'") != -1);
-                Assert.True(ex.Message.IndexOf("'Start'") != -1);
+                Assert.True(ex.Message.IndexOf("'CatalogLocation'", StringComparison.Ordinal) != -1);
+                Assert.True(ex.Message.IndexOf("'Start'", StringComparison.Ordinal) != -1);
                 Assert.Null(ex.ParamName);
             }
             Assert.Equal(CatalogLocation.Start, cb.CatalogLocation);
@@ -52,8 +55,8 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(typeof(ArgumentException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("'CatalogLocation'") != -1);
-                Assert.True(ex.Message.IndexOf("'Start'") != -1);
+                Assert.True(ex.Message.IndexOf("'CatalogLocation'", StringComparison.Ordinal) != -1);
+                Assert.True(ex.Message.IndexOf("'Start'", StringComparison.Ordinal) != -1);
                 Assert.Null(ex.ParamName);
             }
             Assert.Equal(CatalogLocation.Start, cb.CatalogLocation);
@@ -63,6 +66,8 @@ namespace Microsoft.Data.SqlClient.Tests
         public void CatalogSeparator()
         {
             SqlCommandBuilder cb = new SqlCommandBuilder();
+            Assert.Equal(".", cb.CatalogSeparator);
+            cb.CatalogSeparator = ".";
             Assert.Equal(".", cb.CatalogSeparator);
         }
 
@@ -87,8 +92,8 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(typeof(ArgumentException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("'CatalogSeparator'") != -1);
-                Assert.True(ex.Message.IndexOf("'.'") != -1);
+                Assert.True(ex.Message.IndexOf("'CatalogSeparator'", StringComparison.Ordinal) != -1);
+                Assert.True(ex.Message.IndexOf("'.'", StringComparison.Ordinal) != -1);
                 Assert.Null(ex.ParamName);
             }
         }
@@ -117,11 +122,28 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(typeof(ArgumentOutOfRangeException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("ConflictOption") != -1);
-                Assert.True(ex.Message.IndexOf("666") != -1);
+                Assert.True(ex.Message.IndexOf("ConflictOption", StringComparison.Ordinal) != -1);
+                Assert.True(ex.Message.IndexOf("666", StringComparison.Ordinal) != -1);
                 Assert.Equal("ConflictOption", ex.ParamName);
             }
             Assert.Equal(ConflictOption.CompareRowVersion, cb.ConflictOption);
+        }
+
+        [Fact]
+        public void DataAdapter()
+        {
+            SqlCommandBuilder cb = new SqlCommandBuilder();
+            Assert.Null(cb.DataAdapter);
+
+            cb.DataAdapter = new SqlDataAdapter();
+            Assert.NotNull(cb.DataAdapter);
+        }
+
+        [Theory]
+        [MemberData(nameof(SqlTestCommands))]
+        public void DeriveParameters_Throws(Type ex, SqlCommand command)
+        {
+            Assert.Throws(ex, () => SqlCommandBuilder.DeriveParameters(command));
         }
 
         [Fact]
@@ -168,8 +190,8 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(typeof(ArgumentException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("QuotePrefix") != -1);
-                Assert.True(ex.Message.IndexOf("QuoteSuffix") != -1);
+                Assert.True(ex.Message.IndexOf("QuotePrefix", StringComparison.Ordinal) != -1);
+                Assert.True(ex.Message.IndexOf("QuoteSuffix", StringComparison.Ordinal) != -1);
                 Assert.Null(ex.ParamName);
             }
 
@@ -186,8 +208,8 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(typeof(ArgumentException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("QuotePrefix") != -1);
-                Assert.True(ex.Message.IndexOf("QuoteSuffix") != -1);
+                Assert.True(ex.Message.IndexOf("QuotePrefix", StringComparison.Ordinal) != -1);
+                Assert.True(ex.Message.IndexOf("QuoteSuffix", StringComparison.Ordinal) != -1);
                 Assert.Null(ex.ParamName);
             }
         }
@@ -318,10 +340,24 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(typeof(ArgumentException), ex.GetType());
                 Assert.Null(ex.InnerException);
                 Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("'SchemaSeparator'") != -1);
-                Assert.True(ex.Message.IndexOf("'.'") != -1);
+                Assert.True(ex.Message.IndexOf("'SchemaSeparator'", StringComparison.Ordinal) != -1);
+                Assert.True(ex.Message.IndexOf("'.'", StringComparison.Ordinal) != -1);
                 Assert.Null(ex.ParamName);
             }
         }
+
+        #region member data
+        public static IEnumerable<object[]> SqlTestCommands =>
+            new List<object[]>
+            {
+                new object[] { typeof(ArgumentNullException), null },
+                /* TODO: may need a MOQ class for DbCommand to override the DeriveParameters to throw these exceptions
+                new object[] { typeof(OutOfMemoryException), new SqlCommand() },
+                new object[] { typeof(StackOverflowException), new SqlCommand() },
+                new object[] { typeof(ThreadAbortException), new SqlCommand() },
+                new object[] { typeof(Exception), new SqlCommand() }
+                */
+            };
+        #endregion
     }
 }

@@ -95,8 +95,10 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             // Generate random bytes cryptographically.
             byte[] randomBytes = new byte[length];
-            RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
-            rngCsp.GetBytes(randomBytes);
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomBytes);
+            }
 
             return randomBytes;
         }
@@ -311,12 +313,12 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         internal static byte[] DecryptWithKey(byte[] cipherText, Object cipherMd)
         {
-            return (byte[])SqlSecurityUtilDecryptWithKey.Invoke(null, new Object[] { cipherText, cipherMd, new SqlConnection() });
+            return (byte[])SqlSecurityUtilDecryptWithKey.Invoke(null, new Object[] { cipherText, cipherMd, new SqlConnection(), new SqlCommand() });
         }
 
         internal static byte[] EncryptWithKey(byte[] plainText, Object cipherMd)
         {
-            return (byte[])SqlSecurityUtilEncryptWithKey.Invoke(null, new Object[] { plainText, cipherMd, new SqlConnection() });
+            return (byte[])SqlSecurityUtilEncryptWithKey.Invoke(null, new Object[] { plainText, cipherMd, new SqlConnection(), new SqlCommand() });
         }
 
         /// <summary>
@@ -348,8 +350,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             return decryptedData;
         }
 
+#if NETFRAMEWORK
         /// <summary>
-        /// Create a self-signed certificate without private key. NET461 only.
+        /// Create a self-signed certificate without private key.
         /// </summary>
         internal static X509Certificate2 CreateCertificateWithNoPrivateKey()
         {
@@ -376,6 +379,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             return certificate;
         }
+#endif
 
         /// <summary>
         /// Gets hex representation of byte array.
@@ -400,9 +404,11 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             return str.ToString();
         }
 
+        internal static object ClearSqlConnectionGlobalProvidersLock = new();
+
         /// <summary>
         /// Through reflection, clear the static provider list set on SqlConnection. 
-        /// Note- This API doesn't use locks for synchronization.
+        /// Note- Any test using this method should be wrapped in a lock statement using ClearSqlConnectionGlobalProvidersLock
         /// </summary>
         internal static void ClearSqlConnectionGlobalProviders()
         {

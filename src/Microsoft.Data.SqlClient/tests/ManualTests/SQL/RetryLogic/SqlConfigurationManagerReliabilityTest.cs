@@ -27,10 +27,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Fix, RetryLogicConfigHelper.RetryMethodName_Inc)]
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Inc, RetryLogicConfigHelper.RetryMethodName_Exp)]
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Exp, RetryLogicConfigHelper.RetryMethodName_Fix)]
-        public void LoadValidInternalTypesAndEnableSwitch(string method1, string method2)
+        public void LoadValidInternalTypes(string method1, string method2)
         {
-            bool switchValue = true;
-
             RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(method1);
             RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(method2,
                                            // Doesn't accept DML statements
@@ -39,34 +37,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnnCfg.NumberOfTries = 1;
             cmdCfg.NumberOfTries = 1;
 
-            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
-            RetryLogicConfigHelper.AssessProvider(cnnProvider, cnnCfg, switchValue);
-            RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg, switchValue);
+            RetryLogicConfigHelper.AssessProvider(cnnProvider, cnnCfg);
+            RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg);
 
             // check the retry in action
             s_connectionCRLTest.ConnectionRetryOpenInvalidCatalogFailed(TcpCnnString, cnnProvider);
             s_commandCRLTest.RetryExecuteFail(TcpCnnString, cmdProvider);
-            s_commandCRLTest.RetryExecuteUnauthorizedSqlStatementDML(TcpCnnString, cmdProvider);
-        }
-
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(RetryLogicConfigHelper.RetryMethodName_Fix, RetryLogicConfigHelper.RetryMethodName_Inc)]
-        [InlineData(RetryLogicConfigHelper.RetryMethodName_Inc, RetryLogicConfigHelper.RetryMethodName_Exp)]
-        [InlineData(RetryLogicConfigHelper.RetryMethodName_Exp, RetryLogicConfigHelper.RetryMethodName_Fix)]
-        public void LoadValidInternalTypesWithoutEnablingSwitch(string method1, string method2)
-        {
-            bool switchValue = false;
-            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(method1);
-            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(method2, @"Don't care!");
-
-            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
-            Assert.NotNull(loaderObj);
-            RetryLogicConfigHelper.AssessProvider(cnnProvider, cnnCfg, switchValue);
-            RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg, switchValue);
-
-            s_connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
-            s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
+            if (DataTestUtility.IsNotAzureSynapse())
+            {
+                s_commandCRLTest.RetryExecuteUnauthorizedSqlStatementDML(TcpCnnString, cmdProvider);
+            }
         }
         #endregion
 
@@ -81,8 +63,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogicEx, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
         public void LoadCustomMethod(string typeName, string methodName)
         {
-            bool switchValue = true;
-
             RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName);
             RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName);
             // for sake of reducing the retry time in total
@@ -92,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnnCfg.NumberOfTries = 1;
             cmdCfg.NumberOfTries = 3;
 
-            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
 
             TestConnection(cnnProvider, cnnCfg);
@@ -113,8 +93,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "getdefaultretry")]
         public void LoadInvalidCustomRetryLogicType(string typeName, string methodName)
         {
-            bool switchValue = true;
-
             RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName);
             RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName);
             // for sake of reducing the retry time in total
@@ -124,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnnCfg.NumberOfTries = 1;
             cmdCfg.NumberOfTries = 3;
 
-            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
 
             s_connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
@@ -143,8 +121,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName);
             RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName, @"Don't care!");
 
-            bool switchValue = true;
-            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
 
             // none retriable logic applies.
@@ -167,11 +144,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnnCfg.NumberOfTries = 1;
             cmdCfg.NumberOfTries = 1;
 
-            bool switchValue = true;
-            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
-            RetryLogicConfigHelper.AssessProvider(cnnProvider, cnnCfg, switchValue);
-            RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg, switchValue);
+            RetryLogicConfigHelper.AssessProvider(cnnProvider, cnnCfg);
+            RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg);
 
             // internal type used to resolve the specified method
             s_connectionCRLTest.ConnectionRetryOpenInvalidCatalogFailed(TcpCnnString, cnnProvider);
@@ -186,20 +162,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnnCfg.DeltaTime = deltaTime;
             RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
 
-            bool switchValue = true;
-            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
+            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
 
             cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
             cnnCfg.MinTimeInterval = minTime;
-            ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
+            ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
 
             cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
             cnnCfg.MaxTimeInterval = maxTime;
-            ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
+            ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
         }
@@ -215,8 +190,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnnCfg.NumberOfTries = num;
             RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
 
-            bool switchValue = true;
-            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
+            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
         }
@@ -240,22 +214,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnnCfg.TransientErrors = errors;
             RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
 
-            bool switchValue = true;
-            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
+            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
-        }
-#endregion
-
-        #region AppContextSwitchManager
-        [Theory]
-        [InlineData("Switch.Microsoft.Data.SqlClient.EnableRetryLogic", true)]
-        [InlineData("Switch.Microsoft.Data.SqlClient.EnableRetryLogic", false)]
-        public void ContextSwitchMangerTest(string name, bool value)
-        {
-            RetryLogicConfigHelper.ApplyContextSwitchByManager(name, value);
-            AppContext.TryGetSwitch(name, out bool result);
-            Assert.Equal(value, result);
         }
         #endregion
 
@@ -289,9 +250,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
                 ex = Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
-                cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
-                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
-                Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                if (DataTestUtility.IsNotAzureSynapse())
+                {
+                    cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
+                    ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
+                    Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                }
             }
         }
 
@@ -312,9 +276,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
                 ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync());
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
-                cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
-                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
-                Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                if (DataTestUtility.IsNotAzureSynapse())
+                {
+                    cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
+                    ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
+                    Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                }
             }
         }
         #endregion

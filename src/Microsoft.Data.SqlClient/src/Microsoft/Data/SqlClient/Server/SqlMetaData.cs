@@ -7,6 +7,7 @@ using System.Data;
 using System.Globalization;
 using System.Data.SqlTypes;
 using Microsoft.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -237,14 +238,22 @@ namespace Microsoft.Data.SqlClient.Server
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedType/*' />
         // udt ctor without tvp extended properties
-        public SqlMetaData(string name, SqlDbType dbType, Type userDefinedType)
+        public SqlMetaData(string name, SqlDbType dbType,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
+            Type userDefinedType)
         {
             Construct(name, dbType, userDefinedType, null, DefaultUseServerDefault, DefaultIsUniqueKey, DefaultColumnSortOrder, DefaultSortOrdinal);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedTypeServerTypeName/*' />
         // udt ctor without tvp extended properties
-        public SqlMetaData(string name, SqlDbType dbType, Type userDefinedType, string serverTypeName)
+        public SqlMetaData(string name, SqlDbType dbType,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
+            Type userDefinedType, string serverTypeName)
         {
             Construct(name, dbType, userDefinedType, serverTypeName, DefaultUseServerDefault, DefaultIsUniqueKey, DefaultColumnSortOrder, DefaultSortOrdinal);
         }
@@ -253,7 +262,10 @@ namespace Microsoft.Data.SqlClient.Server
         // udt ctor
         public SqlMetaData(
             string name, 
-            SqlDbType dbType, 
+            SqlDbType dbType,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType, 
             string serverTypeName,
             bool useServerDefault, 
@@ -345,6 +357,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale, 
             long locale, 
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType
         ) : this(
             name, 
@@ -373,6 +388,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale, 
             long localeId, 
             SqlCompareOptions compareOptions,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType, 
             bool useServerDefault,
             bool isUniqueKey, 
@@ -428,8 +446,7 @@ namespace Microsoft.Data.SqlClient.Server
                     Construct(name, dbType, userDefinedType, string.Empty, useServerDefault, isUniqueKey, columnSortOrder, sortOrdinal);
                     break;
                 default:
-                    SQL.InvalidSqlDbTypeForConstructor(dbType);
-                    break;
+                    throw SQL.InvalidSqlDbTypeForConstructor(dbType);
             }
         }
 
@@ -813,7 +830,7 @@ namespace Microsoft.Data.SqlClient.Server
             _sortOrdinal = sortOrdinal;
         }
 
-        // Construction for Decimal type and new Katmai Date/Time types
+        // Construction for Decimal type and new 2008 Date/Time types
         private void Construct(
             string name, 
             SqlDbType dbType, 
@@ -875,7 +892,10 @@ namespace Microsoft.Data.SqlClient.Server
         // Construction for Udt type
         private void Construct(
             string name, 
-            SqlDbType dbType, 
+            SqlDbType dbType,
+#if NET6_0_OR_GREATER
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType, 
             string serverTypeName, 
             bool useServerDefault,
@@ -1286,7 +1306,7 @@ namespace Microsoft.Data.SqlClient.Server
                     {
                         byte[] rgbValue = value.Value;
                         byte[] rgbNewValue = new byte[MaxLength];
-                        Array.Copy(rgbValue, rgbNewValue, rgbValue.Length);
+                        Buffer.BlockCopy(rgbValue, 0, rgbNewValue, 0, rgbValue.Length);
                         Array.Clear(rgbNewValue, rgbValue.Length, rgbNewValue.Length - rgbValue.Length);
                         return new SqlBinary(rgbNewValue);
                     }
@@ -1308,7 +1328,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 byte[] rgbValue = value.Value;
                 byte[] rgbNewValue = new byte[MaxLength];
-                Array.Copy(rgbValue, rgbNewValue, (int)MaxLength);
+                Buffer.BlockCopy(rgbValue,0, rgbNewValue,0, (int)MaxLength);
                 value = new SqlBinary(rgbNewValue);
             }
 
@@ -1400,7 +1420,7 @@ namespace Microsoft.Data.SqlClient.Server
                         if (value.MaxLength < MaxLength)
                         {
                             byte[] rgbNew = new byte[MaxLength];
-                            Array.Copy(value.Buffer, rgbNew, (int)oldLength);
+                            Buffer.BlockCopy(value.Buffer, 0,rgbNew,0, (int)oldLength);
                             value = new SqlBytes(rgbNew);
                         }
 
@@ -1929,7 +1949,7 @@ namespace Microsoft.Data.SqlClient.Server
                     if (value.Length < MaxLength)
                     {
                         byte[] rgbNewValue = new byte[MaxLength];
-                        Array.Copy(value, rgbNewValue, value.Length);
+                        Buffer.BlockCopy(value, 0, rgbNewValue, 0, value.Length);
                         Array.Clear(rgbNewValue, value.Length, (int)rgbNewValue.Length - value.Length);
                         return rgbNewValue;
                     }
@@ -1950,7 +1970,7 @@ namespace Microsoft.Data.SqlClient.Server
             if (value.Length > MaxLength && Max != MaxLength)
             {
                 byte[] rgbNewValue = new byte[MaxLength];
-                Array.Copy(value, rgbNewValue, (int)MaxLength);
+                Buffer.BlockCopy(value, 0, rgbNewValue, 0, (int)MaxLength);
                 value = rgbNewValue;
             }
 

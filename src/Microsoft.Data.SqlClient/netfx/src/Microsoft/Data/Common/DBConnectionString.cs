@@ -6,11 +6,9 @@ namespace Microsoft.Data.Common
 {
 
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Data;
     using System.Diagnostics;
-    using System.Linq;
     using System.Text;
     using Microsoft.Data.SqlClient;
 
@@ -23,16 +21,16 @@ namespace Microsoft.Data.Common
 
         private static class KEY
         {
-            internal const string Password = "password";
-            internal const string PersistSecurityInfo = "persist security info";
-            internal const string Pwd = "pwd";
+            internal const string Password = DbConnectionStringKeywords.Password;
+            internal const string PersistSecurityInfo = DbConnectionStringKeywords.PersistSecurityInfo;
+            internal const string Pwd = DbConnectionStringSynonyms.Pwd;
         };
 
         // this class is serializable with Everett, so ugly field names can't be changed
         readonly private string _encryptedUsersConnectionString;
 
         // hash of unique keys to values
-        readonly private Hashtable _parsetable;
+        readonly private Dictionary<string, string> _parsetable;
 
         // a linked list of key/value and their length in _encryptedUsersConnectionString
         readonly private NameValuePair _keychain;
@@ -52,21 +50,21 @@ namespace Microsoft.Data.Common
         readonly private string _encryptedActualConnectionString;
 #pragma warning restore 169
 
-        internal DBConnectionString(string value, string restrictions, KeyRestrictionBehavior behavior, Hashtable synonyms, bool useOdbcRules)
-            : this(new DbConnectionOptions(value, synonyms, useOdbcRules), restrictions, behavior, synonyms, false)
+        internal DBConnectionString(string value, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool useOdbcRules)
+            : this(new DbConnectionOptions(value, synonyms), restrictions, behavior, synonyms, false)
         {
             // useOdbcRules is only used to parse the connection string, not to parse restrictions because values don't apply there
             // the hashtable doesn't need clone since it isn't shared with anything else
         }
 
         internal DBConnectionString(DbConnectionOptions connectionOptions)
-            : this(connectionOptions, (string)null, KeyRestrictionBehavior.AllowOnly, (Hashtable)null, true)
+            : this(connectionOptions, (string)null, KeyRestrictionBehavior.AllowOnly, null, true)
         {
             // used by DBDataPermission to convert from DbConnectionOptions to DBConnectionString
             // since backward compatibility requires Everett level classes
         }
 
-        private DBConnectionString(DbConnectionOptions connectionOptions, string restrictions, KeyRestrictionBehavior behavior, Hashtable synonyms, bool mustCloneDictionary)
+        private DBConnectionString(DbConnectionOptions connectionOptions, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool mustCloneDictionary)
         { // used by DBDataPermission
             Debug.Assert(null != connectionOptions, "null connectionOptions");
             switch (behavior)
@@ -81,9 +79,9 @@ namespace Microsoft.Data.Common
 
             // grab all the parsed details from DbConnectionOptions
             _encryptedUsersConnectionString = connectionOptions.UsersConnectionString(false);
-            _hasPassword = connectionOptions.HasPasswordKeyword;
+            _hasPassword = connectionOptions._hasPasswordKeyword;
             _parsetable = connectionOptions.Parsetable;
-            _keychain = connectionOptions.KeyChain;
+            _keychain = connectionOptions._keyChain;
 
             // we do not want to serialize out user password unless directed so by "persist security info=true"
             // otherwise all instances of user's password will be replaced with "*"
@@ -94,7 +92,7 @@ namespace Microsoft.Data.Common
                 {
                     // clone the hashtable to replace user's password/pwd value with "*"
                     // we only need to clone if coming from DbConnectionOptions and password exists
-                    _parsetable = (Hashtable)_parsetable.Clone();
+                    _parsetable = new Dictionary<string, string>(_parsetable, _parsetable.Comparer);
                 }
 
                 // different than Everett in that instead of removing password/pwd from
@@ -311,7 +309,12 @@ namespace Microsoft.Data.Common
                         // Component==Allow, Combined==Allow
                         // All values in the Combined Set should also be in the Component Set
                         // Combined - Component == null
-                        Debug.Assert(combinedSet._restrictionValues.Except(componentSet._restrictionValues).Count() == 0, "Combined set allows values not allowed by component set");
+#if DEBUG
+                        HashSet<string> combined = new HashSet<string>(combinedSet._restrictionValues);
+                        HashSet<string> component = new HashSet<string>(componentSet._restrictionValues);
+                        combined.ExceptWith(component);
+                        Debug.Assert(combined.Count == 0, "Combined set allows values not allowed by component set");
+#endif 
                     }
                     else if (combinedSet._behavior == KeyRestrictionBehavior.PreventUsage)
                     {
@@ -330,14 +333,24 @@ namespace Microsoft.Data.Common
                         // Component==PreventUsage, Combined==Allow
                         // There shouldn't be any of the values from the Component Set in the Combined Set
                         // Intersect(Component, Combined) == null
-                        Debug.Assert(combinedSet._restrictionValues.Intersect(componentSet._restrictionValues).Count() == 0, "Combined values allows values prevented by component set");
+#if DEBUG
+                        HashSet<string> combined = new HashSet<string>(combinedSet._restrictionValues);
+                        HashSet<string> component = new HashSet<string>(componentSet._restrictionValues);
+                        combined.IntersectWith(component);
+                        Debug.Assert(combined.Count == 0, "Combined values allows values prevented by component set");
+#endif 
                     }
                     else if (combinedSet._behavior == KeyRestrictionBehavior.PreventUsage)
                     {
                         // Component==PreventUsage, Combined==PreventUsage
                         // All values in the Component Set should also be in the Combined Set
                         // Component - Combined == null
-                        Debug.Assert(componentSet._restrictionValues.Except(combinedSet._restrictionValues).Count() == 0, "Combined values does not prevent all of the values prevented by the component set");
+#if DEBUG
+                        HashSet<string> combined = new HashSet<string>(combinedSet._restrictionValues);
+                        HashSet<string> component = new HashSet<string>(componentSet._restrictionValues);
+                        component.IntersectWith(combined);
+                        Debug.Assert(component.Count == 0, "Combined values does not prevent all of the values prevented by the component set");
+#endif 
                     }
                     else
                     {
@@ -467,7 +480,7 @@ namespace Microsoft.Data.Common
             return restrictionValues;
         }
 
-        private static string[] ParseRestrictions(string restrictions, Hashtable synonyms)
+        private static string[] ParseRestrictions(string restrictions, Dictionary<string, string> synonyms)
         {
 #if DEBUG
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.DBConnectionString|INFO|ADV> Restrictions='{0}'", restrictions);

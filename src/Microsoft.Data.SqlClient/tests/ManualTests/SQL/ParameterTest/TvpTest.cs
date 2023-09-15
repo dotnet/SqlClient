@@ -17,13 +17,14 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
+using System.Linq;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class TvpTest
     {
         private const string TvpName = "@tvp";
-        private static readonly IList<SteAttributeKey> BoundariesTestKeys = new List<SteAttributeKey>(
+        private static readonly IList<SteAttributeKey> s_boundariesTestKeys = new List<SteAttributeKey>(
                 new SteAttributeKey[] {
                     SteAttributeKey.SqlDbType,
                     SteAttributeKey.MultiValued,
@@ -39,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }).AsReadOnly();
 
         // data value and server consts
-        private string _connStr;
+        private readonly string _connStr;
 
         // Synapse: The statement failed. Column 'blob' has a data type that cannot participate in a columnstore index.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
@@ -65,7 +66,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             var enumerator = new WraparoundRowEnumerator(1000000);
 
-            Stopwatch stopwatch = new Stopwatch();
+            Stopwatch stopwatch = new();
             stopwatch.Start();
             int returned = Task.WaitAny(
                 Task.Factory.StartNew(
@@ -80,6 +81,99 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Console.WriteLine($"enumerator.Count={enumerator.Count}, enumerator.MaxCount={enumerator.MaxCount}, elapsed={stopwatch.Elapsed.TotalSeconds}");
             }
             Assert.True(enumerator.MaxCount == enumerator.Count);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void TestConnectionIsSafeToReuse()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+
+            // Bad Scenario - exception expected.
+            try
+            {
+                List<Item> list = new()
+                {
+                    new Item(0),
+                    null,
+                    new Item(2),
+                    new Item(3),
+                    new Item(4),
+                    new Item(5)
+                };
+
+                IEnumerable<int> Ids = list.Select(x => x.id.Value).Distinct();
+
+                var sqlParam = new SqlParameter("ids", SqlDbType.Structured)
+                {
+                    TypeName = "dbo.TableOfIntId",
+                    SqlValue = Ids.Select(x =>
+                    {
+                        SqlDataRecord rec = new(new[] { new SqlMetaData("Id", SqlDbType.Int) });
+                        rec.SetInt32(0, x);
+                        return rec;
+                    })
+                };
+
+                var parameters = new List<SqlParameter>() { sqlParam };
+                const string SQL = @"SELECT * FROM information_schema.COLUMNS cols INNER JOIN  @ids Ids on Ids.id = cols.ORDINAL_POSITION";
+                using SqlCommand cmd = new(SQL, connection);
+                cmd.CommandTimeout = 100;
+                AddCommandParameters(cmd, parameters);
+                new SqlDataAdapter(cmd).Fill(new("BadFunc"));
+                Assert.False(true, "Expected exception did not occur");
+            }
+            catch (Exception e)
+            {
+                // Ignore this exception as it's deliberately introduced.
+                Assert.True(e.Message.Contains("Object reference not set to an instance of an object"), "Expected exception did not occur");
+            }
+
+            // Good Scenario - No failure expected.
+            try
+            {
+                const string SQL = @"SELECT * FROM information_schema.tables WHERE TABLE_NAME = @TableName";
+                var parameters = new List<SqlParameter>() { new SqlParameter("@TableName", "Temp") };
+                using SqlCommand cmd = new(SQL, connection);
+                cmd.CommandTimeout = 100;
+                AddCommandParameters(cmd, parameters);
+                new SqlDataAdapter(cmd).Fill(new("GoodFunc"));
+            }
+            catch (Exception e)
+            {
+                Assert.False(true, $"Unexpected error occurred: {e.Message}");
+            }
+        }
+
+        private class Item
+        {
+            public Item(int? v)
+            {
+                id = v;
+            }
+            public int? id { get; set; }
+        }
+
+        static internal void AddCommandParameters(SqlCommand command, IEnumerable parameters)
+        {
+            if (parameters == null)
+                return;
+
+            foreach (SqlParameter p in parameters)
+            {
+                if (p == null)
+                    continue;
+
+                if (p.Value == null)
+                {
+                    var clone = (SqlParameter)((ICloneable)p).Clone();
+                    clone.Value = DBNull.Value;
+                    command.Parameters.Add(clone);
+                }
+                else
+                {
+                    command.Parameters.Add(p);
+                }
+            }
         }
 
         public TvpTest()
@@ -101,10 +195,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private bool RunTestCoreAndCompareWithBaseline()
         {
             string outputPath = "SqlParameterTest.out";
+            string baselinePath;
 #if DEBUG
-            string baselinePath = DataTestUtility.IsNotAzureServer() ? "SqlParameterTest_DebugMode.bsl" : "SqlParameterTest_DebugMode_Azure.bsl";
+            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
+            {
+                baselinePath = "SqlParameterTest_DebugMode.bsl";
+            }
+            else
+            {
+                baselinePath = "SqlParameterTest_DebugMode_Azure.bsl";
+            }
 #else
-            string baselinePath = DataTestUtility.IsNotAzureServer() ? "SqlParameterTest_ReleaseMode.bsl" : "SqlParameterTest_ReleaseMode_Azure.bsl";
+            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
+            {
+                baselinePath = "SqlParameterTest_ReleaseMode.bsl";
+            }
+            else
+            {
+                baselinePath = "SqlParameterTest_ReleaseMode_Azure.bsl";
+            }
 #endif
 
             var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
@@ -120,7 +229,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.Out.Dispose();
 
             // Recover the standard output stream
-            StreamWriter standardOutput = new StreamWriter(Console.OpenStandardOutput());
+            StreamWriter standardOutput = new(Console.OpenStandardOutput());
             standardOutput.AutoFlush = true;
             Console.SetOut(standardOutput);
 
@@ -194,10 +303,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             internal CarriageReturnLineFeedReplacer(TextWriter output)
             {
-                if (output == null)
-                    throw new ArgumentNullException(nameof(output));
-
-                _output = output;
+                _output = output ?? throw new ArgumentNullException(nameof(output));
             }
 
             public int LineFeedCount
@@ -253,8 +359,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Main test methods
         private void ColumnBoundariesTest()
         {
-            IEnumerator<StePermutation> boundsMD = SteStructuredTypeBoundaries.AllColumnTypesExceptUdts.GetEnumerator(
-                        BoundariesTestKeys);
+            _ = SteStructuredTypeBoundaries.AllColumnTypesExceptUdts.GetEnumerator(
+                        s_boundariesTestKeys);
             TestTVPPermutations(SteStructuredTypeBoundaries.AllColumnTypesExceptUdts, false);
             //Console.WriteLine("+++++++++++  UDT TVP tests ++++++++++++++");
             //TestTVPPermutations(SteStructuredTypeBoundaries.UdtsOnly, true);
@@ -262,12 +368,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void TestTVPPermutations(SteStructuredTypeBoundaries bounds, bool runOnlyDataRecordTest)
         {
-            IEnumerator<StePermutation> boundsMD = bounds.GetEnumerator(BoundariesTestKeys);
+            IEnumerator<StePermutation> boundsMD = bounds.GetEnumerator(s_boundariesTestKeys);
 
             object[][] baseValues = SteStructuredTypeBoundaries.GetSeparateValues(boundsMD);
             IList<DataTable> dtList = GenerateDataTables(baseValues);
 
-            TransactionOptions opts = new TransactionOptions();
+            TransactionOptions opts = new();
             opts.IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted;
 
             // for each unique pattern of metadata
@@ -280,8 +386,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Set up base command
                 SqlCommand cmd;
                 SqlParameter param;
-                cmd = new SqlCommand(GetProcName(tvpPerm));
-                cmd.CommandType = CommandType.StoredProcedure;
+                cmd = new SqlCommand(GetProcName(tvpPerm))
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
                 param = cmd.Parameters.Add(TvpName, SqlDbType.Structured);
                 param.TypeName = GetTypeName(tvpPerm);
 
@@ -344,268 +452,263 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void QueryHintsTest()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using SqlConnection conn = new(_connStr);
+            conn.Open();
+
+            Guid randomizer = Guid.NewGuid();
+            string typeName = string.Format("dbo.[QHint_{0}]", randomizer);
+            string procName = string.Format("dbo.[QHint_Proc_{0}]", randomizer);
+            string createTypeSql = string.Format(
+                    "CREATE TYPE {0} AS TABLE("
+                        + " c1 Int DEFAULT -1,"
+                        + " c2 NVarChar(40) DEFAULT N'DEFUALT',"
+                        + " c3 DateTime DEFAULT '1/1/2006',"
+                        + " c4 Int DEFAULT -1)",
+                        typeName);
+            string createProcSql = string.Format(
+                    "CREATE PROC {0}(@tvp {1} READONLY) AS SELECT TOP(2) * FROM @tvp ORDER BY c1", procName, typeName);
+            string dropSql = string.Format("DROP PROC {0}; DROP TYPE {1}", procName, typeName);
+
+            try
             {
-                conn.Open();
+                SqlCommand cmd = new(createTypeSql, conn);
+                cmd.ExecuteNonQuery();
 
-                Guid randomizer = Guid.NewGuid();
-                string typeName = string.Format("dbo.[QHint_{0}]", randomizer);
-                string procName = string.Format("dbo.[QHint_Proc_{0}]", randomizer);
-                string createTypeSql = string.Format(
-                        "CREATE TYPE {0} AS TABLE("
-                            + " c1 Int DEFAULT -1,"
-                            + " c2 NVarChar(40) DEFAULT N'DEFUALT',"
-                            + " c3 DateTime DEFAULT '1/1/2006',"
-                            + " c4 Int DEFAULT -1)",
-                            typeName);
-                string createProcSql = string.Format(
-                        "CREATE PROC {0}(@tvp {1} READONLY) AS SELECT TOP(2) * FROM @tvp ORDER BY c1", procName, typeName);
-                string dropSql = string.Format("DROP PROC {0}; DROP TYPE {1}", procName, typeName);
+                cmd.CommandText = createProcSql;
+                cmd.ExecuteNonQuery();
 
-                try
-                {
-                    SqlCommand cmd = new SqlCommand(createTypeSql, conn);
-                    cmd.ExecuteNonQuery();
+                cmd.CommandText = procName;
+                cmd.CommandType = CommandType.StoredProcedure;
+                SqlParameter param = cmd.Parameters.Add("@tvp", SqlDbType.Structured);
 
-                    cmd.CommandText = createProcSql;
-                    cmd.ExecuteNonQuery();
+                SqlMetaData[] columnMetadata;
+                List<SqlDataRecord> rows = new();
+                SqlDataRecord record;
 
-                    cmd.CommandText = procName;
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    SqlParameter param = cmd.Parameters.Add("@tvp", SqlDbType.Structured);
-
-                    SqlMetaData[] columnMetadata;
-                    List<SqlDataRecord> rows = new List<SqlDataRecord>();
-                    SqlDataRecord record;
-
-                    Console.WriteLine("------- Sort order + uniqueness #1: simple -------");
-                    columnMetadata = new SqlMetaData[] {
+                Console.WriteLine("------- Sort order + uniqueness #1: simple -------");
+                columnMetadata = new SqlMetaData[] {
                             new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Ascending, 0),
                             new SqlMetaData("", SqlDbType.NVarChar, 40, false, true, SortOrder.Descending, 1),
                             new SqlMetaData("", SqlDbType.DateTime, false, true, SortOrder.Ascending, 2),
                             new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Descending, 3),
                         };
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(0, "Z-value", DateTime.Parse("03/01/2000"), 5);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(0, "Z-value", DateTime.Parse("03/01/2000"), 5);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(1, "Y-value", DateTime.Parse("02/01/2000"), 6);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(1, "Y-value", DateTime.Parse("02/01/2000"), 6);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(1, "X-value", DateTime.Parse("01/01/2000"), 7);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(1, "X-value", DateTime.Parse("01/01/2000"), 7);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 8);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 8);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 4);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 4);
+                rows.Add(record);
 
-                    param.Value = rows;
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
-                    {
-                        WriteReader(rdr);
-                    }
-                    rows.Clear();
+                param.Value = rows;
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    WriteReader(rdr);
+                }
+                rows.Clear();
 
-                    Console.WriteLine("------- Sort order + uniqueness #2: mixed order -------");
-                    columnMetadata = new SqlMetaData[] {
+                Console.WriteLine("------- Sort order + uniqueness #2: mixed order -------");
+                columnMetadata = new SqlMetaData[] {
                             new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Descending, 3),
                             new SqlMetaData("", SqlDbType.NVarChar, 40, false, true, SortOrder.Descending, 0),
                             new SqlMetaData("", SqlDbType.DateTime, false, true, SortOrder.Ascending, 2),
                             new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Ascending, 1),
                         };
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    param.Value = rows;
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
-                    {
-                        WriteReader(rdr);
-                    }
-                    rows.Clear();
+                param.Value = rows;
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    WriteReader(rdr);
+                }
+                rows.Clear();
 
-                    Console.WriteLine("------- default column #1: outer subset -------");
-                    columnMetadata = new SqlMetaData[] {
+                Console.WriteLine("------- default column #1: outer subset -------");
+                columnMetadata = new SqlMetaData[] {
                             new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.NVarChar, 40, false, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.DateTime, false, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
                         };
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    param.Value = rows;
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
-                    {
-                        WriteReader(rdr);
-                    }
-                    rows.Clear();
+                param.Value = rows;
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    WriteReader(rdr);
+                }
+                rows.Clear();
 
-                    Console.WriteLine("------- default column #1: middle subset -------");
-                    columnMetadata = new SqlMetaData[] {
+                Console.WriteLine("------- default column #1: middle subset -------");
+                columnMetadata = new SqlMetaData[] {
                             new SqlMetaData("", SqlDbType.Int, false, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.NVarChar, 40, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.DateTime, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.Int, false, false, SortOrder.Unspecified, -1),
                         };
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    param.Value = rows;
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
-                    {
-                        WriteReader(rdr);
-                    }
-                    rows.Clear();
+                param.Value = rows;
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    WriteReader(rdr);
+                }
+                rows.Clear();
 
-                    Console.WriteLine("------- default column #1: all -------");
-                    columnMetadata = new SqlMetaData[] {
+                Console.WriteLine("------- default column #1: all -------");
+                columnMetadata = new SqlMetaData[] {
                             new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.NVarChar, 40, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.DateTime, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
                         };
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    param.Value = rows;
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
-                    {
-                        WriteReader(rdr);
-                    }
-                    rows.Clear();
-
-                }
-                catch (Exception e)
+                param.Value = rows;
+                using (SqlDataReader rdr = cmd.ExecuteReader())
                 {
-                    Console.WriteLine(e.Message);
+                    WriteReader(rdr);
                 }
-                finally
-                {
-                    SqlCommand cmd = new SqlCommand(dropSql, conn);
-                    cmd.ExecuteNonQuery();
-                }
+                rows.Clear();
 
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            finally
+            {
+                SqlCommand cmd = new(dropSql, conn);
+                cmd.ExecuteNonQuery();
             }
         }
 
         private static async Task RunPacketNumberWraparound(WraparoundRowEnumerator enumerator)
         {
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (var cmd = new SqlCommand("unimportant")
+            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var cmd = new SqlCommand("unimportant")
             {
-                CommandType = System.Data.CommandType.StoredProcedure,
+                CommandType = CommandType.StoredProcedure,
                 Connection = connection,
-            })
+            };
+            await cmd.Connection.OpenAsync();
+            cmd.Parameters.Add(new SqlParameter("@rows", SqlDbType.Structured)
             {
-                await cmd.Connection.OpenAsync();
-                cmd.Parameters.Add(new SqlParameter("@rows", SqlDbType.Structured)
-                {
-                    TypeName = "unimportant",
-                    Value = enumerator,
-                });
-                try
-                {
-                    await cmd.ExecuteNonQueryAsync();
-                }
-                catch (Exception)
-                {
-                    // ignore the errors caused by the sproc and table type not existing
-                }
+                TypeName = "unimportant",
+                Value = enumerator,
+            });
+            try
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception)
+            {
+                // ignore the errors caused by the sproc and table type not existing
             }
         }
 
@@ -615,7 +718,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private bool AllowableDifference(string source, object result, StePermutation metadata)
         {
-            object value;
             bool returnValue = false;
 
             // turn result into a string
@@ -639,7 +741,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     returnValue = true;
                 }
-                else if (metadata.TryGetValue(SteAttributeKey.MaxLength, out value) && value != SteTypeBoundaries.s_doNotUseMarker)
+                else if (metadata.TryGetValue(SteAttributeKey.MaxLength, out object value) && value != SteTypeBoundaries.s_doNotUseMarker)
                 {
                     int maxLength = (int)value;
 
@@ -666,7 +768,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private bool AllowableDifference(byte[] source, object result, StePermutation metadata)
         {
-            object value;
             bool returnValue = false;
 
             // turn result into byte array
@@ -686,14 +787,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     returnValue = true;
                 }
-                else if (metadata.TryGetValue(SteAttributeKey.MaxLength, out value) && value != SteTypeBoundaries.s_doNotUseMarker)
+                else if (metadata.TryGetValue(SteAttributeKey.MaxLength, out object value) && value != SteTypeBoundaries.s_doNotUseMarker)
                 {
                     int maxLength = (int)value;
 
                     // allowable max-length adjustments
                     if (maxLength == resultBytes.Length)
                     {  // a bit optimistic, but what the heck.
-                        // truncation
+                       // truncation
                         if (maxLength <= source.Length)
                         {
                             returnValue = true;
@@ -713,8 +814,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private bool AllowableDifference(SqlDecimal source, object result, StePermutation metadata)
         {
-            object value;
-            object value2;
             bool returnValue = false;
 
             // turn result into SqlDecimal
@@ -738,7 +837,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     returnValue = true;
                 }
-                else if (metadata.TryGetValue(SteAttributeKey.SqlDbType, out value) &&
+                else if (metadata.TryGetValue(SteAttributeKey.SqlDbType, out object value) &&
                         SteTypeBoundaries.s_doNotUseMarker != value &&
                         (SqlDbType.SmallMoney == (SqlDbType)value ||
                          SqlDbType.Money == (SqlDbType)value))
@@ -762,7 +861,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         SqlDbType.Decimal == (SqlDbType)value)
                 {
                     if (metadata.TryGetValue(SteAttributeKey.Scale, out value) &&
-                            metadata.TryGetValue(SteAttributeKey.Precision, out value2) &&
+                            metadata.TryGetValue(SteAttributeKey.Precision, out object value2) &&
                             SteTypeBoundaries.s_doNotUseMarker != value &&
                             SteTypeBoundaries.s_doNotUseMarker != value2)
                     {
@@ -811,55 +910,55 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 break;
                             case TypeCode.Object:
                                 {
-                                    if (source is char[])
+                                    if (source is char[] charSource)
                                     {
-                                        source = new string((char[])source);
+                                        source = new string(charSource);
                                         isMatch = AllowableDifference((string)source, result, metadata);
                                     }
-                                    else if (source is byte[])
+                                    else if (source is byte[] byteSource)
                                     {
-                                        isMatch = AllowableDifference((byte[])source, result, metadata);
+                                        isMatch = AllowableDifference(byteSource, result, metadata);
                                     }
-                                    else if (source is SqlBytes)
+                                    else if (source is SqlBytes sqlBytesSource)
                                     {
-                                        isMatch = AllowableDifference(((SqlBytes)source).Value, result, metadata);
+                                        isMatch = AllowableDifference(sqlBytesSource.Value, result, metadata);
                                     }
-                                    else if (source is SqlChars)
+                                    else if (source is SqlChars sqlCharSource)
                                     {
-                                        source = new string(((SqlChars)source).Value);
+                                        source = new string(sqlCharSource.Value);
                                         isMatch = AllowableDifference((string)source, result, metadata);
                                     }
-                                    else if (source is SqlInt64 && result is long)
+                                    else if (source is SqlInt64 @int && result is long)
                                     {
-                                        isMatch = result.Equals(((SqlInt64)source).Value);
+                                        isMatch = result.Equals(@int.Value);
                                     }
-                                    else if (source is SqlInt32 && result is int)
+                                    else if (source is SqlInt32 shortSource && result is int)
                                     {
-                                        isMatch = result.Equals(((SqlInt32)source).Value);
+                                        isMatch = result.Equals(shortSource.Value);
                                     }
-                                    else if (source is SqlInt16 && result is short)
+                                    else if (source is SqlInt16 intSource && result is short)
                                     {
-                                        isMatch = result.Equals(((SqlInt16)source).Value);
+                                        isMatch = result.Equals(intSource.Value);
                                     }
-                                    else if (source is SqlSingle && result is float)
+                                    else if (source is SqlSingle singleSource && result is float)
                                     {
-                                        isMatch = result.Equals(((SqlSingle)source).Value);
+                                        isMatch = result.Equals(singleSource.Value);
                                     }
-                                    else if (source is SqlDouble && result is double)
+                                    else if (source is SqlDouble @double && result is double)
                                     {
-                                        isMatch = result.Equals(((SqlDouble)source).Value);
+                                        isMatch = result.Equals(@double.Value);
                                     }
-                                    else if (source is SqlDateTime && result is DateTime)
+                                    else if (source is SqlDateTime timeSource && result is DateTime)
                                     {
-                                        isMatch = result.Equals(((SqlDateTime)source).Value);
+                                        isMatch = result.Equals(timeSource.Value);
                                     }
-                                    else if (source is SqlMoney)
+                                    else if (source is SqlMoney sqlMoneySource)
                                     {
-                                        isMatch = AllowableDifference(new SqlDecimal(((SqlMoney)source).Value), result, metadata);
+                                        isMatch = AllowableDifference(new SqlDecimal(sqlMoneySource.Value), result, metadata);
                                     }
-                                    else if (source is SqlDecimal)
+                                    else if (source is SqlDecimal @decimal)
                                     {
-                                        isMatch = AllowableDifference((SqlDecimal)source, result, metadata);
+                                        isMatch = AllowableDifference(@decimal, result, metadata);
                                     }
                                 }
                                 break;
@@ -901,11 +1000,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 i++;
             }
 
-            List<SqlDataRecord> records = new List<SqlDataRecord>(baseValues.Length);
+            List<SqlDataRecord> records = new(baseValues.Length);
             for (int rowOrd = 0; rowOrd < baseValues.Length; rowOrd++)
             {
                 object[] row = baseValues[rowOrd];
-                SqlDataRecord rec = new SqlDataRecord(fieldMetadata);
+                SqlDataRecord rec = new(fieldMetadata);
                 records.Add(rec); // Call SetValue *after* Add to ensure record is put in list
                 for (int colOrd = 0; colOrd < row.Length; colOrd++)
                 {
@@ -930,7 +1029,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private DataTable CreateNewTable(object[] row, ref Type[] lastRowTypes)
         {
-            DataTable dt = new DataTable();
+            DataTable dt = new();
             for (int i = 0; i < row.Length; i++)
             {
                 object value = row[i];
@@ -963,7 +1062,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
 
             // Create the table type tsql
-            StringBuilder tsql = new StringBuilder();
+            StringBuilder tsql = new();
             tsql.Append("CREATE TYPE ");
             tsql.Append(GetTypeName(tvpPerm));
             tsql.Append(" AS TABLE(");
@@ -1103,19 +1202,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             tsql.Append(")");
 
-            using (SqlConnection conn = new SqlConnection(_connStr))
-            {
-                conn.Open();
+            using SqlConnection conn = new(_connStr);
+            conn.Open();
 
-                // execute it to create the type
-                SqlCommand cmd = new SqlCommand(tsql.ToString(), conn);
-                cmd.ExecuteNonQuery();
+            // execute it to create the type
+            SqlCommand cmd = new(tsql.ToString(), conn);
+            cmd.ExecuteNonQuery();
 
-                // and create the proc that uses the type            
-                cmd.CommandText = string.Format("CREATE PROC {0}(@tvp {1} READONLY) AS SELECT * FROM @tvp order by {2}",
-                        GetProcName(tvpPerm), GetTypeName(tvpPerm), colOrdinal - 1);
-                cmd.ExecuteNonQuery();
-            }
+            // and create the proc that uses the type            
+            cmd.CommandText = string.Format("CREATE PROC {0}(@tvp {1} READONLY) AS SELECT * FROM @tvp order by {2}",
+                    GetProcName(tvpPerm), GetTypeName(tvpPerm), colOrdinal - 1);
+            cmd.ExecuteNonQuery();
         }
 
         private bool DoesRowMatchMetadata(object[] row, DataTable table)
@@ -1141,62 +1238,54 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void DropServerObjects(StePermutation tvpPerm)
         {
             string dropText = "DROP PROC " + GetProcName(tvpPerm) + "; DROP TYPE " + GetTypeName(tvpPerm);
-            using (SqlConnection conn = new SqlConnection(_connStr))
-            {
-                conn.Open();
+            using SqlConnection conn = new(_connStr);
+            conn.Open();
 
-                SqlCommand cmd = new SqlCommand(dropText, conn);
-                try
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                catch (SqlException e)
-                {
-                    Console.WriteLine("SqlException dropping objects: {0}", e.Number);
-                }
+            SqlCommand cmd = new(dropText, conn);
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (SqlException e)
+            {
+                Console.WriteLine("SqlException dropping objects: {0}", e.Number);
             }
         }
 
         private void ExecuteAndVerify(SqlCommand cmd, StePermutation tvpPerm, object[][] objValues, DataTable dtValues)
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using SqlConnection conn = new(_connStr);
+            conn.Open();
+            cmd.Connection = conn;
+            if (DataTestUtility.IsNotAzureServer())
             {
-                conn.Open();
-                cmd.Connection = conn;
-                if (DataTestUtility.IsNotAzureServer())
-                {
-                    // Choose the 2628 error message instead of 8152 in SQL Server 2016 & 2017
-                    using (SqlCommand cmdFix = new SqlCommand("DBCC TRACEON(460)", conn))
-                    {
-                        cmdFix.ExecuteNonQuery();
-                    }
-                }
+                // Choose the 2628 error message instead of 8152 in SQL Server 2016 & 2017
+                using SqlCommand cmdFix = new("DBCC TRACEON(460)", conn);
+                cmdFix.ExecuteNonQuery();
+            }
 
-                try
-                {
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
-                    {
-                        VerifyColumnBoundaries(rdr, GetFields(tvpPerm), objValues, dtValues);
-                    }
-                }
-                catch (SqlException se)
-                {
-                    Console.WriteLine("SqlException. Error Code: {0}", se.Number);
-                }
-                catch (InvalidOperationException ioe)
-                {
-                    Console.WriteLine("InvalidOp: {0}", ioe.Message);
-                }
-                catch (ArgumentException ae)
-                {
-                    Console.WriteLine("ArgumentException: {0}", ae.Message);
-                }
+            try
+            {
+                using SqlDataReader rdr = cmd.ExecuteReader();
+                VerifyColumnBoundaries(rdr, GetFields(tvpPerm), objValues, dtValues);
+            }
+            catch (SqlException se)
+            {
+                Console.WriteLine("SqlException. Error Code: {0}", se.Number);
+            }
+            catch (InvalidOperationException ioe)
+            {
+                Console.WriteLine("InvalidOp: {0}", ioe.Message);
+            }
+            catch (ArgumentException ae)
+            {
+                Console.WriteLine("ArgumentException: {0}", ae.Message);
             }
         }
 
         private IList<DataTable> GenerateDataTables(object[][] values)
         {
-            List<DataTable> dtList = new List<DataTable>();
+            List<DataTable> dtList = new();
             Type[] valueTypes = new Type[values[0].Length];
             foreach (object[] row in values)
             {
@@ -1258,22 +1347,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             return null == value ||
                     DBNull.Value == value ||
-                    (value is INullable &&
-                     ((INullable)value).IsNull);
+                    (value is INullable nullable &&
+                     nullable.IsNull);
         }
 
         private SqlMetaData PermToSqlMetaData(StePermutation perm)
         {
-            object attr;
             SqlDbType sqlDbType;
             int maxLength = 0;
             byte precision = 0;
             byte scale = 0;
-            string typeName = null;
+            string typeName;
             Type type = null;
             long localeId = 0;
             SqlCompareOptions opts = SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth;
-            if (perm.TryGetValue(SteAttributeKey.SqlDbType, out attr) && (attr != SteTypeBoundaries.s_doNotUseMarker))
+            if (perm.TryGetValue(SteAttributeKey.SqlDbType, out object attr) && (attr != SteTypeBoundaries.s_doNotUseMarker))
             {
                 sqlDbType = (SqlDbType)attr;
             }
@@ -1434,7 +1522,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
     internal class TvpRestartableReader : DbDataReader
     {
-        private IList<SqlDataRecord> _sourceData;
+        private readonly IList<SqlDataRecord> _sourceData;
         int _currentRow;
 
         internal TvpRestartableReader(IList<SqlDataRecord> source) : base()
@@ -1517,7 +1605,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlDataRecord rec = _sourceData[0];
 
-            DataTable schemaTable = new DataTable();
+            DataTable schemaTable = new();
             schemaTable.Columns.Add(new DataColumn(SchemaTableColumn.ColumnName, typeof(string)));
             schemaTable.Columns.Add(new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(int)));
             schemaTable.Columns.Add(new DataColumn(SchemaTableColumn.ColumnSize, typeof(int)));
@@ -1688,7 +1776,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private int _count;
         private int _maxCount;
-        private SqlDataRecord _record;
+        private readonly SqlDataRecord _record;
 
         public WraparoundRowEnumerator(int maxCount)
         {
@@ -1717,8 +1805,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         object IEnumerator.Current => Current;
 
-        public int Count { get => this._count; set => this._count = value; }
-        public int MaxCount { get => this._maxCount; set => this._maxCount = value; }
+        public int Count { get => _count; set => _count = value; }
+        public int MaxCount { get => _maxCount; set => _maxCount = value; }
 
         public IEnumerator<SqlDataRecord> GetEnumerator() => this;
 

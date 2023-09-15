@@ -11,24 +11,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DDAsyncTest
     {
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void OpenConnection_WithAsyncTrue_ThrowsNotSupportedException()
-        {
-            //Passes on NetCore
-            var asyncConnectionString = DataTestUtility.TCPConnectionString + ";async=true";
-            Assert.Throws<NotSupportedException>(() => { new SqlConnection(asyncConnectionString); });
-        }
-
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void OpenConnection_WithAsyncTrue()
-        {
-            // Passes on NetFx
-            var asyncConnectionString = DataTestUtility.TCPConnectionString + ";async=true";
-            using (SqlConnection connection = new SqlConnection(asyncConnectionString)){}
-        }
-
         #region <<ExecuteCommand_WithNewConnection>>
         // TODO Synapse: Remove dependency on Northwind database by creating required table in setup.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]

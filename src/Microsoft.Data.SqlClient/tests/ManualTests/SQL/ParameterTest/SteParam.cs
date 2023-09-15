@@ -13,9 +13,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Map values from a permutation into a parameter (doesn't currently map values)
         public static void Map(StePermutation perm, SqlParameter param)
         {
-            object attr;
             bool didSetSqlDbType = false;
-            if (perm.TryGetValue(SteAttributeKey.SqlDbType, out attr) && (attr != SteTypeBoundaries.s_doNotUseMarker))
+            if (perm.TryGetValue(SteAttributeKey.SqlDbType, out object attr) && (attr != SteTypeBoundaries.s_doNotUseMarker))
             {
                 param.SqlDbType = (SqlDbType)attr;
                 didSetSqlDbType = true;

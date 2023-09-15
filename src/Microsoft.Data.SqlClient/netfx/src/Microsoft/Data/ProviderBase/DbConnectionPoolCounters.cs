@@ -95,7 +95,7 @@ namespace Microsoft.Data.ProviderBase
 
             internal Counter(string categoryName, string instanceName, string counterName, PerformanceCounterType counterType)
             {
-                if (ADP.IsPlatformNT5)
+                if (ADP.s_isPlatformNT5)
                 {
                     try
                     {
@@ -184,7 +184,7 @@ namespace Microsoft.Data.ProviderBase
 
             if (!ADP.IsEmpty(categoryName))
             {
-                if (ADP.IsPlatformNT5)
+                if (ADP.s_isPlatformNT5)
                 {
                     instanceName = GetInstanceName();
                 }

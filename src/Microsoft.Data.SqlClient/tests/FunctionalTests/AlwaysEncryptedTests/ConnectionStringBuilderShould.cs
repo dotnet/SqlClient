@@ -88,6 +88,17 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             Assert.Equal(SqlConnectionAttestationProtocol.NotSpecified, connectionStringBuilder3.AttestationProtocol);
             Assert.True(string.IsNullOrEmpty(connectionStringBuilder3.DataSource));
+
+            SqlConnectionStringBuilder connectionStringBuilder4 = new SqlConnectionStringBuilder();
+            connectionStringBuilder4.AttestationProtocol = SqlConnectionAttestationProtocol.None;
+            Assert.Equal(SqlConnectionAttestationProtocol.None, connectionStringBuilder4.AttestationProtocol);
+            connectionStringBuilder4.DataSource = @"localhost";
+
+            VerifyAttestationProtocol(connectionStringBuilder4, SqlConnectionAttestationProtocol.None);
+
+            connectionStringBuilder4.Clear();
+            Assert.Equal(SqlConnectionAttestationProtocol.NotSpecified, connectionStringBuilder4.AttestationProtocol);
+            Assert.Empty(connectionStringBuilder4.DataSource);
         }
 
         [Fact]
@@ -117,20 +128,32 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             SqlConnectionAttestationProtocol protocol1 = SqlConnectionAttestationProtocol.AAS;
             SqlConnectionAttestationProtocol protocol2 = SqlConnectionAttestationProtocol.HGS;
+            SqlConnectionAttestationProtocol protocol3 = SqlConnectionAttestationProtocol.None;
 
             SqlConnectionStringBuilder connectionStringBuilder1 = new SqlConnectionStringBuilder();
             SqlConnectionStringBuilder connectionStringBuilder2 = new SqlConnectionStringBuilder();
+            SqlConnectionStringBuilder connectionStringBuilder3 = new SqlConnectionStringBuilder();
 
             // Modify the default value and set the same value on the both the builder objects above.
             connectionStringBuilder1.AttestationProtocol = protocol1;
             connectionStringBuilder2.AttestationProtocol = protocol1;
+            connectionStringBuilder3.AttestationProtocol = protocol1;
 
             // Use the EquivalentTo function to compare both the builder objects and make sure the result is expected.
             Assert.True(connectionStringBuilder1.EquivalentTo(connectionStringBuilder2));
+            Assert.True(connectionStringBuilder1.EquivalentTo(connectionStringBuilder3));
+            Assert.Equal(connectionStringBuilder1.AttestationProtocol, connectionStringBuilder2.AttestationProtocol);
+            Assert.Equal(connectionStringBuilder1.AttestationProtocol, connectionStringBuilder3.AttestationProtocol);
 
             connectionStringBuilder2.AttestationProtocol = protocol2;
-
             Assert.True(!connectionStringBuilder1.EquivalentTo(connectionStringBuilder2));
+            Assert.True(!connectionStringBuilder3.EquivalentTo(connectionStringBuilder2));
+            Assert.Equal(protocol2, connectionStringBuilder2.AttestationProtocol);
+
+            connectionStringBuilder3.AttestationProtocol = protocol3;
+            Assert.True(!connectionStringBuilder1.EquivalentTo(connectionStringBuilder3));
+            Assert.True(!connectionStringBuilder2.EquivalentTo(connectionStringBuilder3));
+            Assert.Equal(protocol3, connectionStringBuilder3.AttestationProtocol);
         }
 
 
@@ -151,14 +174,15 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [InlineData(SqlConnectionAttestationProtocol.AAS)]
         [InlineData(SqlConnectionAttestationProtocol.HGS)]
         [InlineData(SqlConnectionAttestationProtocol.NotSpecified)]
+        [InlineData(SqlConnectionAttestationProtocol.None)]
         public void TestSqlConnectionStringBuilderAttestationProtocol(SqlConnectionAttestationProtocol protocol)
         {
             SqlConnectionStringBuilder connectionStringBuilder = new SqlConnectionStringBuilder();
             connectionStringBuilder.DataSource = @"localhost";
 
             // Modify value.
-                connectionStringBuilder.AttestationProtocol = protocol;
-          
+            connectionStringBuilder.AttestationProtocol = protocol;
+
             //Create a connection object with the above builder and verify the expected value.
             VerifyAttestationProtocol(connectionStringBuilder, protocol);
         }
@@ -313,6 +337,12 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             tryGetValueResult = connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue);
             Assert.True(tryGetValueResult);
             Assert.Equal(SqlConnectionAttestationProtocol.AAS, outputValue);
+
+            connectionStringBuilder.AttestationProtocol = SqlConnectionAttestationProtocol.None;
+
+            Assert.True(connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue), 
+                "'Attestation Protocol'' key not found in SqlConnectionStringBuilder");
+            Assert.Equal(SqlConnectionAttestationProtocol.None, outputValue);
         }
 
         [Theory]

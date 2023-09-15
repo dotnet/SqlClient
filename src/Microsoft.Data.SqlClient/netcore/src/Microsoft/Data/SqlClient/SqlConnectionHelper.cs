@@ -153,18 +153,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
         override protected DbCommand CreateDbCommand()
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID);
-            try
+            using (TryEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
             {
                 DbCommand command = null;
                 DbProviderFactory providerFactory = ConnectionFactory.ProviderFactory;
                 command = providerFactory.CreateCommand();
                 command.Connection = this;
                 return command;
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
