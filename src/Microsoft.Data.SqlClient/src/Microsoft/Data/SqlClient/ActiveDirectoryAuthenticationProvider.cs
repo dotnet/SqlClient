@@ -84,7 +84,8 @@ namespace Microsoft.Data.SqlClient
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryDefault;
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
@@ -162,6 +163,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     defaultAzureCredentialOptions.ManagedIdentityClientId = clientId;
                     defaultAzureCredentialOptions.SharedTokenCacheUsername = clientId;
+                    defaultAzureCredentialOptions.WorkloadIdentityClientId = clientId;
                 }
                 AccessToken accessToken = await new DefaultAzureCredential(defaultAzureCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
@@ -177,11 +179,23 @@ namespace Microsoft.Data.SqlClient
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
-            AuthenticationResult result = null;
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)
             {
                 AccessToken accessToken = await new ClientSecretCredential(audience, parameters.UserId, parameters.Password, tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
+            }
+
+            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity || parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryMSI)
+            {
+                WorkloadIdentityCredentialOptions options = new()
+                {
+                    AuthorityHost = new Uri(authority),
+                    ClientId = clientId,
+                };
+
+                AccessToken accessToken = await new WorkloadIdentityCredential(options).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Workload Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
@@ -209,6 +223,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                 );
 
+            AuthenticationResult result = null;
             IPublicClientApplication app = GetPublicClientAppInstance(pcaKey);
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
