@@ -169,6 +169,17 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
         <AttestationProtocol>
             <summary>Gets or sets the value of Attestation Protocol.</summary>
             <value>The attestation protocol.</value>
+          <remarks>
+            <format type="text/markdown">
+              <![CDATA[  
+  
+## Remarks  
+
+When no value is specified, secure enclaves are disabled on the connection.
+
+ ]]>
+            </format>
+          </remarks>
         </AttestationProtocol>
         <Authentication>
             <summary>Gets or sets the authentication method used for [Connecting to SQL Database By Using Azure Active Directory Authentication](https://azure.microsoft.com/documentation/articles/sql-database-aad-authentication/#7-connect-to-your-database-by-using-azure-active-directory-identities).</summary>
@@ -177,8 +188,6 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
-
-When no value is specified, secure enclaves are disabled on the connection.
 
 For more information, see [Using Azure Active Directory authentication with SqlClient](/sql/connect/ado-net/sql/azure-active-directory-authentication).
 
