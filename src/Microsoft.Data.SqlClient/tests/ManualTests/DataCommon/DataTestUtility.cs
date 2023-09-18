@@ -21,6 +21,7 @@ using Xunit;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Security.Principal;
+using System.Runtime.InteropServices;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -301,6 +302,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return isTDS8Supported;
         }
+
+        public static bool IsNotX86Architecture => RuntimeInformation.ProcessArchitecture != Architecture.X86;
 
         public static bool IsDatabasePresent(string name)
         {
