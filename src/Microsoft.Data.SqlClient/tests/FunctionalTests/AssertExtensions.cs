@@ -5,6 +5,7 @@
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests;
 using Xunit;
 using Xunit.Sdk;
 
@@ -12,7 +13,7 @@ namespace System
 {
     public static class AssertExtensions
     {
-        private static bool IsFullFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework");
+        private static bool IsFullFramework => TestUtility.s_isFullFramework;
 
         public static void Throws<T>(Action action, string message)
             where T : Exception
@@ -35,7 +36,7 @@ namespace System
                 IsFullFramework ?
                 netFxParamName : netCoreParamName;
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
+            if (!TestUtility.s_netNative)
                 Assert.Equal(expectedParamName, exception.ParamName);
         }
 
@@ -54,7 +55,7 @@ namespace System
                 IsFullFramework ?
                 netFxParamName : netCoreParamName;
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
+            if (!TestUtility.s_netNative)
                 Assert.Equal(expectedParamName, exception.ParamName);
         }
 
@@ -63,7 +64,7 @@ namespace System
         {
             T exception = Assert.Throws<T>(action);
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
+            if (!TestUtility.s_netNative)
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;
@@ -82,7 +83,7 @@ namespace System
         {
             T exception = Assert.Throws<T>(testCode);
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
+            if (!TestUtility.s_netNative)
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;
@@ -93,7 +94,7 @@ namespace System
         {
             T exception = await Assert.ThrowsAsync<T>(testCode);
 
-            if (!RuntimeInformation.FrameworkDescription.StartsWith(".NET Native"))
+            if (!TestUtility.s_netNative)
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;

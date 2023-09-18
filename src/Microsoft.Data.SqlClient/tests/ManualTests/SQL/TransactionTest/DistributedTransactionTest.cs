@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [PlatformSpecific(TestPlatforms.Windows)]
     public class DistributedTransactionTest
     {
-        private static bool s_DelegatedTransactionCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotAzureServer() && (RuntimeInformation.ProcessArchitecture != Architecture.X86);
+        private static bool s_DelegatedTransactionCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotAzureServer() && DataTestUtility.IsNotX86Architecture();
 
         [ConditionalFact(nameof(s_DelegatedTransactionCondition), Timeout = 10000)]
         public async Task Delegated_transaction_deadlock_in_SinglePhaseCommit()

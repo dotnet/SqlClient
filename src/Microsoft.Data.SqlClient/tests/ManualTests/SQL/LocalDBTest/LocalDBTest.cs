@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_startLocalDbCommand = @$"/c SqlLocalDb start {DataTestUtility.LocalDbAppName}";
         private static readonly string s_localDbNamedPipeConnectionString = @$"server={GetLocalDbNamedPipe()}";
 
-#if !WINDOWS_UAP
+
         #region LocalDbTests
 
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
@@ -154,7 +154,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
         #endregion
-#endif
 
         private static void ConnectionWithMarsTest(string connectionString)
         {

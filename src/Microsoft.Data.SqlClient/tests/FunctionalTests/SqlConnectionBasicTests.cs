@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [ConditionalFact(nameof(s_isNotArmProcess))]
+        [ConditionalFact(nameof(TestUtility.s_isNotArmProcess))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()
         {
