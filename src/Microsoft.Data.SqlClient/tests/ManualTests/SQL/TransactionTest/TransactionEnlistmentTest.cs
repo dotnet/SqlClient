@@ -47,7 +47,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RunTestSet(TestCase_ManualEnlistment_Enlist_TxScopeComplete);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void TestEnlistmentPrepare_TxScopeComplete()
         {
