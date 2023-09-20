@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsSupportingDistributedTransactions()
         {
 #if NET7_0_OR_GREATER
-            return OperatingSystem.IsWindows() && IsNotAzureServer();
+            return OperatingSystem.IsWindows() && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture != System.Runtime.InteropServices.Architecture.X86 && IsNotAzureServer();
 #elif NETFRAMEWORK
             return System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) && IsNotAzureServer();
 #else
