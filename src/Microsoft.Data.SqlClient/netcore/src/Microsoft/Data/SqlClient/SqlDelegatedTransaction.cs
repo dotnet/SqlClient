@@ -363,7 +363,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        Exception commitException = null;
+                        Exception commitException;
                         lock (connection)
                         {
                             try
@@ -371,13 +371,11 @@ namespace Microsoft.Data.SqlClient
                                 // Now that we've acquired the lock, make sure we still have valid state for this operation.
                                 ValidateActiveOnConnection(connection);
 
-                                _active =
-                                    false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
-                                _connection =
-                                    null; // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
+                                _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
+                                _connection = null; // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
 
-                                connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null,
-                                    System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                                connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                                commitException = null;
                             }
                             catch (SqlException e)
                             {
@@ -426,7 +424,6 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
-                        
                         if (commitException == null)
                         {
                             // connection.ExecuteTransaction succeeded
