@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void TestEnlistmentPrepare_TxScopeComplete()
         {
-            try
+            Assert.Throws<TransactionAbortedException>( () =>
             {
                 using TransactionScope txScope = new(TransactionScopeOption.RequiresNew, new TransactionOptions()
                 {
@@ -62,12 +62,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
                 System.Transactions.Transaction.Current.EnlistDurable(EnlistmentForPrepare.s_id, new EnlistmentForPrepare(), EnlistmentOptions.None);
                 txScope.Complete();
-                Assert.False(true, "Expected exception not thrown.");
-            }
-            catch (Exception e)
-            {
-                Assert.True(e is TransactionAbortedException);
-            }
+            });
         }
 
         private static void TestCase_AutoEnlistment_TxScopeComplete()
