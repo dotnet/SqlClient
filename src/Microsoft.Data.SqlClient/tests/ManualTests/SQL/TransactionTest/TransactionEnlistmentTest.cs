@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RunTestSet(TestCase_ManualEnlistment_Enlist_TxScopeComplete);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportingDistributedTransactions))]
         public static void TestEnlistmentPrepare_TxScopeComplete()
         {
             Assert.Throws<TransactionAbortedException>( () =>

@@ -439,6 +439,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ;
         }
 
+        public static bool IsSupportingDistributedTransactions()
+        {
+#if NET7_0_OR_GREATER
+            return OperatingSystem.IsWindows() && IsNotAzureServer();
+#elif NETFRAMEWORK
+            return System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) && IsNotAzureServer();
+#else
+            return false;
+#endif
+        }
+
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
 
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
