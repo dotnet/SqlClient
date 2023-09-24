@@ -963,9 +963,7 @@ namespace Microsoft.Data.SqlClient
         // NOTE: This method (and all it calls) should be retryable without replaying a snapshot
         internal bool TryPrepareBuffer()
         {
-#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadBuffer");  // you need to setup for a thread abort somewhere before you call this method
-#endif
             Debug.Assert(_inBuff != null, "packet buffer should not be null!");
 
             // Header spans packets, or we haven't read the header yet - process header
@@ -1146,9 +1144,7 @@ namespace Microsoft.Data.SqlClient
         // Every time you call this method increment the offset and decrease len by the value of totalRead
         public bool TryReadByteArray(Span<byte> buff, int len, out int totalRead)
         {
-#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
-#endif
             totalRead = 0;
 
 #if DEBUG
@@ -1207,9 +1203,7 @@ namespace Microsoft.Data.SqlClient
         // before the byte is returned.
         internal bool TryReadByte(out byte value)
         {
-#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadByte");  // you need to setup for a thread abort somewhere before you call this method
-#endif
             Debug.Assert(_inBytesUsed >= 0 && _inBytesUsed <= _inBytesRead, "ERROR - TDSParser: _inBytesUsed < 0 or _inBytesUsed > _inBytesRead");
             value = 0;
 
@@ -1313,9 +1307,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool TryReadInt32(out int value)
         {
-#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadInt32");  // you need to setup for a thread abort somewhere before you call this method
-#endif
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             Span<byte> buffer = stackalloc byte[4];
             if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
@@ -1345,9 +1337,7 @@ namespace Microsoft.Data.SqlClient
         // This method is safe to call when doing async without snapshot
         internal bool TryReadInt64(out long value)
         {
-#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadInt64");  // you need to setup for a thread abort somewhere before you call this method
-#endif
             if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
             {
                 if (!TryPrepareBuffer())
@@ -1426,9 +1416,7 @@ namespace Microsoft.Data.SqlClient
         // This method is safe to call when doing async without replay
         internal bool TryReadUInt32(out uint value)
         {
-#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadUInt32");  // you need to setup for a thread abort somewhere before you call this method
-#endif
             if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
             {
                 if (!TryPrepareBuffer())
@@ -1477,9 +1465,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool TryReadSingle(out float value)
         {
-#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadSingle");  // you need to setup for a thread abort somewhere before you call this method
-#endif
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
             {
@@ -1513,9 +1499,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool TryReadDouble(out double value)
         {
-#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadDouble");  // you need to setup for a thread abort somewhere before you call this method
-#endif
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             if (((_inBytesUsed + 8) > _inBytesRead) || (_inBytesPacket < 8))
             {
@@ -1549,9 +1533,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool TryReadString(int length, out string value)
         {
-#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadString");  // you need to setup for a thread abort somewhere before you call this method
-#endif
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             int cBytes = length << 1;
             byte[] buf;
@@ -1592,9 +1574,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool TryReadStringWithEncoding(int length, System.Text.Encoding encoding, bool isPlp, out string value)
         {
-#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadStringWithEncoding");  // you need to setup for a thread abort somewhere before you call this method
-#endif
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
             if (null == encoding)

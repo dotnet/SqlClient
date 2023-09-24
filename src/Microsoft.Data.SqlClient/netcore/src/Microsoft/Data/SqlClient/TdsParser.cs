@@ -40,6 +40,17 @@ namespace Microsoft.Data.SqlClient
     // and surfacing objects to the user.
     internal sealed partial class TdsParser
     {
+        internal struct ReliabilitySection
+        {
+            /// <summary>
+            /// This is a no-op in netcore version. Only needed for merging with netfx codebase.
+            /// </summary>
+            [Conditional("NETFRAMEWORK")]
+            internal static void Assert(string message)
+            {
+            }
+        }
+
         private static int _objectTypeCount; // EventSource counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
