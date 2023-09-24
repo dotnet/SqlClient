@@ -1669,6 +1669,98 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
+        internal ulong ReadPlpLength(bool returnPlpNullIfNull)
+        {
+            ulong value;
+            Debug.Assert(_syncOverAsync, "Should not attempt pends in a synchronous call");
+            bool result = TryReadPlpLength(returnPlpNullIfNull, out value);
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
+            return value;
+        }
+
+        // Reads the length of either the entire data or the length of the next chunk in a
+        //   partially length prefixed data
+        // After this call, call  ReadPlpBytes/ReadPlpUnicodeChars until the specified length of data
+        // is consumed. Repeat this until ReadPlpLength returns 0 in order to read the
+        // entire stream.
+        // When this function returns 0, it means the data stream is read completely and the
+        // plp state in the tdsparser is cleaned.
+        internal bool TryReadPlpLength(bool returnPlpNullIfNull, out ulong lengthLeft)
+        {
+            uint chunklen;
+            // bool firstchunk = false;
+            bool isNull = false;
+
+            Debug.Assert(_longlenleft == 0, "Out of synch length read request");
+            if (_longlen == 0)
+            {
+                // First chunk is being read. Find out what type of chunk it is
+                long value;
+                if (!TryReadInt64(out value))
+                {
+                    lengthLeft = 0;
+                    return false;
+                }
+                _longlen = (ulong)value;
+                // firstchunk = true;
+            }
+
+            if (_longlen == TdsEnums.SQL_PLP_NULL)
+            {
+                _longlen = 0;
+                _longlenleft = 0;
+                isNull = true;
+            }
+            else
+            {
+                // Data is coming in uint chunks, read length of next chunk
+                if (!TryReadUInt32(out chunklen))
+                {
+                    lengthLeft = 0;
+                    return false;
+                }
+                if (chunklen == TdsEnums.SQL_PLP_CHUNK_TERMINATOR)
+                {
+                    _longlenleft = 0;
+                    _longlen = 0;
+                }
+                else
+                {
+                    _longlenleft = chunklen;
+                }
+            }
+
+            AssertValidState();
+
+            if (isNull && returnPlpNullIfNull)
+            {
+                lengthLeft = TdsEnums.SQL_PLP_NULL;
+                return true;
+            }
+
+            lengthLeft = _longlenleft;
+            return true;
+        }
+
+        internal int ReadPlpBytesChunk(byte[] buff, int offset, int len)
+        {
+            Debug.Assert(_syncOverAsync, "Should not attempt pends in a synchronous call");
+            Debug.Assert(_longlenleft > 0, "Read when no data available");
+
+            int value;
+            int bytesToRead = (int)Math.Min(_longlenleft, (ulong)len);
+            bool result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out value);
+            _longlenleft -= (ulong)bytesToRead;
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
+            return value;
+        }
+
         /*
 
         // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)
