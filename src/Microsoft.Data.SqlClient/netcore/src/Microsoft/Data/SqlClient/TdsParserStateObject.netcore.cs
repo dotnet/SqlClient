@@ -310,6 +310,9 @@ namespace Microsoft.Data.SqlClient
         // Every time you call this method increment the offset and decrease len by the value of totalRead
         public bool TryReadByteArray(Span<byte> buff, int len, out int totalRead)
         {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
+#endif
             totalRead = 0;
 
 #if DEBUG
@@ -331,7 +334,7 @@ namespace Microsoft.Data.SqlClient
             }
 #endif
 
-            Debug.Assert(buff == null || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
+            Debug.Assert(buff.IsEmpty || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
 
             // loop through and read up to array length
             while (len > 0)
@@ -368,6 +371,9 @@ namespace Microsoft.Data.SqlClient
         // before the byte is returned.
         internal bool TryReadByte(out byte value)
         {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByte");  // you need to setup for a thread abort somewhere before you call this method
+#endif
             Debug.Assert(_inBytesUsed >= 0 && _inBytesUsed <= _inBytesRead, "ERROR - TDSParser: _inBytesUsed < 0 or _inBytesUsed > _inBytesRead");
             value = 0;
 

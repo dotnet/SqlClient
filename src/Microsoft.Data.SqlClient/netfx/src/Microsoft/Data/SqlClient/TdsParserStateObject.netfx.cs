@@ -404,14 +404,16 @@ namespace Microsoft.Data.SqlClient
         // Every time you call this method increment the offset and decrease len by the value of totalRead
         public bool TryReadByteArray(Span<byte> buff, int len, out int totalRead)
         {
+#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
+#endif
             totalRead = 0;
 
 #if DEBUG
             if (_snapshot != null && _snapshot.DoPend())
             {
                 _networkPacketTaskSource = new TaskCompletionSource<object>();
-                Thread.MemoryBarrier();
+                Interlocked.MemoryBarrier();
 
                 if (s_forcePendingReadsToWaitForUser)
                 {
@@ -463,7 +465,9 @@ namespace Microsoft.Data.SqlClient
         // before the byte is returned.
         internal bool TryReadByte(out byte value)
         {
+#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadByte");  // you need to setup for a thread abort somewhere before you call this method
+#endif
             Debug.Assert(_inBytesUsed >= 0 && _inBytesUsed <= _inBytesRead, "ERROR - TDSParser: _inBytesUsed < 0 or _inBytesUsed > _inBytesRead");
             value = 0;
 
@@ -471,7 +475,7 @@ namespace Microsoft.Data.SqlClient
             if (_snapshot != null && _snapshot.DoPend())
             {
                 _networkPacketTaskSource = new TaskCompletionSource<object>();
-                Thread.MemoryBarrier();
+                Interlocked.MemoryBarrier();
 
                 if (s_forcePendingReadsToWaitForUser)
                 {
@@ -510,35 +514,28 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
-            byte[] buffer;
-            int offset;
+            Span<byte> buffer = stackalloc byte[2];
             if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
             {
                 // If the char isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-                if (!TryReadByteArray(_bTmp, 2))
+                if (!TryReadByteArray(buffer, 2))
                 {
                     value = '\0';
                     return false;
                 }
-
-                buffer = _bTmp;
-                offset = 0;
             }
             else
             {
                 // The entire char is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-
-                buffer = _inBuff;
-                offset = _inBytesUsed;
-
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
 
             AssertValidState();
-            value = (char)((buffer[offset + 1] << 8) + buffer[offset]);
+            value = (char)((buffer[1] << 8) + buffer[0]);
 
             return true;
         }
