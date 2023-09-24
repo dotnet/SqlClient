@@ -2445,8 +2445,6 @@ namespace Microsoft.Data.SqlClient
             private PacketData _snapshotInBuffList;
             private PacketData _sparePacket;
 
-            internal byte[] _plpBuffer;
-
             private int _snapshotInBuffCount;
 
 #if DEBUG

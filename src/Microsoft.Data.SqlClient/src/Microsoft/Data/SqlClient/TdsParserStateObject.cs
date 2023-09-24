@@ -1928,6 +1928,8 @@ namespace Microsoft.Data.SqlClient
             private TdsParserStateObject _stateObj;
             private StateObjectData _replayStateData;
 
+            internal byte[] _plpBuffer;
+
 #if DEBUG
             private int _rollingPend = 0;
             private int _rollingPendCount = 0;

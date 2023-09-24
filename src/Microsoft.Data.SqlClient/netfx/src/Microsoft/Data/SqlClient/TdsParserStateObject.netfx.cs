@@ -393,7 +393,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(_longlenleft == 0);
                 if (buff == null)
                 {
-                    buff = new byte[0];
+                    buff = Array.Empty<byte>();
                 }
 
                 AssertValidState();
@@ -409,7 +409,19 @@ namespace Microsoft.Data.SqlClient
             // If total length is known up front, allocate the whole buffer in one shot instead of realloc'ing and copying over each time
             if (buff == null && _longlen != TdsEnums.SQL_PLP_UNKNOWNLEN)
             {
-                buff = new byte[(Math.Min((int)_longlen, len))];
+                if (_snapshot != null)
+                {
+                    // if there is a snapshot and it contains a stored plp buffer take it
+                    // and try to use it if it is the right length
+                    buff = _snapshot._plpBuffer;
+                    _snapshot._plpBuffer = null;
+                }
+
+                if ((ulong)(buff?.Length ?? 0) != _longlen)
+                {
+                    // if the buffer is null or the wrong length create one to use
+                    buff = new byte[(Math.Min((int)_longlen, len))];
+                }
             }
 
             if (_longlenleft == 0)
@@ -454,6 +466,12 @@ namespace Microsoft.Data.SqlClient
                 _longlenleft -= (ulong)bytesRead;
                 if (!result)
                 {
+                    if (_snapshot != null)
+                    {
+                        // a partial read has happened so store the target buffer in the snapshot
+                        // so it can be re-used when another packet arrives and we read again
+                        _snapshot._plpBuffer = buff;
+                    }
                     return false;
                 }
 
@@ -462,6 +480,12 @@ namespace Microsoft.Data.SqlClient
                     // Read the next chunk or cleanup state if hit the end
                     if (!TryReadPlpLength(false, out _))
                     {
+                        if (_snapshot != null)
+                        {
+                            // a partial read has happened so store the target buffer in the snapshot
+                            // so it can be re-used when another packet arrives and we read again
+                            _snapshot._plpBuffer = buff;
+                        }
                         return false;
                     }
                 }
