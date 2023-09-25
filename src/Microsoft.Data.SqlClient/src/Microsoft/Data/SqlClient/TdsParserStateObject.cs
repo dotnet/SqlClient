@@ -1113,6 +1113,175 @@ namespace Microsoft.Data.SqlClient
 
             return false;
         }
+
+        ///////////////////////////////////////
+        // Buffer read methods - data values //
+        ///////////////////////////////////////
+
+        // look at the next byte without pulling it off the wire, don't just return _inBytesUsed since we may
+        // have to go to the network to get the next byte.
+        internal bool TryPeekByte(out byte value)
+        {
+            if (!TryReadByte(out value))
+            {
+                return false;
+            }
+
+            // now do fixup
+            _inBytesPacket++;
+            _inBytesUsed--;
+
+            AssertValidState();
+            return true;
+        }
+
+        // Takes a byte array, an offset, and a len and fills the array from the offset to len number of
+        // bytes from the in buffer.
+        public bool TryReadByteArray(Span<byte> buff, int len)
+        {
+            return TryReadByteArray(buff, len, out _);
+        }
+
+        // NOTE: This method must be retriable WITHOUT replaying a snapshot
+        // Every time you call this method increment the offset and decrease len by the value of totalRead
+        public bool TryReadByteArray(Span<byte> buff, int len, out int totalRead)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            totalRead = 0;
+
+#if DEBUG
+            if (_snapshot != null && _snapshot.DoPend())
+            {
+                _networkPacketTaskSource = new TaskCompletionSource<object>();
+                Interlocked.MemoryBarrier();
+
+                if (s_forcePendingReadsToWaitForUser)
+                {
+                    _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
+                    _realNetworkPacketTaskSource.SetResult(null);
+                }
+                else
+                {
+                    _networkPacketTaskSource.TrySetResult(null);
+                }
+                return false;
+            }
+#endif
+
+            Debug.Assert(buff.IsEmpty || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
+
+            // loop through and read up to array length
+            while (len > 0)
+            {
+                if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
+                {
+                    if (!TryPrepareBuffer())
+                    {
+                        return false;
+                    }
+                }
+
+                int bytesToRead = Math.Min(len, Math.Min(_inBytesPacket, _inBytesRead - _inBytesUsed));
+                Debug.Assert(bytesToRead > 0, "0 byte read in TryReadByteArray");
+                if (!buff.IsEmpty)
+                {
+                    ReadOnlySpan<byte> copyFrom = new ReadOnlySpan<byte>(_inBuff, _inBytesUsed, bytesToRead);
+                    Span<byte> copyTo = buff.Slice(totalRead, bytesToRead);
+                    copyFrom.CopyTo(copyTo);
+                }
+
+                totalRead += bytesToRead;
+                _inBytesUsed += bytesToRead;
+                _inBytesPacket -= bytesToRead;
+                len -= bytesToRead;
+
+                AssertValidState();
+            }
+
+            return true;
+        }
+
+        // Takes no arguments and returns a byte from the buffer.  If the buffer is empty, it is filled
+        // before the byte is returned.
+        internal bool TryReadByte(out byte value)
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByte");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            Debug.Assert(_inBytesUsed >= 0 && _inBytesUsed <= _inBytesRead, "ERROR - TDSParser: _inBytesUsed < 0 or _inBytesUsed > _inBytesRead");
+            value = 0;
+
+#if DEBUG
+            if (_snapshot != null && _snapshot.DoPend())
+            {
+                _networkPacketTaskSource = new TaskCompletionSource<object>();
+                Interlocked.MemoryBarrier();
+
+                if (s_forcePendingReadsToWaitForUser)
+                {
+                    _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
+                    _realNetworkPacketTaskSource.SetResult(null);
+                }
+                else
+                {
+                    _networkPacketTaskSource.TrySetResult(null);
+                }
+                return false;
+            }
+#endif
+
+            if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
+            {
+                if (!TryPrepareBuffer())
+                {
+                    return false;
+                }
+            }
+
+            // decrement the number of bytes left in the packet
+            _inBytesPacket--;
+
+            Debug.Assert(_inBytesPacket >= 0, "ERROR - TDSParser: _inBytesPacket < 0");
+
+            // return the byte from the buffer and increment the counter for number of bytes used in the in buffer
+            value = (_inBuff[_inBytesUsed++]);
+
+            AssertValidState();
+            return true;
+        }
+
+        internal bool TryReadChar(out char value)
+        {
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+
+            Span<byte> buffer = stackalloc byte[2];
+            if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
+            {
+                // If the char isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+                if (!TryReadByteArray(buffer, 2))
+                {
+                    value = '\0';
+                    return false;
+                }
+            }
+            else
+            {
+                // The entire char is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
+                _inBytesUsed += 2;
+                _inBytesPacket -= 2;
+            }
+
+            AssertValidState();
+            value = (char)((buffer[1] << 8) + buffer[0]);
+
+            return true;
+        }
+
         /*
 
         // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)
