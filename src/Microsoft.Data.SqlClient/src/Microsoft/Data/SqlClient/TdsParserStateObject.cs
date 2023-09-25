@@ -2013,7 +2013,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         stateObj._lastStack = null;
                     }
-#endif 
+#endif
                 }
 
                 internal void Restore(TdsParserStateObject stateObj)
