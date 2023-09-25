@@ -116,22 +116,47 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     PipeDirection.InOut,
                     PipeOptions.Asynchronous | PipeOptions.WriteThrough);
 
-            string normalizedPipePath = pipeStream
-                .GetType()
-                .GetField("m_normalizedPipePath", BindingFlags.Instance | BindingFlags.NonPublic)
-                .GetValue(pipeStream).ToString();
+            string normalizedPipePath = string.Empty;
+
+            try
+            {
+                // use m_normalizedPipePath as the field name
+                normalizedPipePath = pipeStream
+                    .GetType()
+                    .GetField("m_normalizedPipePath", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .GetValue(pipeStream).ToString();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                // if not found, then use _normalizedPipePath as the field name
+                if (normalizedPipePath == string.Empty)
+                    normalizedPipePath = pipeStream
+                        .GetType()
+                        .GetField("_normalizedPipePath", BindingFlags.Instance | BindingFlags.NonPublic)
+                        .GetValue(pipeStream).ToString();
+            }
+
 
             // Check if the normalized pipe path parsed by NamedPipeClientStream object from supplied 
             // host and pipename has a valid format
-            if (instanceName != string.Empty)
+            if (normalizedPipePath != string.Empty)
             {
-                // Secondary NamedPipe Instance normalized pipe path format check
-                Assert.Matches(@"\\\\.*\\pipe\\MSSQL\$.*\\sql\\sqlquery", normalizedPipePath);
+                if (instanceName != string.Empty )
+                {
+                    // Secondary NamedPipe Instance normalized pipe path format check
+                    Assert.Matches(@"\\\\.*\\pipe\\MSSQL\$.*\\sql\\sqlquery", normalizedPipePath);
+                }
+                else
+                {
+                    // Default NamedPipe Instance normalized pipe path format check
+                    Assert.Matches(@"\\\\.*\\pipe\\sql\\sqlquery", normalizedPipePath);
+                }
             }
             else
             {
-                // Default NamedPipe Instance normalized pipe path format check
-                Assert.Matches(@"\\\\.*\\pipe\\sql\\sqlquery", normalizedPipePath);
+                Assert.Fail("Unable to extract NormalizedPipePath using reflection.");
             }
         }
 

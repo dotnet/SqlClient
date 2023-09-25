@@ -678,7 +678,7 @@ namespace Microsoft.Data.SqlClient.SNI
             // If we have a datasource beginning with a pipe or we have already determined that the protocol is Named Pipe
             if (_dataSourceAfterTrimmingProtocol.StartsWith(PipeBeginning, StringComparison.Ordinal) || _connectionProtocol == Protocol.NP)
             {
-                // If the data source is "np:servername" or "np:servername\instance"
+                // If the data source starts with "np:servername"
                 if (!_dataSourceAfterTrimmingProtocol.Contains(PipeBeginning))
                 {
                     // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance, 
@@ -691,10 +691,9 @@ namespace Microsoft.Data.SqlClient.SNI
                         {
                             // NamedPipeClientStream object will create the network path using PipeHostName and PipeName
                             // and can be seen in its _normalizedPipePath variable in the format \\servername\pipe\MSSQL$<instancename>\sql\query
-                            ReadOnlySpan<string> arr = tokensByBackSlash; 
-                            PipeHostName = ServerName = arr[0];
+                            PipeHostName = ServerName = tokensByBackSlash[0];
                             InferLocalServerName();
-                            PipeName = $"{InstancePrefix}{arr[1].ToUpper()}{PathSeparator}{DefaultPipeName}";
+                            PipeName = $"{InstancePrefix}{tokensByBackSlash[1].ToUpper()}{PathSeparator}{DefaultPipeName}";
                         }
                         else
                         {
