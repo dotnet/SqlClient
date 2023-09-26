@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
@@ -525,6 +526,13 @@ namespace Microsoft.Data.SqlClient
                     {
                         return false;
                     }
+                }
+            }
+            if (!BitConverter.IsLittleEndian)
+            {
+                for (int ii = charsOffset; ii < charsCopied + charsOffset; ii++)
+                {
+                    chars[ii] = (char)BinaryPrimitives.ReverseEndianness((ushort)chars[ii]);
                 }
             }
             return true;

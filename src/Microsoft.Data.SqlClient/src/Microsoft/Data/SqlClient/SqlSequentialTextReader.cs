@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
@@ -514,6 +515,15 @@ namespace Microsoft.Data.SqlClient
                 completed = (bytesUsed == byteCount);
 
                 // BlockCopy uses offsets\length measured in bytes, not the actual array index
+                if (!BitConverter.IsLittleEndian)
+                {
+                    Span<byte> span = bytes.AsSpan();
+                    for (int ii = 0; ii < byteCount; ii += 2)
+                    {
+                        short value = BinaryPrimitives.ReadInt16LittleEndian(span.Slice(ii));
+                        BinaryPrimitives.WriteInt16BigEndian(span.Slice(ii), value);
+                    }
+                }
                 Buffer.BlockCopy(bytes, byteIndex, chars, charIndex * 2, bytesUsed);
             }
         }
