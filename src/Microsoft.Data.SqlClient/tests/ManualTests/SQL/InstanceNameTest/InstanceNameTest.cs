@@ -3,10 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.IO.Pipes;
+using System.Data;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -88,77 +87,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)] // Named pipes with the given input strings are not supported on Unix
-        [InlineData("")]
-        [InlineData("MSSQLSERVER02")]
-        public static void NamedPipeInstanceNormalizedPipePathTest(string instance)
+        public async static void NamedPipeSecondaryInstanceTest()
         {
-            var instancePrefix = "MSSQL$";
-            var pathSeparator = "\\";
-            var defaultPipeName = "sql\\sqlquery";
+            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
 
-            SqlConnectionStringBuilder builder = new(DataTestUtility.NPConnectionString); 
-
-            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
-            instanceName = instance;
-
-            // Mimic the SNIProxy.InferNamedPipesInformation's logic to initialize the PipeName.  It is private so can not be used here.
-            string pipeName = $"{defaultPipeName}";
-            if (instanceName != string.Empty)
-            {
-                // This is how InferNamedPipesInformation build the pipeName when there's an instance provided. 
-                pipeName = $"{instancePrefix}{instanceName.ToUpper()}{pathSeparator}{defaultPipeName}";
-            }
-
-            NamedPipeClientStream pipeStream = new NamedPipeClientStream(
-                    hostname,
-                    pipeName,
-                    PipeDirection.InOut,
-                    PipeOptions.Asynchronous | PipeOptions.WriteThrough);
-
-            string normalizedPipePath = string.Empty;
-
-            try
-            {
-                // use m_normalizedPipePath as the field name
-                normalizedPipePath = pipeStream
-                    .GetType()
-                    .GetField("m_normalizedPipePath", BindingFlags.Instance | BindingFlags.NonPublic)
-                    .GetValue(pipeStream).ToString();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-
-                // if not found, then use _normalizedPipePath as the field name
-                if (normalizedPipePath == string.Empty)
-                    normalizedPipePath = pipeStream
-                        .GetType()
-                        .GetField("_normalizedPipePath", BindingFlags.Instance | BindingFlags.NonPublic)
-                        .GetValue(pipeStream).ToString();
-            }
-
-
-            // Check if the normalized pipe path parsed by NamedPipeClientStream object from supplied 
-            // host and pipename has a valid format
-            if (normalizedPipePath != string.Empty)
-            {
-                if (instanceName != string.Empty )
-                {
-                    // Secondary NamedPipe Instance normalized pipe path format check
-                    Assert.Matches(@"\\\\.*\\pipe\\MSSQL\$.*\\sql\\sqlquery", normalizedPipePath);
-                }
-                else
-                {
-                    // Default NamedPipe Instance normalized pipe path format check
-                    Assert.Matches(@"\\\\.*\\pipe\\sql\\sqlquery", normalizedPipePath);
-                }
-            }
-            else
-            {
-                Assert.Fail("Unable to extract NormalizedPipePath using reflection.");
-            }
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.NPInstanceConnectionString);
+            builder.ConnectTimeout = 5;
+            await OpenGoodConnection(builder.ConnectionString);
         }
 
+        private async static Task OpenGoodConnection(string connectionString)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+                DataTestUtility.AssertEqualsWithDescription( ConnectionState.Open, conn.State, "FAILED: Connection should be in open state");
+            }
+        }
+   
         private static bool IsBrowserAlive(string browserHostname)
         {
             const byte ClntUcastEx = 0x03;

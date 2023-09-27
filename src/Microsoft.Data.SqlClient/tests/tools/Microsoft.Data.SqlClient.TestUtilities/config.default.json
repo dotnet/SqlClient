@@ -1,6 +1,8 @@
 {
     "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
     "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
+    "TCPInstanceConnectionString": "Data Source=tcp:localhost\\MSSQLSERVER02;Database=Northwind;Integrated Security=true;Encrypt=false;",
+    "NPInstanceConnectionString": "Data Source=np:localhost\\MSSQLSERVER02;Database=Northwind;Integrated Security=true;Encrypt=false;",
     "TCPConnectionStringHGSVBS": "",
     "TCPConnectionStringAASVBS": "",
     "TCPConnectionStringNoneVBS": "",
