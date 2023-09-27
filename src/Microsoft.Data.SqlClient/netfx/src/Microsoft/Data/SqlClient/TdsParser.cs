@@ -2624,68 +2624,6 @@ namespace Microsoft.Data.SqlClient
                             break;
                         }
 
-                    case TdsEnums.SQLALTMETADATA:
-                        {
-                            stateObj.CloneCleanupAltMetaDataSetArray();
-
-                            if (stateObj._cleanupAltMetaDataSetArray == null)
-                            {
-                                // create object on demand (lazy creation)
-                                stateObj._cleanupAltMetaDataSetArray = new _SqlMetaDataSetCollection();
-                            }
-
-                            _SqlMetaDataSet cleanupAltMetaDataSet;
-                            if (!TryProcessAltMetaData(tokenLength, stateObj, out cleanupAltMetaDataSet))
-                            {
-                                return false;
-                            }
-
-                            stateObj._cleanupAltMetaDataSetArray.SetAltMetaData(cleanupAltMetaDataSet);
-                            if (null != dataStream)
-                            {
-                                byte metadataConsumedByte;
-                                if (!stateObj.TryPeekByte(out metadataConsumedByte))
-                                {
-                                    return false;
-                                }
-                                if (!dataStream.TrySetAltMetaDataSet(cleanupAltMetaDataSet, (TdsEnums.SQLALTMETADATA != metadataConsumedByte)))
-                                {
-                                    return false;
-                                }
-                            }
-
-                            break;
-                        }
-
-                    case TdsEnums.SQLALTROW:
-                        {
-                            if (!stateObj.TryStartNewRow(isNullCompressed: false))
-                            { // altrows are not currently null compressed
-                                return false;
-                            }
-
-                            // read will call run until dataReady. Must not read any data if return immediately set
-                            if (RunBehavior.ReturnImmediately != (RunBehavior.ReturnImmediately & runBehavior))
-                            {
-                                ushort altRowId;
-                                if (!stateObj.TryReadUInt16(out altRowId))
-                                { // get altRowId
-                                    return false;
-                                }
-
-                                if (!TrySkipRow(stateObj._cleanupAltMetaDataSetArray.GetAltMetaData(altRowId), stateObj))
-                                { // skip altRow
-                                    return false;
-                                }
-                            }
-                            else
-                            {
-                                dataReady = true;
-                            }
-
-                            break;
-                        }
-
                     case TdsEnums.SQLENVCHANGE:
                         {
                             // ENVCHANGE must be processed synchronously (since it can modify the state of many objects)
@@ -3002,6 +2940,68 @@ namespace Microsoft.Data.SqlClient
                             {
                                 return false;
                             }
+                            break;
+                        }
+
+                    // deprecated
+                    case TdsEnums.SQLALTMETADATA:
+                        {
+                            stateObj.CloneCleanupAltMetaDataSetArray();
+
+                            if (stateObj._cleanupAltMetaDataSetArray == null)
+                            {
+                                // create object on demand (lazy creation)
+                                stateObj._cleanupAltMetaDataSetArray = new _SqlMetaDataSetCollection();
+                            }
+
+                            _SqlMetaDataSet cleanupAltMetaDataSet;
+                            if (!TryProcessAltMetaData(tokenLength, stateObj, out cleanupAltMetaDataSet))
+                            {
+                                return false;
+                            }
+
+                            stateObj._cleanupAltMetaDataSetArray.SetAltMetaData(cleanupAltMetaDataSet);
+                            if (null != dataStream)
+                            {
+                                byte metadataConsumedByte;
+                                if (!stateObj.TryPeekByte(out metadataConsumedByte))
+                                {
+                                    return false;
+                                }
+                                if (!dataStream.TrySetAltMetaDataSet(cleanupAltMetaDataSet, (TdsEnums.SQLALTMETADATA != metadataConsumedByte)))
+                                {
+                                    return false;
+                                }
+                            }
+
+                            break;
+                        }
+                    case TdsEnums.SQLALTROW:
+                        {
+                            if (!stateObj.TryStartNewRow(isNullCompressed: false))
+                            { // altrows are not currently null compressed
+                                return false;
+                            }
+
+                            // read will call run until dataReady. Must not read any data if return immediately set
+                            if (RunBehavior.ReturnImmediately != (RunBehavior.ReturnImmediately & runBehavior))
+                            {
+                                ushort altRowId;
+                                if (!stateObj.TryReadUInt16(out altRowId))
+                                { // get altRowId
+                                    return false;
+                                }
+
+                                if (!TrySkipRow(stateObj._cleanupAltMetaDataSetArray.GetAltMetaData(altRowId), stateObj))
+                                { // skip altRow
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                dataReady = true;
+                            }
+
                             break;
                         }
 
