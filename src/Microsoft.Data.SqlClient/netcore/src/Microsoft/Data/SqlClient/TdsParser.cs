@@ -7944,6 +7944,7 @@ namespace Microsoft.Data.SqlClient
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY;
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryDefault:
+                            case SqlAuthenticationMethod.ActiveDirectoryAzureCli:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
                                 break;
                             default:

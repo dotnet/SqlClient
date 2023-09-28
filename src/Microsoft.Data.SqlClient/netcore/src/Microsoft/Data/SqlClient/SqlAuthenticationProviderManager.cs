@@ -20,6 +20,7 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryManagedIdentity = "active directory managed identity";
         private const string ActiveDirectoryMSI = "active directory msi";
         private const string ActiveDirectoryDefault = "active directory default";
+        private const string ActiveDirectoryAzureCli = "active directory azure cli";
 
         private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;
         private readonly ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers;
@@ -45,6 +46,7 @@ namespace Microsoft.Data.SqlClient
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryAzureCli, activeDirectoryAuthProvider);
             }
         }
         /// <summary>

@@ -347,6 +347,7 @@ namespace Microsoft.Data.Common
         internal const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
         internal const string ActiveDirectoryMSIString = "Active Directory MSI";
         internal const string ActiveDirectoryDefaultString = "Active Directory Default";
+        internal const string ActiveDirectoryAzureCliString = "Active Directory Azure CLI";
         const string SqlCertificateString = "Sql Certificate";
 
 #if DEBUG
@@ -361,7 +362,8 @@ namespace Microsoft.Data.Common
             "ActiveDirectoryDeviceCodeFlow",
             "ActiveDirectoryManagedIdentity",
             "ActiveDirectoryMSI",
-            "ActiveDirectoryDefault"
+            "ActiveDirectoryDefault",
+            "ActiveDirectoryAzureCli"
         };
 
         private static bool IsValidAuthenticationMethodEnum()
@@ -442,6 +444,12 @@ namespace Microsoft.Data.Common
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryDefault, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryDefault;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryAzureCliString)
+                     || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryAzureCli, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryAzureCli;
                 isSuccess = true;
             }
 #if ADONET_CERT_AUTH && NETFRAMEWORK
@@ -526,6 +534,7 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || value == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || value == SqlAuthenticationMethod.ActiveDirectoryDefault
+                || value == SqlAuthenticationMethod.ActiveDirectoryAzureCli
 #if ADONET_CERT_AUTH && NETFRAMEWORK
                 || value == SqlAuthenticationMethod.SqlCertificate
 #endif
@@ -547,6 +556,7 @@ namespace Microsoft.Data.Common
                 SqlAuthenticationMethod.ActiveDirectoryManagedIdentity => ActiveDirectoryManagedIdentityString,
                 SqlAuthenticationMethod.ActiveDirectoryMSI => ActiveDirectoryMSIString,
                 SqlAuthenticationMethod.ActiveDirectoryDefault => ActiveDirectoryDefaultString,
+                SqlAuthenticationMethod.ActiveDirectoryAzureCli => ActiveDirectoryAzureCliString,
 #if ADONET_CERT_AUTH && NETFRAMEWORK
                 SqlAuthenticationMethod.SqlCertificate => SqlCertificateString,
 #endif

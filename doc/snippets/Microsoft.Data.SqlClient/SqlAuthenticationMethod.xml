@@ -45,5 +45,9 @@
           <summary>The authentication method uses Active Directory Default. Use this mode to connect to a SQL Database using multiple non-interactive authentication methods tried sequentially to acquire an access token. This method does not fallback to the "Active Directory Interactive" authentication method.</summary>
           <value>9</value>
       </ActiveDirectoryDefault>
+      <ActiveDirectoryAzureCli>
+        <summary>The authentication method uses Active Directory Azure CLI credential. Use this mode to connect to a SQL Database using AzureCliCredential to acquire an access token. This method does not fallback to the "Active Directory Interactive" authentication method.</summary>
+        <value>9</value>
+      </ActiveDirectoryAzureCli>
     </members>
 </docs>

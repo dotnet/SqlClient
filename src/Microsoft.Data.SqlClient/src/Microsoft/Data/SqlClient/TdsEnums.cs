@@ -1212,6 +1212,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDefault/*'/>
         ActiveDirectoryDefault,
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryAzureCli/*'/>
+        ActiveDirectoryAzureCli,
 #if ADONET_CERT_AUTH && NETFRAMEWORK
         SqlCertificate
 #endif

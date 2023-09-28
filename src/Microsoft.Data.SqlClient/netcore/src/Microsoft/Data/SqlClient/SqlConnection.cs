@@ -202,6 +202,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
                 }
+                else if (UsesActiveDirectoryAzureCli(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryAzureCliString);
+                }
 
                 Credential = credential;
             }
@@ -530,6 +534,11 @@ namespace Microsoft.Data.SqlClient
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault;
         }
 
+        private bool UsesActiveDirectoryAzureCli(SqlConnectionString opt)
+        {
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryAzureCli;
+        }
+
         private bool UsesAuthentication(SqlConnectionString opt)
         {
             return opt != null && opt.Authentication != SqlAuthenticationMethod.NotSpecified;
@@ -618,6 +627,10 @@ namespace Microsoft.Data.SqlClient
                         else if (UsesActiveDirectoryDefault(connectionOptions))
                         {
                             throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                        }
+                        else if (UsesActiveDirectoryAzureCli(connectionOptions))
+                        {
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryAzureCliString);
                         }
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -998,6 +1011,10 @@ namespace Microsoft.Data.SqlClient
                     else if (UsesActiveDirectoryDefault(connectionOptions))
                     {
                         throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                    }
+                    else if (UsesActiveDirectoryAzureCli(connectionOptions))
+                    {
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryAzureCliString);
                     }
 
                     CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);

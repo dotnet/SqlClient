@@ -594,6 +594,9 @@ namespace Microsoft.Data.SqlClient
                     case SqlAuthenticationMethod.ActiveDirectoryDefault:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Default authentication");
                         break;
+                    case SqlAuthenticationMethod.ActiveDirectoryAzureCli:
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Azure CLI authentication");
+                        break;
                     case SqlAuthenticationMethod.SqlPassword:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL Password authentication");
                         break;
@@ -8741,6 +8744,7 @@ namespace Microsoft.Data.SqlClient
                             case SqlAuthenticationMethod.ActiveDirectoryMSI:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY;
                                 break;
+                            case SqlAuthenticationMethod.ActiveDirectoryAzureCli:
                             case SqlAuthenticationMethod.ActiveDirectoryDefault:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
                                 break;
