@@ -38,6 +38,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Authentication = Active Directory MSI ")]
         [InlineData("Authentication = ActiveDirectoryMSI ")]
         [InlineData("Authentication = Active Directory Default ")]
+        [InlineData("Authentication = Active Directory Azure CLI ")]
         [InlineData("Authentication = ActiveDirectoryDefault ")]
         [InlineData("Command Timeout = 5")]
         [InlineData("Command Timeout = 15")]
