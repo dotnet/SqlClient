@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient
 
         public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
         {
-            CancellationTokenSource cts = new CancellationTokenSource();
+            using CancellationTokenSource cts = new();
 
             // Use Connection timeout value to cancel token acquire request after certain period of time.
             cts.CancelAfter(parameters.ConnectionTimeout * 1000); // Convert to milliseconds
@@ -188,12 +188,18 @@ namespace Microsoft.Data.SqlClient
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)
             {
-                WorkloadIdentityCredentialOptions options = new()
-                {
-                    AuthorityHost = new Uri(authority),
-                    ClientId = clientId,
-                };
+                // The WorkloadIdentityCredentialOptions object initialization populates its instance members
+                // from the environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE,
+                // and AZURE_ADDITIONALLY_ALLOWED_TENANTS. AZURE_CLIENT_ID may be overridden by the User Id.
+                WorkloadIdentityCredentialOptions options = new() { AuthorityHost = new Uri(authority) };
 
+                if (clientId is not null)
+                {
+                    options.ClientId = clientId;
+                }
+
+                // If either tenant id, client id, or the token file path are not specified when fetching the token,
+                // a CredentialUnavailableException will be thrown instead
                 AccessToken accessToken = await new WorkloadIdentityCredential(options).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Workload Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
