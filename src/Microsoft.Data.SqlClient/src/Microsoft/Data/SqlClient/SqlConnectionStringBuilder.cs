@@ -1936,6 +1936,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if ADONET_CERT_AUTH
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Certificate/*' />
         [DisplayName(DbConnectionStringKeywords.Certificate)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Certificate)]

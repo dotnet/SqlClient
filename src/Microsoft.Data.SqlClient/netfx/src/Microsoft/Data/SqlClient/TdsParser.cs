@@ -1048,7 +1048,16 @@ namespace Microsoft.Data.SqlClient
             if (encrypt == SqlConnectionEncryptOption.Strict)
             {
                 //Always validate the certificate when in strict encryption mode
-                uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
+                uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
+
+                if (clientCertificate)
+                {
+                    _encryptionOption |= EncryptionOptions.CLIENT_CERT;
+                }
+                else
+                {
+                    info |= TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;
+                }
 
                 EnableSsl(info, encrypt, integratedSecurity, serverCertificate, serverCallback, clientCallback);
 

@@ -1317,7 +1317,8 @@ namespace Microsoft.Data.SqlClient
 
 
 #if ADONET_CERT_AUTH
-         public ServerCertificateValidationCallback ServerCertificateValidationCallback {
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerCertificateValidationCallback/*' />
+        public ServerCertificateValidationCallback ServerCertificateValidationCallback {
             get {
                 return _serverCertificateValidationCallback;
             }
@@ -1329,6 +1330,7 @@ namespace Microsoft.Data.SqlClient
 
         // The exceptions from client certificate callback are not rethrown and instead an SSL
         // exchange fails with CRYPT_E_NOT_FOUND = 0x80092004
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClientCertificateRetrievalCallback/*' />
         public ClientCertificateRetrievalCallback ClientCertificateRetrievalCallback {
             get {
                 return _clientCertificateRetrievalCallback;
