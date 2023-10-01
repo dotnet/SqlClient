@@ -3202,7 +3202,6 @@ namespace Microsoft.Data.SqlClient
         {
             private List<PacketData> _snapshotInBuffs;
 
-
             public StateSnapshot()
             {
                 _snapshotInBuffs = new List<PacketData>();
@@ -3270,32 +3269,10 @@ namespace Microsoft.Data.SqlClient
 
             internal void Snap(TdsParserStateObject state)
             {
-                _stateObj = state;
                 _snapshotInBuffs.Clear();
                 _snapshotInBuffCurrent = 0;
-                _snapshotInBytesUsed = _stateObj._inBytesUsed;
-                _snapshotInBytesPacket = _stateObj._inBytesPacket;
-                _snapshotMessageStatus = _stateObj._messageStatus;
-                // _nullBitmapInfo must be cloned before it is updated
-                _snapshotNullBitmapInfo = _stateObj._nullBitmapInfo;
-                if (_stateObj._longlen != 0 || _stateObj._longlenleft != 0)
-                {
-                    _plpData = new PLPData(_stateObj._longlen, _stateObj._longlenleft);
-                }
-                _snapshotCleanupMetaData = _stateObj._cleanupMetaData;
-                // _cleanupAltMetaDataSetArray must be cloned bofore it is updated
-                _snapshotCleanupAltMetaDataSetArray = _stateObj._cleanupAltMetaDataSetArray;
 
-                _state = _stateObj._snapshottedState;
-#if DEBUG
-                _rollingPend = 0;
-                _rollingPendCount = 0;
-                _stateObj._lastStack = null;
-                Debug.Assert(_stateObj._bTmpRead == 0, "Has partially read data when snapshot taken");
-                Debug.Assert(_stateObj._partialHeaderBytesRead == 0, "Has partially read header when snapshot taken");
-#endif
-
-                PushBuffer(_stateObj._inBuff, _stateObj._inBytesRead);
+                CaptureAsStart(state);
             }
 
             internal void Clear()
