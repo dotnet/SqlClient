@@ -23,6 +23,8 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
 
         private const string TCPConnectionString = "TCPConnectionString";
         private const string NPConnectionString = "NPConnectionString";
+        private const string TCPInstanceConnectionString = "TCPInstanceConnectionString";
+        private const string NPInstanceConnectionString = "NPInstanceConnectionString";
         private const string TCPConnectionStringAASSGX = "TCPConnectionStringAASSGX";
         private const string TCPConnectionStringAASVBS = "TCPConnectionStringAASVBS";
         private const string TCPConnectionStringHGSVBS = "TCPConnectionStringHGSVBS";
@@ -36,6 +38,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
         /// </param>
         public static void Run(string[] args)
         {
+            Console.WriteLine($"Current directory = {Environment.CurrentDirectory}");
             if (!args.Any() || args.Length < 2)
             {
                 throw new InvalidArgumentException("Incomplete arguments provided.");
@@ -63,7 +66,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                             {
                                 // We do not create database for HGS-VBS since SQL Server for AASVBS and HGSVBS connection strings is same.
                                 // Do not create database for NP connection string, since server is always same as TCP
-                                if (activeConnString.Key != TCPConnectionStringHGSVBS && activeConnString.Key != NPConnectionString)
+                                if (activeConnString.Key != TCPConnectionStringHGSVBS && activeConnString.Key != NPConnectionString && activeConnString.Key != NPInstanceConnectionString)
                                 {
                                     //Create a new database
                                     CreateDatabase(dbName, context);
@@ -77,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                             {
                                 // We do not drop database for HGS-VBS since SQL Server for AASVBS and HGSVBS connection strings is same.
                                 // Do not drop database for NP connection string, since server is always same as TCP
-                                if (activeConnString.Key != TCPConnectionStringHGSVBS && activeConnString.Key != NPConnectionString)
+                                if (activeConnString.Key != TCPConnectionStringHGSVBS && activeConnString.Key != NPConnectionString && activeConnString.Key != NPInstanceConnectionString)
                                 {
                                     // Drop Northwind for test run.
                                     DropIfExistsDatabase(dbName, context);
@@ -118,6 +121,16 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
             {
                 s_activeConnectionStrings.Add(NPConnectionString, s_configJson.NPConnectionString);
             }
+            if (!string.IsNullOrEmpty(s_configJson.TCPInstanceConnectionString))
+            {
+                Console.WriteLine($"Loading {s_configJson.TCPInstanceConnectionString}");
+                s_activeConnectionStrings.Add(TCPInstanceConnectionString, s_configJson.TCPInstanceConnectionString);
+            }
+            if (!string.IsNullOrEmpty(s_configJson.NPInstanceConnectionString))
+            {
+                Console.WriteLine($"Loading {s_configJson.NPInstanceConnectionString}");
+                s_activeConnectionStrings.Add(NPInstanceConnectionString, s_configJson.NPInstanceConnectionString);
+            }
             if (s_configJson.EnclaveEnabled)
             {
                 if (!string.IsNullOrEmpty(s_configJson.TCPConnectionStringAASSGX))
@@ -144,6 +157,12 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                     break;
                 case NPConnectionString:
                     s_configJson.NPConnectionString = builder.ConnectionString;
+                    break;
+                case TCPInstanceConnectionString:
+                    s_configJson.TCPInstanceConnectionString = builder.ConnectionString;
+                    break;
+                case NPInstanceConnectionString:
+                    s_configJson.NPInstanceConnectionString = builder.ConnectionString;
                     break;
                 case TCPConnectionStringAASSGX:
                     s_configJson.TCPConnectionStringAASSGX = builder.ConnectionString;
