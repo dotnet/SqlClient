@@ -29,6 +29,8 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
         private const string TCPConnectionStringAASVBS = "TCPConnectionStringAASVBS";
         private const string TCPConnectionStringHGSVBS = "TCPConnectionStringHGSVBS";
 
+        private static bool CreateNamedInstance = false;
+
         /// <summary>
         /// Creates/ drops database as requested.
         /// </summary>
@@ -42,6 +44,11 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
             if (!args.Any() || args.Length < 2)
             {
                 throw new InvalidArgumentException("Incomplete arguments provided.");
+            }
+
+            if (args.Length > 2)
+            {
+                CreateNamedInstance = true;
             }
 
             try
@@ -121,12 +128,12 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
             {
                 s_activeConnectionStrings.Add(NPConnectionString, s_configJson.NPConnectionString);
             }
-            if (!string.IsNullOrEmpty(s_configJson.TCPInstanceConnectionString))
+            if (!string.IsNullOrEmpty(s_configJson.TCPInstanceConnectionString) && CreateNamedInstance)
             {
                 Console.WriteLine($"Loading {s_configJson.TCPInstanceConnectionString}");
                 s_activeConnectionStrings.Add(TCPInstanceConnectionString, s_configJson.TCPInstanceConnectionString);
             }
-            if (!string.IsNullOrEmpty(s_configJson.NPInstanceConnectionString))
+            if (!string.IsNullOrEmpty(s_configJson.NPInstanceConnectionString) && CreateNamedInstance)
             {
                 Console.WriteLine($"Loading {s_configJson.NPInstanceConnectionString}");
                 s_activeConnectionStrings.Add(NPInstanceConnectionString, s_configJson.NPInstanceConnectionString);
@@ -159,10 +166,10 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                     s_configJson.NPConnectionString = builder.ConnectionString;
                     break;
                 case TCPInstanceConnectionString:
-                    s_configJson.TCPInstanceConnectionString = builder.ConnectionString;
+                    if (CreateNamedInstance) s_configJson.TCPInstanceConnectionString = builder.ConnectionString;
                     break;
                 case NPInstanceConnectionString:
-                    s_configJson.NPInstanceConnectionString = builder.ConnectionString;
+                    if (CreateNamedInstance) s_configJson.NPInstanceConnectionString = builder.ConnectionString;
                     break;
                 case TCPConnectionStringAASSGX:
                     s_configJson.TCPConnectionStringAASSGX = builder.ConnectionString;
