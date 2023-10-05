@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
         private const string TCPConnectionStringAASVBS = "TCPConnectionStringAASVBS";
         private const string TCPConnectionStringHGSVBS = "TCPConnectionStringHGSVBS";
 
-        private static bool CreateNamedInstance = false;
+        private static bool CreateTestDbInNamedInstance = false;
 
         /// <summary>
         /// Creates/ drops database as requested.
@@ -40,15 +40,14 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
         /// </param>
         public static void Run(string[] args)
         {
-            Console.WriteLine($"Current directory = {Environment.CurrentDirectory}");
             if (!args.Any() || args.Length < 2)
             {
                 throw new InvalidArgumentException("Incomplete arguments provided.");
             }
 
-            if (args.Length > 2)
+            if (args.Length > 2 && args[2] == "UsingNamedInstance")
             {
-                CreateNamedInstance = true;
+                CreateTestDbInNamedInstance = true;
             }
 
             try
@@ -128,12 +127,12 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
             {
                 s_activeConnectionStrings.Add(NPConnectionString, s_configJson.NPConnectionString);
             }
-            if (!string.IsNullOrEmpty(s_configJson.TCPInstanceConnectionString) && CreateNamedInstance)
+            if (!string.IsNullOrEmpty(s_configJson.TCPInstanceConnectionString) && CreateTestDbInNamedInstance)
             {
                 Console.WriteLine($"Loading {s_configJson.TCPInstanceConnectionString}");
                 s_activeConnectionStrings.Add(TCPInstanceConnectionString, s_configJson.TCPInstanceConnectionString);
             }
-            if (!string.IsNullOrEmpty(s_configJson.NPInstanceConnectionString) && CreateNamedInstance)
+            if (!string.IsNullOrEmpty(s_configJson.NPInstanceConnectionString) && CreateTestDbInNamedInstance)
             {
                 Console.WriteLine($"Loading {s_configJson.NPInstanceConnectionString}");
                 s_activeConnectionStrings.Add(NPInstanceConnectionString, s_configJson.NPInstanceConnectionString);
@@ -166,10 +165,10 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                     s_configJson.NPConnectionString = builder.ConnectionString;
                     break;
                 case TCPInstanceConnectionString:
-                    if (CreateNamedInstance) s_configJson.TCPInstanceConnectionString = builder.ConnectionString;
+                    if (CreateTestDbInNamedInstance) s_configJson.TCPInstanceConnectionString = builder.ConnectionString;
                     break;
                 case NPInstanceConnectionString:
-                    if (CreateNamedInstance) s_configJson.NPInstanceConnectionString = builder.ConnectionString;
+                    if (CreateTestDbInNamedInstance) s_configJson.NPInstanceConnectionString = builder.ConnectionString;
                     break;
                 case TCPConnectionStringAASSGX:
                     s_configJson.TCPConnectionStringAASSGX = builder.ConnectionString;
