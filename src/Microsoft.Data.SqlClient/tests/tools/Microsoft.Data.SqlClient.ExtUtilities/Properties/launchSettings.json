@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Microsoft.Data.SqlClient.ExtUtilities": {
-      "commandName": "Project",
-      "commandLineArgs": "CreateDatabase NORTHWIND"
-    }
-  }
-}
