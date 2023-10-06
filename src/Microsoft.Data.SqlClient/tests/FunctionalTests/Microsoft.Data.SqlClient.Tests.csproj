@@ -71,6 +71,13 @@
   <!-- XUnit and XUnit extensions -->
   <ItemGroup>
     <PackageReference Condition="$(TargetGroup) == 'netfx'" Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
+     <PackageReference
+        Include="Microsoft.NETFramework.ReferenceAssemblies"
+        Version="1.0.3"
+        Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="xunit" Version="$(XunitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xunitrunnervisualstudioVersion)">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
