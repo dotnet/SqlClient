@@ -70,8 +70,8 @@
     <SystemDataOdbcVersion>6.0.1</SystemDataOdbcVersion>
     <SystemIdentityModelTokensJwtVersion>6.24.0</SystemIdentityModelTokensJwtVersion>
     <XunitVersion>2.5.1</XunitVersion>
-    <xunitrunnervisualstudioVersion>2.5.1</xunitrunnervisualstudioVersion>
-    <MicrosoftDotNetRemoteExecutorVersion>9.0.0-beta.23504.4</MicrosoftDotNetRemoteExecutorVersion>
+    <xunitrunnervisualstudioVersion>2.5.0</xunitrunnervisualstudioVersion>
+    <MicrosoftDotNetRemoteExecutorVersion>8.0.0-beta.23505.1</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
     <MicrosoftSqlServerSqlManagementObjectsVersion>170.8.0</MicrosoftSqlServerSqlManagementObjectsVersion>
     <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
