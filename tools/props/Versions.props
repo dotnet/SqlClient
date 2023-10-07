@@ -61,7 +61,7 @@
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
-    <MicrosoftDotNetXUnitExtensionsVersion>8.0.0-beta.23451.1</MicrosoftDotNetXUnitExtensionsVersion>
+    <MicrosoftDotNetXUnitExtensionsVersion>9.0.0-beta.23506.2</MicrosoftDotNetXUnitExtensionsVersion>
     <MicrosoftDotNetPlatformAbstractionsVersion>3.1.6</MicrosoftDotNetPlatformAbstractionsVersion>
     <MicrosoftIdentityModelClientsActiveDirectoryVersion>5.2.9</MicrosoftIdentityModelClientsActiveDirectoryVersion>
     <MicrosoftNETTestSdkVersion>17.7.2</MicrosoftNETTestSdkVersion>
@@ -71,7 +71,7 @@
     <SystemIdentityModelTokensJwtVersion>6.24.0</SystemIdentityModelTokensJwtVersion>
     <XunitVersion>2.5.1</XunitVersion>
     <xunitrunnervisualstudioVersion>2.5.0</xunitrunnervisualstudioVersion>
-    <MicrosoftDotNetRemoteExecutorVersion>8.0.0-beta.23505.1</MicrosoftDotNetRemoteExecutorVersion>
+    <MicrosoftDotNetRemoteExecutorVersion>7.0.0-beta.22316.1</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
     <MicrosoftSqlServerSqlManagementObjectsVersion>170.8.0</MicrosoftSqlServerSqlManagementObjectsVersion>
     <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
