@@ -307,10 +307,7 @@
   <ItemGroup>
     <PackageReference Condition="$(TargetGroup) == 'netfx'" Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
     <PackageReference Include="xunit" Version="$(XunitVersion)" />
-    <PackageReference
-        Include="Microsoft.NETFramework.ReferenceAssemblies"
-        Version="1.0.3"
-        Condition="'$(TargetGroup)' == 'netfx'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="$(MicrosoftNETFrameworkReferenceAssembliesVersion)" Condition="'$(TargetGroup)' == 'netfx'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -346,6 +343,9 @@
   <ItemGroup>
     <None Update="SQL\ConnectionTestWithSSLCert\GenerateSelfSignedCertificate.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 </Project>

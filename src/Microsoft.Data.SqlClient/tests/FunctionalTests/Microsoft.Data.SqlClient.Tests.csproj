@@ -71,10 +71,7 @@
   <!-- XUnit and XUnit extensions -->
   <ItemGroup>
     <PackageReference Condition="$(TargetGroup) == 'netfx'" Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
-     <PackageReference
-        Include="Microsoft.NETFramework.ReferenceAssemblies"
-        Version="1.0.3"
-        Condition="'$(TargetGroup)' == 'netfx'">
+     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="$(MicrosoftNETFrameworkReferenceAssembliesVersion)" Condition="'$(TargetGroup)'=='netfx'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -127,4 +124,10 @@
     <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
 </Project>

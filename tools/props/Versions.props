@@ -70,6 +70,7 @@
     <SystemDataOdbcVersion>6.0.1</SystemDataOdbcVersion>
     <SystemIdentityModelTokensJwtVersion>6.24.0</SystemIdentityModelTokensJwtVersion>
     <XunitVersion>2.5.1</XunitVersion>
+    <MicrosoftNETFrameworkReferenceAssembliesVersion>1.0.3</MicrosoftNETFrameworkReferenceAssembliesVersion>
     <xunitrunnervisualstudioVersion>2.5.0</xunitrunnervisualstudioVersion>
     <MicrosoftDotNetRemoteExecutorVersion>7.0.0-beta.22316.1</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
