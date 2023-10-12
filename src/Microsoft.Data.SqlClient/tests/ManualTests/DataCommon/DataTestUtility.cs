@@ -315,6 +315,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(TCPConnectionString);
         }
 
+        public static bool IsNPInstanceConnStringsSetup()
+        {
+            return !string.IsNullOrEmpty(NPInstanceConnectionString);
+        }
+
         // Synapse: Always Encrypted is not supported with Azure Synapse.
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool AreConnStringSetupForAE()
