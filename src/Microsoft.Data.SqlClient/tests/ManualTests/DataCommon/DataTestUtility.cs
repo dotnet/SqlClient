@@ -27,8 +27,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         public static readonly string NPConnectionString = null;
         public static readonly string TCPConnectionString = null;
-        public static readonly string NPInstanceConnectionString = null;
-        public static readonly string TCPInstanceConnectionString = null;
         public static readonly string TCPConnectionStringHGSVBS = null;
         public static readonly string TCPConnectionStringAASVBS = null;
         public static readonly string TCPConnectionStringNoneVBS = null;
@@ -92,8 +90,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Config c = Config.Load();
             NPConnectionString = c.NPConnectionString;
             TCPConnectionString = c.TCPConnectionString;
-            NPInstanceConnectionString = c.NPInstanceConnectionString;
-            TCPInstanceConnectionString = c.TCPInstanceConnectionString;
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
             TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
@@ -313,11 +309,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsTCPConnStringSetup()
         {
             return !string.IsNullOrEmpty(TCPConnectionString);
-        }
-
-        public static bool IsNPInstanceConnStringsSetup()
-        {
-            return !string.IsNullOrEmpty(NPInstanceConnectionString);
         }
 
         // Synapse: Always Encrypted is not supported with Azure Synapse.

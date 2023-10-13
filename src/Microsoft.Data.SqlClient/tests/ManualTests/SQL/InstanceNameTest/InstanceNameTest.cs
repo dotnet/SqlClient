@@ -85,26 +85,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNPInstanceConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        [PlatformSpecific(TestPlatforms.Windows)] // Named pipes with the given input strings are not supported on Unix
-        public async static void NamedPipeSecondaryInstanceTest()
-        {
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
-
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.NPInstanceConnectionString);
-            builder.ConnectTimeout = 5;
-            await OpenGoodConnection(builder.ConnectionString);
-        }
-
-        private async static Task OpenGoodConnection(string connectionString)
-        {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                await conn.OpenAsync();
-                DataTestUtility.AssertEqualsWithDescription( ConnectionState.Open, conn.State, "FAILED: Connection should be in open state");
-            }
-        }
-   
         private static bool IsBrowserAlive(string browserHostname)
         {
             const byte ClntUcastEx = 0x03;

@@ -12,8 +12,6 @@ namespace Microsoft.Data.SqlClient.TestUtilities
     {
         public string TCPConnectionString = null;
         public string NPConnectionString = null;
-        public string TCPInstanceConnectionString = null;
-        public string NPInstanceConnectionString = null;
         public string TCPConnectionStringHGSVBS = null;
         public string TCPConnectionStringAASVBS = null;
         public string TCPConnectionStringNoneVBS = null;
