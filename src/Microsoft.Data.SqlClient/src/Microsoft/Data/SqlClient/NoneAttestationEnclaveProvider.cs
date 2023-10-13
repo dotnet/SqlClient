@@ -18,9 +18,9 @@ namespace Microsoft.Data.SqlClient
 
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
-        internal override void GetEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
+        internal override void GetEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, bool isRetry, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
-            GetEnclaveSessionHelper(enclaveSessionParameters, false, out sqlEnclaveSession, out counter, out customData, out customDataLength);
+            GetEnclaveSessionHelper(enclaveSessionParameters, false, isRetry, out sqlEnclaveSession, out counter, out customData, out customDataLength);
         }
 
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.

@@ -2400,6 +2400,92 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             cmd.ExecuteNonQuery();
         }
 
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.EnclaveEnabled))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestRetryWhenAEEnclaveCacheIsStale(string connectionString)
+        {
+            CleanUpTable(connectionString, _tableName);
+
+            const int customerId = 50;
+            IList<object> values = GetValues(dataHint: customerId);
+            InsertRows(tableName: _tableName, numberofRows: 1, values: values, connection: connectionString);
+
+            ApiTestTable table = _fixture.ApiTestTable as ApiTestTable;
+            string enclaveSelectQuery = $@"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE CustomerId > @CustomerId";
+            string alterCekQueryFormatString = "ALTER TABLE [{0}] " +
+                "ALTER COLUMN [CustomerId] [int]  " +
+                "ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{1}], " +
+                "ENCRYPTION_TYPE = Randomized, " +
+                "ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256'); " +
+                "ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE;";
+
+            using SqlConnection sqlConnection = new(connectionString);
+            sqlConnection.Open();
+
+            // change the CEK and encryption type to randomized for the CustomerId column to ensure enclaves are used
+            using SqlCommand cmd = new SqlCommand(
+                string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey2.Name),
+                sqlConnection,
+                null,
+                SqlCommandColumnEncryptionSetting.Enabled);
+            cmd.ExecuteNonQuery();
+
+            // execute the select query to create the cache entry
+            cmd.CommandText = enclaveSelectQuery;
+            cmd.Parameters.AddWithValue("@CustomerId", 0);
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            }
+
+            CommandHelper.InvalidateEnclaveSession(cmd);
+
+            // Execute again to exercise the session retry logic
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            }
+
+            CommandHelper.InvalidateEnclaveSession(cmd);
+
+            // Execute again to exercise the async session retry logic
+            Task readAsyncTask = ReadAsync(cmd, values, CommandBehavior.Default);
+            readAsyncTask.GetAwaiter().GetResult();
+
+#if DEBUG
+            CommandHelper.ForceThrowDuringGenerateEnclavePackage(cmd);
+
+            // Execute again to exercise the session retry logic
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    Assert.Equal(customerId, (int)reader[0]);
+                }
+                reader.Close();
+            }
+
+            CommandHelper.ForceThrowDuringGenerateEnclavePackage(cmd);
+
+            // Execute again to exercise the async session retry logic
+            Task readAsyncTask2 = ReadAsync(cmd, values, CommandBehavior.Default);
+            readAsyncTask2.GetAwaiter().GetResult();
+#endif
+
+            // revert the CEK change to the CustomerId column
+            cmd.Parameters.Clear();
+            cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey1.Name);
+            cmd.ExecuteNonQuery();
+        }
+
         private void ExecuteQueryThatRequiresCustomKeyStoreProvider(SqlConnection connection)
         {
             using (SqlCommand command = CreateCommandThatRequiresCustomKeyStoreProvider(connection))
