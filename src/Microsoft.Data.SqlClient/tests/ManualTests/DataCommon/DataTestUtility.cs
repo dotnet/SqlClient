@@ -327,8 +327,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
 
-        public static bool IsUsingNativeSNI() => !IsUsingManagedSNI();
-
+        public static bool IsUsingNativeSNI() =>
+#if !NETFRAMEWORK
+        DataTestUtility.IsNotUsingManagedSNIOnWindows();
+#else 
+            true;
+#endif
         // Synapse: UTF8 collations are not supported with Azure Synapse.
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/40103791-utf-8-collations-should-be-supported-in-azure-syna
         public static bool IsUTF8Supported()

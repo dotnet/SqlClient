@@ -21,16 +21,18 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal enum SNIProviders
     {
-        HTTP_PROV, // HTTP Provider
-        NP_PROV, // Named Pipes Provider
-        SESSION_PROV, // Session Provider
-        SIGN_PROV, // Sign Provider
-        SM_PROV, // Shared Memory Provider
-        SMUX_PROV, // SMUX Provider
-        SSL_PROV, // SSL Provider
-        TCP_PROV, // TCP Provider
-        MAX_PROVS, // Number of providers
-        INVALID_PROV // SQL Network Interfaces
+        HTTP_PROV = 0, // HTTP Provider
+        NP_PROV = 1, // Named Pipes Provider
+        SESSION_PROV = 2, // Session Provider
+        SIGN_PROV = 3, // Sign Provider
+        SM_PROV = 4, // Shared Memory Provider
+        SMUX_PROV = 5, // SMUX Provider
+        SSL_PROV = 6, // SSL Provider
+        TCP_PROV = 7, // TCP Provider
+        VIA_PROV = 8, // Virtual Interface Architecture Provider
+        CTAIP_PROV = 9,
+        MAX_PROVS = 10, // Number of providers
+        INVALID_PROV = 11 // SQL Network Interfaces
     }
 
     /// <summary>

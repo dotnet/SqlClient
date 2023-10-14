@@ -1195,10 +1195,10 @@
     <value>TCP Provider</value>
   </data>
   <data name="SNI_PN8" xml:space="preserve">
-    <value />
+    <value>VIA Provider</value>
   </data>
   <data name="SNI_PN9" xml:space="preserve">
-    <value>SQL Network Interfaces</value>
+    <value>CTAIP Provider</value>
   </data>
   <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
     <value>.database.windows.net</value>
@@ -1934,5 +1934,11 @@
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+  </data>
+  <data name="SNI_PN10" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SNI_PN11" xml:space="preserve">
+    <value>SQL Network Interfaces</value>
   </data>
 </root>
