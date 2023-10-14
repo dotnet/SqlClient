@@ -19,7 +19,6 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlConnectionBasicTests
     {
-        private static readonly bool s_isNotArmProcess = RuntimeInformation.ProcessArchitecture != Architecture.Arm;
         [Fact]
         public void ConnectionTest()
         {
@@ -39,7 +38,7 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [ConditionalTheory(nameof(s_isNotArmProcess))]
+        [ConditionalTheory(nameof(TestUtility.s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -59,7 +58,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Open, connection.State);
         }
 
-        [ConditionalTheory(nameof(s_isNotArmProcess))]
+        [ConditionalTheory(nameof(TestUtility.s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -86,7 +85,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        [ConditionalTheory(nameof(s_isNotArmProcess))]
+        [ConditionalTheory(nameof(TestUtility.s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -108,7 +107,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
-        [ConditionalTheory(nameof(s_isNotArmProcess))]
+        [ConditionalTheory(nameof(TestUtility.s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
