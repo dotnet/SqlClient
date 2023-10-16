@@ -1195,10 +1195,10 @@
     <value>TCP Provider</value>
   </data>
   <data name="SNI_PN8" xml:space="preserve">
-    <value />
+    <value>VIA Provider</value>
   </data>
   <data name="SNI_PN9" xml:space="preserve">
-    <value>SQL Network Interfaces</value>
+    <value>CTAIP Provider</value>
   </data>
   <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
     <value>.database.windows.net</value>
@@ -1940,5 +1940,11 @@
   </data>
   <data name="SQL_TDS8_NotSupported_Netstandard2.0" xml:space="preserve">
     <value>Encrypt=Strict is not supported when targeting .NET Standard 2.0. Use .NET Standard 2.1, .NET Framework, or .NET.</value>
+  </data>
+  <data name="SNI_PN10" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SNI_PN11" xml:space="preserve">
+    <value>SQL Network Interfaces</value>
   </data>
 </root>

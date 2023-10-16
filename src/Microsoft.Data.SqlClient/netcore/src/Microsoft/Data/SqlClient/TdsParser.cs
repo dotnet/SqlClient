@@ -1516,20 +1516,17 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-
                     if (TdsParserStateObjectFactory.UseManagedSNI)
                     {
-                        // SNI error. Append additional error message info if available.
-                        //
+                        // SNI error. Append additional error message info if available and hasn't been included.
                         string sniLookupMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
-                        errorMessage = (errorMessage != string.Empty) ?
-                                        (sniLookupMessage + ": " + errorMessage) :
-                                        sniLookupMessage;
+                        errorMessage = (string.IsNullOrEmpty(errorMessage) || errorMessage.Contains(sniLookupMessage))
+                                        ? sniLookupMessage
+                                        : (sniLookupMessage + ": " + errorMessage);
                     }
                     else
                     {
                         // SNI error. Replace the entire message.
-                        //
                         errorMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
 
                         // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
@@ -1538,6 +1535,7 @@ namespace Microsoft.Data.SqlClient
                             errorMessage += LocalDBAPI.GetLocalDBMessage((int)details.nativeError);
                             win32ErrorCode = 0;
                         }
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Extracting the latest exception from native SNI. errorMessage: {0}", errorMessage);
                     }
                 }
                 errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
@@ -12545,8 +12543,7 @@ namespace Microsoft.Data.SqlClient
                 return true;       // No data
             }
 
-            Debug.Assert(((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL),
-                    "Out of sync plp read request");
+            Debug.Assert(((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL), "Out of sync plp read request");
 
             Debug.Assert((buff == null && offst == 0) || (buff.Length >= offst + len), "Invalid length sent to ReadPlpUnicodeChars()!");
             charsLeft = len;
