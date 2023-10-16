@@ -146,6 +146,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             if (isDisposing)
             {
                 _endpoint?.Stop();
+                RequestCounter = 0;
             }
         }
     }
