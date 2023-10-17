@@ -507,7 +507,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 Debug.Assert(!string.IsNullOrWhiteSpace(localDBInstance), "Local DB Instance name cannot be empty.");
                 localDBConnectionString = LocalDB.GetLocalDBConnectionString(localDBInstance);
 
-                if (fullServerName == null)
+                if (fullServerName == null || string.IsNullOrEmpty(localDBConnectionString))
                 {
                     // The Last error is set in LocalDB.GetLocalDBConnectionString. We don't need to set Last here.
                     error = true;
@@ -531,6 +531,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private const string Slash = @"/";
         private const string PipeToken = "pipe";
         private const string LocalDbHost = "(localdb)";
+        private const string LocalDbHost_NP = @"np:\\.\pipe\LOCALDB#";
         private const string NamedPipeInstanceNameHeader = "mssql$";
         private const string DefaultPipeName = "sql\\query";
 
@@ -626,25 +627,41 @@ namespace Microsoft.Data.SqlClient.SNI
         internal static string GetLocalDBInstance(string dataSource, out bool error)
         {
             string instanceName = null;
-
-            string workingDataSource = dataSource.ToLowerInvariant();
-
-            string[] tokensByBackSlash = workingDataSource.Split(BackSlashCharacter);
+            // ReadOnlySpan is not supported in netstandard 2.0, but installing System.Memory solves the issue
+            ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
 
             error = false;
 
             // All LocalDb endpoints are of the format host\instancename where host is always (LocalDb) (case-insensitive)
-            if (tokensByBackSlash.Length == 2 && LocalDbHost.Equals(tokensByBackSlash[0].TrimStart()))
+            // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
+            int index = input.IndexOf(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase);
+            if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
             {
-                if (!string.IsNullOrWhiteSpace(tokensByBackSlash[1]))
+                instanceName = input.Trim().ToString();
+            }
+            else if (index > 0)
+            {
+                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIProxy), EventType.ERR, "Incompatible use of prefix with LocalDb: '{0}'", dataSource);
+                error = true;
+            }
+            else if (index == 0)
+            {
+                // When netcoreapp support for netcoreapp2.1 is dropped these slice calls could be converted to System.Range\System.Index
+                // Such ad input = input[1..];
+                input = input.Slice(LocalDbHost.Length);
+                if (!input.IsEmpty && input[0] == BackSlashCharacter)
                 {
-                    instanceName = tokensByBackSlash[1].Trim();
+                    input = input.Slice(1);
+                }
+                if (!input.IsEmpty)
+                {
+                    instanceName = input.Trim().ToString();
                 }
                 else
                 {
                     SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
-                    return null;
                 }
             }
 

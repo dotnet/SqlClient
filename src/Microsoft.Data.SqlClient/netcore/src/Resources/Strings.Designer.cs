@@ -1942,6 +1942,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string SNI_PN10 {
+            get {
+                return ResourceManager.GetString("SNI_PN10", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SQL Network Interfaces.
+        /// </summary>
+        internal static string SNI_PN11 {
+            get {
+                return ResourceManager.GetString("SNI_PN11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Session Provider.
         /// </summary>
         internal static string SNI_PN2 {
@@ -1996,7 +2014,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to VIA Provider.
         /// </summary>
         internal static string SNI_PN8 {
             get {
@@ -2005,7 +2023,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SQL Network Interfaces.
+        ///   Looks up a localized string similar to CTAIP Provider.
         /// </summary>
         internal static string SNI_PN9 {
             get {
@@ -2806,15 +2824,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
-        /// </summary>
-        internal static string SQL_NonInteractiveWithPassword {
-            get {
-                return ResourceManager.GetString("SQL_NonInteractiveWithPassword", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The connection does not support MultipleActiveResultSets..
         /// </summary>
         internal static string SQL_MarsUnsupportedOnConnection {
@@ -2874,6 +2883,15 @@ namespace System {
         internal static string SQL_NonCharColumn {
             get {
                 return ResourceManager.GetString("SQL_NonCharColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_NonInteractiveWithPassword {
+            get {
+                return ResourceManager.GetString("SQL_NonInteractiveWithPassword", resourceCulture);
             }
         }
         
