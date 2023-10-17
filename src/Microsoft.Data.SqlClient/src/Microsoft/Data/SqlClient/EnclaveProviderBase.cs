@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
 
         #region protected methods
         // Helper method to get the enclave session from the cache if present
-        protected void GetEnclaveSessionHelper(EnclaveSessionParameters enclaveSessionParameters, bool shouldGenerateNonce, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
+        protected void GetEnclaveSessionHelper(EnclaveSessionParameters enclaveSessionParameters, bool shouldGenerateNonce, bool isRetry, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
             customData = null;
             customDataLength = 0;
@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     sameThreadRetry = true;
                 }
-                else
+                else if (!isRetry)
                 {
                     // We are explicitly not signalling the event here, as we want to hold the event till driver calls CreateEnclaveSession
                     // If we signal the event now, then multiple thread end up calling GetAttestationParameters which triggers the attestation workflow.
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient
 
                 // In case of multi-threaded application, first thread will set the event and all the subsequent threads will wait here either until the enclave
                 // session is created or timeout happens.
-                if (sessionCacheLockTaken || sameThreadRetry)
+                if (sessionCacheLockTaken || sameThreadRetry || isRetry)
                 {
                     // While the current thread is waiting for event to be signaled and in the meanwhile we already completed the attestation on different thread
                     // then we need to signal the event here
