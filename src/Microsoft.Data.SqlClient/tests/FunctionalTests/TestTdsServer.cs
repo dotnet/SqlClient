@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.Tests
             this.Engine = engine;
         }
 
-        public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false, [CallerMemberName] string methodName = "")
+        public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false, bool excludeEncryption = false, [CallerMemberName] string methodName = "")
         {
             TDSServerArguments args = new TDSServerArguments()
             {
@@ -35,6 +35,11 @@ namespace Microsoft.Data.SqlClient.Tests
                 args.FedAuthRequiredPreLoginOption = Microsoft.SqlServer.TDS.PreLogin.TdsPreLoginFedAuthRequiredOption.FedAuthRequired;
             }
 
+            if (excludeEncryption)
+            {
+                args.Encryption = SqlServer.TDS.PreLogin.TDSPreLoginTokenEncryptionType.None;
+            }
+
             TestTdsServer server = engine == null ? new TestTdsServer(args) : new TestTdsServer(engine, args);
             server._endpoint = new TDSServerEndPoint(server) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
             server._endpoint.EndpointName = methodName;
@@ -43,14 +48,17 @@ namespace Microsoft.Data.SqlClient.Tests
             server._endpoint.Start();
 
             int port = server._endpoint.ServerEndPoint.Port;
-            server.connectionStringBuilder = new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = 5, Encrypt = false };
+            server.connectionStringBuilder = excludeEncryption
+                // Allow encryption to be set when encryption is to be excluded from pre-login response.
+                ? new SqlConnectionStringBuilder() { DataSource = "localhost," + port, Encrypt = true }
+                : new SqlConnectionStringBuilder() { DataSource = "localhost," + port, Encrypt = false };
             server.ConnectionString = server.connectionStringBuilder.ConnectionString;
             return server;
         }
 
-        public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false, [CallerMemberName] string methodName = "")
+        public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false, bool excludeEncryption = false, [CallerMemberName] string methodName = "")
         {
-            return StartServerWithQueryEngine(null, false, false, methodName);
+            return StartServerWithQueryEngine(null, false, false, excludeEncryption, methodName);
         }
 
         public void Dispose() => _endpoint?.Stop();

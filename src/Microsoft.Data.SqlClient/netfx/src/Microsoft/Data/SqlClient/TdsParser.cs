@@ -1159,6 +1159,8 @@ namespace Microsoft.Data.SqlClient
             int payloadOffset = 0;
             int payloadLength = 0;
             int option = payload[offset++];
+            bool serverSupportsEncryption = false;
+            bool serverSupportsCTAIP = false;
 
             while (option != (byte)PreLoginOptions.LASTOPT)
             {
@@ -1191,20 +1193,17 @@ namespace Microsoft.Data.SqlClient
                         ON,
                         NOT_SUP,
                         REQ,
-                        LOGIN
-                    } */
+                        LOGIN,
+                        OPTIONS_MASK = 0x3f,
+                        CTAIP = 0x40,
+                        CLIENT_CERT = 0x80,
+                        } */
+
+                        // Any response other than NOT_SUP means the server supports encryption.
+                        serverSupportsEncryption = (serverOption & EncryptionOptions.OPTIONS_MASK) != EncryptionOptions.NOT_SUP;
+
                         switch (_encryptionOption & EncryptionOptions.OPTIONS_MASK)
                         {
-                            case (EncryptionOptions.ON):
-                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.NOT_SUP)
-                                {
-                                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                                    _physicalStateObj.Dispose();
-                                    ThrowExceptionAndWarning(_physicalStateObj);
-                                }
-
-                                break;
-
                             case (EncryptionOptions.OFF):
                                 if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.OFF)
                                 {
@@ -1222,6 +1221,7 @@ namespace Microsoft.Data.SqlClient
                             case (EncryptionOptions.NOT_SUP):
                                 if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.REQ)
                                 {
+                                    // Server requires encryption, but client does not support it.
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                                     _physicalStateObj.Dispose();
                                     ThrowExceptionAndWarning(_physicalStateObj);
@@ -1230,128 +1230,20 @@ namespace Microsoft.Data.SqlClient
                                 break;
 
                             default:
-                                Debug.Fail("Invalid client encryption option detected");
+                                // Any other client option needs encryption
+                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.NOT_SUP)
+                                {
+                                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                                    _physicalStateObj.Dispose();
+                                    ThrowExceptionAndWarning(_physicalStateObj);
+                                }
+
                                 break;
                         }
 
                         // Check if the server will accept CTAIP.
                         //
-                        if ((_encryptionOption & EncryptionOptions.CTAIP) != 0 &&
-                            (serverOption & EncryptionOptions.CTAIP) == 0)
-                        {
-                            _physicalStateObj.AddError(new SqlError(TdsEnums.CTAIP_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.CTAIPNotSupportedByServer(), "", 0));
-                            _physicalStateObj.Dispose();
-                            ThrowExceptionAndWarning(_physicalStateObj);
-                        }
-
-                        if ((_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.ON ||
-                            (_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.LOGIN)
-                        {
-
-                            if (serverCallback != null)
-                            {
-                                trustServerCert = true;
-                            }
-
-                            UInt32 error = 0;
-
-                            // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
-                            bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || ((authType != SqlAuthenticationMethod.NotSpecified || _connHandler._accessTokenInBytes != null) && !trustServerCert);
-
-                            UInt32 info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
-                                | (isYukonOrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
-
-                            if (encrypt && !integratedSecurity)
-                            {
-                                // optimization: in case of SQL Authentication and encryption, set SNI_SSL_IGNORE_CHANNEL_BINDINGS to let SNI
-                                // know that it does not need to allocate/retrieve the Channel Bindings from the SSL context.
-                                info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
-                            }
-
-                            // Add SSL (Encryption) SNI provider.
-                            SNINativeMethodWrapper.AuthProviderInfo authInfo = new SNINativeMethodWrapper.AuthProviderInfo();
-                            authInfo.flags = info;
-                            authInfo.certId = null;
-                            authInfo.certHash = false;
-                            authInfo.clientCertificateCallbackContext = IntPtr.Zero;
-                            authInfo.clientCertificateCallback = null;
-
-                            if ((_encryptionOption & EncryptionOptions.CLIENT_CERT) != 0)
-                            {
-
-                                string certificate = _connHandler.ConnectionOptions.Certificate;
-
-                                if (certificate.StartsWith("subject:", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    authInfo.certId = certificate.Substring(8);
-                                }
-                                else if (certificate.StartsWith("sha1:", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    authInfo.certId = certificate.Substring(5);
-                                    authInfo.certHash = true;
-                                }
-
-                                if (clientCallback != null)
-                                {
-                                    authInfo.clientCertificateCallbackContext = clientCallback;
-                                    authInfo.clientCertificateCallback = _clientCertificateCallback;
-                                }
-                            }
-
-                            error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, authInfo);
-
-                            if (error != TdsEnums.SNI_SUCCESS)
-                            {
-                                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                                ThrowExceptionAndWarning(_physicalStateObj);
-                            }
-
-                            // in the case where an async connection is made, encryption is used and Windows Authentication is used,
-                            // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
-                            // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
-                            // before calling SNISecGenClientContext).
-                            error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
-
-                            if (error != TdsEnums.SNI_SUCCESS)
-                            {
-                                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                                ThrowExceptionAndWarning(_physicalStateObj);
-                            }
-
-                            string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
-                            if (!string.IsNullOrEmpty(warningMessage))
-                            {
-                                // This logs console warning of insecure protocol in use.
-                                _logger.LogWarning(_typeName, MethodBase.GetCurrentMethod().Name, warningMessage);
-                            }
-
-                            // Validate server certificate
-                            if (serverCallback != null)
-                            {
-                                X509Certificate2 serverCert = null;
-
-                                error = SNINativeMethodWrapper.SNISecGetServerCertificate(_physicalStateObj.Handle, ref serverCert);
-                                if (error != TdsEnums.SNI_SUCCESS)
-                                {
-                                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                                    ThrowExceptionAndWarning(_physicalStateObj);
-                                }
-
-                                bool valid = serverCallback(serverCert);
-                                if (!valid)
-                                {
-                                    throw SQL.InvalidServerCertificate();
-                                }
-                            }
-
-                            // create a new packet encryption changes the internal packet size Bug# 228403
-                            try
-                            { } // EmptyTry/Finally to avoid FXCop violation
-                            finally
-                            {
-                                _physicalStateObj.ClearAllWritePackets();
-                            }
-                        }
+                        serverSupportsCTAIP = (serverOption & EncryptionOptions.CTAIP) != 0;
 
                         break;
 
@@ -1431,6 +1323,128 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     break;
+                }
+            }
+
+            if ((_encryptionOption & EncryptionOptions.CTAIP) != 0 && !serverSupportsCTAIP)
+            {
+                _physicalStateObj.AddError(new SqlError(TdsEnums.CTAIP_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.CTAIPNotSupportedByServer(), "", 0));
+                _physicalStateObj.Dispose();
+                ThrowExceptionAndWarning(_physicalStateObj);
+            }
+
+            if ((_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.ON ||
+                (_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.LOGIN)
+            {
+                if (!serverSupportsEncryption)
+                {
+                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                    _physicalStateObj.Dispose();
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+
+                if (serverCallback != null)
+                {
+                    trustServerCert = true;
+                }
+
+                UInt32 error = 0;
+
+                // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
+                bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || ((authType != SqlAuthenticationMethod.NotSpecified || _connHandler._accessTokenInBytes != null) && !trustServerCert);
+
+                UInt32 info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
+                    | (isYukonOrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
+
+                if (encrypt && !integratedSecurity)
+                {
+                    // optimization: in case of SQL Authentication and encryption, set SNI_SSL_IGNORE_CHANNEL_BINDINGS to let SNI
+                    // know that it does not need to allocate/retrieve the Channel Bindings from the SSL context.
+                    info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
+                }
+
+                // Add SSL (Encryption) SNI provider.
+                SNINativeMethodWrapper.AuthProviderInfo authInfo = new SNINativeMethodWrapper.AuthProviderInfo();
+                authInfo.flags = info;
+                authInfo.certId = null;
+                authInfo.certHash = false;
+                authInfo.clientCertificateCallbackContext = IntPtr.Zero;
+                authInfo.clientCertificateCallback = null;
+
+                if ((_encryptionOption & EncryptionOptions.CLIENT_CERT) != 0)
+                {
+
+                    string certificate = _connHandler.ConnectionOptions.Certificate;
+
+                    if (certificate.StartsWith("subject:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        authInfo.certId = certificate.Substring(8);
+                    }
+                    else if (certificate.StartsWith("sha1:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        authInfo.certId = certificate.Substring(5);
+                        authInfo.certHash = true;
+                    }
+
+                    if (clientCallback != null)
+                    {
+                        authInfo.clientCertificateCallbackContext = clientCallback;
+                        authInfo.clientCertificateCallback = _clientCertificateCallback;
+                    }
+                }
+
+                error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, authInfo);
+
+                if (error != TdsEnums.SNI_SUCCESS)
+                {
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+
+                // in the case where an async connection is made, encryption is used and Windows Authentication is used,
+                // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
+                // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
+                // before calling SNISecGenClientContext).
+                error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
+
+                if (error != TdsEnums.SNI_SUCCESS)
+                {
+                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+
+                string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
+                if (!string.IsNullOrEmpty(warningMessage))
+                {
+                    // This logs console warning of insecure protocol in use.
+                    _logger.LogWarning(_typeName, MethodBase.GetCurrentMethod().Name, warningMessage);
+                }
+
+                // Validate server certificate
+                if (serverCallback != null)
+                {
+                    X509Certificate2 serverCert = null;
+
+                    error = SNINativeMethodWrapper.SNISecGetServerCertificate(_physicalStateObj.Handle, ref serverCert);
+                    if (error != TdsEnums.SNI_SUCCESS)
+                    {
+                        _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                        ThrowExceptionAndWarning(_physicalStateObj);
+                    }
+
+                    bool valid = serverCallback(serverCert);
+                    if (!valid)
+                    {
+                        throw SQL.InvalidServerCertificate();
+                    }
+                }
+
+                // create a new packet encryption changes the internal packet size Bug# 228403
+                try
+                { } // EmptyTry/Finally to avoid FXCop violation
+                finally
+                {
+                    _physicalStateObj.ClearAllWritePackets();
                 }
             }
 
