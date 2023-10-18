@@ -444,7 +444,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #if NET7_0_OR_GREATER
             return OperatingSystem.IsWindows() && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture != System.Runtime.InteropServices.Architecture.X86 && IsNotAzureServer();
 #elif NETFRAMEWORK
-            return System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) && IsNotAzureServer();
+            return IsNotAzureServer();
 #else
             return false;
 #endif
