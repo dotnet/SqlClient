@@ -307,6 +307,8 @@
       Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))"
       Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
+    <!-- This is to identify if UWP is being used -->
+    <PackageReference Include="DesktopBridge.Helpers" Version="1.2.2"/>
     <ProjectReference
       Include="$(TestsPath)CustomConfigurableRetryLogic\CustomRetryLogicProvider.csproj" />
   </ItemGroup>
@@ -359,8 +361,9 @@
     <None Update="SQL\ConnectionTestWithSSLCert\GenerateSelfSignedCertificate.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="xunit.runner.json">
+    <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+      <TargetPath>xunit.runner.json</TargetPath>
+    </ContentWithTargetPath>
   </ItemGroup>
 </Project>
