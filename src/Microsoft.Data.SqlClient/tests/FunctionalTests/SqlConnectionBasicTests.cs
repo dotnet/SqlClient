@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [ConditionalFact(nameof(TestUtility.s_isNotArmProcess))]
+        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.s_isNotArmProcess))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()
         {
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [ConditionalTheory(nameof(TestUtility.s_isNotArmProcess))]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Open, connection.State);
         }
 
-        [ConditionalTheory(nameof(TestUtility.s_isNotArmProcess))]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        [ConditionalTheory(nameof(TestUtility.s_isNotArmProcess))]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
-        [ConditionalTheory(nameof(TestUtility.s_isNotArmProcess))]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.s_isNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -316,7 +316,7 @@ namespace Microsoft.Data.SqlClient.Tests
             try
             {
                 //an asyn call with a timeout token to cancel the operation after the specific time
-                using CancellationTokenSource cts  = new CancellationTokenSource(timeout * 1000);
+                using CancellationTokenSource cts = new CancellationTokenSource(timeout * 1000);
                 timer.Start();
                 await connection.OpenAsync(cts.Token).ConfigureAwait(false);
             }
