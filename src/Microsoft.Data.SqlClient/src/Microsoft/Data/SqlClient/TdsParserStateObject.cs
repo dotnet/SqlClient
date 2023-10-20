@@ -64,6 +64,7 @@ namespace Microsoft.Data.SqlClient
         private readonly WeakReference<object> _owner = new(null);   // the owner of this session, used to track when it's been orphaned
         internal SqlDataReader.SharedState _readerState;                    // susbset of SqlDataReader state (if it is the owner) necessary for parsing abandoned results in TDS
         private int _activateCount;                     // 0 when we're in the pool, 1 when we're not, all others are an error
+        private SnapshottedStateFlags _snapshottedState;
 
         // Two buffers exist in tdsparser, an in buffer and an out buffer.  For the out buffer, only
         // one bookkeeping variable is needed, the number of bytes used in the buffer.  For the in buffer,
@@ -203,6 +204,7 @@ namespace Microsoft.Data.SqlClient
         internal bool _syncOverAsync = true;
         private bool _snapshotReplay;
         private StateSnapshot _snapshot;
+        private StateSnapshot _cachedSnapshot;
         internal ExecutionContext _executionContext;
         internal bool _asyncReadWithoutSnapshot;
 #if DEBUG
@@ -260,7 +262,7 @@ namespace Microsoft.Data.SqlClient
         // remainder of the async operation.
         internal static bool s_forceSyncOverAsyncAfterFirstPend = false;
 
-        // Requests to send attention will be ignored when _skipSendAttention is true.
+        // Requests to send attention will be ignored when s_skipSendAttention is true.
         // This is useful to simulate circumstances where timeouts do not recover.
         internal static bool s_skipSendAttention = false;
 
@@ -295,6 +297,53 @@ namespace Microsoft.Data.SqlClient
             // be released.
             IncrementPendingCallbacks();
             _lastSuccessfulIOTimer = new LastIOTimer();
+        }
+
+        private void SetSnapshottedState(SnapshottedStateFlags flag, bool value)
+        {
+            if (value)
+            {
+                _snapshottedState |= flag;
+            }
+            else
+            {
+                _snapshottedState &= ~flag;
+            }
+        }
+
+        private bool GetSnapshottedState(SnapshottedStateFlags flag)
+        {
+            return (_snapshottedState & flag) == flag;
+        }
+
+        internal bool HasOpenResult
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.OpenResult);
+            set => SetSnapshottedState(SnapshottedStateFlags.OpenResult, value);
+        }
+
+        internal bool HasPendingData
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.PendingData);
+            set => SetSnapshottedState(SnapshottedStateFlags.PendingData, value);
+        }
+
+        internal bool HasReceivedError
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived, value);
+        }
+
+        internal bool HasReceivedAttention
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.AttentionReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.AttentionReceived, value);
+        }
+
+        internal bool HasReceivedColumnMetadata
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived, value);
         }
 
         ////////////////
@@ -1102,6 +1151,34 @@ namespace Microsoft.Data.SqlClient
         }
         */
 
+        internal void SetSnapshot()
+        {
+            StateSnapshot snapshot = _snapshot;
+            if (snapshot is null)
+            {
+                snapshot = Interlocked.Exchange(ref _cachedSnapshot, null) ?? new StateSnapshot();
+            }
+            else
+            {
+                snapshot.Clear();
+            }
+            _snapshot = snapshot;
+            _snapshot.Snap(this);
+            _snapshotReplay = false;
+        }
+
+        internal void ResetSnapshot()
+        {
+            if (_snapshot != null)
+            {
+                StateSnapshot snapshot = _snapshot;
+                _snapshot = null;
+                snapshot.Clear();
+                Interlocked.CompareExchange(ref _cachedSnapshot, snapshot, null);
+            }
+            _snapshotReplay = false;
+        }
+
         sealed partial class StateSnapshot
         {
             private sealed class PLPData
@@ -1116,19 +1193,93 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
+            private sealed class StateObjectData
+            {
+                private int _inBytesUsed;
+                private int _inBytesPacket;
+                private PLPData _plpData;
+                private byte _messageStatus;
+                internal NullBitmap _nullBitmapInfo;
+                private _SqlMetaDataSet _cleanupMetaData;
+                internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
+                private SnapshottedStateFlags _state;
+
+                internal void Capture(TdsParserStateObject stateObj, bool trackStack = true)
+                {
+                    _inBytesUsed = stateObj._inBytesUsed;
+                    _inBytesPacket = stateObj._inBytesPacket;
+                    _messageStatus = stateObj._messageStatus;
+                    _nullBitmapInfo = stateObj._nullBitmapInfo; // _nullBitmapInfo must be cloned before it is updated
+                    if (stateObj._longlen != 0 || stateObj._longlenleft != 0)
+                    {
+                        _plpData = new PLPData(stateObj._longlen, stateObj._longlenleft);
+                    }
+                    _cleanupMetaData = stateObj._cleanupMetaData;
+                    _cleanupAltMetaDataSetArray = stateObj._cleanupAltMetaDataSetArray; // _cleanupAltMetaDataSetArray must be cloned before it is updated
+                    _state = stateObj._snapshottedState;
+#if DEBUG
+                    if (trackStack)
+                    {
+                        stateObj._lastStack = null;
+                    }
+                    Debug.Assert(stateObj._bTmpRead == 0, "Has partially read data when snapshot taken");
+                    Debug.Assert(stateObj._partialHeaderBytesRead == 0, "Has partially read header when snapshot taken");
+#endif
+                }
+
+                internal void Clear(TdsParserStateObject stateObj, bool trackStack = true)
+                {
+                    _inBytesUsed = 0;
+                    _inBytesPacket = 0;
+                    _messageStatus = 0;
+                    _nullBitmapInfo = default;
+                    _plpData = null;
+                    _cleanupMetaData = null;
+                    _cleanupAltMetaDataSetArray = null;
+                    _state = SnapshottedStateFlags.None;
+#if DEBUG
+                    if (trackStack)
+                    {
+                        stateObj._lastStack = null;
+                    }
+#endif 
+                }
+
+                internal void Restore(TdsParserStateObject stateObj)
+                {
+                    stateObj._inBytesUsed = _inBytesUsed;
+                    stateObj._inBytesPacket = _inBytesPacket;
+                    stateObj._messageStatus = _messageStatus;
+                    stateObj._nullBitmapInfo = _nullBitmapInfo;
+                    stateObj._cleanupMetaData = _cleanupMetaData;
+                    stateObj._cleanupAltMetaDataSetArray = _cleanupAltMetaDataSetArray;
+
+                    // Make sure to go through the appropriate increment/decrement methods if changing HasOpenResult
+                    if (!stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) == SnapshottedStateFlags.OpenResult))
+                    {
+                        stateObj.IncrementAndObtainOpenResultCount(stateObj._executedUnderTransaction);
+                    }
+                    else if (stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) != SnapshottedStateFlags.OpenResult))
+                    {
+                        stateObj.DecrementOpenResultCount();
+                    }
+                    //else _stateObj._hasOpenResult is already == _snapshotHasOpenResult
+                    stateObj._snapshottedState = _state;
+
+                    // Reset partially read state (these only need to be maintained if doing async without snapshot)
+                    stateObj._bTmpRead = 0;
+                    stateObj._partialHeaderBytesRead = 0;
+
+                    // reset plp state
+                    stateObj._longlen = _plpData?.SnapshotLongLen ?? 0;
+                    stateObj._longlenleft = _plpData?.SnapshotLongLenLeft ?? 0;
+                }
+            }
+
             private int _snapshotInBuffCurrent;
-            private int _snapshotInBytesUsed;
-            private int _snapshotInBytesPacket;
-
-            private PLPData _plpData;
-
-            private byte _snapshotMessageStatus;
-
-            private NullBitmap _snapshotNullBitmapInfo;
-            private _SqlMetaDataSet _snapshotCleanupMetaData;
-            private _SqlMetaDataSetCollection _snapshotCleanupAltMetaDataSetArray;
-
             private TdsParserStateObject _stateObj;
+            private StateObjectData _replayStateData;
+
 #if DEBUG
             private int _rollingPend = 0;
             private int _rollingPendCount = 0;
@@ -1153,7 +1304,7 @@ namespace Microsoft.Data.SqlClient
 #endif
             internal void CloneNullBitmapInfo()
             {
-                if (_stateObj._nullBitmapInfo.ReferenceEquals(_snapshotNullBitmapInfo))
+                if (_stateObj._nullBitmapInfo.ReferenceEquals(_replayStateData?._nullBitmapInfo ?? default))
                 {
                     _stateObj._nullBitmapInfo = _stateObj._nullBitmapInfo.Clone();
                 }
@@ -1161,15 +1312,58 @@ namespace Microsoft.Data.SqlClient
 
             internal void CloneCleanupAltMetaDataSetArray()
             {
-                if (_stateObj._cleanupAltMetaDataSetArray != null && object.ReferenceEquals(_snapshotCleanupAltMetaDataSetArray, _stateObj._cleanupAltMetaDataSetArray))
+                if (_stateObj._cleanupAltMetaDataSetArray != null && object.ReferenceEquals(_replayStateData?._cleanupAltMetaDataSetArray ?? default, _stateObj._cleanupAltMetaDataSetArray))
                 {
                     _stateObj._cleanupAltMetaDataSetArray = (_SqlMetaDataSetCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
                 }
             }
 
+            internal void ResetSnapshotState()
+            {
+                // go back to the beginning
+                _snapshotInBuffCurrent = 0;
+
+                Replay();
+
+                _replayStateData.Restore(_stateObj);
+
+                _stateObj._snapshotReplay = true;
+
+                _stateObj.AssertValidState();
+            }
+
             internal void PrepareReplay()
             {
                 ResetSnapshotState();
+            }
+
+            internal void CaptureAsStart(TdsParserStateObject stateObj)
+            {
+                _stateObj = stateObj;
+                _replayStateData ??= new StateObjectData();
+                _replayStateData.Capture(stateObj);
+
+#if DEBUG
+                _rollingPend = 0;
+                _rollingPendCount = 0;
+                stateObj._lastStack = null;
+                Debug.Assert(stateObj._bTmpRead == 0, "Has partially read data when snapshot taken");
+                Debug.Assert(stateObj._partialHeaderBytesRead == 0, "Has partially read header when snapshot taken");
+#endif
+
+                PushBuffer(stateObj._inBuff, stateObj._inBytesRead);
+            }
+
+            internal void ClearCore()
+            {
+                _snapshotInBuffCurrent = 0;
+                _replayStateData.Clear(_stateObj);
+#if DEBUG
+                _rollingPend = 0;
+                _rollingPendCount = 0;
+                _stateObj._lastStack = null;
+#endif
+                _stateObj = null;
             }
         }
     }

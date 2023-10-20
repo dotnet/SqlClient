@@ -946,6 +946,15 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void Open_ConnectionString_UserInstance()
+        {
+            SqlConnection cn = new SqlConnection("User Instance=true;");
+            SqlException ex = Assert.Throws<SqlException>(() => cn.Open());
+            // Throws without access violation
+            Assert.NotNull(ex.Message);
+        }
+
+        [Fact]
         public void ServerVersion_Connection_Closed()
         {
             SqlConnection cn = new SqlConnection();

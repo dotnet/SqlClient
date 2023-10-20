@@ -4732,12 +4732,12 @@
     <value>由 DataAdapter.Update 使用時，參數值會從 DBNull.Value 變更為 (Int32)1 或 (Int32)0 (如果非 Null)。</value>
   </data>
   <data name="SQL_RemoteCertificateChainErrors" xml:space="preserve">
-    <value>Certificate failed chain validation. Error(s): '{0}'.</value>
+    <value>憑證未通過鏈結驗證。錯誤: '{0}'。</value>
   </data>
   <data name="SQL_RemoteCertificateNameMismatch" xml:space="preserve">
-    <value>Certificate name mismatch. The provided 'DataSource' or 'HostNameInCertificate' does not match the name in the certificate.</value>
+    <value>憑證名稱不相符。提供的 'DataSource' 或 'HostNameInCertificate' 與憑證中的名稱不相符。</value>
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
-    <value>Certificate not available while validating the certificate.</value>
+    <value>驗證在進行憑證驗證時無法使用。</value>
   </data>
 </root>
