@@ -307,8 +307,6 @@
       Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))"
       Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
-    <!-- This is to identify if UWP is being used -->
-    <PackageReference Include="DesktopBridge.Helpers" Version="1.2.2"/>
     <ProjectReference
       Include="$(TestsPath)CustomConfigurableRetryLogic\CustomRetryLogicProvider.csproj" />
   </ItemGroup>

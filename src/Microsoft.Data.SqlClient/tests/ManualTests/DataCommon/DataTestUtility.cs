@@ -1068,11 +1068,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return fqdn.ToString();
         }
-
-        public static bool IsRunningAsUwp()
-        {
-            DesktopBridge.Helpers helpers = new ();
-            return helpers.IsRunningAsUwp();
-        }
     }
 }
