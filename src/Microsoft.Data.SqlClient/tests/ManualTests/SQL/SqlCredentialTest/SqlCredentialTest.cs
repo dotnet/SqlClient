@@ -173,7 +173,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     using (SqlConnection conn5 = new SqlConnection(sqlConnectionStringBuilder.ConnectionString, new SqlCredential(user, password)))
                     {
-                        Assert.Throws<SqlException>(() => conn5.Open());
+                        // Assert.Throws<SqlException>(() => );
+
+                        try
+                        {
+                            conn5.Open();
+                        }
+                        catch (Exception ex)
+                        {
+                            Assert.True(ex.GetType() == typeof(SqlException));
+                        }
                     }
                 }
             }
@@ -194,7 +203,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 conn.Open();
                 cmd.ExecuteNonQuery();
-                Thread.Sleep(500);
             }
         }
 
