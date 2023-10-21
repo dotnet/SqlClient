@@ -78,6 +78,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
+        // uap constant
+        const long APPMODEL_ERROR_NO_PACKAGE = 15700L;
+
         private static Dictionary<string, bool> AvailableDatabases;
         private static BaseEventListener TraceListener;
 
@@ -1067,6 +1070,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 fqdn.Append(host.HostName);
             }
             return fqdn.ToString();
+        }
+
+        public static bool IsRunningAsUWPApp()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return false;
+            }
+            else
+            {
+                [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+                static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder packageFullName);
+
+                {
+                    int length = 0;
+                    StringBuilder sb = new(0);
+                    _ = GetCurrentPackageFullName(ref length, sb);
+
+                    sb = new StringBuilder(length);
+                    int result = GetCurrentPackageFullName(ref length, sb);
+
+                    return result != APPMODEL_ERROR_NO_PACKAGE;
+                }
+            }
         }
     }
 }

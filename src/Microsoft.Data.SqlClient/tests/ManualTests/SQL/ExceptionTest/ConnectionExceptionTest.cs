@@ -176,8 +176,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             OpenBadConnection(builder.ConnectionString, invalidConnStringError);
         }
 
-#if WINDOWS_UAP
-        [ConditionalFact(typeof(DataTestUtility))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsRunningAsUWPApp))]
         public static void LocalDBNotSupportedOnUapTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(@$"server=(localdb)\{DataTestUtility.LocalDbAppName}")
@@ -194,7 +193,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             });
         }
-#endif
+
 
         private void GenerateConnectionException(string connectionString)
         {

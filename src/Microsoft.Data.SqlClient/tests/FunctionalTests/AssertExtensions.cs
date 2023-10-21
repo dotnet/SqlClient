@@ -13,7 +13,7 @@ namespace System
 {
     public static class AssertExtensions
     {
-        private static bool IsFullFramework => TestUtility.s_isFullFramework;
+        private static bool IsFullFramework => TestUtility.IsFullFramework;
 
         public static void Throws<T>(Action action, string message)
             where T : Exception
@@ -36,7 +36,7 @@ namespace System
                 IsFullFramework ?
                 netFxParamName : netCoreParamName;
 
-            if (!TestUtility.s_netNative)
+            if (!TestUtility.NetNative)
                 Assert.Equal(expectedParamName, exception.ParamName);
         }
 
@@ -55,7 +55,7 @@ namespace System
                 IsFullFramework ?
                 netFxParamName : netCoreParamName;
 
-            if (!TestUtility.s_netNative)
+            if (!TestUtility.NetNative)
                 Assert.Equal(expectedParamName, exception.ParamName);
         }
 
@@ -64,7 +64,7 @@ namespace System
         {
             T exception = Assert.Throws<T>(action);
 
-            if (!TestUtility.s_netNative)
+            if (!TestUtility.NetNative)
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;
@@ -83,7 +83,7 @@ namespace System
         {
             T exception = Assert.Throws<T>(testCode);
 
-            if (!TestUtility.s_netNative)
+            if (!TestUtility.NetNative)
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;
@@ -94,7 +94,7 @@ namespace System
         {
             T exception = await Assert.ThrowsAsync<T>(testCode);
 
-            if (!TestUtility.s_netNative)
+            if (!TestUtility.NetNative)
                 Assert.Equal(paramName, exception.ParamName);
 
             return exception;
