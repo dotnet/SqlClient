@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // uap constant
         const long APPMODEL_ERROR_NO_PACKAGE = 15700L;
-        private static readonly bool? s_isUAP = null; 
+        public static readonly bool IsRunningAsUWPApp = RunningAsUWPApp();
 
         private static Dictionary<string, bool> AvailableDatabases;
         private static BaseEventListener TraceListener;
@@ -1073,33 +1073,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return fqdn.ToString();
         }
 
-        public static bool IsRunningAsUWPApp()
+        private static bool RunningAsUWPApp()
         {
-            if (!s_isUAP.HasValue)
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return false;
+            }
+            else
+            {
+                [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+                static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder packageFullName);
+
                 {
-                    return false;
-                }
-                else
-                {
-                    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-                    static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder packageFullName);
+                    int length = 0;
+                    StringBuilder sb = new(0);
+                    _ = GetCurrentPackageFullName(ref length, sb);
 
-                    {
-                        int length = 0;
-                        StringBuilder sb = new(0);
-                        _ = GetCurrentPackageFullName(ref length, sb);
+                    sb = new StringBuilder(length);
+                    int result = GetCurrentPackageFullName(ref length, sb);
 
-                        sb = new StringBuilder(length);
-                        int result = GetCurrentPackageFullName(ref length, sb);
-
-                        return result != APPMODEL_ERROR_NO_PACKAGE;
-                    }
+                    return result != APPMODEL_ERROR_NO_PACKAGE;
                 }
             }
-            return s_isUAP.Value;
-
         }
     }
 }
