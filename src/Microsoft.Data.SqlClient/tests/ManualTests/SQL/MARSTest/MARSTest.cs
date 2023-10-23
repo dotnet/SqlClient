@@ -688,7 +688,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 catch (Exception e)
                 {
-                    Assert.False(true, "CRITIAL: Test should not fail randomly. Exception occurred: " + e.Message);
+                    Assert.Fail("CRITIAL: Test should not fail randomly. Exception occurred: " + e.Message);
                 }
                 finally
                 {
