@@ -80,6 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // uap constant
         const long APPMODEL_ERROR_NO_PACKAGE = 15700L;
+        private static readonly bool? s_isUAP = null; 
 
         private static Dictionary<string, bool> AvailableDatabases;
         private static BaseEventListener TraceListener;
@@ -1074,26 +1075,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsRunningAsUWPApp()
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (!s_isUAP.HasValue)
             {
-                return false;
-            }
-            else
-            {
-                [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-                static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder packageFullName);
-
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    int length = 0;
-                    StringBuilder sb = new(0);
-                    _ = GetCurrentPackageFullName(ref length, sb);
+                    return false;
+                }
+                else
+                {
+                    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+                    static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder packageFullName);
 
-                    sb = new StringBuilder(length);
-                    int result = GetCurrentPackageFullName(ref length, sb);
+                    {
+                        int length = 0;
+                        StringBuilder sb = new(0);
+                        _ = GetCurrentPackageFullName(ref length, sb);
 
-                    return result != APPMODEL_ERROR_NO_PACKAGE;
+                        sb = new StringBuilder(length);
+                        int result = GetCurrentPackageFullName(ref length, sb);
+
+                        return result != APPMODEL_ERROR_NO_PACKAGE;
+                    }
                 }
             }
+            return s_isUAP.Value;
+
         }
     }
 }
