@@ -203,6 +203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 conn.Open();
                 cmd.ExecuteNonQuery();
+                Thread.Sleep(5000);
             }
         }
 
