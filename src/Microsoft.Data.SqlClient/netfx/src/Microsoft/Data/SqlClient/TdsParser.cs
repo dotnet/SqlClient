@@ -5006,6 +5006,9 @@ namespace Microsoft.Data.SqlClient
                         case 0x43f:
                             codePage = 1251;  // Kazakh code page based on SQL Server
                             break;
+                        case 0x10437:
+                            codePage = 1252;  // Georgian code page based on SQL Server
+                            break;
                         default:
                             break;
                     }
