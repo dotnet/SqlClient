@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         break;
 
                     default:
-                        Assert.True(false, "FAILED: unexpected data type.");
+                        Assert.Fail("FAILED: unexpected data type.");
                         break;
                 }
 
