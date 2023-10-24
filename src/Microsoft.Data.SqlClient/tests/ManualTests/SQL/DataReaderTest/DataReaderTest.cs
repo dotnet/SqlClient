@@ -126,7 +126,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void CollatedDataReaderTest(string collation)
         {
             string dbName = DataTestUtility.GetUniqueName("CollationTest", false);
-            // Remove square brackets
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
