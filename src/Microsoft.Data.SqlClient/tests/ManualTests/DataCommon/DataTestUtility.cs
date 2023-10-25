@@ -21,6 +21,7 @@ using Xunit;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Security.Principal;
+using System.Runtime.InteropServices;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -76,6 +77,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public const string MDSEventSourceName = "Microsoft.Data.SqlClient.EventSource";
         public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
+
+        // uap constant
+        const long APPMODEL_ERROR_NO_PACKAGE = 15700L;
+        public static readonly bool IsRunningAsUWPApp = RunningAsUWPApp();
 
         private static Dictionary<string, bool> AvailableDatabases;
         private static BaseEventListener TraceListener;
@@ -302,6 +307,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return isTDS8Supported;
         }
 
+        public static bool IsNotX86Architecture => RuntimeInformation.ProcessArchitecture != Architecture.X86;
+
         public static bool IsDatabasePresent(string name)
         {
             AvailableDatabases = AvailableDatabases ?? new Dictionary<string, bool>();
@@ -437,6 +444,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 && (OperatingSystem.IsWindows() || DataTestUtility.IsAKVSetupAvailable())
 #endif
                 ;
+        }
+
+        public static bool IsSupportingDistributedTransactions()
+        {
+#if NET7_0_OR_GREATER
+            return OperatingSystem.IsWindows() && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture != System.Runtime.InteropServices.Architecture.X86 && IsNotAzureServer();
+#elif NETFRAMEWORK
+            return IsNotAzureServer();
+#else
+            return false;
+#endif
         }
 
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
@@ -723,7 +741,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
+                Assert.Fail("ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -744,7 +762,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
+                Assert.Fail("ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -765,7 +783,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
+                Assert.Fail("ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -1053,6 +1071,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 fqdn.Append(host.HostName);
             }
             return fqdn.ToString();
+        }
+
+        private static bool RunningAsUWPApp()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return false;
+            }
+            else
+            {
+                [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+                static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder packageFullName);
+
+                {
+                    int length = 0;
+                    StringBuilder sb = new(0);
+                    _ = GetCurrentPackageFullName(ref length, sb);
+
+                    sb = new StringBuilder(length);
+                    int result = GetCurrentPackageFullName(ref length, sb);
+
+                    return result != APPMODEL_ERROR_NO_PACKAGE;
+                }
+            }
         }
     }
 }
