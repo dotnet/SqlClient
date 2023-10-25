@@ -69,6 +69,10 @@ This update brings the below changes over the previous release:
 - Fixed invariant mode checks. [#1917](https://github.com/dotnet/SqlClient/pull/1917)
 - Fixed GC behavior in TdsParser by adding array rental capability in TryReadPlpUnicodeChars. [#1866](https://github.com/dotnet/SqlClient/pull/1866)
 
+## [Stable release 5.1.2] - 2023-10-26
+
+This update brings the below changes over the previous release:
+
 ### Changed
 
 - Updated Azure Identity version from 1.7.0 to 1.8.0. [#1921](https://github.com/dotnet/SqlClient/pull/1921)
@@ -76,6 +80,21 @@ This update brings the below changes over the previous release:
 - Removed reference to Microsoft.Win32.Registry since it's shipped starting with .NET 6.0. [#1974](https://github.com/dotnet/SqlClient/pull/1974)
 - Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
 - Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
+
+### Fixed
+
+- Fixed access violation when using Express user instance. [#2101](https://github.com/dotnet/SqlClient/pull/2101)
+- Fixed AE enclave retry logic for async queries. [#1988](https://github.com/dotnet/SqlClient/pull/1988)
+- Fixed LocalDb and managed SNI by improving the error messages and avoid falling back to the local service. [#2129](https://github.com/dotnet/SqlClient/pull/2129)
+- Fixed .NET and .NET Standard file version. [2093](https://github.com/dotnet/SqlClient/pull/2093)
+- Fixed non-string values and `SqlConnectionStringBuilder` property indexer issue. [#2018](https://github.com/dotnet/SqlClient/pull/2018)
+- Fixed `SqlConnectionEncryptOption` type conversion by introducing the `SqlConnectionEncryptOptionConverter` attribute when using **appsettings.json** files. [#2057](https://github.com/dotnet/SqlClient/pull/2057)
+- Fixed Transient fault handling issue with `OpenAsync`. [#1983](https://github.com/dotnet/SqlClient/pull/1983)
+- Fixed activity correlator to continue use of same GUID for connection activity. [#1997](https://github.com/dotnet/SqlClient/pull/1997)
+
+### Changed
+
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.1.1`. [#2123](https://github.com/dotnet/SqlClient/pull/2123)
 
 ## [Stable release 5.1.1] - 2023-03-28
 
