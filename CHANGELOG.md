@@ -331,6 +331,15 @@ This update brings the below changes over the previous release:
 
 - Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1419](https://github.com/dotnet/SqlClient/pull/1419) [#1425](https://github.com/dotnet/SqlClient/pull/1425)
 
+## [Stable release 4.0.4] - 2023-10-30
+
+### Fixed
+
+- Fixed Always Encrypted secure enclave retry logic for async queries. [#1988](https://github.com/dotnet/SqlClient/pull/1988)
+- Fixed LocalDb and managed SNI by improving the error messages and avoid falling back to the local service. [#2129](https://github.com/dotnet/SqlClient/pull/2129)
+- Fixed .NET and .NET Standard file version. [2093](https://github.com/dotnet/SqlClient/pull/2093)
+- Fixed activity correlator to continue use of same GUID for connection activity. [#1997](https://github.com/dotnet/SqlClient/pull/1997)
+
 ## [Stable release 4.0.3] - 2023-04-20
 
 ### Fixed
