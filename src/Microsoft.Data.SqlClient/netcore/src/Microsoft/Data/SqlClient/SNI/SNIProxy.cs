@@ -692,7 +692,6 @@ namespace Microsoft.Data.SqlClient.SNI
                             // NamedPipeClientStream object will create the network path using PipeHostName and PipeName
                             // and can be seen in its _normalizedPipePath variable in the format \\servername\pipe\MSSQL$<instancename>\sql\query
                             PipeHostName = ServerName = tokensByBackSlash[0];
-                            //InferLocalServerName();
                             PipeName = $"{InstancePrefix}{tokensByBackSlash[1]}{PathSeparator}{DefaultPipeName}";
                         }
                         else
@@ -704,7 +703,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     else
                     {
                         PipeHostName = ServerName = _dataSourceAfterTrimmingProtocol;
-                        //InferLocalServerName();
                         PipeName = SNINpHandle.DefaultPipePath;
                     }
 
