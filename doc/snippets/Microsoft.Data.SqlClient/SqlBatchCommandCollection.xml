@@ -2,7 +2,8 @@
 <docs>
   <members name="SqlBatchCommandCollection">
     <SqlBatchCommandCollection>
-      <summary></summary>
+      <summary>A collection of instances of <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />, contained within a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.
+    </summary>
       <remarks>
         <format type="text/markdown">
           <![CDATA[  
@@ -11,7 +12,7 @@
       </remarks>
     </SqlBatchCommandCollection>
     <Add>
-      <summary>TODO</summary>
+      <summary>Add an <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
       <value></value>
       <remarks>
         <format type="text/markdown">
@@ -21,7 +22,7 @@
       </remarks>
     </Add>
     <Contains>
-      <summary>TODO</summary>
+      <summary>Determines whether a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> is in the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
       <value></value>
       <remarks>
         <format type="text/markdown">
@@ -31,7 +32,7 @@
       </remarks>
     </Contains>
     <CopyTo>
-      <summary>TODO</summary>
+      <summary>Copies the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> to a one dimensional array, starting at the target index of the target array.</summary>
       <value></value>
       <remarks>
         <format type="text/markdown">
@@ -41,8 +42,10 @@
       </remarks>
     </CopyTo>
     <IndexOf>
-      <summary>TODO</summary>
-      <value></value>
+      <summary>Searches for the specified <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> within the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> and returns the zero-based index of the first occurence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
+      <returns>
+        Returns the zero-based index of the first occurence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+      </returns>
       <remarks>
         <format type="text/markdown">
           <![CDATA[   
@@ -51,8 +54,8 @@
       </remarks>
     </IndexOf>
     <Insert>
-      <summary>TODO</summary>
-      <value></value>
+      <summary>Inserts an item into the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> at the specified index.</summary>
+      <exception cref="T:System.ArgumentOutOfRangeException"></exception>
       <remarks>
         <format type="text/markdown">
           <![CDATA[   
@@ -61,8 +64,8 @@
       </remarks>
     </Insert>
     <Remove>
-      <summary>TODO</summary>
-      <value></value>
+      <summary>Removes the first occurence of the specific item from the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.</summary>
+      <returns>Returns <see langword="true" /> if item is successfully removed, false otherwise if it could not be removed or was not found.</returns>
       <remarks>
         <format type="text/markdown">
           <![CDATA[   
@@ -71,8 +74,9 @@
       </remarks>
     </Remove>
     <this1>
-      <summary>TODO</summary>
-      <value></value>
+      <summary>Gets or Sets the element at the specified index.</summary>
+      <returns>The element at the specified index.</returns>
+      <exception cref="T:System.ArgumentOutOfRangeException"></exception>
       <remarks>
         <format type="text/markdown">
           <![CDATA[   
@@ -81,8 +85,9 @@
       </remarks>
     </this1>
     <this2>
-      <summary>TODO</summary>
-      <value></value>
+      <summary>Gets or Sets the element at the specified index.</summary>
+      <returns>The element at the specified index.</returns>
+      <exception cref="T:System.ArgumentOutOfRangeException"></exception>
       <remarks>
         <format type="text/markdown">
           <![CDATA[   

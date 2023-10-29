@@ -50,13 +50,13 @@ namespace Microsoft.Data.SqlClient
         /// <inheritdoc />
         protected override System.Data.Common.DbBatchCommand CreateDbBatchCommand() => throw null;
     }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
+    /// <inheritdoc />
     public partial class SqlBatchCommand : System.Data.Common.DbBatchCommand
     {
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/cto1/*'/>
         public SqlBatchCommand() => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ctor2/*'/>
-        public SqlBatchCommand(string commandText, System.Data.CommandType commandType = System.Data.CommandType.Text, System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.SqlParameter> parameters = null) { throw null; }
+        public SqlBatchCommand(string commandText, System.Data.CommandType commandType = System.Data.CommandType.Text, System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.SqlParameter> parameters = null, Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting columnEncryptionSetting = Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting.UseConnectionSetting) { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/Parameters/*'/>
         public new Microsoft.Data.SqlClient.SqlParameterCollection Parameters { get { throw null; } }
         /// <inheritdoc />

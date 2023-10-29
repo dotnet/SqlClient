@@ -294,7 +294,7 @@ catch (Exception ex) {
         </Source>
         <BatchCommand>
           <summary>Gets the BatchCommand instance that generated the error or null if the exception was not raised from a batch.</summary>
-          <value>A BachCommand object or null</value>
+          <value>A BatchCommand object or null</value>
           <remarks></remarks>
           <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Number" />
           <altmember cref="P:Microsoft.Data.SqlClient.SqlException.State" />
