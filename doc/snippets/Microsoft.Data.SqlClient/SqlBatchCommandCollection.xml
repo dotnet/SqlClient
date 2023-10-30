@@ -12,7 +12,7 @@
       </remarks>
     </SqlBatchCommandCollection>
     <Add>
-      <summary>Add an <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
+      <summary>Add a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
       <value></value>
       <remarks>
         <format type="text/markdown">
@@ -65,7 +65,7 @@
     </Insert>
     <Remove>
       <summary>Removes the first occurence of the specific item from the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.</summary>
-      <returns>Returns <see langword="true" /> if item is successfully removed, false otherwise if it could not be removed or was not found.</returns>
+      <returns>Returns <see langword="true" /> if an item is successfully removed. Returns false if an item could not be removed or no item was not found.</returns>
       <remarks>
         <format type="text/markdown">
           <![CDATA[   

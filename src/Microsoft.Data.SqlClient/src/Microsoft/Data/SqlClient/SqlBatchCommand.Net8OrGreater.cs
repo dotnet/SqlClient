@@ -6,12 +6,12 @@ using System.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public partial class SqlBatchCommand
     {
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CreateParameter/*'/>
         public override DbParameter CreateParameter() => new SqlParameter();
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CanCreateParameter/*'/>
         public override bool CanCreateParameter => true;
     }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }

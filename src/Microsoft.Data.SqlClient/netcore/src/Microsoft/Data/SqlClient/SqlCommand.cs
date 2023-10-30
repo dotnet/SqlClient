@@ -6779,10 +6779,12 @@ namespace Microsoft.Data.SqlClient
                 return _rpcArrayOf1[0].batchCommand;
             }
         }
+
         internal SqlBatchCommand GetBatchCommand(int index)
         {
             return _RPCList[index].batchCommand;
         }
+
         internal int GetCurrentBatchIndex()
         {
             return _batchRPCMode ? _currentlyExecutingBatch : -1;
