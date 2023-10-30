@@ -81,14 +81,6 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
   </PropertyGroup>
-  <!-- Packaging Extension CI Builds -->
-  <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
-    <!-- Repository Url is required for none SDK project even if it is already in nuspec file. -->
-    <RepositoryUrl>https://github.com/dotnet/sqlclient</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>      
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-    <Deterministic>true</Deterministic>
-  </PropertyGroup>
 
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
