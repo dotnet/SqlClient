@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         int timeoutMilliseconds = timeout.MillisecondsRemainingInt;
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO,
-                                                                  "Connection Id {0}, Setting server name = {1}, pipe name = {2}. Connecting within the {3} sepecified milliseconds.",
+                                                                  "Connection Id {0}, Setting server name = {1}, pipe name = {2}. Connecting within the {3} specified milliseconds.",
                                                                   args0: _connectionId,
                                                                   args1: serverName,
                                                                   args2: pipeName,
