@@ -23,11 +23,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Private Fields
         private const string IPV4 = @"127.0.0.1";
         private const string IPV6 = @"::1";
-        private static readonly string s_fullPathToPowershellScript = Path.Combine(Directory.GetCurrentDirectory(), "SQL", "ConnectionTestWithSSLCert", "GenerateSelfSignedCertificate.ps1");
+        private static readonly string s_fullPathToPowershellScript = Path.Combine(Directory.GetCurrentDirectory(), "SQL", "ConnectionTestWithSSLCert", $"GenerateSelfSignedCertificate.ps1");
         private const string LocalHost = "localhost";
         private static readonly string s_fQDN = Dns.GetHostEntry(Environment.MachineName).HostName;
         private readonly string _thumbprint;
         private const string ThumbPrintEnvName = "Thumbprint";
+        private static string SqlServer = "MSSQLSERVER";
+        private static string NamedInstanceSqlServer = "";
 
         public string ForceEncryptionRegistryPath
         {
@@ -35,15 +37,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (DataTestUtility.IsSQL2022())
                 {
-                    return @"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQLServer\SuperSocketNetLib";
+                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL16.{SqlServer}\\MSSQLSERVER\\SuperSocketNetLib";
                 }
                 if (DataTestUtility.IsSQL2019())
                 {
-                    return @"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQLServer\SuperSocketNetLib";
+                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL15.{SqlServer}\\MSSQLSERVER\\SuperSocketNetLib";
                 }
                 if (DataTestUtility.IsSQL2016())
                 {
-                    return @"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.MSSQLSERVER\MSSQLServer\SuperSocketNetLib";
+                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL14.{SqlServer}\\MSSQLSERVER\\SuperSocketNetLib";
                 }
                 return string.Empty;
             }
@@ -91,6 +93,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpeningConnectionWitHNICTest()
         {
+            // If the connection string has a named instance sql server, install the certificate in it first.
+            string[] tokensByBackSlash = DataTestUtility.TCPConnectionString.Split('\\');
+            if (tokensByBackSlash.Length > 1)
+            {
+                SqlServer = NamedInstanceSqlServer = tokensByBackSlash[1].Split(';')[0];
+                CreateValidCertificate(s_fullPathToPowershellScript);
+                // Restore server name for disposal of certificate
+                SqlServer = "MSSQLSERVER";
+            }
+
             // Mandatory
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -161,7 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
-                    Arguments = script,
+                    Arguments = $"{script} -Instance {SqlServer}",
                     CreateNoWindow = false,
                     Verb = "runas"
                 }
@@ -232,7 +244,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RegistryKey key = Registry.LocalMachine.OpenSubKey(registryPath, true);
             key?.SetValue("ForceEncryption", 0, RegistryValueKind.DWord);
             key?.SetValue("Certificate", "", RegistryValueKind.String);
-            ServiceController sc = new("MSSQLSERVER");
+            ServiceController sc = new($"{SqlServer}");
             sc.Stop();
             sc.WaitForStatus(ServiceControllerStatus.Stopped);
             sc.Start();
@@ -258,6 +270,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 RemoveForceEncryptionFromRegistryPath(ForceEncryptionRegistryPath);
                 RemoveEnvironmentVariable(ThumbPrintEnvName);
             }
+
+            //If there is a named instance sql server, remove the certificate from it too
+            if (disposing && NamedInstanceSqlServer != string.Empty)
+            {
+                SqlServer = NamedInstanceSqlServer;
+                if (!string.IsNullOrEmpty(ForceEncryptionRegistryPath))
+                {
+                    RemoveForceEncryptionFromRegistryPath(ForceEncryptionRegistryPath);
+                }
+                SqlServer = "MSSQLSERVER";
+            }
+
         }
     }
 }
