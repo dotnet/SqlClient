@@ -525,20 +525,6 @@
       <Link>Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NotSupported.cs</Link>
     </Compile>
   </ItemGroup>
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard' AND ('$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1')">
-    <Compile Include="..\..\src\Microsoft\Data\Common\DbBatch.cs">
-      <Link>Microsoft\Data\Common\DbBatch.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\Common\DbBatch.IAsyncDispose.cs">
-      <Link>Microsoft\Data\Common\DbBatch.IAsyncDispose.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\Common\DbBatchCommand.cs">
-      <Link>Microsoft\Data\Common\DbBatchCommand.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\Common\DbBatchCommandCollection.cs">
-      <Link>Microsoft\Data\Common\DbBatchCommandCollection.cs</Link>
-    </Compile>
-  </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' == 'netstandard2.0'">
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.Task.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
