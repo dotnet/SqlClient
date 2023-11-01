@@ -407,6 +407,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return AEConnStrings.Count > 0 && IsNotAzureSynapse();
         }
 
+        public static bool IsNotUsingNamedInstance()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            string[] tokensByBackSlash = builder.DataSource.Split('\\');
+            if (tokensByBackSlash.Length > 1)
+            {
+                return false; // there is a named instance in connection string
+            }
+
+            return true;      // there is no named instance in connection string
+        }
+
         public static bool IsSGXEnclaveConnStringSetup() => !string.IsNullOrEmpty(TCPConnectionStringAASSGX);
 
         public static bool IsAADPasswordConnStrSetup()
