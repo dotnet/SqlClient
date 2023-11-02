@@ -13,6 +13,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.ServiceProcess;
 using System.Text;
+using Microsoft.SqlServer.TDS.Login7;
 using Microsoft.Win32;
 using Xunit;
 
@@ -28,8 +29,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_fQDN = Dns.GetHostEntry(Environment.MachineName).HostName;
         private readonly string _thumbprint;
         private const string ThumbPrintEnvName = "Thumbprint";
-        private static string SqlServer = "MSSQLSERVER";
-        private static string NamedInstanceSqlServer = "";
+        private static string InstanceName = "MSSQLSERVER";
+        private static string InstanceNamePrefix = "";
 
         public string ForceEncryptionRegistryPath
         {
@@ -37,15 +38,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (DataTestUtility.IsSQL2022())
                 {
-                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL16.{SqlServer}\\MSSQLSERVER\\SuperSocketNetLib";
+                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL16.{InstanceName}\\MSSQLSERVER\\SuperSocketNetLib";
                 }
                 if (DataTestUtility.IsSQL2019())
                 {
-                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL15.{SqlServer}\\MSSQLSERVER\\SuperSocketNetLib";
+                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL15.{InstanceName}\\MSSQLSERVER\\SuperSocketNetLib";
                 }
                 if (DataTestUtility.IsSQL2016())
                 {
-                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL14.{SqlServer}\\MSSQLSERVER\\SuperSocketNetLib";
+                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL14.{InstanceName}\\MSSQLSERVER\\SuperSocketNetLib";
                 }
                 return string.Empty;
             }
@@ -54,6 +55,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public CertificateTest()
         {
+            string[] tokensByBackSlash = DataTestUtility.TCPConnectionString.Split('\\');
+            if (tokensByBackSlash.Length > 1)
+            {
+                InstanceName = tokensByBackSlash[1].Split(';')[0];
+                InstanceNamePrefix = "MSSQL$";
+            }
+
             Assert.True(DataTestUtility.IsAdmin, "CertificateTest class needs to be run in Admin mode.");
 
             CreateValidCertificate(s_fullPathToPowershellScript);
@@ -93,24 +101,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpeningConnectionWitHNICTest()
         {
-            // If the connection string has a named instance sql server, install the certificate in it first.
-            string[] tokensByBackSlash = DataTestUtility.TCPConnectionString.Split('\\');
-            if (tokensByBackSlash.Length > 1)
-            {
-                SqlServer = NamedInstanceSqlServer = tokensByBackSlash[1].Split(';')[0];
-                CreateValidCertificate(s_fullPathToPowershellScript);
-                // Restore server name for disposal of certificate
-                SqlServer = "MSSQLSERVER";
-            }
-
             // Mandatory
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
-                // 127.0.0.1 most of the cases does not cause any Remote certificate validation error depinding on name resolution on the machine
+                // 127.0.0.1 most of the cases does not cause any Remote certificate validation error depending on name resolution on the machine
                 //  It mostly returns SslPolicyErrors.None
-                DataSource = IPV4,
+                //DataSource = IPV4,
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
                 HostNameInCertificate = "localhost"
+                //HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName
             };
             using SqlConnection connection = new(builder.ConnectionString);
             connection.Open();
@@ -173,7 +172,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
-                    Arguments = $"{script} -Instance {SqlServer}",
+                    Arguments = $"{script} -Prefix {InstanceNamePrefix} -Instance {InstanceName}",
                     CreateNoWindow = false,
                     Verb = "runas"
                 }
@@ -244,7 +243,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RegistryKey key = Registry.LocalMachine.OpenSubKey(registryPath, true);
             key?.SetValue("ForceEncryption", 0, RegistryValueKind.DWord);
             key?.SetValue("Certificate", "", RegistryValueKind.String);
-            ServiceController sc = new($"{SqlServer}");
+            ServiceController sc = new($"{InstanceNamePrefix}{InstanceName}");
             sc.Stop();
             sc.WaitForStatus(ServiceControllerStatus.Stopped);
             sc.Start();
@@ -270,18 +269,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 RemoveForceEncryptionFromRegistryPath(ForceEncryptionRegistryPath);
                 RemoveEnvironmentVariable(ThumbPrintEnvName);
             }
-
-            //If there is a named instance sql server, remove the certificate from it too
-            if (disposing && NamedInstanceSqlServer != string.Empty)
-            {
-                SqlServer = NamedInstanceSqlServer;
-                if (!string.IsNullOrEmpty(ForceEncryptionRegistryPath))
-                {
-                    RemoveForceEncryptionFromRegistryPath(ForceEncryptionRegistryPath);
-                }
-                SqlServer = "MSSQLSERVER";
-            }
-
         }
     }
 }
