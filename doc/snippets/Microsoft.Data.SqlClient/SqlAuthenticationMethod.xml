@@ -47,7 +47,7 @@
       </ActiveDirectoryDefault>
       <ActiveDirectoryAzureCli>
         <summary>The authentication method uses Active Directory Azure CLI credential. Use this mode to connect to a SQL Database using AzureCliCredential to acquire an access token. This method does not fallback to the "Active Directory Interactive" authentication method.</summary>
-        <value>9</value>
+        <value>10</value>
       </ActiveDirectoryAzureCli>
     </members>
 </docs>
