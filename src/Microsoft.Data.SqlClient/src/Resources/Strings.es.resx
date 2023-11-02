@@ -4731,4 +4731,13 @@
   <data name="SqlParameter_SourceColumnNullMapping" xml:space="preserve">
     <value>Cuando lo utiliza DataAdapter.Update, el valor del parámetro cambia de DBNull.Value a (Int32)1 o (Int32)0 si no es nulo.</value>
   </data>
+  <data name="SQL_RemoteCertificateChainErrors" xml:space="preserve">
+    <value>El certificado no superó la validación de la cadena. Errores: "{0}".</value>
+  </data>
+  <data name="SQL_RemoteCertificateNameMismatch" xml:space="preserve">
+    <value>El nombre del certificado no coincide. El elemento "DataSource" o "HostNameInCertificate" proporcionado no coincide con el nombre del certificado.</value>
+  </data>
+  <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
+    <value>El certificado no está disponible al validar el certificado.</value>
+  </data>
 </root>

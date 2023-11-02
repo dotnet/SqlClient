@@ -10207,6 +10207,33 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Certificate failed chain validation. Error(s): &apos;{0}&apos;..
+        /// </summary>
+        internal static string SQL_RemoteCertificateChainErrors {
+            get {
+                return ResourceManager.GetString("SQL_RemoteCertificateChainErrors", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Certificate name mismatch. The provided &apos;DataSource&apos; or &apos;HostNameInCertificate&apos; does not match the name in the certificate..
+        /// </summary>
+        internal static string SQL_RemoteCertificateNameMismatch {
+            get {
+                return ResourceManager.GetString("SQL_RemoteCertificateNameMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Certificate not available while validating the certificate..
+        /// </summary>
+        internal static string SQL_RemoteCertificateNotAvailable {
+            get {
+                return ResourceManager.GetString("SQL_RemoteCertificateNotAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Scale value &apos;{0}&apos; is either less than 0 or greater than the maximum allowed scale of 38..
         /// </summary>
         internal static string SQL_ScaleValueOutOfRange {

@@ -4731,4 +4731,13 @@
   <data name="SqlParameter_SourceColumnNullMapping" xml:space="preserve">
     <value>在 DataAdapter.Update 使用时，参数值由 DBNull.Value 更改为 (Int32)1 或 (Int32)0 (如果非空)。</value>
   </data>
+  <data name="SQL_RemoteCertificateChainErrors" xml:space="preserve">
+    <value>证书链验证失败。错误:“{0}”。</value>
+  </data>
+  <data name="SQL_RemoteCertificateNameMismatch" xml:space="preserve">
+    <value>证书名称不匹配。提供的“DataSource”或“HostNameInCertificate”与证书中的名称不匹配。</value>
+  </data>
+  <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
+    <value>验证证书时证书不可用。</value>
+  </data>
 </root>

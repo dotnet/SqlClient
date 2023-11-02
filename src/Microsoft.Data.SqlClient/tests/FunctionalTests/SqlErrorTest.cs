@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 }
                 catch (Exception ex)
                 {
-                    Assert.False(true, $"Unexpected Exception occurred: {ex.Message}");
+                    Assert.Fail($"Unexpected Exception occurred: {ex.Message}");
                 }
             }
 

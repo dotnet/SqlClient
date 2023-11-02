@@ -2495,7 +2495,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (token == TdsEnums.SQLERROR)
                             {
-                                stateObj._errorTokenReceived = true; // Keep track of the fact error token was received - for Done processing.
+                                stateObj.HasReceivedError = true; // Keep track of the fact error token was received - for Done processing.
                             }
 
                             SqlError error;
@@ -2636,68 +2636,6 @@ namespace Microsoft.Data.SqlClient
                             {
                                 return false;
                             }
-                            break;
-                        }
-
-                    case TdsEnums.SQLALTMETADATA:
-                        {
-                            stateObj.CloneCleanupAltMetaDataSetArray();
-
-                            if (stateObj._cleanupAltMetaDataSetArray == null)
-                            {
-                                // create object on demand (lazy creation)
-                                stateObj._cleanupAltMetaDataSetArray = new _SqlMetaDataSetCollection();
-                            }
-
-                            _SqlMetaDataSet cleanupAltMetaDataSet;
-                            if (!TryProcessAltMetaData(tokenLength, stateObj, out cleanupAltMetaDataSet))
-                            {
-                                return false;
-                            }
-
-                            stateObj._cleanupAltMetaDataSetArray.SetAltMetaData(cleanupAltMetaDataSet);
-                            if (null != dataStream)
-                            {
-                                byte metadataConsumedByte;
-                                if (!stateObj.TryPeekByte(out metadataConsumedByte))
-                                {
-                                    return false;
-                                }
-                                if (!dataStream.TrySetAltMetaDataSet(cleanupAltMetaDataSet, (TdsEnums.SQLALTMETADATA != metadataConsumedByte)))
-                                {
-                                    return false;
-                                }
-                            }
-
-                            break;
-                        }
-
-                    case TdsEnums.SQLALTROW:
-                        {
-                            if (!stateObj.TryStartNewRow(isNullCompressed: false))
-                            { // altrows are not currently null compressed
-                                return false;
-                            }
-
-                            // read will call run until dataReady. Must not read any data if return immediately set
-                            if (RunBehavior.ReturnImmediately != (RunBehavior.ReturnImmediately & runBehavior))
-                            {
-                                ushort altRowId;
-                                if (!stateObj.TryReadUInt16(out altRowId))
-                                { // get altRowId
-                                    return false;
-                                }
-
-                                if (!TrySkipRow(stateObj._cleanupAltMetaDataSetArray.GetAltMetaData(altRowId), stateObj))
-                                { // skip altRow
-                                    return false;
-                                }
-                            }
-                            else
-                            {
-                                dataReady = true;
-                            }
-
                             break;
                         }
 
@@ -3017,6 +2955,68 @@ namespace Microsoft.Data.SqlClient
                             {
                                 return false;
                             }
+                            break;
+                        }
+
+                    // deprecated
+                    case TdsEnums.SQLALTMETADATA:
+                        {
+                            stateObj.CloneCleanupAltMetaDataSetArray();
+
+                            if (stateObj._cleanupAltMetaDataSetArray == null)
+                            {
+                                // create object on demand (lazy creation)
+                                stateObj._cleanupAltMetaDataSetArray = new _SqlMetaDataSetCollection();
+                            }
+
+                            _SqlMetaDataSet cleanupAltMetaDataSet;
+                            if (!TryProcessAltMetaData(tokenLength, stateObj, out cleanupAltMetaDataSet))
+                            {
+                                return false;
+                            }
+
+                            stateObj._cleanupAltMetaDataSetArray.SetAltMetaData(cleanupAltMetaDataSet);
+                            if (null != dataStream)
+                            {
+                                byte metadataConsumedByte;
+                                if (!stateObj.TryPeekByte(out metadataConsumedByte))
+                                {
+                                    return false;
+                                }
+                                if (!dataStream.TrySetAltMetaDataSet(cleanupAltMetaDataSet, (TdsEnums.SQLALTMETADATA != metadataConsumedByte)))
+                                {
+                                    return false;
+                                }
+                            }
+
+                            break;
+                        }
+                    case TdsEnums.SQLALTROW:
+                        {
+                            if (!stateObj.TryStartNewRow(isNullCompressed: false))
+                            { // altrows are not currently null compressed
+                                return false;
+                            }
+
+                            // read will call run until dataReady. Must not read any data if return immediately set
+                            if (RunBehavior.ReturnImmediately != (RunBehavior.ReturnImmediately & runBehavior))
+                            {
+                                ushort altRowId;
+                                if (!stateObj.TryReadUInt16(out altRowId))
+                                { // get altRowId
+                                    return false;
+                                }
+
+                                if (!TrySkipRow(stateObj._cleanupAltMetaDataSetArray.GetAltMetaData(altRowId), stateObj))
+                                { // skip altRow
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                dataReady = true;
+                            }
+
                             break;
                         }
 
@@ -3553,13 +3553,13 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Skip the bogus DONE counts sent by the server
-                if (stateObj._receivedColMetaData || (curCmd != TdsEnums.SELECT))
+                if (stateObj.HasReceivedColumnMetadata || (curCmd != TdsEnums.SELECT))
                 {
                     cmd.OnStatementCompleted(count);
                 }
             }
 
-            stateObj._receivedColMetaData = false;
+            stateObj.HasReceivedColumnMetadata = false;
 
             // Surface exception for DONE_ERROR in the case we did not receive an error token
             // in the stream, but an error occurred.  In these cases, we throw a general server error.  The
@@ -3568,7 +3568,7 @@ namespace Microsoft.Data.SqlClient
             // the server has reached its max connection limit.  Bottom line, we need to throw general
             // error in the cases where we did not receive a error token along with the DONE_ERROR.
             if ((TdsEnums.DONE_ERROR == (TdsEnums.DONE_ERROR & status)) && stateObj.ErrorCount == 0 &&
-                  stateObj._errorTokenReceived == false && (RunBehavior.Clean != (RunBehavior.Clean & run)))
+                  stateObj.HasReceivedError == false && (RunBehavior.Clean != (RunBehavior.Clean & run)))
             {
                 stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0, exception: null, batchIndex: cmd?.GetCurrentBatchIndex() ?? -1));
 
@@ -3602,7 +3602,7 @@ namespace Microsoft.Data.SqlClient
             // stop if the DONE_MORE bit isn't set (see above for attention handling)
             if (TdsEnums.DONE_MORE != (status & TdsEnums.DONE_MORE))
             {
-                stateObj._errorTokenReceived = false;
+                stateObj.HasReceivedError = false;
                 if (stateObj._inBytesUsed >= stateObj._inBytesRead)
                 {
                     stateObj.HasPendingData = false;
@@ -3612,7 +3612,7 @@ namespace Microsoft.Data.SqlClient
             // _pendingData set by e.g. 'TdsExecuteSQLBatch'
             // _hasOpenResult always set to true by 'WriteMarsHeader'
             //
-            if (!stateObj.HasPendingData && stateObj._hasOpenResult)
+            if (!stateObj.HasPendingData && stateObj.HasOpenResult)
             {
                 /*
                                 Debug.Assert(!((sqlTransaction != null               && _distributedTransaction != null) ||
@@ -5025,6 +5025,9 @@ namespace Microsoft.Data.SqlClient
                         case 0x43f:
                             codePage = 1251;  // Kazakh code page based on SQL Server
                             break;
+                        case 0x10437:
+                            codePage = 1252;  // Georgian code page based on SQL Server
+                            break;
                         default:
                             break;
                     }
@@ -5762,7 +5765,7 @@ namespace Microsoft.Data.SqlClient
 
             // We get too many DONE COUNTs from the server, causing too meany StatementCompleted event firings.
             // We only need to fire this event when we actually have a meta data stream with 0 or more rows.
-            stateObj._receivedColMetaData = true;
+            stateObj.HasReceivedColumnMetadata = true;
             return true;
         }
 

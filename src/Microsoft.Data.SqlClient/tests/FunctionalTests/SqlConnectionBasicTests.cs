@@ -8,6 +8,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,8 +27,7 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
-        [ActiveIssue(4830, TestPlatforms.AnyUnix)]
+        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()
         {
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Open, connection.State);
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -81,11 +81,11 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -316,7 +316,7 @@ namespace Microsoft.Data.SqlClient.Tests
             try
             {
                 //an asyn call with a timeout token to cancel the operation after the specific time
-                using CancellationTokenSource cts  = new CancellationTokenSource(timeout * 1000);
+                using CancellationTokenSource cts = new CancellationTokenSource(timeout * 1000);
                 timer.Start();
                 await connection.OpenAsync(cts.Token).ConfigureAwait(false);
             }

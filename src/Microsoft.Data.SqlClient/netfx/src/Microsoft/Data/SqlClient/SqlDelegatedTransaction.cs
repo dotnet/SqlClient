@@ -387,7 +387,6 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(null != enlistment, "null enlistment?");
             SqlInternalConnection connection = GetValidConnection();
 
-
             if (null != connection)
             {
                 SqlConnection usersConnection = connection.Connection;

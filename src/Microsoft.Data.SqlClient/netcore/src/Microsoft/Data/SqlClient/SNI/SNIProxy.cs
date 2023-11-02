@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.TCP:
                     sniHandle = CreateTcpHandle(details, timeout, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
                         tlsFirst, hostNameInCertificate, serverCertificateFilename);
-                    break;
+                     break;
                 case DataSource.Protocol.NP:
                     sniHandle = CreateNpHandle(details, timeout, parallel, tlsFirst);
                     break;
@@ -391,7 +391,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 Debug.Assert(!string.IsNullOrWhiteSpace(localDBInstance), "Local DB Instance name cannot be empty.");
                 localDBConnectionString = LocalDB.GetLocalDBConnectionString(localDBInstance);
 
-                if (fullServerName == null)
+                if (fullServerName == null || string.IsNullOrEmpty(localDBConnectionString))
                 {
                     // The Last error is set in LocalDB.GetLocalDBConnectionString. We don't need to set Last here.
                     error = true;
@@ -418,6 +418,8 @@ namespace Microsoft.Data.SqlClient.SNI
         private const string LocalDbHost_NP = @"np:\\.\pipe\LOCALDB#";
         private const string NamedPipeInstanceNameHeader = "mssql$";
         private const string DefaultPipeName = "sql\\query";
+        private const string InstancePrefix = "MSSQL$";
+        private const string PathSeparator = "\\";
 
         internal enum Protocol { TCP, NP, None, Admin };
 
@@ -521,7 +523,18 @@ namespace Microsoft.Data.SqlClient.SNI
             ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
             error = false;
             // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
-            if (input.StartsWith(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
+            int index = input.IndexOf(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase);
+            if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
+            {
+                instanceName = input.Trim().ToString();
+            }
+            else if (index > 0)
+            {
+                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIProxy), EventType.ERR, "Incompatible use of prefix with LocalDb: '{0}'", dataSource);
+                error = true;
+            }
+            else if (index == 0)
             {
                 // When netcoreapp support for netcoreapp2.1 is dropped these slice calls could be converted to System.Range\System.Index
                 // Such ad input = input[1..];
@@ -539,10 +552,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
                 }
-            }
-            else if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
-            {
-                instanceName = input.Trim().ToString();
             }
 
             return instanceName;
@@ -676,12 +685,35 @@ namespace Microsoft.Data.SqlClient.SNI
             // If we have a datasource beginning with a pipe or we have already determined that the protocol is Named Pipe
             if (_dataSourceAfterTrimmingProtocol.StartsWith(PipeBeginning, StringComparison.Ordinal) || _connectionProtocol == Protocol.NP)
             {
-                // If the data source is "np:servername"
+                // If the data source starts with "np:servername"
                 if (!_dataSourceAfterTrimmingProtocol.Contains(PipeBeginning))
                 {
-                    PipeHostName = ServerName = _dataSourceAfterTrimmingProtocol;
+                    // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance, 
+                    // separate servername and instance and prepend instance with MSSQL$ and append default pipe path 
+                    // https://learn.microsoft.com/en-us/sql/tools/configuration-manager/named-pipes-properties?view=sql-server-ver16
+                    if (_dataSourceAfterTrimmingProtocol.Contains(PathSeparator) && _connectionProtocol == Protocol.NP)
+                    {
+                        string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter);
+                        if (tokensByBackSlash.Length == 2)
+                        {
+                            // NamedPipeClientStream object will create the network path using PipeHostName and PipeName
+                            // and can be seen in its _normalizedPipePath variable in the format \\servername\pipe\MSSQL$<instancename>\sql\query
+                            PipeHostName = ServerName = tokensByBackSlash[0];
+                            PipeName = $"{InstancePrefix}{tokensByBackSlash[1]}{PathSeparator}{DefaultPipeName}";
+                        }
+                        else
+                        {
+                            ReportSNIError(SNIProviders.NP_PROV);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        PipeHostName = ServerName = _dataSourceAfterTrimmingProtocol;
+                        PipeName = SNINpHandle.DefaultPipePath;
+                    }
+
                     InferLocalServerName();
-                    PipeName = SNINpHandle.DefaultPipePath;
                     return true;
                 }
 

@@ -4731,4 +4731,13 @@
   <data name="SqlParameter_SourceColumnNullMapping" xml:space="preserve">
     <value>При использовании в DataAdapter.Update значение параметра изменяется с DBNull.Value на (Int32)1 или (Int32)0, если определено.</value>
   </data>
+  <data name="SQL_RemoteCertificateChainErrors" xml:space="preserve">
+    <value>Цепочка сертификатов не прошла проверку. Ошибки: "{0}".</value>
+  </data>
+  <data name="SQL_RemoteCertificateNameMismatch" xml:space="preserve">
+    <value>Несоответствие имени сертификата. Указанное имя "DataSource" или "HostNameInCertificate" не соответствует имени в сертификате.</value>
+  </data>
+  <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
+    <value>Сертификат недоступен при проверке сертификата.</value>
+  </data>
 </root>
