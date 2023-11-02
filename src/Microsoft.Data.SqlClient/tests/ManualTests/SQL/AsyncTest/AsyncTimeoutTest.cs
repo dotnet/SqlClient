@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             }
                             catch (Exception ex)
                             {
-                                Assert.False(true, "Exception occurred: " + ex.Message);
+                                Assert.Fail("Exception occurred: " + ex.Message);
                             }
                         }
                         break;

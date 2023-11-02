@@ -418,6 +418,8 @@ namespace Microsoft.Data.SqlClient.SNI
         private const string LocalDbHost_NP = @"np:\\.\pipe\LOCALDB#";
         private const string NamedPipeInstanceNameHeader = "mssql$";
         private const string DefaultPipeName = "sql\\query";
+        private const string InstancePrefix = "MSSQL$";
+        private const string PathSeparator = "\\";
 
         internal enum Protocol { TCP, NP, None, Admin };
 
@@ -683,12 +685,35 @@ namespace Microsoft.Data.SqlClient.SNI
             // If we have a datasource beginning with a pipe or we have already determined that the protocol is Named Pipe
             if (_dataSourceAfterTrimmingProtocol.StartsWith(PipeBeginning, StringComparison.Ordinal) || _connectionProtocol == Protocol.NP)
             {
-                // If the data source is "np:servername"
+                // If the data source starts with "np:servername"
                 if (!_dataSourceAfterTrimmingProtocol.Contains(PipeBeginning))
                 {
-                    PipeHostName = ServerName = _dataSourceAfterTrimmingProtocol;
+                    // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance, 
+                    // separate servername and instance and prepend instance with MSSQL$ and append default pipe path 
+                    // https://learn.microsoft.com/en-us/sql/tools/configuration-manager/named-pipes-properties?view=sql-server-ver16
+                    if (_dataSourceAfterTrimmingProtocol.Contains(PathSeparator) && _connectionProtocol == Protocol.NP)
+                    {
+                        string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter);
+                        if (tokensByBackSlash.Length == 2)
+                        {
+                            // NamedPipeClientStream object will create the network path using PipeHostName and PipeName
+                            // and can be seen in its _normalizedPipePath variable in the format \\servername\pipe\MSSQL$<instancename>\sql\query
+                            PipeHostName = ServerName = tokensByBackSlash[0];
+                            PipeName = $"{InstancePrefix}{tokensByBackSlash[1]}{PathSeparator}{DefaultPipeName}";
+                        }
+                        else
+                        {
+                            ReportSNIError(SNIProviders.NP_PROV);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        PipeHostName = ServerName = _dataSourceAfterTrimmingProtocol;
+                        PipeName = SNINpHandle.DefaultPipePath;
+                    }
+
                     InferLocalServerName();
-                    PipeName = SNINpHandle.DefaultPipePath;
                     return true;
                 }
 

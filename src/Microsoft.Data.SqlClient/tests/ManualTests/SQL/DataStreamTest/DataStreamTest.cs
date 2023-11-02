@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue(5540)]
+        [ActiveIssue("5540")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void RunAllTestsForSingleServer_TCP()
         {
@@ -106,17 +106,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int sharedLength = Math.Min(inputData.Length, outputData.Length);
             if (sharedLength < outputData.Length)
             {
-                Assert.False(true, $"output is longer than input, input={inputData.Length} bytes, output={outputData.Length} bytes");
+                Assert.Fail($"output is longer than input, input={inputData.Length} bytes, output={outputData.Length} bytes");
             }
             if (sharedLength < inputData.Length)
             {
-                Assert.False(true, $"input is longer than output, input={inputData.Length} bytes, output={outputData.Length} bytes");
+                Assert.Fail($"input is longer than output, input={inputData.Length} bytes, output={outputData.Length} bytes");
             }
             for (int index = 0; index < sharedLength; index++)
             {
                 if (inputData[index] != outputData[index]) // avoid formatting the output string unless there is a difference
                 {
-                    Assert.True(false, $"input and output differ at index {index}, input={inputData[index]}, output={outputData[index]}");
+                    Assert.Fail($"input and output differ at index {index}, input={inputData[index]}, output={outputData[index]}");
                 }
             }
 

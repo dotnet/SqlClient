@@ -1164,7 +1164,7 @@ namespace Microsoft.Data.SqlClient
         /////////////////////////////////////////
 
 #if DEBUG
-        StackTrace _lastStack;
+        string _lastStack;
 #endif
 
         internal bool TryReadNetworkPacket()
@@ -1179,12 +1179,18 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_snapshotReplay)
                 {
-                    if (_snapshot.Replay())
+#if DEBUG
+                    // in debug builds stack traces contain line numbers so if we want to be
+                    // able to compare the stack traces they must all be created in the same
+                    // location in the code
+                    string stackTrace = Environment.StackTrace;
+#endif
+                    if (_snapshot.MoveNext())
                     {
 #if DEBUG
                         if (s_checkNetworkPacketRetryStacks)
                         {
-                            _snapshot.CheckStack(new StackTrace());
+                            _snapshot.CheckStack(stackTrace);
                         }
 #endif
                         return true;
@@ -1194,7 +1200,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (s_checkNetworkPacketRetryStacks)
                         {
-                            _lastStack = new StackTrace();
+                            _lastStack = stackTrace;
                         }
                     }
 #endif
@@ -1230,7 +1236,7 @@ namespace Microsoft.Data.SqlClient
         internal void PrepareReplaySnapshot()
         {
             _networkPacketTaskSource = null;
-            _snapshot.PrepareReplay();
+            _snapshot.MoveToStart();
         }
 
         internal void ReadSniSyncOverAsync()
@@ -1884,10 +1890,10 @@ namespace Microsoft.Data.SqlClient
 
                     if (_snapshot != null)
                     {
-                        _snapshot.PushBuffer(_inBuff, _inBytesRead);
+                        _snapshot.AppendPacketData(_inBuff, _inBytesRead);
                         if (_snapshotReplay)
                         {
-                            _snapshot.Replay();
+                            _snapshot.MoveNext();
 #if DEBUG
                             _snapshot.AssertCurrent();
 #endif
@@ -3189,98 +3195,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        class PacketData
-        {
-            public byte[] Buffer;
-            public int Read;
-#if DEBUG
-            public StackTrace Stack;
-#endif
-        }
 
         sealed partial class StateSnapshot
         {
-            private List<PacketData> _snapshotInBuffs;
 
-            public StateSnapshot()
-            {
-                _snapshotInBuffs = new List<PacketData>();
-            }
-
-#if DEBUG
-            internal void AssertCurrent()
-            {
-                Debug.Assert(_snapshotInBuffCurrent == _snapshotInBuffs.Count, "Should not be reading new packets when not replaying last packet");
-            }
-
-            internal void CheckStack(StackTrace trace)
-            {
-                PacketData prev = _snapshotInBuffs[_snapshotInBuffCurrent - 1];
-                if (prev.Stack == null)
-                {
-                    prev.Stack = trace;
-                }
-                else
-                {
-                    Debug.Assert(_stateObj._permitReplayStackTraceToDiffer || prev.Stack.ToString() == trace.ToString(), "The stack trace on subsequent replays should be the same");
-                }
-            }
-#endif
-
-            internal void PushBuffer(byte[] buffer, int read)
-            {
-#if DEBUG
-                if (_snapshotInBuffs != null && _snapshotInBuffs.Count > 0)
-                {
-                    foreach (PacketData packet in _snapshotInBuffs)
-                    {
-                        if (object.ReferenceEquals(packet.Buffer, buffer))
-                        {
-                            Debug.Assert(false,"buffer is already present in packet list");
-                        }
-                    }
-                }
-#endif
-
-                PacketData packetData = new PacketData();
-                packetData.Buffer = buffer;
-                packetData.Read = read;
-#if DEBUG
-                packetData.Stack = _stateObj._lastStack;
-#endif
-
-                _snapshotInBuffs.Add(packetData);
-            }
-
-            internal bool Replay()
-            {
-                if (_snapshotInBuffCurrent < _snapshotInBuffs.Count)
-                {
-                    PacketData next = _snapshotInBuffs[_snapshotInBuffCurrent];
-                    _stateObj._inBuff = next.Buffer;
-                    _stateObj._inBytesUsed = 0;
-                    _stateObj._inBytesRead = next.Read;
-                    _snapshotInBuffCurrent++;
-                    return true;
-                }
-
-                return false;
-            }
-
-            internal void Snap(TdsParserStateObject state)
-            {
-                _snapshotInBuffs.Clear();
-                _snapshotInBuffCurrent = 0;
-
-                CaptureAsStart(state);
-            }
-
-            internal void Clear()
-            {
-                _snapshotInBuffs.Clear();
-
-                ClearCore();
-            }
         }
     }
 }

@@ -120,12 +120,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Statement 'Drop Database' is not supported in this version of SQL Server.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void CollatedDataReaderTest()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData("KAZAKH_90_CI_AI")]
+        [InlineData("Georgian_Modern_Sort_CI_AS")]
+        public static void CollatedDataReaderTest(string collation)
         {
-            var databaseName = DataTestUtility.GetUniqueName("DB");
-            // Remove square brackets
-            var dbName = databaseName.Substring(1, databaseName.Length - 2);
+            string dbName = DataTestUtility.GetUniqueName("CollationTest", false);
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -140,14 +140,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 con.Open();
 
                 // Create collated database
-                cmd.CommandText = $"CREATE DATABASE {databaseName} COLLATE KAZAKH_90_CI_AI";
+                cmd.CommandText = $"CREATE DATABASE [{dbName}] COLLATE {collation}";
                 cmd.ExecuteNonQuery();
 
                 //Create connection without pooling in order to delete database later.
                 using (SqlConnection dbCon = new(builder.ConnectionString))
                 using (SqlCommand dbCmd = dbCon.CreateCommand())
                 {
-                    var data = "TestData";
+                    string data = Guid.NewGuid().ToString();
 
                     dbCon.Open();
                     dbCmd.CommandText = $"SELECT '{data}'";
@@ -155,18 +155,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     reader.Read();
                     Assert.Equal(data, reader.GetString(0));
                 }
-
-                // Let connection close safely before dropping database for slow servers.
-                Thread.Sleep(500);
-            }
-            catch (SqlException e)
-            {
-                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
             }
             finally
             {
-                cmd.CommandText = $"DROP DATABASE {databaseName}";
-                cmd.ExecuteNonQuery();
+                // Let connection close safely before dropping database for slow servers.
+                Thread.Sleep(500);
+                DataTestUtility.DropDatabase(con, dbName);
             }
         }
 
