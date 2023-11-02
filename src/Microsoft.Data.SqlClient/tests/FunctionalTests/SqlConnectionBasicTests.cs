@@ -241,6 +241,29 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
+        [Theory]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryIntegrated)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryMSI)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryDefault)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
+        public void ConnectionTestInvalidCredentialAndAuthentication(SqlAuthenticationMethod authentication)
+        {
+            var connectionString = $"Authentication={authentication}";
+
+            using var testPassword = new SecureString();
+            testPassword.MakeReadOnly();
+            var credential = new SqlCredential(string.Empty, testPassword);
+
+            Assert.Throws<ArgumentException>(() => new SqlConnection(connectionString, credential));
+
+            // Attempt to set the credential after creation
+            using var connection = new SqlConnection(connectionString);
+            Assert.Throws<InvalidOperationException>(() => connection.Credential = credential);
+        }
+
         [Fact]
         public void ConnectionTestValidCredentialCombination()
         {

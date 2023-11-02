@@ -362,7 +362,8 @@ namespace Microsoft.Data.Common
             "ActiveDirectoryDeviceCodeFlow",
             "ActiveDirectoryManagedIdentity",
             "ActiveDirectoryMSI",
-            "ActiveDirectoryDefault"
+            "ActiveDirectoryDefault",
+            "ActiveDirectoryWorkloadIdentity",
         };
 
         private static bool IsValidAuthenticationMethodEnum()
