@@ -23,7 +23,7 @@
   </PropertyGroup>
   <!-- NetFx project dependencies -->
   <PropertyGroup>
-    <MicrosoftDataSqlClientSniVersion>5.1.1</MicrosoftDataSqlClientSniVersion>   
+    <MicrosoftDataSqlClientSniVersion>5.1.1</MicrosoftDataSqlClientSniVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
