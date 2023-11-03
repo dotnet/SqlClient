@@ -348,21 +348,23 @@ namespace Microsoft.Data.SqlClient
 #endif
                 try
                 {
-                    Exception commitException = null;
-
-                    lock (connection)
+                    // If the connection is doomed, we can be certain that the
+                    // transaction will eventually be rolled back or has already been aborted externally, and we shouldn't
+                    // attempt to commit it.
+                    if (connection.IsConnectionDoomed)
                     {
-                        // If the connection is doomed, we can be certain that the
-                        // transaction will eventually be rolled back or has already been aborted externally, and we shouldn't
-                        // attempt to commit it.
-                        if (connection.IsConnectionDoomed)
+                        lock (connection)
                         {
                             _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
                             _connection = null;
-
-                            enlistment.Aborted(SQL.ConnectionDoomed());
                         }
-                        else
+
+                        enlistment.Aborted(SQL.ConnectionDoomed());
+                    }
+                    else
+                    {
+                        Exception commitException;
+                        lock (connection)
                         {
                             try
                             {
@@ -370,9 +372,10 @@ namespace Microsoft.Data.SqlClient
                                 ValidateActiveOnConnection(connection);
 
                                 _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
-                                _connection = null;   // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
+                                _connection = null; // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
 
                                 connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                                commitException = null;
                             }
                             catch (SqlException e)
                             {
@@ -391,42 +394,41 @@ namespace Microsoft.Data.SqlClient
                                 ADP.TraceExceptionWithoutRethrow(e);
                                 connection.DoomThisConnection();
                             }
-                            if (commitException != null)
+                        }
+                        if (commitException != null)
+                        {
+                            // connection.ExecuteTransaction failed with exception
+                            if (_internalTransaction.IsCommitted)
                             {
-                                // connection.ExecuteTransaction failed with exception
-                                if (_internalTransaction.IsCommitted)
-                                {
-                                    // Even though we got an exception, the transaction
-                                    // was committed by the server.
-                                    enlistment.Committed();
-                                }
-                                else if (_internalTransaction.IsAborted)
-                                {
-                                    // The transaction was aborted, report that to
-                                    // SysTx.
-                                    enlistment.Aborted(commitException);
-                                }
-                                else
-                                {
-                                    // The transaction is still active, we cannot
-                                    // know the state of the transaction.
-                                    enlistment.InDoubt(commitException);
-                                }
-
-                                // We eat the exception.  This is called on the SysTx
-                                // thread, not the applications thread.  If we don't
-                                // eat the exception an UnhandledException will occur,
-                                // causing the process to FailFast.
+                                // Even though we got an exception, the transaction
+                                // was committed by the server.
+                                enlistment.Committed();
+                            }
+                            else if (_internalTransaction.IsAborted)
+                            {
+                                // The transaction was aborted, report that to
+                                // SysTx.
+                                enlistment.Aborted(commitException);
+                            }
+                            else
+                            {
+                                // The transaction is still active, we cannot
+                                // know the state of the transaction.
+                                enlistment.InDoubt(commitException);
                             }
 
-                            connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
+                            // We eat the exception.  This is called on the SysTx
+                            // thread, not the applications thread.  If we don't
+                            // eat the exception an UnhandledException will occur,
+                            // causing the process to FailFast.
                         }
-                    }
 
-                    if (commitException == null)
-                    {
-                        // connection.ExecuteTransaction succeeded
-                        enlistment.Committed();
+                        connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
+                        if (commitException == null)
+                        {
+                            // connection.ExecuteTransaction succeeded
+                            enlistment.Committed();
+                        }
                     }
                 }
                 catch (System.OutOfMemoryException e)
