@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Private Fields
         private const string IPV4 = @"127.0.0.1";
         private const string IPV6 = @"::1";
-        private static readonly string s_fullPathToPowershellScript = Path.Combine(Directory.GetCurrentDirectory(), "SQL", "ConnectionTestWithSSLCert", $"GenerateSelfSignedCertificate.ps1");
+        private static readonly string s_fullPathToPowershellScript = Path.Combine(Directory.GetCurrentDirectory(), "SQL", "ConnectionTestWithSSLCert", "GenerateSelfSignedCertificate.ps1");
         private const string LocalHost = "localhost";
         private static readonly string s_fQDN = Dns.GetHostEntry(Environment.MachineName).HostName;
         private readonly string _thumbprint;
