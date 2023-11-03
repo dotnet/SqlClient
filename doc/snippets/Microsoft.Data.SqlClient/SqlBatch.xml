@@ -5,8 +5,12 @@
       <summary></summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[  
- ]]>
+          <![CDATA[
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+
+[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
+]]>
         </format>
       </remarks>
     </SqlBatch>
@@ -17,13 +21,17 @@
       <value></value>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+
+[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
+]]>
         </format>
       </remarks>
     </ctor1>
     <ctor2>
-      <summary>Initializes a new <see cref="SqlBatch"/>.        ///
+      <summary>Initializes a new <see cref="SqlBatch"/>.
       </summary>
       <param name="connection">
         A
@@ -39,8 +47,8 @@
       </param>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </ctor2>
@@ -49,8 +57,12 @@
      </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+
+[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
+]]>
         </format>
       </remarks>
     </BatchCommands>
@@ -60,8 +72,8 @@
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </Commands>
@@ -75,8 +87,8 @@
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </Connection>
@@ -84,8 +96,8 @@
       <summary>Gets or sets the <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" /> within which the <see cref="T:Microsoft.Data.SqlClient.SqlBatch" /> commands execute.</summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </Transaction>
@@ -101,8 +113,12 @@
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+
+[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
+]]>
         </format>
       </remarks>
     </ExecuteReader>
@@ -120,8 +136,8 @@
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </ExecuteReaderAsync>

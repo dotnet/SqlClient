@@ -5,7 +5,12 @@
       <summary>Initializes a new <see cref="SqlBatchCommand"/>.</summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[]]>
+          <![CDATA[
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+
+[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
+]]>
         </format>
       </remarks>
     </ctor1>
@@ -17,7 +22,8 @@
       <param name="columnEncryptionSetting">The encryption setting. For more information, see [Always Encrypted](/sql/relational-databases/security/encryption/always-encrypted-database-engine).</param>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </ctor2>
@@ -30,8 +36,8 @@
       <value>The parameters of the Transact-SQL statement or stored procedure. The default is an empty collection.</value>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </Parameters>
@@ -41,8 +47,8 @@
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </CommandBehavior>
@@ -53,8 +59,8 @@
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </ColumnEncryptionSetting>

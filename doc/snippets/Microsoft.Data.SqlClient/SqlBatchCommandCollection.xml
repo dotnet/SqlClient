@@ -6,8 +6,8 @@
     </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[  
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </SqlBatchCommandCollection>
@@ -16,8 +16,8 @@
       <value></value>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </Add>
@@ -26,8 +26,8 @@
       <value></value>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </Contains>
@@ -36,8 +36,8 @@
       <value></value>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </CopyTo>
@@ -48,8 +48,8 @@
       </returns>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </IndexOf>
@@ -58,8 +58,8 @@
       <exception cref="T:System.ArgumentOutOfRangeException"></exception>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </Insert>
@@ -68,8 +68,8 @@
       <returns>Returns <see langword="true" /> if an item is successfully removed. Returns false if an item could not be removed or no item was not found.</returns>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </Remove>
@@ -79,8 +79,8 @@
       <exception cref="T:System.ArgumentOutOfRangeException"></exception>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </this1>
@@ -90,11 +90,10 @@
       <exception cref="T:System.ArgumentOutOfRangeException"></exception>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[   
- ]]>
+          <![CDATA[
+]]>
         </format>
       </remarks>
     </this2>
-
   </members>
 </docs>
