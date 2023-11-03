@@ -30,6 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private readonly string _thumbprint;
         private const string ThumbPrintEnvName = "Thumbprint";
         private static string InstanceName = "MSSQLSERVER";
+        private static string SlashInstanceName = "";
         private static string InstanceNamePrefix = "";
 
         public string ForceEncryptionRegistryPath
@@ -60,6 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 InstanceName = tokensByBackSlash[1].Split(';')[0];
                 InstanceNamePrefix = "MSSQL$";
+                SlashInstanceName = $"\\{InstanceName}";
             }
 
             Assert.True(DataTestUtility.IsAdmin, "CertificateTest class needs to be run in Admin mode.");
@@ -107,8 +109,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // 127.0.0.1 most of the cases does not cause any Remote certificate validation error depending on name resolution on the machine
                 //  It mostly returns SslPolicyErrors.None
                 //DataSource = IPV4,
+                DataSource = IPV4 + SlashInstanceName,
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
-                HostNameInCertificate = "localhost"
+                HostNameInCertificate = LocalHost
                 //HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName
             };
             using SqlConnection connection = new(builder.ConnectionString);
@@ -120,7 +123,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // According to above no other hostname in certificate than FQDN will work in net6 which is same as SubjectName in case of RemoteCertificateNameMismatch
             // Net7.0 the new API added by dotnet runtime will check SANS and then SubjectName
 
-            builder.DataSource = IPV6;
+            builder.DataSource = IPV6 + SlashInstanceName;
             builder.HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName;
             builder.Encrypt = SqlConnectionEncryptOption.Mandatory;
             using SqlConnection connection2 = new(builder.ConnectionString);
@@ -130,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (DataTestUtility.IsTDS8Supported)
             {
                 // Strict
-                builder.DataSource = IPV6;
+                builder.DataSource = IPV6 + SlashInstanceName;
                 builder.HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName;
                 builder.Encrypt = SqlConnectionEncryptOption.Strict;
                 using SqlConnection connection3 = new(builder.ConnectionString);
