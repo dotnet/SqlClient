@@ -13,7 +13,6 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.ServiceProcess;
 using System.Text;
-using Microsoft.SqlServer.TDS.Login7;
 using Microsoft.Win32;
 using Xunit;
 
