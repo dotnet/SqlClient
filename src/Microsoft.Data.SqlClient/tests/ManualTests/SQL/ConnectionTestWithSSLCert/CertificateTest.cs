@@ -29,9 +29,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_fQDN = Dns.GetHostEntry(Environment.MachineName).HostName;
         private readonly string _thumbprint;
         private const string ThumbPrintEnvName = "Thumbprint";
+
+        // InstanceName will get replaced with an instance name in the connection string
         private static string InstanceName = "MSSQLSERVER";
-        private static string SlashInstanceName = "";
+        
+        // InstanceNamePrefix will get replaced with MSSQL$ is there is an instance name in connection string
         private static string InstanceNamePrefix = "";
+
+        // SlashInstance is used to override IPV4 and IPV6 defined about so it includes an instance name
+        private static string SlashInstanceName = "";
 
         public string ForceEncryptionRegistryPath
         {
