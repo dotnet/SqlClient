@@ -44,15 +44,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (DataTestUtility.IsSQL2022())
                 {
-                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL16.{InstanceName}\\MSSQLSERVER\\SuperSocketNetLib";
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL16.{InstanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }
                 if (DataTestUtility.IsSQL2019())
                 {
-                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL15.{InstanceName}\\MSSQLSERVER\\SuperSocketNetLib";
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.{InstanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }
                 if (DataTestUtility.IsSQL2016())
                 {
-                    return $"SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL14.{InstanceName}\\MSSQLSERVER\\SuperSocketNetLib";
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.{InstanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }
                 return string.Empty;
             }
