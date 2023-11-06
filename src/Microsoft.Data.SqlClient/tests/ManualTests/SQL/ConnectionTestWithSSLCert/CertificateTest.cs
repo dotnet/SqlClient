@@ -29,21 +29,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private readonly string _thumbprint;
         private const string ThumbPrintEnvName = "Thumbprint";
 
+        // InstanceName will get replaced with an instance name in the connection string
+        private static string InstanceName = "MSSQLSERVER";
+        
+        // InstanceNamePrefix will get replaced with MSSQL$ is there is an instance name in connection string
+        private static string InstanceNamePrefix = "";
+
+        // SlashInstance is used to override IPV4 and IPV6 defined about so it includes an instance name
+        private static string SlashInstanceName = "";
+
         public string ForceEncryptionRegistryPath
         {
             get
             {
                 if (DataTestUtility.IsSQL2022())
                 {
-                    return @"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQLServer\SuperSocketNetLib";
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL16.{InstanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }
                 if (DataTestUtility.IsSQL2019())
                 {
-                    return @"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQLServer\SuperSocketNetLib";
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.{InstanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }
                 if (DataTestUtility.IsSQL2016())
                 {
-                    return @"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.MSSQLSERVER\MSSQLServer\SuperSocketNetLib";
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.{InstanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }
                 return string.Empty;
             }
@@ -52,6 +61,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public CertificateTest()
         {
+            string[] tokensByBackSlash = DataTestUtility.TCPConnectionString.Split('\\');
+            if (tokensByBackSlash.Length > 1)
+            {
+                InstanceName = tokensByBackSlash[1].Split(';')[0];
+                InstanceNamePrefix = "MSSQL$";
+                SlashInstanceName = $"\\{InstanceName}";
+            }
+
             Assert.True(DataTestUtility.IsAdmin, "CertificateTest class needs to be run in Admin mode.");
 
             CreateValidCertificate(s_fullPathToPowershellScript);
@@ -94,11 +111,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Mandatory
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
-                // 127.0.0.1 most of the cases does not cause any Remote certificate validation error depinding on name resolution on the machine
+                // 127.0.0.1 most of the cases does not cause any Remote certificate validation error depending on name resolution on the machine
                 //  It mostly returns SslPolicyErrors.None
-                DataSource = IPV4,
+                //DataSource = IPV4,
+                DataSource = IPV4 + SlashInstanceName,
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
-                HostNameInCertificate = "localhost"
+                HostNameInCertificate = LocalHost
+                //HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName
             };
             using SqlConnection connection = new(builder.ConnectionString);
             connection.Open();
@@ -109,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // According to above no other hostname in certificate than FQDN will work in net6 which is same as SubjectName in case of RemoteCertificateNameMismatch
             // Net7.0 the new API added by dotnet runtime will check SANS and then SubjectName
 
-            builder.DataSource = IPV6;
+            builder.DataSource = IPV6 + SlashInstanceName;
             builder.HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName;
             builder.Encrypt = SqlConnectionEncryptOption.Mandatory;
             using SqlConnection connection2 = new(builder.ConnectionString);
@@ -119,7 +138,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (DataTestUtility.IsTDS8Supported)
             {
                 // Strict
-                builder.DataSource = IPV6;
+                builder.DataSource = IPV6 + SlashInstanceName;
                 builder.HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName;
                 builder.Encrypt = SqlConnectionEncryptOption.Strict;
                 using SqlConnection connection3 = new(builder.ConnectionString);
@@ -161,7 +180,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
-                    Arguments = script,
+                    Arguments = $"{script} -Prefix {InstanceNamePrefix} -Instance {InstanceName}",
                     CreateNoWindow = false,
                     Verb = "runas"
                 }
@@ -232,7 +251,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RegistryKey key = Registry.LocalMachine.OpenSubKey(registryPath, true);
             key?.SetValue("ForceEncryption", 0, RegistryValueKind.DWord);
             key?.SetValue("Certificate", "", RegistryValueKind.String);
-            ServiceController sc = new("MSSQLSERVER");
+            ServiceController sc = new($"{InstanceNamePrefix}{InstanceName}");
             sc.Stop();
             sc.WaitForStatus(ServiceControllerStatus.Stopped);
             sc.Start();
