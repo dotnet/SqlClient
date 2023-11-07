@@ -83,10 +83,10 @@
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
     <TestMicrosoftDataSqlClientVersion>$(NugetPackageVersion)</TestMicrosoftDataSqlClientVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Condition="$(BuildForRelease) == '' Or $(BuildForRelease) == 'true'" Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>  
-  </ItemGroup>
+  <!-- <itemgroup> -->
+    <!-- <packagereference condition="$(buildforrelease) == '' or $(buildforrelease) == 'true'" include="microsoft.sourcelink.github" version="1.1.1"> -->
+      <!-- <privateassets>all</privateassets> -->
+      <!-- <includeassets>runtime; build; native; contentfiles; analyzers; buildtransitive</includeassets> -->
+    <!-- </packagereference>   -->
+  <!-- </itemgroup> -->
 </Project>
