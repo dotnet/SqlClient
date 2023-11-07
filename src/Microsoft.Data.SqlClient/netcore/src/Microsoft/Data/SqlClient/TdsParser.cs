@@ -9174,20 +9174,23 @@ namespace Microsoft.Data.SqlClient
 
                             ParameterDirection parameterDirection = param.Direction;
 
-                            // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
-                            if (param.ForceColumnEncryption &&
-                                !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled ||
-                                  (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled)))
+                            if (param.ForceColumnEncryption)
                             {
-                                throw SQL.ParamInvalidForceColumnEncryptionSetting(param.ParameterName, rpcext.GetCommandTextOrRpcName());
-                            }
+                                // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
+                                if (
+                                    !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled 
+                                    ||
+                                    (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled)))
+                                {
+                                    throw SQL.ParamInvalidForceColumnEncryptionSetting(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                                }
 
-                            // Check if the applications wants to force column encryption to avoid sending sensitive data to server
-                            if (param.ForceColumnEncryption && param.CipherMetadata == null
-                                                            && (parameterDirection == ParameterDirection.Input || parameterDirection == ParameterDirection.InputOutput))
-                            {
-                                // Application wants a parameter to be encrypted before sending it to server, however server doesnt think this parameter needs encryption.
-                                throw SQL.ParamUnExpectedEncryptionMetadata(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                                // Check if the applications wants to force column encryption to avoid sending sensitive data to server
+                                if (param.CipherMetadata == null && (parameterDirection == ParameterDirection.Input || parameterDirection == ParameterDirection.InputOutput))
+                                {
+                                    // Application wants a parameter to be encrypted before sending it to server, however server doesnt think this parameter needs encryption.
+                                    throw SQL.ParamUnExpectedEncryptionMetadata(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                                }
                             }
 
                             if (enableOptimizedParameterBinding && (parameterDirection == ParameterDirection.Output || parameterDirection == ParameterDirection.InputOutput))
