@@ -81,6 +81,9 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
 
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
