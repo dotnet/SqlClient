@@ -38,6 +38,31 @@ The following example displays a list of all available SQL Server data sources, 
 ]]></format>
 			</remarks>
 		</CanCreateDataSourceEnumerator>
+    <CanCreateBatch>
+      <summary>
+        Gets a value that indicates whether a
+        <see cref="T:System.Data.Common.DbBatch" />
+        can be created.
+      </summary>
+      <value>
+        <see langword="true" />
+        if a
+        <see cref="T:System.Data.Common.DbBatch" />
+        can be created; otherwise,
+        <see langword="false" />
+        .
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+
+## Remarks
+The <xref:System.Data.Common.DbProviderFactory> class provides the <xref:System.Data.Common.DbProviderFactory.CanCreateBatch%2A> property so that inheritors can indicate
+whether they can provide a DbBatch. The <xref:Microsoft.Data.SqlClient.SqlClientFactory> displays this property, but its value is always `true`.
+]]>
+        </format>
+      </remarks>
+    </CanCreateBatch>
 		<CreateCommand>
 			<summary>
 				Returns a strongly typed
@@ -227,6 +252,60 @@ DbParameter cmd = newFactory.CreateParameter();
 				To be added.
 			</remarks>
 		</CreatePermission>
+    <CreateBatch>
+      <summary>
+        Returns a strongly typed
+        <see cref="T:System.Data.Common.DbBatch" />
+        instance.
+      </summary>
+      <returns>
+        A new strongly typed instance of
+        <see cref="T:System.Data.Common.DbBatch" />
+        .
+      </returns>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+					
+## Examples
+The following code fragment returns a strongly typed <xref:System.Data.Common.DbBatch> instance:
+
+
+```csharp
+SqlClientFactory newFactory = SqlClientFactory.Instance;
+DbParameter cmd = newFactory.CreateBatch();
+```
+]]>
+        </format>
+      </remarks>
+    </CreateBatch>
+    <CreateBatchCommand>
+      <summary>
+        Returns a strongly typed
+        <see cref="T:System.Data.Common.DbBatchCommand" />
+        instance.
+      </summary>
+      <returns>
+        A new strongly typed instance of
+        <see cref="T:System.Data.Common.DbBatchCommand" />
+        .
+      </returns>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+					
+## Examples
+The following code fragment returns a strongly typed <xref:System.Data.Common.DbBatchCommand> instance:
+
+
+```csharp
+SqlClientFactory newFactory = SqlClientFactory.Instance;
+DbParameter cmd = newFactory.CreateBatchCommand();
+```
+]]>
+        </format>
+      </remarks>
+    </CreateBatchCommand>
 		<Instance>
 			<summary>
 				Gets an instance of the

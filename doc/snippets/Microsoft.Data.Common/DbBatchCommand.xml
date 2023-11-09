@@ -1,0 +1,113 @@
+<Type Name="DbBatchCommand" FullName="System.Data.Common.DbBatchCommand">
+  <TypeSignature Language="C#" Value="public abstract class DbBatchCommand" />
+  <TypeSignature Language="VB.NET" Value="Public MustInherit Class DbBatchCommand" />
+  <Base>
+    <BaseTypeName>System.Object</BaseTypeName>
+  </Base>
+  <Interfaces />
+  <Attributes>
+    <Attribute FrameworkAlternate="net-8.0">
+      <AttributeName Language="C#">[System.Runtime.CompilerServices.Nullable(0)]</AttributeName>
+      <AttributeName Language="F#">[&lt;System.Runtime.CompilerServices.Nullable(0)&gt;]</AttributeName>
+    </Attribute>
+    <Attribute FrameworkAlternate="net-8.0">
+      <AttributeName Language="C#">[System.Runtime.CompilerServices.NullableContext(1)]</AttributeName>
+      <AttributeName Language="F#">[&lt;System.Runtime.CompilerServices.NullableContext(1)&gt;]</AttributeName>
+    </Attribute>
+  </Attributes>
+  <Docs>
+    <summary>
+      Represents a single command within a <see cref="T:System.Data.Common.DbBatch" />. A batch can be executed against a data source in a single round trip.
+    </summary>
+    <remarks>To be added.</remarks>
+  </Docs>
+  <Members>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="protected DbBatchCommand ();" />
+      <MemberSignature Language="VB.NET" Value="Protected Sub New ()" />
+      <MemberType>Constructor</MemberType>
+      <Parameters />
+      <Docs>
+        <summary>
+          Constructs an instance of the <see cref="T:System.Data.Common.DbBatchCommand" /> object.
+        </summary>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="CommandText">
+      <MemberSignature Language="C#" Value="public abstract string CommandText { get; set; }" />
+      <MemberSignature Language="VB.NET" Value="Public MustOverride Property CommandText As String" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.String</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>Gets or sets the text command to run against the data source.</summary>
+        <value>The text command to execute. The default value is an empty string ("").</value>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="CommandType">
+      <MemberSignature Language="C#" Value="public abstract System.Data.CommandType CommandType { get; set; }" />
+      <MemberSignature Language="VB.NET" Value="Public MustOverride Property CommandType As CommandType" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Data.CommandType</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>
+          Gets or sets how the <see cref="P:System.Data.Common.DbBatchCommand.CommandText" /> property is interpreted.
+        </summary>
+        <value>
+          One of the enumeration values that specifies how a command string is interpreted. The default is <see langword="Text" />.
+        </value>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="DbParameterCollection">
+      <MemberSignature Language="C#" Value="protected abstract System.Data.Common.DbParameterCollection DbParameterCollection { get; }" />
+      <MemberSignature Language="VB.NET" Value="Protected MustOverride ReadOnly Property DbParameterCollection As DbParameterCollection" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbParameterCollection</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>
+          Gets the collection of <see cref="T:System.Data.Common.DbParameter" /> objects.
+        </summary>
+        <value>The parameters of the SQL statement or stored procedure.</value>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Parameters">
+      <MemberSignature Language="C#" Value="public System.Data.Common.DbParameterCollection Parameters { get; }" />
+      <MemberSignature Language="VB.NET" Value="Public ReadOnly Property Parameters As DbParameterCollection" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbParameterCollection</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>
+          Gets the collection of <see cref="T:System.Data.Common.DbParameter" /> objects. For more information on parameters, see [Configuring Parameters and Parameter Data Types](/dotnet/framework/data/adonet/configuring-parameters-and-parameter-data-types).
+        </summary>
+        <value>The parameters of the SQL statement or stored procedure.</value>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="RecordsAffected">
+      <MemberSignature Language="C#" Value="public abstract int RecordsAffected { get; }" />
+      <MemberSignature Language="VB.NET" Value="Public MustOverride ReadOnly Property RecordsAffected As Integer" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>
+          Gets the number of rows changed, inserted, or deleted by execution of this specific <see cref="T:System.Data.Common.DbBatchCommand" />.
+        </summary>
+        <value>The number of rows changed, inserted, or deleted. -1 for SELECT statements; 0 if no rows were affected or the statement failed.</value>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

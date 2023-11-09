@@ -448,7 +448,7 @@ namespace Microsoft.Data.Common
                                         connectionOptions.DataSource, msalException.Message,
                                         ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
             }
-            return SqlException.CreateException(sqlErs, "", sender);
+            return SqlException.CreateException(sqlErs, "", sender, innerException: null, batchCommand: null);
         }
 
 #endregion
