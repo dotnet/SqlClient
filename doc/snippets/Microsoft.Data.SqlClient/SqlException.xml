@@ -155,7 +155,7 @@ catch (Exception ex) {
         </GetObjectData>
         <IsTransient>
             <summary>Indicates whether the error represented by this <see cref="T:Microsoft.Data.SqlClient.SqlException" /> could be a transient error, i.e. if retrying the triggering operation may succeed without any other change. Examples of transient errors include failure to acquire a database lock, networking issues. This allows automatic retry execution strategies to be developed without knowledge of specific database error codes.</summary>
-            <returns><see langword="true"/> if the error represented could be a transient error; <see langword="true"/> otherwise.</returns>
+            <returns><see langword="true"/> if the error represented could be a transient error; <see langword="false"/> otherwise.</returns>
         </IsTransient>
         <LineNumber>
             <summary>Gets the line number within the Transact-SQL command batch or stored procedure that generated the error.</summary>
