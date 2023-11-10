@@ -25,6 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string IPV6 = @"::1";
         private static readonly string s_fullPathToPowershellScript = Path.Combine(Directory.GetCurrentDirectory(), "SQL", "ConnectionTestWithSSLCert", "GenerateSelfSignedCertificate.ps1");
         private const string LocalHost = "localhost";
+        private static bool s_isLocalHost = true;
         private static readonly string s_fQDN = Dns.GetHostEntry(Environment.MachineName).HostName;
         private readonly string _thumbprint;
         private const string ThumbPrintEnvName = "Thumbprint";
@@ -38,7 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // SlashInstance is used to override IPV4 and IPV6 defined about so it includes an instance name
         private static string SlashInstanceName = "";
 
-        public string ForceEncryptionRegistryPath
+        private static string ForceEncryptionRegistryPath
         {
             get
             {
@@ -61,10 +62,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public CertificateTest()
         {
-            string[] tokensByBackSlash = DataTestUtility.TCPConnectionString.Split('\\');
-            if (tokensByBackSlash.Length > 1)
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
+            if (!LocalHost.Equals(hostname, StringComparison.OrdinalIgnoreCase))
             {
-                InstanceName = tokensByBackSlash[1].Split(';')[0];
+                s_isLocalHost = false;
+                if (!s_isLocalHost) // Eliminate build warning/error since s_isLocalHost is only referenced in ConditionalFact options
+                {
+                    return;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(instanceName))
+            {
+                InstanceName = instanceName;
                 InstanceNamePrefix = "MSSQL$";
                 SlashInstanceName = $"\\{InstanceName}";
             }
@@ -75,7 +86,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _thumbprint = Environment.GetEnvironmentVariable(ThumbPrintEnvName, EnvironmentVariableTarget.Machine);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        private static bool AreConnStringsSetup() => DataTestUtility.AreConnStringsSetup();
+        private static bool IsNotAzureServer() => DataTestUtility.IsNotAzureServer();
+        private static bool UseManagedSNIOnWindows() => DataTestUtility.UseManagedSNIOnWindows;
+
+
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(s_isLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpenningConnectionWithGoodCertificateTest()
         {
@@ -104,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Provided hostname in certificate are:
         // localhost, FQDN, Loopback IPv4: 127.0.0.1, IPv6: ::1
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(s_isLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpeningConnectionWitHNICTest()
         {
@@ -148,7 +164,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ActiveIssue("26934")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.UseManagedSNIOnWindows), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(UseManagedSNIOnWindows), nameof(IsNotAzureServer), nameof(s_isLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void RemoteCertificateNameMismatchErrorTest()
         {
