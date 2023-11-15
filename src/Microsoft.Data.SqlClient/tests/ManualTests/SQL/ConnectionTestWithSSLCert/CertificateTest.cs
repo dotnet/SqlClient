@@ -25,7 +25,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string IPV6 = @"::1";
         private static readonly string s_fullPathToPowershellScript = Path.Combine(Directory.GetCurrentDirectory(), "SQL", "ConnectionTestWithSSLCert", "GenerateSelfSignedCertificate.ps1");
         private const string LocalHost = "localhost";
-        private static bool s_isLocalHost = true;
         private static readonly string s_fQDN = Dns.GetHostEntry(Environment.MachineName).HostName;
         private readonly string _thumbprint;
         private const string ThumbPrintEnvName = "Thumbprint";
@@ -66,11 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
             if (!LocalHost.Equals(hostname, StringComparison.OrdinalIgnoreCase))
             {
-                s_isLocalHost = false;
-                if (!s_isLocalHost) // Eliminate build warning/error since s_isLocalHost is only referenced in ConditionalFact options
-                {
-                    return;
-                }
+                return;
             }
 
             if (!string.IsNullOrEmpty(instanceName))
@@ -86,12 +81,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _thumbprint = Environment.GetEnvironmentVariable(ThumbPrintEnvName, EnvironmentVariableTarget.Machine);
         }
 
+        private static bool IsLocalHost()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out _));
+            return LocalHost.Equals(hostname, StringComparison.OrdinalIgnoreCase);
+        }
         private static bool AreConnStringsSetup() => DataTestUtility.AreConnStringsSetup();
         private static bool IsNotAzureServer() => DataTestUtility.IsNotAzureServer();
         private static bool UseManagedSNIOnWindows() => DataTestUtility.UseManagedSNIOnWindows;
 
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(s_isLocalHost))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpenningConnectionWithGoodCertificateTest()
         {
@@ -120,7 +121,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Provided hostname in certificate are:
         // localhost, FQDN, Loopback IPv4: 127.0.0.1, IPv6: ::1
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(s_isLocalHost))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpeningConnectionWitHNICTest()
         {
@@ -164,7 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ActiveIssue("26934")]
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(UseManagedSNIOnWindows), nameof(IsNotAzureServer), nameof(s_isLocalHost))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(UseManagedSNIOnWindows), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void RemoteCertificateNameMismatchErrorTest()
         {
