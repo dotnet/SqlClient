@@ -56,6 +56,15 @@ msbuild -t:BuildNetCoreAllOS
 # Builds the .NET driver for all Operating Systems.
 ```
 
+### Conditional properties intended for continuous integation build
+
+Some project properties are enabled only within AzureDevOps pipeline. For these properties, the DevOPs system variable TF_BUILD is used.
+
+For example:
+
+<NugetPackProperties Condition="'$(TF_BUILD)' == 'true'">$(NugetPackProperties);ContinuousIntegrationBuild=true;</NugetPackProperties>
+
+
 ## Building Tests
 
 ```bash
