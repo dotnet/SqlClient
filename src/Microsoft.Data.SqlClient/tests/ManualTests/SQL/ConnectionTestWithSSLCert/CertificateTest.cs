@@ -87,10 +87,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out _));
             return LocalHost.Equals(hostname, StringComparison.OrdinalIgnoreCase);
         }
+
         private static bool AreConnStringsSetup() => DataTestUtility.AreConnStringsSetup();
         private static bool IsNotAzureServer() => DataTestUtility.IsNotAzureServer();
         private static bool UseManagedSNIOnWindows() => DataTestUtility.UseManagedSNIOnWindows;
-
 
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
