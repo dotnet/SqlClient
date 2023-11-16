@@ -12,6 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class BatchTests
     {
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MissingCommandTextThrows()
         {
@@ -32,6 +33,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Throws<InvalidOperationException>(() => batch.ExecuteNonQuery());
             }
         }
+
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ConnectionCanCreateBatch()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                Assert.True(connection.CanCreateBatch);
+                using (var batch = connection.CreateBatch())
+                {
+                    Assert.NotNull(batch);
+                    Assert.Equal(connection, batch.Connection);
+
+                    batch.BatchCommands.Add(new SqlBatchCommand("SELECT @@SPID"));
+                    connection.Open();
+                    batch.ExecuteNonQuery();
+                }
+            }
+        }
+
+#if NET8_0_OR_GREATER
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void SqlBatchCanCreateParameter()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var batch = connection.CreateBatch())
+            {
+                SqlBatchCommand batchCommand = new SqlBatchCommand("SELECT @p");
+
+                Assert.True(batchCommand.CanCreateParameter);
+                SqlParameter parameter = batchCommand.CreateParameter();
+                Assert.NotNull(parameter);
+                parameter.ParameterName = "@p";
+                parameter.Value = 1;
+                batchCommand.Parameters.Add(parameter);
+
+                batch.ExecuteNonQuery();
+
+            }
+        }
+#endif 
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
