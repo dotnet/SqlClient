@@ -83,6 +83,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsManagedSNI), nameof(DataTestUtility.IsNotLocalhost), nameof(DataTestUtility.IsKerberosTest), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void PortNumberInSPNTest()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
+
+            if (IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName))
+            {
+                builder.DataSource = hostname + "\\" + instanceName;
+                using SqlConnection connection = new(builder.ConnectionString);
+                connection.Open();
+            }
+        }
+
         private static bool IsBrowserAlive(string browserHostname)
         {
             const byte ClntUcastEx = 0x03;

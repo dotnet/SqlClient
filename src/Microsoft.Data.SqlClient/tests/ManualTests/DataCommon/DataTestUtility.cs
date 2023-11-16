@@ -1073,6 +1073,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return fqdn.ToString();
         }
 
+        public static bool IsManagedSNI()
+        {
+            return UseManagedSNIOnWindows;
+        }
+
+        public static bool IsNotLocalhost()
+        {
+            // get the tcp connection string
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+
+            // remove tcp from connection string
+            string dataSourceStr = builder.DataSource.Replace("tcp:", "");
+            // create a string array
+            string[] serverNamePartsByBackSlash = dataSourceStr.Split('\\');
+            // first element of array is the hostname
+            string hostname = serverNamePartsByBackSlash[0];
+
+            // check if hostname = localhost
+            return hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+        }
+
         private static bool RunningAsUWPApp()
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
