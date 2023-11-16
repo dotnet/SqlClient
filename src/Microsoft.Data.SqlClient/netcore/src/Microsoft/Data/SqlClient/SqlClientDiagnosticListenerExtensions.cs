@@ -61,7 +61,9 @@ namespace Microsoft.Data.SqlClient
                 return operationId;
             }
             else
+            {
                 return Guid.Empty;
+            }
         }
 
         public static void WriteCommandAfter(this SqlDiagnosticListener @this, Guid operationId, SqlCommand sqlCommand, SqlTransaction transaction, [CallerMemberName] string operation = "")
@@ -89,16 +91,17 @@ namespace Microsoft.Data.SqlClient
             {
                 @this.Write(
                     SqlErrorExecuteCommand,
-                    new
-                    {
-                        OperationId = operationId,
-                        Operation = operation,
-                        ConnectionId = sqlCommand.Connection?.ClientConnectionId,
-                        Command = sqlCommand,
+                    new SqlClientCommandError
+                    (
+                        operationId,
+                        operation,
+                        Stopwatch.GetTimestamp(),
+                        sqlCommand.Connection?.ClientConnectionId,
                         transaction?.InternalTransaction?.TransactionId,
-                        Exception = ex,
-                        Timestamp = Stopwatch.GetTimestamp()
-                    });
+                        sqlCommand,
+                        ex
+                    )
+                );
             }
         }
 
@@ -123,7 +126,9 @@ namespace Microsoft.Data.SqlClient
                 return operationId;
             }
             else
+            {
                 return Guid.Empty;
+            }
         }
 
         public static void WriteConnectionOpenAfter(this SqlDiagnosticListener @this, Guid operationId, SqlConnection sqlConnection, [CallerMemberName] string operation = "")
@@ -174,16 +179,16 @@ namespace Microsoft.Data.SqlClient
 
                 @this.Write(
                     SqlBeforeCloseConnection,
-                    new
-                    {
-                        OperationId = operationId,
-                        Operation = operation,
-                        Timestamp = Stopwatch.GetTimestamp(),
-
-                        ConnectionId = sqlConnection.ClientConnectionId,
-                        Connection = sqlConnection,
-                        Statistics = sqlConnection.Statistics?.GetDictionary()
-                    });
+                    new SqlClientConnectionCloseBefore
+                    (
+                        operationId,
+                        operation,
+                        Stopwatch.GetTimestamp(),
+                        sqlConnection.ClientConnectionId,
+                        sqlConnection,
+                        sqlConnection.Statistics?.GetDictionary()
+                    )
+                );
 
                 return operationId;
             }
@@ -197,16 +202,16 @@ namespace Microsoft.Data.SqlClient
             {
                 @this.Write(
                     SqlAfterCloseConnection,
-                    new
-                    {
-                        OperationId = operationId,
-                        Operation = operation,
-                        Timestamp = Stopwatch.GetTimestamp(),
-
-                        ConnectionId = clientConnectionId,
-                        Connection = sqlConnection,
-                        Statistics = sqlConnection.Statistics?.GetDictionary(),
-                    });
+                    new SqlClientConnectionCloseAfter
+                    (
+                        operationId,
+                        operation,
+                        Stopwatch.GetTimestamp(),
+                        clientConnectionId,
+                        sqlConnection,
+                        sqlConnection.Statistics?.GetDictionary()
+                    )
+                );
             }
         }
 
@@ -216,17 +221,17 @@ namespace Microsoft.Data.SqlClient
             {
                 @this.Write(
                     SqlErrorCloseConnection,
-                    new
-                    {
-                        OperationId = operationId,
-                        Operation = operation,
-                        Timestamp = Stopwatch.GetTimestamp(),
-
-                        ConnectionId = clientConnectionId,
-                        Connection = sqlConnection,
-                        Statistics = sqlConnection.Statistics?.GetDictionary(),
-                        Exception = ex,
-                    });
+                    new SqlClientConnectionCloseError
+                    (
+                        operationId,
+                        operation,
+                        Stopwatch.GetTimestamp(),
+                        clientConnectionId,
+                        sqlConnection,
+                        sqlConnection.Statistics?.GetDictionary(),
+                        ex
+                    )
+                );
             }
         }
 
@@ -238,21 +243,23 @@ namespace Microsoft.Data.SqlClient
 
                 @this.Write(
                     SqlBeforeCommitTransaction,
-                    new
-                    {
-                        OperationId = operationId,
-                        Operation = operation,
-                        Timestamp = Stopwatch.GetTimestamp(),
-
-                        IsolationLevel = isolationLevel,
-                        Connection = connection,
+                    new SqlClientTransactionCommitBefore
+                    (
+                        operationId,
+                        operation,
+                        Stopwatch.GetTimestamp(),
+                        isolationLevel,
+                        connection,
                         transaction?.TransactionId
-                    });
+                    )
+                );
 
                 return operationId;
             }
             else
+            {
                 return Guid.Empty;
+            }
         }
 
         public static void WriteTransactionCommitAfter(this SqlDiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, SqlInternalTransaction transaction, [CallerMemberName] string operation = "")
@@ -261,16 +268,16 @@ namespace Microsoft.Data.SqlClient
             {
                 @this.Write(
                     SqlAfterCommitTransaction,
-                    new
-                    {
-                        OperationId = operationId,
-                        Operation = operation,
-                        Timestamp = Stopwatch.GetTimestamp(),
-
-                        IsolationLevel = isolationLevel,
-                        Connection = connection,
+                    new SqlClientTransactionCommitAfter
+                    (
+                        operationId,
+                        operation,
+                        Stopwatch.GetTimestamp(),
+                        isolationLevel,
+                        connection,
                         transaction?.TransactionId
-                    });
+                    )
+                );
             }
         }
 
@@ -280,17 +287,17 @@ namespace Microsoft.Data.SqlClient
             {
                 @this.Write(
                     SqlErrorCommitTransaction,
-                    new
-                    {
-                        OperationId = operationId,
-                        Operation = operation,
-                        Timestamp = Stopwatch.GetTimestamp(),
-
-                        IsolationLevel = isolationLevel,
-                        Connection = connection,
+                    new SqlClientTransactionCommitError
+                    (
+                        operationId,
+                        operation,
+                        Stopwatch.GetTimestamp(),
+                        isolationLevel,
+                        connection,
                         transaction?.TransactionId,
-                        Exception = ex,
-                    });
+                        ex
+                    )
+               );
             }
         }
 
@@ -302,22 +309,24 @@ namespace Microsoft.Data.SqlClient
 
                 @this.Write(
                     SqlBeforeRollbackTransaction,
-                    new
-                    {
-                        OperationId = operationId,
-                        Operation = operation,
-                        Timestamp = Stopwatch.GetTimestamp(),
-
-                        IsolationLevel = isolationLevel,
-                        Connection = connection,
+                    new SqlClientTransactionRollbackBefore
+                    (
+                        operationId,
+                        operation,
+                        Stopwatch.GetTimestamp(),
+                        isolationLevel,
+                        connection,
                         transaction?.TransactionId,
-                        TransactionName = transactionName,
-                    });
+                        transactionName
+                    )
+                );
 
                 return operationId;
             }
             else
+            {
                 return Guid.Empty;
+            }
         }
 
         public static void WriteTransactionRollbackAfter(this SqlDiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, SqlInternalTransaction transaction, string transactionName = null, [CallerMemberName] string operation = "")
@@ -326,17 +335,17 @@ namespace Microsoft.Data.SqlClient
             {
                 @this.Write(
                     SqlAfterRollbackTransaction,
-                    new
-                    {
-                        OperationId = operationId,
-                        Operation = operation,
-                        Timestamp = Stopwatch.GetTimestamp(),
-
-                        IsolationLevel = isolationLevel,
-                        Connection = connection,
+                    new SqlClientTransactionRollbackAfter
+                    (
+                        operationId,
+                        operation,
+                        Stopwatch.GetTimestamp(),
+                        isolationLevel,
+                        connection,
                         transaction?.TransactionId,
-                        TransactionName = transactionName
-                    });
+                        transactionName
+                    )
+                );
             }
         }
 
@@ -346,18 +355,18 @@ namespace Microsoft.Data.SqlClient
             {
                 @this.Write(
                     SqlErrorRollbackTransaction,
-                    new
-                    {
-                        OperationId = operationId,
-                        Operation = operation,
-                        Timestamp = Stopwatch.GetTimestamp(),
-
-                        IsolationLevel = isolationLevel,
-                        Connection = connection,
+                    new SqlClientTransactionRollbackError
+                    (
+                        operationId,
+                        operation,
+                        Stopwatch.GetTimestamp(),
+                        isolationLevel,
+                        connection,
                         transaction?.TransactionId,
-                        TransactionName = transactionName,
-                        Exception = ex,
-                    });
+                        transactionName,
+                        ex
+                    )
+                );
             }
         }
 
@@ -603,6 +612,249 @@ namespace Microsoft.Data.SqlClient
             1 => new KeyValuePair<string, object>(nameof(Connection), Connection),
             2 => new KeyValuePair<string, object>(nameof(ClientVersion), ClientVersion),
             3 => new KeyValuePair<string, object>(nameof(Exception), Exception),
+            _ => throw new IndexOutOfRangeException(nameof(index)),
+        };
+    }
+
+    public sealed class SqlClientConnectionCloseBefore : SqlClientDiagnostic
+    {
+        public SqlClientConnectionCloseBefore(Guid operationId, string operation, long timestamp, Guid? connectionId, SqlConnection connection, IDictionary statistics)
+            : base(operationId, operation, timestamp)
+        {
+            ConnectionId = connectionId;
+            Connection = connection;
+            Statistics = statistics;
+        }
+
+        public Guid? ConnectionId { get; }
+        public SqlConnection Connection { get; }
+        public IDictionary Statistics { get; }
+
+        protected sealed override int GetDerivedCount() => 3;
+
+        protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
+        {
+            0 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
+            1 => new KeyValuePair<string, object>(nameof(Connection), Connection),
+            2 => new KeyValuePair<string, object>(nameof(Statistics), Statistics),
+            _ => throw new IndexOutOfRangeException(nameof(index)),
+        };
+    }
+
+    public sealed class SqlClientConnectionCloseAfter : SqlClientDiagnostic
+    {
+        public SqlClientConnectionCloseAfter(Guid operationId, string operation, long timestamp, Guid? connectionId, SqlConnection connection, IDictionary statistics)
+            : base(operationId, operation, timestamp)
+        {
+            ConnectionId = connectionId;
+            Connection = connection;
+            Statistics = statistics;
+        }
+
+        public Guid? ConnectionId { get; }
+        public SqlConnection Connection { get; }
+        public IDictionary Statistics { get; }
+
+        protected sealed override int GetDerivedCount() => 3;
+
+        protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
+        {
+            0 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
+            1 => new KeyValuePair<string, object>(nameof(Connection), Connection),
+            2 => new KeyValuePair<string, object>(nameof(Statistics), Statistics),
+            _ => throw new IndexOutOfRangeException(nameof(index)),
+        };
+    }
+
+    public sealed class SqlClientConnectionCloseError : SqlClientDiagnostic
+    {
+        public SqlClientConnectionCloseError(Guid operationId, string operation, long timestamp, Guid? connectionId, SqlConnection connection, IDictionary statistics, Exception ex)
+            : base(operationId, operation, timestamp)
+        {
+            ConnectionId = connectionId;
+            Connection = connection;
+            Statistics = statistics;
+            Exception = ex;
+        }
+
+        public Guid? ConnectionId { get; }
+        public SqlConnection Connection { get; }
+        public IDictionary Statistics { get; }
+        public Exception Exception { get; }
+
+        protected sealed override int GetDerivedCount() => 4;
+
+        protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
+        {
+            0 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
+            1 => new KeyValuePair<string, object>(nameof(Connection), Connection),
+            2 => new KeyValuePair<string, object>(nameof(Statistics), Statistics),
+            3 => new KeyValuePair<string, object>(nameof(Exception), Exception),
+            _ => throw new IndexOutOfRangeException(nameof(index)),
+        };
+    }
+
+    public sealed class SqlClientTransactionCommitBefore : SqlClientDiagnostic
+    {
+        public SqlClientTransactionCommitBefore(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId)
+            : base(operationId, operation, timestamp)
+        {
+            IsolationLevel = isolationLevel;
+            Connection = connection;
+            TransactionId = transactionId;
+        }
+
+        public IsolationLevel IsolationLevel { get; }
+        public SqlConnection Connection { get; }
+        public long? TransactionId { get; }
+
+        protected sealed override int GetDerivedCount() => 3;
+
+        protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
+        {
+            0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
+            1 => new KeyValuePair<string, object>(nameof(Connection), Connection),
+            2 => new KeyValuePair<string, object>(nameof(TransactionId), TransactionId),
+            _ => throw new IndexOutOfRangeException(nameof(index)),
+        };
+    }
+
+    public sealed class SqlClientTransactionCommitAfter : SqlClientDiagnostic
+    {
+        public SqlClientTransactionCommitAfter(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId)
+            : base(operationId, operation, timestamp)
+        {
+            IsolationLevel = isolationLevel;
+            Connection = connection;
+            TransactionId = transactionId;
+        }
+
+        public IsolationLevel IsolationLevel { get; }
+        public SqlConnection Connection { get; }
+        public long? TransactionId { get; }
+
+        protected sealed override int GetDerivedCount() => 3;
+
+        protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
+        {
+            0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
+            1 => new KeyValuePair<string, object>(nameof(Connection), Connection),
+            2 => new KeyValuePair<string, object>(nameof(TransactionId), TransactionId),
+            _ => throw new IndexOutOfRangeException(nameof(index)),
+        };
+    }
+
+    public sealed class SqlClientTransactionCommitError : SqlClientDiagnostic
+    {
+        public SqlClientTransactionCommitError(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, Exception ex)
+            : base(operationId, operation, timestamp)
+        {
+            IsolationLevel = isolationLevel;
+            Connection = connection;
+            TransactionId = transactionId;
+            Exception = ex;
+        }
+
+        public IsolationLevel IsolationLevel { get; }
+        public SqlConnection Connection { get; }
+        public long? TransactionId { get; }
+        public Exception Exception { get; }
+
+        protected sealed override int GetDerivedCount() => 4;
+
+        protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
+        {
+            0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
+            1 => new KeyValuePair<string, object>(nameof(Connection), Connection),
+            2 => new KeyValuePair<string, object>(nameof(TransactionId), TransactionId),
+            3 => new KeyValuePair<string, object>(nameof(Exception), Exception),
+            _ => throw new IndexOutOfRangeException(nameof(index)),
+        };
+    }
+
+    public sealed class SqlClientTransactionRollbackBefore : SqlClientDiagnostic
+    {
+        public SqlClientTransactionRollbackBefore(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName)
+            : base(operationId, operation, timestamp)
+        {
+            IsolationLevel = isolationLevel;
+            Connection = connection;
+            TransactionId = transactionId;
+            TransactionName = transactionName;
+        }
+
+        public IsolationLevel IsolationLevel { get; }
+        public SqlConnection Connection { get; }
+        public long? TransactionId { get; }
+        public string TransactionName { get; }
+
+        protected sealed override int GetDerivedCount() => 4;
+
+        protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
+        {
+            0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
+            1 => new KeyValuePair<string, object>(nameof(Connection), Connection),
+            2 => new KeyValuePair<string, object>(nameof(TransactionId), TransactionId),
+            3 => new KeyValuePair<string, object>(nameof(TransactionName), TransactionName),
+            _ => throw new IndexOutOfRangeException(nameof(index)),
+        };
+    }
+
+    public sealed class SqlClientTransactionRollbackAfter : SqlClientDiagnostic
+    {
+        public SqlClientTransactionRollbackAfter(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName)
+            : base(operationId, operation, timestamp)
+        {
+            IsolationLevel = isolationLevel;
+            Connection = connection;
+            TransactionId = transactionId;
+            TransactionName = transactionName;
+        }
+
+        public IsolationLevel IsolationLevel { get; }
+        public SqlConnection Connection { get; }
+        public long? TransactionId { get; }
+        public string TransactionName { get; }
+
+        protected sealed override int GetDerivedCount() => 4;
+
+        protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
+        {
+            0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
+            1 => new KeyValuePair<string, object>(nameof(Connection), Connection),
+            2 => new KeyValuePair<string, object>(nameof(TransactionId), TransactionId),
+            3 => new KeyValuePair<string, object>(nameof(TransactionName), TransactionName),
+            _ => throw new IndexOutOfRangeException(nameof(index)),
+        };
+    }
+
+    public sealed class SqlClientTransactionRollbackError : SqlClientDiagnostic
+    {
+        public SqlClientTransactionRollbackError(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName, Exception ex)
+            : base(operationId, operation, timestamp)
+        {
+            IsolationLevel = isolationLevel;
+            Connection = connection;
+            TransactionId = transactionId;
+            TransactionName = transactionName;
+            Exception = ex;
+        }
+
+        public IsolationLevel IsolationLevel { get; }
+        public SqlConnection Connection { get; }
+        public long? TransactionId { get; }
+        public string TransactionName { get; }
+        public Exception Exception { get; }
+
+        protected sealed override int GetDerivedCount() => 5;
+
+        protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
+        {
+            0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
+            1 => new KeyValuePair<string, object>(nameof(Connection), Connection),
+            2 => new KeyValuePair<string, object>(nameof(TransactionId), TransactionId),
+            3 => new KeyValuePair<string, object>(nameof(TransactionName), TransactionName),
+            4 => new KeyValuePair<string, object>(nameof(Exception), Exception),
             _ => throw new IndexOutOfRangeException(nameof(index)),
         };
     }
