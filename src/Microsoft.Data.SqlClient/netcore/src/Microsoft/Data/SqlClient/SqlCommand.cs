@@ -596,7 +596,7 @@ namespace Microsoft.Data.SqlClient
                 if (null != _activeConnection)
                 {
                     if (_activeConnection.StatisticsEnabled ||
-                        s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand))
+                        s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name))
                     {
                         return _activeConnection.Statistics;
                     }

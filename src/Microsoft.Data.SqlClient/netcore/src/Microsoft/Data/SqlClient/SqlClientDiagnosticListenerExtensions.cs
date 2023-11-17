@@ -18,36 +18,14 @@ namespace Microsoft.Data.SqlClient
     {
         public const string DiagnosticListenerName = "SqlClientDiagnosticListener";
 
-        private const string SqlClientPrefix = "Microsoft.Data.SqlClient.";
-
-        public const string SqlBeforeExecuteCommand = SqlClientPrefix + nameof(WriteCommandBefore);
-        public const string SqlAfterExecuteCommand = SqlClientPrefix + nameof(WriteCommandAfter);
-        public const string SqlErrorExecuteCommand = SqlClientPrefix + nameof(WriteCommandError);
-
-        public const string SqlBeforeOpenConnection = SqlClientPrefix + nameof(WriteConnectionOpenBefore);
-        public const string SqlAfterOpenConnection = SqlClientPrefix + nameof(WriteConnectionOpenAfter);
-        public const string SqlErrorOpenConnection = SqlClientPrefix + nameof(WriteConnectionOpenError);
-
-        public const string SqlBeforeCloseConnection = SqlClientPrefix + nameof(WriteConnectionCloseBefore);
-        public const string SqlAfterCloseConnection = SqlClientPrefix + nameof(WriteConnectionCloseAfter);
-        public const string SqlErrorCloseConnection = SqlClientPrefix + nameof(WriteConnectionCloseError);
-
-        public const string SqlBeforeCommitTransaction = SqlClientPrefix + nameof(WriteTransactionCommitBefore);
-        public const string SqlAfterCommitTransaction = SqlClientPrefix + nameof(WriteTransactionCommitAfter);
-        public const string SqlErrorCommitTransaction = SqlClientPrefix + nameof(WriteTransactionCommitError);
-
-        public const string SqlBeforeRollbackTransaction = SqlClientPrefix + nameof(WriteTransactionRollbackBefore);
-        public const string SqlAfterRollbackTransaction = SqlClientPrefix + nameof(WriteTransactionRollbackAfter);
-        public const string SqlErrorRollbackTransaction = SqlClientPrefix + nameof(WriteTransactionRollbackError);
-
         public static Guid WriteCommandBefore(this SqlDiagnosticListener @this, SqlCommand sqlCommand, SqlTransaction transaction, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlBeforeExecuteCommand))
+            if (@this.IsEnabled(SqlClientCommandBefore.Name))
             {
                 Guid operationId = Guid.NewGuid();
 
                 @this.Write(
-                    SqlBeforeExecuteCommand,
+                    SqlClientCommandBefore.Name,
                     new SqlClientCommandBefore(
                         operationId,
                         operation,
@@ -68,10 +46,10 @@ namespace Microsoft.Data.SqlClient
 
         public static void WriteCommandAfter(this SqlDiagnosticListener @this, Guid operationId, SqlCommand sqlCommand, SqlTransaction transaction, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlAfterExecuteCommand))
+            if (@this.IsEnabled(SqlClientCommandAfter.Name))
             {
                 @this.Write(
-                    SqlAfterExecuteCommand,
+                    SqlClientCommandAfter.Name,
                     new SqlClientCommandAfter(
                         operationId,
                         operation,
@@ -87,10 +65,10 @@ namespace Microsoft.Data.SqlClient
 
         public static void WriteCommandError(this SqlDiagnosticListener @this, Guid operationId, SqlCommand sqlCommand, SqlTransaction transaction, Exception ex, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlErrorExecuteCommand))
+            if (@this.IsEnabled(SqlClientCommandError.Name))
             {
                 @this.Write(
-                    SqlErrorExecuteCommand,
+                    SqlClientCommandError.Name,
                     new SqlClientCommandError
                     (
                         operationId,
@@ -107,12 +85,12 @@ namespace Microsoft.Data.SqlClient
 
         public static Guid WriteConnectionOpenBefore(this SqlDiagnosticListener @this, SqlConnection sqlConnection, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlBeforeOpenConnection))
+            if (@this.IsEnabled(SqlClientConnectionOpenBefore.Name))
             {
                 Guid operationId = Guid.NewGuid();
 
                 @this.Write(
-                    SqlBeforeOpenConnection,
+                    SqlClientConnectionOpenBefore.Name,
                     new SqlClientConnectionOpenBefore
                     (
                         operationId,
@@ -133,10 +111,10 @@ namespace Microsoft.Data.SqlClient
 
         public static void WriteConnectionOpenAfter(this SqlDiagnosticListener @this, Guid operationId, SqlConnection sqlConnection, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlAfterOpenConnection))
+            if (@this.IsEnabled(SqlClientConnectionOpenAfter.Name))
             {
                 @this.Write(
-                    SqlAfterOpenConnection,
+                    SqlClientConnectionOpenAfter.Name,
                     new SqlClientConnectionOpenAfter
                     (
                         operationId,
@@ -153,10 +131,10 @@ namespace Microsoft.Data.SqlClient
 
         public static void WriteConnectionOpenError(this SqlDiagnosticListener @this, Guid operationId, SqlConnection sqlConnection, Exception ex, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlErrorOpenConnection))
+            if (@this.IsEnabled(SqlClientConnectionOpenError.Name))
             {
                 @this.Write(
-                    SqlErrorOpenConnection,
+                    SqlClientConnectionOpenError.Name,
                     new SqlClientConnectionOpenError
                     (
                         operationId,
@@ -173,12 +151,12 @@ namespace Microsoft.Data.SqlClient
 
         public static Guid WriteConnectionCloseBefore(this SqlDiagnosticListener @this, SqlConnection sqlConnection, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlBeforeCloseConnection))
+            if (@this.IsEnabled(SqlClientConnectionCloseBefore.Name))
             {
                 Guid operationId = Guid.NewGuid();
 
                 @this.Write(
-                    SqlBeforeCloseConnection,
+                    SqlClientConnectionCloseBefore.Name,
                     new SqlClientConnectionCloseBefore
                     (
                         operationId,
@@ -198,10 +176,10 @@ namespace Microsoft.Data.SqlClient
 
         public static void WriteConnectionCloseAfter(this SqlDiagnosticListener @this, Guid operationId, Guid clientConnectionId, SqlConnection sqlConnection, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlAfterCloseConnection))
+            if (@this.IsEnabled(SqlClientConnectionCloseAfter.Name))
             {
                 @this.Write(
-                    SqlAfterCloseConnection,
+                    SqlClientConnectionCloseAfter.Name,
                     new SqlClientConnectionCloseAfter
                     (
                         operationId,
@@ -217,10 +195,10 @@ namespace Microsoft.Data.SqlClient
 
         public static void WriteConnectionCloseError(this SqlDiagnosticListener @this, Guid operationId, Guid clientConnectionId, SqlConnection sqlConnection, Exception ex, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlErrorCloseConnection))
+            if (@this.IsEnabled(SqlClientConnectionCloseError.Name))
             {
                 @this.Write(
-                    SqlErrorCloseConnection,
+                    SqlClientConnectionCloseError.Name,
                     new SqlClientConnectionCloseError
                     (
                         operationId,
@@ -237,12 +215,12 @@ namespace Microsoft.Data.SqlClient
 
         public static Guid WriteTransactionCommitBefore(this SqlDiagnosticListener @this, IsolationLevel isolationLevel, SqlConnection connection, SqlInternalTransaction transaction, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlBeforeCommitTransaction))
+            if (@this.IsEnabled(SqlClientTransactionCommitBefore.Name))
             {
                 Guid operationId = Guid.NewGuid();
 
                 @this.Write(
-                    SqlBeforeCommitTransaction,
+                    SqlClientTransactionCommitBefore.Name,
                     new SqlClientTransactionCommitBefore
                     (
                         operationId,
@@ -264,10 +242,10 @@ namespace Microsoft.Data.SqlClient
 
         public static void WriteTransactionCommitAfter(this SqlDiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, SqlInternalTransaction transaction, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlAfterCommitTransaction))
+            if (@this.IsEnabled(SqlClientTransactionCommitAfter.Name))
             {
                 @this.Write(
-                    SqlAfterCommitTransaction,
+                    SqlClientTransactionCommitAfter.Name,
                     new SqlClientTransactionCommitAfter
                     (
                         operationId,
@@ -283,10 +261,10 @@ namespace Microsoft.Data.SqlClient
 
         public static void WriteTransactionCommitError(this SqlDiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, SqlInternalTransaction transaction, Exception ex, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlErrorCommitTransaction))
+            if (@this.IsEnabled(SqlClientTransactionCommitError.Name))
             {
                 @this.Write(
-                    SqlErrorCommitTransaction,
+                    SqlClientTransactionCommitError.Name,
                     new SqlClientTransactionCommitError
                     (
                         operationId,
@@ -303,12 +281,12 @@ namespace Microsoft.Data.SqlClient
 
         public static Guid WriteTransactionRollbackBefore(this SqlDiagnosticListener @this, IsolationLevel isolationLevel, SqlConnection connection, SqlInternalTransaction transaction, string transactionName = null, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlBeforeRollbackTransaction))
+            if (@this.IsEnabled(SqlClientTransactionRollbackBefore.Name))
             {
                 Guid operationId = Guid.NewGuid();
 
                 @this.Write(
-                    SqlBeforeRollbackTransaction,
+                    SqlClientTransactionRollbackBefore.Name,
                     new SqlClientTransactionRollbackBefore
                     (
                         operationId,
@@ -331,10 +309,10 @@ namespace Microsoft.Data.SqlClient
 
         public static void WriteTransactionRollbackAfter(this SqlDiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, SqlInternalTransaction transaction, string transactionName = null, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlAfterRollbackTransaction))
+            if (@this.IsEnabled(SqlClientTransactionRollbackAfter.Name))
             {
                 @this.Write(
-                    SqlAfterRollbackTransaction,
+                    SqlClientTransactionRollbackAfter.Name,
                     new SqlClientTransactionRollbackAfter
                     (
                         operationId,
@@ -351,10 +329,10 @@ namespace Microsoft.Data.SqlClient
 
         public static void WriteTransactionRollbackError(this SqlDiagnosticListener @this, Guid operationId, IsolationLevel isolationLevel, SqlConnection connection, SqlInternalTransaction transaction, Exception ex, string transactionName = null, [CallerMemberName] string operation = "")
         {
-            if (@this.IsEnabled(SqlErrorRollbackTransaction))
+            if (@this.IsEnabled(SqlClientTransactionRollbackError.Name))
             {
                 @this.Write(
-                    SqlErrorRollbackTransaction,
+                    SqlClientTransactionRollbackError.Name,
                     new SqlClientTransactionRollbackError
                     (
                         operationId,
@@ -386,11 +364,13 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/SqlClientDiagnostic/*'/>
     public abstract class SqlClientDiagnostic : IReadOnlyList<KeyValuePair<string, object>>
     {
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/CommonPropertyCount/*'/>
         protected const int CommonPropertyCount = 3;
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/ctor/*'/>
         protected SqlClientDiagnostic(Guid operationId, string operation, long timestamp)
         {
             OperationId = operationId;
@@ -398,12 +378,17 @@ namespace Microsoft.Data.SqlClient
             Timestamp = timestamp;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
         public Guid OperationId { get; }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation { get; }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
         public long Timestamp { get; }
 
+        /// <inheritdoc/>>
         public int Count => CommonPropertyCount + GetDerivedCount();
 
+        /// <inheritdoc/>>
         public KeyValuePair<string, object> this[int index]
         {
             get
@@ -419,20 +404,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <inheritdoc/>>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
-            var count = Count;
-            for (var i = 0; i < count; i++)
+            int count = Count;
+            for (var index = 0; index < count; index++)
             {
-                yield return this[i];
+                yield return this[index];
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        /// <inheritdoc/>>
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/TryGetCommonProperty/*'/>
         protected bool TryGetCommonProperty(int index, out KeyValuePair<string, object> property)
         {
             switch (index)
@@ -452,14 +437,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetDerivedCount/*'/>
         protected abstract int GetDerivedCount();
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetDerivedProperty/*'/>
         protected abstract KeyValuePair<string, object> GetDerivedProperty(int index);
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/SqlClientCommandBefore/*'/>
     public sealed class SqlClientCommandBefore : SqlClientDiagnostic
-    {
-        public SqlClientCommandBefore(Guid operationId, string operation, long timestamp, Guid? connectionId, long? transactionId, SqlCommand command)
+    {    
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/SqlClientCommandBefore/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteCommandBefore";
+
+        internal SqlClientCommandBefore(Guid operationId, string operation, long timestamp, Guid? connectionId, long? transactionId, SqlCommand command)
             : base(operationId, operation, timestamp)
         {
             ConnectionId = connectionId;
@@ -467,12 +458,20 @@ namespace Microsoft.Data.SqlClient
             Command = command;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/ConnectionId/*'/>
         public Guid? ConnectionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/TransactionId/*'/>
         public long? TransactionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/Command/*'/>
         public SqlCommand Command { get; }
 
+
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 3;
 
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
@@ -482,9 +481,13 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/SqlClientCommandAfter/*'/>
     public sealed class SqlClientCommandAfter : SqlClientDiagnostic
     {
-        public SqlClientCommandAfter(Guid operationId, string operation, long timestamp, Guid? connectionId, long? transactionId, SqlCommand command, IDictionary statistics)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteCommandAfter";
+
+        internal SqlClientCommandAfter(Guid operationId, string operation, long timestamp, Guid? connectionId, long? transactionId, SqlCommand command, IDictionary statistics)
             : base(operationId, operation, timestamp)
         {
             ConnectionId = connectionId;
@@ -493,13 +496,21 @@ namespace Microsoft.Data.SqlClient
             Statistics = statistics;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/ConnectionId/*'/>
         public Guid? ConnectionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/TransactionId/*'/>
         public long? TransactionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/Command/*'/>
         public SqlCommand Command { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/Statistics/*'/>
         public IDictionary Statistics { get; }
 
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 4;
-
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
@@ -510,9 +521,14 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/SqlClientCommandError/*'/>
     public sealed class SqlClientCommandError : SqlClientDiagnostic
     {
-        public SqlClientCommandError(Guid operationId, string operation, long timestamp, Guid? connectionId, long? transactionId, SqlCommand command, Exception exception)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/SqlClientCommandError/*'/>
+
+        public const string Name = "Microsoft.Data.SqlClient.WriteCommandError";
+
+        internal SqlClientCommandError(Guid operationId, string operation, long timestamp, Guid? connectionId, long? transactionId, SqlCommand command, Exception exception)
             : base(operationId, operation, timestamp)
         {
             ConnectionId = connectionId;
@@ -521,13 +537,21 @@ namespace Microsoft.Data.SqlClient
             Exception = exception;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/ConnectionId/*'/>
         public Guid? ConnectionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/TransactionId/*'/>
         public long? TransactionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/Command/*'/>
         public SqlCommand Command { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/Exception/*'/>
         public Exception Exception { get; }
 
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 4;
-
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
@@ -538,20 +562,28 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenBefore"]/SqlClientConnectionOpenBefore/*'/>
     public sealed class SqlClientConnectionOpenBefore : SqlClientDiagnostic
     {
-        public SqlClientConnectionOpenBefore(Guid operationId, string operation, long timestamp, SqlConnection connection, string clientVersion)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenBefore"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteConnectionOpenBefore";
+
+        internal SqlClientConnectionOpenBefore(Guid operationId, string operation, long timestamp, SqlConnection connection, string clientVersion)
             : base(operationId, operation, timestamp)
         {
             Connection = connection;
             ClientVersion = clientVersion;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenBefore"]/Connection/*'/>
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenBefore"]/ClientVersion/*'/>
         public string ClientVersion { get; }
 
+        /// <inheritdoc/>>
         protected override int GetDerivedCount() => 2;
-
+        /// <inheritdoc/>>
         protected override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(Connection), Connection),
@@ -560,9 +592,13 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/SqlClientConnectionOpenAfter/*'/>
     public sealed class SqlClientConnectionOpenAfter : SqlClientDiagnostic
     {
-        public SqlClientConnectionOpenAfter(Guid operationId, string operation, long timestamp, Guid connectionId, SqlConnection connection, string clientVersion, IDictionary statistics)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteConnectionOpenAfter";
+
+        internal SqlClientConnectionOpenAfter(Guid operationId, string operation, long timestamp, Guid connectionId, SqlConnection connection, string clientVersion, IDictionary statistics)
             : base(operationId, operation, timestamp)
         {
             ConnectionId = connectionId;
@@ -571,13 +607,22 @@ namespace Microsoft.Data.SqlClient
             Statistics = statistics;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/ConnectionId/*'/>
         public Guid ConnectionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/Connection/*'/>
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/ClientVersion/*'/>
         public string ClientVersion { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/Statistics/*'/>
         public IDictionary Statistics { get; }
 
+        /// <inheritdoc/>>
         protected override int GetDerivedCount() => 4;
 
+        /// <inheritdoc/>>
         protected override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
@@ -588,9 +633,14 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/SqlClientConnectionOpenError/*'/>
     public sealed class SqlClientConnectionOpenError : SqlClientDiagnostic
     {
-        public SqlClientConnectionOpenError(Guid operationId, string operation, long timestamp, Guid connectionId, SqlConnection connection, string clientVersion, Exception exception)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/Name/*'/>
+
+        public const string Name = "Microsoft.Data.SqlClient.WriteConnectionOpenError";
+
+        internal SqlClientConnectionOpenError(Guid operationId, string operation, long timestamp, Guid connectionId, SqlConnection connection, string clientVersion, Exception exception)
             : base(operationId, operation, timestamp)
         {
             ConnectionId = connectionId;
@@ -599,13 +649,21 @@ namespace Microsoft.Data.SqlClient
             Exception = exception;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/ConnectionId/*'/>
         public Guid ConnectionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/Connection/*'/>
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/ClientVersion/*'/>
         public string ClientVersion { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/Exception/*'/>
         public Exception Exception { get; }
 
+        /// <inheritdoc/>>
         protected override int GetDerivedCount() => 4;
-
+        /// <inheritdoc/>>
         protected override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
@@ -616,9 +674,13 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]/SqlClientConnectionCloseBefore/*'/>
     public sealed class SqlClientConnectionCloseBefore : SqlClientDiagnostic
     {
-        public SqlClientConnectionCloseBefore(Guid operationId, string operation, long timestamp, Guid? connectionId, SqlConnection connection, IDictionary statistics)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]//*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteConnectionCloseBefore";
+
+        internal SqlClientConnectionCloseBefore(Guid operationId, string operation, long timestamp, Guid? connectionId, SqlConnection connection, IDictionary statistics)
             : base(operationId, operation, timestamp)
         {
             ConnectionId = connectionId;
@@ -626,12 +688,19 @@ namespace Microsoft.Data.SqlClient
             Statistics = statistics;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]/ConnectionId/*'/>
         public Guid? ConnectionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]/Connection/*'/>
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]/Statistics/*'/>
         public IDictionary Statistics { get; }
 
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 3;
 
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
@@ -641,9 +710,13 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/SqlClientConnectionCloseAfter/*'/>
     public sealed class SqlClientConnectionCloseAfter : SqlClientDiagnostic
     {
-        public SqlClientConnectionCloseAfter(Guid operationId, string operation, long timestamp, Guid? connectionId, SqlConnection connection, IDictionary statistics)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteConnectionCloseAfter";
+
+        internal SqlClientConnectionCloseAfter(Guid operationId, string operation, long timestamp, Guid? connectionId, SqlConnection connection, IDictionary statistics)
             : base(operationId, operation, timestamp)
         {
             ConnectionId = connectionId;
@@ -651,12 +724,19 @@ namespace Microsoft.Data.SqlClient
             Statistics = statistics;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/ConnectionId/*'/>
         public Guid? ConnectionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/Connection/*'/>
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/Statistics/*'/>
         public IDictionary Statistics { get; }
 
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 3;
 
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
@@ -666,9 +746,13 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/SqlClientConnectionCloseError/*'/>
     public sealed class SqlClientConnectionCloseError : SqlClientDiagnostic
     {
-        public SqlClientConnectionCloseError(Guid operationId, string operation, long timestamp, Guid? connectionId, SqlConnection connection, IDictionary statistics, Exception ex)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteConnectionCloseError";
+
+        internal SqlClientConnectionCloseError(Guid operationId, string operation, long timestamp, Guid? connectionId, SqlConnection connection, IDictionary statistics, Exception ex)
             : base(operationId, operation, timestamp)
         {
             ConnectionId = connectionId;
@@ -677,13 +761,23 @@ namespace Microsoft.Data.SqlClient
             Exception = ex;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/ConnectionId/*'/>
         public Guid? ConnectionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/Connection/*'/>
+
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/Statistics/*'/>
         public IDictionary Statistics { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/Exception/*'/>
         public Exception Exception { get; }
 
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 4;
 
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(ConnectionId), ConnectionId),
@@ -694,9 +788,13 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitBefore"]/SqlClientTransactionCommitBefore/*'/>
     public sealed class SqlClientTransactionCommitBefore : SqlClientDiagnostic
     {
-        public SqlClientTransactionCommitBefore(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitBefore"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteTransactionCommitBefore";
+
+        internal SqlClientTransactionCommitBefore(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId)
             : base(operationId, operation, timestamp)
         {
             IsolationLevel = isolationLevel;
@@ -704,12 +802,19 @@ namespace Microsoft.Data.SqlClient
             TransactionId = transactionId;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitBefore"]/IsolationLevel/*'/>
         public IsolationLevel IsolationLevel { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitBefore"]/Connection/*'/>
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitBefore"]/TransactionId/*'/>
         public long? TransactionId { get; }
 
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 3;
 
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
@@ -719,9 +824,13 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/SqlClientTransactionCommitAfter/*'/>
     public sealed class SqlClientTransactionCommitAfter : SqlClientDiagnostic
     {
-        public SqlClientTransactionCommitAfter(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteTransactionCommitAfter";
+
+        internal SqlClientTransactionCommitAfter(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId)
             : base(operationId, operation, timestamp)
         {
             IsolationLevel = isolationLevel;
@@ -729,12 +838,19 @@ namespace Microsoft.Data.SqlClient
             TransactionId = transactionId;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/IsolationLevel/*'/>
         public IsolationLevel IsolationLevel { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/Connection/*'/>
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/TransactionId/*'/>
         public long? TransactionId { get; }
 
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 3;
 
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
@@ -744,9 +860,13 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/SqlClientTransactionCommitError/*'/>
     public sealed class SqlClientTransactionCommitError : SqlClientDiagnostic
     {
-        public SqlClientTransactionCommitError(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, Exception ex)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteTransactionCommitError";
+
+        internal SqlClientTransactionCommitError(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, Exception ex)
             : base(operationId, operation, timestamp)
         {
             IsolationLevel = isolationLevel;
@@ -755,13 +875,22 @@ namespace Microsoft.Data.SqlClient
             Exception = ex;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/IsolationLevel/*'/>
         public IsolationLevel IsolationLevel { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/Connection/*'/>
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/TransactionId/*'/>
         public long? TransactionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/Exception/*'/>
         public Exception Exception { get; }
 
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 4;
 
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
@@ -772,9 +901,13 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackBefore"]/SqlClientTransactionRollbackBefore/*'/>
     public sealed class SqlClientTransactionRollbackBefore : SqlClientDiagnostic
     {
-        public SqlClientTransactionRollbackBefore(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackBefore"]/SqlClientTransactionRollbackBefore/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteTransactionRollbackBefore";
+
+        internal SqlClientTransactionRollbackBefore(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName)
             : base(operationId, operation, timestamp)
         {
             IsolationLevel = isolationLevel;
@@ -783,13 +916,22 @@ namespace Microsoft.Data.SqlClient
             TransactionName = transactionName;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackBefore"]/IsolationLevel/*'/>
         public IsolationLevel IsolationLevel { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackBefore"]/Connection/*'/>
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackBefore"]/TransactionId/*'/>
         public long? TransactionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackBefore"]/TransactionName/*'/>
         public string TransactionName { get; }
 
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 4;
 
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
@@ -800,9 +942,13 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/SqlClientTransactionRollbackAfter/*'/>
     public sealed class SqlClientTransactionRollbackAfter : SqlClientDiagnostic
     {
-        public SqlClientTransactionRollbackAfter(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteTransactionRollbackAfter";
+
+        internal SqlClientTransactionRollbackAfter(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName)
             : base(operationId, operation, timestamp)
         {
             IsolationLevel = isolationLevel;
@@ -811,13 +957,22 @@ namespace Microsoft.Data.SqlClient
             TransactionName = transactionName;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/IsolationLevel/*'/>
         public IsolationLevel IsolationLevel { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/Connection/*'/>
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/TransactionId/*'/>
         public long? TransactionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/TransactionName/*'/>
         public string TransactionName { get; }
 
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 4;
 
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
@@ -828,9 +983,13 @@ namespace Microsoft.Data.SqlClient
         };
     }
 
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackError"]/SqlClientTransactionRollbackError/*'/>
     public sealed class SqlClientTransactionRollbackError : SqlClientDiagnostic
     {
-        public SqlClientTransactionRollbackError(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName, Exception ex)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackError"]/Name/*'/>
+        public const string Name = "Microsoft.Data.SqlClient.WriteTransactionRollbackError";
+
+        internal SqlClientTransactionRollbackError(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName, Exception ex)
             : base(operationId, operation, timestamp)
         {
             IsolationLevel = isolationLevel;
@@ -840,14 +999,25 @@ namespace Microsoft.Data.SqlClient
             Exception = ex;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackError"]/IsolationLevel/*'/>
         public IsolationLevel IsolationLevel { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackError"]/Connection/*'/>
         public SqlConnection Connection { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackError"]/TransactionId/*'/>
         public long? TransactionId { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackError"]/TransactionName/*'/>
         public string TransactionName { get; }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackError"]/Exception/*'/>
         public Exception Exception { get; }
 
+        /// <inheritdoc/>>
         protected sealed override int GetDerivedCount() => 5;
 
+        /// <inheritdoc/>>
         protected sealed override KeyValuePair<string, object> GetDerivedProperty(int index) => index switch
         {
             0 => new KeyValuePair<string, object>(nameof(IsolationLevel), IsolationLevel),
@@ -858,8 +1028,6 @@ namespace Microsoft.Data.SqlClient
             _ => throw new IndexOutOfRangeException(nameof(index)),
         };
     }
-
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
     internal ref struct DiagnosticScope //: IDisposable //ref structs cannot implement interfaces but the compiler will use pattern matching
     {
