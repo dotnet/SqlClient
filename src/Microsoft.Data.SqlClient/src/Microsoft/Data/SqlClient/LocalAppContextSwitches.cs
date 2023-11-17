@@ -15,8 +15,8 @@ namespace Microsoft.Data.SqlClient
 
         private static bool? s_legacyRowVersionNullBehavior;
         private static bool? s_suppressInsecureTLSWarning;
-        private static bool s_makeReadAsyncBlocking;
-        private static bool s_useMinimumLoginTimeout;
+        private static bool? s_makeReadAsyncBlocking;
+        private static bool? s_useMinimumLoginTimeout;
 
 #if !NETFRAMEWORK
         static LocalAppContextSwitches()
@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
         internal const string DisableTNIRByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
-        private static bool s_disableTNIRByDefault;
+        private static bool? s_disableTNIRByDefault;
 
         /// <summary>
         /// Transparent Network IP Resolution (TNIR) is a revision of the existing MultiSubnetFailover feature.
@@ -54,7 +54,17 @@ namespace Microsoft.Data.SqlClient
         /// This app context switch defaults to 'false'.
         /// </summary>
         public static bool DisableTNIRByDefault
-            => AppContext.TryGetSwitch(DisableTNIRByDefaultString, out s_disableTNIRByDefault) && s_disableTNIRByDefault;
+        {
+            get
+            {
+                if (s_disableTNIRByDefault is null)
+                {
+                    bool result = AppContext.TryGetSwitch(DisableTNIRByDefaultString, out bool returnedValue) && returnedValue;
+                    s_disableTNIRByDefault = result;
+                }
+                return s_disableTNIRByDefault.Value;
+            }
+        }
 #endif
 
         /// <summary>
@@ -101,7 +111,17 @@ namespace Microsoft.Data.SqlClient
         /// This app context switch defaults to 'false'.
         /// </summary>
         public static bool MakeReadAsyncBlocking
-            => AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out s_makeReadAsyncBlocking) && s_makeReadAsyncBlocking;
+        {
+            get
+            {
+                if (s_makeReadAsyncBlocking is null)
+                {
+                    bool result = AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out bool returnedValue) && returnedValue;
+                    s_makeReadAsyncBlocking = result;
+                }
+                return s_makeReadAsyncBlocking.Value;
+            }
+        }
 
         /// <summary>
         /// Specifies minimum login timeout to be set to 1 second instead of 0 seconds,
@@ -109,6 +129,16 @@ namespace Microsoft.Data.SqlClient
         /// This app context switch defaults to 'true'.
         /// </summary>
         public static bool UseMinimumLoginTimeout
-            => !AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out s_useMinimumLoginTimeout) || s_useMinimumLoginTimeout;
+        {
+            get
+            {
+                if (s_useMinimumLoginTimeout is null)
+                {
+                    bool result = AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) && returnedValue;
+                    s_useMinimumLoginTimeout = result;
+                }
+                return s_useMinimumLoginTimeout.Value;
+            }
+        }
     }
 }
