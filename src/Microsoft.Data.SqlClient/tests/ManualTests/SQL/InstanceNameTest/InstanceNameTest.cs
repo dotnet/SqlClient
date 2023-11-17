@@ -83,7 +83,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [PlatformSpecific(TestPlatforms.AnyUnix)]
+        // Note: This Unit test was tested in a VM within the sqldrv.ad domain. i.e. from server sqldrv-win22 and
+        //       is connecting to a Sql Server using Kerberos at sqldrv-sql22 server in the same domain.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsManagedSNI), nameof(DataTestUtility.IsNotLocalhost), nameof(DataTestUtility.IsKerberosTest), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void PortNumberInSPNTest()
         {
@@ -93,9 +94,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName))
             {
-                builder.DataSource = hostname + "\\" + instanceName;
                 using SqlConnection connection = new(builder.ConnectionString);
                 connection.Open();
+                using SqlCommand command = new("SELECT auth_scheme, local_tcp_port from sys.dm_exec_connections where session_id = @@spid", connection);
+                using SqlDataReader reader = command.ExecuteReader();
+                Assert.True(reader.Read(), "Expected to receive one row data");
+                Assert.Equal("KERBEROS", reader.GetString(0));
+                int Port = reader.GetInt32(1);
+                Assert.True( Port > 0);
             }
         }
 

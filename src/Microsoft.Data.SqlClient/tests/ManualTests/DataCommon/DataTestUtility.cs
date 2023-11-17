@@ -1078,6 +1078,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return UseManagedSNIOnWindows;
         }
 
+        public static bool IsIntegratedSecurity()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            return builder.IntegratedSecurity;  
+        }
+
         public static bool IsNotLocalhost()
         {
             // get the tcp connection string
