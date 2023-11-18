@@ -8,15 +8,22 @@ namespace Microsoft.Data.SqlClient
 {
     internal static partial class LocalAppContextSwitches
     {
+        private enum Tristate : byte
+        {
+            NotInitialized = 0,
+            False = 1,
+            True = 2
+        }
+
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
         internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
         internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
 
-        private static bool? s_legacyRowVersionNullBehavior;
-        private static bool? s_suppressInsecureTLSWarning;
-        private static bool? s_makeReadAsyncBlocking;
-        private static bool? s_useMinimumLoginTimeout;
+        private static Tristate s_legacyRowVersionNullBehavior;
+        private static Tristate s_suppressInsecureTLSWarning;
+        private static Tristate s_makeReadAsyncBlocking;
+        private static Tristate s_useMinimumLoginTimeout;
 
 #if !NETFRAMEWORK
         static LocalAppContextSwitches()
@@ -36,7 +43,7 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
         internal const string DisableTNIRByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
-        private static bool? s_disableTNIRByDefault;
+        private static Tristate s_disableTNIRByDefault;
 
         /// <summary>
         /// Transparent Network IP Resolution (TNIR) is a revision of the existing MultiSubnetFailover feature.
@@ -57,12 +64,18 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_disableTNIRByDefault is null)
+                if (s_disableTNIRByDefault == Tristate.NotInitialized)
                 {
-                    bool result = AppContext.TryGetSwitch(DisableTNIRByDefaultString, out bool returnedValue) && returnedValue;
-                    s_disableTNIRByDefault = result;
+                    if (AppContext.TryGetSwitch(DisableTNIRByDefaultString, out bool returnedValue) && returnedValue)
+                    {
+                        s_disableTNIRByDefault = Tristate.True;
+                    }
+                    else
+                    {
+                        s_disableTNIRByDefault = Tristate.False;
+                    }
                 }
-                return s_disableTNIRByDefault.Value;
+                return s_disableTNIRByDefault == Tristate.True;
             }
         }
 #endif
@@ -76,13 +89,18 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_suppressInsecureTLSWarning is null)
+                if (s_suppressInsecureTLSWarning == Tristate.NotInitialized)
                 {
-                    bool result;
-                    result = AppContext.TryGetSwitch(SuppressInsecureTLSWarningString, out result) && result;
-                    s_suppressInsecureTLSWarning = result;
+                    if (AppContext.TryGetSwitch(SuppressInsecureTLSWarningString, out bool returnedValue) && returnedValue)
+                    {
+                        s_suppressInsecureTLSWarning = Tristate.True;
+                    }
+                    else
+                    {
+                        s_suppressInsecureTLSWarning = Tristate.False;
+                    }
                 }
-                return s_suppressInsecureTLSWarning.Value;
+                return s_suppressInsecureTLSWarning == Tristate.True;
             }
         }
 
@@ -96,13 +114,18 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_legacyRowVersionNullBehavior is null)
+                if (s_legacyRowVersionNullBehavior == Tristate.NotInitialized)
                 {
-                    bool result;
-                    result = AppContext.TryGetSwitch(LegacyRowVersionNullString, out result) && result;
-                    s_legacyRowVersionNullBehavior = result;
+                    if (AppContext.TryGetSwitch(LegacyRowVersionNullString, out bool returnedValue) && returnedValue)
+                    {
+                        s_legacyRowVersionNullBehavior = Tristate.True;
+                    }
+                    else
+                    {
+                        s_legacyRowVersionNullBehavior = Tristate.False;
+                    }
                 }
-                return s_legacyRowVersionNullBehavior.Value;
+                return s_legacyRowVersionNullBehavior == Tristate.True;
             }
         }
 
@@ -114,12 +137,18 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_makeReadAsyncBlocking is null)
+                if (s_makeReadAsyncBlocking == Tristate.NotInitialized)
                 {
-                    bool result = AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out bool returnedValue) && returnedValue;
-                    s_makeReadAsyncBlocking = result;
+                    if (AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out bool returnedValue) && returnedValue)
+                    {
+                        s_makeReadAsyncBlocking = Tristate.True;
+                    }
+                    else
+                    {
+                        s_makeReadAsyncBlocking = Tristate.False;
+                    }
                 }
-                return s_makeReadAsyncBlocking.Value;
+                return s_makeReadAsyncBlocking == Tristate.True;
             }
         }
 
@@ -132,12 +161,18 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_useMinimumLoginTimeout is null)
+                if (s_useMinimumLoginTimeout == Tristate.NotInitialized)
                 {
-                    bool result = AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) && returnedValue;
-                    s_useMinimumLoginTimeout = result;
+                    if (AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) && returnedValue)
+                    {
+                        s_useMinimumLoginTimeout = Tristate.True;
+                    }
+                    else
+                    {
+                        s_useMinimumLoginTimeout = Tristate.False;
+                    }
                 }
-                return s_useMinimumLoginTimeout.Value;
+                return s_useMinimumLoginTimeout == Tristate.True;
             }
         }
     }
