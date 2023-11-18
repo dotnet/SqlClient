@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient
         internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
         internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
 
-        // this field is accessed through reflection in tests and should be be renamed or have the type changed without refactoring NullRow related tests
+        // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
         private static Tristate s_suppressInsecureTLSWarning;
         private static Tristate s_makeReadAsyncBlocking;
