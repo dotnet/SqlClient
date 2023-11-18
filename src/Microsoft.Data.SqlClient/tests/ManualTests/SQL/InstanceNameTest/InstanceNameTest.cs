@@ -5,6 +5,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -102,7 +103,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal("KERBEROS", reader.GetString(0));
                 int Port = reader.GetInt32(1);
                 Assert.True( Port > 0);
+                Port = GetSPNPort(builder.DataSource);
             }
+        }
+
+        private static int GetSPNPort(string datasource)
+        {
+            Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
+            Type SniProxy = systemData.GetType("Microsoft.Data.SqlClient.SNI.SNIProxy");
+            ConstructorInfo sniProxyConstructor = SniProxy.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { }, null);
+
+            Object sniProxy = sniProxyConstructor.Invoke(new object[] { });
+
+            return 0;
         }
 
         private static bool IsBrowserAlive(string browserHostname)
