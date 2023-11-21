@@ -17,6 +17,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static readonly object s_rowVersionLock = new();
 
+        // this enum must mirror the definition in LocalAppContextSwitches
+        private enum Tristate : byte
+        {
+            NotInitialized = 0,
+            False = 1,
+            True = 2
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
         {
@@ -261,7 +269,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             lock (s_rowVersionLock)
             {
-                bool? originalValue = SetLegacyRowVersionNullBehavior(false);
+                Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.False);
                 try
                 {
                     using SqlConnection con = new(DataTestUtility.TCPConnectionString);
@@ -298,7 +306,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             lock (s_rowVersionLock)
             {
-                bool? originalValue = SetLegacyRowVersionNullBehavior(true);
+                Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.True);
                 try
                 {
                     using SqlConnection con = new(DataTestUtility.TCPConnectionString);
@@ -323,11 +331,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static bool? SetLegacyRowVersionNullBehavior(bool? value)
+        private static Tristate SetLegacyRowVersionNullBehavior(Tristate value)
         {
             Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
             FieldInfo switchField = switchesType.GetField("s_legacyRowVersionNullBehavior", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            bool? originalValue = (bool?)switchField.GetValue(null);
+            Tristate originalValue = (Tristate)switchField.GetValue(null);
             switchField.SetValue(null, value);
             return originalValue;
         }
