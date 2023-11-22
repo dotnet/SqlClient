@@ -12,6 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class BatchTests
     {
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MissingCommandTextThrows()
         {
@@ -23,7 +24,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MissingConnectionThrows()
         {
@@ -33,7 +33,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ConnectionCanCreateBatch()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                Assert.True(connection.CanCreateBatch);
+                using (var batch = connection.CreateBatch())
+                {
+                    Assert.NotNull(batch);
+                    Assert.Equal(connection, batch.Connection);
+
+                    batch.BatchCommands.Add(new SqlBatchCommand("SELECT @@SPID"));
+                    connection.Open();
+                    batch.ExecuteNonQuery();
+                }
+            }
+        }
+
+#if NET8_0_OR_GREATER
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void SqlBatchCanCreateParameter()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var batch = connection.CreateBatch())
+            {
+                SqlBatchCommand batchCommand = new SqlBatchCommand("SELECT @p");
+
+                Assert.True(batchCommand.CanCreateParameter);
+                SqlParameter parameter = batchCommand.CreateParameter();
+                Assert.NotNull(parameter);
+                parameter.ParameterName = "@p";
+                parameter.Value = 1;
+                batchCommand.Parameters.Add(parameter);
+
+                batch.ExecuteNonQuery();
+
+            }
+        }
+#endif 
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void StoredProcedureBatchSupported()
         {
@@ -45,7 +84,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void CommandTextBatchSupported()
         {
@@ -57,14 +95,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TableDirectBatchNotSupported()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => new SqlBatchCommand("Categories", CommandType.TableDirect));
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MixedBatchSupported()
         {
@@ -84,7 +120,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void DisposedThrows()
         {
@@ -93,7 +128,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Throws<ObjectDisposedException>(() => batch.ExecuteNonQuery());
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ProviderApi()
         {
@@ -166,7 +200,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void DirectApi()
         {
@@ -238,7 +271,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.NotNull(exception.BatchCommand);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExceptionInBatchContainsBatch()
         {
@@ -276,7 +308,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.NotNull(exception.BatchCommand);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExceptionWithoutBatchContainsNoBatch()
         {
@@ -306,7 +337,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Null(exception.BatchCommand);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ParameterInOutAndReturn()
         {
@@ -359,7 +389,6 @@ END";
             Assert.Equal(2, Convert.ToInt32(returned.Value));
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteNonQuery()
         {
@@ -422,7 +451,6 @@ END";
             Assert.Equal(1, batch.Commands[2].RecordsAffected);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task ExecuteNonQueryAsync()
         {
@@ -485,7 +513,6 @@ END";
             Assert.Equal(1, batch.Commands[2].RecordsAffected);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteScalarMultiple()
         {
@@ -505,7 +532,6 @@ END";
             Assert.Equal(9, value);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task ExecuteScalarAsyncMultiple()
         {
@@ -525,7 +551,6 @@ END";
             Assert.Equal(9, value);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteReaderMultiple()
         {
@@ -557,7 +582,6 @@ END";
             Assert.Equal(10, resultRowCount);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task ExecuteReaderAsyncMultiple()
         {
