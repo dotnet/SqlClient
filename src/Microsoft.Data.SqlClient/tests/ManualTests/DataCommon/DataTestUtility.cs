@@ -1097,7 +1097,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string hostname = serverNamePartsByBackSlash[0];
 
             // check if hostname = localhost
-            return hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+            return !hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool RunningAsUWPApp()
