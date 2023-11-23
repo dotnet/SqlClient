@@ -1073,11 +1073,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return fqdn.ToString();
         }
 
-        public static bool IsManagedSNI()
-        {
-            return UseManagedSNIOnWindows;
-        }
-
         public static bool IsIntegratedSecurity()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
