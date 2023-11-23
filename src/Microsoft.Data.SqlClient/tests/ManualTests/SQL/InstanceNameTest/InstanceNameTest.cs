@@ -166,8 +166,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Get TimeoutTimer.StartSecondsTimeout Method
             MethodInfo startSecondsTimeout = timeoutTimer.GetType().GetMethod("StartSecondsTimeout", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, types4, null);
-            // Create a timeoutTimer that expires in 100,000 milliseconds
-            timeoutTimer = startSecondsTimeout.Invoke(details, new object[] { 100000 });
+            // Create a timeoutTimer that expires in 30 seconds
+            timeoutTimer = startSecondsTimeout.Invoke(details, new object[] { 30 });
 
             // Parse the datasource to separate the server name and instance name
             MethodInfo ParseServerName = details.GetType().GetMethod("ParseServerName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, types, null);
