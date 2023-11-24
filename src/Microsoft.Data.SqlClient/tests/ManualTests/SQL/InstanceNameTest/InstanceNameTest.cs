@@ -115,46 +115,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static string GetSPNInfo(string datasource, out int out_port)
         {
-            Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
+            Assembly sqlConnectionAssembly = Assembly.GetAssembly(typeof(SqlConnection));
 
             // Get all required types using reflection
-            Type SniProxy = systemData.GetType("Microsoft.Data.SqlClient.SNI.SNIProxy");
-            Type SSRP = systemData.GetType("Microsoft.Data.SqlClient.SNI.SSRP");
-            Type DataSource = systemData.GetType("Microsoft.Data.SqlClient.SNI.DataSource");
-            Type TimeoutTimer = systemData.GetType("Microsoft.Data.ProviderBase.TimeoutTimer");
+            Type sniProxyType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.SNI.SNIProxy");
+            Type ssrpType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.SNI.SSRP");
+            Type dataSourceType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.SNI.DataSource");
+            Type timeoutTimerType = sqlConnectionAssembly.GetType("Microsoft.Data.ProviderBase.TimeoutTimer");
 
             // Used in Datasource constructor param type array 
-            Type[] types = new Type[1];
-            types[0] = typeof(string);
+            Type[] types = new Type[1] { typeof(string) };
 
             // Used in GetSqlServerSPNs function param types array
-            Type[] types2 = new Type[2];
-            types2[0] = DataSource;
-            types2[1] = typeof(string);
+            Type[] types2 = new Type[2] { dataSourceType, typeof(string) };
 
             // GetPortByInstanceName parameters array
-            Type[] types3 = new Type[5];
-            types3[0] = typeof(string);
-            types3[1] = typeof(string);
-            types3[2] = TimeoutTimer;
-            types3[3] = typeof(bool);
-            types3[4] = typeof(Microsoft.Data.SqlClient.SqlConnectionIPAddressPreference);
+            Type[] types3 = new Type[5] { typeof(string), typeof(string), timeoutTimerType, typeof(bool), typeof(Microsoft.Data.SqlClient.SqlConnectionIPAddressPreference) };
 
             // TimeoutTimer.StartSecondsTimeout params
-            Type[] types4 = new Type[1];
-            types4[0] = typeof(int);
+            Type[] types4 = new Type[1] { typeof(int) };
 
             // Get all types constructors
-            ConstructorInfo sniProxyCtor = SniProxy.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
-            ConstructorInfo SSRPCtor = SSRP.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
-            ConstructorInfo datasSourceCtor = DataSource.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, types , null);
-            ConstructorInfo timeoutTimerCtor = TimeoutTimer.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
+            ConstructorInfo sniProxyCtor = sniProxyType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
+            ConstructorInfo SSRPCtor = ssrpType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
+            ConstructorInfo dataSourceCtor = dataSourceType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, types , null);
+            ConstructorInfo timeoutTimerCtor = timeoutTimerType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
 
             // Instantiate SNIProxy
             var sniProxy =  sniProxyCtor.Invoke(new object[] { });
 
-            // Instatntiate datasource 
-            var details = datasSourceCtor.Invoke(new object[] { datasource });
+            // Instantiate datasource 
+            var details = dataSourceCtor.Invoke(new object[] { datasource });
 
             // Instantiate SSRP
             var ssrp = SSRPCtor.Invoke(new object[] { });    

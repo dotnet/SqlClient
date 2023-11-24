@@ -1091,8 +1091,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // first element of array is the hostname
             string hostname = serverNamePartsByBackSlash[0];
 
-            // check if hostname = localhost
-            return !hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+            // check if hostname = localhost or . or 127.0.0.1 or ::1
+            if (hostname == "localhost" || hostname == "." || hostname == "127.0.0.1" || hostname == "::1") return false;
+
+            return true;
         }
 
         private static bool RunningAsUWPApp()
