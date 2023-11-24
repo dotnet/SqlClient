@@ -142,16 +142,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConstructorInfo timeoutTimerCtor = timeoutTimerType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
 
             // Instantiate SNIProxy
-            var sniProxy =  sniProxyCtor.Invoke(new object[] { });
+            object sniProxy =  sniProxyCtor.Invoke(new object[] { });
 
             // Instantiate datasource 
-            var details = dataSourceCtor.Invoke(new object[] { datasource });
+            object details = dataSourceCtor.Invoke(new object[] { datasource });
 
             // Instantiate SSRP
-            var ssrp = SSRPCtor.Invoke(new object[] { });    
+            object ssrp = SSRPCtor.Invoke(new object[] { });    
 
             // Instantiate TimeoutTimer
-            var timeoutTimer = timeoutTimerCtor.Invoke(new object[] { });
+            object timeoutTimer = timeoutTimerCtor.Invoke(new object[] { });
 
             // Get TimeoutTimer.StartSecondsTimeout Method
             MethodInfo startSecondsTimeout = timeoutTimer.GetType().GetMethod("StartSecondsTimeout", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, startSecondsTimeoutTypesArray, null);
@@ -160,7 +160,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Parse the datasource to separate the server name and instance name
             MethodInfo ParseServerName = details.GetType().GetMethod("ParseServerName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, dataSourceConstructorTypesArray, null);
-            var dataSrcInfo = ParseServerName.Invoke(details, new object[] { datasource });
+            object dataSrcInfo = ParseServerName.Invoke(details, new object[] { datasource });
 
             // Get the GetPortByInstanceName method of SSRP
             MethodInfo getPortByInstanceName = ssrp.GetType().GetMethod("GetPortByInstanceName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, getPortByInstanceNameTypesArray, null);
@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string instanceName = instanceNameInfo.GetValue(dataSrcInfo, null).ToString();
 
             // Get the port number using the GetPortByInstanceName method of SSRP
-            var port = getPortByInstanceName.Invoke(ssrp, parameters: new object[] { serverName, instanceName, timeoutTimer, false, 0 } );
+            object port = getPortByInstanceName.Invoke(ssrp, parameters: new object[] { serverName, instanceName, timeoutTimer, false, 0 } );
 
             // Set the resolved port property of datasource
             PropertyInfo resolvedPortInfo = dataSrcInfo.GetType().GetProperty("ResolvedPort", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -185,6 +185,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             MethodInfo getSqlServerSPNs = sniProxy.GetType().GetMethod("GetSqlServerSPNs", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, getSqlServerSPNsTypesArray, null);
 
             // Finally call GetSqlServerSPNs
+            // Use dynamic type for indexing to work at design time
             dynamic result = getSqlServerSPNs.Invoke(sniProxy, new object[] { dataSrcInfo, serverSPN });
 
             // Example result: MSSQLSvc/sqldrv-sql22.sqldrv.ad:1433"
