@@ -124,21 +124,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Type timeoutTimerType = sqlConnectionAssembly.GetType("Microsoft.Data.ProviderBase.TimeoutTimer");
 
             // Used in Datasource constructor param type array 
-            Type[] types = new Type[1] { typeof(string) };
+            Type[] dataSourceConstructorTypesArray = new Type[] { typeof(string) };
 
             // Used in GetSqlServerSPNs function param types array
-            Type[] types2 = new Type[2] { dataSourceType, typeof(string) };
+            Type[] getSqlServerSPNsTypesArray = new Type[] { dataSourceType, typeof(string) };
 
             // GetPortByInstanceName parameters array
-            Type[] types3 = new Type[5] { typeof(string), typeof(string), timeoutTimerType, typeof(bool), typeof(Microsoft.Data.SqlClient.SqlConnectionIPAddressPreference) };
+            Type[] getPortByInstanceNameTypesArray = new Type[] { typeof(string), typeof(string), timeoutTimerType, typeof(bool), typeof(Microsoft.Data.SqlClient.SqlConnectionIPAddressPreference) };
 
             // TimeoutTimer.StartSecondsTimeout params
-            Type[] types4 = new Type[1] { typeof(int) };
+            Type[] startSecondsTimeoutTypesArray = new Type[] { typeof(int) };
 
             // Get all types constructors
             ConstructorInfo sniProxyCtor = sniProxyType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
             ConstructorInfo SSRPCtor = ssrpType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
-            ConstructorInfo dataSourceCtor = dataSourceType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, types , null);
+            ConstructorInfo dataSourceCtor = dataSourceType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, dataSourceConstructorTypesArray , null);
             ConstructorInfo timeoutTimerCtor = timeoutTimerType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
 
             // Instantiate SNIProxy
@@ -154,24 +154,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var timeoutTimer = timeoutTimerCtor.Invoke(new object[] { });
 
             // Get TimeoutTimer.StartSecondsTimeout Method
-            MethodInfo startSecondsTimeout = timeoutTimer.GetType().GetMethod("StartSecondsTimeout", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, types4, null);
+            MethodInfo startSecondsTimeout = timeoutTimer.GetType().GetMethod("StartSecondsTimeout", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, startSecondsTimeoutTypesArray, null);
             // Create a timeoutTimer that expires in 30 seconds
             timeoutTimer = startSecondsTimeout.Invoke(details, new object[] { 30 });
 
             // Parse the datasource to separate the server name and instance name
-            MethodInfo ParseServerName = details.GetType().GetMethod("ParseServerName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, types, null);
+            MethodInfo ParseServerName = details.GetType().GetMethod("ParseServerName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, dataSourceConstructorTypesArray, null);
             var dataSrcInfo = ParseServerName.Invoke(details, new object[] { datasource });
 
             // Get the GetPortByInstanceName method of SSRP
-            MethodInfo getPortByInstanceName = ssrp.GetType().GetMethod("GetPortByInstanceName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, types3, null);
+            MethodInfo getPortByInstanceName = ssrp.GetType().GetMethod("GetPortByInstanceName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, getPortByInstanceNameTypesArray, null);
 
             // Get the server name
             PropertyInfo serverInfo = dataSrcInfo.GetType().GetProperty("ServerName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            var serverName = serverInfo.GetValue(dataSrcInfo, null).ToString();
+            string serverName = serverInfo.GetValue(dataSrcInfo, null).ToString();
 
             // Get the instance name
             PropertyInfo instanceNameInfo = dataSrcInfo.GetType().GetProperty("InstanceName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            var instanceName = instanceNameInfo.GetValue(dataSrcInfo, null).ToString();
+            string instanceName = instanceNameInfo.GetValue(dataSrcInfo, null).ToString();
 
             // Get the port number using the GetPortByInstanceName method of SSRP
             var port = getPortByInstanceName.Invoke(ssrp, parameters: new object[] { serverName, instanceName, timeoutTimer, false, 0 } );
@@ -182,13 +182,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Prepare the GetSqlServerSPNs method
             string serverSPN = "";
-            MethodInfo getSqlServerSPNs = sniProxy.GetType().GetMethod("GetSqlServerSPNs", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, types2, null);
+            MethodInfo getSqlServerSPNs = sniProxy.GetType().GetMethod("GetSqlServerSPNs", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, getSqlServerSPNsTypesArray, null);
 
             // Finally call GetSqlServerSPNs
             dynamic result = getSqlServerSPNs.Invoke(sniProxy, new object[] { dataSrcInfo, serverSPN });
 
-            // MSSQLSvc/sqldrv-sql22.sqldrv.ad:1433"
-            var spnInfo = System.Text.Encoding.Unicode.GetString(result[0]);
+            // Example result: MSSQLSvc/sqldrv-sql22.sqldrv.ad:1433"
+            string spnInfo = Encoding.Unicode.GetString(result[0]);
 
             out_port = (int)port;
 
