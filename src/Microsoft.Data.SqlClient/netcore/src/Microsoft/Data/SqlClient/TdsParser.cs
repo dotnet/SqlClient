@@ -2344,6 +2344,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
                         }
+#if !CORE
                     case TdsEnums.SQLFEDAUTHINFO:
                         {
                             _connHandler._federatedAuthenticationInfoReceived = true;
@@ -2356,6 +2357,7 @@ namespace Microsoft.Data.SqlClient
                             _connHandler.OnFedAuthInfo(info);
                             break;
                         }
+#endif
                     case TdsEnums.SQLSESSIONSTATE:
                         {
                             if (!TryProcessSessionState(stateObj, tokenLength, _connHandler._currentSessionData))

@@ -200,6 +200,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4F3CD363-B1E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.SqlServer.Server", "Microsoft.SqlServer.Server\Microsoft.SqlServer.Server.csproj", "{A314812A-7820-4565-A2A8-ABBE391C11E4}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.Core", "Microsoft.Data.SqlClient\netcore\src\Microsoft.Data.SqlClient.Core.csproj", "{638A00EA-9648-45F1-B2FF-94E9A111AD73}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -472,6 +474,18 @@ Global
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x64.Build.0 = Release|Any CPU
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.ActiveCfg = Release|Any CPU
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.Build.0 = Release|Any CPU
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Debug|x64.ActiveCfg = Debug|x64
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Debug|x64.Build.0 = Debug|x64
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Debug|x86.ActiveCfg = Debug|x86
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Debug|x86.Build.0 = Debug|x86
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Release|x64.ActiveCfg = Release|x64
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Release|x64.Build.0 = Release|x64
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Release|x86.ActiveCfg = Release|x86
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -507,6 +521,7 @@ Global
 		{B93A3149-67E8-491E-A1E5-19D65F9D9E98} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{599A336B-2A5F-473D-8442-1223ED37C93E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{A314812A-7820-4565-A2A8-ABBE391C11E4} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
+		{638A00EA-9648-45F1-B2FF-94E9A111AD73} = {28E5EFE6-C9DD-4FF9-9FEC-532F72DFFA6E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}

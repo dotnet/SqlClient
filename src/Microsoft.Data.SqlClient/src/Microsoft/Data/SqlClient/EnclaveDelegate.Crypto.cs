@@ -91,12 +91,13 @@ namespace Microsoft.Data.SqlClient
             {
                 switch (attestationProtocol)
                 {
+#if !CORE
                     case SqlConnectionAttestationProtocol.AAS:
                         AzureAttestationEnclaveProvider azureAttestationEnclaveProvider = new AzureAttestationEnclaveProvider();
                         s_enclaveProviders[attestationProtocol] = azureAttestationEnclaveProvider;
                         sqlColumnEncryptionEnclaveProvider = s_enclaveProviders[attestationProtocol];
                         break;
-
+#endif
                     case SqlConnectionAttestationProtocol.HGS:
                         HostGuardianServiceEnclaveProvider hostGuardianServiceEnclaveProvider = new HostGuardianServiceEnclaveProvider();
                         s_enclaveProviders[attestationProtocol] = hostGuardianServiceEnclaveProvider;
