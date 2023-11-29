@@ -15,6 +15,17 @@ namespace Microsoft.Data.SqlClient
 {
     internal abstract partial class TdsParserStateObject
     {
+        private struct RuntimeHelpers
+        {
+            /// <summary>
+            /// This is a no-op in netcore version. Only needed for merging with netfx codebase.
+            /// </summary>
+            [Conditional("NETFRAMEWORK")]
+            internal static void PrepareConstrainedRegions() 
+            { 
+            }
+        }
+
         private static readonly ContextCallback s_readAsyncCallbackComplete = ReadAsyncCallbackComplete;
 
         // Timeout variables
@@ -260,6 +271,8 @@ namespace Microsoft.Data.SqlClient
 
         internal bool TryReadNetworkPacket()
         {
+            TdsParser.ReliabilitySection.Assert("unreliable call to TryReadNetworkPacket");  // you need to setup for a thread abort somewhere before you call this method
+
 #if DEBUG
             Debug.Assert(!_shouldHaveEnoughData || _attentionSent, "Caller said there should be enough data, but we are currently reading a packet");
 #endif
@@ -339,9 +352,12 @@ namespace Microsoft.Data.SqlClient
 
             uint error;
 
+            RuntimeHelpers.PrepareConstrainedRegions();
             bool shouldDecrement = false;
             try
             {
+                TdsParser.ReliabilitySection.Assert("unreliable call to ReadSniSync");  // you need to setup for a thread abort somewhere before you call this method
+
                 Interlocked.Increment(ref _readingCount);
                 shouldDecrement = true;
 
@@ -539,6 +555,7 @@ namespace Microsoft.Data.SqlClient
                                 if (!source.Task.IsCompleted)
                                 {
                                     int pendingCallback = IncrementPendingCallbacks();
+                                    RuntimeHelpers.PrepareConstrainedRegions();
                                     try
                                     {
                                         // If pendingCallback is at 3, then ReadAsyncCallback hasn't been called yet
@@ -613,6 +630,7 @@ namespace Microsoft.Data.SqlClient
 
             uint error = 0;
 
+            RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
                 Debug.Assert(completion != null, "Async on but null asyncResult passed");
@@ -815,6 +833,8 @@ namespace Microsoft.Data.SqlClient
         // This method should only be called by ReadSni!  If not - it may have problems with timeouts!
         private void ReadSniError(TdsParserStateObject stateObj, uint error)
         {
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadSniSyncError");  // you need to setup for a thread abort somewhere before you call this method
+
             if (TdsEnums.SNI_WAIT_TIMEOUT == error)
             {
                 Debug.Assert(_syncOverAsync, "Should never reach here with async on!");
@@ -837,7 +857,7 @@ namespace Microsoft.Data.SqlClient
                             stateObj.SendAttention(mustTakeWriteLock: true);
 
                             PacketHandle syncReadPacket = default;
-
+                            RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
                             {
@@ -1037,6 +1057,7 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
+            RuntimeHelpers.PrepareConstrainedRegions();
             bool processFinallyBlock = true;
             try
             {
@@ -1258,6 +1279,8 @@ namespace Microsoft.Data.SqlClient
         //
         internal void WriteSecureString(SecureString secureString)
         {
+            TdsParser.ReliabilitySection.Assert("unreliable call to WriteSecureString");  // you need to setup for a thread abort somewhere before you call this method
+
             Debug.Assert(_securePasswords[0] == null || _securePasswords[1] == null, "There are more than two secure passwords");
 
             int index = _securePasswords[0] != null ? 1 : 0;
@@ -1332,6 +1355,8 @@ namespace Microsoft.Data.SqlClient
         // and then the buffer is re-initialized in flush() and then the byte is put in the buffer.
         internal void WriteByte(byte b)
         {
+            TdsParser.ReliabilitySection.Assert("unreliable call to WriteByte");  // you need to setup for a thread abort somewhere before you call this method
+
             Debug.Assert(_outBytesUsed <= _outBuff.Length, "ERROR - TDSParser: _outBytesUsed > _outBuff.Length");
 
             // check to make sure we haven't used the full amount of space available in the buffer, if so, flush it
@@ -1367,6 +1392,8 @@ namespace Microsoft.Data.SqlClient
             }
             try
             {
+                TdsParser.ReliabilitySection.Assert("unreliable call to WriteByteArray");  // you need to setup for a thread abort somewhere before you call this method
+
                 bool async = _parser._asyncWrite;  // NOTE: We are capturing this now for the assert after the Task is returned, since WritePacket will turn off async if there is an exception
                 Debug.Assert(async || _asyncWriteCount == 0);
                 // Do we have to send out in packet size chunks, or can we rely on netlib layer to break it up?
@@ -1729,6 +1756,7 @@ namespace Microsoft.Data.SqlClient
 
                 PacketHandle attnPacket = CreateAndSetAttentionPacket();
 
+                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     // Dev11 #344723: SqlClient stress test suspends System_Data!Tcp::ReadSync via a call to SqlDataReader::Close
