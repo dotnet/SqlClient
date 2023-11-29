@@ -293,6 +293,8 @@ namespace Microsoft.Data.SqlClient
             return readPacket;
         }
 
+        internal uint CheckConnection() => SNINativeMethodWrapper.SNICheckConnection(Handle);
+
         internal void ReleasePacket(PacketHandle syncReadPacket) => SNINativeMethodWrapper.SNIPacketRelease(syncReadPacket);
         
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
@@ -911,7 +913,7 @@ namespace Microsoft.Data.SqlClient
 
 
                         SniContext = SniContext.Snix_Connect;
-                        error = SNINativeMethodWrapper.SNICheckConnection(Handle);
+                        error = CheckConnection();
 
                         if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                         {
