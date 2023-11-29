@@ -1073,28 +1073,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return fqdn.ToString();
         }
 
-        public static bool IsIntegratedSecurity()
-        {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
-            return builder.IntegratedSecurity;  
-        }
-
         public static bool IsNotLocalhost()
         {
             // get the tcp connection string
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
 
-            // remove tcp from connection string
-            string dataSourceStr = builder.DataSource.Replace("tcp:", "");
-            // create a string array
-            string[] serverNamePartsByBackSlash = dataSourceStr.Split('\\');
-            // first element of array is the hostname
-            string hostname = serverNamePartsByBackSlash[0];
+            string hostname = "";
 
-            // check if hostname = localhost or . or 127.0.0.1 or ::1
-            if (hostname == "localhost" || hostname == "." || hostname == "127.0.0.1" || hostname == "::1") return false;
+            // parse the datasource
+            ParseDataSource(builder.DataSource, out hostname, out _, out _);
 
-            return true;
+            // hostname must not be localhost, ., 127.0.0.1 nor ::1
+            return !(new string[] { "localhost", ".", "127.0.0.1", "::1" }).Contains(hostname.ToLowerInvariant());
+
+        }
+
+        public static bool IsKerberosManagedSNI() 
+        {
+            return (AreConnStringsSetup() && IsUsingManagedSNI() && IsNotLocalhost() && IsKerberosTest && IsNotAzureServer() && IsNotAzureSynapse());
         }
 
         private static bool RunningAsUWPApp()

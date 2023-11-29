@@ -84,12 +84,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // Note: This Unit test was tested in a VM within the sqldrv.ad domain. i.e. from server sqldrv-win22 and
-        //       is connecting to a Sql Server using Kerberos at sqldrv-sql22 server in the same domain.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUsingManagedSNI), nameof(DataTestUtility.IsNotLocalhost), nameof(DataTestUtility.IsKerberosTest), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
+        // Note: This Unit test was tested in a domain-joined VM connecting to a remote
+        //       SQL Server using Kerberos in the same domain.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosManagedSNI))]
         public static void PortNumberInSPNTest()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            string connStr = DataTestUtility.TCPConnectionString;
+            // If config.json.SupportsIntegratedSecurity = true, replace all keys defined below with Integrated Security=true 
+            if (DataTestUtility.IsIntegratedSecuritySetup())
+            {
+                string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection" };
+                connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys) + $"Integrated Security=true";
+            }
+
+            SqlConnectionStringBuilder builder = new(connStr);
 
             Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
 
@@ -188,7 +196,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Use dynamic type for indexing to work at design time
             dynamic result = getSqlServerSPNs.Invoke(sniProxy, new object[] { dataSrcInfo, serverSPN });
 
-            // Example result: MSSQLSvc/sqldrv-sql22.sqldrv.ad:1433"
+            // Example result: MSSQLSvc/machine.domain.tld:port"
             string spnInfo = Encoding.Unicode.GetString(result[0]);
 
             out_port = (int)port;
