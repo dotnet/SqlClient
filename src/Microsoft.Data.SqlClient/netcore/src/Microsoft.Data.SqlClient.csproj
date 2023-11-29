@@ -577,7 +577,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\netfx\src\Microsoft\Data\SqlClient\SSPIContextManager.cs" Link="Microsoft\Data\SqlClient\SSPIContextManager.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParser.SSPI.cs" Link="Microsoft\Data\SqlClient\TdsParser.SSPI.cs" />
     <Compile Include="..\..\src\Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>  
