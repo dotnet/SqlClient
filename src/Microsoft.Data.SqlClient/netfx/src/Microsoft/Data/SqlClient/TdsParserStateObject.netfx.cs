@@ -467,7 +467,7 @@ namespace Microsoft.Data.SqlClient
                     if (s_forcePendingReadsToWaitForUser)
                     {
                         _networkPacketTaskSource = new TaskCompletionSource<object>();
-                        Thread.MemoryBarrier();
+                        Interlocked.MemoryBarrier();
                         _networkPacketTaskSource.Task.Wait();
                         _networkPacketTaskSource = null;
                     }
@@ -516,7 +516,7 @@ namespace Microsoft.Data.SqlClient
             Parser.Connection.BreakConnection();
 
             // Ensure that changing state occurs before checking _networkPacketTaskSource
-            Thread.MemoryBarrier();
+            Interlocked.MemoryBarrier();
 
             // then check for networkPacketTaskSource
             TaskCompletionSource<object> taskSource = _networkPacketTaskSource;
@@ -696,7 +696,7 @@ namespace Microsoft.Data.SqlClient
             _networkPacketTaskSource = completion;
 
             // Ensure that setting the completion source is completed before checking the state
-            Thread.MemoryBarrier();
+            Interlocked.MemoryBarrier();
 
             // We must check after assigning _networkPacketTaskSource to avoid races with
             // SqlCommand.OnConnectionClosed
@@ -1277,7 +1277,7 @@ namespace Microsoft.Data.SqlClient
                             _delayedWriteAsyncCallbackException = e;
 
                             // Ensure that _delayedWriteAsyncCallbackException is set before checking _writeCompletionSource
-                            Thread.MemoryBarrier();
+                            Interlocked.MemoryBarrier();
 
                             // Double check that _writeCompletionSource hasn't been created in the meantime
                             writeCompletionSource = _writeCompletionSource;
@@ -1398,7 +1398,7 @@ namespace Microsoft.Data.SqlClient
             Task task = _writeCompletionSource.Task;
 
             // Ensure that _writeCompletionSource is set before checking state
-            Thread.MemoryBarrier();
+            Interlocked.MemoryBarrier();
 
             // Now that we have set _writeCompletionSource, check if parser is closed or broken
             if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
@@ -1693,7 +1693,7 @@ namespace Microsoft.Data.SqlClient
                     task = _writeCompletionSource.Task;
 
                     // Ensure that setting _writeCompletionSource completes before checking _delayedWriteAsyncCallbackException
-                    Thread.MemoryBarrier();
+                    Interlocked.MemoryBarrier();
 
                     // Check for a stored exception
                     delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
