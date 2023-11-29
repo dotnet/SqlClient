@@ -665,22 +665,30 @@ namespace Microsoft.Data.SqlClient
                     ChangeNetworkPacketTimeout(msecsRemaining, Timeout.Infinite);
                 }
 
-                Interlocked.Increment(ref _readingCount);
+                SessionHandle handle = default;
 
-                SessionHandle handle = SessionHandle;
-                if (!handle.IsNull)
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try
+                { }
+                finally
                 {
-                    IncrementPendingCallbacks();
+                    Interlocked.Increment(ref _readingCount);
 
-                    readPacket = ReadAsync(handle, out error);
-
-                    if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
+                    handle = SessionHandle;
+                    if (!handle.IsNull)
                     {
-                        DecrementPendingCallbacks(false); // Failure - we won't receive callback!
-                    }
-                }
+                        IncrementPendingCallbacks();
 
-                Interlocked.Decrement(ref _readingCount);
+                        readPacket = ReadAsync(handle, out error);
+
+                        if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
+                        {
+                            DecrementPendingCallbacks(false); // Failure - we won't receive callback!
+                        }
+                    }
+
+                    Interlocked.Decrement(ref _readingCount);
+                }
 
                 if (handle.IsNull)
                 {
