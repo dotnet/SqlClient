@@ -16,6 +16,8 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
+    using PacketHandle = IntPtr;
+
     internal partial class TdsParserStateObject
     {
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
@@ -254,6 +256,8 @@ namespace Microsoft.Data.SqlClient
                 ipPreference, cachedDNSInfo, hostNameInCertificate);
         }
 
+        internal bool IsPacketEmpty(PacketHandle readPacket) => readPacket == default;
+
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
         {
@@ -431,7 +435,8 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ClosedConnectionError();
             }
 
-            IntPtr readPacket = IntPtr.Zero;
+            PacketHandle readPacket = default;
+
             uint error;
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -461,7 +466,9 @@ namespace Microsoft.Data.SqlClient
 
                 if (TdsEnums.SNI_SUCCESS == error)
                 { // Success - process results!
-                    Debug.Assert(ADP.s_ptrZero != readPacket, "ReadNetworkPacket cannot be null in synchronous operation!");
+
+                    Debug.Assert(!IsPacketEmpty(readPacket), "ReadNetworkPacket cannot be null in synchronous operation!");
+
                     ProcessSniPacket(readPacket, 0);
 #if DEBUG
                     if (s_forcePendingReadsToWaitForUser)
@@ -476,7 +483,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 { // Failure!
 
-                    Debug.Assert(IntPtr.Zero == readPacket, "unexpected readPacket without corresponding SNIPacketRelease");
+                    Debug.Assert(!IsValidPacket(readPacket), "unexpected readPacket without corresponding SNIPacketRelease");
 
                     ReadSniError(this, error);
                 }
@@ -488,7 +495,7 @@ namespace Microsoft.Data.SqlClient
                     Interlocked.Decrement(ref _readingCount);
                 }
 
-                if (readPacket != IntPtr.Zero)
+                if (!IsPacketEmpty(readPacket))
                 {
                     // Be sure to release packet, otherwise it will be leaked by native.
                     SNINativeMethodWrapper.SNIPacketRelease(readPacket);
@@ -712,7 +719,7 @@ namespace Microsoft.Data.SqlClient
             }
 #endif
 
-            IntPtr readPacket = IntPtr.Zero;
+            PacketHandle readPacket = default;
             uint error = 0;
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -782,12 +789,13 @@ namespace Microsoft.Data.SqlClient
 
                 if (TdsEnums.SNI_SUCCESS == error)
                 { // Success - process results!
-                    Debug.Assert(ADP.s_ptrZero != readPacket, "ReadNetworkPacket should not have been null on this async operation!");
-                    ReadAsyncCallback(ADP.s_ptrZero, readPacket, 0);
+                    Debug.Assert(IsValidPacket(readPacket), "ReadNetworkPacket should not have been null on this async operation!");
+                    ReadAsyncCallback(IntPtr.Zero, readPacket, 0);
                 }
                 else if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
                 { // FAILURE!
-                    Debug.Assert(IntPtr.Zero == readPacket, "unexpected readPacket without corresponding SNIPacketRelease");
+                    Debug.Assert(IsPacketEmpty(readPacket), "unexpected readPacket without corresponding SNIPacketRelease");
+
                     ReadSniError(this, error);
 #if DEBUG
                     if ((s_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null))
@@ -815,7 +823,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                if (readPacket != IntPtr.Zero)
+                if (!IsPacketEmpty(readPacket))
                 {
                     // Be sure to release packet, otherwise it will be leaked by native.
                     SNINativeMethodWrapper.SNIPacketRelease(readPacket);
@@ -955,7 +963,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             stateObj.SendAttention(mustTakeWriteLock: true);
 
-                            IntPtr syncReadPacket = IntPtr.Zero;
+                            PacketHandle syncReadPacket = default;
                             RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
@@ -982,7 +990,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    Debug.Assert(IntPtr.Zero == syncReadPacket, "unexpected syncReadPacket without corresponding SNIPacketRelease");
+                                    Debug.Assert(!IsValidPacket(syncReadPacket), "unexpected syncReadPacket without corresponding SNIPacketRelease");
                                     fail = true; // Subsequent read failed, time to give up.
                                 }
                             }
@@ -993,7 +1001,7 @@ namespace Microsoft.Data.SqlClient
                                     Interlocked.Decrement(ref _readingCount);
                                 }
 
-                                if (syncReadPacket != IntPtr.Zero)
+                                if (!IsPacketEmpty(syncReadPacket))
                                 {
                                     // Be sure to release packet, otherwise it will be leaked by native.
                                     SNINativeMethodWrapper.SNIPacketRelease(syncReadPacket);
@@ -1034,7 +1042,7 @@ namespace Microsoft.Data.SqlClient
             AssertValidState();
         }
 
-        public void ProcessSniPacket(IntPtr packet, uint error)
+        public void ProcessSniPacket(PacketHandle packet, uint error)
         {
             if (error != 0)
             {
@@ -1107,7 +1115,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        public void ReadAsyncCallback(IntPtr key, IntPtr packet, uint error)
+        public void ReadAsyncCallback(IntPtr key, PacketHandle packet, uint error)
         {
             // Key never used.
             // Note - it's possible that when native calls managed that an asynchronous exception
@@ -1252,7 +1260,7 @@ namespace Microsoft.Data.SqlClient
 
 #pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
 
-        public void WriteAsyncCallback(IntPtr key, IntPtr packet, uint sniError)
+        public void WriteAsyncCallback(IntPtr key, PacketHandle packet, uint sniError)
         { // Key never used.
             RemovePacketFromPendingList(packet);
             try
@@ -1647,7 +1655,7 @@ namespace Microsoft.Data.SqlClient
 
             Task task = null;
             _writeCompletionSource = null;
-            IntPtr packetPointer = IntPtr.Zero;
+            PacketHandle packetPointer = EmptyReadPacket;
             bool sync = !_parser._asyncWrite;
             if (sync && _asyncWriteCount > 0)
             { // for example, SendAttention while there are writes pending
@@ -1755,7 +1763,7 @@ namespace Microsoft.Data.SqlClient
                     if (!sync)
                     {
                         // Since there will be no callback, remove the packet from the pending list
-                        Debug.Assert(packetPointer != IntPtr.Zero, "Packet added to list has an invalid pointer, can not remove from pending list");
+                        Debug.Assert(IsValidPacket(packetPointer), "Packet added to list has an invalid pointer, can not remove from pending list");
                         RemovePacketFromPendingList(packetPointer);
                     }
                 }
@@ -1771,6 +1779,8 @@ namespace Microsoft.Data.SqlClient
         }
 
 #pragma warning restore 420
+
+        internal bool IsValidPacket(PacketHandle packetPointer) => packetPointer != default;
 
         // Sends an attention signal - executing thread will consume attn.
         internal void SendAttention(bool mustTakeWriteLock = false, bool asyncClose = false)
@@ -2142,6 +2152,8 @@ namespace Microsoft.Data.SqlClient
                 return count;
             }
         }
+
+        protected PacketHandle EmptyReadPacket => default;
 
         internal int PreAttentionErrorCount
         {
