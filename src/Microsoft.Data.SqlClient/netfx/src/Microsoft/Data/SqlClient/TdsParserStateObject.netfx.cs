@@ -20,6 +20,14 @@ namespace Microsoft.Data.SqlClient
 
     internal partial class TdsParserStateObject
     {
+        private static class TdsParserStateObjectFactory
+        {
+            /// <summary>
+            /// Always false in case of netfx. Only needed for merging with netcore codebase.
+            /// </summary>
+            internal const bool UseManagedSNI = false;
+        }
+
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         // SNI variables                                                     // multiple resultsets in one batch.
@@ -258,6 +266,16 @@ namespace Microsoft.Data.SqlClient
 
         internal bool IsPacketEmpty(PacketHandle readPacket) => readPacket == default;
 
+        internal PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
+        {
+            SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
+            PacketHandle readPacket = default;
+            error = SNINativeMethodWrapper.SNIReadSyncOverAsync(handle, ref readPacket, timeoutRemaining);
+            return readPacket;
+        }
+
+        internal void ReleasePacket(PacketHandle syncReadPacket) => SNINativeMethodWrapper.SNIPacketRelease(syncReadPacket);
+        
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
         {
@@ -448,13 +466,7 @@ namespace Microsoft.Data.SqlClient
                 Interlocked.Increment(ref _readingCount);
                 shouldDecrement = true;
 
-                SNIHandle handle = Handle;
-                if (handle == null)
-                {
-                    throw ADP.ClosedConnectionError();
-                }
-
-                error = SNINativeMethodWrapper.SNIReadSyncOverAsync(handle, ref readPacket, GetTimeoutRemaining());
+                readPacket = ReadSyncOverAsync(GetTimeoutRemaining(), out error);
 
                 Interlocked.Decrement(ref _readingCount);
                 shouldDecrement = false;
@@ -497,8 +509,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!IsPacketEmpty(readPacket))
                 {
-                    // Be sure to release packet, otherwise it will be leaked by native.
-                    SNINativeMethodWrapper.SNIPacketRelease(readPacket);
+                    ReleasePacket(readPacket);
                 }
 
                 AssertValidState();
@@ -790,7 +801,14 @@ namespace Microsoft.Data.SqlClient
                 if (TdsEnums.SNI_SUCCESS == error)
                 { // Success - process results!
                     Debug.Assert(IsValidPacket(readPacket), "ReadNetworkPacket should not have been null on this async operation!");
+                    // Evaluate this condition for MANAGED_SNI. This may not be needed because the network call is happening Async and only the callback can receive a success.
                     ReadAsyncCallback(IntPtr.Zero, readPacket, 0);
+
+                    // Only release packet for Managed SNI as for Native SNI packet is released in finally block.
+                    if (TdsParserStateObjectFactory.UseManagedSNI && !IsPacketEmpty(readPacket))
+                    {
+                        ReleasePacket(readPacket);
+                    }
                 }
                 else if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
                 { // FAILURE!
@@ -823,10 +841,13 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                if (!IsPacketEmpty(readPacket))
+                if (!TdsParserStateObjectFactory.UseManagedSNI)
                 {
-                    // Be sure to release packet, otherwise it will be leaked by native.
-                    SNINativeMethodWrapper.SNIPacketRelease(readPacket);
+                    if (!IsPacketEmpty(readPacket))
+                    {
+                        // Be sure to release packet, otherwise it will be leaked by native.
+                        ReleasePacket(readPacket);
+                    }
                 }
 
                 AssertValidState();
@@ -971,13 +992,7 @@ namespace Microsoft.Data.SqlClient
                                 Interlocked.Increment(ref _readingCount);
                                 shouldDecrement = true;
 
-                                SNIHandle handle = Handle;
-                                if (handle == null)
-                                {
-                                    throw ADP.ClosedConnectionError();
-                                }
-
-                                error = SNINativeMethodWrapper.SNIReadSyncOverAsync(handle, ref syncReadPacket, stateObj.GetTimeoutRemaining());
+                                syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
 
                                 Interlocked.Decrement(ref _readingCount);
                                 shouldDecrement = false;
@@ -1004,7 +1019,7 @@ namespace Microsoft.Data.SqlClient
                                 if (!IsPacketEmpty(syncReadPacket))
                                 {
                                     // Be sure to release packet, otherwise it will be leaked by native.
-                                    SNINativeMethodWrapper.SNIPacketRelease(syncReadPacket);
+                                    ReleasePacket(syncReadPacket);
                                 }
                             }
                         }
