@@ -856,7 +856,6 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     uint error;
-                    IntPtr readPacket = IntPtr.Zero;
 
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
@@ -887,12 +886,6 @@ namespace Microsoft.Data.SqlClient
                     }
                     finally
                     {
-                        if (readPacket != IntPtr.Zero)
-                        {
-                            // Be sure to release packet, otherwise it will be leaked by native.
-                            SNINativeMethodWrapper.SNIPacketRelease(readPacket);
-                        }
-
                     }
                 }
             }
@@ -1777,7 +1770,7 @@ namespace Microsoft.Data.SqlClient
             return task;
         }
 
-#pragma warning restore 420 
+#pragma warning restore 420
 
         // Sends an attention signal - executing thread will consume attn.
         internal void SendAttention(bool mustTakeWriteLock = false, bool asyncClose = false)
