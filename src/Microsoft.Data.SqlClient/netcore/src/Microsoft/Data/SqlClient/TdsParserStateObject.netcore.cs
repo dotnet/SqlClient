@@ -781,24 +781,34 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     uint error;
-                    SniContext = SniContext.Snix_Connect;
 
-                    error = CheckConnection();
-                    if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
+                    RuntimeHelpers.PrepareConstrainedRegions();
+                    try
                     {
-                        // Connection is dead
-                        SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.IsConnectionAlive | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
-                        isAlive = false;
-                        if (throwOnException)
+                        TdsParser.ReliabilitySection.Assert("unreliable call to IsConnectionAlive");  // you need to setup for a thread abort somewhere before you call this method
+
+                        SniContext = SniContext.Snix_Connect;
+
+                        error = CheckConnection();
+                        if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                         {
-                            // Get the error from SNI so that we can throw the correct exception
-                            AddError(_parser.ProcessSNIError(this));
-                            ThrowExceptionAndWarning();
+                            // Connection is dead
+                            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.IsConnectionAlive | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
+                            isAlive = false;
+                            if (throwOnException)
+                            {
+                                // Get the error from SNI so that we can throw the correct exception
+                                AddError(_parser.ProcessSNIError(this));
+                                ThrowExceptionAndWarning();
+                            }
+                        }
+                        else
+                        {
+                            _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
                         }
                     }
-                    else
+                    finally
                     {
-                        _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
                     }
                 }
             }
