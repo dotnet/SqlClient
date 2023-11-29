@@ -18,6 +18,15 @@ namespace Microsoft.Data.SqlClient
 {
     using PacketHandle = IntPtr;
 
+    internal readonly ref struct SessionHandle
+    {
+        public readonly SNIHandle NativeHandle;
+
+        public SessionHandle(SNIHandle nativeHandle) => NativeHandle = nativeHandle;
+
+        public bool IsNull => NativeHandle is null;
+    }
+
     internal partial class TdsParserStateObject
     {
         private static class TdsParserStateObjectFactory
@@ -115,6 +124,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+
+        internal SessionHandle SessionHandle => new SessionHandle(Handle);
 
         /////////////////////
         // General methods //
@@ -271,6 +282,13 @@ namespace Microsoft.Data.SqlClient
             SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
             PacketHandle readPacket = default;
             error = SNINativeMethodWrapper.SNIReadSyncOverAsync(handle, ref readPacket, timeoutRemaining);
+            return readPacket;
+        }
+
+        internal PacketHandle ReadAsync(SessionHandle handle, out uint error)
+        {
+            PacketHandle readPacket = default;
+            error = SNINativeMethodWrapper.SNIReadAsync(handle.NativeHandle, ref readPacket);
             return readPacket;
         }
 
@@ -767,7 +785,7 @@ namespace Microsoft.Data.SqlClient
                     ChangeNetworkPacketTimeout(msecsRemaining, Timeout.Infinite);
                 }
 
-                SNIHandle handle = null;
+                SessionHandle handle = default;
 
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
@@ -776,13 +794,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     Interlocked.Increment(ref _readingCount);
 
-                    handle = Handle;
-                    if (handle != null)
+                    handle = SessionHandle;
+                    if (!handle.IsNull)
                     {
-
                         IncrementPendingCallbacks();
 
-                        error = SNINativeMethodWrapper.SNIReadAsync(handle, ref readPacket);
+                        readPacket = ReadAsync(handle, out error);
 
                         if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
                         {
@@ -793,7 +810,7 @@ namespace Microsoft.Data.SqlClient
                     Interlocked.Decrement(ref _readingCount);
                 }
 
-                if (handle == null)
+                if (handle.IsNull)
                 {
                     throw ADP.ClosedConnectionError();
                 }
