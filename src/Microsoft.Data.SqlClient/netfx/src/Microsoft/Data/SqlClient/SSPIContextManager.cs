@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient
         public static void Invoke(SqlInternalConnectionTds Connection, ref byte[] output, ref uint outputLength)
 #endif
         {
-            Debug.Assert(Connection.Connection.SSPIContextCallback is not null);
+            Debug.Assert(Connection.Connection.NegotiateCallback is not null);
 
             var result = Invoke(Connection);
 
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient
 
             using var cts = Connection.CreateCancellationTokenSource();
 
-            return Connection.Connection.SSPIContextCallback(auth, cts.Token);
+            return Connection.Connection.NegotiateCallback(auth, cts.Token);
         }
     }
 }

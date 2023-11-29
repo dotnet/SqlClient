@@ -9463,7 +9463,7 @@ namespace Microsoft.Data.SqlClient
                 receivedLength = 0;
             }
 
-            if (Connection.Connection.SSPIContextCallback is { })
+            if (Connection.Connection.NegotiateCallback is { })
             {
                 try
                 {

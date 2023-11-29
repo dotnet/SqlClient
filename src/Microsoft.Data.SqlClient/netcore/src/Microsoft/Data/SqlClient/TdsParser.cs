@@ -8570,7 +8570,7 @@ namespace Microsoft.Data.SqlClient
 
         private void SSPIData(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength)
         {
-            if (Connection.Connection.SSPIContextCallback is { })
+            if (Connection.Connection.NegotiateCallback is { })
             {
                 try
                 {
