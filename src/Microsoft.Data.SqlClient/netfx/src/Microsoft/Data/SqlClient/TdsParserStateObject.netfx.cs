@@ -345,38 +345,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         /////////////////////////////////////////
-        // Value Skip Logic                    //
-        /////////////////////////////////////////
-
-
-        // Reads bytes from the buffer but doesn't return them, in effect simply deleting them.
-        // Does not handle plp fields, need to use SkipPlpBytesValue for those.
-        // Does not handle null values or NBC bitmask, ensure the value is not null before calling this method
-        internal bool TrySkipLongBytes(long num)
-        {
-            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
-
-            while (num > 0)
-            {
-                int cbSkip = (int)Math.Min(int.MaxValue, num);
-                if (!TryReadByteArray(Span<byte>.Empty, cbSkip))
-                {
-                    return false;
-                }
-                num -= cbSkip;
-            }
-
-            return true;
-        }
-
-        // Reads bytes from the buffer but doesn't return them, in effect simply deleting them.
-        internal bool TrySkipBytes(int num)
-        {
-            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
-            return TryReadByteArray(Span<byte>.Empty, num);
-        }
-
-        /////////////////////////////////////////
         // Network/Packet Reading & Processing //
         /////////////////////////////////////////
 
