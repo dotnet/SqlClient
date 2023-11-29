@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 int port = -1;
                 string spnInfo = GetSPNInfo(builder.DataSource, out port);
 
-                // sample output to validate = MSSQLSvc/sqldrv-sql22.sqldrv.ad:1433"
+                // sample output to validate = MSSQLSvc/machine.domain.tld:port"
                 Assert.Contains($"MSSQLSvc/{hostname}", spnInfo);
                 // the local_tcp_port Port is the same as the inferred port from instance name
                 Assert.Equal(Port, port);
