@@ -431,6 +431,19 @@ namespace Microsoft.Data.SqlClient
         private string _routingDestination = null;
         private readonly TimeoutTimer _timeout;
 
+        public CancellationTokenSource CreateCancellationTokenSource()
+        {
+            CancellationTokenSource cts = new();
+           
+            // Use Connection timeout value to cancel token acquire request after certain period of time.(int)
+            if (_timeout.MillisecondsRemaining < Int32.MaxValue)
+            {
+                cts.CancelAfter((int)_timeout.MillisecondsRemaining);
+            }
+
+            return cts;
+        }
+
         // although the new password is generally not used it must be passed to the ctor
         // the new Login7 packet will always write out the new password (or a length of zero and no bytes if not present)
         //
@@ -2463,12 +2476,7 @@ namespace Microsoft.Data.SqlClient
                                     authParamsBuilder.WithPassword(ConnectionOptions.Password);
                                 }
                                 SqlAuthenticationParameters parameters = authParamsBuilder;
-                                CancellationTokenSource cts = new();
-                                // Use Connection timeout value to cancel token acquire request after certain period of time.(int)
-                                if (_timeout.MillisecondsRemaining < Int32.MaxValue)
-                                {
-                                    cts.CancelAfter((int)_timeout.MillisecondsRemaining);
-                                }
+                                using CancellationTokenSource cts = CreateCancellationTokenSource();
                                 _fedAuthToken = Task.Run(async () => await _accessTokenCallback(parameters, cts.Token)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }

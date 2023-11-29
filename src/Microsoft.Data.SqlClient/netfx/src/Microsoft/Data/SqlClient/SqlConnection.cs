@@ -768,6 +768,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SSPIContextCallback/*' />
+        public Func<SqlAuthenticationParameters, CancellationToken, ReadOnlyMemory<byte>> SSPIContextCallback { get; set; }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
         [
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),

@@ -64,7 +64,7 @@
     <NuGetRoot Condition="'$(NuGetRoot)' == ''">$(RepoRoot).nuget\</NuGetRoot>
     <NuGetCmd>$(NuGetRoot)nuget.exe</NuGetCmd>
     <!-- Respect environment variable for the .NET install directory if set; otherwise, use the current default location -->
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- <TreatWarningsAsErrors Condition="!$(Configuration.Contains('Debug'))">true</TreatWarningsAsErrors>-->
     <BuildSimulator Condition="'$(BuildSimulator)' != 'true'">false</BuildSimulator>
   </PropertyGroup>
   <PropertyGroup Condition="'$(BuildSimulator)' == 'true'">

@@ -259,6 +259,19 @@ namespace Microsoft.Data.SqlClient
 
         private static HashSet<int> transientErrors = new HashSet<int>();
 
+        public CancellationTokenSource CreateCancellationTokenSource()
+        {
+            CancellationTokenSource cts = new();
+
+            // Use Connection timeout value to cancel token acquire request after certain period of time.(int)
+            if (_timeout.MillisecondsRemaining < Int32.MaxValue)
+            {
+                cts.CancelAfter((int)_timeout.MillisecondsRemaining);
+            }
+
+            return cts;
+        }
+
         internal SessionData CurrentSessionData
         {
             get
@@ -2877,12 +2890,7 @@ namespace Microsoft.Data.SqlClient
                                     authParamsBuilder.WithPassword(ConnectionOptions.Password);
                                 }
                                 SqlAuthenticationParameters parameters = authParamsBuilder;
-                                CancellationTokenSource cts = new();
-                                // Use Connection timeout value to cancel token acquire request after certain period of time.(int)
-                                if (_timeout.MillisecondsRemaining < Int32.MaxValue)
-                                {
-                                    cts.CancelAfter((int)_timeout.MillisecondsRemaining);
-                                }
+                                using CancellationTokenSource cts = CreateCancellationTokenSource();
                                 _fedAuthToken = Task.Run(async () => await _accessTokenCallback(parameters, cts.Token)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }

@@ -1485,10 +1485,10 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
-                             bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
-                             ((authType != SqlAuthenticationMethod.NotSpecified || (_connHandler._accessTokenInBytes != null || 
-                            _connHandler._accessTokenCallback != null))
-                            && !trustServerCert);
+                            bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
+                            ((authType != SqlAuthenticationMethod.NotSpecified || (_connHandler._accessTokenInBytes != null ||
+                           _connHandler._accessTokenCallback != null))
+                           && !trustServerCert);
 
                             UInt32 info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                                 | (is2005OrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
@@ -2528,7 +2528,7 @@ namespace Microsoft.Data.SqlClient
                                     (error.Class <= TdsEnums.MAX_USER_CORRECTABLE_ERROR_CLASS))
                                 {
                                     // Fire SqlInfoMessage here
-                                    FireInfoMessageEvent(connection,cmdHandler, stateObj, error);
+                                    FireInfoMessageEvent(connection, cmdHandler, stateObj, error);
                                 }
                                 else
                                 {
@@ -8886,7 +8886,7 @@ namespace Microsoft.Data.SqlClient
                                TdsEnums.FeatureExtension requestedFeatures,
                                SessionData recoverySessionData,
                                FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
-                               SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo, 
+                               SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo,
                                SqlConnectionEncryptOption encrypt)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
@@ -9462,10 +9462,25 @@ namespace Microsoft.Data.SqlClient
                 // we do not have SSPI data coming from server, so send over 0's for pointer and length
                 receivedLength = 0;
             }
-            // we need to respond to the server's message with SSPI data
-            if (0 != SNINativeMethodWrapper.SNISecGenClientContext(_physicalStateObj.Handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer))
+
+            if (Connection.Connection.SSPIContextCallback is { })
             {
-                SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
+                try
+                {
+                    SSPIContextManager.Invoke(Connection, sendBuff, ref sendLength);
+                }
+                catch (Exception e)
+                {
+                    SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
+                }           
+            }
+            else
+            {
+                // we need to respond to the server's message with SSPI data
+                if (0 != SNINativeMethodWrapper.SNISecGenClientContext(_physicalStateObj.Handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer))
+                {
+                    SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
+                }
             }
         }
 
@@ -10101,7 +10116,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
                                 if (
-                                    !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled 
+                                    !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
                                     ||
                                     (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled))
                                 )

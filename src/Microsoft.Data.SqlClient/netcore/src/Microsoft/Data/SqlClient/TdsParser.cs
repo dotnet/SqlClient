@@ -1258,7 +1258,7 @@ namespace Microsoft.Data.SqlClient
 
             sqlErs.Add(error);
 
-            SqlException exc = SqlException.CreateException(sqlErs, serverVersion, _connHandler, innerException:null, batchCommand: command?.GetCurrentBatchCommand());
+            SqlException exc = SqlException.CreateException(sqlErs, serverVersion, _connHandler, innerException: null, batchCommand: command?.GetCurrentBatchCommand());
 
             bool notified;
             connection.OnInfoMessage(new SqlInfoMessageEventArgs(exc), out notified);
@@ -3969,7 +3969,7 @@ namespace Microsoft.Data.SqlClient
             {
                 batchIndex = command.GetCurrentBatchIndex();
             }
-            error = new SqlError(number, state, errorClass, _server, message, procedure, line,exception: null, batchIndex: batchIndex);
+            error = new SqlError(number, state, errorClass, _server, message, procedure, line, exception: null, batchIndex: batchIndex);
             return true;
         }
 
@@ -5712,7 +5712,7 @@ namespace Microsoft.Data.SqlClient
                                     s = "";
                                 }
                             }
-                            
+
                             if (buffIsRented)
                             {
                                 // do not use clearArray:true on the rented array because it can be massively larger
@@ -8570,7 +8570,18 @@ namespace Microsoft.Data.SqlClient
 
         private void SSPIData(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength)
         {
-            if (TdsParserStateObjectFactory.UseManagedSNI)
+            if (Connection.Connection.SSPIContextCallback is { })
+            {
+                try
+                {
+                    SSPIContextManager.Invoke(Connection, ref sendBuff, ref sendLength);
+                }
+                catch (Exception e)
+                {
+                    SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
+                }
+            }
+            else if (TdsParserStateObjectFactory.UseManagedSNI)
             {
                 try
                 {
@@ -9191,7 +9202,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
                                 if (
-                                    !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled 
+                                    !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
                                     ||
                                     (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled)))
                                 {
