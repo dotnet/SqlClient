@@ -69,6 +69,7 @@ namespace Microsoft.Data.SqlClient
             // Construct a MARS session
             Debug.Assert(null != parser, "no parser?");
             _parser = parser;
+            _onTimeoutAsync = OnTimeoutAsync;
             SniContext = SniContext.Snix_GetMarsSession;
 
             Debug.Assert(null != _parser._physicalStateObj, "no physical session?");
@@ -769,8 +770,8 @@ namespace Microsoft.Data.SqlClient
 
                 _networkPacketTimeout?.Dispose();
 
-                _networkPacketTimeout = new Timer(
-                    new TimerCallback(OnTimeoutAsync),
+                _networkPacketTimeout = ADP.UnsafeCreateTimer(
+                    _onTimeoutAsync,
                     new TimeoutState(_timeoutIdentityValue),
                     Timeout.Infinite,
                     Timeout.Infinite
