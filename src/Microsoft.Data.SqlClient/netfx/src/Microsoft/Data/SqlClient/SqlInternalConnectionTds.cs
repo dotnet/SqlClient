@@ -135,8 +135,11 @@ namespace Microsoft.Data.SqlClient
 
         // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
         SqlFedAuthToken _fedAuthToken = null;
+
         internal byte[] _accessTokenInBytes;
-        internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
+        internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+
+        internal readonly Func<NegotiateCallbackContext, CancellationToken, Task<ReadOnlyMemory<byte>>> _negotiateCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
         private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
@@ -447,8 +450,9 @@ namespace Microsoft.Data.SqlClient
                 string accessToken = null,
                 SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo = null,
                 bool applyTransientFaultHandling = false,
-                Func<SqlAuthenticationParameters, CancellationToken,
-                Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
+                Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
+                Func<NegotiateCallbackContext, CancellationToken, Task<ReadOnlyMemory<byte>>> negotiateCallback = null)
+            : base(connectionOptions)
         {
 
 #if DEBUG
@@ -504,6 +508,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _accessTokenCallback = accessTokenCallback;
+            _negotiateCallback = negotiateCallback;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
             _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;

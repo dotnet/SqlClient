@@ -9463,16 +9463,16 @@ namespace Microsoft.Data.SqlClient
                 receivedLength = 0;
             }
 
-            if (Connection.Connection.NegotiateCallback is { })
+            if (Connection is { })
             {
                 try
                 {
-                    SSPIContextManager.Invoke(Connection, sendBuff, ref sendLength);
+                    SSPIContextManager.Invoke(Connection, receivedBuff.AsMemory(0, (int)receivedLength), sendBuff, ref sendLength);
                 }
                 catch (Exception e)
                 {
                     SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
-                }           
+                }
             }
             else
             {

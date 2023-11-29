@@ -8581,11 +8581,11 @@ namespace Microsoft.Data.SqlClient
 
         private void SSPIData(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength)
         {
-            if (Connection.Connection.NegotiateCallback is { })
+            if (Connection._negotiateCallback is { })
             {
                 try
                 {
-                    SSPIContextManager.Invoke(Connection, ref sendBuff, ref sendLength);
+                    SSPIContextManager.Invoke(Connection, receivedBuff.AsMemory(0, (int)receivedLength), ref sendBuff, ref sendLength);
                 }
                 catch (Exception e)
                 {

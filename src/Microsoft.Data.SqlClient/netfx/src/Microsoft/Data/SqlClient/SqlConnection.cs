@@ -344,6 +344,7 @@ namespace Microsoft.Data.SqlClient
         // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
         // using SqlConnection.Open() method.
         internal bool _applyTransientFaultHandling = false;
+        private Func<NegotiateCallbackContext, CancellationToken, Task<ReadOnlyMemory<byte>>> _negotiateCallback;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
         public SqlConnection(string connectionString) : this(connectionString, null)
@@ -769,7 +770,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/NegotiateCallback/*' />
-        public Func<SqlAuthenticationParameters, CancellationToken, ReadOnlyMemory<byte>> NegotiateCallback { get; set; }
+        public Func<NegotiateCallbackContext, CancellationToken, Task<ReadOnlyMemory<byte>>> NegotiateCallback
+        {
+            get => _negotiateCallback;
+            set
+            {
+                _negotiateCallback = value;
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo, negotiateCallback: value));
+            }
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
         [

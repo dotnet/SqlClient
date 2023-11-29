@@ -100,6 +100,7 @@ namespace Microsoft.Data.SqlClient
         /// Global custom provider list can only supplied once per application.
         /// </summary>
         private static IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> s_globalCustomColumnEncryptionKeyStoreProviders;
+        private Func<NegotiateCallbackContext, CancellationToken, Task<ReadOnlyMemory<byte>>> _negotiateCallback;
 
         /// <summary>
         /// Dictionary object holding trusted key paths for various SQL Servers.
@@ -722,7 +723,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/NegotiateCallback/*' />
-        public Func<SqlAuthenticationParameters, CancellationToken, ReadOnlyMemory<byte>> NegotiateCallback { get; set; }
+        public Func<NegotiateCallbackContext, CancellationToken, Task<ReadOnlyMemory<byte>>> NegotiateCallback
+        {
+            get => _negotiateCallback;
+            set
+            {
+                _negotiateCallback = value;
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, negotiateCallback: value));
+            }
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*' />
         [ResDescription(StringsHelper.ResourceNames.SqlConnection_Database)]
@@ -1062,7 +1071,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();
             }
 
-            if(_accessTokenCallback != null)
+            if (_accessTokenCallback != null)
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
             }
@@ -1084,7 +1093,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndAuthentication();
             }
 
-            if(_accessToken != null)
+            if (_accessToken != null)
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
             }

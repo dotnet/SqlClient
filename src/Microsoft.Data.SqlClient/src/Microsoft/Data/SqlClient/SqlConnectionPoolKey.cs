@@ -18,10 +18,12 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlCredential _credential;
         private readonly string _accessToken;
         private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+        private readonly Func<NegotiateCallbackContext, CancellationToken, Task<ReadOnlyMemory<byte>>> _negotiateCallback;
 
         internal SqlCredential Credential => _credential;
         internal string AccessToken => _accessToken;
         internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback => _accessTokenCallback;
+        internal Func<NegotiateCallbackContext, CancellationToken, Task<ReadOnlyMemory<byte>>> NegotiateCallback => _negotiateCallback;
 
         internal override string ConnectionString
         {
@@ -34,7 +36,6 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
-        #region NET Framework
         private readonly ServerCertificateValidationCallback _serverCertificateValidationCallback;
         private readonly ClientCertificateRetrievalCallback _clientCertificateRetrievalCallback;
         private readonly SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
@@ -47,43 +48,40 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlClientOriginalNetworkAddressInfo OriginalNetworkAddressInfo
             => _originalNetworkAddressInfo;
+#endif
 
-        internal SqlConnectionPoolKey(string connectionString,
-                            SqlCredential credential,
-                            string accessToken,
-                            ServerCertificateValidationCallback serverCertificateValidationCallback,
-                            ClientCertificateRetrievalCallback clientCertificateRetrievalCallback,
-                            SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo,
-                            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionString)
+        internal SqlConnectionPoolKey(
+            string connectionString,
+            SqlCredential credential,
+            string accessToken,
+#if NETFRAMEWORK
+            ServerCertificateValidationCallback serverCertificateValidationCallback,
+            ClientCertificateRetrievalCallback clientCertificateRetrievalCallback,
+            SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo,
+#endif
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
+            Func<NegotiateCallbackContext, CancellationToken, Task<ReadOnlyMemory<byte>>> negotiateCallback = null)
+            : base(connectionString)
         {
-            Debug.Assert(_credential == null || _accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have a value at the same time.");
+            Debug.Assert(_credential == null || _accessToken == null || accessTokenCallback == null || negotiateCallback == null, "Credential, AccessToken, and Callback can't have a value at the same time.");
             _credential = credential;
             _accessToken = accessToken;
             _accessTokenCallback = accessTokenCallback;
+#if NETFRAMEWORK
             _serverCertificateValidationCallback = serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = clientCertificateRetrievalCallback;
             _originalNetworkAddressInfo = originalNetworkAddressInfo;
-            CalculateHashCode();
-        }
-        #endregion
-#else
-        #region NET Core
-        internal SqlConnectionPoolKey(string connectionString, SqlCredential credential, string accessToken, Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback) : base(connectionString)
-        {
-            Debug.Assert(credential == null || accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have a value at the same time.");
-            _credential = credential;
-            _accessToken = accessToken;
-            _accessTokenCallback = accessTokenCallback;
-            CalculateHashCode();
-        }
-        #endregion
 #endif
+            _negotiateCallback = negotiateCallback;
+            CalculateHashCode();
+        }
 
         private SqlConnectionPoolKey(SqlConnectionPoolKey key) : base(key)
         {
             _credential = key.Credential;
             _accessToken = key.AccessToken;
             _accessTokenCallback = key._accessTokenCallback;
+            _negotiateCallback = key._negotiateCallback;
 #if NETFRAMEWORK
             _serverCertificateValidationCallback = key._serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = key._clientCertificateRetrievalCallback;
@@ -102,6 +100,7 @@ namespace Microsoft.Data.SqlClient
                 && _credential == key._credential
                 && ConnectionString == key.ConnectionString
                 && _accessTokenCallback == key._accessTokenCallback
+                && _negotiateCallback == key._negotiateCallback
                 && string.CompareOrdinal(_accessToken, key._accessToken) == 0
 #if NETFRAMEWORK
                 && _serverCertificateValidationCallback == key._serverCertificateValidationCallback
@@ -139,6 +138,13 @@ namespace Microsoft.Data.SqlClient
                 unchecked
                 {
                     _hashValue = _hashValue * 17 + _accessTokenCallback.GetHashCode();
+                }
+            }
+            else if (_negotiateCallback != null)
+            {
+                unchecked
+                {
+                    _hashValue = _hashValue * 17 + _negotiateCallback.GetHashCode();
                 }
             }
 

@@ -130,7 +130,9 @@ namespace Microsoft.Data.SqlClient
         // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
-        internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
+        internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+
+        internal readonly Func<NegotiateCallbackContext, CancellationToken, Task<ReadOnlyMemory<byte>>> _negotiateCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
         private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
@@ -434,7 +436,7 @@ namespace Microsoft.Data.SqlClient
         public CancellationTokenSource CreateCancellationTokenSource()
         {
             CancellationTokenSource cts = new();
-           
+
             // Use Connection timeout value to cancel token acquire request after certain period of time.(int)
             if (_timeout.MillisecondsRemaining < Int32.MaxValue)
             {
@@ -460,8 +462,9 @@ namespace Microsoft.Data.SqlClient
             bool applyTransientFaultHandling = false,
             string accessToken = null,
             DbConnectionPool pool = null,
-            Func<SqlAuthenticationParameters, CancellationToken,
-            Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
+            Func<NegotiateCallbackContext, CancellationToken, Task<ReadOnlyMemory<byte>>> negotiateCallback = null) 
+            : base(connectionOptions)
 
         {
 #if DEBUG
@@ -495,6 +498,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _accessTokenCallback = accessTokenCallback;
+            _negotiateCallback = negotiateCallback;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
             _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
