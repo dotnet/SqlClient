@@ -25,17 +25,17 @@ namespace Microsoft.Data.SqlClient
         public SqlAuthenticationParameters AuthenticationParameters { get; }
     }
 
-    internal static class SSPIContextManager
+    internal partial class TdsParser
     {
 #if NETFRAMEWORK
-        public static void Invoke(SqlInternalConnectionTds Connection, ReadOnlyMemory<byte> lastReceived, byte[] output, ref uint outputLength)
+        public static void HandleNegotiateCallback(SqlInternalConnectionTds Connection, ReadOnlyMemory<byte> lastReceived, byte[] output, ref uint outputLength)
 #else
-        public static void Invoke(SqlInternalConnectionTds Connection, ReadOnlyMemory<byte> lastReceived, ref byte[] output, ref uint outputLength)
+        public static void HandleNegotiateCallback(SqlInternalConnectionTds Connection, ReadOnlyMemory<byte> lastReceived, ref byte[] output, ref uint outputLength)
 #endif
         {
             Debug.Assert(Connection._negotiateCallback is not null);
 
-            var result = Invoke(Connection, lastReceived);
+            var result = HandleNegotiateCallback(Connection, lastReceived);
 
 #if !NETFRAMEWORK
             output = new byte[result.Length];
@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient
             outputLength = (uint)result.Length;
         }
 
-        private static ReadOnlyMemory<byte> Invoke(SqlInternalConnectionTds Connection, ReadOnlyMemory<byte> lastReceived)
+        private static ReadOnlyMemory<byte> HandleNegotiateCallback(SqlInternalConnectionTds Connection, ReadOnlyMemory<byte> lastReceived)
         {
             var auth = new SqlAuthenticationParameters.Builder(Connection.ConnectionOptions.Authentication, "resource", "auth", Connection.ConnectionOptions.ObtainWorkstationId(), Connection.ConnectionOptions.InitialCatalog);
 

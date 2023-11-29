@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient
 
     // The TdsParser Object controls reading/writing to the netlib, parsing the tds,
     // and surfacing objects to the user.
-    sealed internal class TdsParser
+    sealed internal partial class TdsParser
     {
         private static int _objectTypeCount; // EventSource Counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
@@ -9452,11 +9452,6 @@ namespace Microsoft.Data.SqlClient
 
         private void SSPIData(byte[] receivedBuff, UInt32 receivedLength, byte[] sendBuff, ref UInt32 sendLength)
         {
-            SNISSPIData(receivedBuff, receivedLength, sendBuff, ref sendLength);
-        }
-
-        private void SNISSPIData(byte[] receivedBuff, UInt32 receivedLength, byte[] sendBuff, ref UInt32 sendLength)
-        {
             if (receivedBuff == null)
             {
                 // we do not have SSPI data coming from server, so send over 0's for pointer and length
@@ -9467,7 +9462,7 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    SSPIContextManager.Invoke(Connection, receivedBuff.AsMemory(0, (int)receivedLength), sendBuff, ref sendLength);
+                    HandleNegotiateCallback(Connection, receivedBuff.AsMemory(0, (int)receivedLength), sendBuff, ref sendLength);
                 }
                 catch (Exception e)
                 {

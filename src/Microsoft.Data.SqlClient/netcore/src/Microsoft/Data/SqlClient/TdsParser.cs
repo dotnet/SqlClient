@@ -8585,7 +8585,7 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    SSPIContextManager.Invoke(Connection, receivedBuff.AsMemory(0, (int)receivedLength), ref sendBuff, ref sendLength);
+                    HandleNegotiateCallback(Connection, receivedBuff.AsMemory(0, (int)receivedLength), ref sendBuff, ref sendLength);
                 }
                 catch (Exception e)
                 {
