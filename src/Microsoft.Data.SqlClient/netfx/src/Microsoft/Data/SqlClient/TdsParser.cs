@@ -9458,7 +9458,7 @@ namespace Microsoft.Data.SqlClient
                 receivedLength = 0;
             }
 
-            if (Connection is { })
+            if (Connection is { _negotiateCallback: { } })
             {
                 try
                 {
