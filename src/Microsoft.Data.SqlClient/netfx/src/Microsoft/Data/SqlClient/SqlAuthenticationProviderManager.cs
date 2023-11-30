@@ -22,6 +22,7 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryManagedIdentity = "active directory managed identity";
         private const string ActiveDirectoryMSI = "active directory msi";
         private const string ActiveDirectoryDefault = "active directory default";
+        private const string ActiveDirectoryAzureCli = "active directory azure cli";
 
         static SqlAuthenticationProviderManager()
         {
@@ -52,6 +53,7 @@ namespace Microsoft.Data.SqlClient
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryAzureCli, activeDirectoryAuthProvider);
         }
         public static readonly SqlAuthenticationProviderManager Instance;
 
@@ -231,6 +233,8 @@ namespace Microsoft.Data.SqlClient
                     return SqlAuthenticationMethod.ActiveDirectoryMSI;
                 case ActiveDirectoryDefault:
                     return SqlAuthenticationMethod.ActiveDirectoryDefault;
+                case ActiveDirectoryAzureCli:
+                    return SqlAuthenticationMethod.ActiveDirectoryAzureCli;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }

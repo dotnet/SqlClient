@@ -626,6 +626,10 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
             }
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryAzureCli && _hasPasswordKeyword)
+            {
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryAzureCliString);
+            }
 #if ADONET_CERT_AUTH && NETFRAMEWORK
 
             if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(_certificate))

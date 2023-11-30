@@ -84,7 +84,8 @@ namespace Microsoft.Data.SqlClient
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryDefault;
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryAzureCli;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
@@ -165,6 +166,17 @@ namespace Microsoft.Data.SqlClient
                 }
                 AccessToken accessToken = await new DefaultAzureCredential(defaultAzureCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
+            }
+            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryAzureCli)
+            {
+                AzureCliCredentialOptions azureCliCredentialOptions = new()
+                {
+                    AuthorityHost = new Uri(authority),
+                };
+
+                AccessToken accessToken = await new AzureCliCredential(azureCliCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Azure CLI auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
