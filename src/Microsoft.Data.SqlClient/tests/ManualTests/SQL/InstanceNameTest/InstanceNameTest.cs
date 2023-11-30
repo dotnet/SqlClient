@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Note: This Unit test was tested in a domain-joined VM connecting to a remote
         //       SQL Server using Kerberos in the same domain.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosManagedSNI))]
+        [ConditionalFact(nameof(IsKerberosManagedSNI))]
         public static void PortNumberInSPNTest()
         {
             string connStr = DataTestUtility.TCPConnectionString;
@@ -202,6 +202,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             out_port = (int)port;
 
             return spnInfo;
+        }
+
+        private static bool IsKerberosManagedSNI()
+        {
+            return (DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsUsingManagedSNI() && DataTestUtility.IsNotLocalhost() && DataTestUtility.IsKerberosTest && DataTestUtility.IsNotAzureServer() && DataTestUtility.IsNotAzureSynapse());
         }
 
         private static bool IsBrowserAlive(string browserHostname)

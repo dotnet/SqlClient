@@ -1088,11 +1088,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         }
 
-        public static bool IsKerberosManagedSNI() 
-        {
-            return (AreConnStringsSetup() && IsUsingManagedSNI() && IsNotLocalhost() && IsKerberosTest && IsNotAzureServer() && IsNotAzureSynapse());
-        }
-
         private static bool RunningAsUWPApp()
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
