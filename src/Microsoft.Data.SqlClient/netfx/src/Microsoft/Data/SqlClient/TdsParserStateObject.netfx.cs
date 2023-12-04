@@ -392,7 +392,7 @@ namespace Microsoft.Data.SqlClient
         /////////////////////////////////////////
 
 #if DEBUG
-        string _lastStack;
+        private string _lastStack;
 #endif
 
         internal bool TryReadNetworkPacket()
@@ -751,7 +751,9 @@ namespace Microsoft.Data.SqlClient
             }
 #endif
 
+
             PacketHandle readPacket = default;
+
             uint error = 0;
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -778,6 +780,7 @@ namespace Microsoft.Data.SqlClient
                     Timeout.Infinite,
                     Timeout.Infinite
                 );
+
 
                 // -1 == Infinite
                 //  0 == Already timed out (NOTE: To simulate the same behavior as sync we will only timeout on 0 if we receive an IO Pending from SNI)
@@ -869,7 +872,6 @@ namespace Microsoft.Data.SqlClient
                         ReleasePacket(readPacket);
                     }
                 }
-
                 AssertValidState();
             }
         }
@@ -911,15 +913,13 @@ namespace Microsoft.Data.SqlClient
                     {
                         TdsParser.ReliabilitySection.Assert("unreliable call to IsConnectionAlive");  // you need to setup for a thread abort somewhere before you call this method
 
-
                         SniContext = SniContext.Snix_Connect;
-                        error = CheckConnection();
 
+                        error = CheckConnection();
                         if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                         {
                             // Connection is dead
                             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.IsConnectionAlive | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
-
                             isAlive = false;
                             if (throwOnException)
                             {
