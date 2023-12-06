@@ -1488,12 +1488,10 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
-                             bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
-                             ((authType != SqlAuthenticationMethod.NotSpecified || (_connHandler._accessTokenInBytes != null || 
-                            _connHandler._accessTokenCallback != null))
-                            && !trustServerCert);
-
-                            UInt32 info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
+                            bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
+                                ((_connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null)
+                                && !trustServerCert);
+                            uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                                 | (is2005OrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
 
                             EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename, serverCallback, clientCallback);
@@ -1545,8 +1543,7 @@ namespace Microsoft.Data.SqlClient
                         if (payload[payloadOffset] != 0x00 && payload[payloadOffset] != 0x01)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ConsumePreLoginHandshake|ERR> {0}, " +
-                            "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {1}.", ObjectID, (int)payload[payloadOffset]);
-
+                                "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {1}.", ObjectID, (int)payload[payloadOffset]);
                             throw SQL.ParsingErrorValue(ParsingErrorState.FedAuthRequiredPreLoginResponseInvalidValue, (int)payload[payloadOffset]);
                         }
 
@@ -1680,7 +1677,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Fires a single InfoMessageEvent
-        private void FireInfoMessageEvent(SqlConnection connection, TdsParserStateObject stateObj, SqlError error)
+        private void FireInfoMessageEvent(SqlConnection connection, SqlCommand command, TdsParserStateObject stateObj, SqlError error)
         {
 
             string serverVersion = null;
@@ -1696,7 +1693,7 @@ namespace Microsoft.Data.SqlClient
 
             sqlErs.Add(error);
 
-            SqlException exc = SqlException.CreateException(sqlErs, serverVersion, _connHandler);
+            SqlException exc = SqlException.CreateException(sqlErs, serverVersion, _connHandler, innerException: null, batchCommand: command?.GetCurrentBatchCommand());
 
             bool notified;
             connection.OnInfoMessage(new SqlInfoMessageEventArgs(exc), out notified);
@@ -1730,7 +1727,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void ThrowExceptionAndWarning(TdsParserStateObject stateObj, bool callerHasConnectionLock = false, bool asyncClose = false)
+        internal void ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command = null, bool callerHasConnectionLock = false, bool asyncClose = false)
         {
             Debug.Assert(!callerHasConnectionLock || _connHandler._parserLock.ThreadMayHaveLock(), "Caller claims to have lock, but connection lock is not taken");
 
@@ -1780,10 +1777,19 @@ namespace Microsoft.Data.SqlClient
                 {
                     serverVersion = _connHandler.ServerVersion;
                 }
-                exception = SqlException.CreateException(temp, serverVersion, _connHandler);
-                if (exception.Procedure == TdsEnums.INIT_SSPI_PACKAGE)
+
+                if (temp.Count == 1 && temp[0].Exception != null)
                 {
-                    exception._doNotReconnect = true;
+                    exception = SqlException.CreateException(temp, serverVersion, _connHandler, temp[0].Exception, command?.GetBatchCommand(temp[0].BatchIndex));
+                }
+                else
+                {
+                    SqlBatchCommand batchCommand = null;
+                    if (temp[0]?.BatchIndex is var index and >= 0 && command is not null)
+                    {
+                        batchCommand = command.GetBatchCommand(index.Value);
+                    }
+                    exception = SqlException.CreateException(temp, serverVersion, _connHandler, innerException: null, batchCommand: batchCommand);
                 }
             }
 
@@ -2445,11 +2451,17 @@ namespace Microsoft.Data.SqlClient
                         if ((connection != null) && connection.FireInfoMessageEventOnUserErrors)
                         {
                             foreach (SqlError error in stateObj._pendingInfoEvents)
-                                FireInfoMessageEvent(connection, stateObj, error);
+                            {
+                                FireInfoMessageEvent(connection, cmdHandler, stateObj, error);
+                            }
                         }
                         else
+                        {
                             foreach (SqlError error in stateObj._pendingInfoEvents)
+                            {
                                 stateObj.AddWarning(error);
+                            }
+                        }
 
                     }
                     stateObj._pendingInfoEvents = null;
@@ -2487,7 +2499,7 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             SqlError error;
-                            if (!TryProcessError(token, stateObj, out error))
+                            if (!TryProcessError(token, stateObj, cmdHandler, out error))
                             {
                                 return false;
                             }
@@ -2516,7 +2528,7 @@ namespace Microsoft.Data.SqlClient
                                     (error.Class <= TdsEnums.MAX_USER_CORRECTABLE_ERROR_CLASS))
                                 {
                                     // Fire SqlInfoMessage here
-                                    FireInfoMessageEvent(connection, stateObj, error);
+                                    FireInfoMessageEvent(connection,cmdHandler, stateObj, error);
                                 }
                                 else
                                 {
@@ -2610,7 +2622,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    cmdHandler.OnDoneProc();
+                                    cmdHandler.OnDoneProc(stateObj);
                                 }
                             }
 
@@ -3061,14 +3073,14 @@ namespace Microsoft.Data.SqlClient
                     if (RunBehavior.Clean != (RunBehavior.Clean & runBehavior) && !stateObj.IsTimeoutStateExpired)
                     {
                         // Add attention error to collection - if not RunBehavior.Clean!
-                        stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.OperationCancelled(), "", 0));
+                        stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.OperationCancelled(), "", 0, exception: null, batchIndex: cmdHandler?.GetCurrentBatchIndex() ?? -1));
                     }
                 }
             }
 
             if (stateObj.HasErrorOrWarning)
             {
-                ThrowExceptionAndWarning(stateObj);
+                ThrowExceptionAndWarning(stateObj, cmdHandler);
             }
             return true;
         }
@@ -3558,7 +3570,7 @@ namespace Microsoft.Data.SqlClient
             if ((TdsEnums.DONE_ERROR == (TdsEnums.DONE_ERROR & status)) && stateObj.ErrorCount == 0 &&
                   stateObj.HasReceivedError == false && (RunBehavior.Clean != (RunBehavior.Clean & run)))
             {
-                stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0));
+                stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0, exception: null, batchIndex: cmd?.GetCurrentBatchIndex() ?? -1));
 
                 if (null != reader)
                 { // SQL BU DT 269516
@@ -3574,7 +3586,7 @@ namespace Microsoft.Data.SqlClient
             // MDAC #93896.  Also, per Ashwin, the server will always break the connection in this case.
             if ((TdsEnums.DONE_SRVERROR == (TdsEnums.DONE_SRVERROR & status)) && (RunBehavior.Clean != (RunBehavior.Clean & run)))
             {
-                stateObj.AddError(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0));
+                stateObj.AddError(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0, exception: null, batchIndex: cmd?.GetCurrentBatchIndex() ?? -1));
 
                 if (null != reader)
                 { // SQL BU DT 269516
@@ -4389,7 +4401,7 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        internal bool TryProcessError(byte token, TdsParserStateObject stateObj, out SqlError error)
+        internal bool TryProcessError(byte token, TdsParserStateObject stateObj, SqlCommand command, out SqlError error)
         {
             ushort shortLen;
             byte byteLen;
@@ -4495,8 +4507,12 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-
-            error = new SqlError(number, state, errorClass, _server, message, procedure, line);
+            int batchIndex = -1;
+            if (command != null)
+            {
+                batchIndex = command.GetCurrentBatchIndex();
+            }
+            error = new SqlError(number, state, errorClass, _server, message, procedure, line, exception: null, batchIndex: batchIndex);
             return true;
         }
 
@@ -9972,7 +9988,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Task TdsExecuteRPC(SqlCommand cmd, _SqlRPC[] rpcArray, int timeout, bool inSchema, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool isCommandProc, bool sync = true,
+        internal Task TdsExecuteRPC(SqlCommand cmd, IList<_SqlRPC> rpcArray, int timeout, bool inSchema, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool isCommandProc, bool sync = true,
             TaskCompletionSource<object> completion = null, int startRpc = 0, int startParam = 0)
         {
             bool firstCall = (completion == null);
@@ -10036,7 +10052,7 @@ namespace Microsoft.Data.SqlClient
                         stateObj._outputMessageType = TdsEnums.MT_RPC;
                     }
 
-                    for (int ii = startRpc; ii < rpcArray.Length; ii++)
+                    for (int ii = startRpc; ii < rpcArray.Count; ii++)
                     {
                         rpcext = rpcArray[ii];
 
@@ -10084,20 +10100,24 @@ namespace Microsoft.Data.SqlClient
 
                             ParameterDirection parameterDirection = param.Direction;
 
-                            // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
-                            if (param.ForceColumnEncryption &&
-                                !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled ||
-                                (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled)))
+                            if (param.ForceColumnEncryption)
                             {
-                                throw SQL.ParamInvalidForceColumnEncryptionSetting(param.ParameterName, rpcext.GetCommandTextOrRpcName());
-                            }
+                                // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
+                                if (
+                                    !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled 
+                                    ||
+                                    (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled))
+                                )
+                                {
+                                    throw SQL.ParamInvalidForceColumnEncryptionSetting(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                                }
 
-                            // Check if the applications wants to force column encryption to avoid sending sensitive data to server
-                            if (param.ForceColumnEncryption && param.CipherMetadata == null
-                                && (parameterDirection == ParameterDirection.Input || parameterDirection == ParameterDirection.InputOutput))
-                            {
-                                // Application wants a parameter to be encrypted before sending it to server, however server doesnt think this parameter needs encryption.
-                                throw SQL.ParamUnExpectedEncryptionMetadata(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                                // Check if the applications wants to force column encryption to avoid sending sensitive data to server
+                                if (param.CipherMetadata == null && (parameterDirection == ParameterDirection.Input || parameterDirection == ParameterDirection.InputOutput))
+                                {
+                                    // Application wants a parameter to be encrypted before sending it to server, however server doesnt think this parameter needs encryption.
+                                    throw SQL.ParamUnExpectedEncryptionMetadata(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                                }
                             }
 
                             if (enableOptimizedParameterBinding && (parameterDirection == ParameterDirection.Output || parameterDirection == ParameterDirection.InputOutput))
@@ -10622,7 +10642,7 @@ namespace Microsoft.Data.SqlClient
                         } // parameter for loop
 
                         // If this is not the last RPC we are sending, add the batch flag
-                        if (ii < (rpcArray.Length - 1))
+                        if (ii < (rpcArray.Count - 1))
                         {
                             if (_is2005)
                             {

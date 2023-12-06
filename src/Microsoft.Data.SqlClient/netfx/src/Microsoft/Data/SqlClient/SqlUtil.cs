@@ -960,7 +960,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, (StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection)), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
-            return SqlException.CreateException(errors, null, internalConnection);
+            return SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
         }
         static internal SysTx.TransactionPromotionException PromotionFailed(Exception inner)
         {
@@ -2126,7 +2126,7 @@ namespace Microsoft.Data.SqlClient
                 // VSTFDEVDIV\DevDiv2\179041 - replacing InvalidOperation with SQL exception
                 SqlErrorCollection errors = new SqlErrorCollection();
                 errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, msg, "", 0));
-                SqlException exc = SqlException.CreateException(errors, null, internalConnection);
+                SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
                 exc._doNotReconnect = true; // disable open retry logic on this error
                 return exc;
             }
@@ -2167,7 +2167,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_FailoverNotSupported)), "", 0));
-            SqlException exc = SqlException.CreateException(errors, null, internalConnection);
+            SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
             exc._doNotReconnect = true;
             return exc;
         }
@@ -2176,7 +2176,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_RecursiveRoutingNotSupported)), "", 0));
-            SqlException exc = SqlException.CreateException(errors, null, internalConnection);
+            SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
             exc._doNotReconnect = true;
             return exc;
         }
@@ -2185,7 +2185,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_UnexpectedRoutingInfo)), "", 0));
-            SqlException exc = SqlException.CreateException(errors, null, internalConnection);
+            SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
             exc._doNotReconnect = true;
             return exc;
         }
@@ -2194,7 +2194,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_InvalidRoutingInfo)), "", 0));
-            SqlException exc = SqlException.CreateException(errors, null, internalConnection);
+            SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
             exc._doNotReconnect = true;
             return exc;
         }
@@ -2203,7 +2203,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_TimeoutAfterRoutingInfo)), "", 0));
-            SqlException exc = SqlException.CreateException(errors, null, internalConnection);
+            SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
             exc._doNotReconnect = true;
             return exc;
         }
@@ -2231,7 +2231,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_NextAttemptWillExceedQueryTimeout), "", 0));
-            SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException);
+            SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException, batchCommand: null);
             return exc;
         }
 
@@ -2239,7 +2239,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_EncryptionChanged), "", 0));
-            SqlException exc = SqlException.CreateException(errors, "", internalConnection);
+            SqlException exc = SqlException.CreateException(errors, "", internalConnection, innerException: null, batchCommand: null);
             return exc;
         }
 
@@ -2247,7 +2247,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_AllAttemptsFailed), "", 0));
-            SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException);
+            SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException, batchCommand: null);
             return exc;
         }
 
@@ -2255,7 +2255,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_NoCRAckAtReconnection), "", 0));
-            SqlException exc = SqlException.CreateException(errors, "", internalConnection);
+            SqlException exc = SqlException.CreateException(errors, "", internalConnection, innerException: null, batchCommand: null);
             return exc;
         }
 
@@ -2263,7 +2263,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_TDSVestionNotPreserved), "", 0));
-            SqlException exc = SqlException.CreateException(errors, "", internalConnection);
+            SqlException exc = SqlException.CreateException(errors, "", internalConnection, innerException: null, batchCommand: null);
             return exc;
         }
 
@@ -2271,7 +2271,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_UnrecoverableServer), "", 0));
-            SqlException exc = SqlException.CreateException(errors, "", connectionId);
+            SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException: null, batchCommand: null);
             return exc;
         }
 
@@ -2279,7 +2279,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_UnrecoverableClient), "", 0));
-            SqlException exc = SqlException.CreateException(errors, "", connectionId);
+            SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException: null, batchCommand: null);
             return exc;
         }
         internal static Exception Azure_ManagedIdentityException(string msg)

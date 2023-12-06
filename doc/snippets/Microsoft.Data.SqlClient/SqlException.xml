@@ -292,6 +292,17 @@ catch (Exception ex) {
             <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Procedure" />
             <altmember cref="P:Microsoft.Data.SqlClient.SqlException.LineNumber" />
         </Source>
+        <BatchCommand>
+          <summary>Gets the BatchCommand instance that generated the error or null if the exception was not raised from a batch.</summary>
+          <value>A BatchCommand object or null</value>
+          <remarks></remarks>
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Number" />
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.State" />
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Class" />
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Server" />
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Procedure" />
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.LineNumber" />
+        </BatchCommand>
         <State>
             <summary>Gets a numeric error code from SQL Server that represents an error, warning or "no data found" message. For more information about how to decode these values, see <see href="/sql/relational-databases/errors-events/database-engine-events-and-errors">Database Engine Events and Errors</see>.</summary>
             <value>The number representing the error code.</value>

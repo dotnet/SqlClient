@@ -1792,6 +1792,14 @@ namespace Microsoft.Data.SqlClient
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
         }
 
+#if NET6_0_OR_GREATER
+        /// <inheritdoc />
+        public override bool CanCreateBatch => true;
+
+        /// <inheritdoc />
+        protected override DbBatch CreateDbBatch() => new SqlBatch(this);
+#endif
+
         private class OpenAsyncRetry
         {
             private SqlConnection _parent;
