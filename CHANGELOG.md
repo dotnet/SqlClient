@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Added
 
-- Added `SqlBatch` support on .NET 6+[#1825](https://github.com/dotnet/SqlClient/pull/1825), [#2223](https://github.com/dotnet/SqlClient/pull/2223)
+- Added `SqlBatch` support on .NET 6+ [#1825](https://github.com/dotnet/SqlClient/pull/1825), [#2223](https://github.com/dotnet/SqlClient/pull/2223)
 - Added Workload Identity authentication support [#2159](https://github.com/dotnet/SqlClient/pull/2159)
 - Added Localization support on .NET [#2210](https://github.com/dotnet/SqlClient/pull/2110)
 - Added support for Georgian collation [#2194](https://github.com/dotnet/SqlClient/pull/2194)
