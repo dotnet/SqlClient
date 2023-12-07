@@ -1589,6 +1589,7 @@ namespace Microsoft.Data.SqlClient
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("SqlConnection.InternalOpenAsync | API | Object Id {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.InternalOpenAsync | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
+
             try
             {
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);

@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         tlsFirst, hostNameInCertificate, serverCertificateFilename);
                     break;
                 case DataSource.Protocol.NP:
-                    sniHandle = CreateNpHandle(details, timerExpire, parallel, tlsFirst);
+                    sniHandle = CreateNpHandle(details, timerExpire, parallel, tlsFirst, isAsyncOption : async);
                     break;
                 default:
                     Debug.Fail($"Unexpected connection protocol: {details._connectionProtocol}");
@@ -348,8 +348,9 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="timerExpire">Timer expiration</param>
         /// <param name="parallel">Should MultiSubnetFailover be used. Only returns an error for named pipes.</param>
         /// <param name="tlsFirst"></param>
+        /// <param name="isAsyncOption"></param>
         /// <returns>SNINpHandle</returns>
-        private static SNINpHandle CreateNpHandle(DataSource details, long timerExpire, bool parallel, bool tlsFirst)
+        private static SNINpHandle CreateNpHandle(DataSource details, long timerExpire, bool parallel, bool tlsFirst, bool isAsyncOption)
         {
             if (parallel)
             {
@@ -357,7 +358,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
-            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire, tlsFirst);
+            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire, tlsFirst, isAsyncOption);
         }
 
         /// <summary>
