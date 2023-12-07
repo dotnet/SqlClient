@@ -38,6 +38,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private bool _AsyncCommandInProgress;
+        private bool _isAsyncPipeOption = false;
 
         // SQLStatistics support
         internal SqlStatistics _statistics;
@@ -494,6 +495,11 @@ namespace Microsoft.Data.SqlClient
         {
             get => _AsyncCommandInProgress;
             set => _AsyncCommandInProgress = value;
+        }
+
+        internal bool IsAsyncPipeOption
+        {
+            get => _isAsyncPipeOption;
         }
 
         private bool UsesActiveDirectoryIntegrated(SqlConnectionString opt)
@@ -1589,6 +1595,7 @@ namespace Microsoft.Data.SqlClient
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("SqlConnection.InternalOpenAsync | API | Object Id {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.InternalOpenAsync | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
+            _isAsyncPipeOption = true;
 
             try
             {

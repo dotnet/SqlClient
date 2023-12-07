@@ -443,6 +443,7 @@ namespace Microsoft.Data.SqlClient
             _connHandler.pendingSQLDNSObject = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
+            
             _physicalStateObj.CreatePhysicalSNIHandle(
                 serverInfo.ExtendedServerName,
                 ignoreSniOpenTimeout,
