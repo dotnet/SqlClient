@@ -86,8 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Note: This Unit test was tested in a domain-joined VM connecting to a remote
         //       SQL Server using Kerberos in the same domain.
-        // Disable this test for now as Davoud said there is an issue.
-        [ActiveIssue("27824")] // Per Davoud, "With specifying instance name and port number, this method call always returns false!"
+        [ActiveIssue("27824")] // When specifying instance name and port number, this method call always returns false
         [ConditionalFact(nameof(IsKerberos))]
         public static void PortNumberInSPNTest()
         {
