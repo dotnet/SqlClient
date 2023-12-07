@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 5.2.0-preview4.x] - 2023-12-07
+
+### Added
+
+- Added `SQLBatch` public API supprot to NetCore [#1825](https://github.com/dotnet/SqlClient/pull/1825), [#2223](https://github.com/dotnet/SqlClient/pull/2223)
+- Added WorkLoad Identity support [#2159](https://github.com/dotnet/SqlClient/pull/1825)
+- Added Localization support to NetCore [#2210](https://github.com/dotnet/SqlClient/pull/2110)
+- Added caching support for all `AppContext` switches [#227](https://github.com/dotnet/SqlClient/pull/2227)
+- Added support for Georgian collation [#2194](https://github.com/dotnet/SqlClient/pull/2194)
+- Added support for Big Endian Systems [#2170](https://github.com/dotnet/SqlClient/pull/2170)
+
+
+### Changed
+
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v5.2.0-preview1.23340.1`. [#2257](https://github.com/dotnet/SqlClient/pull/2257)
+- Improved CPU usage when `AppContext` switched are in use [#2227](https://github.com/dotnet/SqlClient/pull/2227)
+- Upgraded `Azure.Identity` version to [1.10.3](https://www.nuget.org/packages/Azure.Identity/1.10.3) to address [ CVE-2023-36414](https://github.com/advisories/GHSA-5mfx-4wcx-rv27), [#2188](https://github.com/dotnet/SqlClient/pull/2188)
+- Improved error messages on RemoteCertificate validation in manaded SNI [#2060](https://github.com/dotnet/SqlClient/pull/2060)
+
+
+### Fixed
+
+- Fixed the issue with `AppContext` switches CPU useage [#2227](https://github.com/dotnet/SqlClient/pull/2227)
+- Fixed the issue for validating server certificate when using Authentication option, but not encrypting on NetFX [#2224](https://github.com/dotnet/SqlClient/pull/2224)
+- Ported  deadlock problem for `Transaction` to NetFX [#2161](https://github.com/dotnet/SqlClient/pull/2161)
+- Fixed the issue for SQL named instances on named pipes in manged SNI [#2141](https://github.com/dotnet/SqlClient/pull/2142)
+- Fixed the issue for `LocalDb` in managed SNI [#2129](https://github.com/dotnet/SqlClient/pull/2129)
+- Fixed `AccessViolationException` issue when using express user instance [#2101](https://github.com/dotnet/SqlClient/pull/2101)
+- Fixed UDT query issue on Azure SQL Edge [#2099](https://github.com/dotnet/SqlClient/pull/2099)
+- Fixed NetCore and Net Standard file version [#2093](https://github.com/dotnet/SqlClient/pull/2093)
+- Fixed the issue on Linux SPN port number when using named instance and Kerberos authention [#2240](https://github.com/dotnet/SqlClient/pull/2240)
+- Various code improvements [#2091](https://github.com/dotnet/SqlClient/pull/2091), [#2098](https://github.com/dotnet/SqlClient/pull/2098), [#2121](https://github.com/dotnet/SqlClient/pull/2121), [#2122](https://github.com/dotnet/SqlClient/pull/2122), [#2132](https://github.com/dotnet/SqlClient/pull/2132), [#2136](https://github.com/dotnet/SqlClient/pull/2136), [#2144](https://github.com/dotnet/SqlClient/pull/2144), [#2147](https://github.com/dotnet/SqlClient/pull/2147), [#2157](https://github.com/dotnet/SqlClient/pull/2157), [#2164](https://github.com/dotnet/SqlClient/pull/2164), [#2166](https://github.com/dotnet/SqlClient/pull/2166), [#2168](https://github.com/dotnet/SqlClient/pull/2168), [#2186](https://github.com/dotnet/SqlClient/pull/2186),
+
+This update brings the below changes over the previous release:
+
 ## [Preview Release 5.2.0-preview3.23201.1] - 2023-07-20
 
 This update brings the below changes over the previous release:
