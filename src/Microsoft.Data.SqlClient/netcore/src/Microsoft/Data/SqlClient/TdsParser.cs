@@ -1781,7 +1781,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             var bytes = new byte[4];
-            BinaryPrimitives.WriteInt32LittleEndian(bytes, BitConverterCompat.SingleToInt32Bits(v));
+            BinaryPrimitives.WriteInt32LittleEndian(bytes, BitConverterCompatible.SingleToInt32Bits(v));
             return bytes;
         }
 
@@ -5842,7 +5842,7 @@ namespace Microsoft.Data.SqlClient
                         return false;
                     }
 
-                    singleValue = BitConverterCompat.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(unencryptedBytes));
+                    singleValue = BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(unencryptedBytes));
                     value.Single = singleValue;
                     break;
 

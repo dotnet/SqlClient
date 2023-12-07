@@ -705,7 +705,6 @@ namespace Microsoft.Data.SqlClient
             _stateObj.WriteByteArray(BitConverter.GetBytes(time), length - 5, 0); // time
             _stateObj.WriteByteArray(BitConverter.GetBytes(days), 3, 0); // date
 #endif
-
             _stateObj.WriteByte((byte)(offset & 0xff)); // offset byte 1
             _stateObj.WriteByte((byte)((offset >> 8) & 0xff)); // offset byte 2
         }

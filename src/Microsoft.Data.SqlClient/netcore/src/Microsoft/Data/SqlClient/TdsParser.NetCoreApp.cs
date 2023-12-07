@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void FillDoubleBytes(double value, Span<byte> buffer) => BinaryPrimitives.TryWriteInt64LittleEndian(buffer, BitConverter.DoubleToInt64Bits(value));
 
-        internal static void FillFloatBytes(float value, Span<byte> buffer) => BinaryPrimitives.TryWriteInt32LittleEndian(buffer, BitConverterCompat.SingleToInt32Bits(value));
+        internal static void FillFloatBytes(float value, Span<byte> buffer) => BinaryPrimitives.TryWriteInt32LittleEndian(buffer, BitConverterCompatible.SingleToInt32Bits(value));
         
         internal static Guid ConstructGuid(ReadOnlySpan<byte> bytes)
         {

@@ -4,7 +4,7 @@ using System;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal static class BitConverterCompat
+    internal static class BitConverterCompatible
     {
         public static unsafe int SingleToInt32Bits(float value) 
         {

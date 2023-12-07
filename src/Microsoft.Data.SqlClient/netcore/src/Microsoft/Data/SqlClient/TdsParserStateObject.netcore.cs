@@ -279,7 +279,6 @@ namespace Microsoft.Data.SqlClient
             _cancellationOwner.Target = cancellationOwner;
         }
 
-
         /////////////////////////////////////////
         // Value Skip Logic                    //
         /////////////////////////////////////////
