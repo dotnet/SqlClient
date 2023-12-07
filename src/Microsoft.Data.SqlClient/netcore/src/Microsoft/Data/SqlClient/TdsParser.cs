@@ -7973,6 +7973,9 @@ namespace Microsoft.Data.SqlClient
                             case SqlAuthenticationMethod.ActiveDirectoryDefault:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
                                 break;
+                            case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYWORKLOADIDENTITY;
+                                break;
                             default:
                                 if (_connHandler._accessTokenCallback != null)
                                 {

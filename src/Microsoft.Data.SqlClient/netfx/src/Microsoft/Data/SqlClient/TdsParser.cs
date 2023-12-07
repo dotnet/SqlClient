@@ -594,6 +594,9 @@ namespace Microsoft.Data.SqlClient
                     case SqlAuthenticationMethod.ActiveDirectoryDefault:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Default authentication");
                         break;
+                    case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Workload Identity authentication");
+                        break;
                     case SqlAuthenticationMethod.SqlPassword:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL Password authentication");
                         break;
@@ -8762,6 +8765,9 @@ namespace Microsoft.Data.SqlClient
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryDefault:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYWORKLOADIDENTITY;
                                 break;
                             default:
                                 if (_connHandler._accessTokenCallback != null)

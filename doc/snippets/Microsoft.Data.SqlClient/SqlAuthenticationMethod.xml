@@ -45,5 +45,9 @@
           <summary>The authentication method uses Active Directory Default. Use this mode to connect to a SQL Database using multiple non-interactive authentication methods tried sequentially to acquire an access token. This method does not fallback to the "Active Directory Interactive" authentication method.</summary>
           <value>9</value>
       </ActiveDirectoryDefault>
+      <ActiveDirectoryWorkloadIdentity>
+        <summary>The authentication method uses Active Directory Workload Identity. Use a federated User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Workload Identity. The 'User Id' or 'UID' is required to be set to the "client ID" of the user identity.</summary>
+        <value>10</value>
+      </ActiveDirectoryWorkloadIdentity>
     </members>
 </docs>
