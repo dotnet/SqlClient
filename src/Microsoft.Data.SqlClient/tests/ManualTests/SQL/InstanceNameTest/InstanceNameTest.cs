@@ -86,6 +86,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Note: This Unit test was tested in a domain-joined VM connecting to a remote
         //       SQL Server using Kerberos in the same domain.
+        // Disable this test for now as Davoud said there is an issue.
+        [ActiveIssue("27824")] // Per Davoud, "With specifying instance name and port number, this method call always returns false!"
         [ConditionalFact(nameof(IsKerberos))]
         public static void PortNumberInSPNTest()
         {
@@ -99,9 +101,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SqlConnectionStringBuilder builder = new(connStr);
 
-            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName), "Data source to be parsed must contain a host name and instance name");
 
-            if (IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName))
+            bool condition = IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName);
+            Assert.True(condition, "Browser service is not running or instance name is invalid");
+
+            if (condition)
             {
                 using SqlConnection connection = new(builder.ConnectionString);
                 connection.Open();
@@ -109,15 +114,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlDataReader reader = command.ExecuteReader();
                 Assert.True(reader.Read(), "Expected to receive one row data");
                 Assert.Equal("KERBEROS", reader.GetString(0));
-                int Port = reader.GetInt32(1);
+                int localTcpPort = reader.GetInt32(1);
 
-                int port = -1;
-                string spnInfo = GetSPNInfo(builder.DataSource, out port);
+                int spnPort = -1;
+                string spnInfo = GetSPNInfo(builder.DataSource, out spnPort);
 
-                // sample output to validate = MSSQLSvc/machine.domain.tld:port"
+                // sample output to validate = MSSQLSvc/machine.domain.tld:spnPort"
                 Assert.Contains($"MSSQLSvc/{hostname}", spnInfo);
-                // the local_tcp_port Port is the same as the inferred port from instance name
-                Assert.Equal(Port, port);
+                // the local_tcp_port should be the same as the inferred SPN port from instance name
+                Assert.Equal(localTcpPort, spnPort);
             }
         }
 
@@ -146,17 +151,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Get all types constructors
             ConstructorInfo sniProxyCtor = sniProxyType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
             ConstructorInfo SSRPCtor = ssrpType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
-            ConstructorInfo dataSourceCtor = dataSourceType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, dataSourceConstructorTypesArray , null);
+            ConstructorInfo dataSourceCtor = dataSourceType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, dataSourceConstructorTypesArray, null);
             ConstructorInfo timeoutTimerCtor = timeoutTimerType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
 
             // Instantiate SNIProxy
-            object sniProxy =  sniProxyCtor.Invoke(new object[] { });
+            object sniProxy = sniProxyCtor.Invoke(new object[] { });
 
             // Instantiate datasource 
-            object details = dataSourceCtor.Invoke(new object[] { datasource });
+            object dataSourceObj = dataSourceCtor.Invoke(new object[] { datasource });
 
             // Instantiate SSRP
-            object ssrp = SSRPCtor.Invoke(new object[] { });    
+            object ssrp = SSRPCtor.Invoke(new object[] { });
 
             // Instantiate TimeoutTimer
             object timeoutTimer = timeoutTimerCtor.Invoke(new object[] { });
@@ -164,11 +169,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Get TimeoutTimer.StartSecondsTimeout Method
             MethodInfo startSecondsTimeout = timeoutTimer.GetType().GetMethod("StartSecondsTimeout", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, startSecondsTimeoutTypesArray, null);
             // Create a timeoutTimer that expires in 30 seconds
-            timeoutTimer = startSecondsTimeout.Invoke(details, new object[] { 30 });
+            timeoutTimer = startSecondsTimeout.Invoke(dataSourceObj, new object[] { 30 });
 
             // Parse the datasource to separate the server name and instance name
-            MethodInfo ParseServerName = details.GetType().GetMethod("ParseServerName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, dataSourceConstructorTypesArray, null);
-            object dataSrcInfo = ParseServerName.Invoke(details, new object[] { datasource });
+            MethodInfo ParseServerName = dataSourceObj.GetType().GetMethod("ParseServerName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, dataSourceConstructorTypesArray, null);
+            object dataSrcInfo = ParseServerName.Invoke(dataSourceObj, new object[] { datasource });
 
             // Get the GetPortByInstanceName method of SSRP
             MethodInfo getPortByInstanceName = ssrp.GetType().GetMethod("GetPortByInstanceName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, getPortByInstanceNameTypesArray, null);
@@ -182,7 +187,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string instanceName = instanceNameInfo.GetValue(dataSrcInfo, null).ToString();
 
             // Get the port number using the GetPortByInstanceName method of SSRP
-            object port = getPortByInstanceName.Invoke(ssrp, parameters: new object[] { serverName, instanceName, timeoutTimer, false, 0 } );
+            object port = getPortByInstanceName.Invoke(ssrp, parameters: new object[] { serverName, instanceName, timeoutTimer, false, 0 });
 
             // Set the resolved port property of datasource
             PropertyInfo resolvedPortInfo = dataSrcInfo.GetType().GetProperty("ResolvedPort", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -193,8 +198,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             MethodInfo getSqlServerSPNs = sniProxy.GetType().GetMethod("GetSqlServerSPNs", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, getSqlServerSPNsTypesArray, null);
 
             // Finally call GetSqlServerSPNs
-            // Use dynamic type for indexing to work at design time
-            dynamic result = getSqlServerSPNs.Invoke(sniProxy, new object[] { dataSrcInfo, serverSPN });
+            byte[][] result = (byte[][])getSqlServerSPNs.Invoke(sniProxy, new object[] { dataSrcInfo, serverSPN });
 
             // Example result: MSSQLSvc/machine.domain.tld:port"
             string spnInfo = Encoding.Unicode.GetString(result[0]);
@@ -206,7 +210,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static bool IsKerberos()
         {
-            return (DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotLocalhost() && DataTestUtility.IsKerberosTest && DataTestUtility.IsNotAzureServer() && DataTestUtility.IsNotAzureSynapse());
+            return (DataTestUtility.AreConnStringsSetup() 
+                 && DataTestUtility.IsNotLocalhost() 
+                 && DataTestUtility.IsKerberosTest 
+                 && DataTestUtility.IsNotAzureServer() 
+                 && DataTestUtility.IsNotAzureSynapse());
         }
 
         private static bool IsBrowserAlive(string browserHostname)
