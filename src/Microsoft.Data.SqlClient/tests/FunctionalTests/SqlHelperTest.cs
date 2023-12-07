@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 if (unobservedExceptionHappend) //Save doing string interpolation in the happy case
                 {
                     var e = UnwrapException(unhandledException);
-                    Assert.False(true, $"Did not expect an unobserved exception, but found a {e?.GetType()} with message \"{e?.Message}\"");
+                    Assert.Fail($"Did not expect an unobserved exception, but found a {e?.GetType()} with message \"{e?.Message}\"");
                 }
             }
             finally

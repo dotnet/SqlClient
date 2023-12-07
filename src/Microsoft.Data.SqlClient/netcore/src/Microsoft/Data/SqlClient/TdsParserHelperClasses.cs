@@ -614,6 +614,8 @@ namespace Microsoft.Data.SqlClient
 
         internal bool needsFetchParameterEncryptionMetadata;
 
+        internal SqlBatchCommand batchCommand;
+
         internal string GetCommandTextOrRpcName()
         {
             if (TdsEnums.RPC_PROCID_EXECUTESQL == ProcID)

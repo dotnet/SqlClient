@@ -636,7 +636,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsIntegratedSecuritySetup), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ADInteractiveUsingSSPI()
+        public static void ADIntegratedUsingSSPI()
         {
             // test Passes with correct connection string.
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
@@ -647,7 +647,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Test passes locally everytime, but in pieplines fails randomly with uncertainity.
         // e.g. Second AAD connection too slow (802ms)! (More than 30% of the first (576ms).)
-        [ActiveIssue(16058)]
+        [ActiveIssue("16058")]
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ConnectionSpeed()
         {

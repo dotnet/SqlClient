@@ -12,7 +12,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class SqlCredentialTest
     {
-
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void CreateSqlConnectionWithCredential()
         {
