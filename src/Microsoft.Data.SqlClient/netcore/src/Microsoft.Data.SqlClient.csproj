@@ -33,6 +33,9 @@
     <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Common\BitConverterCompatible.cs">
+      <Link>Microsoft\Data\Common\BitConverterCompatible.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Common\DbConnectionOptions.Common.cs">
       <Link>Microsoft\Data\Common\DbConnectionOptions.Common.cs</Link>
     </Compile>

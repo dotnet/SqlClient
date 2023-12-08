@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Buffers.Binary;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
@@ -1055,6 +1056,15 @@ namespace Microsoft.Data.SqlClient
                             str = Marshal.SecureStringToBSTR(_securePasswords[i]);
                             byte[] data = new byte[_securePasswords[i].Length * 2];
                             Marshal.Copy(str, data, 0, _securePasswords[i].Length * 2);
+                            if (!BitConverter.IsLittleEndian)
+                            {
+                                Span<byte> span = data.AsSpan();
+                                for (int ii = 0; ii < _securePasswords[i].Length * 2; ii += 2)
+                                {
+                                    short value = BinaryPrimitives.ReadInt16LittleEndian(span.Slice(ii));
+                                    BinaryPrimitives.WriteInt16BigEndian(span.Slice(ii), value);
+                                }
+                            }
                             TdsParserStaticMethods.ObfuscatePassword(data);
                             data.CopyTo(_outBuff, _securePasswordOffsetsInBuffer[i]);
                         }
@@ -1556,7 +1566,8 @@ namespace Microsoft.Data.SqlClient
                 // So we need to avoid this check prior to login completing
                 state == TdsParserState.OpenLoggedIn
                     && !_bulkCopyOpperationInProgress // ignore the condition checking for bulk copy
-                    && _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen))
+                    && _outBytesUsed == (_outputHeaderLen +
+                    BinaryPrimitives.ReadInt32LittleEndian(_outBuff.AsSpan(_outputHeaderLen)))
                     && _outputPacketCount == 0
                     || _outBytesUsed == _outputHeaderLen
                     && _outputPacketCount == 0)

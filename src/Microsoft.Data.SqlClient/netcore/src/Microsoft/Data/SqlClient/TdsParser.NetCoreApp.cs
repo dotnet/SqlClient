@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Buffers.Binary;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -11,9 +12,9 @@ namespace Microsoft.Data.SqlClient
     {
         internal static void FillGuidBytes(Guid guid, Span<byte> buffer) => guid.TryWriteBytes(buffer);
 
-        internal static void FillDoubleBytes(double value, Span<byte> buffer) => BitConverter.TryWriteBytes(buffer, value);
+        internal static void FillDoubleBytes(double value, Span<byte> buffer) => BinaryPrimitives.TryWriteInt64LittleEndian(buffer, BitConverter.DoubleToInt64Bits(value));
 
-        internal static void FillFloatBytes(float v, Span<byte> buffer) => BitConverter.TryWriteBytes(buffer, v);
+        internal static void FillFloatBytes(float value, Span<byte> buffer) => BinaryPrimitives.TryWriteInt32LittleEndian(buffer, BitConverterCompatible.SingleToInt32Bits(value));
         
         internal static Guid ConstructGuid(ReadOnlySpan<byte> bytes)
         {

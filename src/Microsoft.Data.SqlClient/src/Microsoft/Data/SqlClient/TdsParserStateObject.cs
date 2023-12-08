@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
@@ -525,6 +526,13 @@ namespace Microsoft.Data.SqlClient
                     {
                         return false;
                     }
+                }
+            }
+            if (!BitConverter.IsLittleEndian)
+            {
+                for (int ii = charsOffset; ii < charsCopied + charsOffset; ii++)
+                {
+                    chars[ii] = (char)BinaryPrimitives.ReverseEndianness((ushort)chars[ii]);
                 }
             }
             return true;
@@ -1365,7 +1373,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_bTmpRead + bytesRead == 8, "TryReadByteArray returned true without reading all data required");
                     _bTmpRead = 0;
                     AssertValidState();
-                    value = BitConverter.ToInt64(_bTmp, 0);
+                    value = BinaryPrimitives.ReadInt64LittleEndian(_bTmp);
                     return true;
                 }
             }
@@ -1374,7 +1382,7 @@ namespace Microsoft.Data.SqlClient
                 // The entire long is in the packet and in the buffer, so just return it
                 // and take care of the counters.
 
-                value = BitConverter.ToInt64(_inBuff, _inBytesUsed);
+                value = BinaryPrimitives.ReadInt64LittleEndian(_inBuff.AsSpan(_inBytesUsed));
 
                 _inBytesUsed += 8;
                 _inBytesPacket -= 8;
@@ -1444,7 +1452,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_bTmpRead + bytesRead == 4, "TryReadByteArray returned true without reading all data required");
                     _bTmpRead = 0;
                     AssertValidState();
-                    value = BitConverter.ToUInt32(_bTmp, 0);
+                    value = BinaryPrimitives.ReadUInt32LittleEndian(_bTmp);
                     return true;
                 }
             }
@@ -1453,7 +1461,7 @@ namespace Microsoft.Data.SqlClient
                 // The entire int is in the packet and in the buffer, so just return it
                 // and take care of the counters.
 
-                value = BitConverter.ToUInt32(_inBuff, _inBytesUsed);
+                value = BinaryPrimitives.ReadUInt32LittleEndian(_inBuff.AsSpan(_inBytesUsed));
 
                 _inBytesUsed += 4;
                 _inBytesPacket -= 4;
@@ -1479,7 +1487,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 AssertValidState();
-                value = BitConverter.ToSingle(_bTmp, 0);
+                value = BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(_bTmp));
                 return true;
             }
             else
@@ -1487,7 +1495,7 @@ namespace Microsoft.Data.SqlClient
                 // The entire float is in the packet and in the buffer, so just return it
                 // and take care of the counters.
 
-                value = BitConverter.ToSingle(_inBuff, _inBytesUsed);
+                value = BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(_inBuff.AsSpan(_inBytesUsed)));
 
                 _inBytesUsed += 4;
                 _inBytesPacket -= 4;
@@ -1513,7 +1521,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 AssertValidState();
-                value = BitConverter.ToDouble(_bTmp, 0);
+                value = BitConverter.Int64BitsToDouble(BinaryPrimitives.ReadInt64LittleEndian(_bTmp));
                 return true;
             }
             else
@@ -1521,7 +1529,7 @@ namespace Microsoft.Data.SqlClient
                 // The entire double is in the packet and in the buffer, so just return it
                 // and take care of the counters.
 
-                value = BitConverter.ToDouble(_inBuff, _inBytesUsed);
+                value = BitConverter.Int64BitsToDouble(BinaryPrimitives.ReadInt64LittleEndian(_inBuff.AsSpan(_inBytesUsed)));
 
                 _inBytesUsed += 8;
                 _inBytesPacket -= 8;
