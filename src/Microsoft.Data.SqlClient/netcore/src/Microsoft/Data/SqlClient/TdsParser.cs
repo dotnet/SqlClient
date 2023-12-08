@@ -364,7 +364,8 @@ namespace Microsoft.Data.SqlClient
             bool ignoreSniOpenTimeout,
             long timerExpire,
             SqlConnectionString connectionOptions,
-            bool withFailover)
+            bool withFailover,
+            bool isAsyncPipeOption)
         {
             SqlConnectionEncryptOption encrypt = connectionOptions.Encrypt;
             bool isTlsFirst = (encrypt == SqlConnectionEncryptOption.Strict);
@@ -451,7 +452,7 @@ namespace Microsoft.Data.SqlClient
                 out instanceName,
                 ref _sniSpnBuffer,
                 false,
-                async: true,
+                async: isAsyncPipeOption,
                 fParallel,
                 _connHandler.ConnectionOptions.IPAddressPreference,
                 FQDNforDNSCache,
@@ -550,7 +551,7 @@ namespace Microsoft.Data.SqlClient
                     out instanceName,
                     ref _sniSpnBuffer,
                     true,
-                    async: true,
+                    async: isAsyncPipeOption,
                     fParallel,
                     _connHandler.ConnectionOptions.IPAddressPreference,
                     FQDNforDNSCache,
