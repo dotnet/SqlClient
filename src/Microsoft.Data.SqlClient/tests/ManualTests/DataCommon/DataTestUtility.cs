@@ -1073,6 +1073,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return fqdn.ToString();
         }
 
+        public static bool IsNotLocalhost()
+        {
+            // get the tcp connection string
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+
+            string hostname = "";
+
+            // parse the datasource
+            ParseDataSource(builder.DataSource, out hostname, out _, out _);
+
+            // hostname must not be localhost, ., 127.0.0.1 nor ::1
+            return !(new string[] { "localhost", ".", "127.0.0.1", "::1" }).Contains(hostname.ToLowerInvariant());
+
+        }
+
         private static bool RunningAsUWPApp()
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

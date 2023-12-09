@@ -230,7 +230,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             else if (!string.IsNullOrWhiteSpace(dataSource.InstanceName))
             {
-                postfix = dataSource.InstanceName;
+                postfix = dataSource._connectionProtocol == DataSource.Protocol.TCP ? dataSource.ResolvedPort.ToString() : dataSource.InstanceName;
             }
 
             SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, postfix {3}", dataSource?.ServerName, dataSource?.InstanceName, dataSource?.Port, postfix);
@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 try
                 {
-                    port = isAdminConnection ?
+                    details.ResolvedPort = port = isAdminConnection ?
                             SSRP.GetDacPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference) :
                             SSRP.GetPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference);
                 }
@@ -435,6 +435,11 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Provides the port on which the TCP connection should be made if one was specified in Data Source
         /// </summary>
         internal int Port { get; private set; } = -1;
+
+        /// <summary>
+        /// The port resolved by SSRP when InstanceName is specified
+        /// </summary>
+        internal int ResolvedPort { get; set; } = -1;
 
         /// <summary>
         /// Provides the inferred Instance Name from Server Data Source

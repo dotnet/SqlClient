@@ -39,6 +39,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Authentication = ActiveDirectoryMSI ")]
         [InlineData("Authentication = Active Directory Default ")]
         [InlineData("Authentication = ActiveDirectoryDefault ")]
+        [InlineData("Authentication = Active Directory Workload Identity ")]
+        [InlineData("Authentication = ActiveDirectoryWorkloadIdentity ")]
         [InlineData("Command Timeout = 5")]
         [InlineData("Command Timeout = 15")]
         [InlineData("Command Timeout = 0")]
