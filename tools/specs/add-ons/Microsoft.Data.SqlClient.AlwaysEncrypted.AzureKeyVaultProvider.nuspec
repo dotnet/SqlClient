@@ -32,9 +32,6 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
         <dependency id="Microsoft.Extensions.Caching.Memory" version="6.0.1" />
       </group>
       <group targetFramework="net8.0">
-        <dependency id="Microsoft.Data.SqlClient" version="3.0.0" />
-        <dependency id="Azure.Core" version="[1.35.0,2.0.0)" />
-      <group targetFramework="net7.0">
         <dependency id="Microsoft.Data.SqlClient" version="5.1.2" />
         <dependency id="Azure.Core" version="[1.35.0,2.0.0)" />
         <dependency id="System.Text.Encodings.Web" version="6.0.0" />
