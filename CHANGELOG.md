@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed
 
-- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET/.NET Standard dependency) version to `v5.2.0-preview1.23340.1`. [#2257](https://github.com/dotnet/SqlClient/pull/2257), which includes removing dead code and addressing TSA warnings
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET/.NET Standard dependency) version to `v5.2.0-preview1.23340.1`. [#2257](https://github.com/dotnet/SqlClient/pull/2257), which includes removing dead code and addressing static analysis warnings
 - Improved CPU usage when `AppContext` switches are in use [#2227](https://github.com/dotnet/SqlClient/pull/2227)
 - Upgraded `Azure.Identity` dependency version to [1.10.3](https://www.nuget.org/packages/Azure.Identity/1.10.3) to address [CVE-2023-36414](https://github.com/advisories/GHSA-5mfx-4wcx-rv27), [#2188](https://github.com/dotnet/SqlClient/pull/2188)
 - Improved error messages when validating server certificates in managed SNI (Linux/macOS) [#2060](https://github.com/dotnet/SqlClient/pull/2060)
@@ -26,7 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed an issue when using the Authentication option, but not encrypting on .NET Framework where the server certificate was being incorrectly validated [#2224](https://github.com/dotnet/SqlClient/pull/2224)
 - Fixed a deadlock problem for distributed transactions when on .NET [#2161](https://github.com/dotnet/SqlClient/pull/2161)
 - Fixed an issue with connecting to named instances on named pipes in managed SNI (Linux/macOS)[#2142](https://github.com/dotnet/SqlClient/pull/2142)
-- Fixed LocalDb connection issue with an invalid source using managed SNI [#2129](https://github.com/dotnet/SqlClient/pull/2129)
+- Fixed LocalDb connection issue with an invalid source when using managed SNI [#2129](https://github.com/dotnet/SqlClient/pull/2129)
 - Fixed an `AccessViolationException` when using a SQL Express user instance [#2101](https://github.com/dotnet/SqlClient/pull/2101)
 - Fixed a metadata query issue when connecting to Azure SQL Edge [#2099](https://github.com/dotnet/SqlClient/pull/2099)
 - Fixed file version information for .NET and .NET Standard binaries[#2093](https://github.com/dotnet/SqlClient/pull/2093)
