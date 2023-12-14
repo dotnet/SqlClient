@@ -247,15 +247,18 @@ For more information, see [Using Azure Active Directory authentication with SqlC
             </remarks>
         </ConnectionReset>
         <ConnectRetryCount>
-            <summary>The number of reconnections attempted after identifying that there was an idle connection failure. This must be an integer between 0 and 255. Default is 1. Set to 0 to disable reconnecting on idle connection failures. An <see cref="T:System.ArgumentException" /> will be thrown if set to a value outside of the allowed range.</summary>
+            <summary>The number of reconnections attempted after identifying that there was an idle connection failure. This must be an integer between 0 and 255. The default value for non Azure endpoints is 1. For Azure SQL endpoints, the default is 2. Starting in version 5.x, for Azure SQL serverless or on demand endpoints, the default is 5 to improve connection success for connections to an idle or paused instance. Set to 0 to disable reconnecting on idle connection failures. An <see cref="T:System.ArgumentException" /> will be thrown if set to a value outside of the allowed range.</summary>
             <value>The number of reconnections attempted after identifying that there was an idle connection failure.</value>
             <remarks>
               <format type="text/markdown">
                 <![CDATA[  
   
-  ## Remarks  
-   This property corresponds to the "Connect Retry Count" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
-  
+## Remarks  
+ This property corresponds to the "Connect Retry Count" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
+
+> [!NOTE]
+> Since version 5.x the default value for none Azure endpoints is 1 and for Azure SQL and Azure Synapse has increased to 2 and 5 to imporve the recovery against on high demand Azure endpoints. It should be detected first, and Synapse could be detected as a regular Azure SQL DB endpoint.
+
    ]]>
               </format>
             </remarks>

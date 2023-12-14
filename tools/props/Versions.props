@@ -23,7 +23,7 @@
   </PropertyGroup>
   <!-- NetFx project dependencies -->
   <PropertyGroup>
-    <MicrosoftDataSqlClientSniVersion>5.1.1</MicrosoftDataSqlClientSniVersion>
+    <MicrosoftDataSqlClientSniVersion>5.2.0-preview1.23340.1</MicrosoftDataSqlClientSniVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
@@ -38,7 +38,7 @@
   <!-- NetCore project dependencies -->
   <PropertyGroup>
     <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
-    <MicrosoftDataSqlClientSNIRuntimeVersion>5.1.1</MicrosoftDataSqlClientSNIRuntimeVersion>
+    <MicrosoftDataSqlClientSNIRuntimeVersion>5.2.0-preview1.23340.1</MicrosoftDataSqlClientSNIRuntimeVersion>
     <SystemConfigurationConfigurationManagerVersion>6.0.1</SystemConfigurationConfigurationManagerVersion>
     <MicrosoftSqlServerServerVersion>1.0.0</MicrosoftSqlServerServerVersion>
     <SystemDiagnosticsPerformanceCounterVersion>6.0.1</SystemDiagnosticsPerformanceCounterVersion>

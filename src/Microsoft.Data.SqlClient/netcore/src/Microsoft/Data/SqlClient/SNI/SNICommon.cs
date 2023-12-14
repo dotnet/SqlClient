@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
@@ -59,10 +60,11 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             SMID = bytes[0];
             flags = bytes[1];
-            sessionId = BitConverter.ToUInt16(bytes, 2);
-            length = BitConverter.ToUInt32(bytes, 4) - SNISMUXHeader.HEADER_LENGTH;
-            sequenceNumber = BitConverter.ToUInt32(bytes, 8);
-            highwater = BitConverter.ToUInt32(bytes, 12);
+            Span<byte> span = bytes.AsSpan();
+            sessionId = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(2));
+            length = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(4)) - SNISMUXHeader.HEADER_LENGTH;
+            sequenceNumber = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(8));
+            highwater = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(12));
         }
 
         public void Write(Span<byte> bytes)

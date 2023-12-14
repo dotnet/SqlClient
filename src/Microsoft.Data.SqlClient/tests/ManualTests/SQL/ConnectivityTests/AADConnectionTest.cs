@@ -453,6 +453,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryWorkloadIdentityWithCredentialsMustFail()
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=Active Directory Workload Identity;";
+
+            SecureString str = new SecureString();
+            foreach (char c in "hello")
+            {
+                str.AppendChar(c);
+            }
+            str.MakeReadOnly();
+            SqlCredential credential = new SqlCredential("someuser", str);
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
+
+            string expectedMessage = "Cannot set the Credential property if 'Authentication=Active Directory Workload Identity' has been specified in the connection string.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
         [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup))]
         public static void ActiveDirectoryManagedIdentityWithPasswordMustFail()
         {
@@ -636,7 +657,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsIntegratedSecuritySetup), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ADInteractiveUsingSSPI()
+        public static void ADIntegratedUsingSSPI()
         {
             // test Passes with correct connection string.
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };

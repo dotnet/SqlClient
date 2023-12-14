@@ -4,6 +4,7 @@
 
 using System;
 using System.Buffers;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
@@ -40,6 +41,17 @@ namespace Microsoft.Data.SqlClient
     // and surfacing objects to the user.
     internal sealed partial class TdsParser
     {
+        internal struct ReliabilitySection
+        {
+            /// <summary>
+            /// This is a no-op in netcore version. Only needed for merging with netfx codebase.
+            /// </summary>
+            [Conditional("NETFRAMEWORK")]
+            internal static void Assert(string message)
+            {
+            }
+        }
+
         private static int _objectTypeCount; // EventSource counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
@@ -1749,7 +1761,7 @@ namespace Microsoft.Data.SqlClient
         internal static void WriteInt(Span<byte> buffer, int value)
         {
 #if NETCOREAPP
-            BitConverter.TryWriteBytes(buffer, value);
+            BinaryPrimitives.TryWriteInt32LittleEndian(buffer, value);
 #else
             buffer[0] = (byte)(value & 0xff);
             buffer[1] = (byte)((value >> 8) & 0xff);
@@ -1768,7 +1780,9 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ParameterValueOutOfRange(v.ToString());
             }
 
-            return BitConverter.GetBytes(v);
+            var bytes = new byte[4];
+            BinaryPrimitives.WriteInt32LittleEndian(bytes, BitConverterCompatible.SingleToInt32Bits(v));
+            return bytes;
         }
 
         internal void WriteFloat(float v, TdsParserStateObject stateObj)
@@ -1891,7 +1905,9 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ParameterValueOutOfRange(v.ToString());
             }
 
-            return BitConverter.GetBytes(v);
+            var bytes = new byte[8];
+            BinaryPrimitives.WriteInt64LittleEndian(bytes, BitConverter.DoubleToInt64Bits(v));
+            return bytes;
         }
 
         internal void WriteDouble(double v, TdsParserStateObject stateObj)
@@ -3818,8 +3834,8 @@ namespace Microsoft.Data.SqlClient
                     uint currentOptionOffset = checked(i * optionSize);
 
                     byte id = tokenData[currentOptionOffset];
-                    uint dataLen = BitConverter.ToUInt32(tokenData, checked((int)(currentOptionOffset + 1)));
-                    uint dataOffset = BitConverter.ToUInt32(tokenData, checked((int)(currentOptionOffset + 5)));
+                    uint dataLen = BinaryPrimitives.ReadUInt32LittleEndian(tokenData.AsSpan(checked((int)(currentOptionOffset + 1))));
+                    uint dataOffset = BinaryPrimitives.ReadUInt32LittleEndian(tokenData.AsSpan(checked((int)(currentOptionOffset + 5))));
                     if (SqlClientEventSource.Log.IsAdvancedTraceOn())
                     {
                         SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> FedAuthInfoOpt: ID={0}, DataLen={1}, Offset={2}", id, dataLen.ToString(CultureInfo.InvariantCulture), dataOffset.ToString(CultureInfo.InvariantCulture));
@@ -5788,7 +5804,7 @@ namespace Microsoft.Data.SqlClient
                         return false;
                     }
 
-                    longValue = BitConverter.ToInt64(unencryptedBytes, 0);
+                    longValue = BinaryPrimitives.ReadInt64LittleEndian(unencryptedBytes);
 
                     if (tdsType == TdsEnums.SQLBIT ||
                         tdsType == TdsEnums.SQLBITN)
@@ -5826,7 +5842,7 @@ namespace Microsoft.Data.SqlClient
                         return false;
                     }
 
-                    singleValue = BitConverter.ToSingle(unencryptedBytes, 0);
+                    singleValue = BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(unencryptedBytes));
                     value.Single = singleValue;
                     break;
 
@@ -5837,7 +5853,7 @@ namespace Microsoft.Data.SqlClient
                         return false;
                     }
 
-                    doubleValue = BitConverter.ToDouble(unencryptedBytes, 0);
+                    doubleValue = BitConverter.Int64BitsToDouble(BinaryPrimitives.ReadInt64LittleEndian(unencryptedBytes));
                     value.Double = doubleValue;
                     break;
 
@@ -5854,8 +5870,8 @@ namespace Microsoft.Data.SqlClient
                             return false;
                         }
 
-                        mid = BitConverter.ToInt32(unencryptedBytes, 0);
-                        lo = BitConverter.ToUInt32(unencryptedBytes, 4);
+                        mid = BinaryPrimitives.ReadInt32LittleEndian(unencryptedBytes);
+                        lo = BinaryPrimitives.ReadUInt32LittleEndian(unencryptedBytes.AsSpan(4));
 
                         long l = (((long)mid) << 0x20) + ((long)lo);
                         value.SetToMoney(l);
@@ -5892,8 +5908,8 @@ namespace Microsoft.Data.SqlClient
                         return false;
                     }
 
-                    daypart = BitConverter.ToInt32(unencryptedBytes, 0);
-                    timepart = BitConverter.ToUInt32(unencryptedBytes, 4);
+                    daypart = BinaryPrimitives.ReadInt32LittleEndian(unencryptedBytes);
+                    timepart = BinaryPrimitives.ReadUInt32LittleEndian(unencryptedBytes.AsSpan(4));
                     value.SetToDateTime(daypart, (int)timepart);
                     break;
 
@@ -5936,10 +5952,11 @@ namespace Microsoft.Data.SqlClient
                     length = checked((int)length - 1);
                     int[] bits = new int[4];
                     int decLength = length >> 2;
+                    var span = unencryptedBytes.AsSpan();
                     for (int i = 0; i < decLength; i++)
                     {
                         // up to 16 bytes of data following the sign byte
-                        bits[i] = BitConverter.ToInt32(unencryptedBytes, index);
+                        bits[i] = BinaryPrimitives.ReadInt32LittleEndian(span.Slice(index));
                         index += 4;
                     }
                     value.SetToDecimal(md.baseTI.precision, md.baseTI.scale, fPositive, bits);
@@ -7507,7 +7524,20 @@ namespace Microsoft.Data.SqlClient
 
         private static void CopyCharsToBytes(char[] source, int sourceOffset, byte[] dest, int destOffset, int charLength)
         {
-            Buffer.BlockCopy(source, sourceOffset, dest, destOffset, charLength * ADP.CharSize);
+            if (!BitConverter.IsLittleEndian)
+            {
+                int desti = 0;
+                Span<byte> span = dest.AsSpan();
+                for (int srci = 0; srci < charLength; srci++)
+                {
+                    BinaryPrimitives.WriteUInt16LittleEndian(span.Slice(desti + destOffset), (ushort)source[srci + sourceOffset]);
+                    desti += 2;
+                }
+            }
+            else
+            {
+                Buffer.BlockCopy(source, sourceOffset, dest, destOffset, charLength * ADP.CharSize);
+            }
         }
 
         private static void CopyStringToBytes(string source, int sourceOffset, byte[] dest, int destOffset, int charLength)
@@ -7961,6 +7991,9 @@ namespace Microsoft.Data.SqlClient
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryDefault:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYWORKLOADIDENTITY;
                                 break;
                             default:
                                 if (_connHandler._accessTokenCallback != null)
