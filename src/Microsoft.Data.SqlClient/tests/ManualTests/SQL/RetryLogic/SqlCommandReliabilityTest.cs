@@ -640,7 +640,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Assertion that Method Exceptions are Aggregate Exceptions
             foreach (var exception in exceptions)
             {
-                Assert.IsType<AggregateException>(exception.InnerException);
+                Assert.IsType<AggregateException>(exception.InnerException); // We need to look at the InnerException due to Synchronous Exception Propogation 
             }
             // Assertion for Retries
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + exceptions.Count);
@@ -700,7 +700,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Assertion that Method Exceptions are Aggregate Exceptions
             foreach (var exception in exceptions)
             {
-                Assert.IsType<AggregateException>(exception);
+                Assert.IsType<AggregateException>(exception); // In Asynchronous code, the Exception is placed on the Task object
             }
             // Assertion for Retries
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + exceptions.Count);
