@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlBatchCommand batchCommand = new SqlBatchCommand("SELECT @p");
 
                 Assert.True(batchCommand.CanCreateParameter);
-                SqlParameter parameter = batchCommand.CreateParameter();
+                SqlParameter parameter = (SqlParameter)batchCommand.CreateParameter();
                 Assert.NotNull(parameter);
                 parameter.ParameterName = "@p";
                 parameter.Value = 1;
