@@ -18,14 +18,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private readonly string _exceedErrMsgPattern = RetryLogicTestHelper.s_exceedErrMsgPattern;
         private readonly string _cancelErrMsgPattern = RetryLogicTestHelper.s_cancelErrMsgPattern;
 
-        private enum SqlCommandTestType
-        {
-            ExecuteScalar = 0,
-            ExecuteNonQuery = 1,
-            ExecuteReader = 2,
-            ExecuteXmlReader = 3
-        }
-
         #region Sync
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
@@ -536,15 +528,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string query = "SELECT bad command";
             int concurrentExecution = 3;
-            ProcessDataInParallel(cnnString, provider, query, concurrentExecution, SqlCommandTestType.ExecuteScalar);
-            ProcessDataInParallel(cnnString, provider, query, concurrentExecution, SqlCommandTestType.ExecuteNonQuery);
-            ProcessDataInParallel(cnnString, provider, query, concurrentExecution, SqlCommandTestType.ExecuteReader);
-            ProcessDataInParallel(cnnString, provider, query, concurrentExecution, SqlCommandTestType.ExecuteXmlReader);
+            ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteScalar());
+            ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteNonQuery());
+            ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteReader());
+            ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteXmlReader());
 
             if (DataTestUtility.IsNotAzureSynapse())
             {
                 query += " FOR XML AUTO";
-                ProcessDataInParallel(cnnString, provider, query, concurrentExecution, SqlCommandTestType.ExecuteXmlReader);
+                ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteXmlReader());
             }
         }
 
@@ -554,15 +546,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string query = "SELECT bad command";
             int concurrentExecution = 3;
-            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, SqlCommandTestType.ExecuteScalar);
-            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, SqlCommandTestType.ExecuteNonQuery);
-            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, SqlCommandTestType.ExecuteReader);
-            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, SqlCommandTestType.ExecuteXmlReader);
+            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteScalarAsync());
+            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteNonQueryAsync());
+            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteReaderAsync());
+            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteXmlReaderAsync());
 
             if (DataTestUtility.IsNotAzureSynapse())
             {
                 query += " FOR XML AUTO";
-                ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, SqlCommandTestType.ExecuteXmlReader);
+                ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteXmlReaderAsync());
             }
         }
         #endregion
@@ -588,7 +580,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void ProcessDataInParallel(string cnnString, SqlRetryLogicBaseProvider provider,
                                                   string query, int concurrentExecution,
-                                                  SqlCommandTestType sqlCommandTestType)
+                                                  Action<SqlCommand> commandAction)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             int delayCount = 10_000;
@@ -613,21 +605,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             int longQueryOperation = j * j;
                         }
 
-                        switch (sqlCommandTestType)
-                        {
-                            case SqlCommandTestType.ExecuteScalar:
-                                Assert.Throws<Exception>(() => cmd.ExecuteScalar());
-                                break;
-                            case SqlCommandTestType.ExecuteNonQuery:
-                                Assert.Throws<Exception>(() => cmd.ExecuteNonQuery());
-                                break;
-                            case SqlCommandTestType.ExecuteReader:
-                                Assert.Throws<Exception>(() => cmd.ExecuteReader());
-                                break;
-                            case SqlCommandTestType.ExecuteXmlReader:
-                                Assert.Throws<Exception>(() => cmd.ExecuteXmlReader());
-                                break;
-                        }
+                        Assert.Throws<Exception>(() => commandAction(cmd));
                     }
                 }
                 // Store the exception and continue with the loop.
@@ -648,7 +626,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void ProcessDataAsAsync(string cnnString, SqlRetryLogicBaseProvider provider,
                                                string query, int concurrentExecution,
-                                               SqlCommandTestType sqlCommandTestType)
+                                               Func<SqlCommand, Task> commandAction)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             int delayCount = 10_000;
@@ -673,21 +651,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             int longQueryOperation = j * j;
                         }
 
-                        switch (sqlCommandTestType)
-                        {
-                            case SqlCommandTestType.ExecuteScalar:
-                                Assert.ThrowsAsync<Exception>(() => cmd.ExecuteScalarAsync()).Wait();
-                                break;
-                            case SqlCommandTestType.ExecuteNonQuery:
-                                Assert.ThrowsAsync<Exception>(() => cmd.ExecuteNonQueryAsync()).Wait();
-                                break;
-                            case SqlCommandTestType.ExecuteReader:
-                                Assert.ThrowsAsync<Exception>(() => cmd.ExecuteReaderAsync()).Wait();
-                                break;
-                            case SqlCommandTestType.ExecuteXmlReader:
-                                Assert.ThrowsAsync<Exception>(() => cmd.ExecuteXmlReaderAsync()).Wait();
-                                break;
-                        }
+                        Assert.ThrowsAsync<Exception>(async () => await commandAction(cmd)).Wait();
                     }
                 }
                 // Store the exception and continue with the loop.
