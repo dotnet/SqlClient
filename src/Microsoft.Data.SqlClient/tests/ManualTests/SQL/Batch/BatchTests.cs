@@ -443,7 +443,6 @@ END";
                     }
                 }
             }
-
             Assert.Equal(3, batch.Commands.Count);
             Assert.Equal(2, count);
             Assert.Equal(1, batch.Commands[0].RecordsAffected);
