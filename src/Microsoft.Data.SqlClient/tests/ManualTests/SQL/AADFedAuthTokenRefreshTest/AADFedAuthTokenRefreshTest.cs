@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Display old expiry in local time which should be in 1 minute from now
             DateTime oldLocalExpiryTime = TimeZoneInfo.ConvertTimeFromUtc((DateTime)oldExpiry, TimeZoneInfo.Local);
-            _output?.WriteLine($"Token: {tokenHash1}   Old Expiry: {oldLocalExpiryTime}");
+            LogInfo($"Token: {tokenHash1}   Old Expiry: {oldLocalExpiryTime}");
             TimeSpan timeDiff = oldLocalExpiryTime - DateTime.Now;
             Assert.True(timeDiff.TotalSeconds <= 60, "Failed to set expiry after 1 minute from current time.");
 
@@ -83,13 +83,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DateTime? newExpiry = GetOrSetTokenExpiryDateTime(connection2, false, out tokenHash2);
             // Display new expiry in local time
             DateTime newLocalTime = TimeZoneInfo.ConvertTimeFromUtc((DateTime)newExpiry, TimeZoneInfo.Local);
-            _output?.WriteLine($"Token: {tokenHash2}   New Expiry: {newLocalTime}");
+            LogInfo($"Token: {tokenHash2}   New Expiry: {newLocalTime}");
 
             Assert.True(tokenHash1 == tokenHash2, "The token's hash before and after token refresh must be identical.");
             Assert.True(newLocalTime > oldLocalExpiryTime, "The refreshed token must have a later expiry time.");
             
             connection.Close();
             connection2.Close();
+        }
+
+        private void LogInfo(string message)
+        {
+            _output?.WriteLine(message);
         }
 
         private DateTime? GetOrSetTokenExpiryDateTime(SqlConnection connection, bool setExpiry, out string tokenHash)
