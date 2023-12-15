@@ -2680,6 +2680,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     // GetFedAuthToken should have updated _newDbConnectionPoolAuthenticationContext.
                     Debug.Assert(_newDbConnectionPoolAuthenticationContext != null, "_newDbConnectionPoolAuthenticationContext should not be null.");
+
+                    if (_newDbConnectionPoolAuthenticationContext != null)
+                    {
+                        // Try adding this new _newDbConnectionPoolAuthenticationContext to the _dbConnectionPool's AuthenticationContextKeys if it is not in there yet.
+                        // The DbConnectionPoolAuthenticationContextKeys collection is used to refresh a cached token just before it expires within 10 minutes.
+                        _dbConnectionPool.AuthenticationContexts.TryAdd(new DbConnectionPoolAuthenticationContextKey(fedAuthInfo.stsurl, fedAuthInfo.spn), _newDbConnectionPoolAuthenticationContext);
+                    }
                 }
             }
             else if (!attemptRefreshTokenLocked)
