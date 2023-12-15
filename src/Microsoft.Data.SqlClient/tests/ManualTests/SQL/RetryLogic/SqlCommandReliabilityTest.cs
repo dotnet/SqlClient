@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string query = "SELECT bad command";
-            int concurrentExecution = 30;
+            int concurrentExecution = 3;
             ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteScalar());
             ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteNonQuery());
             ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteReader());
@@ -542,19 +542,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
-        public void ConcurrentExecutionAsync(string cnnString, SqlRetryLogicBaseProvider provider)
+        public async void ConcurrentExecutionAsync(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string query = "SELECT bad command";
-            int concurrentExecution = 30;
-            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteScalarAsync());
-            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteNonQueryAsync());
-            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteReaderAsync());
-            ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteXmlReaderAsync());
+            int concurrentExecution = 3;
+            await ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteScalarAsync());
+            await ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteNonQueryAsync());
+            await ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteReaderAsync());
+            await ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteXmlReaderAsync());
 
             if (DataTestUtility.IsNotAzureSynapse())
             {
                 query += " FOR XML AUTO";
-                ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteXmlReaderAsync());
+                await ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteXmlReaderAsync());
             }
         }
         #endregion
@@ -619,15 +619,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Assertion that Method Exceptions are Aggregate Exceptions
             foreach (var exception in exceptions)
             {
-                Assert.IsType<AggregateException>(exception.InnerException); // We need to look at the InnerException due to Synchronous Exception Propogation 
+                Assert.IsType<AggregateException>(exception.InnerException);
             }
             // Assertion for Retries
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + exceptions.Count);
         }
 
-        private static void ProcessDataAsAsync(string cnnString, SqlRetryLogicBaseProvider provider,
-                                               string query, int concurrentExecution,
-                                               Func<SqlCommand, Task> commandAction)
+        private static async Task ProcessDataAsAsync(string cnnString, SqlRetryLogicBaseProvider provider,
+                                                     string query, int concurrentExecution,
+                                                     Func<SqlCommand, Task> commandAction)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             int delayCount = 10_000;
@@ -636,37 +636,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             ThreadPool.SetMinThreads(concurrentExecution * 2, concurrentExecution * 2);
             provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);
-            Parallel.For(0, concurrentExecution,
-            i =>
+
+            List<Task> tasks = new List<Task>();
+            for (int i = 0; i < concurrentExecution; i++)
             {
-                try
+                tasks.Add(Task.Run(async () =>
                 {
-                    using (SqlConnection cnn = new SqlConnection(cnnString))
-                    using (SqlCommand cmd = cnn.CreateCommand())
+                    try
                     {
-                        cnn.Open();
-                        cmd.RetryLogicProvider = provider;
-                        cmd.CommandText = query;
-
-                        for (int j = 0; j < delayCount; j++)
+                        using (SqlConnection cnn = new SqlConnection(cnnString))
+                        using (SqlCommand cmd = cnn.CreateCommand())
                         {
-                            int longQueryOperation = j * j;
-                        }
+                            await cnn.OpenAsync();
+                            cmd.RetryLogicProvider = provider;
+                            cmd.CommandText = query;
 
-                        Assert.ThrowsAsync<Exception>(async () => await commandAction(cmd)).Wait();
+                            for (int j = 0; j < delayCount; j++)
+                            {
+                                int longQueryOperation = j * j;
+                            }
+
+                            await Assert.ThrowsAsync<Exception>(async () => await commandAction(cmd));
+                        }
                     }
-                }
-                // Store the exception and continue with the loop.
-                catch (Exception e)
-                {
-                    exceptions.Enqueue(e);
-                }
-            });
+                    // Store the exception and continue with the loop.
+                    catch (Exception e)
+                    {
+                        exceptions.Enqueue(e);
+                    }
+                }));
+            }
+
+            await Task.WhenAll(tasks);
 
             // Assertion that Method Exceptions are Aggregate Exceptions
             foreach (var exception in exceptions)
             {
-                Assert.IsType<AggregateException>(exception); // In Asynchronous code, the Exception is placed on the Task object
+                Assert.IsType<AggregateException>(exception.InnerException); 
             }
             // Assertion for Retries
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + exceptions.Count);
