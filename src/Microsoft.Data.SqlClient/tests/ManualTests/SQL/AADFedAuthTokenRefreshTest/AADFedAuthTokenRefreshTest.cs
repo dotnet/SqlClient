@@ -11,17 +11,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class AADFedAuthTokenRefreshTest
     {
-        //private readonly ITestOutputHelper _output;
+        private readonly ITestOutputHelper _output;
 
-        //public AADFedAuthTokenRefreshTest(ITestOutputHelper output)
-        //{
-        //    _output = output;
-        //}
+        public AADFedAuthTokenRefreshTest(ITestOutputHelper output)
+        {
+            _output = output;
+        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
-        public void FedAuthTokenRefreshTest(ITestOutputHelper output)
+        public void FedAuthTokenRefreshTest()
         {
-            // ------------------  Use settings below for local environment testing in your PC ------------------------
+            // ------------------  Use settings below for local environment testing  ------------------------
             //SqlConnectionStringBuilder builder = new(DataTestUtility.AADPasswordConnectionString);
             //string dataSourceStr = builder.DataSource;
 
@@ -38,13 +38,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             //Assert.True($"{user}" == userEnvVar, @"AZURE_USERNAME environment variable must be set");
             //Assert.True($"{password}" == passwordEnvVar, @"AZURE_PASSWORD environment variable must be set");
 
-            //// This is the format of connection string that works for me
+            //// Local environment connection string
             //string connStr = $"Server={dataSourceStr};Persist Security Info=False;User ID={user};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication=ActiveDirectoryDefault;Timeout=90";
            
             // ------------------ End of local environment settings ----------------------------------------------------
 
+            // ------------------ Pipeline environment setting ---------------------------------------------------------
             // Use this connection string when running in a pipeline
             string connStr = DataTestUtility.AADPasswordConnectionString;
+            // -------------------End of Pipeline environment setting --------------------------------------------------
 
             // Create a new connection object and open it
             SqlConnection connection = new SqlConnection(connStr);
@@ -94,8 +96,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void LogInfo(string message)
         {
-            //_output?.WriteLine(message);
-            Console.WriteLine(message);
+            //Console.WriteLine(message);
+            _output.WriteLine(message);
         }
 
         private DateTime? GetOrSetTokenExpiryDateTime(SqlConnection connection, bool setExpiry, out string tokenHash)
