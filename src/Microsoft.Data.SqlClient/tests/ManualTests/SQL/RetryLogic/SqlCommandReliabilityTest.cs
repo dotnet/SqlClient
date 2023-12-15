@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string query = "SELECT bad command";
-            int concurrentExecution = 3;
+            int concurrentExecution = 30;
             ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteScalar());
             ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteNonQuery());
             ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteReader());
@@ -545,7 +545,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void ConcurrentExecutionAsync(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string query = "SELECT bad command";
-            int concurrentExecution = 3;
+            int concurrentExecution = 30;
             ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteScalarAsync());
             ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteNonQueryAsync());
             ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteReaderAsync());
@@ -587,7 +587,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int retriesCount = 0;
             var exceptions = new ConcurrentQueue<Exception>();
 
-            provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);            
+            ThreadPool.SetMinThreads(concurrentExecution * 2, concurrentExecution * 2);
+            provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);             
             Parallel.For(0, concurrentExecution,
             i =>
             {
@@ -633,6 +634,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int retriesCount = 0;
             var exceptions = new ConcurrentQueue<Exception>();
 
+            ThreadPool.SetMinThreads(concurrentExecution * 2, concurrentExecution * 2);
             provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);
             Parallel.For(0, concurrentExecution,
             i =>
