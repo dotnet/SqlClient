@@ -11,12 +11,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class AADFedAuthTokenRefreshTest
     {
-        private readonly ITestOutputHelper _output;
+        //private readonly ITestOutputHelper _output;
 
-        public AADFedAuthTokenRefreshTest(ITestOutputHelper output)
-        {
-            _output = output;
-        }
+        //public AADFedAuthTokenRefreshTest(ITestOutputHelper output)
+        //{
+        //    _output = output;
+        //}
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
         public void FedAuthTokenRefreshTest(ITestOutputHelper output)
@@ -94,7 +94,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void LogInfo(string message)
         {
-            _output?.WriteLine(message);
+            //_output?.WriteLine(message);
+            Console.WriteLine(message);
         }
 
         private DateTime? GetOrSetTokenExpiryDateTime(SqlConnection connection, bool setExpiry, out string tokenHash)
