@@ -5,15 +5,23 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class AADFedAuthTokenRefreshTest
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
-        public void FedAuthTokenRefreshTest()
+        private readonly ITestOutputHelper _output;
+
+        public AADFedAuthTokenRefreshTest(ITestOutputHelper output)
         {
-            // for local testing in PC
+            _output = output;
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
+        public void FedAuthTokenRefreshTest(ITestOutputHelper output)
+        {
+            // ------------------  Use settings below for local environment testing in your PC ------------------------
             //SqlConnectionStringBuilder builder = new(DataTestUtility.AADPasswordConnectionString);
             //string dataSourceStr = builder.DataSource;
 
@@ -32,11 +40,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             //// This is the format of connection string that works
             //string connStr = $"Server={dataSourceStr};Persist Security Info=False;User ID={user};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication=ActiveDirectoryDefault;Timeout=90";
+           
+            // ------------------ End of local environment settings ----------------------------------------------------
+
             string connStr = DataTestUtility.AADPasswordConnectionString;
 
-            //using var connection = new SqlConnection(connStr);
-            using var connection = new SqlConnection(connStr);
-
+            // Create a new connection object and open it
+            SqlConnection connection = new SqlConnection(connStr);
             connection.Open();
 
             // Set the token expiry to expire in 1 minute from now to force token refresh
@@ -46,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Display old expiry in local time which should be in 1 minute from now
             DateTime oldLocalExpiryTime = TimeZoneInfo.ConvertTimeFromUtc((DateTime)oldExpiry, TimeZoneInfo.Local);
-            Console.WriteLine($"Token: {tokenHash1}   Old Expiry: {oldLocalExpiryTime}");
+            _output.WriteLine($"Token: {tokenHash1}   Old Expiry: {oldLocalExpiryTime}");
             TimeSpan timeDiff = oldLocalExpiryTime - DateTime.Now;
             Assert.True(timeDiff.TotalSeconds <= 60, "Failed to set expiry after 1 minute from current time.");
 
@@ -58,7 +68,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(result != string.Empty, "The connection's command must return a value");
 
             // The new connection will use the same FedAuthToken but will or supposed to refresh first
-            using var connection2 = new SqlConnection(connStr);
+            SqlConnection connection2 = new SqlConnection(connStr);
             connection2.Open();
 
             // Check again if connection is alive
@@ -72,7 +82,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DateTime? newExpiry = GetOrSetTokenExpiryDateTime(connection2, false, out tokenHash2);
             // Display new expiry in local time
             DateTime newLocalTime = TimeZoneInfo.ConvertTimeFromUtc((DateTime)newExpiry, TimeZoneInfo.Local);
-            Console.WriteLine($"Token: {tokenHash2}   New Expiry: {newLocalTime}");
+            _output.WriteLine($"Token: {tokenHash2}   New Expiry: {newLocalTime}");
 
             Assert.True(tokenHash1 == tokenHash2, "The FedAuthToken failed to refresh correctly.");
             Assert.True(newLocalTime > oldLocalExpiryTime, "The FedAuthToken failed to refresh correctly.");
