@@ -38,11 +38,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             //Assert.True($"{user}" == userEnvVar, @"AZURE_USERNAME environment variable must be set");
             //Assert.True($"{password}" == passwordEnvVar, @"AZURE_PASSWORD environment variable must be set");
 
-            //// This is the format of connection string that works
+            //// This is the format of connection string that works for me
             //string connStr = $"Server={dataSourceStr};Persist Security Info=False;User ID={user};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication=ActiveDirectoryDefault;Timeout=90";
            
             // ------------------ End of local environment settings ----------------------------------------------------
 
+            // Use this connection string when running in a pipeline
             string connStr = DataTestUtility.AADPasswordConnectionString;
 
             // Create a new connection object and open it
@@ -56,13 +57,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Display old expiry in local time which should be in 1 minute from now
             DateTime oldLocalExpiryTime = TimeZoneInfo.ConvertTimeFromUtc((DateTime)oldExpiry, TimeZoneInfo.Local);
-            _output.WriteLine($"Token: {tokenHash1}   Old Expiry: {oldLocalExpiryTime}");
+            _output?.WriteLine($"Token: {tokenHash1}   Old Expiry: {oldLocalExpiryTime}");
             TimeSpan timeDiff = oldLocalExpiryTime - DateTime.Now;
             Assert.True(timeDiff.TotalSeconds <= 60, "Failed to set expiry after 1 minute from current time.");
 
             // Check if connection is alive
             string result = "";
-            var cmd = connection.CreateCommand();
+            SqlCommand cmd = connection.CreateCommand();
             cmd.CommandText = "select @@version";
             result = $"{cmd.ExecuteScalar()}";
             Assert.True(result != string.Empty, "The connection's command must return a value");
@@ -82,10 +83,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DateTime? newExpiry = GetOrSetTokenExpiryDateTime(connection2, false, out tokenHash2);
             // Display new expiry in local time
             DateTime newLocalTime = TimeZoneInfo.ConvertTimeFromUtc((DateTime)newExpiry, TimeZoneInfo.Local);
-            _output.WriteLine($"Token: {tokenHash2}   New Expiry: {newLocalTime}");
+            _output?.WriteLine($"Token: {tokenHash2}   New Expiry: {newLocalTime}");
 
-            Assert.True(tokenHash1 == tokenHash2, "The FedAuthToken failed to refresh correctly.");
-            Assert.True(newLocalTime > oldLocalExpiryTime, "The FedAuthToken failed to refresh correctly.");
+            Assert.True(tokenHash1 == tokenHash2, "The token's hash before and after token refresh must be identical.");
+            Assert.True(newLocalTime > oldLocalExpiryTime, "The refreshed token must have a later expiry time.");
             
             connection.Close();
             connection2.Close();
