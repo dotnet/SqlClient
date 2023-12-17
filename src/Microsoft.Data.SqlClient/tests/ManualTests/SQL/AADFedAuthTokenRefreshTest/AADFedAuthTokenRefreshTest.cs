@@ -11,11 +11,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class AADFedAuthTokenRefreshTest
     {
-        private readonly ITestOutputHelper _output;
+        private readonly ITestOutputHelper _testOutputHelper;
 
-        public AADFedAuthTokenRefreshTest(ITestOutputHelper output)
+        public AADFedAuthTokenRefreshTest(ITestOutputHelper testOutputHelper)
         {
-            _output = output;
+            _testOutputHelper = testOutputHelper;
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             result = $"{cmd.ExecuteScalar()}";
             Assert.True(result != string.Empty, "The connection's command must return a value");
 
-            // The new connection will use the same FedAuthToken but will or supposed to refresh first
+            // The new connection will use the same FedAuthToken but will refresh it first as it will expire in 1 minute.
             SqlConnection connection2 = new SqlConnection(connStr);
             connection2.Open();
 
@@ -84,11 +84,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tokenHash2 = "";
             DateTime? newExpiry = GetOrSetTokenExpiryDateTime(connection2, false, out tokenHash2);
             // Display new expiry in local time
-            DateTime newLocalTime = TimeZoneInfo.ConvertTimeFromUtc((DateTime)newExpiry, TimeZoneInfo.Local);
-            LogInfo($"Token: {tokenHash2}   New Expiry: {newLocalTime}");
+            DateTime newLocalExpiryTime = TimeZoneInfo.ConvertTimeFromUtc((DateTime)newExpiry, TimeZoneInfo.Local);
+            LogInfo($"Token: {tokenHash2}   New Expiry: {newLocalExpiryTime}");
 
             Assert.True(tokenHash1 == tokenHash2, "The token's hash before and after token refresh must be identical.");
-            Assert.True(newLocalTime > oldLocalExpiryTime, "The refreshed token must have a later expiry time.");
+            Assert.True(newLocalExpiryTime > oldLocalExpiryTime, "The refreshed token must have a new or later expiry time.");
             
             connection.Close();
             connection2.Close();
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void LogInfo(string message)
         {
             //Console.WriteLine(message);
-            _output.WriteLine(message);
+            _testOutputHelper.WriteLine(message);
         }
 
         private DateTime? GetOrSetTokenExpiryDateTime(SqlConnection connection, bool setExpiry, out string tokenHash)
