@@ -251,6 +251,8 @@
   </ItemGroup>
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0')) AND !$(ReferenceType.Contains('NetStandard')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Compile Include="SQL\Batch\BatchTests.cs" />
+    <Compile Include="AlwaysEncrypted\DateOnlyReadTests.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DateOnlyTestTable.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Reference Include="System.Transactions" />
@@ -260,8 +262,6 @@
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AlwaysEncrypted\DateOnlyReadTests.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DateOnlyTestTable.cs" />
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
     <Compile Include="DataCommon\DataSourceBuilder.cs" />
