@@ -3170,7 +3170,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     }
 
 #if NET6_0_OR_GREATER
-    public record CustomerDateOnly(int Id, string FirstName, string LastName, DateOnly DateOfBirth);
+    public record CustomerDateOnly(int Id, string FirstName, string LastName, DateOnly DateOfBirth, TimeOnly TimeOfDay);
 #endif
 
     internal class TestAsyncCallBackStateObject

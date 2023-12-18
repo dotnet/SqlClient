@@ -37,7 +37,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 Table.DeleteData(tableName, sqlConn);
 
                 // insert 1 row data
-                CustomerDateOnly customer = new CustomerDateOnly(45, "Microsoft", "Corporation", new DateOnly(2001, 1, 31));
+                CustomerDateOnly customer = new CustomerDateOnly(
+                    45, 
+                    "Microsoft", 
+                    "Corporation", 
+                    new DateOnly(2001, 1, 31), 
+                    new TimeOnly(18, 36, 45));
 
                 DatabaseHelper.InsertCustomerDateOnlyData(sqlConn, null, tableName, customer);
 
@@ -80,7 +85,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 yield return new object[] { connStrAE, @"select CustomerId, FirstName, LastName from  [{0}] ", 3, new string[] { @"int", @"string", @"string" } };
                 yield return new object[] { connStrAE, @"select CustomerId, FirstName from  [{0}] ", 2, new string[] { @"int", @"string" } };
                 yield return new object[] { connStrAE, @"select LastName from  [{0}] ", 1, new string[] { @"string" }};
-                yield return new object[] { connStrAE, @"select DateOfBirth from  [{0}] ", 1, new string[] { @"DateOnly" } };
+                yield return new object[] { connStrAE, @"select DateOfBirth, TimeOfDay from  [{0}] ", 2, new string[] { @"DateOnly", "TimeOnly" } };
             }
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

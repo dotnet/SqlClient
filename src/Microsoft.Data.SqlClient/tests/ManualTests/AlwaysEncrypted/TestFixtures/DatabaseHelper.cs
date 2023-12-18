@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         internal static void InsertCustomerDateOnlyData(SqlConnection sqlConnection, SqlTransaction transaction, string tableName, CustomerDateOnly customer)
         {
             using SqlCommand sqlCommand = new(
-                $"INSERT INTO [{tableName}] (CustomerId, FirstName, LastName, DateOfBirth) VALUES (@CustomerId, @FirstName, @LastName, @DateOfBirth);",
+                $"INSERT INTO [{tableName}] (CustomerId, FirstName, LastName, DateOfBirth, TimeOfDay) VALUES (@CustomerId, @FirstName, @LastName, @DateOfBirth, @TimeOfDay);",
                 connection: sqlConnection,
                 transaction: transaction,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
@@ -47,6 +47,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
             sqlCommand.Parameters.AddWithValue(@"LastName", customer.LastName);
             sqlCommand.Parameters.AddWithValue(@"DateOfBirth", customer.DateOfBirth);
+            sqlCommand.Parameters.AddWithValue(@"TimeOfDay", customer.TimeOfDay);
             sqlCommand.ExecuteNonQuery();
         }
 #endif
@@ -178,6 +179,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 #if NET6_0_OR_GREATER
                     case "DateOnly":
                         Assert.True(sqlDataReader.GetFieldValue<DateOnly>(columnsRead) == new DateOnly(2001, 1, 31), "FAILED: read DateOnly value does not match.");
+                        break;
+
+                    case "TimeOnly":
+                        Assert.True(sqlDataReader.GetFieldValue<TimeOnly>(columnsRead) == new TimeOnly(18, 36, 45), "FAILED: read TimeOnly value does not match.");
                         break;
 #endif
                     default:
