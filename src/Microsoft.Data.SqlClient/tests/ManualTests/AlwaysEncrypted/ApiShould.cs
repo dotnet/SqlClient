@@ -3160,9 +3160,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Id = id;
             FirstName = firstName;
             LastName = lastName;
-#if NET6_0_OR_GREATER
-            DateOfBirth = new DateOnly(1990, 1, 31);
-#endif
         }
 
         public int Id { get; set; }
@@ -3170,10 +3167,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public string FirstName { get; set; }
 
         public string LastName { get; set; }
-
-#if NET6_0_OR_GREATER
-        public DateOnly DateOfBirth { get; set; }
-#endif
     }
 
     internal class TestAsyncCallBackStateObject

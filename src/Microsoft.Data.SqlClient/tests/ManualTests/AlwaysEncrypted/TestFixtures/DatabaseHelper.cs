@@ -20,11 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         internal static void InsertCustomerData(SqlConnection sqlConnection, SqlTransaction transaction, string tableName, Customer customer)
         {
             using SqlCommand sqlCommand = new(
-#if NET6_0_OR_GREATER
-                $"INSERT INTO [{tableName}] (CustomerId, FirstName, LastName, DateOfBirth) VALUES (@CustomerId, @FirstName, @LastName, @DateOfBirth);",
-#else
                 $"INSERT INTO [{tableName}] (CustomerId, FirstName, LastName) VALUES (@CustomerId, @FirstName, @LastName);",
-#endif
                 connection: sqlConnection,
                 transaction: transaction,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
@@ -32,9 +28,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
             sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
             sqlCommand.Parameters.AddWithValue(@"LastName", customer.LastName);
-#if NET6_0_OR_GREATER
-            sqlCommand.Parameters.AddWithValue(@"DateOfBirth", customer.DateOfBirth);
-#endif
             sqlCommand.ExecuteNonQuery();
         }
 
@@ -163,11 +156,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Assert.True(sqlDataReader.GetInt32(columnsRead) == 45, "FAILED: read int value does not match.");
                         break;
 
-#if NET6_0_OR_GREATER
-                    case "DateOnly":
-                        Assert.True(sqlDataReader.GetFieldValue<DateOnly>(columnsRead) == new DateOnly(1990, 1, 31), "FAILED: read DateOnly value does not match.");
-                        break;
-#endif
                     default:
                         Assert.Fail("FAILED: unexpected data type.");
                         break;

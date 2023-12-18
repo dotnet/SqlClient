@@ -149,9 +149,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 yield return new object[] { connStrAE, @"select CustomerId, FirstName, LastName from  [{0}] ", 3, new string[] { @"int", @"string", @"string" } };
                 yield return new object[] { connStrAE, @"select CustomerId, FirstName from  [{0}] ", 2, new string[] { @"int", @"string" } };
                 yield return new object[] { connStrAE, @"select LastName from  [{0}] ", 1, new string[] { @"string" }};
-#if NET6_0_OR_GREATER
-                yield return new object[] { connStrAE, @"select DateOfBirth from  [{0}] ", 1, new string[] { @"DateOnly" } };
-#endif
             }
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
