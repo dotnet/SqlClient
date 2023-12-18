@@ -1,6 +1,6 @@
 {
-    "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
-    "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
+    "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;Max Pool Size = 1;",
+    "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;Max Pool Size = 1;",
     "TCPConnectionStringHGSVBS": "",
     "TCPConnectionStringAASVBS": "",
     "TCPConnectionStringNoneVBS": "",

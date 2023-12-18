@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string query = "SELECT bad command";
-            int concurrentExecution = 3;
+            int concurrentExecution = 30;
             ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteScalar());
             ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteNonQuery());
             ProcessDataInParallel(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteReader());
@@ -545,7 +545,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public async void ConcurrentExecutionAsync(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string query = "SELECT bad command";
-            int concurrentExecution = 3;
+            int concurrentExecution = 30;
             await ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteScalarAsync());
             await ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteNonQueryAsync());
             await ProcessDataAsAsync(cnnString, provider, query, concurrentExecution, cmd => cmd.ExecuteReaderAsync());
