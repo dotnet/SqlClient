@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         // tests
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(TestSelectOnEncryptedNonEncryptedColumnsData))]
+        [ClassData(typeof(TestSelectOnEncryptedNonEncryptedColumnsDataDateOnly))]
         public void TestSelectOnEncryptedNonEncryptedColumns(string connString, string selectQuery, int totalColumnsInSelect, string[] types)
         {
             Assert.False(string.IsNullOrWhiteSpace(selectQuery), "FAILED: select query should not be null or empty.");
