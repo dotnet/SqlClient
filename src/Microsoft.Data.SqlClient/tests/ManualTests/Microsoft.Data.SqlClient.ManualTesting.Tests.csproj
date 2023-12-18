@@ -56,6 +56,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAETestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAEErrorMessageTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyTruncationTables.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DateOnlyTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlNullValuesTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlParameterPropertiesTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DbObject.cs" />
@@ -68,6 +69,9 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyProviderMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
+    <Compile Include="AlwaysEncrypted\DateOnlyReadTests.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '1'">
     <Compile Include="SQL\AsyncTest\AsyncTimeoutTest.cs" />
@@ -251,8 +255,6 @@
   </ItemGroup>
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0')) AND !$(ReferenceType.Contains('NetStandard')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Compile Include="SQL\Batch\BatchTests.cs" />
-    <Compile Include="AlwaysEncrypted\DateOnlyReadTests.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DateOnlyTestTable.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Reference Include="System.Transactions" />
