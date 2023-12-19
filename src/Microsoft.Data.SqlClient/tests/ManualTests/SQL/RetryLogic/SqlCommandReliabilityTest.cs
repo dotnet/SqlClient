@@ -683,7 +683,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 retryExceptionCount += retryAggregateException.InnerExceptions?.Count ?? 0;
             }
             // Assertion for Retries
-            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + exceptions.Count);
+            Assert.Equal(numberOfTries * concurrentExecution, retryExceptionCount);
         }
         #endregion
     }
