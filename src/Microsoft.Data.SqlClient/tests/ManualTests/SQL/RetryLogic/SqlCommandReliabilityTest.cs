@@ -617,12 +617,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             });
 
             // Assertion that Method Exceptions are Aggregate Exceptions
+            int retryExceptionCount = 0;
             foreach (var exception in exceptions)
             {
                 Assert.IsType<AggregateException>(exception.InnerException);
+                
+                var retryAggregateException = exception.InnerException as AggregateException;
+                retryExceptionCount += retryAggregateException.InnerExceptions?.Count ?? 0;
             }
             // Assertion for Retries
-            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + exceptions.Count);
+            Assert.Equal(numberOfTries * concurrentExecution, retryExceptionCount);
         }
 
         private static async Task ProcessDataAsAsync(string cnnString, SqlRetryLogicBaseProvider provider,
@@ -670,9 +674,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             await Task.WhenAll(tasks);
 
             // Assertion that Method Exceptions are Aggregate Exceptions
+            int retryExceptionCount = 0;
             foreach (var exception in exceptions)
             {
-                Assert.IsType<AggregateException>(exception.InnerException); 
+                Assert.IsType<AggregateException>(exception.InnerException);
+
+                var retryAggregateException = exception.InnerException as AggregateException;
+                retryExceptionCount += retryAggregateException.InnerExceptions?.Count ?? 0;
             }
             // Assertion for Retries
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + exceptions.Count);
