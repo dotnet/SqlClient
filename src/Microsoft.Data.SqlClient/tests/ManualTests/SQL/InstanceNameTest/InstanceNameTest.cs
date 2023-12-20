@@ -88,10 +88,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ActiveIssue("27981")] // DataSource.InferNamedPipesInformation is not initializing InstanceName field
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(nameof(IsSPNPortNumberTest))]
         [InlineData("")]
         [InlineData("44444")]
-        [SkipOnTargetFramework(~TargetFrameworkMonikers.NetFramework)]
         public static void PortNumberInSPNTestForNP(string port)
         {
             string connectionString = DataTestUtility.NPConnectionString;
@@ -103,10 +103,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PortNumberInSPNTest(builder.ConnectionString);
         }
 
+        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(nameof(IsSPNPortNumberTest))]
         [InlineData("")]
         [InlineData("44444")]
-        [SkipOnTargetFramework(~TargetFrameworkMonikers.NetFramework)]
         public static void PortNumberInSPNTestForTCP(string port)
         {
             string connectionString = DataTestUtility.TCPConnectionString;
