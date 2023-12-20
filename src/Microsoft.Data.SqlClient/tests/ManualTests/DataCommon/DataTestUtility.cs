@@ -979,8 +979,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             port = -1;
             instanceName = string.Empty;
 
-            if (dataSource.Contains(",") && dataSource.Contains("\\"))
+            // Named pipe protocol data source does not support port number
+            if ((dataSource.ToUpper().Contains(@"\MSSQL$") && dataSource.ToUpper().Contains(@"\SQL\QUERY") && dataSource.Contains(",")) ||
+               (dataSource.ToUpper().Contains(@"np:") && dataSource.Contains(",")))
+            {
+                port = -2;
                 return false;
+            }
 
             if (dataSource.Contains(":"))
             {
@@ -993,7 +998,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     return false;
                 }
-                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal) - 1);
+                // IndexOf is zero-based, no need to subtract one
+                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal));
             }
 
             if (dataSource.Contains("\\"))
