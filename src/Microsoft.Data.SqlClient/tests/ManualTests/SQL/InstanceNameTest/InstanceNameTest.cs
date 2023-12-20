@@ -161,17 +161,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(portInSPN > 0, "The expected SPN must include a valid port number.");
 
                 connection.Close();
-                // Wait 2 seconds for connection to completely close before running second test
-                System.Threading.Thread.Sleep(2000);
             }
         }
 
         private static string GetSPNInfo(string datasource)
         {
-            // This method is failing intermittently in the pipeline with NRE using reflection.
-            // Perhaps some underlying objects are not completely initialized yet.
-            System.Threading.Thread.Sleep(500);
-
             Assembly sqlConnectionAssembly = Assembly.GetAssembly(typeof(SqlConnection));
 
             // Get all required types using reflection
@@ -249,13 +243,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string spnInfo = Encoding.Unicode.GetString(result[0]);
 
             return spnInfo;
-        }
-
-        private static bool IsNotLocalHost()
-        {
-            return (DataTestUtility.AreConnStringsSetup()
-                 && DataTestUtility.IsNotAzureServer()
-                 && DataTestUtility.IsNotAzureSynapse());
         }
 
         private static bool IsSPNPortNumberTest()
