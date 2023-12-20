@@ -87,8 +87,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+#if NETCOREAPP
         [ActiveIssue("27981")] // DataSource.InferNamedPipesInformation is not initializing InstanceName field
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(nameof(IsSPNPortNumberTest))]
         [InlineData("")]
         [InlineData("44444")]
@@ -103,7 +103,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PortNumberInSPNTest(builder.ConnectionString);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(nameof(IsSPNPortNumberTest))]
         [InlineData("")]
         [InlineData("44444")]
@@ -117,6 +116,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             PortNumberInSPNTest(builder.ConnectionString);
         }
+#endif
 
         private static void PortNumberInSPNTest(string connStr)
         {
