@@ -91,6 +91,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalTheory(nameof(IsSPNPortNumberTest))]
         [InlineData("")]
         [InlineData("44444")]
+        [SkipOnTargetFramework(~TargetFrameworkMonikers.NetFramework)]
         public static void PortNumberInSPNTestForNP(string port)
         {
             string connectionString = DataTestUtility.NPConnectionString;
@@ -105,6 +106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalTheory(nameof(IsSPNPortNumberTest))]
         [InlineData("")]
         [InlineData("44444")]
+        [SkipOnTargetFramework(~TargetFrameworkMonikers.NetFramework)]
         public static void PortNumberInSPNTestForTCP(string port)
         {
             string connectionString = DataTestUtility.TCPConnectionString;
