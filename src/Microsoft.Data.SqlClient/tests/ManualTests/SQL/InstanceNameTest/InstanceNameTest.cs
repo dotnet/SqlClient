@@ -142,7 +142,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 // Create a connection object to ensure SPN info is available via reflection
                 using SqlConnection connection = new(builder.ConnectionString);
-                connection.Open();
+
+                // This is failing intermittently in the pipeline. Perhaps it is hitting a limit on connection related issues.
+                int maxTry = 5;
+                while (connection.State != System.Data.ConnectionState.Open && maxTry > 1)
+                {
+                    connection.Open();
+                    if (connection.State != System.Data.ConnectionState.Open)
+                        // Wait for 30 seconds for available connection
+                        System.Threading.Thread.Sleep(30000);
+
+                    maxTry--;
+                }
+                
+                
 
                 // Get the SPN info using reflection
                 string spnInfo = GetSPNInfo(builder.DataSource);
@@ -158,11 +171,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(portInSPN > 0, "The expected SPN must include a valid port number.");
 
                 connection.Close();
+                // Wait 2 seconds for connection to completely close before running second test
+                System.Threading.Thread.Sleep(2000);
             }
         }
 
         private static string GetSPNInfo(string datasource)
         {
+            // This is failing intermittently in the pipeline. Perhaps it is hitting a limit on connection related issues.
+            System.Threading.Thread.Sleep(500);
+
             Assembly sqlConnectionAssembly = Assembly.GetAssembly(typeof(SqlConnection));
 
             // Get all required types using reflection
