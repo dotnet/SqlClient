@@ -7,8 +7,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -85,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ActiveIssue("27981")] // DataSource.InferNamedPipesInformation is not initializing InstanceName field
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUsingManagedSNI))]
         [InlineData("")]
         [InlineData("44444")]
         public static void PortNumberInSPNTestForNP(string port)
@@ -99,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PortNumberInSPNTest(builder.ConnectionString);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUsingManagedSNI))]
         [InlineData("")]
         [InlineData("44444")]
         public static void PortNumberInSPNTestForTCP(string port)
@@ -142,20 +145,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 // Create a connection object to ensure SPN info is available via reflection
                 using SqlConnection connection = new(builder.ConnectionString);
+                
+                // This is failing intermittently in the pipeline. Perhaps it is hitting a limit on connection related issues. ---------------
+                connection.Open();
 
-                // This is failing intermittently in the pipeline. Perhaps it is hitting a limit on connection related issues.
+                Console.WriteLine($"Connection state after Open = {connection.State}");
+
                 int maxTry = 5;
                 while (connection.State != System.Data.ConnectionState.Open && maxTry > 1)
                 {
-                    connection.Open();
                     if (connection.State != System.Data.ConnectionState.Open)
                         // Wait for 30 seconds for available connection
                         System.Threading.Thread.Sleep(30000);
 
+                    if (connection.State == System.Data.ConnectionState.Broken || connection.State == System.Data.ConnectionState.Closed)
+                    {
+                        if (connection.State == System.Data.ConnectionState.Broken)
+                        {
+                            Console.WriteLine($"Connection state before close  = {connection.State}");
+                            connection.Close();
+                            // Wait for 5 seconds to fully close
+                            System.Threading.Thread.Sleep(5000);
+                            Console.WriteLine($"Connection state after close  = {connection.State}");
+                        }
+                        // Open connection once more
+                        connection.Open();
+                        Console.WriteLine($"Connection state after re-open  = {connection.State}");
+                        // Wait for 5 seconds to fully open
+                        System.Threading.Thread.Sleep(5000);
+                    }
+
                     maxTry--;
                 }
-                
-                
+                // ----------------------------------------------------------------------------------------------------------------------------
 
                 // Get the SPN info using reflection
                 string spnInfo = GetSPNInfo(builder.DataSource);
@@ -178,7 +200,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static string GetSPNInfo(string datasource)
         {
-            // This is failing intermittently in the pipeline. Perhaps it is hitting a limit on connection related issues.
+            // This method is failing intermittently in the pipeline with NRE using reflection.
+            // Perhaps some underlying objects are not completely initialized yet.
             System.Threading.Thread.Sleep(500);
 
             Assembly sqlConnectionAssembly = Assembly.GetAssembly(typeof(SqlConnection));
