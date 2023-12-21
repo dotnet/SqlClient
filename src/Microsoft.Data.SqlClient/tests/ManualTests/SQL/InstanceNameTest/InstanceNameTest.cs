@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
 #if NETCOREAPP
         [ActiveIssue("27981")] // DataSource.InferNamedPipesInformation is not initializing InstanceName field
-        [ConditionalTheory(nameof(IsSPNPortNumberTest))]
+        [ConditionalTheory(nameof(IsSPNPortNumberTestForNP))]
         [InlineData("")]
         [InlineData("44444")]
         public static void PortNumberInSPNTestForNP(string port)
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PortNumberInSPNTest(builder.ConnectionString);
         }
 
-        [ConditionalTheory(nameof(IsSPNPortNumberTest))]
+        [ConditionalTheory(nameof(IsSPNPortNumberTestForTCP))]
         [InlineData("")]
         [InlineData("44444")]
         public static void PortNumberInSPNTestForTCP(string port)
@@ -247,12 +247,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return spnInfo;
         }
 
-        private static bool IsSPNPortNumberTest()
+        private static bool IsSPNPortNumberTestForTCP()
         {
-            return (DataTestUtility.AreConnStringsSetup()
+            return (IsInstanceNameValid(DataTestUtility.TCPConnectionString)
+                 && DataTestUtility.AreConnStringsSetup()
                  && DataTestUtility.IsUsingManagedSNI()
                  && DataTestUtility.IsNotAzureServer()
                  && DataTestUtility.IsNotAzureSynapse());
+        }
+
+        private static bool IsSPNPortNumberTestForNP()
+        {
+            return (IsInstanceNameValid(DataTestUtility.NPConnectionString)
+                 && DataTestUtility.AreConnStringsSetup()
+                 && DataTestUtility.IsUsingManagedSNI()
+                 && DataTestUtility.IsNotAzureServer()
+                 && DataTestUtility.IsNotAzureSynapse());
+        }
+
+        private static bool IsInstanceNameValid(string connStr)
+        {
+            string hostname = "";
+            string instanceName = "";
+            int port = -1;
+
+            SqlConnectionStringBuilder builder = new(connStr);
+            
+            DataTestUtility.ParseDataSource(builder.DataSource, out hostname, out port, out instanceName);
+
+            return !string.IsNullOrWhiteSpace(instanceName);
+
         }
 
         private static bool IsBrowserAlive(string browserHostname)
