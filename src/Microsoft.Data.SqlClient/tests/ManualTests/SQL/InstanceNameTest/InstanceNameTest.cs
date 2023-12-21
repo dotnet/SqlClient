@@ -7,11 +7,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
-using Xunit.Sdk;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -91,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ActiveIssue("27981")] // DataSource.InferNamedPipesInformation is not initializing InstanceName field
         [ConditionalTheory(nameof(IsSPNPortNumberTestForNP))]
         [InlineData("")]
-        [InlineData("44444")]
+        [InlineData("44444")] // Named Instance Sql Server Port will be setup in the pipeline to 44444 as well
         public static void PortNumberInSPNTestForNP(string port)
         {
             string connectionString = DataTestUtility.NPConnectionString;
@@ -105,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(nameof(IsSPNPortNumberTestForTCP))]
         [InlineData("")]
-        [InlineData("44444")]
+        [InlineData("44444")] // Named Instance Sql Server Port will be setup in the pipeline to 44444 as well
         public static void PortNumberInSPNTestForTCP(string port)
         {
             string connectionString = DataTestUtility.TCPConnectionString;
