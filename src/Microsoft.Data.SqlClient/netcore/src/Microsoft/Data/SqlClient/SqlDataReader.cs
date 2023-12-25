@@ -4401,7 +4401,7 @@ namespace Microsoft.Data.SqlClient
             }
             if ((columnIndex < 0) || (columnIndex >= _metaData.Length))
             {
-                throw ADP.IndexOutOfRange();
+                throw ADP.IndexOutOfRange(columnIndex);
             }
             if ((IsCommandBehavior(CommandBehavior.SequentialAccess)) &&                                    // Only for sequential access
                 ((_sharedState._nextColumnDataToRead > columnIndex) || (_lastColumnWithDataChunkRead > columnIndex) ||   // Read past column
