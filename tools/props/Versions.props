@@ -39,7 +39,7 @@
   <PropertyGroup>
     <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
     <MicrosoftDataSqlClientSNIRuntimeVersion>5.2.0-preview1.23340.1</MicrosoftDataSqlClientSNIRuntimeVersion>
-    <SystemConfigurationConfigurationManagerVersion>6.0.1</SystemConfigurationConfigurationManagerVersion>
+    <SystemConfigurationConfigurationManagerVersion>8.0.0</SystemConfigurationConfigurationManagerVersion>
     <MicrosoftSqlServerServerVersion>1.0.0</MicrosoftSqlServerServerVersion>
     <SystemDiagnosticsPerformanceCounterVersion>6.0.1</SystemDiagnosticsPerformanceCounterVersion>
     <SystemRuntimeCachingVersion>6.0.0</SystemRuntimeCachingVersion>
