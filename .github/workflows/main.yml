@@ -80,6 +80,11 @@ jobs:
           $spec = [xml] (Get-Content $file.FullName)
           $spec.package.metadata.id = 'Rabota.Data.SqlClient'
           $spec.package.metadata.title = 'Rabota.Data.SqlClient'
+          $spec.package.metadata.authors = 'robota.ua'
+          $spec.package.metadata.projectUrl = 'https://github.com/rabotaua/SqlClient'
+          $spec.package.metadata.description = 'Notice: this is not Microsoft library it is an robota.ua fork to fix issue with old SQLServer version in modern environments, if you found this library you probably want to use Microsoft.Data.SqlClient instead'
+          $spec.package.metadata.releaseNotes = 'https://github.com/rabotaua/SqlClient'
+          $spec.package.metadata.copyright = 'robota.ua'
           $spec.Save($file.FullName)
       - run: msbuild /t:BuildAllConfigurations /p:Configuration=Release /p:NugetPackageVersion=3.0.${{ github.run_number }}
       - run: dir packages
