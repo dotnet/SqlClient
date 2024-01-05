@@ -115,24 +115,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 #endif
 
-        private static void PortNumberInSPNTest(string connStr)
+        private static void PortNumberInSPNTest(string connectionString)
         {
             // If config.json.Supports IntegratedSecurity = true, replace all keys defined below with Integrated Security=true 
             if (DataTestUtility.IsIntegratedSecuritySetup())
             {
                 string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection" };
-                connStr = DataTestUtility.RemoveKeysInConnStr(connStr, removeKeys) + $"Integrated Security=true";
+                connectionString = DataTestUtility.RemoveKeysInConnStr(connectionString, removeKeys) + $"Integrated Security=true";
             }
 
-            SqlConnectionStringBuilder builder = new(connStr);
+            SqlConnectionStringBuilder builder = new(connectionString);
 
             string hostname = "";
             string instanceName = "";
             int port = -1;
+
+            // Named pipe protocol data source does not support port number
+            string dataSource = builder.DataSource.ToUpper();
+            if ((dataSource.Contains(@"\MSSQL$") && builder.DataSource.ToUpper().Contains(@"\SQL\QUERY") && dataSource.Contains(",")) ||
+               (dataSource.Contains(@"NP:") && dataSource.Contains(",")))
+            {
+                port = -2;
+            }
+            Assert.False(port == -2, "Named pipe protocol in data source does not support port number.");
+
             DataTestUtility.ParseDataSource(builder.DataSource, out hostname, out port, out instanceName);
-            Assert.True(port != -2, "Named pipe protocol in data source does not support port number.");
-            Assert.True(!string.IsNullOrEmpty(hostname), "Hostname must be included in the data source.");
-            Assert.True(!string.IsNullOrEmpty(instanceName), "Instance name must be included in the data source.");
+            
+            Assert.False(string.IsNullOrEmpty(hostname), "Hostname must be included in the data source.");
+            Assert.False(string.IsNullOrEmpty(instanceName), "Instance name must be included in the data source.");
 
             bool isBrowserRunning = IsBrowserAlive(hostname);
             Assert.True(isBrowserRunning, "Browser service is not running.");
@@ -143,7 +153,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (isBrowserRunning && isInstanceExisting)
             {
                 // Create a connection object to ensure SPN info is available via reflection
-                using SqlConnection connection = new(builder.ConnectionString);
+                SqlConnection connection = new(builder.ConnectionString);
                 connection.Open();
 
                 // Get the SPN info using reflection
@@ -163,7 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static string GetSPNInfo(string datasource)
+        private static string GetSPNInfo(string dataSource)
         {
             Assembly sqlConnectionAssembly = Assembly.GetAssembly(typeof(SqlConnection));
 
@@ -194,8 +204,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Instantiate SNIProxy
             object sniProxy = sniProxyCtor.Invoke(new object[] { });
 
-            // Instantiate datasource 
-            object dataSourceObj = dataSourceCtor.Invoke(new object[] { datasource });
+            // Instantiate dataSource 
+            object dataSourceObj = dataSourceCtor.Invoke(new object[] { dataSource });
 
             // Instantiate SSRP
             object ssrpObj = SSRPCtor.Invoke(new object[] { });
@@ -209,9 +219,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Create a timeoutTimer that expires in 30 seconds
             timeoutTimerObj = startSecondsTimeout.Invoke(dataSourceObj, new object[] { 30 });
 
-            // Parse the datasource to separate the server name and instance name
+            // Parse the dataSource to separate the server name and instance name
             MethodInfo ParseServerName = dataSourceObj.GetType().GetMethod("ParseServerName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, dataSourceConstructorTypesArray, null);
-            object dataSrcInfo = ParseServerName.Invoke(dataSourceObj, new object[] { datasource });
+            object dataSrcInfo = ParseServerName.Invoke(dataSourceObj, new object[] { dataSource });
 
             // Get the GetPortByInstanceName method of SSRP
             MethodInfo getPortByInstanceName = ssrpObj.GetType().GetMethod("GetPortByInstanceName", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, getPortByInstanceNameTypesArray, null);
@@ -227,7 +237,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Get the port number using the GetPortByInstanceName method of SSRP
             object port = getPortByInstanceName.Invoke(ssrpObj, parameters: new object[] { serverName, instanceName, timeoutTimerObj, false, 0 });
 
-            // Set the resolved port property of datasource
+            // Set the resolved port property of dataSource
             PropertyInfo resolvedPortInfo = dataSrcInfo.GetType().GetProperty("ResolvedPort", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             resolvedPortInfo.SetValue(dataSrcInfo, (int)port, null);
 
@@ -262,18 +272,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                  && DataTestUtility.IsNotAzureSynapse());
         }
 
-        private static bool IsInstanceNameValid(string connStr)
+        private static bool IsInstanceNameValid(string connectionString)
         {
             string hostname = "";
             string instanceName = "";
             int port = -1;
 
-            SqlConnectionStringBuilder builder = new(connStr);
+            SqlConnectionStringBuilder builder = new(connectionString);
             
             DataTestUtility.ParseDataSource(builder.DataSource, out hostname, out port, out instanceName);
 
             return !string.IsNullOrWhiteSpace(instanceName);
-
         }
 
         private static bool IsBrowserAlive(string browserHostname)

@@ -979,14 +979,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             port = -1;
             instanceName = string.Empty;
 
-            // Named pipe protocol data source does not support port number
-            if ((dataSource.ToUpper().Contains(@"\MSSQL$") && dataSource.ToUpper().Contains(@"\SQL\QUERY") && dataSource.Contains(",")) ||
-               (dataSource.ToUpper().Contains(@"NP:") && dataSource.Contains(",")))
-            {
-                port = -2;
-                return false;
-            }
-
             if (dataSource.Contains(":"))
             {
                 dataSource = dataSource.Substring(dataSource.IndexOf(":", StringComparison.Ordinal) + 1);
