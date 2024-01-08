@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Preview Release 5.2.0-preview4.23342.2] - 2023-12-08
 
+This update brings the below changes over the previous release:
+
 ### Added
 
 - Added `SqlBatch` support on .NET 6+ [#1825](https://github.com/dotnet/SqlClient/pull/1825), [#2223](https://github.com/dotnet/SqlClient/pull/2223)
@@ -100,10 +102,6 @@ This update brings the below changes over the previous release:
 - Fixed invariant mode checks. [#1917](https://github.com/dotnet/SqlClient/pull/1917)
 - Fixed GC behavior in TdsParser by adding array rental capability in TryReadPlpUnicodeChars. [#1866](https://github.com/dotnet/SqlClient/pull/1866)
 
-## [Stable release 5.1.2] - 2023-10-26
-
-This update brings the below changes over the previous release:
-
 ### Changed
 
 - Updated Azure Identity version from 1.7.0 to 1.8.0. [#1921](https://github.com/dotnet/SqlClient/pull/1921)
@@ -111,6 +109,19 @@ This update brings the below changes over the previous release:
 - Removed reference to Microsoft.Win32.Registry since it's shipped starting with .NET 6.0. [#1974](https://github.com/dotnet/SqlClient/pull/1974)
 - Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
 - Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
+
+## [Stable release 5.1.3] - 2024-01-09
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed encryption downgrade issue. [CVE-2024-0056](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-0056)
+- Fixed certificate chain validation logic flow.
+
+## [Stable release 5.1.2] - 2023-10-26
+
+This update brings the below changes over the previous release:
 
 ### Fixed
 
