@@ -634,7 +634,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                                      Func<SqlCommand, Task> commandAction)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
-            int delayCount = 10_000;
             int retriesCount = 0;
             var exceptions = new ConcurrentQueue<Exception>();
 
@@ -654,11 +653,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             await cnn.OpenAsync();
                             cmd.RetryLogicProvider = provider;
                             cmd.CommandText = query;
-
-                            for (int j = 0; j < delayCount; j++)
-                            {
-                                int longQueryOperation = j * j;
-                            }
 
                             await Assert.ThrowsAsync<Exception>(async () => await commandAction(cmd));
                         }
