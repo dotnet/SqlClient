@@ -597,6 +597,13 @@ This update brings the below changes over the previous release:
 
 - Modified column encryption key store provider registrations to give built-in system providers precedence over providers registered on connection and command instances. [#1101](https://github.com/dotnet/SqlClient/pull/1101)
 
+## [Stable Release 2.1.7] - 2024-01-09
+
+### Fixed
+
+- Fixed encryption downgrade issue. [CVE-2024-0056](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-0056)
+- Fixed certificate chain validation logic flow.
+
 ## [Stable Release 2.1.6] - 2023-04-27
 
 ### Fixed
