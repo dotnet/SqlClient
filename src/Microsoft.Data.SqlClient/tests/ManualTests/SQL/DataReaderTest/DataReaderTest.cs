@@ -333,7 +333,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_Default_GetValueColumnB_Then_ReadColumnA_Test1()
+        public static void ExecuteReader_WhenCommandBehaviorIsDefault_ReadsColumn1_After_GetValueColumn2_Successfully()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
@@ -347,15 +347,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     reader.GetValue(1);
 
-                    int value2 =  tr1.Read();
+                    int testResult =  tr1.Read();
 
-                    Assert.True(value2 > -1, "Expected to read a value successfully.");
+                    Assert.True(testResult > -1, "Expected to read a value successfully.");
                 }
             }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async void ExecuteReader_CommandBehavior_Default_GetValueColumnB_Then_ReadAsyncColumnA_Test2()
+        public static async void ExecuteReader_WhenCommandBehaviorIsDefault_ReadsAsyncColumn1_After_GetValueColumn2_Successfully()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
@@ -370,15 +370,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     reader.GetValue(1);
 
                     char[] value = new char[1];
-                    int value2 = await tr1.ReadAsync(value, 0, 1);
+                    int testResult = await tr1.ReadAsync(value, 0, 1);
 
-                    Assert.True(value2 > -1, "Expected to read a value successfully.");
+                    Assert.True(testResult > -1, "Expected to read a value successfully.");
                 }
             }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_Default_ReadColumnB_Then_ReadColumnA_Test3()
+        public static void ExecuteReader_WhenCommandBehaviorIsDefault_ReadsColumn1_After_ReadColumn2_Successfully()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
@@ -392,13 +392,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using var tr2 = reader.GetTextReader(1);
 
                 tr2.Read();
-                int value2 = tr1.Read();
-                Assert.True(value2 > -1, "Expected to read a value successfully.");
+                int testResult = tr1.Read();
+                Assert.True(testResult > -1, "Expected to read a value successfully.");
             }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_Default_ReadAsyncColumnB_Then_ReadAsyncColumnA_Test4()
+        public static async void ExecuteReader_WhenCommandBehaviorIsDefault_ReadsAsyncColumn1_After_ReadAsyncColumn2_Successfully()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
@@ -412,15 +412,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using var tr2 = reader.GetTextReader(1);
 
                 char[] value2 = new char[1];
-                tr2.ReadAsync(value2, 0 ,1);
-                char[] value1 = new char[1];
-                tr1.ReadAsync(value1, 0, 1);
-                Assert.True(value1[0] > -1, "Expected to read a value successfully.");
+                await tr2.ReadAsync(value2, 0 ,1);
+                char[] testResult = new char[1];
+                await tr1.ReadAsync(testResult, 0, 1);
+                Assert.True(testResult[0] > -1, "Expected to read a value successfully.");
             }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_Sequential_GetValueColumnB_Then_ReadColumnA_Test5()
+        public static void ExecuteReader_WhenCommandBehaviorIsSequential_ReadColumn1_After_GetValueColumn2_ThrowsException()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
@@ -439,7 +439,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async void ExecuteReader_CommandBehavior_Sequential_ReadColumnB_Then_ReadAsyncColumnA_Test6()
+        public static async void ExecuteReader_WhenCommandBehaviorIsSequential_ReadAsyncColumn1_After_GetValueColumn2_ThrowsException()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
@@ -453,13 +453,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     reader.GetValue(1);
                     char[] value = new char[1];
-                    await Assert.ThrowsAsync<ObjectDisposedException>(() => tr1.ReadAsync(value, 0, 1));
+                    await Assert.ThrowsAsync<ObjectDisposedException>(async () => await tr1.ReadAsync(value, 0, 1));
                 }
             }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_Sequential_ReadColumnB_Then_ReadColumnA_Test7()
+        public static void ExecuteReader_WhenCommandBehaviorIsSequential_ReadColumn1_After_ReadColumn2_ThrowsException()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
@@ -478,7 +478,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async void ExecuteReader_CommandBehavior_Sequential_ReadAsyncColumnB_Then_ReadAsyncColumnA_Test8()
+        public static async void ExecuteReader_WhenCommandBehaviorIsSequential_ReadAsyncColumn1_After_ReadAsyncColumn2_ThrowsException()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
@@ -494,12 +494,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 char[] value2 = new char[1];
                 await tr2.ReadAsync(value2, 0, 1);
                 char[] value1 = new char[1];
-                await Assert.ThrowsAsync<ObjectDisposedException>(() => tr1.ReadAsync(value1, 0, 1));
+                await Assert.ThrowsAsync<ObjectDisposedException>(async () => await tr1.ReadAsync(value1, 0, 1));
             }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_Sequential_ReadColumnB_Then_GetValueColumnA_Test9()
+        public static void ExecuteReader_WhenCommandBehaviorIsSequential_GetValueColumn1_After_ReadColumn2_ThrowsException()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
@@ -518,7 +518,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_Sequential_GetValueColumnB_Then_GetValueColumnA_Test10()
+        public static void ExecuteReader_WhenCommandBehaviorIsSequential_GetValueColumn1_After_GetValueColumn2_ThrowsException()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();

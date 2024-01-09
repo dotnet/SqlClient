@@ -2133,15 +2133,12 @@ namespace Microsoft.Data.SqlClient
 
             bytesRead = 0;
 
-            // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
             bool isSequentialAccess = IsCommandBehavior(CommandBehavior.SequentialAccess);
             if (isSequentialAccess)
             {
                 // Track the index of the last column read used to enforce sequential access.
-                if (i > _lastColumnPartiallyRead)
-                    _lastColumnPartiallyRead = i;
+                _lastColumnPartiallyRead = Math.Max(i, _lastColumnPartiallyRead);
             }
-            // End of GitHub Issue# 2087 fix
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -4323,7 +4320,6 @@ namespace Microsoft.Data.SqlClient
                         (_metaData[i].type == SqlDbType.Timestamp),                                                     // Or Dev11 Bug #336820, Dev10 Bug #479607 (SqlClient: IsDBNull always returns false for timestamp datatype)
                         "Gone past column, be we have no data stored for it");
 
-                    // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
                     if (IsCommandBehavior(CommandBehavior.SequentialAccess))
                     {
                         if (i < _lastColumnPartiallyRead)
@@ -4332,7 +4328,6 @@ namespace Microsoft.Data.SqlClient
                             throw ADP.ObjectDisposed(this);
                         }
                     }
-                    // End GitHub Issue# 2087 fix
 
                     return true;
                 }
@@ -5064,12 +5059,10 @@ namespace Microsoft.Data.SqlClient
                 return source.Task;
             }
 
-            // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
             if (columnIndex < _lastColumnPartiallyRead)
             {
                 return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.ObjectDisposed(this)));
             }
-            // End GitHub Issue# 2087 fix
 
             if (_currentTask != null)
             {

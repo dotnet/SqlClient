@@ -3811,7 +3811,6 @@ namespace Microsoft.Data.SqlClient
                             throw ADP.ObjectDisposed(this);
                         }
                     }
-                    // End GitHub Issue# 2087 fix
 
                     return true;
                 }
@@ -4519,12 +4518,10 @@ namespace Microsoft.Data.SqlClient
                 return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
             }
 
-            // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
             if (columnIndex < _lastColumnRead)
             {
                 return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.ObjectDisposed(this)));
             }
-            // End GitHub Issue# 2087 fix
 
             if (_currentTask != null)
             {
