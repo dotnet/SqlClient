@@ -84,11 +84,11 @@ namespace Microsoft.Data.SqlClient
         private string _resetOptionsString;
 
         private int _lastColumnWithDataChunkRead;
-        private int _lastColumnRead;             // index of last column read 
+        private int _lastColumnPartiallyRead;    // index of last column partially read 
         private long _columnDataBytesRead;       // last byte read by user
         private long _columnDataCharsRead;       // last char read by user
         private char[] _columnDataChars;
-        private int _columnDataCharsIndex;      // Column index that is currently loaded in _columnDataChars
+        private int _columnDataCharsIndex;       // Column index that is currently loaded in _columnDataChars
 
         private Task _currentTask;
         private Snapshot _snapshot;
@@ -126,7 +126,7 @@ namespace Microsoft.Data.SqlClient
             _cancelAsyncOnCloseTokenSource = new CancellationTokenSource();
             _cancelAsyncOnCloseToken = _cancelAsyncOnCloseTokenSource.Token;
             _columnDataCharsIndex = -1;
-            _lastColumnRead = -1;
+            _lastColumnPartiallyRead = -1;
         }
 
         internal bool BrowseModeInfoConsumed
@@ -2138,8 +2138,8 @@ namespace Microsoft.Data.SqlClient
             if (isSequentialAccess)
             {
                 // Track the index of the last column read used to enforce sequential access.
-                if (i > _lastColumnRead)
-                    _lastColumnRead = i;
+                if (i > _lastColumnPartiallyRead)
+                    _lastColumnPartiallyRead = i;
             }
             // End of GitHub Issue# 2087 fix
 
@@ -4319,13 +4319,12 @@ namespace Microsoft.Data.SqlClient
                         ((i + 1 < _sharedState._nextColumnDataToRead) && (IsCommandBehavior(CommandBehavior.SequentialAccess))) ||   // Or we're in sequential mode and we've read way past the column (i.e. it was not the last column we read)
                         (!_data[i].IsEmpty || _data[i].IsNull) ||                                                       // Or we should have data stored for the column (unless the column was null)
                         (_metaData[i].type == SqlDbType.Timestamp),                                                     // Or Dev11 Bug #336820, Dev10 Bug #479607 (SqlClient: IsDBNull always returns false for timestamp datatype)
-                                                                                                                        //    Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the check
                         "Gone past column, be we have no data stored for it");
 
                     // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
                     if (IsCommandBehavior(CommandBehavior.SequentialAccess))
                     {
-                        if (i < _lastColumnRead)
+                        if (i < _lastColumnPartiallyRead)
                         {
                             CloseActiveSequentialStreamAndTextReader();
                             throw ADP.ObjectDisposed(this);
@@ -5064,7 +5063,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
-            if (columnIndex < _lastColumnRead)
+            if (columnIndex < _lastColumnPartiallyRead)
             {
                 return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.ObjectDisposed(this)));
             }

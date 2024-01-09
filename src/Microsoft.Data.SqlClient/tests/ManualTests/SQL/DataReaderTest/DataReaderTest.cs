@@ -17,6 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class DataReaderTest
     {
         private static readonly object s_rowVersionLock = new();
+        private const string QueryString = "SELECT 'A' as ColumnA, 'B' as ColumnB";
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
@@ -331,13 +332,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_Default_Test1()
+        public static void ExecuteReader_CommandBehavior_Default_GetValueColumnB_Then_ReadColumnA_Test1()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            cmd.CommandText = QueryString;
             using var reader = cmd.ExecuteReader(CommandBehavior.Default);
             {
                 reader.Read();
@@ -353,13 +354,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async void ExecuteReader_CommandBehavior_Default_Async_Test2()
+        public static async void ExecuteReader_CommandBehavior_Default_GetValueColumnB_Then_ReadAsyncColumnA_Test2()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            cmd.CommandText = QueryString;
             using var reader = cmd.ExecuteReader(CommandBehavior.Default);
             {
                 reader.Read();
@@ -376,13 +377,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_Default_Test3()
+        public static void ExecuteReader_CommandBehavior_Default_ReadColumnB_Then_ReadColumnA_Test3()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            cmd.CommandText = QueryString;
             using var reader = cmd.ExecuteReader(CommandBehavior.Default);
             {
                 reader.Read();
@@ -396,13 +397,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_Default_Async_Test4()
+        public static void ExecuteReader_CommandBehavior_Default_ReadAsyncColumnB_Then_ReadAsyncColumnA_Test4()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            cmd.CommandText = QueryString;
             using var reader = cmd.ExecuteReader(CommandBehavior.Default);
             {
                 reader.Read();
@@ -418,13 +419,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_SequentialAccess_Test5()
+        public static void ExecuteReader_CommandBehavior_Sequential_GetValueColumnB_Then_ReadColumnA_Test5()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            cmd.CommandText = QueryString;
             using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
             {
                 reader.Read();
@@ -437,13 +438,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async void ExecuteReader_CommandBehavior_SequentialAccess_Async_Test6()
+        public static async void ExecuteReader_CommandBehavior_Sequential_ReadColumnB_Then_ReadAsyncColumnA_Test6()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            cmd.CommandText = QueryString;
             using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
             {
                 reader.Read();
@@ -457,13 +458,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_SequentialAccess_Test7()
+        public static void ExecuteReader_CommandBehavior_Sequential_ReadColumnB_Then_ReadColumnA_Test7()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            cmd.CommandText = QueryString;
             using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
             {
                 reader.Read();
@@ -476,13 +477,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async void ExecuteReader_CommandBehavior_SequentialAccess_Async_Test8()
+        public static async void ExecuteReader_CommandBehavior_Sequential_ReadAsyncColumnB_Then_ReadAsyncColumnA_Test8()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            cmd.CommandText = QueryString;
             using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
             {
                 reader.Read();
@@ -497,13 +498,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_SequentialAccess_Test9()
+        public static void ExecuteReader_CommandBehavior_Sequential_ReadColumnB_Then_GetValueColumnA_Test9()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            cmd.CommandText = QueryString;
             using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
             {
                 reader.Read();
@@ -516,13 +517,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ExecuteReader_CommandBehavior_SequentialAccess_Test10()
+        public static void ExecuteReader_CommandBehavior_Sequential_GetValueColumnB_Then_GetValueColumnA_Test10()
         {
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT 'abcdefg', 'hijklmn'";
+            cmd.CommandText = QueryString;
             using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
             {
                 reader.Read();

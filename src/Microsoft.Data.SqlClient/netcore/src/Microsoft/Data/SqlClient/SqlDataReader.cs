@@ -1893,15 +1893,11 @@ namespace Microsoft.Data.SqlClient
 
             bytesRead = 0;
 
-            // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
             bool isSequentialAccess = IsCommandBehavior(CommandBehavior.SequentialAccess);
             if (isSequentialAccess)
             {
-                // Track the index of the last column read used to enforce sequential access.
-                if (i > _lastColumnRead)
-                    _lastColumnRead = i;
+                _lastColumnRead = Math.Max(i, _lastColumnRead);
             }
-            // End of GitHub Issue# 2087 fix
 
             if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
             {
@@ -3805,7 +3801,6 @@ namespace Microsoft.Data.SqlClient
                                                                                                                         // Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the check 
                     "Gone past column, be we have no data stored for it");
 
-                    // GitHub Issue# 2087 fix, throw error if not accessing fields sequentially
                     if (IsCommandBehavior(CommandBehavior.SequentialAccess))
                     {
                         if (i < _lastColumnRead)
