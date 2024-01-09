@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
@@ -586,9 +587,21 @@ namespace Microsoft.Data.SqlClient
                     if (SqlDbType.DateTime2 == _metaData.SqlDbType)
                     {
                         long time = value.TimeOfDay.Ticks / TdsEnums.TICKS_FROM_SCALE[_metaData.Scale];
+#if NETCOREAPP
+                        Span<byte> result_time = stackalloc byte[8];
+                        BinaryPrimitives.WriteInt64LittleEndian(result_time, time);
+                        _stateObj.WriteByteSpan(result_time.Slice(0, (int)_metaData.MaxLength - 3));
+#else
                         _stateObj.WriteByteArray(BitConverter.GetBytes(time), (int)_metaData.MaxLength - 3, 0);
+#endif
                     }
+#if NETCOREAPP
+                    Span<byte> result_date = stackalloc byte[4];
+                    BinaryPrimitives.WriteInt32LittleEndian(result_date, days);
+                    _stateObj.WriteByteSpan(result_date.Slice(0, 3));
+#else
                     _stateObj.WriteByteArray(BitConverter.GetBytes(days), 3, 0);
+#endif
                 }
             }
         }
@@ -646,7 +659,13 @@ namespace Microsoft.Data.SqlClient
                 _stateObj.WriteByte(length);
             }
             long time = value.Ticks / TdsEnums.TICKS_FROM_SCALE[scale];
+#if NETCOREAPP
+            Span<byte> result_time = stackalloc byte[8];
+            BinaryPrimitives.WriteInt64LittleEndian(result_time, time);
+            _stateObj.WriteByteSpan(result_time.Slice(0, length));
+#else
             _stateObj.WriteByteArray(BitConverter.GetBytes(time), length, 0);
+#endif
         }
 
         // valid for DateTimeOffset
@@ -677,8 +696,15 @@ namespace Microsoft.Data.SqlClient
             int days = utcDateTime.Subtract(DateTime.MinValue).Days;
             short offset = (short)value.Offset.TotalMinutes;
 
+#if NETCOREAPP
+            Span<byte> result = stackalloc byte[9];
+            BinaryPrimitives.WriteInt64LittleEndian(result, time);
+            BinaryPrimitives.WriteInt32LittleEndian(result.Slice(5), days);
+            _stateObj.WriteByteSpan(result.Slice(0, 8));
+#else
             _stateObj.WriteByteArray(BitConverter.GetBytes(time), length - 5, 0); // time
             _stateObj.WriteByteArray(BitConverter.GetBytes(days), 3, 0); // date
+#endif
             _stateObj.WriteByte((byte)(offset & 0xff)); // offset byte 1
             _stateObj.WriteByte((byte)((offset >> 8) & 0xff)); // offset byte 2
         }

@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                Assert.True(false, e.Message);
+                Assert.Fail(e.Message);
             }
         }
 
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                Assert.True(false, e.Message);
+                Assert.Fail(e.Message);
             }
         }
 

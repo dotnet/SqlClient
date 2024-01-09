@@ -347,6 +347,7 @@ namespace Microsoft.Data.Common
         internal const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
         internal const string ActiveDirectoryMSIString = "Active Directory MSI";
         internal const string ActiveDirectoryDefaultString = "Active Directory Default";
+        internal const string ActiveDirectoryWorkloadIdentityString = "Active Directory Workload Identity";
         const string SqlCertificateString = "Sql Certificate";
 
 #if DEBUG
@@ -361,7 +362,8 @@ namespace Microsoft.Data.Common
             "ActiveDirectoryDeviceCodeFlow",
             "ActiveDirectoryManagedIdentity",
             "ActiveDirectoryMSI",
-            "ActiveDirectoryDefault"
+            "ActiveDirectoryDefault",
+            "ActiveDirectoryWorkloadIdentity",
         };
 
         private static bool IsValidAuthenticationMethodEnum()
@@ -451,6 +453,12 @@ namespace Microsoft.Data.Common
                 isSuccess = true;
             }
 #endif
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryWorkloadIdentityString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
+                isSuccess = true;
+            }
             else
             {
                 result = DbConnectionStringDefaults.Authentication;
@@ -529,6 +537,7 @@ namespace Microsoft.Data.Common
 #if ADONET_CERT_AUTH && NETFRAMEWORK
                 || value == SqlAuthenticationMethod.SqlCertificate
 #endif
+                || value == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 
@@ -550,6 +559,7 @@ namespace Microsoft.Data.Common
 #if ADONET_CERT_AUTH && NETFRAMEWORK
                 SqlAuthenticationMethod.SqlCertificate => SqlCertificateString,
 #endif
+                SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity => ActiveDirectoryWorkloadIdentityString,
                 _ => null
             };
         }

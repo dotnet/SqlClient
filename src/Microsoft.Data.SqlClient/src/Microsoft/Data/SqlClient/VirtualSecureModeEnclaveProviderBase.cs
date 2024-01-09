@@ -160,8 +160,8 @@ namespace Microsoft.Data.SqlClient
                 X509Certificate2Collection signingCerts = GetSigningCertificate(attestationUrl, shouldForceUpdateSigningKeys);
 
                 // Verify SQL Health report root chain of trust is the HGS root signing cert
-                X509ChainStatusFlags chainStatus = VerifyHealthReportAgainstRootCertificate(signingCerts, healthReport.Certificate);
-                if (chainStatus != X509ChainStatusFlags.NoError)
+                if (!VerifyHealthReportAgainstRootCertificate(signingCerts, healthReport.Certificate, out X509ChainStatusFlags chainStatus) ||
+                    chainStatus != X509ChainStatusFlags.NoError)
                 {
                     // In cases if we fail to validate the health report, it might be possible that we are using old signing keys
                     // let's re-download the signing keys again and re-validate the health report
@@ -232,11 +232,20 @@ namespace Microsoft.Data.SqlClient
             return false;
         }
 
-        // Verifies that a chain of trust can be built from the health report provided
-        // by SQL Server and the attestation service's root signing certificate(s).
-        private X509ChainStatusFlags VerifyHealthReportAgainstRootCertificate(X509Certificate2Collection signingCerts, X509Certificate2 healthReportCert)
+        /// <summary>
+        /// Verifies that a chain of trust can be built from the health report provided
+        /// by SQL Server and the attestation service's root signing certificate(s).
+        /// 
+        /// If the method returns false, the value of chainStatus doesn't matter. The chain could not be validated.
+        /// </summary>
+        /// <param name="signingCerts"></param>
+        /// <param name="healthReportCert"></param>
+        /// <param name="chainStatus"></param>
+        /// <returns>A <see cref="T:System.Boolean" /> that indicates if the certificate was able to be verified.</returns>
+        private bool VerifyHealthReportAgainstRootCertificate(X509Certificate2Collection signingCerts, X509Certificate2 healthReportCert, out X509ChainStatusFlags chainStatus)
         {
             var chain = new X509Chain();
+            chainStatus = X509ChainStatusFlags.NoError;
 
             foreach (var cert in signingCerts)
             {
@@ -258,9 +267,14 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        return status.Status;
+                        chainStatus = status.Status;
+                        return true;
                     }
                 }
+                // The only ways past or out of the loop are:
+                // 1. untrustedRoot is true, in which case we want to continue to below
+                // 2. chainStatus is set to the first status in the chain and we return true
+                // 3. the ChainStatus is empty
 
                 // if the chain failed with untrusted root, this could be because the client doesn't have the root cert
                 // installed. If the chain's untrusted root cert has the same thumbprint as the signing cert, then we
@@ -277,17 +291,21 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (element.Certificate.Thumbprint == cert.Thumbprint)
                             {
-                                return X509ChainStatusFlags.NoError;
+                                return true;
                             }
                         }
                     }
 
                     // in the case where we didn't find matching thumbprint
-                    return X509ChainStatusFlags.UntrustedRoot;
+                    chainStatus = X509ChainStatusFlags.UntrustedRoot;
+                    return true;
                 }
+
+                // There was an unknown failure and X509Chain.Build() returned an empty ChainStatus.
+                return false;
             }
 
-            return X509ChainStatusFlags.NoError;
+            return true;
         }
 
         // Verifies the enclave report signature using the health report.

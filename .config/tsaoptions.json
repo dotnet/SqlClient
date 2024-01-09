@@ -1,0 +1,11 @@
+{
+    "instanceUrl": "https://sqlclientdrivers.visualstudio.com/",
+    "projectName": "ADO.NET",
+    "areaPath": "ADO.NET",
+    "iterationPath": "ADO.NET",
+    "notificationAliases": [ "SqlClient@microsoft.com" ],
+    "repositoryName": "SqlClient",
+    "codebaseName": "SqlClient",
+    "allTools": true,
+    "template": "MSDATA_RevolutionR"
+}

@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SqlBatchCommand">
+    <ctor1>
+      <summary>Initializes a new <see cref="SqlBatchCommand"/>.</summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+
+[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
+]]>
+        </format>
+      </remarks>
+    </ctor1>
+    <ctor2>
+      <summary>Initializes a new <see cref="SqlBatchCommand"/>.</summary>
+      <param name="commandText">The text of the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand"/>.</param>
+      <param name="commandType">Indicates how the <see cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.CommandText" /> property is to be interpreted.</param>
+      <param name="parameters">A <see cref="T:System.Collection.Generic.IEnumerable&lt;Microsoft.Data.SqlClient.SqlParameter&gt;" />, which is used to crate the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.</param>
+      <param name="columnEncryptionSetting">The encryption setting. For more information, see [Always Encrypted](/sql/relational-databases/security/encryption/always-encrypted-database-engine).</param>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </ctor2>
+    <Parameters>
+      <summary>
+        Gets the
+        <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />
+        .
+      </summary>
+      <value>The parameters of the Transact-SQL statement or stored procedure. The default is an empty collection.</value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </Parameters>
+    <CommandBehavior>
+      <summary>
+        One of the <see cref="T:System.Data.CommandBehavior" /> values, indicating options for statement execution and data retrieval.
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </CommandBehavior>
+    <ColumnEncryptionSetting>
+      <summary>
+        Not currently implemented.
+        The encryption setting. For more information, see [Always Encrypted](/sql/relational-databases/security/encryption/always-encrypted-database-engine).
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </ColumnEncryptionSetting>
+    <CreateParameter>
+      <summary>Creates a new instance of a <see cref="T:Microsoft.Data.SqlClient.SqlParameter"/> object.</summary>
+    </CreateParameter>
+    <CanCreateParameter>
+      <summary>
+        Returns whether the <see cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.CreateParameter"/> method is implemented.
+      </summary>
+    </CanCreateParameter>
+  </members>
+</docs>

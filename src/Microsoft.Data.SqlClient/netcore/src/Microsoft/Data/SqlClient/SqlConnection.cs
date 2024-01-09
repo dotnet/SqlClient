@@ -202,6 +202,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
                 }
+                else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+                }
 
                 Credential = credential;
             }
@@ -530,6 +534,11 @@ namespace Microsoft.Data.SqlClient
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault;
         }
 
+        private bool UsesActiveDirectoryWorkloadIdentity(SqlConnectionString opt)
+        {
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
+        }
+
         private bool UsesAuthentication(SqlConnectionString opt)
         {
             return opt != null && opt.Authentication != SqlAuthenticationMethod.NotSpecified;
@@ -618,6 +627,10 @@ namespace Microsoft.Data.SqlClient
                         else if (UsesActiveDirectoryDefault(connectionOptions))
                         {
                             throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                        }
+                        else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
+                        {
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
                         }
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -998,6 +1011,10 @@ namespace Microsoft.Data.SqlClient
                     else if (UsesActiveDirectoryDefault(connectionOptions))
                     {
                         throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                    }
+                    else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
+                    {
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
                     }
 
                     CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -1775,6 +1792,14 @@ namespace Microsoft.Data.SqlClient
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
         }
 
+#if NET6_0_OR_GREATER
+        /// <inheritdoc />
+        public override bool CanCreateBatch => true;
+
+        /// <inheritdoc />
+        protected override DbBatch CreateDbBatch() => new SqlBatch(this);
+#endif
+
         private class OpenAsyncRetry
         {
             private SqlConnection _parent;
@@ -2426,7 +2451,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     return null;
-                };
+                }
             }
         }
 

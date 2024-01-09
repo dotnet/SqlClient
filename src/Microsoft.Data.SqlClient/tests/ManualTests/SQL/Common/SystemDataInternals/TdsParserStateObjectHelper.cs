@@ -9,17 +9,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
 {
     internal static class TdsParserStateObjectHelper
     {
-        private static Assembly s_systemDotData = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
-        private static Type s_tdsParserStateObject = s_systemDotData.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
-        private static Type s_tdsParserStateObjectNative = s_systemDotData.GetType("Microsoft.Data.SqlClient.TdsParserStateObjectNative");
-        private static FieldInfo s_forceAllPends = s_tdsParserStateObject.GetField("s_forceAllPends", BindingFlags.Static | BindingFlags.NonPublic);
-        private static FieldInfo s_skipSendAttention = s_tdsParserStateObject.GetField("s_skipSendAttention", BindingFlags.Static | BindingFlags.NonPublic);
-        private static FieldInfo s_forceSyncOverAsyncAfterFirstPend = s_tdsParserStateObject.GetField("s_forceSyncOverAsyncAfterFirstPend", BindingFlags.Static | BindingFlags.NonPublic);
-        private static FieldInfo s_failAsyncPends = s_tdsParserStateObject.GetField("s_failAsyncPends", BindingFlags.Static | BindingFlags.NonPublic);
-        private static FieldInfo s_forcePendingReadsToWaitForUser = s_tdsParserStateObject.GetField("s_forcePendingReadsToWaitForUser", BindingFlags.Static | BindingFlags.NonPublic);
-        private static FieldInfo s_tdsParserStateObjectNativeSessionHandle = s_tdsParserStateObjectNative.GetField("_sessionHandle", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static Type s_tdsParserStateObjectManaged = s_systemDotData.GetType("Microsoft.Data.SqlClient.SNI.TdsParserStateObjectManaged");
-        private static FieldInfo s_tdsParserStateObjectManagedSessionHandle = s_tdsParserStateObjectManaged.GetField("_sessionHandle", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly Assembly s_systemDotData = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
+        private static readonly Type s_tdsParserStateObject = s_systemDotData.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
+        private static readonly FieldInfo s_forceAllPends = s_tdsParserStateObject.GetField("s_forceAllPends", BindingFlags.Static | BindingFlags.NonPublic);
+        private static readonly FieldInfo s_skipSendAttention = s_tdsParserStateObject.GetField("s_skipSendAttention", BindingFlags.Static | BindingFlags.NonPublic);
+        private static readonly FieldInfo s_forceSyncOverAsyncAfterFirstPend = s_tdsParserStateObject.GetField("s_forceSyncOverAsyncAfterFirstPend", BindingFlags.Static | BindingFlags.NonPublic);
+        private static readonly FieldInfo s_failAsyncPends = s_tdsParserStateObject.GetField("s_failAsyncPends", BindingFlags.Static | BindingFlags.NonPublic);
+        private static readonly FieldInfo s_forcePendingReadsToWaitForUser = s_tdsParserStateObject.GetField("s_forcePendingReadsToWaitForUser", BindingFlags.Static | BindingFlags.NonPublic);
+        private static readonly Type s_tdsParserStateObjectManaged = s_systemDotData.GetType("Microsoft.Data.SqlClient.SNI.TdsParserStateObjectManaged");
+        private static readonly FieldInfo s_tdsParserStateObjectManagedSessionHandle = s_tdsParserStateObjectManaged.GetField("_sessionHandle", BindingFlags.Instance | BindingFlags.NonPublic);
 
         internal static bool ForceAllPends
         {

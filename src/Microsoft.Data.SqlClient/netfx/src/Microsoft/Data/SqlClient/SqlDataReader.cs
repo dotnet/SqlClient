@@ -3496,21 +3496,6 @@ namespace Microsoft.Data.SqlClient
 
                     switch (token)
                     {
-                        case TdsEnums.SQLALTROW:
-                            if (_altRowStatus == ALTROWSTATUS.Null)
-                            {
-                                // cache the regular metadata
-                                _altMetaDataSetCollection.metaDataSet = _metaData;
-                                _metaData = null;
-                            }
-                            else
-                            {
-                                Debug.Assert(_altRowStatus == ALTROWSTATUS.Done, "invalid AltRowStatus");
-                            }
-                            _altRowStatus = ALTROWSTATUS.AltRow;
-                            _hasRows = true;
-                            moreResults = true;
-                            return true;
                         case TdsEnums.SQLROW:
                         case TdsEnums.SQLNBCROW:
                             // always happens if there is a row following an altrow
@@ -3528,6 +3513,23 @@ namespace Microsoft.Data.SqlClient
                             moreResults = true;
                             return true;
                         case TdsEnums.SQLCOLMETADATA:
+                            moreResults = true;
+                            return true;
+
+                        // deprecated
+                        case TdsEnums.SQLALTROW:
+                            if (_altRowStatus == ALTROWSTATUS.Null)
+                            {
+                                // cache the regular metadata
+                                _altMetaDataSetCollection.metaDataSet = _metaData;
+                                _metaData = null;
+                            }
+                            else
+                            {
+                                Debug.Assert(_altRowStatus == ALTROWSTATUS.Done, "invalid AltRowStatus");
+                            }
+                            _altRowStatus = ALTROWSTATUS.AltRow;
+                            _hasRows = true;
                             moreResults = true;
                             return true;
                     }

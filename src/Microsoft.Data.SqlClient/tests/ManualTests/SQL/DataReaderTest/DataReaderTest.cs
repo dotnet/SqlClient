@@ -9,7 +9,6 @@ using System.Data.SqlTypes;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -18,6 +17,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static readonly object s_rowVersionLock = new();
         private const string QueryString = "SELECT 'A' as ColumnA, 'B' as ColumnB";
+
+        // this enum must mirror the definition in LocalAppContextSwitches
+        private enum Tristate : byte
+        {
+            NotInitialized = 0,
+            False = 1,
+            True = 2
+        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
@@ -122,12 +129,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Statement 'Drop Database' is not supported in this version of SQL Server.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void CollatedDataReaderTest()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData("KAZAKH_90_CI_AI")]
+        [InlineData("Georgian_Modern_Sort_CI_AS")]
+        public static void CollatedDataReaderTest(string collation)
         {
-            var databaseName = DataTestUtility.GetUniqueName("DB");
-            // Remove square brackets
-            var dbName = databaseName.Substring(1, databaseName.Length - 2);
+            string dbName = DataTestUtility.GetUniqueName("CollationTest", false);
 
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
@@ -142,14 +149,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 con.Open();
 
                 // Create collated database
-                cmd.CommandText = $"CREATE DATABASE {databaseName} COLLATE KAZAKH_90_CI_AI";
+                cmd.CommandText = $"CREATE DATABASE [{dbName}] COLLATE {collation}";
                 cmd.ExecuteNonQuery();
 
                 //Create connection without pooling in order to delete database later.
                 using (SqlConnection dbCon = new(builder.ConnectionString))
                 using (SqlCommand dbCmd = dbCon.CreateCommand())
                 {
-                    var data = "TestData";
+                    string data = Guid.NewGuid().ToString();
 
                     dbCon.Open();
                     dbCmd.CommandText = $"SELECT '{data}'";
@@ -157,18 +164,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     reader.Read();
                     Assert.Equal(data, reader.GetString(0));
                 }
-
-                // Let connection close safely before dropping database for slow servers.
-                Thread.Sleep(500);
-            }
-            catch (SqlException e)
-            {
-                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
             }
             finally
             {
-                cmd.CommandText = $"DROP DATABASE {databaseName}";
-                cmd.ExecuteNonQuery();
+                // Let connection close safely before dropping database for slow servers.
+                Thread.Sleep(500);
+                DataTestUtility.DropDatabase(con, dbName);
             }
         }
 
@@ -269,7 +270,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             lock (s_rowVersionLock)
             {
-                bool? originalValue = SetLegacyRowVersionNullBehavior(false);
+                Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.False);
                 try
                 {
                     using SqlConnection con = new(DataTestUtility.TCPConnectionString);
@@ -306,7 +307,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             lock (s_rowVersionLock)
             {
-                bool? originalValue = SetLegacyRowVersionNullBehavior(true);
+                Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.True);
                 try
                 {
                     using SqlConnection con = new(DataTestUtility.TCPConnectionString);
@@ -532,11 +533,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static bool? SetLegacyRowVersionNullBehavior(bool? value)
+        private static Tristate SetLegacyRowVersionNullBehavior(Tristate value)
         {
             Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
             FieldInfo switchField = switchesType.GetField("s_legacyRowVersionNullBehavior", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            bool? originalValue = (bool?)switchField.GetValue(null);
+            Tristate originalValue = (Tristate)switchField.GetValue(null);
             switchField.SetValue(null, value);
             return originalValue;
         }

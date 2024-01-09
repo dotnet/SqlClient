@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
@@ -64,6 +65,7 @@ namespace Microsoft.Data.SqlClient
         private readonly WeakReference<object> _owner = new(null);   // the owner of this session, used to track when it's been orphaned
         internal SqlDataReader.SharedState _readerState;                    // susbset of SqlDataReader state (if it is the owner) necessary for parsing abandoned results in TDS
         private int _activateCount;                     // 0 when we're in the pool, 1 when we're not, all others are an error
+        private SnapshottedStateFlags _snapshottedState;
 
         // Two buffers exist in tdsparser, an in buffer and an out buffer.  For the out buffer, only
         // one bookkeeping variable is needed, the number of bytes used in the buffer.  For the in buffer,
@@ -80,7 +82,7 @@ namespace Microsoft.Data.SqlClient
         // Out buffer variables
         internal byte[] _outBuff;                         // internal write buffer - initialize on login
         internal int _outBytesUsed = TdsEnums.HEADER_LEN; // number of bytes used in internal write buffer - initialize past header
-        
+
         // In buffer variables
 
         /// <summary>
@@ -203,6 +205,7 @@ namespace Microsoft.Data.SqlClient
         internal bool _syncOverAsync = true;
         private bool _snapshotReplay;
         private StateSnapshot _snapshot;
+        private StateSnapshot _cachedSnapshot;
         internal ExecutionContext _executionContext;
         internal bool _asyncReadWithoutSnapshot;
 #if DEBUG
@@ -260,7 +263,7 @@ namespace Microsoft.Data.SqlClient
         // remainder of the async operation.
         internal static bool s_forceSyncOverAsyncAfterFirstPend = false;
 
-        // Requests to send attention will be ignored when _skipSendAttention is true.
+        // Requests to send attention will be ignored when s_skipSendAttention is true.
         // This is useful to simulate circumstances where timeouts do not recover.
         internal static bool s_skipSendAttention = false;
 
@@ -295,6 +298,53 @@ namespace Microsoft.Data.SqlClient
             // be released.
             IncrementPendingCallbacks();
             _lastSuccessfulIOTimer = new LastIOTimer();
+        }
+
+        private void SetSnapshottedState(SnapshottedStateFlags flag, bool value)
+        {
+            if (value)
+            {
+                _snapshottedState |= flag;
+            }
+            else
+            {
+                _snapshottedState &= ~flag;
+            }
+        }
+
+        private bool GetSnapshottedState(SnapshottedStateFlags flag)
+        {
+            return (_snapshottedState & flag) == flag;
+        }
+
+        internal bool HasOpenResult
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.OpenResult);
+            set => SetSnapshottedState(SnapshottedStateFlags.OpenResult, value);
+        }
+
+        internal bool HasPendingData
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.PendingData);
+            set => SetSnapshottedState(SnapshottedStateFlags.PendingData, value);
+        }
+
+        internal bool HasReceivedError
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived, value);
+        }
+
+        internal bool HasReceivedAttention
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.AttentionReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.AttentionReceived, value);
+        }
+
+        internal bool HasReceivedColumnMetadata
+        {
+            get => GetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived);
+            set => SetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived, value);
         }
 
         ////////////////
@@ -476,6 +526,13 @@ namespace Microsoft.Data.SqlClient
                     {
                         return false;
                     }
+                }
+            }
+            if (!BitConverter.IsLittleEndian)
+            {
+                for (int ii = charsOffset; ii < charsCopied + charsOffset; ii++)
+                {
+                    chars[ii] = (char)BinaryPrimitives.ReverseEndianness((ushort)chars[ii]);
                 }
             }
             return true;
@@ -776,7 +833,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void ThrowExceptionAndWarning(bool callerHasConnectionLock = false, bool asyncClose = false)
         {
-            _parser.ThrowExceptionAndWarning(this, callerHasConnectionLock, asyncClose);
+            _parser.ThrowExceptionAndWarning(this, null, callerHasConnectionLock, asyncClose);
         }
 
         ////////////////////////////////////////////
@@ -914,9 +971,7 @@ namespace Microsoft.Data.SqlClient
         // NOTE: This method (and all it calls) should be retryable without replaying a snapshot
         internal bool TryPrepareBuffer()
         {
-#if NETFRAMEWORK
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadBuffer");  // you need to setup for a thread abort somewhere before you call this method
-#endif
             Debug.Assert(_inBuff != null, "packet buffer should not be null!");
 
             // Header spans packets, or we haven't read the header yet - process header
@@ -988,7 +1043,7 @@ namespace Microsoft.Data.SqlClient
             _outputPacketNumber = 1;
             _outputPacketCount = 0;
         }
-        
+
         internal bool SetPacketSize(int size)
         {
             if (size > TdsEnums.MAX_PACKET_SIZE)
@@ -1064,6 +1119,759 @@ namespace Microsoft.Data.SqlClient
 
             return false;
         }
+
+        ///////////////////////////////////////
+        // Buffer read methods - data values //
+        ///////////////////////////////////////
+
+        // look at the next byte without pulling it off the wire, don't just return _inBytesUsed since we may
+        // have to go to the network to get the next byte.
+        internal bool TryPeekByte(out byte value)
+        {
+            if (!TryReadByte(out value))
+            {
+                return false;
+            }
+
+            // now do fixup
+            _inBytesPacket++;
+            _inBytesUsed--;
+
+            AssertValidState();
+            return true;
+        }
+
+        // Takes a byte array, an offset, and a len and fills the array from the offset to len number of
+        // bytes from the in buffer.
+        public bool TryReadByteArray(Span<byte> buff, int len)
+        {
+            return TryReadByteArray(buff, len, out _);
+        }
+
+        // NOTE: This method must be retriable WITHOUT replaying a snapshot
+        // Every time you call this method increment the offset and decrease len by the value of totalRead
+        public bool TryReadByteArray(Span<byte> buff, int len, out int totalRead)
+        {
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
+            totalRead = 0;
+
+#if DEBUG
+            if (_snapshot != null && _snapshot.DoPend())
+            {
+                _networkPacketTaskSource = new TaskCompletionSource<object>();
+                Interlocked.MemoryBarrier();
+
+                if (s_forcePendingReadsToWaitForUser)
+                {
+                    _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
+                    _realNetworkPacketTaskSource.SetResult(null);
+                }
+                else
+                {
+                    _networkPacketTaskSource.TrySetResult(null);
+                }
+                return false;
+            }
+#endif
+
+            Debug.Assert(buff.IsEmpty || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
+
+            // loop through and read up to array length
+            while (len > 0)
+            {
+                if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
+                {
+                    if (!TryPrepareBuffer())
+                    {
+                        return false;
+                    }
+                }
+
+                int bytesToRead = Math.Min(len, Math.Min(_inBytesPacket, _inBytesRead - _inBytesUsed));
+                Debug.Assert(bytesToRead > 0, "0 byte read in TryReadByteArray");
+                if (!buff.IsEmpty)
+                {
+                    ReadOnlySpan<byte> copyFrom = new ReadOnlySpan<byte>(_inBuff, _inBytesUsed, bytesToRead);
+                    Span<byte> copyTo = buff.Slice(totalRead, bytesToRead);
+                    copyFrom.CopyTo(copyTo);
+                }
+
+                totalRead += bytesToRead;
+                _inBytesUsed += bytesToRead;
+                _inBytesPacket -= bytesToRead;
+                len -= bytesToRead;
+
+                AssertValidState();
+            }
+
+            return true;
+        }
+
+        // Takes no arguments and returns a byte from the buffer.  If the buffer is empty, it is filled
+        // before the byte is returned.
+        internal bool TryReadByte(out byte value)
+        {
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByte");  // you need to setup for a thread abort somewhere before you call this method
+            Debug.Assert(_inBytesUsed >= 0 && _inBytesUsed <= _inBytesRead, "ERROR - TDSParser: _inBytesUsed < 0 or _inBytesUsed > _inBytesRead");
+            value = 0;
+
+#if DEBUG
+            if (_snapshot != null && _snapshot.DoPend())
+            {
+                _networkPacketTaskSource = new TaskCompletionSource<object>();
+                Interlocked.MemoryBarrier();
+
+                if (s_forcePendingReadsToWaitForUser)
+                {
+                    _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
+                    _realNetworkPacketTaskSource.SetResult(null);
+                }
+                else
+                {
+                    _networkPacketTaskSource.TrySetResult(null);
+                }
+                return false;
+            }
+#endif
+
+            if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
+            {
+                if (!TryPrepareBuffer())
+                {
+                    return false;
+                }
+            }
+
+            // decrement the number of bytes left in the packet
+            _inBytesPacket--;
+
+            Debug.Assert(_inBytesPacket >= 0, "ERROR - TDSParser: _inBytesPacket < 0");
+
+            // return the byte from the buffer and increment the counter for number of bytes used in the in buffer
+            value = (_inBuff[_inBytesUsed++]);
+
+            AssertValidState();
+            return true;
+        }
+
+        internal bool TryReadChar(out char value)
+        {
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+
+            Span<byte> buffer = stackalloc byte[2];
+            if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
+            {
+                // If the char isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+                if (!TryReadByteArray(buffer, 2))
+                {
+                    value = '\0';
+                    return false;
+                }
+            }
+            else
+            {
+                // The entire char is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
+                _inBytesUsed += 2;
+                _inBytesPacket -= 2;
+            }
+
+            AssertValidState();
+            value = (char)((buffer[1] << 8) + buffer[0]);
+
+            return true;
+        }
+
+        internal bool TryReadInt16(out short value)
+        {
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+
+            Span<byte> buffer = stackalloc byte[2];
+            if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
+            {
+                // If the int16 isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+                if (!TryReadByteArray(buffer, 2))
+                {
+                    value = default;
+                    return false;
+                }
+            }
+            else
+            {
+                // The entire int16 is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
+                _inBytesUsed += 2;
+                _inBytesPacket -= 2;
+            }
+
+            AssertValidState();
+            value = (short)((buffer[1] << 8) + buffer[0]);
+            return true;
+        }
+
+        internal bool TryReadInt32(out int value)
+        {
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadInt32");  // you need to setup for a thread abort somewhere before you call this method
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+            Span<byte> buffer = stackalloc byte[4];
+            if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
+            {
+                // If the int isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+                if (!TryReadByteArray(buffer, 4))
+                {
+                    value = 0;
+                    return false;
+                }
+            }
+            else
+            {
+                // The entire int is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+                buffer = _inBuff.AsSpan(_inBytesUsed, 4);
+                _inBytesUsed += 4;
+                _inBytesPacket -= 4;
+            }
+
+            AssertValidState();
+            value = (buffer[3] << 24) + (buffer[2] << 16) + (buffer[1] << 8) + buffer[0];
+            return true;
+        }
+
+        // This method is safe to call when doing async without snapshot
+        internal bool TryReadInt64(out long value)
+        {
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadInt64");  // you need to setup for a thread abort somewhere before you call this method
+            if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
+            {
+                if (!TryPrepareBuffer())
+                {
+                    value = 0;
+                    return false;
+                }
+            }
+
+            if ((_bTmpRead > 0) || (((_inBytesUsed + 8) > _inBytesRead) || (_inBytesPacket < 8)))
+            {
+                // If the long isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+
+                int bytesRead;
+                if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 8 - _bTmpRead, out bytesRead))
+                {
+                    Debug.Assert(_bTmpRead + bytesRead <= 8, "Read more data than required");
+                    _bTmpRead += bytesRead;
+                    value = 0;
+                    return false;
+                }
+                else
+                {
+                    Debug.Assert(_bTmpRead + bytesRead == 8, "TryReadByteArray returned true without reading all data required");
+                    _bTmpRead = 0;
+                    AssertValidState();
+                    value = BinaryPrimitives.ReadInt64LittleEndian(_bTmp);
+                    return true;
+                }
+            }
+            else
+            {
+                // The entire long is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+
+                value = BinaryPrimitives.ReadInt64LittleEndian(_inBuff.AsSpan(_inBytesUsed));
+
+                _inBytesUsed += 8;
+                _inBytesPacket -= 8;
+
+                AssertValidState();
+                return true;
+            }
+        }
+
+        internal bool TryReadUInt16(out ushort value)
+        {
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+
+            Span<byte> buffer = stackalloc byte[2];
+            if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
+            {
+                // If the uint16 isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+                if (!TryReadByteArray(buffer, 2))
+                {
+                    value = default;
+                    return false;
+                }
+            }
+            else
+            {
+                // The entire uint16 is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
+                _inBytesUsed += 2;
+                _inBytesPacket -= 2;
+            }
+
+            AssertValidState();
+            value = (ushort)((buffer[1] << 8) + buffer[0]);
+            return true;
+        }
+
+        // This method is safe to call when doing async without replay
+        internal bool TryReadUInt32(out uint value)
+        {
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadUInt32");  // you need to setup for a thread abort somewhere before you call this method
+            if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
+            {
+                if (!TryPrepareBuffer())
+                {
+                    value = 0;
+                    return false;
+                }
+            }
+
+            if ((_bTmpRead > 0) || (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4)))
+            {
+                // If the int isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+
+                int bytesRead;
+                if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 4 - _bTmpRead, out bytesRead))
+                {
+                    Debug.Assert(_bTmpRead + bytesRead <= 4, "Read more data than required");
+                    _bTmpRead += bytesRead;
+                    value = 0;
+                    return false;
+                }
+                else
+                {
+                    Debug.Assert(_bTmpRead + bytesRead == 4, "TryReadByteArray returned true without reading all data required");
+                    _bTmpRead = 0;
+                    AssertValidState();
+                    value = BinaryPrimitives.ReadUInt32LittleEndian(_bTmp);
+                    return true;
+                }
+            }
+            else
+            {
+                // The entire int is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+
+                value = BinaryPrimitives.ReadUInt32LittleEndian(_inBuff.AsSpan(_inBytesUsed));
+
+                _inBytesUsed += 4;
+                _inBytesPacket -= 4;
+
+                AssertValidState();
+                return true;
+            }
+        }
+
+        internal bool TryReadSingle(out float value)
+        {
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadSingle");  // you need to setup for a thread abort somewhere before you call this method
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+            if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
+            {
+                // If the float isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+
+                if (!TryReadByteArray(_bTmp, 4))
+                {
+                    value = default;
+                    return false;
+                }
+
+                AssertValidState();
+                value = BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(_bTmp));
+                return true;
+            }
+            else
+            {
+                // The entire float is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+
+                value = BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(_inBuff.AsSpan(_inBytesUsed)));
+
+                _inBytesUsed += 4;
+                _inBytesPacket -= 4;
+
+                AssertValidState();
+                return true;
+            }
+        }
+
+        internal bool TryReadDouble(out double value)
+        {
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadDouble");  // you need to setup for a thread abort somewhere before you call this method
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+            if (((_inBytesUsed + 8) > _inBytesRead) || (_inBytesPacket < 8))
+            {
+                // If the double isn't fully in the buffer, or if it isn't fully in the packet,
+                // then use ReadByteArray since the logic is there to take care of that.
+
+                if (!TryReadByteArray(_bTmp, 8))
+                {
+                    value = default;
+                    return false;
+                }
+
+                AssertValidState();
+                value = BitConverter.Int64BitsToDouble(BinaryPrimitives.ReadInt64LittleEndian(_bTmp));
+                return true;
+            }
+            else
+            {
+                // The entire double is in the packet and in the buffer, so just return it
+                // and take care of the counters.
+
+                value = BitConverter.Int64BitsToDouble(BinaryPrimitives.ReadInt64LittleEndian(_inBuff.AsSpan(_inBytesUsed)));
+
+                _inBytesUsed += 8;
+                _inBytesPacket -= 8;
+
+                AssertValidState();
+                return true;
+            }
+        }
+
+        internal bool TryReadString(int length, out string value)
+        {
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadString");  // you need to setup for a thread abort somewhere before you call this method
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+            int cBytes = length << 1;
+            byte[] buf;
+            int offset = 0;
+
+            if (((_inBytesUsed + cBytes) > _inBytesRead) || (_inBytesPacket < cBytes))
+            {
+                if (_bTmp == null || _bTmp.Length < cBytes)
+                {
+                    _bTmp = new byte[cBytes];
+                }
+
+                if (!TryReadByteArray(_bTmp, cBytes))
+                {
+                    value = null;
+                    return false;
+                }
+
+                // assign local to point to parser scratch buffer
+                buf = _bTmp;
+
+                AssertValidState();
+            }
+            else
+            {
+                // assign local to point to _inBuff
+                buf = _inBuff;
+                offset = _inBytesUsed;
+                _inBytesUsed += cBytes;
+                _inBytesPacket -= cBytes;
+
+                AssertValidState();
+            }
+
+            value = System.Text.Encoding.Unicode.GetString(buf, offset, cBytes);
+            return true;
+        }
+
+        internal bool TryReadStringWithEncoding(int length, System.Text.Encoding encoding, bool isPlp, out string value)
+        {
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadStringWithEncoding");  // you need to setup for a thread abort somewhere before you call this method
+            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+
+            if (null == encoding)
+            {
+                // Need to skip the current column before throwing the error - this ensures that the state shared between this and the data reader is consistent when calling DrainData
+                if (isPlp)
+                {
+                    if (!_parser.TrySkipPlpValue((ulong)length, this, out _))
+                    {
+                        value = null;
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!TrySkipBytes(length))
+                    {
+                        value = null;
+                        return false;
+                    }
+                }
+
+                _parser.ThrowUnsupportedCollationEncountered(this);
+            }
+            byte[] buf = null;
+            int offset = 0;
+
+            if (isPlp)
+            {
+                if (!TryReadPlpBytes(ref buf, 0, int.MaxValue, out length))
+                {
+                    value = null;
+                    return false;
+                }
+
+                AssertValidState();
+            }
+            else
+            {
+                if (((_inBytesUsed + length) > _inBytesRead) || (_inBytesPacket < length))
+                {
+                    if (_bTmp == null || _bTmp.Length < length)
+                    {
+                        _bTmp = new byte[length];
+                    }
+
+                    if (!TryReadByteArray(_bTmp, length))
+                    {
+                        value = null;
+                        return false;
+                    }
+
+                    // assign local to point to parser scratch buffer
+                    buf = _bTmp;
+
+                    AssertValidState();
+                }
+                else
+                {
+                    // assign local to point to _inBuff
+                    buf = _inBuff;
+                    offset = _inBytesUsed;
+                    _inBytesUsed += length;
+                    _inBytesPacket -= length;
+
+                    AssertValidState();
+                }
+            }
+
+            // BCL optimizes to not use char[] underneath
+            value = encoding.GetString(buf, offset, length);
+            return true;
+        }
+
+        internal ulong ReadPlpLength(bool returnPlpNullIfNull)
+        {
+            ulong value;
+            Debug.Assert(_syncOverAsync, "Should not attempt pends in a synchronous call");
+            bool result = TryReadPlpLength(returnPlpNullIfNull, out value);
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
+            return value;
+        }
+
+        // Reads the length of either the entire data or the length of the next chunk in a
+        //   partially length prefixed data
+        // After this call, call  ReadPlpBytes/ReadPlpUnicodeChars until the specified length of data
+        // is consumed. Repeat this until ReadPlpLength returns 0 in order to read the
+        // entire stream.
+        // When this function returns 0, it means the data stream is read completely and the
+        // plp state in the tdsparser is cleaned.
+        internal bool TryReadPlpLength(bool returnPlpNullIfNull, out ulong lengthLeft)
+        {
+            uint chunklen;
+            // bool firstchunk = false;
+            bool isNull = false;
+
+            Debug.Assert(_longlenleft == 0, "Out of synch length read request");
+            if (_longlen == 0)
+            {
+                // First chunk is being read. Find out what type of chunk it is
+                long value;
+                if (!TryReadInt64(out value))
+                {
+                    lengthLeft = 0;
+                    return false;
+                }
+                _longlen = (ulong)value;
+                // firstchunk = true;
+            }
+
+            if (_longlen == TdsEnums.SQL_PLP_NULL)
+            {
+                _longlen = 0;
+                _longlenleft = 0;
+                isNull = true;
+            }
+            else
+            {
+                // Data is coming in uint chunks, read length of next chunk
+                if (!TryReadUInt32(out chunklen))
+                {
+                    lengthLeft = 0;
+                    return false;
+                }
+                if (chunklen == TdsEnums.SQL_PLP_CHUNK_TERMINATOR)
+                {
+                    _longlenleft = 0;
+                    _longlen = 0;
+                }
+                else
+                {
+                    _longlenleft = chunklen;
+                }
+            }
+
+            AssertValidState();
+
+            if (isNull && returnPlpNullIfNull)
+            {
+                lengthLeft = TdsEnums.SQL_PLP_NULL;
+                return true;
+            }
+
+            lengthLeft = _longlenleft;
+            return true;
+        }
+
+        internal int ReadPlpBytesChunk(byte[] buff, int offset, int len)
+        {
+            Debug.Assert(_syncOverAsync, "Should not attempt pends in a synchronous call");
+            Debug.Assert(_longlenleft > 0, "Read when no data available");
+
+            int value;
+            int bytesToRead = (int)Math.Min(_longlenleft, (ulong)len);
+            bool result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out value);
+            _longlenleft -= (ulong)bytesToRead;
+            if (!result)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
+            return value;
+        }
+
+        // Reads the requested number of bytes from a plp data stream, or the entire data if
+        // requested length is -1 or larger than the actual length of data. First call to this method
+        //  should be preceeded by a call to ReadPlpLength or ReadDataLength.
+        // Returns the actual bytes read.
+        // NOTE: This method must be retriable WITHOUT replaying a snapshot
+        // Every time you call this method increment the offset and decrease len by the value of totalBytesRead
+        internal bool TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead)
+        {
+            int bytesRead;
+            int bytesLeft;
+            byte[] newbuf;
+
+            if (_longlen == 0)
+            {
+                Debug.Assert(_longlenleft == 0);
+                if (buff == null)
+                {
+                    buff = Array.Empty<byte>();
+                }
+
+                AssertValidState();
+                totalBytesRead = 0;
+                return true;       // No data
+            }
+
+            Debug.Assert(_longlen != TdsEnums.SQL_PLP_NULL, "Out of sync plp read request");
+            Debug.Assert((buff == null && offset == 0) || (buff.Length >= offset + len), "Invalid length sent to ReadPlpBytes()!");
+
+            bytesLeft = len;
+
+            // If total length is known up front, allocate the whole buffer in one shot instead of realloc'ing and copying over each time
+            if (buff == null && _longlen != TdsEnums.SQL_PLP_UNKNOWNLEN)
+            {
+                if (_snapshot != null)
+                {
+                    // if there is a snapshot and it contains a stored plp buffer take it
+                    // and try to use it if it is the right length
+                    buff = _snapshot._plpBuffer;
+                    _snapshot._plpBuffer = null;
+                }
+
+                if ((ulong)(buff?.Length ?? 0) != _longlen)
+                {
+                    // if the buffer is null or the wrong length create one to use
+                    buff = new byte[(Math.Min((int)_longlen, len))];
+                }
+            }
+
+            if (_longlenleft == 0)
+            {
+                if (!TryReadPlpLength(false, out _))
+                {
+                    totalBytesRead = 0;
+                    return false;
+                }
+                if (_longlenleft == 0)
+                { // Data read complete
+                    totalBytesRead = 0;
+                    return true;
+                }
+            }
+
+            if (buff == null)
+            {
+                buff = new byte[_longlenleft];
+            }
+
+            totalBytesRead = 0;
+
+            while (bytesLeft > 0)
+            {
+                int bytesToRead = (int)Math.Min(_longlenleft, (ulong)bytesLeft);
+                if (buff.Length < (offset + bytesToRead))
+                {
+                    // Grow the array
+                    newbuf = new byte[offset + bytesToRead];
+                    Buffer.BlockCopy(buff, 0, newbuf, 0, offset);
+                    buff = newbuf;
+                }
+
+                bool result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out bytesRead);
+                Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
+                Debug.Assert((ulong)bytesRead <= _longlenleft, "Read more bytes than is available");
+
+                bytesLeft -= bytesRead;
+                offset += bytesRead;
+                totalBytesRead += bytesRead;
+                _longlenleft -= (ulong)bytesRead;
+                if (!result)
+                {
+                    if (_snapshot != null)
+                    {
+                        // a partial read has happened so store the target buffer in the snapshot
+                        // so it can be re-used when another packet arrives and we read again
+                        _snapshot._plpBuffer = buff;
+                    }
+                    return false;
+                }
+
+                if (_longlenleft == 0)
+                {
+                    // Read the next chunk or cleanup state if hit the end
+                    if (!TryReadPlpLength(false, out _))
+                    {
+                        if (_snapshot != null)
+                        {
+                            // a partial read has happened so store the target buffer in the snapshot
+                            // so it can be re-used when another packet arrives and we read again
+                            _snapshot._plpBuffer = buff;
+                        }
+                        return false;
+                    }
+                }
+
+                AssertValidState();
+
+                // Catch the point where we read the entire plp data stream and clean up state
+                if (_longlenleft == 0)   // Data read complete
+                    break;
+            }
+            return true;
+        }
+
         /*
 
         // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)
@@ -1101,5 +1909,422 @@ namespace Microsoft.Data.SqlClient
             }
         }
         */
+
+        internal void SetSnapshot()
+        {
+            StateSnapshot snapshot = _snapshot;
+            if (snapshot is null)
+            {
+                snapshot = Interlocked.Exchange(ref _cachedSnapshot, null) ?? new StateSnapshot();
+            }
+            else
+            {
+                snapshot.Clear();
+            }
+            _snapshot = snapshot;
+            _snapshot.CaptureAsStart(this);
+            _snapshotReplay = false;
+        }
+
+        internal void ResetSnapshot()
+        {
+            if (_snapshot != null)
+            {
+                StateSnapshot snapshot = _snapshot;
+                _snapshot = null;
+                snapshot.Clear();
+                Interlocked.CompareExchange(ref _cachedSnapshot, snapshot, null);
+            }
+            _snapshotReplay = false;
+        }
+
+        sealed partial class StateSnapshot
+        {
+            private sealed partial class PacketData
+            {
+                public byte[] Buffer;
+                public int Read;
+                public PacketData NextPacket;
+                public PacketData PrevPacket;
+
+                internal void Clear()
+                {
+                    Buffer = null;
+                    Read = 0;
+                    NextPacket = null;
+                    if (PrevPacket != null)
+                    {
+                        PrevPacket.NextPacket = null;
+                        PrevPacket = null;
+                    }
+                    SetDebugStackInternal(null);
+                    SetDebugPacketIdInternal(0);
+                }
+
+                internal void SetDebugStack(string value) => SetDebugStackInternal(value);
+                internal void SetDebugPacketId(int value) => SetDebugPacketIdInternal(value);
+
+                partial void SetDebugStackInternal(string value);
+                partial void SetDebugPacketIdInternal(int value);
+            }
+
+#if DEBUG
+            [DebuggerDisplay("{ToString(),nq}")]
+            [DebuggerTypeProxy(typeof(PacketDataDebugView))]
+            private sealed partial class PacketData
+            {
+                internal sealed class PacketDataDebugView
+                {
+                    private readonly PacketData _data;
+
+                    public PacketDataDebugView(PacketData data)
+                    {
+                        if (data == null)
+                        {
+                            throw new ArgumentNullException(nameof(data));
+                        }
+
+                        _data = data;
+                    }
+
+                    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+                    public PacketData[] Items
+                    {
+                        get
+                        {
+                            PacketData[] items = Array.Empty<PacketData>();
+                            if (_data != null)
+                            {
+                                int count = 0;
+                                for (PacketData current = _data; current != null; current = current?.NextPacket)
+                                {
+                                    count++;
+                                }
+                                items = new PacketData[count];
+                                int index = 0;
+                                for (PacketData current = _data; current != null; current = current?.NextPacket, index++)
+                                {
+                                    items[index] = current;
+                                }
+                            }
+                            return items;
+                        }
+                    }
+                }
+
+                public int PacketId;
+                public string Stack;
+
+                partial void SetDebugStackInternal(string value) => Stack = value;
+
+                partial void SetDebugPacketIdInternal(int value) => PacketId = value;
+
+
+                public override string ToString()
+                {
+                    //return $"{PacketId}: [{Buffer.Length}] ( {GetPacketDataOffset():D4}, {GetPacketTotalSize():D4} ) {(NextPacket != null ? @"->" : string.Empty)}";
+                    string byteString = null;
+                    if (Buffer != null && Buffer.Length >= 12)
+                    {
+                        ReadOnlySpan<byte> bytes = Buffer.AsSpan(0, 12);
+                        StringBuilder buffer = new StringBuilder(12 * 3 + 10);
+                        buffer.Append('{');
+                        for (int index = 0; index < bytes.Length; index++)
+                        {
+                            buffer.AppendFormat("{0:X2}", bytes[index]);
+                            buffer.Append(", ");
+                        }
+                        buffer.Append("...");
+                        buffer.Append('}');
+                        byteString = buffer.ToString();
+                    }
+                    return $"{PacketId}: [{Read}] {byteString} {(NextPacket != null ? @"->" : string.Empty)}";
+                }
+            }
+#endif
+
+            private sealed class PLPData
+            {
+                public readonly ulong SnapshotLongLen;
+                public readonly ulong SnapshotLongLenLeft;
+
+                public PLPData(ulong snapshotLongLen, ulong snapshotLongLenLeft)
+                {
+                    SnapshotLongLen = snapshotLongLen;
+                    SnapshotLongLenLeft = snapshotLongLenLeft;
+                }
+            }
+
+            private sealed class StateObjectData
+            {
+                private int _inBytesUsed;
+                private int _inBytesPacket;
+                private PLPData _plpData;
+                private byte _messageStatus;
+                internal NullBitmap _nullBitmapInfo;
+                private _SqlMetaDataSet _cleanupMetaData;
+                internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
+                private SnapshottedStateFlags _state;
+
+                internal void Capture(TdsParserStateObject stateObj, bool trackStack = true)
+                {
+                    _inBytesUsed = stateObj._inBytesUsed;
+                    _inBytesPacket = stateObj._inBytesPacket;
+                    _messageStatus = stateObj._messageStatus;
+                    _nullBitmapInfo = stateObj._nullBitmapInfo; // _nullBitmapInfo must be cloned before it is updated
+                    if (stateObj._longlen != 0 || stateObj._longlenleft != 0)
+                    {
+                        _plpData = new PLPData(stateObj._longlen, stateObj._longlenleft);
+                    }
+                    _cleanupMetaData = stateObj._cleanupMetaData;
+                    _cleanupAltMetaDataSetArray = stateObj._cleanupAltMetaDataSetArray; // _cleanupAltMetaDataSetArray must be cloned before it is updated
+                    _state = stateObj._snapshottedState;
+#if DEBUG
+                    if (trackStack)
+                    {
+                        stateObj._lastStack = null;
+                    }
+                    Debug.Assert(stateObj._bTmpRead == 0, "Has partially read data when snapshot taken");
+                    Debug.Assert(stateObj._partialHeaderBytesRead == 0, "Has partially read header when snapshot taken");
+#endif
+                }
+
+                internal void Clear(TdsParserStateObject stateObj, bool trackStack = true)
+                {
+                    _inBytesUsed = 0;
+                    _inBytesPacket = 0;
+                    _messageStatus = 0;
+                    _nullBitmapInfo = default;
+                    _plpData = null;
+                    _cleanupMetaData = null;
+                    _cleanupAltMetaDataSetArray = null;
+                    _state = SnapshottedStateFlags.None;
+#if DEBUG
+                    if (trackStack)
+                    {
+                        stateObj._lastStack = null;
+                    }
+#endif
+                }
+
+                internal void Restore(TdsParserStateObject stateObj)
+                {
+                    stateObj._inBytesUsed = _inBytesUsed;
+                    stateObj._inBytesPacket = _inBytesPacket;
+                    stateObj._messageStatus = _messageStatus;
+                    stateObj._nullBitmapInfo = _nullBitmapInfo;
+                    stateObj._cleanupMetaData = _cleanupMetaData;
+                    stateObj._cleanupAltMetaDataSetArray = _cleanupAltMetaDataSetArray;
+
+                    // Make sure to go through the appropriate increment/decrement methods if changing HasOpenResult
+                    if (!stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) == SnapshottedStateFlags.OpenResult))
+                    {
+                        stateObj.IncrementAndObtainOpenResultCount(stateObj._executedUnderTransaction);
+                    }
+                    else if (stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) != SnapshottedStateFlags.OpenResult))
+                    {
+                        stateObj.DecrementOpenResultCount();
+                    }
+                    //else _stateObj._hasOpenResult is already == _snapshotHasOpenResult
+                    stateObj._snapshottedState = _state;
+
+                    // Reset partially read state (these only need to be maintained if doing async without snapshot)
+                    stateObj._bTmpRead = 0;
+                    stateObj._partialHeaderBytesRead = 0;
+
+                    // reset plp state
+                    stateObj._longlen = _plpData?.SnapshotLongLen ?? 0;
+                    stateObj._longlenleft = _plpData?.SnapshotLongLenLeft ?? 0;
+                }
+            }
+
+            private TdsParserStateObject _stateObj;
+            private StateObjectData _replayStateData;
+
+            internal byte[] _plpBuffer;
+
+            private PacketData _lastPacket;
+            private PacketData _firstPacket;
+            private PacketData _current;
+            private PacketData _sparePacket;
+
+#if DEBUG
+            private int _packetCounter;
+            private int _rollingPend = 0;
+            private int _rollingPendCount = 0;
+
+            internal bool DoPend()
+            {
+                if (s_failAsyncPends || !s_forceAllPends)
+                {
+                    return false;
+                }
+
+                if (_rollingPendCount == _rollingPend)
+                {
+                    _rollingPend++;
+                    _rollingPendCount = 0;
+                    return true;
+                }
+
+                _rollingPendCount++;
+                return false;
+            }
+
+            internal void AssertCurrent()
+            {
+                Debug.Assert(_current == _lastPacket);
+            }
+
+            internal void CheckStack(string trace)
+            {
+                PacketData prev = _current?.PrevPacket;
+                if (prev.Stack == null)
+                {
+                    prev.Stack = trace;
+                }
+                else
+                {
+                    Debug.Assert(_stateObj._permitReplayStackTraceToDiffer || prev.Stack == trace, "The stack trace on subsequent replays should be the same");
+                }
+            }
+#endif
+            internal void CloneNullBitmapInfo()
+            {
+                if (_stateObj._nullBitmapInfo.ReferenceEquals(_replayStateData?._nullBitmapInfo ?? default))
+                {
+                    _stateObj._nullBitmapInfo = _stateObj._nullBitmapInfo.Clone();
+                }
+            }
+
+            internal void CloneCleanupAltMetaDataSetArray()
+            {
+                if (_stateObj._cleanupAltMetaDataSetArray != null && object.ReferenceEquals(_replayStateData?._cleanupAltMetaDataSetArray ?? default, _stateObj._cleanupAltMetaDataSetArray))
+                {
+                    _stateObj._cleanupAltMetaDataSetArray = (_SqlMetaDataSetCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
+                }
+            }
+
+            internal void AppendPacketData(byte[] buffer, int read)
+            {
+                Debug.Assert(buffer != null, "packet data cannot be null");
+                Debug.Assert(read >= TdsEnums.HEADER_LEN, "minimum packet length is TdsEnums.HEADER_LEN");
+#if DEBUG
+                for (PacketData current = _firstPacket; current != null; current = current.NextPacket)
+                {
+                    Debug.Assert(!ReferenceEquals(current.Buffer, buffer));
+                }
+#endif
+                PacketData packetData = _sparePacket;
+                if (packetData is null)
+                {
+                    packetData = new PacketData();
+                }
+                else
+                {
+                    _sparePacket = null;
+                }
+                packetData.Buffer = buffer;
+                packetData.Read = read;
+#if DEBUG
+                packetData.SetDebugStack(_stateObj._lastStack);
+                packetData.SetDebugPacketId(Interlocked.Increment(ref _packetCounter));
+#endif
+                if (_firstPacket is null)
+                {
+                    _firstPacket = packetData;
+                }
+                else
+                {
+                    _lastPacket.NextPacket = packetData;
+                    packetData.PrevPacket = _lastPacket;
+                }
+                _lastPacket = packetData;
+            }
+
+            internal bool MoveNext()
+            {
+                bool retval = false;
+                bool moved = false;
+                if (_current == null)
+                {
+                    _current = _firstPacket;
+                    moved = true;
+                }
+                else if (_current.NextPacket != null)
+                {
+                    _current = _current.NextPacket;
+                    moved = true;
+                }
+
+                if (moved)
+                {
+                    _stateObj._inBuff = _current.Buffer;
+                    _stateObj._inBytesUsed = 0;
+                    _stateObj._inBytesRead = _current.Read;
+                    _stateObj._snapshotReplay = true;
+                    retval = true;
+                }
+
+                return retval;
+            }
+
+            internal void MoveToStart()
+            {
+                // go back to the beginning
+                _current = null;
+                MoveNext();
+                _replayStateData.Restore(_stateObj);
+                _stateObj.AssertValidState();
+            }
+
+            internal void CaptureAsStart(TdsParserStateObject stateObj)
+            {
+                _firstPacket = null;
+                _lastPacket = null;
+                _current = null;
+
+                _stateObj = stateObj;
+                _replayStateData ??= new StateObjectData();
+                _replayStateData.Capture(stateObj);
+
+#if DEBUG
+                _rollingPend = 0;
+                _rollingPendCount = 0;
+                stateObj._lastStack = null;
+                Debug.Assert(stateObj._bTmpRead == 0, "Has partially read data when snapshot taken");
+                Debug.Assert(stateObj._partialHeaderBytesRead == 0, "Has partially read header when snapshot taken");
+#endif
+
+                AppendPacketData(stateObj._inBuff, stateObj._inBytesRead);
+            }
+
+            internal void Clear()
+            {
+                ClearState();
+                ClearPackets();
+            }
+
+            private void ClearPackets()
+            {
+                PacketData packet = _firstPacket;
+                _firstPacket = null;
+                _lastPacket = null;
+                _current = null;
+                packet.Clear();
+                _sparePacket = packet;
+            }
+
+            private void ClearState()
+            {
+                _replayStateData.Clear(_stateObj);
+#if DEBUG
+                _rollingPend = 0;
+                _rollingPendCount = 0;
+                _stateObj._lastStack = null;
+#endif
+                _stateObj = null;
+            }
+        }
     }
 }

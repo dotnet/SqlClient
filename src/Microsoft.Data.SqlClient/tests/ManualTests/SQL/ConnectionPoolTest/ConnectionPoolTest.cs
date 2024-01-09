@@ -155,6 +155,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectionPoolWrapper connectionPool = internalConnection.ConnectionPool;
             GC.Collect();
             GC.WaitForPendingFinalizers();
+            GC.Collect();
 
             DataTestUtility.AssertEqualsWithDescription(1, connectionPool.ConnectionCount, "Wrong number of connections in the pool.");
             DataTestUtility.AssertEqualsWithDescription(0, connectionPool.FreeConnectionCount, "Wrong number of free connections in the pool.");

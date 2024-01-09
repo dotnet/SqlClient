@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SqlBatchCommandCollection">
+    <SqlBatchCommandCollection>
+      <summary>A collection of instances of <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />, contained within a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.
+    </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </SqlBatchCommandCollection>
+    <Add>
+      <summary>Add a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </Add>
+    <Contains>
+      <summary>Determines whether a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> is in the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </Contains>
+    <CopyTo>
+      <summary>Copies the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> to a one dimensional array, starting at the target index of the target array.</summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </CopyTo>
+    <IndexOf>
+      <summary>Searches for the specified <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> within the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> and returns the zero-based index of the first occurence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
+      <returns>
+        Returns the zero-based index of the first occurence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+      </returns>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </IndexOf>
+    <Insert>
+      <summary>Inserts an item into the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> at the specified index.</summary>
+      <exception cref="T:System.ArgumentOutOfRangeException"></exception>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </Insert>
+    <Remove>
+      <summary>Removes the first occurence of the specific item from the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.</summary>
+      <returns>Returns <see langword="true" /> if an item is successfully removed. Returns false if an item could not be removed or no item was not found.</returns>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </Remove>
+    <this1>
+      <summary>Gets or Sets the element at the specified index.</summary>
+      <returns>The element at the specified index.</returns>
+      <exception cref="T:System.ArgumentOutOfRangeException"></exception>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </this1>
+    <this2>
+      <summary>Gets or Sets the element at the specified index.</summary>
+      <returns>The element at the specified index.</returns>
+      <exception cref="T:System.ArgumentOutOfRangeException"></exception>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </this2>
+  </members>
+</docs>

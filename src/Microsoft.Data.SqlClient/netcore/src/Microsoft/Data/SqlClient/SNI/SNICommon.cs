@@ -3,9 +3,16 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using Microsoft.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -21,16 +28,18 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal enum SNIProviders
     {
-        HTTP_PROV, // HTTP Provider
-        NP_PROV, // Named Pipes Provider
-        SESSION_PROV, // Session Provider
-        SIGN_PROV, // Sign Provider
-        SM_PROV, // Shared Memory Provider
-        SMUX_PROV, // SMUX Provider
-        SSL_PROV, // SSL Provider
-        TCP_PROV, // TCP Provider
-        MAX_PROVS, // Number of providers
-        INVALID_PROV // SQL Network Interfaces
+        HTTP_PROV = 0, // HTTP Provider
+        NP_PROV = 1, // Named Pipes Provider
+        SESSION_PROV = 2, // Session Provider
+        SIGN_PROV = 3, // Sign Provider
+        SM_PROV = 4, // Shared Memory Provider
+        SMUX_PROV = 5, // SMUX Provider
+        SSL_PROV = 6, // SSL Provider
+        TCP_PROV = 7, // TCP Provider
+        VIA_PROV = 8, // Virtual Interface Architecture Provider
+        CTAIP_PROV = 9,
+        MAX_PROVS = 10, // Number of providers
+        INVALID_PROV = 11 // SQL Network Interfaces
     }
 
     /// <summary>
@@ -51,10 +60,11 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             SMID = bytes[0];
             flags = bytes[1];
-            sessionId = BitConverter.ToUInt16(bytes, 2);
-            length = BitConverter.ToUInt32(bytes, 4) - SNISMUXHeader.HEADER_LENGTH;
-            sequenceNumber = BitConverter.ToUInt32(bytes, 8);
-            highwater = BitConverter.ToUInt32(bytes, 12);
+            Span<byte> span = bytes.AsSpan();
+            sessionId = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(2));
+            length = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(4)) - SNISMUXHeader.HEADER_LENGTH;
+            sequenceNumber = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(8));
+            highwater = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(12));
         }
 
         public void Write(Span<byte> bytes)
@@ -146,15 +156,56 @@ namespace Microsoft.Data.SqlClient.SNI
                     return true;
                 }
 
-                if ((policyErrors & SslPolicyErrors.RemoteCertificateNameMismatch) != 0)
+                // If we get to this point then there is a ssl policy flag.
+                StringBuilder messageBuilder = new();
+                if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
                 {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "targetServerName {0}, SslPolicyError {1}, SSL Policy certificate chain has errors.", args0: targetServerName, args1: policyErrors);
+
+                    // get the chain status from the certificate
+                    X509Certificate2 cert2 = cert as X509Certificate2;
+                    X509Chain chain = new();
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.Offline;
+                    StringBuilder chainStatusInformation = new();
+                    bool chainIsValid = chain.Build(cert2);
+                    Debug.Assert(!chainIsValid, "RemoteCertificateChainError flag is detected, but certificate chain is valid.");
+                    if (!chainIsValid)
+                    {
+                        foreach (X509ChainStatus chainStatus in chain.ChainStatus)
+                        {
+                            chainStatusInformation.Append($"{chainStatus.StatusInformation}, [Status: {chainStatus.Status}]");
+                            chainStatusInformation.AppendLine();
+                        }
+                    }
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "targetServerName {0}, SslPolicyError {1}, SSL Policy certificate chain has errors. ChainStatus {2}", args0: targetServerName, args1: policyErrors, args2: chainStatusInformation);
+                    messageBuilder.AppendFormat(Strings.SQL_RemoteCertificateChainErrors, chainStatusInformation);
+                    messageBuilder.AppendLine();
+                }
+
+                if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable))
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "targetServerName {0}, SSL Policy invalidated certificate.", args0: targetServerName);
+                    messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNotAvailable);
+                }
+
+                if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch))
+                {
+#if NET7_0_OR_GREATER
+                    X509Certificate2 cert2 = cert as X509Certificate2;
+                    if (!cert2.MatchesHostname(targetServerName))
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "targetServerName {0}, Target Server name or HNIC does not match the Subject/SAN in Certificate.", args0: targetServerName);
+                        messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
+                    }
+#else
+                    // To Do: include certificate SAN (Subject Alternative Name) check.
                     string certServerName = cert.Subject.Substring(cert.Subject.IndexOf('=') + 1);
 
                     // Verify that target server name matches subject in the certificate
                     if (targetServerName.Length > certServerName.Length)
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "targetServerName {0}, Target Server name is of greater length than Subject in Certificate.", args0: targetServerName);
-                        return false;
+                        messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
                     }
                     else if (targetServerName.Length == certServerName.Length)
                     {
@@ -162,7 +213,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         if (!targetServerName.Equals(certServerName, StringComparison.OrdinalIgnoreCase))
                         {
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "targetServerName {0}, Target Server name does not match Subject in Certificate.", args0: targetServerName);
-                            return false;
+                            messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
                         }
                     }
                     else
@@ -170,7 +221,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         if (string.Compare(targetServerName, 0, certServerName, 0, targetServerName.Length, StringComparison.OrdinalIgnoreCase) != 0)
                         {
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "targetServerName {0}, Target Server name does not match Subject in Certificate.", args0: targetServerName);
-                            return false;
+                            messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
                         }
 
                         // Server name matches cert name for its whole length, so ensure that the
@@ -180,21 +231,22 @@ namespace Microsoft.Data.SqlClient.SNI
                         if (certServerName[targetServerName.Length] != '.')
                         {
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "targetServerName {0}, Target Server name does not match Subject in Certificate.", args0: targetServerName);
-                            return false;
+                            messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
                         }
                     }
+#endif
                 }
-                else
+
+                if (messageBuilder.Length > 0)
                 {
-                    // Fail all other SslPolicy cases besides RemoteCertificateNameMismatch
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "targetServerName {0}, SslPolicyError {1}, SSL Policy invalidated certificate.", args0: targetServerName, args1: policyErrors);
-                    return false;
+                    throw ADP.SSLCertificateAuthenticationException(messageBuilder.ToString());
                 }
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "targetServerName {0}, Client certificate validated successfully.", args0: targetServerName);
+
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, " Remote certificate with subject: {0}, validated successfully.", args0: cert.Subject);
                 return true;
             }
         }
-        
+
         /// <summary>
         /// We validate the provided certificate provided by the client with the one from the server to see if it matches.
         /// Certificate validation and chain trust validations are done by SSLStream class [System.Net.Security.SecureChannel.VerifyRemoteCertificate method]
@@ -214,28 +266,87 @@ namespace Microsoft.Data.SqlClient.SNI
                     return true;
                 }
 
-                if ((policyErrors & SslPolicyErrors.RemoteCertificateNameMismatch) != 0)
+                StringBuilder messageBuilder = new();
+                if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable))
                 {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "serverCert {0}, SSL Server certificate not validated as PolicyErrors set to RemoteCertificateNotAvailable.", args0: clientCert.Subject);
+                    messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNotAvailable);
+                }
+
+                if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
+                {
+                    // get the chain status from the server certificate
+                    X509Certificate2 cert2 = serverCert as X509Certificate2;
+                    X509Chain chain = new();
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.Offline;
+                    StringBuilder chainStatusInformation = new();
+                    bool chainIsValid = chain.Build(cert2);
+                    Debug.Assert(!chainIsValid, "RemoteCertificateChainError flag is detected, but certificate chain is valid.");
+                    if (!chainIsValid)
+                    {
+                        foreach (X509ChainStatus chainStatus in chain.ChainStatus)
+                        {
+                            chainStatusInformation.Append($"{chainStatus.StatusInformation}, [Status: {chainStatus.Status}]");
+                            chainStatusInformation.AppendLine();
+                        }
+                    }
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "certificate subject from server is {0}, and does not match with the certificate provided client.", args0: cert2.SubjectName.Name);
+                    messageBuilder.AppendFormat(Strings.SQL_RemoteCertificateChainErrors, chainStatusInformation);
+                    messageBuilder.AppendLine();
+                }
+
+                if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch))
+                {
+#if NET7_0_OR_GREATER
+                    X509Certificate2 s_cert = serverCert as X509Certificate2;
+                    X509Certificate2 c_cert = clientCert as X509Certificate2;
+
+                    if (!s_cert.MatchesHostname(c_cert.SubjectName.Name))
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "certificate from server does not match with the certificate provided client.", args0: s_cert.Subject);
+                        messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
+                    }
+#else
                     // Verify that subject name matches
                     if (serverCert.Subject != clientCert.Subject)
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "certificate subject from server is {0}, and does not match with the certificate provided client.", args0: serverCert.Subject);
-                        return false;
+                        messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
                     }
+
                     if (!serverCert.Equals(clientCert))
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "certificate from server does not match with the certificate provided client.", args0: serverCert.Subject);
-                        return false;
+                        messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
                     }
+#endif
                 }
-                else
+
+                if (messageBuilder.Length > 0)
                 {
-                    // Fail all other SslPolicy cases besides RemoteCertificateNameMismatch
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "certificate subject: {0}, SslPolicyError {1}, SSL Policy invalidated certificate.", args0: clientCert.Subject, args1: policyErrors);
-                    return false;
+                    throw ADP.SSLCertificateAuthenticationException(messageBuilder.ToString());
                 }
+
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "certificate subject {0}, Client certificate validated successfully.", args0: clientCert.Subject);
                 return true;
+            }
+        }
+
+        internal static IPAddress[] GetDnsIpAddresses(string serverName, TimeoutTimer timeout)
+        {
+            using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
+            {
+                int remainingTimeout = timeout.MillisecondsRemainingInt;
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO,
+                                                          "Getting DNS host entries for serverName {0} within {1} milliseconds.",
+                                                          args0: serverName,
+                                                          args1: remainingTimeout);
+                using CancellationTokenSource cts = new CancellationTokenSource(remainingTimeout);
+                // using this overload to support netstandard
+                Task<IPAddress[]> task = Dns.GetHostAddressesAsync(serverName);
+                task.ConfigureAwait(false);
+                task.Wait(cts.Token);
+                return task.Result;
             }
         }
 

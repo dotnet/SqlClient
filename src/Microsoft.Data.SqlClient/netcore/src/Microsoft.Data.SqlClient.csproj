@@ -33,6 +33,9 @@
     <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Common\BitConverterCompatible.cs">
+      <Link>Microsoft\Data\Common\BitConverterCompatible.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Common\DbConnectionOptions.Common.cs">
       <Link>Microsoft\Data\Common\DbConnectionOptions.Common.cs</Link>
     </Compile>
@@ -273,6 +276,15 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationToken.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationToken.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBatch.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBatch.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBatchCommand.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBatchCommand.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBatchCommandCollection.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBatchCommandCollection.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyColumnMapping.cs">
       <Link>Microsoft\Data\SqlClient\SqlBulkCopyColumnMapping.cs</Link>
     </Compile>
@@ -495,14 +507,11 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStream.cs">
       <Link>Microsoft\Data\SqlClient\SqlStream.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Resources\ResCategoryAttribute.cs">
+     <Compile Include="..\..\src\Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Resources\ResDescriptionAttribute.cs">
       <Link>Resources\ResDescriptionAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Resources\StringsHelper.cs">
-      <Link>Resources\StringsHelper.cs</Link>
     </Compile>
     <Compile Include="..\..\src\System\Diagnostics\CodeAnalysis.cs">
       <Link>Common\System\Diagnostics\CodeAnalysis.cs</Link>
@@ -570,20 +579,28 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
-    <Compile Include="Resources\StringsHelper.cs">
-      <Link>Resources\StringsHelper.NetCore.cs</Link>
-    </Compile>
-    <Compile Include="Resources\Strings.Designer.cs">
+  <ItemGroup>
+    <Compile Include="..\..\src\Resources\StringsHelper.cs">
+      <Link>Resources\StringsHelper.cs</Link>
+    </Compile>  
+    <Compile Include="..\..\src\Resources\Strings.Designer.cs">
+      <Link>Resources\Strings.Designer.cs</Link>
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
-    <EmbeddedResource Update="Resources\Strings.resx">
+    <EmbeddedResource Include="..\..\src\Resources\Strings.resx">
+      <Link>Resources\Strings.resx</Link>
+      <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
       <CustomToolNamespace>System</CustomToolNamespace>
     </EmbeddedResource>
+    <EmbeddedResource Include="..\..\src\Resources\$(ResxFileName).*.resx">
+      <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </EmbeddedResource>    
+  </ItemGroup>
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="$(CommonPath)\CoreLib\System\Threading\Tasks\TaskToApm.cs">
       <Link>Common\CoreLib\System\Threading\Tasks\TaskToApm.cs</Link>
     </Compile>
@@ -646,7 +663,7 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
   </ItemGroup>
   <!--This will exclude SqlTypeWorkarounds.netcore.cs from Net7 and greater versions-->
@@ -951,6 +968,14 @@
       <Link>Common\System\Net\Security\NegotiateStreamPal.Unix.cs</Link>
     </Compile>
   </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.NetCoreApp.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBatchCommand.Net8OrGreater.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBatchCommand.Net8OrGreater.cs</Link>
+    </Compile>
+  </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(IsUAPAssembly)' == 'true'">
     <Reference Include="System.Collections.NonGeneric" />
     <Reference Include="System.Memory" />
@@ -964,7 +989,7 @@
     <PackageReference Condition="$(TargetGroup) == 'netstandard' and '$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'" Include="Microsoft.Win32.Registry" Version="$(MicrosoftWin32RegistryVersion)" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
     <PackageReference Include="System.Security.Permissions" Version="$(SystemSecurityPermissionsVersion)" />
-    <PackageReference Include="System.Security.Principal.Windows" Version="$(SystemSecurityPrincipalWindowsVersion)" />
+    <PackageReference Condition="$(TargetGroup) == 'netstandard'" Include="System.Security.Principal.Windows" Version="$(SystemSecurityPrincipalWindowsVersion)" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVersion)" />
     <PackageReference Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebVersion)" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
@@ -985,4 +1010,5 @@
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
+  <Import Project="..\..\src\tools\targets\GenerateResourceStringsSource.targets" />
 </Project>

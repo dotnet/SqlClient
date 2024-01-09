@@ -24,6 +24,7 @@ using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -494,7 +495,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Connect(ServerInfo serverInfo,
                               SqlInternalConnectionTds connHandler,
-                              long timerExpire,
+                              TimeoutTimer timeout,
                               SqlConnectionString connectionOptions,
                               bool withFailover,
                               bool isFirstTransparentAttempt,
@@ -593,6 +594,9 @@ namespace Microsoft.Data.SqlClient
                     case SqlAuthenticationMethod.ActiveDirectoryDefault:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Default authentication");
                         break;
+                    case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Workload Identity authentication");
+                        break;
                     case SqlAuthenticationMethod.SqlPassword:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL Password authentication");
                         break;
@@ -639,7 +643,7 @@ namespace Microsoft.Data.SqlClient
 
             _physicalStateObj.CreatePhysicalSNIHandle(
                 serverInfo.ExtendedServerName,
-                timerExpire,
+                timeout,
                 out instanceName,
                 _sniSpnBuffer,
                 false,
@@ -679,7 +683,7 @@ namespace Microsoft.Data.SqlClient
             }
             _state = TdsParserState.OpenNotLoggedIn;
             _physicalStateObj.SniContext = SniContext.Snix_PreLoginBeforeSuccessfulWrite; // SQL BU DT 376766
-            _physicalStateObj.TimeoutTime = timerExpire;
+            _physicalStateObj.TimeoutTime = timeout.LegacyTimerExpire;
 
             bool marsCapable = false;
 
@@ -744,7 +748,7 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
                 _physicalStateObj.CreatePhysicalSNIHandle(
                     serverInfo.ExtendedServerName,
-                    timerExpire,
+                    timeout,
                     out instanceName,
                     _sniSpnBuffer,
                     true,
@@ -1389,6 +1393,8 @@ namespace Microsoft.Data.SqlClient
             int payloadOffset = 0;
             int payloadLength = 0;
             int option = payload[offset++];
+            bool serverSupportsEncryption = false;
+            bool serverSupportsCTAIP = false;
 
             while (option != (byte)PreLoginOptions.LASTOPT)
             {
@@ -1412,29 +1418,33 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.ENCRYPT:
+                        if (tlsFirst)
+                        {
+                            // Can skip/ignore this option if we are doing TDS 8.
+                            offset += 4;
+                            break;
+                        }
+
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
                         payloadLength = payload[offset++] << 8 | payload[offset++];
 
                         EncryptionOptions serverOption = (EncryptionOptions)payload[payloadOffset];
                         /* internal enum EncryptionOptions {
-                        OFF,
-                        ON,
-                        NOT_SUP,
-                        REQ,
-                        LOGIN
-                    } */
+                            OFF,
+                            ON,
+                            NOT_SUP,
+                            REQ,
+                            LOGIN,
+                            OPTIONS_MASK = 0x3f,
+                            CTAIP = 0x40,
+                            CLIENT_CERT = 0x80,
+                        } */
+
+                        // Any response other than NOT_SUP means the server supports encryption.
+                        serverSupportsEncryption = (serverOption & EncryptionOptions.OPTIONS_MASK) != EncryptionOptions.NOT_SUP;
+
                         switch (_encryptionOption & EncryptionOptions.OPTIONS_MASK)
                         {
-                            case (EncryptionOptions.ON):
-                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.NOT_SUP)
-                                {
-                                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                                    _physicalStateObj.Dispose();
-                                    ThrowExceptionAndWarning(_physicalStateObj);
-                                }
-
-                                break;
-
                             case (EncryptionOptions.OFF):
                                 if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.OFF)
                                 {
@@ -1450,8 +1460,9 @@ namespace Microsoft.Data.SqlClient
                                 break;
 
                             case (EncryptionOptions.NOT_SUP):
-                                if (!tlsFirst && (serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.REQ)
+                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.REQ)
                                 {
+                                    // Server requires encryption, but client does not support it.
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                                     _physicalStateObj.Dispose();
                                     ThrowExceptionAndWarning(_physicalStateObj);
@@ -1460,40 +1471,19 @@ namespace Microsoft.Data.SqlClient
                                 break;
 
                             default:
-                                Debug.Fail("Invalid client encryption option detected");
+                                // Any other client option needs encryption
+                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.NOT_SUP)
+                                {
+                                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                                    _physicalStateObj.Dispose();
+                                    ThrowExceptionAndWarning(_physicalStateObj);
+                                }
+
                                 break;
                         }
 
                         // Check if the server will accept CTAIP.
-                        //
-                        if ((_encryptionOption & EncryptionOptions.CTAIP) != 0 &&
-                            (serverOption & EncryptionOptions.CTAIP) == 0)
-                        {
-                            _physicalStateObj.AddError(new SqlError(TdsEnums.CTAIP_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.CTAIPNotSupportedByServer(), "", 0));
-                            _physicalStateObj.Dispose();
-                            ThrowExceptionAndWarning(_physicalStateObj);
-                        }
-
-                        if ((_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.ON ||
-                            (_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.LOGIN)
-                        {
-
-                            if (serverCallback != null)
-                            {
-                                trustServerCert = true;
-                            }
-
-                            // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
-                             bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
-                             ((authType != SqlAuthenticationMethod.NotSpecified || (_connHandler._accessTokenInBytes != null || 
-                            _connHandler._accessTokenCallback != null))
-                            && !trustServerCert);
-
-                            UInt32 info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
-                                | (is2005OrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
-
-                            EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename, serverCallback, clientCallback);
-                        }
+                        serverSupportsCTAIP = (serverOption & EncryptionOptions.CTAIP) != 0;
 
                         break;
 
@@ -1541,8 +1531,7 @@ namespace Microsoft.Data.SqlClient
                         if (payload[payloadOffset] != 0x00 && payload[payloadOffset] != 0x01)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ConsumePreLoginHandshake|ERR> {0}, " +
-                            "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {1}.", ObjectID, (int)payload[payloadOffset]);
-
+                                "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {1}.", ObjectID, (int)payload[payloadOffset]);
                             throw SQL.ParsingErrorValue(ParsingErrorState.FedAuthRequiredPreLoginResponseInvalidValue, (int)payload[payloadOffset]);
                         }
 
@@ -1574,6 +1563,37 @@ namespace Microsoft.Data.SqlClient
                 {
                     break;
                 }
+            }
+
+            if ((_encryptionOption & EncryptionOptions.CTAIP) != 0 && !serverSupportsCTAIP)
+            {
+                _physicalStateObj.AddError(new SqlError(TdsEnums.CTAIP_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.CTAIPNotSupportedByServer(), "", 0));
+                _physicalStateObj.Dispose();
+                ThrowExceptionAndWarning(_physicalStateObj);
+            }
+
+            if ((_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.ON ||
+                (_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.LOGIN)
+            {
+                if (!serverSupportsEncryption)
+                {
+                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                    _physicalStateObj.Dispose();
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+
+                if (serverCallback != null)
+                {
+                    trustServerCert = true;
+                }
+
+                // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
+                bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || ((_connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null) && !trustServerCert);
+
+                uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
+                    | (is2005OrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
+
+                EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename, serverCallback, clientCallback);
             }
 
             return PreLoginHandshakeStatus.Successful;
@@ -1676,7 +1696,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Fires a single InfoMessageEvent
-        private void FireInfoMessageEvent(SqlConnection connection, TdsParserStateObject stateObj, SqlError error)
+        private void FireInfoMessageEvent(SqlConnection connection, SqlCommand command, TdsParserStateObject stateObj, SqlError error)
         {
 
             string serverVersion = null;
@@ -1692,7 +1712,7 @@ namespace Microsoft.Data.SqlClient
 
             sqlErs.Add(error);
 
-            SqlException exc = SqlException.CreateException(sqlErs, serverVersion, _connHandler);
+            SqlException exc = SqlException.CreateException(sqlErs, serverVersion, _connHandler, innerException: null, batchCommand: command?.GetCurrentBatchCommand());
 
             bool notified;
             connection.OnInfoMessage(new SqlInfoMessageEventArgs(exc), out notified);
@@ -1726,7 +1746,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void ThrowExceptionAndWarning(TdsParserStateObject stateObj, bool callerHasConnectionLock = false, bool asyncClose = false)
+        internal void ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command = null, bool callerHasConnectionLock = false, bool asyncClose = false)
         {
             Debug.Assert(!callerHasConnectionLock || _connHandler._parserLock.ThreadMayHaveLock(), "Caller claims to have lock, but connection lock is not taken");
 
@@ -1776,10 +1796,19 @@ namespace Microsoft.Data.SqlClient
                 {
                     serverVersion = _connHandler.ServerVersion;
                 }
-                exception = SqlException.CreateException(temp, serverVersion, _connHandler);
-                if (exception.Procedure == TdsEnums.INIT_SSPI_PACKAGE)
+
+                if (temp.Count == 1 && temp[0].Exception != null)
                 {
-                    exception._doNotReconnect = true;
+                    exception = SqlException.CreateException(temp, serverVersion, _connHandler, temp[0].Exception, command?.GetBatchCommand(temp[0].BatchIndex));
+                }
+                else
+                {
+                    SqlBatchCommand batchCommand = null;
+                    if (temp[0]?.BatchIndex is var index and >= 0 && command is not null)
+                    {
+                        batchCommand = command.GetBatchCommand(index.Value);
+                    }
+                    exception = SqlException.CreateException(temp, serverVersion, _connHandler, innerException: null, batchCommand: batchCommand);
                 }
             }
 
@@ -2441,11 +2470,17 @@ namespace Microsoft.Data.SqlClient
                         if ((connection != null) && connection.FireInfoMessageEventOnUserErrors)
                         {
                             foreach (SqlError error in stateObj._pendingInfoEvents)
-                                FireInfoMessageEvent(connection, stateObj, error);
+                            {
+                                FireInfoMessageEvent(connection, cmdHandler, stateObj, error);
+                            }
                         }
                         else
+                        {
                             foreach (SqlError error in stateObj._pendingInfoEvents)
+                            {
                                 stateObj.AddWarning(error);
+                            }
+                        }
 
                     }
                     stateObj._pendingInfoEvents = null;
@@ -2479,11 +2514,11 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (token == TdsEnums.SQLERROR)
                             {
-                                stateObj._errorTokenReceived = true; // Keep track of the fact error token was received - for Done processing.
+                                stateObj.HasReceivedError = true; // Keep track of the fact error token was received - for Done processing.
                             }
 
                             SqlError error;
-                            if (!TryProcessError(token, stateObj, out error))
+                            if (!TryProcessError(token, stateObj, cmdHandler, out error))
                             {
                                 return false;
                             }
@@ -2512,7 +2547,7 @@ namespace Microsoft.Data.SqlClient
                                     (error.Class <= TdsEnums.MAX_USER_CORRECTABLE_ERROR_CLASS))
                                 {
                                     // Fire SqlInfoMessage here
-                                    FireInfoMessageEvent(connection, stateObj, error);
+                                    FireInfoMessageEvent(connection,cmdHandler, stateObj, error);
                                 }
                                 else
                                 {
@@ -2606,7 +2641,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    cmdHandler.OnDoneProc();
+                                    cmdHandler.OnDoneProc(stateObj);
                                 }
                             }
 
@@ -2620,68 +2655,6 @@ namespace Microsoft.Data.SqlClient
                             {
                                 return false;
                             }
-                            break;
-                        }
-
-                    case TdsEnums.SQLALTMETADATA:
-                        {
-                            stateObj.CloneCleanupAltMetaDataSetArray();
-
-                            if (stateObj._cleanupAltMetaDataSetArray == null)
-                            {
-                                // create object on demand (lazy creation)
-                                stateObj._cleanupAltMetaDataSetArray = new _SqlMetaDataSetCollection();
-                            }
-
-                            _SqlMetaDataSet cleanupAltMetaDataSet;
-                            if (!TryProcessAltMetaData(tokenLength, stateObj, out cleanupAltMetaDataSet))
-                            {
-                                return false;
-                            }
-
-                            stateObj._cleanupAltMetaDataSetArray.SetAltMetaData(cleanupAltMetaDataSet);
-                            if (null != dataStream)
-                            {
-                                byte metadataConsumedByte;
-                                if (!stateObj.TryPeekByte(out metadataConsumedByte))
-                                {
-                                    return false;
-                                }
-                                if (!dataStream.TrySetAltMetaDataSet(cleanupAltMetaDataSet, (TdsEnums.SQLALTMETADATA != metadataConsumedByte)))
-                                {
-                                    return false;
-                                }
-                            }
-
-                            break;
-                        }
-
-                    case TdsEnums.SQLALTROW:
-                        {
-                            if (!stateObj.TryStartNewRow(isNullCompressed: false))
-                            { // altrows are not currently null compressed
-                                return false;
-                            }
-
-                            // read will call run until dataReady. Must not read any data if return immediately set
-                            if (RunBehavior.ReturnImmediately != (RunBehavior.ReturnImmediately & runBehavior))
-                            {
-                                ushort altRowId;
-                                if (!stateObj.TryReadUInt16(out altRowId))
-                                { // get altRowId
-                                    return false;
-                                }
-
-                                if (!TrySkipRow(stateObj._cleanupAltMetaDataSetArray.GetAltMetaData(altRowId), stateObj))
-                                { // skip altRow
-                                    return false;
-                                }
-                            }
-                            else
-                            {
-                                dataReady = true;
-                            }
-
                             break;
                         }
 
@@ -3004,6 +2977,68 @@ namespace Microsoft.Data.SqlClient
                             break;
                         }
 
+                    // deprecated
+                    case TdsEnums.SQLALTMETADATA:
+                        {
+                            stateObj.CloneCleanupAltMetaDataSetArray();
+
+                            if (stateObj._cleanupAltMetaDataSetArray == null)
+                            {
+                                // create object on demand (lazy creation)
+                                stateObj._cleanupAltMetaDataSetArray = new _SqlMetaDataSetCollection();
+                            }
+
+                            _SqlMetaDataSet cleanupAltMetaDataSet;
+                            if (!TryProcessAltMetaData(tokenLength, stateObj, out cleanupAltMetaDataSet))
+                            {
+                                return false;
+                            }
+
+                            stateObj._cleanupAltMetaDataSetArray.SetAltMetaData(cleanupAltMetaDataSet);
+                            if (null != dataStream)
+                            {
+                                byte metadataConsumedByte;
+                                if (!stateObj.TryPeekByte(out metadataConsumedByte))
+                                {
+                                    return false;
+                                }
+                                if (!dataStream.TrySetAltMetaDataSet(cleanupAltMetaDataSet, (TdsEnums.SQLALTMETADATA != metadataConsumedByte)))
+                                {
+                                    return false;
+                                }
+                            }
+
+                            break;
+                        }
+                    case TdsEnums.SQLALTROW:
+                        {
+                            if (!stateObj.TryStartNewRow(isNullCompressed: false))
+                            { // altrows are not currently null compressed
+                                return false;
+                            }
+
+                            // read will call run until dataReady. Must not read any data if return immediately set
+                            if (RunBehavior.ReturnImmediately != (RunBehavior.ReturnImmediately & runBehavior))
+                            {
+                                ushort altRowId;
+                                if (!stateObj.TryReadUInt16(out altRowId))
+                                { // get altRowId
+                                    return false;
+                                }
+
+                                if (!TrySkipRow(stateObj._cleanupAltMetaDataSetArray.GetAltMetaData(altRowId), stateObj))
+                                { // skip altRow
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                dataReady = true;
+                            }
+
+                            break;
+                        }
+
                     default:
                         Debug.Assert(false, "Unhandled token:  " + token.ToString(CultureInfo.InvariantCulture));
                         break;
@@ -3057,14 +3092,14 @@ namespace Microsoft.Data.SqlClient
                     if (RunBehavior.Clean != (RunBehavior.Clean & runBehavior) && !stateObj.IsTimeoutStateExpired)
                     {
                         // Add attention error to collection - if not RunBehavior.Clean!
-                        stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.OperationCancelled(), "", 0));
+                        stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.OperationCancelled(), "", 0, exception: null, batchIndex: cmdHandler?.GetCurrentBatchIndex() ?? -1));
                     }
                 }
             }
 
             if (stateObj.HasErrorOrWarning)
             {
-                ThrowExceptionAndWarning(stateObj);
+                ThrowExceptionAndWarning(stateObj, cmdHandler);
             }
             return true;
         }
@@ -3537,13 +3572,13 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Skip the bogus DONE counts sent by the server
-                if (stateObj._receivedColMetaData || (curCmd != TdsEnums.SELECT))
+                if (stateObj.HasReceivedColumnMetadata || (curCmd != TdsEnums.SELECT))
                 {
                     cmd.OnStatementCompleted(count);
                 }
             }
 
-            stateObj._receivedColMetaData = false;
+            stateObj.HasReceivedColumnMetadata = false;
 
             // Surface exception for DONE_ERROR in the case we did not receive an error token
             // in the stream, but an error occurred.  In these cases, we throw a general server error.  The
@@ -3552,9 +3587,9 @@ namespace Microsoft.Data.SqlClient
             // the server has reached its max connection limit.  Bottom line, we need to throw general
             // error in the cases where we did not receive a error token along with the DONE_ERROR.
             if ((TdsEnums.DONE_ERROR == (TdsEnums.DONE_ERROR & status)) && stateObj.ErrorCount == 0 &&
-                  stateObj._errorTokenReceived == false && (RunBehavior.Clean != (RunBehavior.Clean & run)))
+                  stateObj.HasReceivedError == false && (RunBehavior.Clean != (RunBehavior.Clean & run)))
             {
-                stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0));
+                stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0, exception: null, batchIndex: cmd?.GetCurrentBatchIndex() ?? -1));
 
                 if (null != reader)
                 { // SQL BU DT 269516
@@ -3570,7 +3605,7 @@ namespace Microsoft.Data.SqlClient
             // MDAC #93896.  Also, per Ashwin, the server will always break the connection in this case.
             if ((TdsEnums.DONE_SRVERROR == (TdsEnums.DONE_SRVERROR & status)) && (RunBehavior.Clean != (RunBehavior.Clean & run)))
             {
-                stateObj.AddError(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0));
+                stateObj.AddError(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0, exception: null, batchIndex: cmd?.GetCurrentBatchIndex() ?? -1));
 
                 if (null != reader)
                 { // SQL BU DT 269516
@@ -3586,7 +3621,7 @@ namespace Microsoft.Data.SqlClient
             // stop if the DONE_MORE bit isn't set (see above for attention handling)
             if (TdsEnums.DONE_MORE != (status & TdsEnums.DONE_MORE))
             {
-                stateObj._errorTokenReceived = false;
+                stateObj.HasReceivedError = false;
                 if (stateObj._inBytesUsed >= stateObj._inBytesRead)
                 {
                     stateObj.HasPendingData = false;
@@ -3596,7 +3631,7 @@ namespace Microsoft.Data.SqlClient
             // _pendingData set by e.g. 'TdsExecuteSQLBatch'
             // _hasOpenResult always set to true by 'WriteMarsHeader'
             //
-            if (!stateObj.HasPendingData && stateObj._hasOpenResult)
+            if (!stateObj.HasPendingData && stateObj.HasOpenResult)
             {
                 /*
                                 Debug.Assert(!((sqlTransaction != null               && _distributedTransaction != null) ||
@@ -4385,7 +4420,7 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        internal bool TryProcessError(byte token, TdsParserStateObject stateObj, out SqlError error)
+        internal bool TryProcessError(byte token, TdsParserStateObject stateObj, SqlCommand command, out SqlError error)
         {
             ushort shortLen;
             byte byteLen;
@@ -4491,8 +4526,12 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-
-            error = new SqlError(number, state, errorClass, _server, message, procedure, line);
+            int batchIndex = -1;
+            if (command != null)
+            {
+                batchIndex = command.GetCurrentBatchIndex();
+            }
+            error = new SqlError(number, state, errorClass, _server, message, procedure, line, exception: null, batchIndex: batchIndex);
             return true;
         }
 
@@ -5004,6 +5043,9 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case 0x43f:
                             codePage = 1251;  // Kazakh code page based on SQL Server
+                            break;
+                        case 0x10437:
+                            codePage = 1252;  // Georgian code page based on SQL Server
                             break;
                         default:
                             break;
@@ -5742,7 +5784,7 @@ namespace Microsoft.Data.SqlClient
 
             // We get too many DONE COUNTs from the server, causing too meany StatementCompleted event firings.
             // We only need to fire this event when we actually have a meta data stream with 0 or more rows.
-            stateObj._receivedColMetaData = true;
+            stateObj.HasReceivedColumnMetadata = true;
             return true;
         }
 
@@ -8743,6 +8785,9 @@ namespace Microsoft.Data.SqlClient
                             case SqlAuthenticationMethod.ActiveDirectoryDefault:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
                                 break;
+                            case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYWORKLOADIDENTITY;
+                                break;
                             default:
                                 if (_connHandler._accessTokenCallback != null)
                                 {
@@ -9962,7 +10007,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Task TdsExecuteRPC(SqlCommand cmd, _SqlRPC[] rpcArray, int timeout, bool inSchema, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool isCommandProc, bool sync = true,
+        internal Task TdsExecuteRPC(SqlCommand cmd, IList<_SqlRPC> rpcArray, int timeout, bool inSchema, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool isCommandProc, bool sync = true,
             TaskCompletionSource<object> completion = null, int startRpc = 0, int startParam = 0)
         {
             bool firstCall = (completion == null);
@@ -10026,7 +10071,7 @@ namespace Microsoft.Data.SqlClient
                         stateObj._outputMessageType = TdsEnums.MT_RPC;
                     }
 
-                    for (int ii = startRpc; ii < rpcArray.Length; ii++)
+                    for (int ii = startRpc; ii < rpcArray.Count; ii++)
                     {
                         rpcext = rpcArray[ii];
 
@@ -10074,20 +10119,24 @@ namespace Microsoft.Data.SqlClient
 
                             ParameterDirection parameterDirection = param.Direction;
 
-                            // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
-                            if (param.ForceColumnEncryption &&
-                                !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled ||
-                                (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled)))
+                            if (param.ForceColumnEncryption)
                             {
-                                throw SQL.ParamInvalidForceColumnEncryptionSetting(param.ParameterName, rpcext.GetCommandTextOrRpcName());
-                            }
+                                // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
+                                if (
+                                    !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled 
+                                    ||
+                                    (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled))
+                                )
+                                {
+                                    throw SQL.ParamInvalidForceColumnEncryptionSetting(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                                }
 
-                            // Check if the applications wants to force column encryption to avoid sending sensitive data to server
-                            if (param.ForceColumnEncryption && param.CipherMetadata == null
-                                && (parameterDirection == ParameterDirection.Input || parameterDirection == ParameterDirection.InputOutput))
-                            {
-                                // Application wants a parameter to be encrypted before sending it to server, however server doesnt think this parameter needs encryption.
-                                throw SQL.ParamUnExpectedEncryptionMetadata(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                                // Check if the applications wants to force column encryption to avoid sending sensitive data to server
+                                if (param.CipherMetadata == null && (parameterDirection == ParameterDirection.Input || parameterDirection == ParameterDirection.InputOutput))
+                                {
+                                    // Application wants a parameter to be encrypted before sending it to server, however server doesnt think this parameter needs encryption.
+                                    throw SQL.ParamUnExpectedEncryptionMetadata(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                                }
                             }
 
                             if (enableOptimizedParameterBinding && (parameterDirection == ParameterDirection.Output || parameterDirection == ParameterDirection.InputOutput))
@@ -10612,7 +10661,7 @@ namespace Microsoft.Data.SqlClient
                         } // parameter for loop
 
                         // If this is not the last RPC we are sending, add the batch flag
-                        if (ii < (rpcArray.Length - 1))
+                        if (ii < (rpcArray.Count - 1))
                         {
                             if (_is2005)
                             {

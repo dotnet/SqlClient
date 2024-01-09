@@ -203,9 +203,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-#if NETFRAMEWORK
                 TdsParser.ReliabilitySection.Assert("unreliable call to CloseFromConnection");  // you need to setup for a thread abort somewhere before you call this method
-#endif
                 if (processFinallyBlock)
                 {
                     // Always ensure we're zombied; 2005 will send an EnvChange that

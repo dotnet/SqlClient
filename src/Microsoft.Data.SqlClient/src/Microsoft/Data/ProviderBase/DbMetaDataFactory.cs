@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Xml;
 
 namespace Microsoft.Data.ProviderBase
 {
@@ -499,9 +500,14 @@ namespace Microsoft.Data.ProviderBase
         {
             _metaDataCollectionsDataSet = new DataSet
             {
-                Locale = System.Globalization.CultureInfo.InvariantCulture
+                Locale = CultureInfo.InvariantCulture
             };
-            _metaDataCollectionsDataSet.ReadXml(XmlStream);
+            XmlReaderSettings settings = new()
+            {
+                XmlResolver = null
+            };
+            using XmlReader reader = XmlReader.Create(XmlStream, settings);
+            _metaDataCollectionsDataSet.ReadXml(reader);
         }
 
         protected virtual DataTable PrepareCollection(string collectionName, string[] restrictions, DbConnection connection)

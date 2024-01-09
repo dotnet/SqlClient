@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -82,7 +83,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal override void CreatePhysicalSNIHandle(
             string serverName,
-            long timerExpire,
+            TimeoutTimer timeout,
             out byte[] instanceName,
             ref byte[][] spnBuffer,
             bool flushCache,
@@ -97,7 +98,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timerExpire, out instanceName, ref spnBuffer, serverSPN,
+            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spnBuffer, serverSPN,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                 hostNameInCertificate, serverCertificateFilename);
 

@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SqlBatch">
+    <SqlBatch>
+      <summary></summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+
+[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
+]]>
+        </format>
+      </remarks>
+    </SqlBatch>
+    <ctor1>
+      <summary>
+        Initializes a new <see cref="SqlBatch"/>.
+      </summary>
+      <value></value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+
+[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
+]]>
+        </format>
+      </remarks>
+    </ctor1>
+    <ctor2>
+      <summary>Initializes a new <see cref="SqlBatch"/>.
+      </summary>
+      <param name="connection">
+        A
+        <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
+        that represents the connection to an instance of SQL Server.
+      </param>
+      <param name="transaction">
+        The
+        <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" />
+        in which the
+        <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />
+        executes.
+      </param>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </ctor2>
+    <BatchCommands>
+      <summary>The list of commands contained in the batch in a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+     </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+
+[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
+]]>
+        </format>
+      </remarks>
+    </BatchCommands>
+    <Commands>
+      <summary>
+        The list of commands contained in the batch in a <see cref="T:System.Collection.Generic.List&lt;Microsoft.Data.SqlClient.SqlBatchCommand&gt;" />.
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </Commands>
+    <Connection>
+      <summary>
+        Gets or sets the
+        <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
+        used by this instance of the
+        <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />
+        .
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </Connection>
+    <Transaction>
+      <summary>Gets or sets the <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" /> within which the <see cref="T:Microsoft.Data.SqlClient.SqlBatch" /> commands execute.</summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </Transaction>
+    <ExecuteReader>
+      <summary>
+        Sends the
+        <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Commands" />
+        to the
+        <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Connection" />
+        and builds a
+        <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />
+        .
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+
+[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
+]]>
+        </format>
+      </remarks>
+    </ExecuteReader>
+    <ExecuteReaderAsync>
+      <summary>
+        An asynchronous version of
+        <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteReader" />
+        , which sends the
+        <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Commands" />
+        to the
+        <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Connection" />
+        and builds a
+        <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />
+        . Exceptions will be reported via the returned Task object.
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </ExecuteReaderAsync>
+  </members>
+</docs>

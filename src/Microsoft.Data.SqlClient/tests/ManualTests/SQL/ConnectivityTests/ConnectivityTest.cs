@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Confirm Server Process Id stays the same after query execution
                 Assert.Equal(sessionSpid, sqlConnection.ServerProcessId);
             }
-            Assert.True(false, "No non-empty hostname found for the application");
+            Assert.Fail("No non-empty hostname found for the application");
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -438,6 +438,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
             b.DataSource = "admin:localhost";
+            using SqlConnection sqlConnection = new(b.ConnectionString);
+            sqlConnection.Open();
+        }
+
+        private static bool UsernamePasswordNonEncryptedConnectionSetup()
+        {
+            if (!DataTestUtility.IsTCPConnStringSetup())
+            {
+                return false;
+            }
+
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            return !string.IsNullOrEmpty(b.UserID) &&
+                !string.IsNullOrEmpty(b.Password) &&
+                b.Encrypt == SqlConnectionEncryptOption.Optional &&
+                (b.Authentication == SqlAuthenticationMethod.NotSpecified || b.Authentication == SqlAuthenticationMethod.SqlPassword);
+        }
+
+        [ConditionalFact(nameof(UsernamePasswordNonEncryptedConnectionSetup))]
+        public static void SqlPasswordConnectionTest()
+        {
+            if (!UsernamePasswordNonEncryptedConnectionSetup())
+            {
+                throw new Exception("Sql credentials and non-Encrypted connection required.");
+            }
+
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            b.Authentication = SqlAuthenticationMethod.SqlPassword;
+
+            // This ensures we are not validating the server certificate when we shouldn't be
+            // This test may fail if Encrypt = false but the test server requires encryption
+            b.TrustServerCertificate = false;
+
             using SqlConnection sqlConnection = new(b.ConnectionString);
             sqlConnection.Open();
         }

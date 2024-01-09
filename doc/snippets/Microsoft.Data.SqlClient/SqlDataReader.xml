@@ -1173,6 +1173,10 @@
  If the `behavior` parameter of <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync%2A> is set to `Default`, <xref:Microsoft.Data.SqlClient.SqlDataReader.ReadAsync%2A> reads the entire row before returning the Task.  
   
  For more information, including code samples, about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](/sql/connect/ado-net/asynchronous-programming).  
+
+> [!NOTE]
+>  When reading large data (binary/text), it is recommended to use <xref:Microsoft.Data.SqlClient.SqlDataReader.Read%2A> for optimal performance.
+
   
  ]]></format>
             </remarks>

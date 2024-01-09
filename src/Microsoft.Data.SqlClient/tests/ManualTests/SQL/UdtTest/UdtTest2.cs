@@ -11,7 +11,7 @@ using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    [ActiveIssue(5536)]
+    [ActiveIssue("5536")]
     // TODO Synapse: Remove dependency from UDTTest Database
     public class UdtTest2
     {
