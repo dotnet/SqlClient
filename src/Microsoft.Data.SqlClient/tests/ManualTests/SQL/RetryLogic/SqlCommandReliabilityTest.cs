@@ -16,6 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class SqlCommandReliabilityTest : IDisposable
     {
         private const int ConcurrentParallelExecutions = 3;
+        private const string UnexpectedSqlConnectionExceptionMessage = "An unexpected SQL Connection Error occured and is not part of the test.";
         private readonly string _exceedErrMsgPattern = RetryLogicTestHelper.s_exceedErrMsgPattern;
         private readonly string _cancelErrMsgPattern = RetryLogicTestHelper.s_cancelErrMsgPattern;
         private readonly int _originalWorkerThreads;
@@ -40,7 +41,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!_disposed)
             {
                 ThreadPool.SetMinThreads(_originalWorkerThreads, _originalCompletionPortThreads);
-
                 _disposed = true;
             }
         }
@@ -607,92 +607,65 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                                   string query, Action<SqlCommand> commandAction)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
-            int retriesCount = 0;
-            var exceptions = new ConcurrentQueue<Exception>();
+            int retryExceptionCount = 0;
 
-            provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);             
             Parallel.For(0, ConcurrentParallelExecutions,
             i =>
             {
-                try
+                using (SqlConnection cnn = new SqlConnection(cnnString))
                 {
-                    using (SqlConnection cnn = new SqlConnection(cnnString))
+                    cnn.Open();
+                    Assert.True(cnn.State == ConnectionState.Open, UnexpectedSqlConnectionExceptionMessage);
+
                     using (SqlCommand cmd = cnn.CreateCommand())
                     {
-                        cnn.Open();
                         cmd.RetryLogicProvider = provider;
                         cmd.CommandText = query;
 
-                        Assert.Throws<Exception>(() => commandAction(cmd));
+                        AggregateException retryAggregateException = Assert.Throws<AggregateException>(() => commandAction(cmd));
+                        Interlocked.Add(ref retryExceptionCount, retryAggregateException.InnerExceptions?.Count ?? 0);
                     }
-                }
-                // Store the exception and continue with the loop.
-                catch (Exception e)
-                {
-                    exceptions.Enqueue(e);
                 }
             });
 
-            // Assertion that Method Exceptions are Aggregate Exceptions
-            int retryExceptionCount = 0;
-            foreach (var exception in exceptions)
-            {
-                Assert.IsType<AggregateException>(exception.InnerException);
-                
-                var retryAggregateException = exception.InnerException as AggregateException;
-                retryExceptionCount += retryAggregateException.InnerExceptions?.Count ?? 0;
-            }
             // Assertion for Retries
-            Assert.Equal(numberOfTries * ConcurrentParallelExecutions, retryExceptionCount);
+            int expectedTotalNumberOfRetries = numberOfTries * ConcurrentParallelExecutions;
+            Assert.Equal(expectedTotalNumberOfRetries, retryExceptionCount);
         }
 
         private static async Task ProcessDataAsAsync(string cnnString, SqlRetryLogicBaseProvider provider,
                                                      string query, Func<SqlCommand, Task> commandAction)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
-            int retriesCount = 0;
-            var exceptions = new ConcurrentQueue<Exception>();
-
-            provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);
+            int retryExceptionCount = 0;
 
             List<Task> tasks = new List<Task>();
             for (int i = 0; i < ConcurrentParallelExecutions; i++)
             {
                 tasks.Add(Task.Run(async () =>
                 {
-                    try
+                    using (SqlConnection cnn = new SqlConnection(cnnString))
                     {
-                        using (SqlConnection cnn = new SqlConnection(cnnString))
+                        await cnn.OpenAsync();
+                        Assert.True(cnn.State == ConnectionState.Open, UnexpectedSqlConnectionExceptionMessage);
+
                         using (SqlCommand cmd = cnn.CreateCommand())
                         {
-                            await cnn.OpenAsync();
                             cmd.RetryLogicProvider = provider;
                             cmd.CommandText = query;
 
-                            await Assert.ThrowsAsync<Exception>(async () => await commandAction(cmd));
+                            AggregateException retryAggregateException = await Assert.ThrowsAsync<AggregateException>(async () => await commandAction(cmd));
+                            Interlocked.Add(ref retryExceptionCount, retryAggregateException.InnerExceptions?.Count ?? 0);
                         }
-                    }
-                    // Store the exception and continue with the loop.
-                    catch (Exception e)
-                    {
-                        exceptions.Enqueue(e);
                     }
                 }));
             }
 
             await Task.WhenAll(tasks);
 
-            // Assertion that Method Exceptions are Aggregate Exceptions
-            int retryExceptionCount = 0;
-            foreach (var exception in exceptions)
-            {
-                Assert.IsType<AggregateException>(exception.InnerException);
-
-                var retryAggregateException = exception.InnerException as AggregateException;
-                retryExceptionCount += retryAggregateException.InnerExceptions?.Count ?? 0;
-            }
             // Assertion for Retries
-            Assert.Equal(numberOfTries * ConcurrentParallelExecutions, retryExceptionCount);
+            int expectedTotalNumberOfRetries = numberOfTries * ConcurrentParallelExecutions;
+            Assert.Equal(expectedTotalNumberOfRetries, retryExceptionCount);
         }
         #endregion
     }
