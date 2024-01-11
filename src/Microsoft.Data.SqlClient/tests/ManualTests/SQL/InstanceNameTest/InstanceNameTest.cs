@@ -135,10 +135,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if ((dataSource.Contains(@"\MSSQL$") && builder.DataSource.ToUpper().Contains(@"\SQL\QUERY") && dataSource.Contains(",")) ||
                (dataSource.Contains(@"NP:") && dataSource.Contains(",")))
             {
-                port = -2;
+                Assert.Fail("Named pipe protocol in data source does not support port number.");
             }
-            Assert.False(port == -2, "Named pipe protocol in data source does not support port number.");
-
+            
             DataTestUtility.ParseDataSource(builder.DataSource, out hostname, out port, out instanceName);
             
             Assert.False(string.IsNullOrEmpty(hostname), "Hostname must be included in the data source.");
