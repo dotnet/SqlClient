@@ -147,7 +147,9 @@ namespace Microsoft.Data.Common
             {
                 // Restore the current ExecutionContext
                 if (restoreFlow)
+                {
                     ExecutionContext.RestoreFlow();
+                }
             }
         }
 
