@@ -81,7 +81,6 @@ namespace Microsoft.Data.SqlClient
         private string _resetOptionsString;
 
         private int _lastColumnWithDataChunkRead;
-        private int _lastColumnRead;             // index of last column read 
         private long _columnDataBytesRead;       // last byte read by user
         private long _columnDataCharsRead;       // last char read by user
         private char[] _columnDataChars;
@@ -118,7 +117,6 @@ namespace Microsoft.Data.SqlClient
             _cancelAsyncOnCloseTokenSource = new CancellationTokenSource();
             _cancelAsyncOnCloseToken = _cancelAsyncOnCloseTokenSource.Token;
             _columnDataCharsIndex = -1;
-            _lastColumnRead = -1;
         }
 
         internal bool BrowseModeInfoConsumed
@@ -1894,10 +1892,6 @@ namespace Microsoft.Data.SqlClient
             bytesRead = 0;
 
             bool isSequentialAccess = IsCommandBehavior(CommandBehavior.SequentialAccess);
-            if (isSequentialAccess)
-            {
-                _lastColumnRead = Math.Max(i, _lastColumnRead);
-            }
 
             if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
             {
@@ -3805,7 +3799,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (IsCommandBehavior(CommandBehavior.SequentialAccess))
                     {
-                        if (i < _lastColumnRead)
+                        if (i < _lastColumnWithDataChunkRead)
                         {
                             CloseActiveSequentialStreamAndTextReader();
                             throw ADP.ObjectDisposed(this);
@@ -4518,7 +4512,7 @@ namespace Microsoft.Data.SqlClient
                 return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
             }
 
-            if (columnIndex < _lastColumnRead)
+            if (columnIndex < _lastColumnWithDataChunkRead)
             {
                 return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.ObjectDisposed(this)));
             }
@@ -4824,42 +4818,42 @@ namespace Microsoft.Data.SqlClient
                         {
                             _stateObj._shouldHaveEnoughData = true;
 #endif
-                            if (_sharedState._dataReady)
-                            {
-                                // Clean off current row
-                                CleanPartialReadReliable();
-                            }
+                        if (_sharedState._dataReady)
+                        {
+                            // Clean off current row
+                            CleanPartialReadReliable();
+                        }
 
-                            // If there a ROW token ready (as well as any metadata for the row)
-                            if (_stateObj.IsRowTokenReady())
-                            {
-                                // Read the ROW token
-                                bool result = TryReadInternal(true, out more);
-                                Debug.Assert(result, "Should not have run out of data");
+                        // If there a ROW token ready (as well as any metadata for the row)
+                        if (_stateObj.IsRowTokenReady())
+                        {
+                            // Read the ROW token
+                            bool result = TryReadInternal(true, out more);
+                            Debug.Assert(result, "Should not have run out of data");
 
-                                rowTokenRead = true;
-                                if (more)
+                            rowTokenRead = true;
+                            if (more)
+                            {
+                                // Sequential mode, nothing left to do
+                                if (IsCommandBehavior(CommandBehavior.SequentialAccess))
                                 {
-                                    // Sequential mode, nothing left to do
-                                    if (IsCommandBehavior(CommandBehavior.SequentialAccess))
-                                    {
-                                        return ADP.TrueTask;
-                                    }
-                                    // For non-sequential, check if we can read the row data now
-                                    else if (WillHaveEnoughData(_metaData.Length - 1))
-                                    {
-                                        // Read row data
-                                        result = TryReadColumn(_metaData.Length - 1, setTimeout: true);
-                                        Debug.Assert(result, "Should not have run out of data");
-                                        return ADP.TrueTask;
-                                    }
+                                    return ADP.TrueTask;
                                 }
-                                else
+                                // For non-sequential, check if we can read the row data now
+                                else if (WillHaveEnoughData(_metaData.Length - 1))
                                 {
-                                    // No data left, return
-                                    return ADP.FalseTask;
+                                    // Read row data
+                                    result = TryReadColumn(_metaData.Length - 1, setTimeout: true);
+                                    Debug.Assert(result, "Should not have run out of data");
+                                    return ADP.TrueTask;
                                 }
                             }
+                            else
+                            {
+                                // No data left, return
+                                return ADP.FalseTask;
+                            }
+                        }
 #if DEBUG
                         }
                         finally
@@ -5024,8 +5018,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             _stateObj._shouldHaveEnoughData = true;
 #endif
-                            ReadColumnHeader(i);
-                            return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
+                        ReadColumnHeader(i);
+                        return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
 #if DEBUG
                         }
                         finally
@@ -5174,7 +5168,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _stateObj._shouldHaveEnoughData = true;
 #endif
-                        return Task.FromResult(GetFieldValueInternal<T>(i, isAsync: true));
+                    return Task.FromResult(GetFieldValueInternal<T>(i, isAsync: true));
 #if DEBUG
                     }
                     finally

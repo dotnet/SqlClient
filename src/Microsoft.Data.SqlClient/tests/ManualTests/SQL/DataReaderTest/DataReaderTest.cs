@@ -419,6 +419,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        //Done
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteReader_WhenCommandBehaviorIsSequential_ReadColumn1_After_GetValueColumn2_ThrowsException()
         {
@@ -432,12 +433,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 reader.Read();
                 using var tr1 = reader.GetTextReader(0);
                 {
+                    // The GetTextReader above immediately sets _lastColumnWithDataChunkRead to the index value passed to it, zero in this case.
+                    // The Get GetValue calls TryReadColumnInternal which will close the stream if the current index to be read is past the
+                    // value of _lastColumnWithDataChunkRead which causes ObjectDisposedException when reading column at _lastColumnWithDataChunkRead.
                     reader.GetValue(1);
                     Assert.Throws<ObjectDisposedException>(() => tr1.Read());
                 }
             }
         }
 
+        // done
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async void ExecuteReader_WhenCommandBehaviorIsSequential_ReadAsyncColumn1_After_GetValueColumn2_ThrowsException()
         {
@@ -458,6 +463,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // done
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteReader_WhenCommandBehaviorIsSequential_ReadColumn1_After_ReadColumn2_ThrowsException()
         {
@@ -477,6 +483,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        //done
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async void ExecuteReader_WhenCommandBehaviorIsSequential_ReadAsyncColumn1_After_ReadAsyncColumn2_ThrowsException()
         {
@@ -498,6 +505,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        //done
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ExecuteReader_WhenCommandBehaviorIsSequential_GetValueColumn1_After_ReadColumn2_ThrowsException()
         {
@@ -530,6 +538,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 reader.Read();
                 reader.GetValue(1);
                 Assert.Throws<InvalidOperationException>(() => reader.GetValue(0));
+            }
+        }
+
+        //done
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReader_WhenCommandBehaviorIsSequential_GetTextReaderColumn2_Then_GetTextReaderColumn1_ThrowsException()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = QueryString;
+            using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+            {
+                reader.Read();
+                using var tr1 = reader.GetTextReader(1);
+                Assert.Throws<InvalidOperationException>(() => reader.GetTextReader(0));
+
+            }
+        }
+
+        //done
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReader_WhenCommandBehaviorIsSequential_GetTextReaderColumn2_ReadColumn2_Then_GetTextReaderColumn1_ThrowsException()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = QueryString;
+            using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+            {
+                reader.Read();
+                using var tr1 = reader.GetTextReader(1);
+                tr1.Read();
+                Assert.Throws<InvalidOperationException>(() => reader.GetTextReader(0));
+
             }
         }
 
