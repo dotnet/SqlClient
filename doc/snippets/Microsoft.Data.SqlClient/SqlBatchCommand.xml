@@ -72,5 +72,8 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
         Returns whether the <see cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.CreateParameter"/> method is implemented.
       </summary>
     </CanCreateParameter>
+    <CommandText>
+      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.CommandText" />
+    </CommandText>
   </members>
 </docs>
