@@ -2319,7 +2319,6 @@ namespace Microsoft.Data.SqlClient
                     Timeout.Infinite
                 );
 
-
                 // -1 == Infinite
                 //  0 == Already timed out (NOTE: To simulate the same behavior as sync we will only timeout on 0 if we receive an IO Pending from SNI)
                 // >0 == Actual timeout remaining
