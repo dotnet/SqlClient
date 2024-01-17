@@ -9,7 +9,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <inheritdoc />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
     public partial class SqlBatchCommand
 #if NET6_0_OR_GREATER
      : DbBatchCommand
