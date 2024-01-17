@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient
                     byte[] srvSPN = Encoding.Unicode.GetBytes(serverSPN);
                     Trace.Assert(srvSPN.Length <= SNINativeMethodWrapper.SniMaxComposedSpnLength, "Length of the provided SPN exceeded the buffer size.");
                     spnBuffer[0] = srvSPN;
-                    SqlClientEventSource.Log.TryTraceEvent("<{0}.{1}|SEC> Server SPN `{2}` from the connection string is used.",nameof(TdsParserStateObjectNative), nameof(CreatePhysicalSNIHandle), serverSPN);
+                    SqlClientEventSource.Log.TryTraceEvent("<{0}.{1}|SEC> Server SPN `{2}` from the connection string is used.", nameof(TdsParserStateObjectNative), nameof(CreatePhysicalSNIHandle), serverSPN);
                 }
                 else
                 {
@@ -271,6 +271,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
+
+        internal override Guid? SessionId => default;
 
         internal override bool IsPacketEmpty(PacketHandle readPacket)
         {
@@ -398,9 +400,6 @@ namespace Microsoft.Data.SqlClient
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SNINativeMethodWrapper.SNISetInfo(Handle, SNINativeMethodWrapper.QTypes.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
-        internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer)
-            => SNINativeMethodWrapper.SNISecGenClientContext(Handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer[0]);
-
         internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
         {
             uint returnValue = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
@@ -450,6 +449,8 @@ namespace Microsoft.Data.SqlClient
                 // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
             }
         }
+
+        internal override SSPIContextProvider CreateSSPIContextProvider() => new NativeSSPIContextProvider();
 
         internal sealed class WritePacketCache : IDisposable
         {

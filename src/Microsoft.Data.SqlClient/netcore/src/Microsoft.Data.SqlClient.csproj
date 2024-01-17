@@ -516,6 +516,18 @@
     <Compile Include="..\..\src\System\Diagnostics\CodeAnalysis.cs">
       <Link>Common\System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParser.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>
+    </Compile>  
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
@@ -580,7 +592,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\src\Resources\StringsHelper.cs">
+  <Compile Include="..\..\src\Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>  
     <Compile Include="..\..\src\Resources\Strings.Designer.cs">
@@ -767,7 +779,8 @@
   <ItemGroup Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'">
     <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs">
       <Link>Common\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs</Link>
-    </Compile>
+    </Compile>    
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs" Link="Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
@@ -1006,6 +1019,9 @@
     <PackageReference Condition="$(TargetGroup) == 'netstandard'" Include="System.Runtime.Loader" Version="$(SystemRuntimeLoaderVersion)" />
     <PackageReference Condition="$(TargetGroup) == 'netstandard'" Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
     <PackageReference Condition="$(BuildForRelease) == 'true'" Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Microsoft\Data\SqlClient\SSPI\" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
