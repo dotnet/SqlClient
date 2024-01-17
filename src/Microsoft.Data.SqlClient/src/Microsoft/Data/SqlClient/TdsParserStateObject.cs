@@ -2442,35 +2442,26 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    uint error;
+                    TdsParser.ReliabilitySection.Assert("unreliable call to IsConnectionAlive");  // you need to setup for a thread abort somewhere before you call this method
 
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
+                    SniContext = SniContext.Snix_Connect;
+
+                    uint error = CheckConnection();
+                    if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                     {
-                        TdsParser.ReliabilitySection.Assert("unreliable call to IsConnectionAlive");  // you need to setup for a thread abort somewhere before you call this method
-
-                        SniContext = SniContext.Snix_Connect;
-
-                        error = CheckConnection();
-                        if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
+                        // Connection is dead
+                        SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.IsConnectionAlive | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
+                        isAlive = false;
+                        if (throwOnException)
                         {
-                            // Connection is dead
-                            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.IsConnectionAlive | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
-                            isAlive = false;
-                            if (throwOnException)
-                            {
-                                // Get the error from SNI so that we can throw the correct exception
-                                AddError(_parser.ProcessSNIError(this));
-                                ThrowExceptionAndWarning();
-                            }
-                        }
-                        else
-                        {
-                            _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
+                            // Get the error from SNI so that we can throw the correct exception
+                            AddError(_parser.ProcessSNIError(this));
+                            ThrowExceptionAndWarning();
                         }
                     }
-                    finally
+                    else
                     {
+                        _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
                     }
                 }
             }
