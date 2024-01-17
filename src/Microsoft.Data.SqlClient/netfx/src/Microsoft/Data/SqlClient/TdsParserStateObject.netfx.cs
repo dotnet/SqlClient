@@ -16,8 +16,27 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
+    using PacketHandle = IntPtr;
+
+    internal readonly ref struct SessionHandle
+    {
+        public readonly SNIHandle NativeHandle;
+
+        public SessionHandle(SNIHandle nativeHandle) => NativeHandle = nativeHandle;
+
+        public bool IsNull => NativeHandle is null;
+    }
+
     internal partial class TdsParserStateObject
     {
+        private static class TdsParserStateObjectFactory
+        {
+            /// <summary>
+            /// Always false in case of netfx. Only needed for merging with netcore codebase.
+            /// </summary>
+            internal const bool UseManagedSNI = false;
+        }
+
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         // SNI variables                                                     // multiple resultsets in one batch.
@@ -50,6 +69,7 @@ namespace Microsoft.Data.SqlClient
             // Construct a MARS session
             Debug.Assert(null != parser, "no parser?");
             _parser = parser;
+            _onTimeoutAsync = OnTimeoutAsync;
             SniContext = SniContext.Snix_GetMarsSession;
 
             Debug.Assert(null != _parser._physicalStateObj, "no physical session?");
@@ -106,33 +126,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private partial struct NullBitmap
-        {
-            internal bool TryInitialize(TdsParserStateObject stateObj, int columnsCount)
-            {
-                _columnsCount = columnsCount;
-                // 1-8 columns need 1 byte
-                // 9-16: 2 bytes, and so on
-                int bitmapArrayLength = (columnsCount + 7) / 8;
-
-                // allow reuse of previously allocated bitmap
-                if (_nullBitmap == null || _nullBitmap.Length != bitmapArrayLength)
-                {
-                    _nullBitmap = new byte[bitmapArrayLength];
-                }
-
-                // read the null bitmap compression information from TDS
-                if (!stateObj.TryReadByteArray(_nullBitmap, _nullBitmap.Length))
-                {
-                    return false;
-                }
-
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
-                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap data. Null Bitmap {1}, Null bitmap length: {2}", stateObj.ObjectID, _nullBitmap, (ushort)_nullBitmap.Length);
-
-                return true;
-            }
-        }
+        internal SessionHandle SessionHandle => new SessionHandle(Handle);
 
         /////////////////////
         // General methods //
@@ -282,6 +276,27 @@ namespace Microsoft.Data.SqlClient
                 ipPreference, cachedDNSInfo, hostNameInCertificate);
         }
 
+        internal bool IsPacketEmpty(PacketHandle readPacket) => readPacket == default;
+
+        internal PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
+        {
+            SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
+            PacketHandle readPacket = default;
+            error = SNINativeMethodWrapper.SNIReadSyncOverAsync(handle, ref readPacket, timeoutRemaining);
+            return readPacket;
+        }
+
+        internal PacketHandle ReadAsync(SessionHandle handle, out uint error)
+        {
+            PacketHandle readPacket = default;
+            error = SNINativeMethodWrapper.SNIReadAsync(handle.NativeHandle, ref readPacket);
+            return readPacket;
+        }
+
+        internal uint CheckConnection() => SNINativeMethodWrapper.SNICheckConnection(Handle);
+
+        internal void ReleasePacket(PacketHandle syncReadPacket) => SNINativeMethodWrapper.SNIPacketRelease(syncReadPacket);
+        
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
         {
@@ -372,594 +387,6 @@ namespace Microsoft.Data.SqlClient
             _allowObjectID = objectID;
         }
 
-        /////////////////////////////////////////
-        // Value Skip Logic                    //
-        /////////////////////////////////////////
-
-
-        // Reads bytes from the buffer but doesn't return them, in effect simply deleting them.
-        // Does not handle plp fields, need to use SkipPlpBytesValue for those.
-        // Does not handle null values or NBC bitmask, ensure the value is not null before calling this method
-        internal bool TrySkipLongBytes(long num)
-        {
-            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
-
-            while (num > 0)
-            {
-                int cbSkip = (int)Math.Min(int.MaxValue, num);
-                if (!TryReadByteArray(Span<byte>.Empty, cbSkip))
-                {
-                    return false;
-                }
-                num -= cbSkip;
-            }
-
-            return true;
-        }
-
-        // Reads bytes from the buffer but doesn't return them, in effect simply deleting them.
-        internal bool TrySkipBytes(int num)
-        {
-            Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
-            return TryReadByteArray(Span<byte>.Empty, num);
-        }
-
-        /////////////////////////////////////////
-        // Network/Packet Reading & Processing //
-        /////////////////////////////////////////
-
-#if DEBUG
-        string _lastStack;
-#endif
-
-        internal bool TryReadNetworkPacket()
-        {
-            TdsParser.ReliabilitySection.Assert("unreliable call to TryReadNetworkPacket");  // you need to setup for a thread abort somewhere before you call this method
-
-#if DEBUG
-            Debug.Assert(!_shouldHaveEnoughData || _attentionSent, "Caller said there should be enough data, but we are currently reading a packet");
-#endif
-
-            if (_snapshot != null)
-            {
-                if (_snapshotReplay)
-                {
-#if DEBUG
-                    // in debug builds stack traces contain line numbers so if we want to be
-                    // able to compare the stack traces they must all be created in the same
-                    // location in the code
-                    string stackTrace = Environment.StackTrace;
-#endif
-                    if (_snapshot.MoveNext())
-                    {
-#if DEBUG
-                        if (s_checkNetworkPacketRetryStacks)
-                        {
-                            _snapshot.CheckStack(stackTrace);
-                        }
-#endif
-                        return true;
-                    }
-#if DEBUG
-                    else
-                    {
-                        if (s_checkNetworkPacketRetryStacks)
-                        {
-                            _lastStack = stackTrace;
-                        }
-                    }
-#endif
-                }
-
-                // previous buffer is in snapshot
-                _inBuff = new byte[_inBuff.Length];
-            }
-
-            if (_syncOverAsync)
-            {
-                ReadSniSyncOverAsync();
-                return true;
-            }
-
-            ReadSni(new TaskCompletionSource<object>());
-
-#if DEBUG
-            if (s_failAsyncPends)
-            {
-                throw new InvalidOperationException("Attempted to pend a read when s_failAsyncPends test hook was enabled");
-            }
-            if (s_forceSyncOverAsyncAfterFirstPend)
-            {
-                _syncOverAsync = true;
-            }
-#endif
-            Debug.Assert((_snapshot != null) ^ _asyncReadWithoutSnapshot, "Must have either _snapshot set up or _asyncReadWithoutSnapshot enabled (but not both) to pend a read");
-
-            return false;
-        }
-
-        internal void PrepareReplaySnapshot()
-        {
-            _networkPacketTaskSource = null;
-            _snapshot.MoveToStart();
-        }
-
-        internal void ReadSniSyncOverAsync()
-        {
-            if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
-            {
-                throw ADP.ClosedConnectionError();
-            }
-
-            IntPtr readPacket = IntPtr.Zero;
-            uint error;
-
-            RuntimeHelpers.PrepareConstrainedRegions();
-            bool shouldDecrement = false;
-            try
-            {
-                TdsParser.ReliabilitySection.Assert("unreliable call to ReadSniSync");  // you need to setup for a thread abort somewhere before you call this method
-
-                Interlocked.Increment(ref _readingCount);
-                shouldDecrement = true;
-
-                SNIHandle handle = Handle;
-                if (handle == null)
-                {
-                    throw ADP.ClosedConnectionError();
-                }
-
-                error = SNINativeMethodWrapper.SNIReadSyncOverAsync(handle, ref readPacket, GetTimeoutRemaining());
-
-                Interlocked.Decrement(ref _readingCount);
-                shouldDecrement = false;
-
-                if (_parser.MARSOn)
-                { // Only take reset lock on MARS and Async.
-                    CheckSetResetConnectionState(error, CallbackType.Read);
-                }
-
-                if (TdsEnums.SNI_SUCCESS == error)
-                { // Success - process results!
-                    Debug.Assert(ADP.s_ptrZero != readPacket, "ReadNetworkPacket cannot be null in synchronous operation!");
-                    ProcessSniPacket(readPacket, 0);
-#if DEBUG
-                    if (s_forcePendingReadsToWaitForUser)
-                    {
-                        _networkPacketTaskSource = new TaskCompletionSource<object>();
-                        Thread.MemoryBarrier();
-                        _networkPacketTaskSource.Task.Wait();
-                        _networkPacketTaskSource = null;
-                    }
-#endif
-                }
-                else
-                { // Failure!
-
-                    Debug.Assert(IntPtr.Zero == readPacket, "unexpected readPacket without corresponding SNIPacketRelease");
-
-                    ReadSniError(this, error);
-                }
-            }
-            finally
-            {
-                if (shouldDecrement)
-                {
-                    Interlocked.Decrement(ref _readingCount);
-                }
-
-                if (readPacket != IntPtr.Zero)
-                {
-                    // Be sure to release packet, otherwise it will be leaked by native.
-                    SNINativeMethodWrapper.SNIPacketRelease(readPacket);
-                }
-
-                AssertValidState();
-            }
-        }
-
-        internal void OnConnectionClosed()
-        {
-            // the stateObj is not null, so the async invocation that registered this callback
-            // via the SqlReferenceCollection has not yet completed.  We will look for a
-            // _networkPacketTaskSource and mark it faulted.  If we don't find it, then
-            // TdsParserStateObject.ReadSni will abort when it does look to see if the parser
-            // is open.  If we do, then when the call that created it completes and a continuation
-            // is registered, we will ensure the completion is called.
-
-            // Note, this effort is necessary because when the app domain is being unloaded,
-            // we don't get callback from SNI.
-
-            // first mark parser broken.  This is to ensure that ReadSni will abort if it has
-            // not yet executed.
-            Parser.State = TdsParserState.Broken;
-            Parser.Connection.BreakConnection();
-
-            // Ensure that changing state occurs before checking _networkPacketTaskSource
-            Thread.MemoryBarrier();
-
-            // then check for networkPacketTaskSource
-            TaskCompletionSource<object> taskSource = _networkPacketTaskSource;
-            if (taskSource != null)
-            {
-                taskSource.TrySetException(ADP.ExceptionWithStackTrace(ADP.ClosedConnectionError()));
-            }
-
-            taskSource = _writeCompletionSource;
-            if (taskSource != null)
-            {
-                taskSource.TrySetException(ADP.ExceptionWithStackTrace(ADP.ClosedConnectionError()));
-            }
-        }
-
-        public void SetTimeoutStateStopped()
-        {
-            Interlocked.Exchange(ref _timeoutState, TimeoutState.Stopped);
-            _timeoutIdentityValue = 0;
-        }
-
-        public bool IsTimeoutStateExpired
-        {
-            get
-            {
-                int state = _timeoutState;
-                return state == TimeoutState.ExpiredAsync || state == TimeoutState.ExpiredSync;
-            }
-        }
-
-        private void OnTimeoutAsync(object state)
-        {
-            if (_enforceTimeoutDelay)
-            {
-                Thread.Sleep(_enforcedTimeoutDelayInMilliSeconds);
-            }
-
-            int currentIdentityValue = _timeoutIdentityValue;
-            TimeoutState timeoutState = (TimeoutState)state;
-            if (timeoutState.IdentityValue == _timeoutIdentityValue)
-            {
-                // the return value is not useful here because no choice is going to be made using it 
-                // we only want to make this call to set the state knowing that it will be seen later
-                OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredAsync);
-            }
-            else
-            {
-                Debug.WriteLine($"OnTimeoutAsync called with identity state={timeoutState.IdentityValue} but current identity is {currentIdentityValue} so it is being ignored");
-            }
-        }
-
-        private bool OnTimeoutSync(bool asyncClose = false)
-        {
-            return OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredSync, asyncClose);
-        }
-
-        /// <summary>
-        /// attempts to change the timout state from the expected state to the target state and if it succeeds
-        /// will setup the the stateobject into the timeout expired state
-        /// </summary>
-        /// <param name="expectedState">the state that is the expected current state, state will change only if this is correct</param>
-        /// <param name="targetState">the state that will be changed to if the expected state is correct</param>
-        /// <param name="asyncClose">any close action to be taken by an async task to avoid deadlock.</param>
-        /// <returns>boolean value indicating whether the call changed the timeout state</returns>
-        private bool OnTimeoutCore(int expectedState, int targetState, bool asyncClose = false)
-        {
-            Debug.Assert(targetState == TimeoutState.ExpiredAsync || targetState == TimeoutState.ExpiredSync, "OnTimeoutCore must have an expiry state as the targetState");
-
-            bool retval = false;
-            if (Interlocked.CompareExchange(ref _timeoutState, targetState, expectedState) == expectedState)
-            {
-                retval = true;
-                // lock protects against Close and Cancel
-                lock (this)
-                {
-                    if (!_attentionSent)
-                    {
-                        AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
-
-                        // Grab a reference to the _networkPacketTaskSource in case it becomes null while we are trying to use it
-                        TaskCompletionSource<object> source = _networkPacketTaskSource;
-
-                        if (_parser.Connection.IsInPool)
-                        {
-                            // We should never timeout if the connection is currently in the pool: the safest thing to do here is to doom the connection to avoid corruption
-                            Debug.Assert(_parser.Connection.IsConnectionDoomed, "Timeout occurred while the connection is in the pool");
-                            _parser.State = TdsParserState.Broken;
-                            _parser.Connection.BreakConnection();
-                            if (source != null)
-                            {
-                                source.TrySetCanceled();
-                            }
-                        }
-                        else if (_parser.State == TdsParserState.OpenLoggedIn)
-                        {
-                            try
-                            {
-                                SendAttention(mustTakeWriteLock: true, asyncClose);
-                            }
-                            catch (Exception e)
-                            {
-                                if (!ADP.IsCatchableExceptionType(e))
-                                {
-                                    throw;
-                                }
-                                // if unable to send attention, cancel the _networkPacketTaskSource to
-                                // request the parser be broken.  SNIWritePacket errors will already
-                                // be in the _errors collection.
-                                if (source != null)
-                                {
-                                    source.TrySetCanceled();
-                                }
-                            }
-                        }
-
-                        // If we still haven't received a packet then we don't want to actually close the connection
-                        // from another thread, so complete the pending operation as cancelled, informing them to break it
-                        if (source != null)
-                        {
-                            Task.Delay(AttentionTimeoutSeconds * 1000).ContinueWith(_ =>
-                            {
-                                // Only break the connection if the read didn't finish
-                                if (!source.Task.IsCompleted)
-                                {
-                                    int pendingCallback = IncrementPendingCallbacks();
-                                    RuntimeHelpers.PrepareConstrainedRegions();
-                                    try
-                                    {
-                                        // If pendingCallback is at 3, then ReadAsyncCallback hasn't been called yet
-                                        // So it is safe for us to break the connection and cancel the Task (since we are not sure that ReadAsyncCallback will ever be called)
-                                        if ((pendingCallback == 3) && (!source.Task.IsCompleted))
-                                        {
-                                            Debug.Assert(source == _networkPacketTaskSource, "_networkPacketTaskSource which is being timed is not the current task source");
-
-                                            // Try to throw the timeout exception and store it in the task
-                                            bool exceptionStored = false;
-                                            try
-                                            {
-                                                CheckThrowSNIException();
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                if (source.TrySetException(ex))
-                                                {
-                                                    exceptionStored = true;
-                                                }
-                                            }
-
-                                            // Ensure that the connection is no longer usable
-                                            // This is needed since the timeout error added above is non-fatal (and so throwing it won't break the connection)
-                                            _parser.State = TdsParserState.Broken;
-                                            _parser.Connection.BreakConnection();
-
-                                            // If we didn't get an exception (something else observed it?) then ensure that the task is cancelled
-                                            if (!exceptionStored)
-                                            {
-                                                source.TrySetCanceled();
-                                            }
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        DecrementPendingCallbacks(release: false);
-                                    }
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-            return retval;
-        }
-
-        internal void ReadSni(TaskCompletionSource<object> completion)
-        {
-            Debug.Assert(_networkPacketTaskSource == null || ((_asyncReadWithoutSnapshot) && (_networkPacketTaskSource.Task.IsCompleted)), "Pending async call or failed to replay snapshot when calling ReadSni");
-            _networkPacketTaskSource = completion;
-
-            // Ensure that setting the completion source is completed before checking the state
-            Thread.MemoryBarrier();
-
-            // We must check after assigning _networkPacketTaskSource to avoid races with
-            // SqlCommand.OnConnectionClosed
-            if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
-            {
-                throw ADP.ClosedConnectionError();
-            }
-
-#if DEBUG
-            if (s_forcePendingReadsToWaitForUser)
-            {
-                _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
-            }
-#endif
-
-            IntPtr readPacket = IntPtr.Zero;
-            uint error = 0;
-
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                Debug.Assert(completion != null, "Async on but null asyncResult passed");
-
-                // if the state is currently stopped then change it to running and allocate a new identity value from 
-                // the identity source. The identity value is used to correlate timer callback events to the currently
-                // running timeout and prevents a late timer callback affecting a result it does not relate to
-                int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
-                Debug.Assert(previousTimeoutState == TimeoutState.Stopped, "previous timeout state was not Stopped");
-                if (previousTimeoutState == TimeoutState.Stopped)
-                {
-                    Debug.Assert(_timeoutIdentityValue == 0, "timer was previously stopped without resetting the _identityValue");
-                    _timeoutIdentityValue = Interlocked.Increment(ref _timeoutIdentitySource);
-                }
-
-                _networkPacketTimeout?.Dispose();
-
-                _networkPacketTimeout = new Timer(
-                    new TimerCallback(OnTimeoutAsync),
-                    new TimeoutState(_timeoutIdentityValue),
-                    Timeout.Infinite,
-                    Timeout.Infinite
-                );
-
-                // -1 == Infinite
-                //  0 == Already timed out (NOTE: To simulate the same behavior as sync we will only timeout on 0 if we receive an IO Pending from SNI)
-                // >0 == Actual timeout remaining
-                int msecsRemaining = GetTimeoutRemaining();
-                if (msecsRemaining > 0)
-                {
-                    ChangeNetworkPacketTimeout(msecsRemaining, Timeout.Infinite);
-                }
-
-                SNIHandle handle = null;
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                { }
-                finally
-                {
-                    Interlocked.Increment(ref _readingCount);
-
-                    handle = Handle;
-                    if (handle != null)
-                    {
-
-                        IncrementPendingCallbacks();
-
-                        error = SNINativeMethodWrapper.SNIReadAsync(handle, ref readPacket);
-
-                        if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
-                        {
-                            DecrementPendingCallbacks(false); // Failure - we won't receive callback!
-                        }
-                    }
-
-                    Interlocked.Decrement(ref _readingCount);
-                }
-
-                if (handle == null)
-                {
-                    throw ADP.ClosedConnectionError();
-                }
-
-                if (TdsEnums.SNI_SUCCESS == error)
-                { // Success - process results!
-                    Debug.Assert(ADP.s_ptrZero != readPacket, "ReadNetworkPacket should not have been null on this async operation!");
-                    ReadAsyncCallback(ADP.s_ptrZero, readPacket, 0);
-                }
-                else if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
-                { // FAILURE!
-                    Debug.Assert(IntPtr.Zero == readPacket, "unexpected readPacket without corresponding SNIPacketRelease");
-                    ReadSniError(this, error);
-#if DEBUG
-                    if ((s_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null))
-                    {
-                        _realNetworkPacketTaskSource.TrySetResult(null);
-                    }
-                    else
-#endif
-                    {
-                        _networkPacketTaskSource.TrySetResult(null);
-                    }
-                    // Disable timeout timer on error
-                    SetTimeoutStateStopped();
-                    ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
-                }
-                else if (msecsRemaining == 0)
-                {
-                    // Got IO Pending, but we have no time left to wait
-                    // disable the timer and set the error state by calling OnTimeoutSync
-                    ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
-                    OnTimeoutSync();
-                }
-                // DO NOT HANDLE PENDING READ HERE - which is TdsEnums.SNI_SUCCESS_IO_PENDING state.
-                // That is handled by user who initiated async read, or by ReadNetworkPacket which is sync over async.
-            }
-            finally
-            {
-                if (readPacket != IntPtr.Zero)
-                {
-                    // Be sure to release packet, otherwise it will be leaked by native.
-                    SNINativeMethodWrapper.SNIPacketRelease(readPacket);
-                }
-
-                AssertValidState();
-            }
-        }
-
-        /// <summary>
-        /// Checks to see if the underlying connection is still alive (used by connection pool resiliency)
-        /// NOTE: This is not safe to do on a connection that is currently in use
-        /// NOTE: This will mark the connection as broken if it is found to be dead
-        /// </summary>
-        /// <param name="throwOnException">If true then an exception will be thrown if the connection is found to be dead, otherwise no exception will be thrown</param>
-        /// <returns>True if the connection is still alive, otherwise false</returns>
-        internal bool IsConnectionAlive(bool throwOnException)
-        {
-            Debug.Assert(_parser.Connection == null || _parser.Connection.Pool != null, "Shouldn't be calling IsConnectionAlive on non-pooled connections");
-            bool isAlive = true;
-
-            if (DateTime.UtcNow.Ticks - _lastSuccessfulIOTimer._value > CheckConnectionWindow)
-            {
-                if ((_parser == null) || ((_parser.State == TdsParserState.Broken) || (_parser.State == TdsParserState.Closed)))
-                {
-                    isAlive = false;
-                    if (throwOnException)
-                    {
-                        throw SQL.ConnectionDoomed();
-                    }
-                }
-                else if ((_pendingCallbacks > 1) || ((_parser.Connection != null) && (!_parser.Connection.IsInPool)))
-                {
-                    // This connection is currently in use, assume that the connection is 'alive'
-                    // NOTE: SNICheckConnection is not currently supported for connections that are in use
-                    Debug.Assert(true, "Call to IsConnectionAlive while connection is in use");
-                }
-                else
-                {
-                    uint error;
-                    IntPtr readPacket = IntPtr.Zero;
-
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
-                        TdsParser.ReliabilitySection.Assert("unreliable call to IsConnectionAlive");  // you need to setup for a thread abort somewhere before you call this method
-
-
-                        SniContext = SniContext.Snix_Connect;
-                        error = SNINativeMethodWrapper.SNICheckConnection(Handle);
-
-                        if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
-                        {
-                            // Connection is dead
-                            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.IsConnectionAlive | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
-
-                            isAlive = false;
-                            if (throwOnException)
-                            {
-                                // Get the error from SNI so that we can throw the correct exception
-                                AddError(_parser.ProcessSNIError(this));
-                                ThrowExceptionAndWarning();
-                            }
-                        }
-                        else
-                        {
-                            _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
-                        }
-                    }
-                    finally
-                    {
-                        if (readPacket != IntPtr.Zero)
-                        {
-                            // Be sure to release packet, otherwise it will be leaked by native.
-                            SNINativeMethodWrapper.SNIPacketRelease(readPacket);
-                        }
-
-                    }
-                }
-            }
-
-            return isAlive;
-        }
-
         /// <summary>
         /// Checks to see if the underlying connection is still valid (used by idle connection resiliency - for active connections)
         /// NOTE: This is not safe to do on a connection that is currently in use
@@ -1022,7 +449,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             stateObj.SendAttention(mustTakeWriteLock: true);
 
-                            IntPtr syncReadPacket = IntPtr.Zero;
+                            PacketHandle syncReadPacket = default;
                             RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
@@ -1030,13 +457,7 @@ namespace Microsoft.Data.SqlClient
                                 Interlocked.Increment(ref _readingCount);
                                 shouldDecrement = true;
 
-                                SNIHandle handle = Handle;
-                                if (handle == null)
-                                {
-                                    throw ADP.ClosedConnectionError();
-                                }
-
-                                error = SNINativeMethodWrapper.SNIReadSyncOverAsync(handle, ref syncReadPacket, stateObj.GetTimeoutRemaining());
+                                syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
 
                                 Interlocked.Decrement(ref _readingCount);
                                 shouldDecrement = false;
@@ -1049,7 +470,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    Debug.Assert(IntPtr.Zero == syncReadPacket, "unexpected syncReadPacket without corresponding SNIPacketRelease");
+                                    Debug.Assert(!IsValidPacket(syncReadPacket), "unexpected syncReadPacket without corresponding SNIPacketRelease");
                                     fail = true; // Subsequent read failed, time to give up.
                                 }
                             }
@@ -1060,10 +481,10 @@ namespace Microsoft.Data.SqlClient
                                     Interlocked.Decrement(ref _readingCount);
                                 }
 
-                                if (syncReadPacket != IntPtr.Zero)
+                                if (!IsPacketEmpty(syncReadPacket))
                                 {
                                     // Be sure to release packet, otherwise it will be leaked by native.
-                                    SNINativeMethodWrapper.SNIPacketRelease(syncReadPacket);
+                                    ReleasePacket(syncReadPacket);
                                 }
                             }
                         }
@@ -1101,7 +522,7 @@ namespace Microsoft.Data.SqlClient
             AssertValidState();
         }
 
-        public void ProcessSniPacket(IntPtr packet, uint error)
+        public void ProcessSniPacket(PacketHandle packet, uint error)
         {
             if (error != 0)
             {
@@ -1174,7 +595,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        public void ReadAsyncCallback(IntPtr key, IntPtr packet, uint error)
+        public void ReadAsyncCallback(IntPtr key, PacketHandle packet, uint error)
         {
             // Key never used.
             // Note - it's possible that when native calls managed that an asynchronous exception
@@ -1319,7 +740,7 @@ namespace Microsoft.Data.SqlClient
 
 #pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
 
-        public void WriteAsyncCallback(IntPtr key, IntPtr packet, uint sniError)
+        public void WriteAsyncCallback(IntPtr key, PacketHandle packet, uint sniError)
         { // Key never used.
             RemovePacketFromPendingList(packet);
             try
@@ -1344,7 +765,7 @@ namespace Microsoft.Data.SqlClient
                             _delayedWriteAsyncCallbackException = e;
 
                             // Ensure that _delayedWriteAsyncCallbackException is set before checking _writeCompletionSource
-                            Thread.MemoryBarrier();
+                            Interlocked.MemoryBarrier();
 
                             // Double check that _writeCompletionSource hasn't been created in the meantime
                             writeCompletionSource = _writeCompletionSource;
@@ -1465,7 +886,7 @@ namespace Microsoft.Data.SqlClient
             Task task = _writeCompletionSource.Task;
 
             // Ensure that _writeCompletionSource is set before checking state
-            Thread.MemoryBarrier();
+            Interlocked.MemoryBarrier();
 
             // Now that we have set _writeCompletionSource, check if parser is closed or broken
             if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
@@ -1714,7 +1135,7 @@ namespace Microsoft.Data.SqlClient
 
             Task task = null;
             _writeCompletionSource = null;
-            IntPtr packetPointer = IntPtr.Zero;
+            PacketHandle packetPointer = EmptyReadPacket;
             bool sync = !_parser._asyncWrite;
             if (sync && _asyncWriteCount > 0)
             { // for example, SendAttention while there are writes pending
@@ -1760,7 +1181,7 @@ namespace Microsoft.Data.SqlClient
                     task = _writeCompletionSource.Task;
 
                     // Ensure that setting _writeCompletionSource completes before checking _delayedWriteAsyncCallbackException
-                    Thread.MemoryBarrier();
+                    Interlocked.MemoryBarrier();
 
                     // Check for a stored exception
                     delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
@@ -1822,7 +1243,7 @@ namespace Microsoft.Data.SqlClient
                     if (!sync)
                     {
                         // Since there will be no callback, remove the packet from the pending list
-                        Debug.Assert(packetPointer != IntPtr.Zero, "Packet added to list has an invalid pointer, can not remove from pending list");
+                        Debug.Assert(IsValidPacket(packetPointer), "Packet added to list has an invalid pointer, can not remove from pending list");
                         RemovePacketFromPendingList(packetPointer);
                     }
                 }
@@ -1837,7 +1258,9 @@ namespace Microsoft.Data.SqlClient
             return task;
         }
 
-#pragma warning restore 420 
+#pragma warning restore 420
+
+        internal bool IsValidPacket(PacketHandle packetPointer) => packetPointer != default;
 
         // Sends an attention signal - executing thread will consume attn.
         internal void SendAttention(bool mustTakeWriteLock = false, bool asyncClose = false)
@@ -2209,6 +1632,8 @@ namespace Microsoft.Data.SqlClient
                 return count;
             }
         }
+
+        protected PacketHandle EmptyReadPacket => default;
 
         internal int PreAttentionErrorCount
         {
