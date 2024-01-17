@@ -2438,7 +2438,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if ((_pendingCallbacks > 1) || ((_parser.Connection != null) && (!_parser.Connection.IsInPool)))
                 {
-                    // This connection is currently in use, assume that the connection is 'alive'
+                    SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.IsConnectionAlive | Info | State Object Id {0}, This connection is currently in use, assume that the connection is 'alive'", _objectID);
                     // NOTE: SNICheckConnection is not currently supported for connections that are in use
                     Debug.Assert(true, "Call to IsConnectionAlive while connection is in use");
                 }
