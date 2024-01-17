@@ -293,7 +293,12 @@ namespace Microsoft.Data.SqlClient
             return readPacket;
         }
 
-        internal uint CheckConnection() => SNINativeMethodWrapper.SNICheckConnection(Handle);
+        /// <remarks>
+        /// Note <see cref="Handle"/> is not supposed to be null when this method is called and the native implementation doesn't expect null values here.
+        /// The handle will not be null unless this <see cref="TdsParserStateObject"/> instance has been disposed.
+        /// We could probably throw an exception instead of returning success (like managed netcore version does).
+        /// </remarks>
+        internal uint CheckConnection() => Handle == null ? TdsEnums.SNI_SUCCESS : SNINativeMethodWrapper.SNICheckConnection(Handle);
 
         internal void ReleasePacket(PacketHandle syncReadPacket) => SNINativeMethodWrapper.SNIPacketRelease(syncReadPacket);
         
@@ -410,11 +415,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 Interlocked.Increment(ref _readingCount);
-                SNIHandle handle = Handle;
-                if (handle != null)
-                {
-                    error = SNINativeMethodWrapper.SNICheckConnection(handle);
-                }
+                error = CheckConnection();
             }
             finally
             {
