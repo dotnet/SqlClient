@@ -2289,7 +2289,6 @@ namespace Microsoft.Data.SqlClient
             }
 #endif
 
-
             PacketHandle readPacket = default;
 
             uint error = 0;
