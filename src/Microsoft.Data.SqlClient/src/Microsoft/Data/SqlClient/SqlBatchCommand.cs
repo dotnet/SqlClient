@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient
             _parameters = parameterCollection;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandText/*'/>
+        /// <inheritdoc />
         public
 #if NET6_0_OR_GREATER
         override 
