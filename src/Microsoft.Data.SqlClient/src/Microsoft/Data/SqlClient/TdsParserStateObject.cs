@@ -2477,6 +2477,38 @@ namespace Microsoft.Data.SqlClient
             return isAlive;
         }
 
+        /// <summary>
+        /// Checks to see if the underlying connection is still valid (used by idle connection resiliency - for active connections)
+        /// NOTE: This is not safe to do on a connection that is currently in use
+        /// NOTE: This will mark the connection as broken if it is found to be dead
+        /// </summary>
+        /// <returns>True if the connection is still alive, otherwise false</returns>
+        internal bool ValidateSNIConnection()
+        {
+            if ((_parser == null) || ((_parser.State == TdsParserState.Broken) || (_parser.State == TdsParserState.Closed)))
+            {
+                return false;
+            }
+
+            if (DateTime.UtcNow.Ticks - _lastSuccessfulIOTimer._value <= CheckConnectionWindow)
+            {
+                return true;
+            }
+
+            uint error = TdsEnums.SNI_SUCCESS;
+            SniContext = SniContext.Snix_Connect;
+            try
+            {
+                Interlocked.Increment(ref _readingCount);
+                error = CheckConnection();
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _readingCount);
+            }
+            return (error == TdsEnums.SNI_SUCCESS) || (error == TdsEnums.SNI_WAIT_TIMEOUT);
+        }
+
         /*
 
         // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)
