@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient
         public System.Data.CommandBehavior CommandBehavior { get { throw null; } set { } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/RecordsAffected/*'/>
         public override int RecordsAffected { get { throw null; } }
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/DbParameterCollection/*'/>
+        /// <inheritdoc />
         protected override System.Data.Common.DbParameterCollection DbParameterCollection => throw null;
     }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/SqlBatchCommandCollection/*'/>

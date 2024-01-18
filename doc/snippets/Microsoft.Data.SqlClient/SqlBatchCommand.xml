@@ -81,5 +81,16 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
     <DbParameterCollection>
       <inheritdoc cref="System.Data.Common.DbParameterCollection" />      
     </DbParameterCollection>
+    <RecordsAffected>
+      <summary>
+        Gets the number of records affected.
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+]]>
+        </format>
+      </remarks>
+    </RecordsAffected>
   </members>
 </docs>

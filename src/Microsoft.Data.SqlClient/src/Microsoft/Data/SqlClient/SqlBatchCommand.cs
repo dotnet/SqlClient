@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandBehavior/*'/>
         public CommandBehavior CommandBehavior { get => _behavior; set => _behavior = value; }
 
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/RecordsAffected/*'/>
         public
 #if NET6_0_OR_GREATER
         override 
