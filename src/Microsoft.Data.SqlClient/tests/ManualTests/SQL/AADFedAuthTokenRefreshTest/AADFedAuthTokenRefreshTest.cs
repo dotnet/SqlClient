@@ -33,13 +33,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DateTime? oldExpiry = GetOrSetTokenExpiryDateTime(connection, true, out tokenHash1);
                 Assert.True(oldExpiry != null, "Failed to make token expiry to expire in one minute.");
 
-                // Display old expiry in local time which should be in 1 minute from now
+                // Convert and display the old expiry into local time which should be in 1 minute from now
                 DateTime oldLocalExpiryTime = TimeZoneInfo.ConvertTimeFromUtc((DateTime)oldExpiry, TimeZoneInfo.Local);
                 LogInfo($"Token: {tokenHash1}   Old Expiry: {oldLocalExpiryTime}");
                 TimeSpan timeDiff = oldLocalExpiryTime - DateTime.Now;
                 Assert.True(timeDiff.TotalSeconds <= 60, "Failed to set expiry after 1 minute from current time.");
 
-                // Check if connection is alive
+                // Check if connection is still alive to continue further testing
                 string result = "";
                 SqlCommand cmd = connection.CreateCommand();
                 cmd.CommandText = "select @@version";
