@@ -6310,7 +6310,7 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case SqlDbType.UniqueIdentifier:
-                    nullVal.SqlGuid = SqlGuid.Null;
+                    nullVal.SetToNullOfType(SqlBuffer.StorageType.SqlGuid);
                     break;
 
                 case SqlDbType.Bit:
