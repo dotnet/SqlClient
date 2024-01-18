@@ -71,7 +71,7 @@
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
   </PropertyGroup>
 
-  <!-- Packaging -->
+  <!-- Packaging  for source link-->
   <PropertyGroup>
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
@@ -84,6 +84,11 @@
   <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
+  <ItemGroup>
+   <PackageReference Condition="'$(TF_BUILD)' == 'true'" Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All">
+    </PackageReference>	
+  </ItemGroup>
+  
 
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
