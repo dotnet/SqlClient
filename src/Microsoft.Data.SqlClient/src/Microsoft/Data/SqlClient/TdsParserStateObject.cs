@@ -2495,18 +2495,17 @@ namespace Microsoft.Data.SqlClient
                 return true;
             }
 
-            uint error = TdsEnums.SNI_SUCCESS;
             SniContext = SniContext.Snix_Connect;
             try
             {
                 Interlocked.Increment(ref _readingCount);
-                error = CheckConnection();
+                uint error = CheckConnection();
+                return (error == TdsEnums.SNI_SUCCESS) || (error == TdsEnums.SNI_WAIT_TIMEOUT);
             }
             finally
             {
                 Interlocked.Decrement(ref _readingCount);
             }
-            return (error == TdsEnums.SNI_SUCCESS) || (error == TdsEnums.SNI_WAIT_TIMEOUT);
         }
 
         /*
