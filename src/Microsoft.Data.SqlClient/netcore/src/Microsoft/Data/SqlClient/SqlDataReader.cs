@@ -1573,7 +1573,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Grab already read data
-                    data = _data[i].SqlBinary.Value;
+                    data = _data[i].ByteArray;
                 }
 
                 // If non-sequential then we just have a read-only MemoryStream
@@ -2969,7 +2969,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    byte[] value = data.IsNull ? Array.Empty<byte>() : data.SqlBinary.Value;
+                    byte[] value = data.IsNull ? Array.Empty<byte>() : data.ByteArray;
                     return (T)(object)new MemoryStream(value, writable: false);
                 }
             }

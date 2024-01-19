@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient.Server
                     case SqlDbType.Image:
                     case SqlDbType.Timestamp:
                     case SqlDbType.VarBinary:
-                        targetBuffer.SqlBinary = GetSqlBinary_Unchecked(sink, getters, ordinal);
+                        targetBuffer.ByteArray = GetByteArray_Unchecked(sink, getters, ordinal);
                         break;
                     case SqlDbType.Bit:
                         targetBuffer.Boolean = GetBoolean_Unchecked(sink, getters, ordinal);

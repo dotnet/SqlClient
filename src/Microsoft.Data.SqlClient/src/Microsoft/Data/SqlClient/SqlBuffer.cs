@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient
         private bool _isNull;
         private StorageType _type;
         private Storage _value;
-        private object _object;    // String, SqlBinary, SqlCachedBuffer, SqlString, SqlXml
+        private object _object;    // String, byte[] for SqlBinary, SqlCachedBuffer, SqlString, SqlXml
 
         internal SqlBuffer()
         {
@@ -179,7 +179,19 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 ThrowIfNull();
-                return SqlBinary.Value;
+
+                if (StorageType.SqlBinary == _type)
+                {
+                    return (byte[])_object;
+                }
+                return ((SqlBinary)SqlValue).Value;   // anything else we haven't thought of goes through boxing.
+            }
+            set
+            {
+                Debug.Assert(IsEmpty, "setting value a second time?");
+                _object = value;
+                _type = StorageType.SqlBinary;
+                _isNull = value is null;
             }
         }
 
@@ -653,22 +665,16 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (StorageType.SqlBinary == _type)
+                if (IsNull)
                 {
-                    if (IsNull)
-                    {
-                        return SqlBinary.Null;
-                    }
-                    return (SqlBinary)_object;
+                    return SqlBinary.Null;
                 }
-                return (SqlBinary)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _object = value;
-                _type = StorageType.SqlBinary;
-                _isNull = value.IsNull;
+
+#if NET7_0_OR_GREATER
+                return SqlBinary.WrapBytes(ByteArray);
+#else
+                return SqlTypeWorkarounds.SqlBinaryCtor(ByteArray, true);   // doesn't copy the byte array
+#endif
             }
         }
 
