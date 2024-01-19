@@ -76,8 +76,6 @@
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
   </PropertyGroup>
