@@ -5932,7 +5932,11 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(length == 16, "invalid length for SqlGuid type!");
+#if NET8_0_OR_GREATER
                         value.SqlGuid = new SqlGuid(unencryptedBytes);   // doesn't copy the byte array
+#else
+                        value.SqlGuid = SqlTypeWorkarounds.SqlGuidCtor(unencryptedBytes, true);   // doesn't copy the byte array
+#endif
                         break;
                     }
 
