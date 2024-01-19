@@ -85,21 +85,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
 #if NETCOREAPP
-        [ActiveIssue("27981")] // DataSource.InferNamedPipesInformation is not initializing InstanceName field
-        [ConditionalTheory(nameof(IsSPNPortNumberTestForNP))]
-        [InlineData("")]
-        [InlineData("44444")] // Named Instance Sql Server Port will be setup in the pipeline to 44444 as well
-        public static void PortNumberInSPNTestForNP(string port)
-        {
-            string connectionString = DataTestUtility.NPConnectionString;
-            SqlConnectionStringBuilder builder = new(connectionString);
-
-            if (!string.IsNullOrWhiteSpace(port))
-                builder.DataSource = $"{builder.DataSource},{port}";
-
-            PortNumberInSPNTest(builder.ConnectionString);
-        }
-
         [ConditionalTheory(nameof(IsSPNPortNumberTestForTCP))]
         [InlineData("")]
         [InlineData("44444")] // Named Instance Sql Server Port will be setup in the pipeline to 44444 as well
@@ -128,17 +113,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string hostname = "";
             string instanceName = "";
-            int port = -1;
 
-            // Named pipe protocol data source does not support port number
-            string dataSource = builder.DataSource.ToUpper();
-            if ((dataSource.Contains(@"\MSSQL$") && builder.DataSource.ToUpper().Contains(@"\SQL\QUERY") && dataSource.Contains(",")) ||
-               (dataSource.Contains(@"NP:") && dataSource.Contains(",")))
-            {
-                Assert.Fail("Named pipe protocol in data source does not support port number.");
-            }
-            
-            DataTestUtility.ParseDataSource(builder.DataSource, out hostname, out port, out instanceName);
+            DataTestUtility.ParseDataSource(builder.DataSource, out hostname, out _, out instanceName);
             
             Assert.False(string.IsNullOrEmpty(hostname), "Hostname must be included in the data source.");
             Assert.False(string.IsNullOrEmpty(instanceName), "Instance name must be included in the data source.");
@@ -256,16 +232,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool IsSPNPortNumberTestForTCP()
         {
             return (IsInstanceNameValid(DataTestUtility.TCPConnectionString)
-                 && DataTestUtility.AreConnStringsSetup()
-                 && DataTestUtility.IsUsingManagedSNI()
-                 && DataTestUtility.IsNotAzureServer()
-                 && DataTestUtility.IsNotAzureSynapse());
-        }
-
-        private static bool IsSPNPortNumberTestForNP()
-        {
-            return (IsInstanceNameValid(DataTestUtility.NPConnectionString)
-                 && DataTestUtility.AreConnStringsSetup()
                  && DataTestUtility.IsUsingManagedSNI()
                  && DataTestUtility.IsNotAzureServer()
                  && DataTestUtility.IsNotAzureSynapse());
@@ -273,13 +239,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static bool IsInstanceNameValid(string connectionString)
         {
-            string hostname = "";
             string instanceName = "";
-            int port = -1;
 
             SqlConnectionStringBuilder builder = new(connectionString);
             
-            DataTestUtility.ParseDataSource(builder.DataSource, out hostname, out port, out instanceName);
+            DataTestUtility.ParseDataSource(builder.DataSource, out _, out _, out instanceName);
 
             return !string.IsNullOrWhiteSpace(instanceName);
         }
