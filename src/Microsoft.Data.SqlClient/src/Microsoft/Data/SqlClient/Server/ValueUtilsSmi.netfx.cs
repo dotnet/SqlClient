@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.Server
             if (isDbNull)
             {
                 // "null" stream
-                data = new byte[0];
+                data = Array.Empty<byte>();
             }
             else
             {
