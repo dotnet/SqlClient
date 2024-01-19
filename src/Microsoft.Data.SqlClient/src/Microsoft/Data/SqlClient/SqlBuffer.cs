@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient
         private bool _isNull;
         private StorageType _type;
         private Storage _value;
-        private object _object;    // String, SqlBinary, SqlCachedBuffer, SqlGuid, SqlString, SqlXml
+        private object _object;    // String, SqlBinary, SqlCachedBuffer, SqlString, SqlXml
 
         internal SqlBuffer()
         {
@@ -815,14 +815,17 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (StorageType.SqlGuid == _type)
                 {
-                    return IsNull ? SqlGuid.Null : (SqlGuid)_object;
+                    return IsNull ? SqlGuid.Null : new SqlGuid(_value._guid);
                 }
                 return (SqlGuid)SqlValue; // anything else we haven't thought of goes through boxing.
             }
             set
             {
                 Debug.Assert(IsEmpty, "setting value a second time?");
-                _object = value;
+                if (!value.IsNull)
+                {
+                    _value._guid = value.Value;
+                }
                 _type = StorageType.SqlGuid;
                 _isNull = value.IsNull;
             }
