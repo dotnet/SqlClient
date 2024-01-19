@@ -147,11 +147,6 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     result = DBNull.Value;
                 }
-                else if (SqlBuffer.StorageType.SqlBinary == stype)
-                {
-                    // special case SqlBinary, 'cause tds parser never sets SqlBuffer to null, just to empty!
-                    targetBuffer.SqlBinary = SqlBinary.Null;
-                }
                 else
                 {
                     targetBuffer.SetToNullOfType(stype);

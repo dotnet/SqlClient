@@ -5500,7 +5500,7 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.Binary:
                 case SqlDbType.VarBinary:
                 case SqlDbType.Image:
-                    nullVal.SqlBinary = SqlBinary.Null;
+                    nullVal.SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
                     break;
 
                 case SqlDbType.UniqueIdentifier:
