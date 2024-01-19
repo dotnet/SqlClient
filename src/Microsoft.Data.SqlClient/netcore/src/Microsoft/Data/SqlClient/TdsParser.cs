@@ -5957,7 +5957,11 @@ namespace Microsoft.Data.SqlClient
                             unencryptedBytes = bytes;
                         }
 
-                        value.SqlBinary = new SqlBinary(unencryptedBytes);   // doesn't copy the byte array
+#if NET7_0_OR_GREATER
+                        value.SqlBinary = SqlBinary.WrapBytes(unencryptedBytes);
+#else
+                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(unencryptedBytes, true);   // doesn't copy the byte array
+#endif
                         break;
                     }
 
