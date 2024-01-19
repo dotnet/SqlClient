@@ -76,21 +76,13 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       <inheritdoc cref="System.Data.Common.DbBatchCommand.CommandText"/>
     </CommandText>
     <CommandType>
-      <inheritdoc cref="System.Data.CommandType" />
+      <inheritdoc cref="System.Data.Common.DbBatchCommand.CommandType" />
     </CommandType>
     <DbParameterCollection>
-      <inheritdoc cref="System.Data.Common.DbParameterCollection" />      
+      <inheritdoc cref="System.Data.Common.DbBatchCommand.DbParameterCollection" />
     </DbParameterCollection>
     <RecordsAffected>
-      <summary>
-        Gets the number of records affected.
-      </summary>
-      <remarks>
-        <format type="text/markdown">
-          <![CDATA[
-]]>
-        </format>
-      </remarks>
+      <inheritdoc cref="System.Data.Common.DbBatchCommand.RecordsAffected" />
     </RecordsAffected>
   </members>
 </docs>
