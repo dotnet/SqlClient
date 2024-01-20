@@ -40,11 +40,9 @@
     <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
     <MicrosoftDataSqlClientSNIRuntimeVersion>5.2.0-preview1.23340.1</MicrosoftDataSqlClientSNIRuntimeVersion>
     <SystemConfigurationConfigurationManagerVersion>6.0.1</SystemConfigurationConfigurationManagerVersion>
-    <SystemConfigurationConfigurationManagerVersionNet8>8.0.0</SystemConfigurationConfigurationManagerVersionNet8>
     <MicrosoftSqlServerServerVersion>1.0.0</MicrosoftSqlServerServerVersion>
     <SystemDiagnosticsPerformanceCounterVersion>6.0.1</SystemDiagnosticsPerformanceCounterVersion>
     <SystemRuntimeCachingVersion>6.0.0</SystemRuntimeCachingVersion>
-    <SystemRuntimeCachingVersionNet8>8.0.0</SystemRuntimeCachingVersionNet8>
     <SystemSecurityCryptographyCngVersion>5.0.0</SystemSecurityCryptographyCngVersion>
     <SystemSecurityPermissionsVersion>6.0.0</SystemSecurityPermissionsVersion>
     <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
