@@ -11,7 +11,6 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETCoreApp'">netcoreapp</TargetGroup>
     <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETStandard'">netstandard</TargetGroup>
-    <TargetGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">net8</TargetGroup>
     <Configurations>Debug;Release;</Configurations>
     <Platforms>AnyCPU;x64;x86</Platforms>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)\netcore\</IntermediateOutputPath>
@@ -1003,7 +1002,7 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)' == 'net80'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersionNet8)" />
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersionNet8)" />
   </ItemGroup>
