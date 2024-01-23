@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <TargetFrameworks>net7.0;net6.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net8.0;net6.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <TargetFrameworks Condition="$(ReferenceType)=='NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1'">netstandard2.1</TargetFrameworks>
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">Microsoft.Data.SqlClient is not supported on this platform.</GeneratePlatformNotSupportedAssemblyMessage>
     <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
@@ -666,8 +666,8 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
   </ItemGroup>
-  <!--This will exclude SqlTypeWorkarounds.netcore.cs from Net7 and greater versions-->
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND !$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">
+  <!--This will exclude SqlTypeWorkarounds.netcore.cs from Net8 and greater versions-->
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND !$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netcore.cs" />
   </ItemGroup>
   <!-- Windows only -->

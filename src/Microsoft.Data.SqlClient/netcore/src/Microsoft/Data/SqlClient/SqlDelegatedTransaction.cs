@@ -159,17 +159,17 @@ namespace Microsoft.Data.SqlClient
                             ValidateActiveOnConnection(connection);
 
                             connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Promote, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
-                            returnValue = _connection.PromotedDTCToken;
+                            returnValue = connection.PromotedDTCToken;
 
                             // For Global Transactions, we need to set the Transaction Id since we use a Non-MSDTC Promoter type.
-                            if (_connection.IsGlobalTransaction)
+                            if (connection.IsGlobalTransaction)
                             {
                                 if (SysTxForGlobalTransactions.SetDistributedTransactionIdentifier == null)
                                 {
                                     throw SQL.UnsupportedSysTxForGlobalTransactions();
                                 }
 
-                                if (!_connection.IsGlobalTransactionsEnabledForServer)
+                                if (!connection.IsGlobalTransactionsEnabledForServer)
                                 {
                                     throw SQL.GlobalTransactionsNotEnabled();
                                 }

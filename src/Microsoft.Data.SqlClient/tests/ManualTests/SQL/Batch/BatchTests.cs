@@ -55,21 +55,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void SqlBatchCanCreateParameter()
         {
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (var batch = connection.CreateBatch())
-            {
-                SqlBatchCommand batchCommand = new SqlBatchCommand("SELECT @p");
+            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using DbBatch batch = connection.CreateBatch();
+            SqlBatchCommand batchCommand = new SqlBatchCommand("SELECT @p");
 
-                Assert.True(batchCommand.CanCreateParameter);
-                SqlParameter parameter = batchCommand.CreateParameter();
-                Assert.NotNull(parameter);
-                parameter.ParameterName = "@p";
-                parameter.Value = 1;
-                batchCommand.Parameters.Add(parameter);
-
-                batch.ExecuteNonQuery();
-
-            }
+            Assert.True(batchCommand.CanCreateParameter);
+            SqlParameter parameter = (SqlParameter)batchCommand.CreateParameter();
+            Assert.NotNull(parameter);
+            parameter.ParameterName = "@p";
+            parameter.Value = 1;
+            batchCommand.Parameters.Add(parameter);
+            batch.BatchCommands.Add(batchCommand);
+            batch.ExecuteNonQuery();
         }
 #endif 
 
