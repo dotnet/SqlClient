@@ -1,17 +1,6 @@
 <?xml version="1.0"?>
 <docs>
   <members name="SqlClientDiagnostic">
-    <SqlClientDiagnostic>
-      <summary>The abstract base class for diagnostic events containing common fields shared by all diagnostic events.</summary>
-    </SqlClientDiagnostic>
-    <ctor>
-      <param name="operationId">A guid value used to correlate before, after and error events.</param>
-      <param name="operation">The name of the operation.</param>
-      <param name="timestamp">The timestamp of the event.</param>
-      <summary>
-        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryingEventArgs" /> class.
-      </summary>
-    </ctor>
     <OperationId>
       <summary>A guid value used to correlate before, after and error events.</summary>
     </OperationId>
@@ -21,18 +10,6 @@
     <Timestamp>
       <summary>The timestamp of the event.</summary>
     </Timestamp>
-    <CommonPropertyCount>
-      <summary>Provides the count of common properties for classes which derive from this class.</summary>
-    </CommonPropertyCount>
-    <TryGetCommonProperty>
-      <summary>Provides derived classed with a method to attempt to fetch common properties from the this base class. Returns true if the property is found false otherwise.</summary>
-    </TryGetCommonProperty>
-    <GetDerivedCount>
-      <summary>Provides the base class with the count of additional properties added by derived classes. This is used to produce the Count value.</summary>
-    </GetDerivedCount>
-    <GetDerivedProperty>
-      <summary>Provides the base class with the the ability to query for properties added by derived classes. This is used to provide values to the indexer.</summary>
-    </GetDerivedProperty>
   </members>
   <members name="SqlClientCommandBefore">
     <SqlClientCommandBefore>
