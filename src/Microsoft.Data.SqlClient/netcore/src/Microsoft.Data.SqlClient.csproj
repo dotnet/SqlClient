@@ -985,26 +985,32 @@
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Condition="$(TargetGroup) == 'netstandard' and '$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'" Include="Microsoft.Win32.Registry" Version="$(MicrosoftWin32RegistryVersion)" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
-    <PackageReference Include="System.Security.Permissions" Version="$(SystemSecurityPermissionsVersion)" />
-    <PackageReference Condition="$(TargetGroup) == 'netstandard'" Include="System.Security.Principal.Windows" Version="$(SystemSecurityPrincipalWindowsVersion)" />
+  <ItemGroup Condition="'$(TargetGroup)' == 'netstandard'">
+    <PackageReference Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'" Include="Microsoft.Win32.Registry" Version="$(MicrosoftWin32RegistryVersion)" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="$(SystemSecurityPrincipalWindowsVersion)" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
+    <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
+    <PackageReference Include="System.Runtime.Loader" Version="$(SystemRuntimeLoaderVersion)" />
+    <PackageReference Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVersion)" />
     <PackageReference Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebVersion)" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
+    <PackageReference Include="System.Security.Permissions" Version="$(SystemSecurityPermissionsVersion)" />
+    <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
+    <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
     <!-- Enable the project reference for debugging purposes. -->
     <!-- <ProjectReference Include="$(SqlServerSourceCode)\Microsoft.SqlServer.Server.csproj" /> -->
     <PackageReference Include="Microsoft.SqlServer.Server" Version="$(MicrosoftSqlServerServerVersion)" />
-    <PackageReference Condition="$(TargetGroup) == 'netstandard'" Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
-    <PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'" Include="System.Buffers" Version="$(SystemBuffersVersion)" />
-    <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
-    <PackageReference Condition="$(TargetGroup) == 'netstandard'" Include="System.Runtime.Loader" Version="$(SystemRuntimeLoaderVersion)" />
-    <PackageReference Condition="$(TargetGroup) == 'netstandard'" Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
     <PackageReference Condition="$(BuildForRelease) == 'true'" Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
