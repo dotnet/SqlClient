@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 5.2.0-preview5.YY365.#] - 2024-01-24
+
+This update brings the below changes over the previous release:
+
+### Added
+
+- Added .NET 8 Support from .NET 7 [2230](https://github.com/dotnet/SqlClient/pull/2230)
+
+### Changed
+
+- Improved by avoiding boxing of SqlGuid in SqlBuffer [#2306] (https://github.com/dotnet/SqlClient/pull/2306)
+- Improved TdsParserStateObject by reducing redundancy [#2254] (https://github.com/dotnet/SqlClient/pull/2254)
+
+### Fixed
+
+- Fixed wrong dependency for netstandard2.0 [#2305](https://github.com/dotnet/SqlClient/pull/2305)
+- Fixed connection to unsubscribe from any provider before returning it to the connection pool [#2301](https://github.com/dotnet/SqlClient/pull/2301)
+- Fixed Microsoft.IdentityModel.JsonWebTokens version [#2290](https://github.com/dotnet/SqlClient/pull/2290)
+- Fixed SQL authentication check during debug mode [#2288](https://github.com/dotnet/SqlClient/pull/2288)
+- Fixed InvalidCastException when reading an always encrypted date column [#2275](https://github.com/dotnet/SqlClient/pull/2275)
+
 ## [Preview Release 5.2.0-preview4.23342.2] - 2023-12-08
 
 This update brings the below changes over the previous release:
