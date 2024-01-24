@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 5.2.0-preview5.24024.5] - 2024-01-24
+## [Preview Release 5.2.0-preview5.24024.3] - 2024-01-24
 
 This update brings the below changes over the previous release:
 
@@ -26,6 +26,7 @@ This update brings the below changes over the previous release:
 - Fixed Microsoft.IdentityModel.JsonWebTokens version [#2290](https://github.com/dotnet/SqlClient/pull/2290) to address [CVE-2024-21319](https://www.cve.org/CVERecord?id=CVE-2024-21319)
 - Fixed SQL authentication assert in debug mode [#2288](https://github.com/dotnet/SqlClient/pull/2288)
 - Fixed InvalidCastException when reading an Always Encrypted date or time column [#2275](https://github.com/dotnet/SqlClient/pull/2275)
+- Fixed AuthFedToken caching to prevent expired tokens from being sent to the server [#2273](https://github.com/dotnet/SqlClient/pull/2273)
 
 ## [Preview Release 5.2.0-preview4.23342.2] - 2023-12-08
 
