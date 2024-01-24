@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DateTime oldLocalExpiryTime = TimeZoneInfo.ConvertTimeFromUtc((DateTime)oldExpiryDateTime, TimeZoneInfo.Local);
                 LogInfo($"Token: {oldTokenHash}   Old Expiry: {oldLocalExpiryTime}");
                 TimeSpan timeDiff = oldLocalExpiryTime - DateTime.Now;
-                Assert.True(timeDiff.TotalSeconds <= 60, "Failed to set expiry after 1 minute from current time.");
+                Assert.InRange(timeDiff.TotalSeconds, 0, 60);
 
                 // Check if connection is still alive to continue further testing
                 string result = "";
