@@ -174,6 +174,7 @@
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
+    <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
     <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
@@ -279,6 +280,7 @@
     <Compile Include="SQL\Common\SystemDataInternals\ConnectionHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\ConnectionPoolHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\DataReaderHelper.cs" />
+    <Compile Include="SQL\Common\SystemDataInternals\FedAuthTokenHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
     <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTest.cs" />
@@ -342,7 +344,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="$(SystemIdentityModelTokensJwtVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersionNet)" />
-    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotnetRemoteExecutorVersion)" /> 
+    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotnetRemoteExecutorVersion)" />
     <PackageReference Condition="'$(TargetGroup)'!='netfx'" Include="System.ServiceProcess.ServiceController" Version="$(SystemServiceProcessServiceControllerVersion)" />
   </ItemGroup>
   <ItemGroup>
