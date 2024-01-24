@@ -97,11 +97,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (port > 0)
                 builder.DataSource = $"{builder.DataSource},{port}";
 
-            PortNumberInSPNTest(builder.ConnectionString);
+            PortNumberInSPNTest(builder.ConnectionString, port);
         }
 #endif
 
-        private static void PortNumberInSPNTest(string connectionString)
+        private static void PortNumberInSPNTest(string connectionString, int expectedPortNumber)
         {
             if (DataTestUtility.IsIntegratedSecuritySetup())
             {
@@ -124,6 +124,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
 
                 string spnInfo = GetSPNInfo(builder.DataSource);
+                Assert.Matches(@"MSSQLSvc\/.*:[\d]", spnInfo);
 
                 string[] spnStrs = spnInfo.Split(':');
                 int portInSPN = 0;
@@ -131,7 +132,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     int.TryParse(spnStrs[1], out portInSPN);
                 }
-                Assert.True(portInSPN > 0, "The expected SPN must include a valid port number.");
+                Assert.Equal(expectedPortNumber, portInSPN);
             }
         }
 
