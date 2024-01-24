@@ -13,6 +13,7 @@ This update brings the below changes over the previous release:
 - Added .NET 8 support [#2230](https://github.com/dotnet/SqlClient/pull/2230)
 - Added explicit version for major .NET version dependencies [#2303](https://github.com/dotnet/SqlClient/pull/2303)
 - Added the ability to generate debugging symbols in a separate package file [#2137](https://github.com/dotnet/SqlClient/pull/2137)
+- Added .NET 6 missing dependency for nuspec [#2317](https://github.com/dotnet/SqlClient/pull/2317)
 
 ### Changed
 
