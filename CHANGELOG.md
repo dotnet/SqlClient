@@ -4,11 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 5.2.0-preview5.YY365.#] - 2024-01-24
+## [Preview Release 5.2.0-preview5.24024.1] - 2024-01-24
+
+This update brings the below changes over the previous release:
 
 ### Added
 
 - Added .NET 8 Support from .NET 7 [#2230](https://github.com/dotnet/SqlClient/pull/2230)
+- Added explicit version for major .NET version dependencies [#2303](https://github.com/dotnet/SqlClient/pull/2303)
+- Added the ability to generate debugging symbols in a separate package file [#2137](https://github.com/dotnet/SqlClient/pull/2137)
 
 ### Changed
 
