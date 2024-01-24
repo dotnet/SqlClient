@@ -17,15 +17,15 @@ This update brings the below changes over the previous release:
 
 ### Changed
 
-- Improved TdsParserStateObject by reducing redundancy [#2254](https://github.com/dotnet/SqlClient/pull/2254)
+- Improved TdsParserStateObject by reducing code redundancy [#2254](https://github.com/dotnet/SqlClient/pull/2254)
 
 ### Fixed
 
 - Fixed wrong dependency for netstandard2.0 [#2305](https://github.com/dotnet/SqlClient/pull/2305)
-- Fixed connection to unsubscribe from any provider before returning it to the connection pool [#2301](https://github.com/dotnet/SqlClient/pull/2301)
+- Fixed connection to unsubscribe from transaction completion events before returning it to the connection pool [#2301](https://github.com/dotnet/SqlClient/pull/2301)
 - Fixed Microsoft.IdentityModel.JsonWebTokens version [#2290](https://github.com/dotnet/SqlClient/pull/2290) to address [CVE-2024-21319](https://www.cve.org/CVERecord?id=CVE-2024-21319)
-- Fixed SQL authentication check during debug mode [#2288](https://github.com/dotnet/SqlClient/pull/2288)
-- Fixed InvalidCastException when reading an always encrypted date or time column [#2275](https://github.com/dotnet/SqlClient/pull/2275)
+- Fixed SQL authentication assert in debug mode [#2288](https://github.com/dotnet/SqlClient/pull/2288)
+- Fixed InvalidCastException when reading an Always Encrypted date or time column [#2275](https://github.com/dotnet/SqlClient/pull/2275)
 
 ## [Preview Release 5.2.0-preview4.23342.2] - 2023-12-08
 
