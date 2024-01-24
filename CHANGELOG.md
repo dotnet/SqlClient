@@ -10,7 +10,7 @@ This update brings the below changes over the previous release:
 
 ### Added
 
-- Added .NET 8 Support from .NET 7 [#2230](https://github.com/dotnet/SqlClient/pull/2230)
+- Added .NET 8 support [#2230](https://github.com/dotnet/SqlClient/pull/2230)
 - Added explicit version for major .NET version dependencies [#2303](https://github.com/dotnet/SqlClient/pull/2303)
 - Added the ability to generate debugging symbols in a separate package file [#2137](https://github.com/dotnet/SqlClient/pull/2137)
 
@@ -24,7 +24,7 @@ This update brings the below changes over the previous release:
 - Fixed connection to unsubscribe from any provider before returning it to the connection pool [#2301](https://github.com/dotnet/SqlClient/pull/2301)
 - Fixed Microsoft.IdentityModel.JsonWebTokens version [#2290](https://github.com/dotnet/SqlClient/pull/2290) to address [CVE-2024-21319](https://www.cve.org/CVERecord?id=CVE-2024-21319)
 - Fixed SQL authentication check during debug mode [#2288](https://github.com/dotnet/SqlClient/pull/2288)
-- Fixed InvalidCastException when reading an always encrypted date column [#2275](https://github.com/dotnet/SqlClient/pull/2275)
+- Fixed InvalidCastException when reading an always encrypted date or time column [#2275](https://github.com/dotnet/SqlClient/pull/2275)
 
 ## [Preview Release 5.2.0-preview4.23342.2] - 2023-12-08
 
