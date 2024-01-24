@@ -9,7 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
-    <repository type="git" url="https://github.com/dotnet/sqlclient" />
+    <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$"/>
     <description>The current data provider for SQL Server and Azure SQL databases. This has replaced System.Data.SqlClient. These classes provide access to SQL and encapsulate database-specific protocols, including tabular data stream (TDS).
     
 Commonly Used Types:
@@ -102,27 +102,22 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <references>
       <group targetFramework="net462">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="net8.0">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="net6.0">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="netstandard2.0">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="netstandard2.1">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
     </references>

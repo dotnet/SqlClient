@@ -19,9 +19,17 @@
     <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
   </PropertyGroup>
+  <!-- Override debugtype=portable in Directory.Build.props for netfx -->
+  <PropertyGroup>
+    <DebugType>full</DebugType>
+  </PropertyGroup>  
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
+    <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
+  </ItemGroup>  
   <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
@@ -714,7 +722,6 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Condition="$(BuildForRelease) == 'true'" Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All" />
     <PackageReference Include="System.Text.Encodings.Web">
       <Version>$(SystemTextEncodingsWebVersion)</Version>
     </PackageReference>
