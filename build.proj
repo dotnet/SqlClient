@@ -36,7 +36,8 @@
     <DotnetPath></DotnetPath>
     <!-- Using these properties to compile and pack netfx dll fixes nuget package explorer error "Compiler flags: missing" -->
     <NugetPackProperties>DebugType=portable;DebugSymbols=true;IncludeSymbols=true;SymbolPackageFormat=snupkg;PublishRepositoryUrl=true;RepositoryUrl=https://github.com/dotnet/sqlclient;RepositoryType=git;EmbedUnTrackedSources=true;Deterministic=true;</NugetPackProperties>
-	<NugetPackProperties Condition="'$(TF_BUILD)' == 'true'">$(NugetPackProperties);ContinuousIntegrationBuild=true;</NugetPackProperties>
+	  <!-- TF_BUILD is enabled only within AzureDevOps pipeline to support continuous integation build. -->
+    <NugetPackProperties Condition="'$(TF_BUILD)' == 'true'">$(NugetPackProperties);ContinuousIntegrationBuild=true;</NugetPackProperties>
   </PropertyGroup>
 
   <!-- Release Build properties must be turned on for Release purposes, and turned off for Code Coverage calculations -->
