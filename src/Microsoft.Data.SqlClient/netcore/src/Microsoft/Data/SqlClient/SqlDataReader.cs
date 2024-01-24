@@ -2863,11 +2863,11 @@ namespace Microsoft.Data.SqlClient
                 return (T)(object)data.DateTime;
             }
 #if NET6_0_OR_GREATER
-            else if (typeof(T) == typeof(DateOnly) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            else if (typeof(T) == typeof(DateOnly) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005)
             {
                 return (T)(object)data.DateOnly;
             }
-            else if (typeof(T) == typeof(TimeOnly) && dataType == typeof(TimeOnly) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            else if (typeof(T) == typeof(TimeOnly) && dataType == typeof(TimeOnly) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005)
             {
                 return (T)(object)data.TimeOnly;
             }
@@ -3147,21 +3147,6 @@ namespace Microsoft.Data.SqlClient
 
                     switch (token)
                     {
-                        case TdsEnums.SQLALTROW:
-                            if (_altRowStatus == ALTROWSTATUS.Null)
-                            {
-                                // cache the regular metadata
-                                _altMetaDataSetCollection.metaDataSet = _metaData;
-                                _metaData = null;
-                            }
-                            else
-                            {
-                                Debug.Assert(_altRowStatus == ALTROWSTATUS.Done, "invalid AltRowStatus");
-                            }
-                            _altRowStatus = ALTROWSTATUS.AltRow;
-                            _hasRows = true;
-                            moreResults = true;
-                            return true;
                         case TdsEnums.SQLROW:
                         case TdsEnums.SQLNBCROW:
                             // always happens if there is a row following an altrow
@@ -3175,6 +3160,23 @@ namespace Microsoft.Data.SqlClient
                             moreResults = true;
                             return true;
                         case TdsEnums.SQLCOLMETADATA:
+                            moreResults = true;
+                            return true;
+
+                        // deprecated
+                        case TdsEnums.SQLALTROW:
+                            if (_altRowStatus == ALTROWSTATUS.Null)
+                            {
+                                // cache the regular metadata
+                                _altMetaDataSetCollection.metaDataSet = _metaData;
+                                _metaData = null;
+                            }
+                            else
+                            {
+                                Debug.Assert(_altRowStatus == ALTROWSTATUS.Done, "invalid AltRowStatus");
+                            }
+                            _altRowStatus = ALTROWSTATUS.AltRow;
+                            _hasRows = true;
                             moreResults = true;
                             return true;
                     }

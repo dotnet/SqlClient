@@ -140,18 +140,7 @@ catch (Exception ex) {
             <altmember cref="T:Microsoft.Data.SqlClient.SqlError" />
         </Errors>
         <GetObjectData>
-            <param name="si">The <see cref="T:System.Runtime.Serialization.SerializationInfo" /> that holds the serialized object data about the exception being thrown.</param>
-            <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext" /> that contains contextual information about the source or destination.</param>
-            <summary>Sets the <see cref="T:System.Runtime.Serialization.SerializationInfo" /> with information about the exception.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- `GetObjectData` sets a `SerializationInfo` with all the exception object data targeted for serialization. During deserialization, the exception is reconstituted from the `SerializationInfo` transmitted over the stream.  
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">The <paramref name="si" /> parameter is a null reference (<see langword="Nothing" /> in Visual Basic).</exception>
+            <inheritdoc cref="System.Exception.GetObjectData" />
         </GetObjectData>
         <LineNumber>
             <summary>Gets the line number within the Transact-SQL command batch or stored procedure that generated the error.</summary>
@@ -292,6 +281,17 @@ catch (Exception ex) {
             <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Procedure" />
             <altmember cref="P:Microsoft.Data.SqlClient.SqlException.LineNumber" />
         </Source>
+        <BatchCommand>
+          <summary>Gets the BatchCommand instance that generated the error or null if the exception was not raised from a batch.</summary>
+          <value>A BatchCommand object or null</value>
+          <remarks></remarks>
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Number" />
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.State" />
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Class" />
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Server" />
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Procedure" />
+          <altmember cref="P:Microsoft.Data.SqlClient.SqlException.LineNumber" />
+        </BatchCommand>
         <State>
             <summary>Gets a numeric error code from SQL Server that represents an error, warning or "no data found" message. For more information about how to decode these values, see <see href="/sql/relational-databases/errors-events/database-engine-events-and-errors">Database Engine Events and Errors</see>.</summary>
             <value>The number representing the error code.</value>

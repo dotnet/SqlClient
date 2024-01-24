@@ -4644,4 +4644,100 @@
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Если в строке подключения указан параметр "Authentication=Active Directory Default", свойство AccessTokenCallback задать не удастся.</value>
   </data>
+  <data name="event_OperationReturnedSomething" xml:space="preserve">
+    <value>Операция {0} возвратила {1}.</value>
+  </data>
+  <data name="net_auth_message_not_encrypted" xml:space="preserve">
+    <value>Ошибка протокола: полученное сообщение содержит действительную подпись, но она не была зашифрована в соответствии с действующим уровнем защиты.</value>
+  </data>
+  <data name="net_log_operation_failed_with_error" xml:space="preserve">
+    <value>Произошел сбой {0} с ошибкой {1}.</value>
+  </data>
+  <data name="net_MethodNotImplementedException" xml:space="preserve">
+    <value>Этот метод в данном классе не реализован.</value>
+  </data>
+  <data name="net_securitypackagesupport" xml:space="preserve">
+    <value>Затребованный пакет безопасности не поддерживается.</value>
+  </data>
+  <data name="SNI_IncorrectPhysicalConnectionType" xml:space="preserve">
+    <value>Неверный тип physicalConnection.</value>
+  </data>
+  <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
+    <value>Возникло исключение при попытке настроить параметр AppContext "{0}"={1}.</value>
+  </data>
+  <data name="SQL_DbTypeNotSupportedOnThisPlatform" xml:space="preserve">
+    <value>Тип {0} не поддерживается этой платформой.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
+    <value>Инвариантный режим глобализации не поддерживается.</value>
+  </data>
+  <data name="SQL_KerberosTicketMissingError" xml:space="preserve">
+    <value>Невозможно выполнить проверку подлинности с помощью Kerberos. Убедитесь, что Kerberos инициализирован в клиенте с помощью "kinit", а имя субъекта-службы зарегистрировано в SQL Server для разрешения проверки подлинности Kerberos.</value>
+  </data>
+  <data name="SQL_NetworkLibraryNotSupported" xml:space="preserve">
+    <value>Ключевое слово "Библиотека сети" не поддерживается этой платформой. Вместо него используйте для параметра "Источник данных" префикс с требуемым протоколом ("tcp:" для TCP-подключения или "np:" для подключения к именованному каналу).</value>
+  </data>
+  <data name="SQL_SocketDidNotThrow" xml:space="preserve">
+    <value>Сокет не вызвал ожидаемый "{0}" с кодом ошибки "{1}".</value>
+  </data>
+  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
+    <value>Не поддерживается в .NET Standard 2.0.</value>
+  </data>
+  <data name="SQL_UnsupportedFeature" xml:space="preserve">
+    <value>Сервер пытается использовать функцию, которая не поддерживается этой платформой.</value>
+  </data>
+  <data name="SQL_UnsupportedKeyword" xml:space="preserve">
+    <value>Ключевое слово "{0}" не поддерживается этой платформой.</value>
+  </data>
+  <data name="SQL_UnsupportedSysTxVersion" xml:space="preserve">
+    <value>Загруженная библиотека System.Transactions.dll не поддерживает глобальные транзакции.</value>
+  </data>
+  <data name="SQL_UnsupportedToken" xml:space="preserve">
+    <value>Получен неподдерживаемый токен "{0}" при чтении данных с сервера.</value>
+  </data>
+  <data name="SSPIInvalidHandleType" xml:space="preserve">
+    <value>Тип дескриптора "{0}" не поддерживается.</value>
+  </data>
+  <data name="SqlFileStream_NotSupported" xml:space="preserve">
+    <value>SqlFileStream не поддерживается этой платформой.</value>
+  </data>
+  <data name="LocalDBNotSupported" xml:space="preserve">
+    <value>LocalDB не поддерживается этой платформой.</value>
+  </data>
+  <data name="net_context_buffer_too_small" xml:space="preserve">
+    <value>Недостаточно места в буфере. Требуется: {0}, фактическое значение: {1}.</value>
+  </data>
+  <data name="net_gssapi_operation_failed" xml:space="preserve">
+    <value>Сбой операции GSSAPI. Состояние: {0} (дополнительное состояние: {1}).</value>
+  </data>
+  <data name="net_gssapi_operation_failed_detailed" xml:space="preserve">
+    <value>Операция GSSAPI завершилось ошибкой — {0} ({1}).</value>
+  </data>
+  <data name="net_nego_channel_binding_not_supported" xml:space="preserve">
+    <value>Привязка канала не поддерживается в операционных системах, отличных от Windows.</value>
+  </data>
+  <data name="net_nego_not_supported_empty_target_with_defaultcreds" xml:space="preserve">
+    <value>Если переданы учетные данные по умолчанию, имя целевого объекта не должно быть пустым.</value>
+  </data>
+  <data name="net_nego_protection_level_not_supported" xml:space="preserve">
+    <value>Запрошенный уровень защиты не поддерживается при установленной в настоящее время реализации GSSAPI.</value>
+  </data>
+  <data name="net_nego_server_not_supported" xml:space="preserve">
+    <value>Реализация сервера не поддерживается.</value>
+  </data>
+  <data name="net_ntlm_not_possible_default_cred" xml:space="preserve">
+    <value>Невозможно выполнить проверку подлинности NTLM с учетными данными по умолчанию на этой платформе.</value>
+  </data>
+  <data name="SqlParameter_SourceColumnNullMapping" xml:space="preserve">
+    <value>При использовании в DataAdapter.Update значение параметра изменяется с DBNull.Value на (Int32)1 или (Int32)0, если определено.</value>
+  </data>
+  <data name="SQL_RemoteCertificateChainErrors" xml:space="preserve">
+    <value>Цепочка сертификатов не прошла проверку. Ошибки: "{0}".</value>
+  </data>
+  <data name="SQL_RemoteCertificateNameMismatch" xml:space="preserve">
+    <value>Несоответствие имени сертификата. Указанное имя "DataSource" или "HostNameInCertificate" не соответствует имени в сертификате.</value>
+  </data>
+  <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
+    <value>Сертификат недоступен при проверке сертификата.</value>
+  </data>
 </root>

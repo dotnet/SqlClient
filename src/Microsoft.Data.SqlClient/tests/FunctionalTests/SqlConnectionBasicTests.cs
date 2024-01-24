@@ -5,8 +5,10 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,8 +27,7 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
-        [ActiveIssue(4830, TestPlatforms.AnyUnix)]
+        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void IntegratedAuthConnectionTest()
         {
@@ -37,7 +38,26 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        /// <summary>
+        /// Runs a test where TDS Server doesn't send encryption info during pre-login response.
+        /// The driver is expected to fail when that happens, and terminate the connection during pre-login phase 
+        /// when client enables encryption using Encrypt=true or uses default encryption setting.
+        /// </summary>
+        [Fact]
+        public async Task PreLoginEncryptionExcludedTest()
+        {
+            using TestTdsServer server = TestTdsServer.StartTestServer(false, false, 5, excludeEncryption: true);
+            SqlConnectionStringBuilder builder = new(server.ConnectionString)
+            {
+                IntegratedSecurity = true
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            Exception ex = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
+            Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -57,7 +77,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Open, connection.State);
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -80,11 +100,11 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (Exception e)
             {
-                Assert.False(true, e.Message);
+                Assert.Fail(e.Message);
             }
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -106,7 +126,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -240,6 +260,29 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
+        [Theory]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryIntegrated)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryMSI)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryDefault)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
+        public void ConnectionTestInvalidCredentialAndAuthentication(SqlAuthenticationMethod authentication)
+        {
+            var connectionString = $"Authentication={authentication}";
+
+            using var testPassword = new SecureString();
+            testPassword.MakeReadOnly();
+            var credential = new SqlCredential(string.Empty, testPassword);
+
+            Assert.Throws<ArgumentException>(() => new SqlConnection(connectionString, credential));
+
+            // Attempt to set the credential after creation
+            using var connection = new SqlConnection(connectionString);
+            Assert.Throws<InvalidOperationException>(() => connection.Credential = credential);
+        }
+
         [Fact]
         public void ConnectionTestValidCredentialCombination()
         {
@@ -269,28 +312,26 @@ namespace Microsoft.Data.SqlClient.Tests
             server.Dispose();
 
             // Measure the actual time it took to timeout and compare it with configured timeout
-            var start = DateTime.Now;
-            var end = start;
+            Stopwatch timer = new();
+            Exception ex = null;
 
             // Open a connection with the server disposed.
             try
             {
+                timer.Start();
                 connection.Open();
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                end = DateTime.Now;
+                timer.Stop();
+                ex = e;
             }
 
-            // Calculate actual duration of timeout
-            TimeSpan s = end - start;
-            // Did not time out?
-            if (s.TotalSeconds == 0)
-                Assert.True(s.TotalSeconds == 0);
-
-            // Is actual time out the same as configured timeout or within an additional 3 second threshold because of overhead?
-            if (s.TotalSeconds > 0)
-                Assert.True(s.TotalSeconds <= timeout + 3);
+            Assert.False(timer.IsRunning, "Timer must be stopped.");
+            Assert.NotNull(ex);
+            Assert.True(timer.Elapsed.TotalSeconds <= timeout + 3,
+                $"The actual timeout {timer.Elapsed.TotalSeconds} is expected to be less than {timeout} plus 3 seconds additional threshold." +
+                $"{Environment.NewLine}{ex}");
         }
 
         [Theory]
@@ -310,28 +351,28 @@ namespace Microsoft.Data.SqlClient.Tests
             server.Dispose();
 
             // Measure the actual time it took to timeout and compare it with configured timeout
-            var start = DateTime.Now;
-            var end = start;
+            Stopwatch timer = new();
+            Exception ex = null;
 
             // Open a connection with the server disposed.
             try
             {
-               await connection.OpenAsync();
+                //an asyn call with a timeout token to cancel the operation after the specific time
+                using CancellationTokenSource cts = new CancellationTokenSource(timeout * 1000);
+                timer.Start();
+                await connection.OpenAsync(cts.Token).ConfigureAwait(false);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                end = DateTime.Now;
+                timer.Stop();
+                ex = e;
             }
 
-            // Calculate actual duration of timeout
-            TimeSpan s = end - start;
-            // Did not time out?
-            if (s.TotalSeconds == 0)
-                Assert.True(s.TotalSeconds == 0);
-
-            // Is actual time out the same as configured timeout or within an additional 3 second threshold because of overhead?
-            if (s.TotalSeconds > 0)
-                Assert.True(s.TotalSeconds <= timeout + 3);
+            Assert.False(timer.IsRunning, "Timer must be stopped.");
+            Assert.NotNull(ex);
+            Assert.True(timer.Elapsed.TotalSeconds <= timeout + 3,
+                $"The actual timeout {timer.Elapsed.TotalSeconds} is expected to be less than {timeout} plus 3 seconds additional threshold." +
+                $"{Environment.NewLine}{ex}");
         }
 
         [Fact]

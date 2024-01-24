@@ -9,6 +9,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -130,7 +131,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Create a SNI connection handle
         /// </summary>
         /// <param name="fullServerName">Full server name from connection string</param>
-        /// <param name="timerExpire">Timer expiration</param>
+        /// <param name="timeout">Timer expiration</param>
         /// <param name="instanceName">Instance name</param>
         /// <param name="spnBuffer">SPN</param>
         /// <param name="serverSPN">pre-defined SPN</param>
@@ -147,7 +148,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI handle</returns>
         internal static SNIHandle CreateConnectionHandle(
             string fullServerName,
-            long timerExpire,
+            TimeoutTimer timeout,
             out byte[] instanceName,
             ref byte[][] spnBuffer,
             string serverSPN,
@@ -186,11 +187,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.Admin:
                 case DataSource.Protocol.None: // default to using tcp if no protocol is provided
                 case DataSource.Protocol.TCP:
-                    sniHandle = CreateTcpHandle(details, timerExpire, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
+                    sniHandle = CreateTcpHandle(details, timeout, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
                         tlsFirst, hostNameInCertificate, serverCertificateFilename);
-                    break;
+                     break;
                 case DataSource.Protocol.NP:
-                    sniHandle = CreateNpHandle(details, timerExpire, parallel, tlsFirst);
+                    sniHandle = CreateNpHandle(details, timeout, parallel, tlsFirst);
                     break;
                 default:
                     Debug.Fail($"Unexpected connection protocol: {details._connectionProtocol}");
@@ -229,7 +230,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             else if (!string.IsNullOrWhiteSpace(dataSource.InstanceName))
             {
-                postfix = dataSource.InstanceName;
+                postfix = dataSource._connectionProtocol == DataSource.Protocol.TCP ? dataSource.ResolvedPort.ToString() : dataSource.InstanceName;
             }
 
             SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, postfix {3}", dataSource?.ServerName, dataSource?.InstanceName, dataSource?.Port, postfix);
@@ -279,7 +280,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Creates an SNITCPHandle object
         /// </summary>
         /// <param name="details">Data source</param>
-        /// <param name="timerExpire">Timer expiration</param>
+        /// <param name="timeout">Timer expiration</param>
         /// <param name="parallel">Should MultiSubnetFailover be used</param>
         /// <param name="ipPreference">IP address preference</param>
         /// <param name="cachedFQDN">Key for DNS Cache</param>
@@ -290,7 +291,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNITCPHandle</returns>
         private static SNITCPHandle CreateTcpHandle(
             DataSource details,
-            long timerExpire,
+            TimeoutTimer timeout,
             bool parallel,
             SqlConnectionIPAddressPreference ipPreference,
             string cachedFQDN,
@@ -316,9 +317,9 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 try
                 {
-                    port = isAdminConnection ?
-                            SSRP.GetDacPortByInstanceName(hostName, details.InstanceName, timerExpire, parallel, ipPreference) :
-                            SSRP.GetPortByInstanceName(hostName, details.InstanceName, timerExpire, parallel, ipPreference);
+                    details.ResolvedPort = port = isAdminConnection ?
+                            SSRP.GetDacPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference) :
+                            SSRP.GetPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference);
                 }
                 catch (SocketException se)
                 {
@@ -335,7 +336,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 port = isAdminConnection ? DefaultSqlServerDacPort : DefaultSqlServerPort;
             }
 
-            return new SNITCPHandle(hostName, port, timerExpire, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
+            return new SNITCPHandle(hostName, port, timeout, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
                 tlsFirst, hostNameInCertificate, serverCertificateFilename);
         }
 
@@ -343,11 +344,11 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Creates an SNINpHandle object
         /// </summary>
         /// <param name="details">Data source</param>
-        /// <param name="timerExpire">Timer expiration</param>
+        /// <param name="timeout">Timer expiration</param>
         /// <param name="parallel">Should MultiSubnetFailover be used. Only returns an error for named pipes.</param>
         /// <param name="tlsFirst"></param>
         /// <returns>SNINpHandle</returns>
-        private static SNINpHandle CreateNpHandle(DataSource details, long timerExpire, bool parallel, bool tlsFirst)
+        private static SNINpHandle CreateNpHandle(DataSource details, TimeoutTimer timeout, bool parallel, bool tlsFirst)
         {
             if (parallel)
             {
@@ -355,7 +356,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
-            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire, tlsFirst);
+            return new SNINpHandle(details.PipeHostName, details.PipeName, timeout, tlsFirst);
         }
 
         /// <summary>
@@ -390,7 +391,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 Debug.Assert(!string.IsNullOrWhiteSpace(localDBInstance), "Local DB Instance name cannot be empty.");
                 localDBConnectionString = LocalDB.GetLocalDBConnectionString(localDBInstance);
 
-                if (fullServerName == null)
+                if (fullServerName == null || string.IsNullOrEmpty(localDBConnectionString))
                 {
                     // The Last error is set in LocalDB.GetLocalDBConnectionString. We don't need to set Last here.
                     error = true;
@@ -417,6 +418,8 @@ namespace Microsoft.Data.SqlClient.SNI
         private const string LocalDbHost_NP = @"np:\\.\pipe\LOCALDB#";
         private const string NamedPipeInstanceNameHeader = "mssql$";
         private const string DefaultPipeName = "sql\\query";
+        private const string InstancePrefix = "MSSQL$";
+        private const string PathSeparator = "\\";
 
         internal enum Protocol { TCP, NP, None, Admin };
 
@@ -432,6 +435,11 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Provides the port on which the TCP connection should be made if one was specified in Data Source
         /// </summary>
         internal int Port { get; private set; } = -1;
+
+        /// <summary>
+        /// The port resolved by SSRP when InstanceName is specified
+        /// </summary>
+        internal int ResolvedPort { get; set; } = -1;
 
         /// <summary>
         /// Provides the inferred Instance Name from Server Data Source
@@ -520,7 +528,18 @@ namespace Microsoft.Data.SqlClient.SNI
             ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
             error = false;
             // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
-            if (input.StartsWith(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
+            int index = input.IndexOf(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase);
+            if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
+            {
+                instanceName = input.Trim().ToString();
+            }
+            else if (index > 0)
+            {
+                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIProxy), EventType.ERR, "Incompatible use of prefix with LocalDb: '{0}'", dataSource);
+                error = true;
+            }
+            else if (index == 0)
             {
                 // When netcoreapp support for netcoreapp2.1 is dropped these slice calls could be converted to System.Range\System.Index
                 // Such ad input = input[1..];
@@ -538,10 +557,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
                 }
-            }
-            else if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
-            {
-                instanceName = input.Trim().ToString();
             }
 
             return instanceName;
@@ -675,12 +690,35 @@ namespace Microsoft.Data.SqlClient.SNI
             // If we have a datasource beginning with a pipe or we have already determined that the protocol is Named Pipe
             if (_dataSourceAfterTrimmingProtocol.StartsWith(PipeBeginning, StringComparison.Ordinal) || _connectionProtocol == Protocol.NP)
             {
-                // If the data source is "np:servername"
+                // If the data source starts with "np:servername"
                 if (!_dataSourceAfterTrimmingProtocol.Contains(PipeBeginning))
                 {
-                    PipeHostName = ServerName = _dataSourceAfterTrimmingProtocol;
+                    // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance, 
+                    // separate servername and instance and prepend instance with MSSQL$ and append default pipe path 
+                    // https://learn.microsoft.com/en-us/sql/tools/configuration-manager/named-pipes-properties?view=sql-server-ver16
+                    if (_dataSourceAfterTrimmingProtocol.Contains(PathSeparator) && _connectionProtocol == Protocol.NP)
+                    {
+                        string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter);
+                        if (tokensByBackSlash.Length == 2)
+                        {
+                            // NamedPipeClientStream object will create the network path using PipeHostName and PipeName
+                            // and can be seen in its _normalizedPipePath variable in the format \\servername\pipe\MSSQL$<instancename>\sql\query
+                            PipeHostName = ServerName = tokensByBackSlash[0];
+                            PipeName = $"{InstancePrefix}{tokensByBackSlash[1]}{PathSeparator}{DefaultPipeName}";
+                        }
+                        else
+                        {
+                            ReportSNIError(SNIProviders.NP_PROV);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        PipeHostName = ServerName = _dataSourceAfterTrimmingProtocol;
+                        PipeName = SNINpHandle.DefaultPipePath;
+                    }
+
                     InferLocalServerName();
-                    PipeName = SNINpHandle.DefaultPipePath;
                     return true;
                 }
 

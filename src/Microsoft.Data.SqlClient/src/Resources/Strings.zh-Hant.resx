@@ -4644,4 +4644,100 @@
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>如果已在連接字串中指定 'Authentication=Active Directory Default'，就不能設定 AccessTokenCallback 屬性。</value>
   </data>
+  <data name="event_OperationReturnedSomething" xml:space="preserve">
+    <value>{0} 已傳回 {1}。</value>
+  </data>
+  <data name="net_auth_message_not_encrypted" xml:space="preserve">
+    <value>通訊協定錯誤: 收到的訊息包含有效的簽章，但是未如生效的保護等級所要求加密。</value>
+  </data>
+  <data name="net_log_operation_failed_with_error" xml:space="preserve">
+    <value>{0} 失敗，發生錯誤: {1}。</value>
+  </data>
+  <data name="net_MethodNotImplementedException" xml:space="preserve">
+    <value>此方法尚未由此類別實作。</value>
+  </data>
+  <data name="net_securitypackagesupport" xml:space="preserve">
+    <value>不支援要求的安全性套件。</value>
+  </data>
+  <data name="SNI_IncorrectPhysicalConnectionType" xml:space="preserve">
+    <value>不正確的 physicalConnection 類型。</value>
+  </data>
+  <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
+    <value>嘗試設定 AppCoNtext 切換 '{0}'={1} 時發生例外。</value>
+  </data>
+  <data name="SQL_DbTypeNotSupportedOnThisPlatform" xml:space="preserve">
+    <value>此平台上不支援類型 {0}。</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
+    <value>不支援全域固定模式。</value>
+  </data>
+  <data name="SQL_KerberosTicketMissingError" xml:space="preserve">
+    <value>無法使用 Kerberos 進行驗證。請確保已在用戶端上使用 'kinit' 初始化 Kerberos，並且已登錄 SQL Server 的服務主體名稱，以允許 Kerberos 驗證。</value>
+  </data>
+  <data name="SQL_NetworkLibraryNotSupported" xml:space="preserve">
+    <value>此平台上不支援關鍵字 'Network Library'，請改為為 'Data Source' 加上所需通訊協定的首碼 (TCP 連線為 'tcp:' 或具名管道連線為 'np:')。</value>
+  </data>
+  <data name="SQL_SocketDidNotThrow" xml:space="preserve">
+    <value>通訊端未擲出預期的 '{0}'，錯誤碼為 '{1}'。</value>
+  </data>
+  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
+    <value>.NET Standard 2.0 中不支援。</value>
+  </data>
+  <data name="SQL_UnsupportedFeature" xml:space="preserve">
+    <value>伺服器正嘗試使用此平台上不支援的功能。</value>
+  </data>
+  <data name="SQL_UnsupportedKeyword" xml:space="preserve">
+    <value>此平台上不支援關鍵字 '{0}'。</value>
+  </data>
+  <data name="SQL_UnsupportedSysTxVersion" xml:space="preserve">
+    <value>目前載入的 System.Transactions.dll 不支援全域交易。</value>
+  </data>
+  <data name="SQL_UnsupportedToken" xml:space="preserve">
+    <value>從伺服器讀取資料時收到不支援的權杖 '{0}'。</value>
+  </data>
+  <data name="SSPIInvalidHandleType" xml:space="preserve">
+    <value>'{0}' 不是支援的控制代碼類型。</value>
+  </data>
+  <data name="SqlFileStream_NotSupported" xml:space="preserve">
+    <value>此平台上不支援 SqlFileStream。</value>
+  </data>
+  <data name="LocalDBNotSupported" xml:space="preserve">
+    <value>此平台上不支援 LocalDB。</value>
+  </data>
+  <data name="net_context_buffer_too_small" xml:space="preserve">
+    <value>緩衝區空間不足。需要: {0} 實際: {1}。</value>
+  </data>
+  <data name="net_gssapi_operation_failed" xml:space="preserve">
+    <value>GSSAPI 作業失敗，出現狀態: {0} (次要狀態: {1})。</value>
+  </data>
+  <data name="net_gssapi_operation_failed_detailed" xml:space="preserve">
+    <value>GSSAPI 作業失敗，發生錯誤 - {0} ({1})。</value>
+  </data>
+  <data name="net_nego_channel_binding_not_supported" xml:space="preserve">
+    <value>不支援 Windows 以外作業系統上的通道繫結。</value>
+  </data>
+  <data name="net_nego_not_supported_empty_target_with_defaultcreds" xml:space="preserve">
+    <value>如果傳遞預設認證，則目標名稱應該不是空白。</value>
+  </data>
+  <data name="net_nego_protection_level_not_supported" xml:space="preserve">
+    <value>使用目前安裝的 GSSAPI 實作不支援要求的保護層級。</value>
+  </data>
+  <data name="net_nego_server_not_supported" xml:space="preserve">
+    <value>不支援伺服器實作。</value>
+  </data>
+  <data name="net_ntlm_not_possible_default_cred" xml:space="preserve">
+    <value>此平台上的預設認證無法使用 NTLM 驗證。</value>
+  </data>
+  <data name="SqlParameter_SourceColumnNullMapping" xml:space="preserve">
+    <value>由 DataAdapter.Update 使用時，參數值會從 DBNull.Value 變更為 (Int32)1 或 (Int32)0 (如果非 Null)。</value>
+  </data>
+  <data name="SQL_RemoteCertificateChainErrors" xml:space="preserve">
+    <value>憑證未通過鏈結驗證。錯誤: '{0}'。</value>
+  </data>
+  <data name="SQL_RemoteCertificateNameMismatch" xml:space="preserve">
+    <value>憑證名稱不相符。提供的 'DataSource' 或 'HostNameInCertificate' 與憑證中的名稱不相符。</value>
+  </data>
+  <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
+    <value>驗證在進行憑證驗證時無法使用。</value>
+  </data>
 </root>

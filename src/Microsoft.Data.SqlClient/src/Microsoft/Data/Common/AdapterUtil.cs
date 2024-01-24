@@ -22,6 +22,7 @@ using Microsoft.Data.SqlClient;
 using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
+using System.Security.Authentication;
 
 #if NETFRAMEWORK
 using Microsoft.Win32;
@@ -124,6 +125,31 @@ namespace Microsoft.Data.Common
             catch (Exception caught)
             {
                 return caught;
+            }
+        }
+
+        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, int dueTime, int period)
+        {
+            // Don't capture the current ExecutionContext and its AsyncLocals onto 
+            // a global timer causing them to live forever
+            bool restoreFlow = false;
+            try
+            {
+                if (!ExecutionContext.IsFlowSuppressed())
+                {
+                    ExecutionContext.SuppressFlow();
+                    restoreFlow = true;
+                }
+
+                return new Timer(callback, state, dueTime, period);
+            }
+            finally
+            {
+                // Restore the current ExecutionContext
+                if (restoreFlow)
+                {
+                    ExecutionContext.RestoreFlow();
+                }
             }
         }
 
@@ -326,9 +352,16 @@ namespace Microsoft.Data.Common
             TraceExceptionAsReturnValue(e);
             return e;
         }
-#endregion
 
-#region Helper Functions
+        internal static AuthenticationException SSLCertificateAuthenticationException(string message)
+        {
+            AuthenticationException e = new(message);
+            TraceExceptionAsReturnValue(e);
+            return e;
+        }
+        #endregion
+
+        #region Helper Functions
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, string value, string method)
             => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_NotSupportedEnumerationValue, type.Name, value, method), type.Name);
 
@@ -440,7 +473,7 @@ namespace Microsoft.Data.Common
                                         connectionOptions.DataSource, msalException.Message,
                                         ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
             }
-            return SqlException.CreateException(sqlErs, "", sender);
+            return SqlException.CreateException(sqlErs, "", sender, innerException: null, batchCommand: null);
         }
 
 #endregion
@@ -1508,28 +1541,6 @@ namespace Microsoft.Data.Common
 #endregion
 #else
 #region netcore project only
-        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, int dueTime, int period)
-        {
-            // Don't capture the current ExecutionContext and its AsyncLocals onto 
-            // a global timer causing them to live forever
-            bool restoreFlow = false;
-            try
-            {
-                if (!ExecutionContext.IsFlowSuppressed())
-                {
-                    ExecutionContext.SuppressFlow();
-                    restoreFlow = true;
-                }
-
-                return new Timer(callback, state, dueTime, period);
-            }
-            finally
-            {
-                // Restore the current ExecutionContext
-                if (restoreFlow)
-                    ExecutionContext.RestoreFlow();
-            }
-        }
 
         //
         // COM+ exceptions

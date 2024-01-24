@@ -49,6 +49,16 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
+            SqlCommand engineEditionCommand = connection.CreateCommand();
+            engineEditionCommand.CommandText = "SELECT SERVERPROPERTY('EngineEdition');";
+            var engineEdition = (int)engineEditionCommand.ExecuteScalar()!;
+
+            if (engineEdition == 9)
+            {
+                // Azure SQL Edge throws an exception when querying sys.assemblies
+                return;
+            }
+
             // Execute the SELECT statement
             SqlCommand command = connection.CreateCommand();
             command.CommandText = sqlCommand;

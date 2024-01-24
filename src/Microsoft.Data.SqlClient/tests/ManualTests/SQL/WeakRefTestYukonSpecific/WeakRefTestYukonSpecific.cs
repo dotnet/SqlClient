@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const int CONCURRENT_COMMANDS = 5;
 
         // TODO Synapse: Remove dependency on Northwind database
-        [ActiveIssue(6643, TestPlatforms.AnyUnix)]
+        [ActiveIssue("6643", TestPlatforms.AnyUnix)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestReaderMars()
         {
@@ -133,6 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             weak = OpenNullifyReader(cmd[i]);
                             GC.Collect();
                             GC.WaitForPendingFinalizers();
+                            GC.Collect();
                             Assert.False(weak.IsAlive, "Transaction is still alive on TestReaderMars: ReaderGC");
                             break;
 
@@ -146,6 +147,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             weak = OpenNullifyReader(cmd[i]);
                             GC.Collect();
                             GC.WaitForPendingFinalizers();
+                            GC.Collect();
                             Assert.False(weak.IsAlive, "Transaction is still alive on TestReaderMars: ReaderGCConnectionClose");
                             con.Close();
                             con.Open();
@@ -221,6 +223,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         weak = OpenNullifyTransaction(con);
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
+                        GC.Collect();
                         Assert.False(weak.IsAlive, "Transaction is still alive on TestTransactionSingle: TransactionGC");
                         break;
 
@@ -234,6 +237,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         weak = OpenNullifyTransaction(con);
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
+                        GC.Collect();
                         Assert.False(weak.IsAlive, "Transaction is still alive on TestTransactionSingle: TransactionGCConnectionClose");
                         con.Close();
                         con.Open();

@@ -4644,4 +4644,100 @@
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>接続文字列に 'Authentication=Active Directory Default' が指定されている場合、AccessTokenCallback プロパティを設定できません。</value>
   </data>
+  <data name="event_OperationReturnedSomething" xml:space="preserve">
+    <value>{0} が {1} を返しました。</value>
+  </data>
+  <data name="net_auth_message_not_encrypted" xml:space="preserve">
+    <value>プロトコル エラー: 受信したメッセージは有効な署名を含んでいますが、有効な保護レベルで必要な暗号化がされていません。</value>
+  </data>
+  <data name="net_log_operation_failed_with_error" xml:space="preserve">
+    <value>エラー {1} により {0} に失敗しました。</value>
+  </data>
+  <data name="net_MethodNotImplementedException" xml:space="preserve">
+    <value>このメソッドは、このクラスで実装されていません。</value>
+  </data>
+  <data name="net_securitypackagesupport" xml:space="preserve">
+    <value>要求されたセキュリティ パッケージは、サポートされていません。</value>
+  </data>
+  <data name="SNI_IncorrectPhysicalConnectionType" xml:space="preserve">
+    <value>physicalConnection の種類が正しくありません。</value>
+  </data>
+  <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
+    <value>AppContext スイッチ '{0}'={1} の設定中に例外が発生しました。</value>
+  </data>
+  <data name="SQL_DbTypeNotSupportedOnThisPlatform" xml:space="preserve">
+    <value>型 {0} はこのプラットフォームでサポートされていません。</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
+    <value>グローバリゼーション インバリアント モードはサポートされていません。</value>
+  </data>
+  <data name="SQL_KerberosTicketMissingError" xml:space="preserve">
+    <value>Kerberos を使用して認証できません。クライアントで 'kinit' を使用して Kerberos が初期化されており、Kerberos 認証を許可するためのサービス プリンシパル名が SQL Server に登録されていることを確認してください。</value>
+  </data>
+  <data name="SQL_NetworkLibraryNotSupported" xml:space="preserve">
+    <value>キーワード 'Network Library' はこのプラットフォームでサポートされていません。代わりに 'Data Source' の前に必要なプロトコルを付けてください (TCP 接続の場合は 'tcp:'、名前付きパイプ接続の場合は 'np:')。</value>
+  </data>
+  <data name="SQL_SocketDidNotThrow" xml:space="preserve">
+    <value>ソケットは予期された '{0}' をスローしませんでした。エラー コード '{1}'。</value>
+  </data>
+  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
+    <value>.Net Standard 2.0 ではサポートされていません。</value>
+  </data>
+  <data name="SQL_UnsupportedFeature" xml:space="preserve">
+    <value>サーバーは、このプラットフォームでサポートされていない機能を使用しようとしています。</value>
+  </data>
+  <data name="SQL_UnsupportedKeyword" xml:space="preserve">
+    <value>キーワード '{0}' はこのプラットフォームでサポートされていません。</value>
+  </data>
+  <data name="SQL_UnsupportedSysTxVersion" xml:space="preserve">
+    <value>現在読み込まれている System.Transactions.dll では、グローバル トランザクションはサポートされていません。</value>
+  </data>
+  <data name="SQL_UnsupportedToken" xml:space="preserve">
+    <value>サーバーからデータを読み取り中に、サポートされていないトークン '{0}' を受信しました。</value>
+  </data>
+  <data name="SSPIInvalidHandleType" xml:space="preserve">
+    <value>'{0}' はサポートされているハンドル型ではありません。</value>
+  </data>
+  <data name="SqlFileStream_NotSupported" xml:space="preserve">
+    <value>SqlFileStream はこのプラットフォームでサポートされていません。</value>
+  </data>
+  <data name="LocalDBNotSupported" xml:space="preserve">
+    <value>LocalDB はこのプラットフォームでサポートされていません。</value>
+  </data>
+  <data name="net_context_buffer_too_small" xml:space="preserve">
+    <value>バッファー領域が不足しています。必須: {0}、実際: {1}。</value>
+  </data>
+  <data name="net_gssapi_operation_failed" xml:space="preserve">
+    <value>GSSAPI 操作が失敗しました。状態: {0} (マイナー状態: {1})。</value>
+  </data>
+  <data name="net_gssapi_operation_failed_detailed" xml:space="preserve">
+    <value>エラー - {0} ({1}) により、GSSAPI 操作が失敗しました。</value>
+  </data>
+  <data name="net_nego_channel_binding_not_supported" xml:space="preserve">
+    <value>Windows 以外のオペレーティング システムでのチャネル バインドはサポートされていません。</value>
+  </data>
+  <data name="net_nego_not_supported_empty_target_with_defaultcreds" xml:space="preserve">
+    <value>既定の資格情報が渡される場合、ターゲット名を空にすることはできません。</value>
+  </data>
+  <data name="net_nego_protection_level_not_supported" xml:space="preserve">
+    <value>要求された保護レベルは、現在インストールされている GSSAPI 実装ではサポートされていません。</value>
+  </data>
+  <data name="net_nego_server_not_supported" xml:space="preserve">
+    <value>サーバーの実装はサポートされていません。</value>
+  </data>
+  <data name="net_ntlm_not_possible_default_cred" xml:space="preserve">
+    <value>このプラットフォームでは、既定の資格情報では NTLM 認証を実行できません。</value>
+  </data>
+  <data name="SqlParameter_SourceColumnNullMapping" xml:space="preserve">
+    <value>DataAdapter.Update が使用する場合、パラメーター値は DBNull.Value から (Int32)1 または (Int32)0 (非 Null の場合) に変更されます。</value>
+  </data>
+  <data name="SQL_RemoteCertificateChainErrors" xml:space="preserve">
+    <value>証明書のチェーン検証に失敗しました。エラー: '{0}'。</value>
+  </data>
+  <data name="SQL_RemoteCertificateNameMismatch" xml:space="preserve">
+    <value>証明書名が一致しません。指定された 'DataSource' または 'HostNameInCertificate' が証明書内の名前と一致しません。</value>
+  </data>
+  <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
+    <value>証明書の検証中は証明書を使用できません。</value>
+  </data>
 </root>

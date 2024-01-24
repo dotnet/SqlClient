@@ -1,0 +1,651 @@
+<Type Name="DbBatch" FullName="System.Data.Common.DbBatch">
+  <TypeSignature Language="C#" Value="public abstract class DbBatch : IAsyncDisposable, IDisposable" />
+  <TypeSignature Language="ILAsm" Value=".class public auto ansi abstract beforefieldinit DbBatch extends System.Object implements class System.IAsyncDisposable, class System.IDisposable" />
+  <TypeSignature Language="DocId" Value="T:System.Data.Common.DbBatch" />
+  <TypeSignature Language="VB.NET" Value="Public MustInherit Class DbBatch&#xA;Implements IAsyncDisposable, IDisposable" />
+  <TypeSignature Language="F#" Value="type DbBatch = class&#xA;    interface IDisposable&#xA;    interface IAsyncDisposable" />
+  <TypeSignature Language="C++ CLI" Value="public ref class DbBatch abstract : IAsyncDisposable, IDisposable" />
+  <Base>
+    <BaseTypeName>System.Object</BaseTypeName>
+  </Base>
+  <Interfaces>
+    <Interface>
+      <InterfaceName>System.IAsyncDisposable</InterfaceName>
+    </Interface>
+    <Interface>
+      <InterfaceName>System.IDisposable</InterfaceName>
+    </Interface>
+  </Interfaces>
+  <Attributes>
+    <Attribute FrameworkAlternate="net-8.0">
+      <AttributeName Language="C#">[System.Runtime.CompilerServices.Nullable(0)]</AttributeName>
+      <AttributeName Language="F#">[&lt;System.Runtime.CompilerServices.Nullable(0)&gt;]</AttributeName>
+    </Attribute>
+    <Attribute FrameworkAlternate="net-8.0">
+      <AttributeName Language="C#">[System.Runtime.CompilerServices.NullableContext(1)]</AttributeName>
+      <AttributeName Language="F#">[&lt;System.Runtime.CompilerServices.NullableContext(1)&gt;]</AttributeName>
+    </Attribute>
+  </Attributes>
+  <Docs>
+    <summary>Represents a batch of commands which can be executed against a data source in a single round trip. Provides a base class for database-specific classes that represent command batches.</summary>
+    <remarks>
+      <format type="text/markdown">
+        <![CDATA[  
+  
+## Remarks  
+
+The precise semantics of batch execution vary across ADO.NET providers, especially around error handling. When possible, it's recommended that an error in a command within the batch immediately terminate the batch, skip all subsequent commands, and roll back commands that already executed. However, this behavior may not be supported across databases; consult your ADO.NET provider's documentation.
+  
+ ]]>
+      </format>
+    </remarks>
+  </Docs>
+  <Members>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="protected DbBatch ();" />
+      <MemberSignature Language="VB.NET" Value="Protected Sub New ()" />
+      <MemberType>Constructor</MemberType>
+      <Parameters />
+      <Docs>
+        <summary>
+          Initializes a new instance of the <see cref="T:System.Data.Common.DbBatch" /> class.
+        </summary>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="BatchCommands">
+      <MemberSignature Language="C#" Value="public System.Data.Common.DbBatchCommandCollection BatchCommands { get; }" />
+      <MemberSignature Language="VB.NET" Value="Public ReadOnly Property BatchCommands As DbBatchCommandCollection" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbBatchCommandCollection</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>
+          Gets the collection of <see cref="T:System.Data.Common.DbBatchCommand" /> objects.
+        </summary>
+        <value>The commands contained within the batch.</value>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Cancel">
+      <MemberSignature Language="C#" Value="public abstract void Cancel ();" />
+      <MemberSignature Language="VB.NET" Value="Public MustOverride Sub Cancel ()" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>
+          Attempts to cancel the execution of a <see cref="T:System.Data.Common.DbBatch" />.
+        </summary>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+ If there is nothing to cancel, nothing happens. However, if there is a batch in process, and the attempt to cancel fails, no exception is generated.  
+  
+ ]]>
+          </format>
+        </remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Connection">
+      <MemberSignature Language="C#" Value="public System.Data.Common.DbConnection? Connection { get; set; }" />
+      <MemberSignature Language="VB.NET" Value="Public Property Connection As DbConnection" />
+      <MemberType>Property</MemberType>
+      <Attributes>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[System.Runtime.CompilerServices.Nullable(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;System.Runtime.CompilerServices.Nullable(2)&gt;]</AttributeName>
+        </Attribute>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[get: System.Runtime.CompilerServices.NullableContext(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;get: System.Runtime.CompilerServices.NullableContext(2)&gt;]</AttributeName>
+        </Attribute>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[set: System.Runtime.CompilerServices.NullableContext(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;set: System.Runtime.CompilerServices.NullableContext(2)&gt;]</AttributeName>
+        </Attribute>
+      </Attributes>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbConnection</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>
+          Gets or sets the <see cref="T:System.Data.Common.DbConnection" /> used by this <see cref="T:System.Data.Common.DbBatch" />.
+        </summary>
+        <value>The connection to the data source.</value>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="CreateBatchCommand">
+      <MemberSignature Language="C#" Value="public System.Data.Common.DbBatchCommand CreateBatchCommand ();" />
+      <MemberSignature Language="VB.NET" Value="Public Function CreateBatchCommand () As DbBatchCommand" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbBatchCommand</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>
+          Creates a new instance of a <see cref="T:System.Data.Common.DbBatchCommand" /> object.
+        </summary>
+        <returns>
+          A <see cref="T:System.Data.Common.DbBatchCommand" /> object.
+        </returns>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="CreateDbBatchCommand">
+      <MemberSignature Language="C#" Value="protected abstract System.Data.Common.DbBatchCommand CreateDbBatchCommand ();" />
+      <MemberSignature Language="VB.NET" Value="Protected MustOverride Function CreateDbBatchCommand () As DbBatchCommand" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbBatchCommand</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>
+          When overridden in a derived class, creates a new instance of a <see cref="T:System.Data.Common.DbBatchCommand" /> object.
+        </summary>
+        <returns>
+          A <see cref="T:System.Data.Common.DbBatchCommand" /> object.
+        </returns>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="DbBatchCommands">
+      <MemberSignature Language="C#" Value="protected abstract System.Data.Common.DbBatchCommandCollection DbBatchCommands { get; }" />
+      <MemberSignature Language="VB.NET" Value="Protected MustOverride ReadOnly Property DbBatchCommands As DbBatchCommandCollection" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbBatchCommandCollection</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>
+          When overridden in a derived class, gets the collection of <see cref="T:System.Data.Common.DbBatchCommand" /> objects.
+        </summary>
+        <value>The commands contained within the batch.</value>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="DbConnection">
+      <MemberSignature Language="C#" Value="protected abstract System.Data.Common.DbConnection? DbConnection { get; set; }" />
+      <MemberSignature Language="VB.NET" Value="Protected MustOverride Property DbConnection As DbConnection" />
+      <MemberType>Property</MemberType>
+      <Attributes>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[System.Runtime.CompilerServices.Nullable(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;System.Runtime.CompilerServices.Nullable(2)&gt;]</AttributeName>
+        </Attribute>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[get: System.Runtime.CompilerServices.NullableContext(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;get: System.Runtime.CompilerServices.NullableContext(2)&gt;]</AttributeName>
+        </Attribute>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[set: System.Runtime.CompilerServices.NullableContext(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;set: System.Runtime.CompilerServices.NullableContext(2)&gt;]</AttributeName>
+        </Attribute>
+      </Attributes>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbConnection</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>
+          When overridden in a derived class, gets or sets the <see cref="T:System.Data.Common.DbConnection" /> used by this <see cref="T:System.Data.Common.DbBatch" />.
+        </summary>
+        <value>The connection to the data source.</value>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="DbTransaction">
+      <MemberSignature Language="C#" Value="protected abstract System.Data.Common.DbTransaction? DbTransaction { get; set; }" />
+      <MemberSignature Language="VB.NET" Value="Protected MustOverride Property DbTransaction As DbTransaction" />
+      <MemberType>Property</MemberType>
+      <Attributes>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[System.Runtime.CompilerServices.Nullable(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;System.Runtime.CompilerServices.Nullable(2)&gt;]</AttributeName>
+        </Attribute>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[get: System.Runtime.CompilerServices.NullableContext(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;get: System.Runtime.CompilerServices.NullableContext(2)&gt;]</AttributeName>
+        </Attribute>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[set: System.Runtime.CompilerServices.NullableContext(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;set: System.Runtime.CompilerServices.NullableContext(2)&gt;]</AttributeName>
+        </Attribute>
+      </Attributes>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbTransaction</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>
+          When overridden in a derived class, gets or sets the <see cref="P:System.Data.Common.DbTransaction" /> within which this <see cref="T:System.Data.Common.DbBatch" /> object executes.
+        </summary>
+        <value>
+          The transaction within which a batch of a .NET data provider executes. The default value is a null reference (<see langword="Nothing" /> in Visual Basic).
+        </value>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Dispose">
+      <MemberSignature Language="C#" Value="public virtual void Dispose ();" />
+      <MemberSignature Language="VB.NET" Value="Public Overridable Sub Dispose ()" />
+      <MemberType>Method</MemberType>
+      <Implements>
+        <InterfaceMember>M:System.IDisposable.Dispose</InterfaceMember>
+      </Implements>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="DisposeAsync">
+      <MemberSignature Language="C#" Value="public virtual System.Threading.Tasks.ValueTask DisposeAsync ();" />
+      <MemberSignature Language="VB.NET" Value="Public Overridable Function DisposeAsync () As ValueTask" />
+      <MemberType>Method</MemberType>
+      <Implements>
+        <InterfaceMember>M:System.IAsyncDisposable.DisposeAsync</InterfaceMember>
+      </Implements>
+      <ReturnValue>
+        <ReturnType>System.Threading.Tasks.ValueTask</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>Asynchronously diposes the batch object.</summary>
+        <returns>
+          A <see cref="T:System.Threading.Tasks.ValueTask" /> representing the asynchronous operation.
+        </returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+ The default implementation of this asynchronous method delegates to its synchronous counterpart and returns a completed `ValueTask`, potentially blocking the calling thread.
+ 
+ Data providers that support [asynchronous programming](/dotnet/framework/data/adonet/asynchronous-programming) should override the default implementation using asynchronous I/O operations.
+
+ This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <xref:System.ArgumentException>, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <xref:System.Data.Common.DbBatch.Dispose>.
+
+]]>
+          </format>
+        </remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ExecuteDbDataReader">
+      <MemberSignature Language="C#" Value="protected abstract System.Data.Common.DbDataReader ExecuteDbDataReader (System.Data.CommandBehavior behavior);" />
+      <MemberSignature Language="VB.NET" Value="Protected MustOverride Function ExecuteDbDataReader (behavior As CommandBehavior) As DbDataReader" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbDataReader</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="behavior" Type="System.Data.CommandBehavior" />
+      </Parameters>
+      <Docs>
+        <param name="behavior">
+          An instance of <see cref="T:System.Data.CommandBehavior" />, specifying options for batch execution and data retrieval.
+        </param>
+        <summary>
+          When overridden in a derived class, executes the batch against its connection, returning a <see cref="T:System.Data.Common.DbDataReader" /> which can be used to access the results.
+        </summary>
+        <returns>
+          A <see cref="T:System.Data.Common.DbDataReader" /> object.
+        </returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+ When the batch returns multiple result sets from different commands, <xref:System.Data.Common.DbDataReader.NextResult> can be used to advance the reader to the next result set.
+  
+ ]]>
+          </format>
+        </remarks>
+        <exception cref="T:System.Data.Common.DbException">An error occurred while executing the batch.</exception>
+        <exception cref="T:System.ArgumentException">
+          The <see cref="T:System.Data.CommandBehavior" /> value is invalid.
+        </exception>
+      </Docs>
+    </Member>
+    <Member MemberName="ExecuteDbDataReaderAsync">
+      <MemberSignature Language="C#" Value="protected abstract System.Threading.Tasks.Task&lt;System.Data.Common.DbDataReader&gt; ExecuteDbDataReaderAsync (System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken);" />
+      <MemberSignature Language="VB.NET" Value="Protected MustOverride Function ExecuteDbDataReaderAsync (behavior As CommandBehavior, cancellationToken As CancellationToken) As Task(Of DbDataReader)" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Threading.Tasks.Task&lt;System.Data.Common.DbDataReader&gt;</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="behavior" Type="System.Data.CommandBehavior" />
+        <Parameter Name="cancellationToken" Type="System.Threading.CancellationToken" />
+      </Parameters>
+      <Docs>
+        <param name="behavior">One of the enumeration values that specifies options for batch execution and data retrieval.</param>
+        <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+        <summary>
+          Providers should implement this method to provide a non-default implementation for <see cref="Overload:System.Data.Common.DbCommand.ExecuteReader" /> overloads.
+
+          The default implementation invokes the synchronous <see cref="M:System.Data.Common.DbCommand.ExecuteReader" /> method and returns a completed task, blocking the calling thread. The default implementation will return a cancelled task if passed an already cancelled cancellation token. Exceptions thrown by ExecuteReader will be communicated via the returned Task Exception property.
+
+          This method accepts a cancellation token that can be used to request the operation to be cancelled early. Implementations may ignore this request.
+        </summary>
+        <returns>A task representing the asynchronous operation.</returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+ For more information about asynchronous programming, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).  
+  
+ This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <xref:System.ArgumentException>, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <xref:System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)>.
+
+]]>
+          </format>
+        </remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ExecuteNonQuery">
+      <MemberSignature Language="C#" Value="public abstract int ExecuteNonQuery ();" />
+      <MemberSignature Language="VB.NET" Value="Public MustOverride Function ExecuteNonQuery () As Integer" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>Executes the batch against its connection object, returning the total number of rows affected across all the batch commands.</summary>
+        <returns>The total number of rows affected across all the batch commands.</returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+ You can use <xref:System.Data.Common.DbBatch.ExecuteNonQuery%2A> to perform catalog operations (for example, querying the structure of a database or creating database objects such as tables), or to change the data in a database by executing UPDATE, INSERT, or DELETE statements.  
+  
+ Although <xref:System.Data.Common.DbBatch.ExecuteNonQuery%2A> does not return any rows, any output parameters or return values mapped to parameters are populated with data.  
+  
+ For UPDATE, INSERT, and DELETE statements, the return value is the total number of rows affected by the batch. If no UPDATE, INSERT, or DELETE statements are included in the batch, the return value is -1.  
+  
+ ]]>
+          </format>
+        </remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ExecuteNonQueryAsync">
+      <MemberSignature Language="C#" Value="public abstract System.Threading.Tasks.Task&lt;int&gt; ExecuteNonQueryAsync (System.Threading.CancellationToken cancellationToken = default);" />
+      <MemberSignature Language="VB.NET" Value="Public MustOverride Function ExecuteNonQueryAsync (Optional cancellationToken As CancellationToken = Nothing) As Task(Of Integer)" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Threading.Tasks.Task&lt;System.Int32&gt;</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="cancellationToken" Type="System.Threading.CancellationToken" />
+      </Parameters>
+      <Docs>
+        <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+        <summary>
+          This is the asynchronous version of <see cref="M:System.Data.Common.DbBatch.ExecuteNonQuery" />. Providers should override with an appropriate implementation. The cancellation token may optionally be ignored.
+
+          The default implementation invokes the synchronous <see cref="M:System.Data.Common.DbBatch.ExecuteNonQuery" /> method and returns a completed task, blocking the calling thread. The default implementation will return a cancelled task if passed an already cancelled cancellation token.  Exceptions thrown by <see cref="M:System.Data.Common.DbBatch.ExecuteNonQuery" /> will be communicated via the returned Task Exception property.
+
+          Do not invoke other methods and properties of the <see langword="DbCommand" /> object until the returned Task is complete.
+        </summary>
+        <returns>A task representing the asynchronous operation.</returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+ For more information about asynchronous programming, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).  
+  
+ This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <xref:System.ArgumentException>, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <xref:System.Data.Common.DbBatch.ExecuteNonQuery>.
+
+]]>
+          </format>
+        </remarks>
+        <exception cref="T:System.Data.Common.DbException">An error occurred while executing the batch.</exception>
+        <related type="Article" href="/dotnet/framework/data/adonet/ado-net-overview">ADO.NET Overview</related>
+      </Docs>
+    </Member>
+    <Member MemberName="ExecuteReader">
+      <MemberSignature Language="C#" Value="public System.Data.Common.DbDataReader ExecuteReader (System.Data.CommandBehavior behavior = System.Data.CommandBehavior.Default);" />
+      <MemberSignature Language="VB.NET" Value="Public Function ExecuteReader (Optional behavior As CommandBehavior = System.Data.CommandBehavior.Default) As DbDataReader" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbDataReader</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="behavior" Type="System.Data.CommandBehavior" />
+      </Parameters>
+      <Docs>
+        <param name="behavior">One of the enumeration values that specifies options for batch execution and data retrieval.</param>
+        <summary>
+          Executes the batch against its connection, returning a <see cref="T:System.Data.Common.DbDataReader" /> which can be used to access the results.
+        </summary>
+        <returns>
+          A <see cref="T:System.Data.Common.DbDataReader" /> object.
+        </returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+ When the batch returns multiple result sets from different commands, <xref:System.Data.Common.DbDataReader.NextResult> can be used to advance the reader to the next result set.
+  
+ ]]>
+          </format>
+        </remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="ExecuteReaderAsync">
+      <MemberSignature Language="C#" Value="public System.Threading.Tasks.Task&lt;System.Data.Common.DbDataReader&gt; ExecuteReaderAsync (System.Threading.CancellationToken cancellationToken = default);" />
+      <MemberSignature Language="VB.NET" Value="Public Function ExecuteReaderAsync (Optional cancellationToken As CancellationToken = Nothing) As Task(Of DbDataReader)" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Threading.Tasks.Task&lt;System.Data.Common.DbDataReader&gt;</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="cancellationToken" Type="System.Threading.CancellationToken" />
+      </Parameters>
+      <Docs>
+        <param name="cancellationToken">To be added.</param>
+        <summary>
+          An asynchronous version of <see cref="Overload:System.Data.Common.DbBatch.ExecuteReader" />, which executes the batch against its connection, returning a <see cref="T:System.Data.Common.DbDataReader" /> which can be used to access the results.
+        </summary>
+        <returns>A task representing the asynchronous operation.</returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+ Managed provider implementers must call <xref:System.Data.Common.DbBatch.ExecuteDbDataReaderAsync%2A> in <xref:System.Data.Common.DbBatch.ExecuteReaderAsync%2A>. For more information about asynchronous programming, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).  
+  
+ ]]>
+          </format>
+        </remarks>
+        <exception cref="T:System.Data.Common.DbException">An error occurred while executing the batch.</exception>
+        <exception cref="T:System.ArgumentException">
+          The <see cref="T:System.Data.CommandBehavior" /> value is invalid.
+        </exception>
+      </Docs>
+    </Member>
+    <Member MemberName="ExecuteReaderAsync">
+      <MemberSignature Language="C#" Value="public System.Threading.Tasks.Task&lt;System.Data.Common.DbDataReader&gt; ExecuteReaderAsync (System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken = default);" />
+      <MemberSignature Language="VB.NET" Value="Public Function ExecuteReaderAsync (behavior As CommandBehavior, Optional cancellationToken As CancellationToken = Nothing) As Task(Of DbDataReader)" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Threading.Tasks.Task&lt;System.Data.Common.DbDataReader&gt;</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="behavior" Type="System.Data.CommandBehavior" />
+        <Parameter Name="cancellationToken" Type="System.Threading.CancellationToken" />
+      </Parameters>
+      <Docs>
+        <param name="behavior">One of the enumeration values that specifies options for batch execution and data retrieval.</param>
+        <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+        <summary>
+          An asynchronous version of <see cref="Overload:System.Data.Common.DbBatch.ExecuteReader" />, which executes the batch against its connection, returning a <see cref="T:System.Data.Common.DbDataReader" /> which can be used to access the results.
+        </summary>
+        <returns>A task representing the asynchronous operation.</returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+ Managed provider implementers must call <xref:System.Data.Common.DbBatch.ExecuteDbDataReaderAsync%2A> in <xref:System.Data.Common.DbBatch.ExecuteReaderAsync%2A>. For more information about asynchronous programming, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).  
+  
+ This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <xref:System.ArgumentException>, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <xref:System.Data.Common.DbBatch.ExecuteReader(System.Data.CommandBehavior)>.
+
+]]>
+          </format>
+        </remarks>
+        <exception cref="T:System.Data.Common.DbException">An error occurred while executing the batch.</exception>
+        <exception cref="T:System.ArgumentException">
+          The <see cref="T:System.Data.CommandBehavior" /> value is invalid.
+        </exception>
+      </Docs>
+    </Member>
+    <Member MemberName="ExecuteScalar">
+      <MemberSignature Language="C#" Value="public abstract object? ExecuteScalar ();" />
+      <MemberSignature Language="VB.NET" Value="Public MustOverride Function ExecuteScalar () As Object" />
+      <MemberType>Method</MemberType>
+      <Attributes>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[System.Runtime.CompilerServices.NullableContext(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;System.Runtime.CompilerServices.NullableContext(2)&gt;]</AttributeName>
+        </Attribute>
+      </Attributes>
+      <ReturnValue>
+        <ReturnType>System.Object</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>Executes the batch and returns the first column of the first row in the first returned result set. All other columns, rows and resultsets are ignored.</summary>
+        <returns>The first column of the first row in the first result set.</returns>
+        <remarks>To be added.</remarks>
+        <exception cref="T:System.Data.Common.DbException">An error occurred while executing the batch.</exception>
+      </Docs>
+    </Member>
+    <Member MemberName="ExecuteScalarAsync">
+      <MemberSignature Language="C#" Value="public abstract System.Threading.Tasks.Task&lt;object?&gt; ExecuteScalarAsync (System.Threading.CancellationToken cancellationToken = default);" />
+      <MemberSignature Language="VB.NET" Value="Public MustOverride Function ExecuteScalarAsync (Optional cancellationToken As CancellationToken = Nothing) As Task(Of Object)" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Threading.Tasks.Task&lt;System.Object&gt;</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="cancellationToken" Type="System.Threading.CancellationToken" />
+      </Parameters>
+      <Docs>
+        <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+        <summary>
+          An asynchronous version of <see cref="M:System.Data.Common.DbBatch.ExecuteScalar" />, which executes the batch and returns the first column of the first row in the first returned result set. All other columns, rows and result sets are ignored.
+        </summary>
+        <returns>The first column of the first row in the first result set.</returns>
+        <remarks>
+          This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <see cref="M:System.Data.Common.DbBatch.ExecuteScalar" />.
+        </remarks>
+        <exception cref="T:System.Data.Common.DbException">An error occurred while executing the batch.</exception>
+      </Docs>
+    </Member>
+    <Member MemberName="Prepare">
+      <MemberSignature Language="C#" Value="public abstract void Prepare ();" />
+      <MemberSignature Language="VB.NET" Value="Public MustOverride Sub Prepare ()" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Void</ReturnType>
+      </ReturnValue>
+      <Parameters />
+      <Docs>
+        <summary>Creates a prepared (or compiled) version of the batch, or of each of its commands, on the data source.</summary>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="PrepareAsync">
+      <MemberSignature Language="C#" Value="public abstract System.Threading.Tasks.Task PrepareAsync (System.Threading.CancellationToken cancellationToken = default);" />
+      <MemberSignature Language="VB.NET" Value="Public MustOverride Function PrepareAsync (Optional cancellationToken As CancellationToken = Nothing) As Task" />
+      <MemberType>Method</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Threading.Tasks.Task</ReturnType>
+      </ReturnValue>
+      <Parameters>
+        <Parameter Name="cancellationToken" Type="System.Threading.CancellationToken" />
+      </Parameters>
+      <Docs>
+        <param name="cancellationToken">
+          An optional token to cancel the asynchronous operation. The default value is <see cref="P:System.Threading.CancellationToken.None" />.
+        </param>
+        <summary>Asynchronously creates a prepared (or compiled) version of the batch, or of each of its commands, on the data source.</summary>
+        <returns>
+          A <see cref="T:System.Threading.Tasks.Task" /> representing the asynchronous operation.
+        </returns>
+        <remarks>
+          This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <see cref="M:System.Data.Common.DbBatch.Prepare" />.
+        </remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Timeout">
+      <MemberSignature Language="C#" Value="public abstract int Timeout { get; set; }" />
+      <MemberSignature Language="VB.NET" Value="Public MustOverride Property Timeout As Integer" />
+      <MemberType>Property</MemberType>
+      <ReturnValue>
+        <ReturnType>System.Int32</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>Gets or sets the wait time (in seconds) before terminating the attempt to execute the batch and generating an error.</summary>
+        <value>The time in seconds to wait for the batch to execute.</value>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+ An <xref:System.ArgumentException> is generated if the assigned <xref:System.Data.Common.DbBatch.Timeout%2A> property value is less than 0.  
+  
+ Note to implementers: it's recommended that 0 mean no timeout.  
+  
+ ]]>
+          </format>
+        </remarks>
+      </Docs>
+    </Member>
+    <Member MemberName="Transaction">
+      <MemberSignature Language="C#" Value="public System.Data.Common.DbTransaction? Transaction { get; set; }" />
+      <MemberSignature Language="VB.NET" Value="Public Property Transaction As DbTransaction" />
+      <MemberType>Property</MemberType>
+      <Attributes>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[System.Runtime.CompilerServices.Nullable(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;System.Runtime.CompilerServices.Nullable(2)&gt;]</AttributeName>
+        </Attribute>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[get: System.Runtime.CompilerServices.NullableContext(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;get: System.Runtime.CompilerServices.NullableContext(2)&gt;]</AttributeName>
+        </Attribute>
+        <Attribute FrameworkAlternate="net-8.0">
+          <AttributeName Language="C#">[set: System.Runtime.CompilerServices.NullableContext(2)]</AttributeName>
+          <AttributeName Language="F#">[&lt;set: System.Runtime.CompilerServices.NullableContext(2)&gt;]</AttributeName>
+        </Attribute>
+      </Attributes>
+      <ReturnValue>
+        <ReturnType>System.Data.Common.DbTransaction</ReturnType>
+      </ReturnValue>
+      <Docs>
+        <summary>
+          Gets or sets the <see cref="T:System.Data.Common.DbTransaction" /> within which this <see cref="T:System.Data.Common.DbBatch" /> object executes.
+        </summary>
+        <value>
+          The transaction within which a batch of a .NET data provider executes. The default value is a null reference (<see langword="Nothing" /> in Visual Basic).
+        </value>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
+  </Members>
+</Type>

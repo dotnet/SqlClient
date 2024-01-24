@@ -626,6 +626,12 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
             }
+
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity && _hasPasswordKeyword)
+            {
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+            }
+
 #if ADONET_CERT_AUTH && NETFRAMEWORK
 
             if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(_certificate))
@@ -703,6 +709,7 @@ namespace Microsoft.Data.SqlClient
             _attestationProtocol = connectionOptions._attestationProtocol;
             _serverSPN = connectionOptions._serverSPN;
             _failoverPartnerSPN = connectionOptions._failoverPartnerSPN;
+            _hostNameInCertificate = connectionOptions._hostNameInCertificate;
 #if NETFRAMEWORK
             _connectionReset = connectionOptions._connectionReset;
             _contextConnection = connectionOptions._contextConnection;

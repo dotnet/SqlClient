@@ -443,6 +443,15 @@ namespace Microsoft.Data.SqlClient
                 Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr));
             }
         }
+
+        [NonEvent]
+        internal void TryTraceEvent<T0, T1, T2, T3, T4, T5, T6>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 arg6)
+        {
+            if (Log.IsTraceEnabled())
+            {
+                Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr, arg6?.ToString() ?? NullStr));
+            }
+        }
         #endregion
 
         #endregion
