@@ -2683,9 +2683,6 @@ namespace Microsoft.Data.SqlClient
 
                     if (_newDbConnectionPoolAuthenticationContext != null)
                     {
-                        // Try adding this new _newDbConnectionPoolAuthenticationContext to the _dbConnectionPool's AuthenticationContextKeys if it is not in there yet.
-                        // The DbConnectionPoolAuthenticationContextKeys collection is used to refresh a cached token just before it expires within 10 minutes.
-                        // _dbConnectionPool.AuthenticationContexts.TryAdd(new DbConnectionPoolAuthenticationContextKey(fedAuthInfo.stsurl, fedAuthInfo.spn), _newDbConnectionPoolAuthenticationContext);
                          _dbConnectionPool.AuthenticationContexts.TryAdd(_dbConnectionPoolAuthenticationContextKey, _newDbConnectionPoolAuthenticationContext);
                     }
                 }
