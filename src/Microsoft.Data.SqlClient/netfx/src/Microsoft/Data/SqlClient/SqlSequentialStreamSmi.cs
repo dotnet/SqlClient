@@ -50,8 +50,16 @@ namespace Microsoft.Data.SqlClient
 
         public override long Position
         {
-            get { throw ADP.NotSupported(); }
-            set { throw ADP.NotSupported(); }
+            get => _position;
+            set
+            {
+                if (_position == value)
+                {
+                    return;
+                }
+
+                throw ADP.NotSupported();
+            }
         }
 
         internal int ColumnIndex
