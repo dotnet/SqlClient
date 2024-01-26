@@ -68,14 +68,14 @@ namespace Microsoft.Data.SqlClient
             _parameters = parameterCollection;
         }
 
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandText/*'/>   
         public
 #if NET6_0_OR_GREATER
         override 
 #endif
         string CommandText { get => _text; set => _text = value; }
 
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandType/*'/>  
         public
 #if NET6_0_OR_GREATER
         override 
@@ -85,14 +85,14 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandBehavior/*'/>
         public CommandBehavior CommandBehavior { get => _behavior; set => _behavior = value; }
 
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/RecordsAffected/*'/>
         public
 #if NET6_0_OR_GREATER
         override 
 #endif
         int RecordsAffected { get => _recordsAffected; }
 
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/DbParameterCollection/*'/>
         protected
 #if NET6_0_OR_GREATER
         override 
