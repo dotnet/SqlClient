@@ -73,16 +73,16 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </summary>
     </CanCreateParameter>
     <CommandText>
-      <inheritdoc cref="Microsoft.Data.SqlClient.SqlCommand.CommandText"/>
+      <inheritdoc cref="Microsoft.Data.SqlClient.SqlBatchCommand.CommandText"/>
     </CommandText>
     <CommandType>
-      <inheritdoc cref="Microsoft.Data.SqlClient.SqlCommand.CommandType" />
+      <inheritdoc cref="Microsoft.Data.SqlClient.SqlBatchCommand.CommandType" />
     </CommandType>
     <DbParameterCollection>
-      <inheritdoc cref="Microsoft.Data.SqlClient.SqlParameterCollection.DbParameterCollection" />
+      <inheritdoc cref="Microsoft.Data.SqlClient.SqlBatchCommand.DbParameterCollection" />
     </DbParameterCollection>
     <RecordsAffected>
-      <inheritdoc cref="Microsoft.Data.SqlClient.RecordsAffected" />
+      <inheritdoc cref="Microsoft.Data.SqlClient.SqlBatchCommand.RecordsAffected" />
     </RecordsAffected>
   </members>
 </docs>
