@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <docs>
   <members name="SqlBatchCommand">
+    <SqlBatchCommand>
+      <summary>
+      SqlBatchCommand allows for the execution of multiple SQL commands in a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />. 
+      </summary>	
+    </SqlBatchCommand>
     <ctor1>
       <summary>Initializes a new <see cref="SqlBatchCommand"/>.</summary>
       <remarks>
