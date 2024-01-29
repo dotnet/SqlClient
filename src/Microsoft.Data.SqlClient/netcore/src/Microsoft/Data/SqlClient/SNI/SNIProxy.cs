@@ -524,7 +524,6 @@ namespace Microsoft.Data.SqlClient.SNI
         internal static string GetLocalDBInstance(string dataSource, out bool error)
         {
             string instanceName = null;
-            // ReadOnlySpan is not supported in netstandard 2.0, but installing System.Memory solves the issue
             ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
             error = false;
             // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
