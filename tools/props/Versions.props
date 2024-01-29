@@ -48,11 +48,6 @@
     <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
     <SystemTextEncodingCodePagesVersion>6.0.0</SystemTextEncodingCodePagesVersion>
   </PropertyGroup>
-  <!-- NetStandard project dependencies -->
-  <PropertyGroup>
-    <SystemRuntimeLoaderVersion>4.3.0</SystemRuntimeLoaderVersion>
-    <SystemDiagnosticsDiagnosticSourceVersion>6.0.1</SystemDiagnosticsDiagnosticSourceVersion>
-  </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
     <AzureCoreVersion>[1.35.0,2.0.0)</AzureCoreVersion>
