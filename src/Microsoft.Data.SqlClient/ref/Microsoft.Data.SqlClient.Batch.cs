@@ -51,6 +51,7 @@ namespace Microsoft.Data.SqlClient
         protected override System.Data.Common.DbBatchCommand CreateDbBatchCommand() => throw null;
     }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/SqlBatch/*'/>
     public partial class SqlBatchCommand : System.Data.Common.DbBatchCommand
     {
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ctor1/*'/>
