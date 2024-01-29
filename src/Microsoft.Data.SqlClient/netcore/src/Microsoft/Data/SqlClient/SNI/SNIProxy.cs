@@ -527,6 +527,7 @@ namespace Microsoft.Data.SqlClient.SNI
             ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
             error = false;
             // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
+            //TODO Refactor?
             int index = input.IndexOf(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase);
             if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
             {
