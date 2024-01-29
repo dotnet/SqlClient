@@ -799,7 +799,7 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
   </ItemGroup>
   <!-- Windows dependencies for Integrated Authentication (SSPI) and MANAGED_SNI build before .NET 7.0-->
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ($(TargetGroup)=='netstandard' OR '$(TargetFramework)' == 'net6.0')">
+  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND '$(TargetFramework)' == 'net6.0'">
     <Compile Include="$(CommonPath)\CoreLib\Interop\Windows\Kernel32\Interop.CloseHandle.cs">
       <Link>Common\CoreLib\Interop\Windows\Kernel32\Interop.CloseHandle.cs</Link>
     </Compile>
@@ -889,7 +889,7 @@
     </Compile>
   </ItemGroup>
   <!-- Common (Windows and Unix) dependencies for Integrated Authentication (SSPI) and MANAGED_SNI build before .NET 7.0-->
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND ($(TargetGroup)=='netstandard' OR '$(TargetFramework)' == 'net6.0')">
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' == 'net6.0'">
     <Compile Include="$(CommonPath)\System\Net\ContextFlagsPal.cs">
       <Link>Common\System\Net\ContextFlagsPal.cs</Link>
     </Compile>
