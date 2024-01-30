@@ -9,7 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
-    <repository type="git" url="https://github.com/dotnet/sqlclient" />
+    <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$"/>
     <description>The current data provider for SQL Server and Azure SQL databases. This has replaced System.Data.SqlClient. These classes provide access to SQL and encapsulate database-specific protocols, including tabular data stream (TDS).
     
 Commonly Used Types:
@@ -31,44 +31,41 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.Data.SqlClient.SNI" version="5.2.0-preview1.23340.1" />
         <dependency id="Azure.Identity" version="1.10.3" />
         <dependency id="Microsoft.Identity.Client" version="4.56.0" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.24.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.24.0" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
         <dependency id="System.Buffers" version="4.5.1" />
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
         <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.3.0" />
         <dependency id="System.Text.Encodings.Web" version="6.0.0" />
       </group>
-      <group targetFramework="net7.0">
+      <group targetFramework="net8.0">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.2.0-preview1.23340.1" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.10.3" />
         <dependency id="Microsoft.Identity.Client" version="4.56.0" exclude="Compile"/>
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.24.0" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.24.0" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
-        <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
-        <dependency id="System.Diagnostics.DiagnosticSource" version="6.0.1" exclude="Compile" />
-        <dependency id="System.Runtime.Caching" version="6.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encoding.CodePages" version="6.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.0" />
+        <dependency id="System.Configuration.ConfigurationManager" version="8.0.0" exclude="Compile" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="8.0.0" exclude="Compile" />
+        <dependency id="System.Runtime.Caching" version="8.0.0" exclude="Compile" />
       </group>
       <group targetFramework="net6.0">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.2.0-preview1.23340.1" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.10.3" />
         <dependency id="Microsoft.Identity.Client" version="4.56.0" exclude="Compile"/>
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.24.0" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.24.0" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="6.0.1" exclude="Compile" />
         <dependency id="System.Runtime.Caching" version="6.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encoding.CodePages" version="6.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.0" />
       </group>
       <group targetFramework="netstandard2.0">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.2.0-preview1.23340.1" exclude="Compile" />
-        <dependency id="Azure.Identity" version="1.8.0" />
+        <dependency id="Azure.Identity" version="1.10.3" />
         <dependency id="Microsoft.Identity.Client" version="4.56.0" exclude="Compile"/>
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.24.0" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.24.0" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
         <dependency id="System.Buffers" version="4.5.1" />
@@ -85,8 +82,8 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="5.2.0-preview1.23340.1" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.10.3" />
         <dependency id="Microsoft.Identity.Client" version="4.56.0" exclude="Compile"/>
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.24.0" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.24.0" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
@@ -106,27 +103,22 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <references>
       <group targetFramework="net462">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
-      <group targetFramework="net7.0">
+      <group targetFramework="net8.0">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="net6.0">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="netstandard2.0">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
       <group targetFramework="netstandard2.1">
           <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
     </references>
@@ -140,9 +132,9 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net462\Microsoft.Data.SqlClient.xml" target="ref\net462\" exclude="" />
 
     <!-- ref NetCore -->
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net7.0\Microsoft.Data.SqlClient.dll" target="ref\net7.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net7.0\Microsoft.Data.SqlClient.pdb" target="ref\net7.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net7.0\Microsoft.Data.SqlClient.xml" target="ref\net7.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net8.0\Microsoft.Data.SqlClient.dll" target="ref\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net8.0\Microsoft.Data.SqlClient.pdb" target="ref\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net8.0\Microsoft.Data.SqlClient.xml" target="ref\net8.0\" exclude="" />
 
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net6.0\Microsoft.Data.SqlClient.dll" target="ref\net6.0\" exclude="" />
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net6.0\Microsoft.Data.SqlClient.pdb" target="ref\net6.0\" exclude="" />
@@ -175,21 +167,21 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.xml" target="lib\net462\" exclude="" />
 
     <!-- lib NetCore -->
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\Microsoft.Data.SqlClient.dll" target="lib\net7.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\Microsoft.Data.SqlClient.pdb" target="lib\net7.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\Microsoft.Data.SqlClient.xml" target="lib\net7.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.dll" target="lib\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.pdb" target="lib\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.xml" target="lib\net8.0\" exclude="" />
     
 	<!-- Localization files for Net 7 -->
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net7.0\de\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net7.0\es\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net7.0\fr\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net7.0\it\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net7.0\ja\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net7.0\ko\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net7.0\pt-BR\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net7.0\ru\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net7.0\zh-Hans\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net7.0\zh-Hant\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\de\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\es\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\fr\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\it\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ja\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ko\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\pt-BR\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ru\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hans\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hant\" exclude="" />
     <!-- End of Localization files for Net 7 -->	
 
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.dll" target="lib\net6.0\" exclude="" />
@@ -249,10 +241,10 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net462\" exclude="" />
 
     <!-- runtimes NetCore -->
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net7.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net7.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\net7.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net7.0\Microsoft.Data.SqlClient.pdb" target="runtimes\unix\lib\net7.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.pdb" target="runtimes\unix\lib\net8.0\" exclude="" />
 
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net6.0\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net6.0\" exclude="" />

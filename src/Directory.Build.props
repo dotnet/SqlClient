@@ -71,8 +71,26 @@
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
   </PropertyGroup>
 
+  <!-- Packaging  for source link-->
+  <PropertyGroup>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+  <ItemGroup>
+   <PackageReference Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All">
+    </PackageReference>	
+  </ItemGroup>
+  
+
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
+  <Import Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" Project="$(ToolsDir)props\VersionsNet8OrLater.props" />
   <!-- Provides Tool properties -->
   <Import Project="$(ToolsDir)props\Tools.props" />
   <!-- Provides Build properties -->

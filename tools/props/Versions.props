@@ -29,11 +29,11 @@
   <PropertyGroup>
     <AzureIdentityVersion>1.10.3</AzureIdentityVersion>
     <MicrosoftIdentityClientVersion>4.56.0</MicrosoftIdentityClientVersion>
-    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.24.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
-    <MicrosoftIdentityModelJsonWebTokensVersion>6.24.0</MicrosoftIdentityModelJsonWebTokensVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.35.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>6.35.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
-    <MicrosoftSourceLinkGitHubVersion>1.1.0</MicrosoftSourceLinkGitHubVersion>
+    <MicrosoftSourceLinkGitHubVersion>8.0.0</MicrosoftSourceLinkGitHubVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>
@@ -68,7 +68,7 @@
     <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
     <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
     <SystemDataOdbcVersion>6.0.1</SystemDataOdbcVersion>
-    <SystemIdentityModelTokensJwtVersion>6.24.0</SystemIdentityModelTokensJwtVersion>
+    <SystemIdentityModelTokensJwtVersion>6.35.0</SystemIdentityModelTokensJwtVersion>
     <XunitVersion>2.6.3</XunitVersion>
     <XunitrunnervisualstudioVersion>2.5.5</XunitrunnervisualstudioVersion>
     <MicrosoftNETFrameworkReferenceAssembliesVersion>1.0.3</MicrosoftNETFrameworkReferenceAssembliesVersion>

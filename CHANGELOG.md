@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 5.2.0-preview5.24024.3] - 2024-01-24
+
+This update brings the below changes over the previous release:
+
+### Added
+
+- Added .NET 8 support [#2230](https://github.com/dotnet/SqlClient/pull/2230)
+- Added explicit version for major .NET version dependencies on System.Runtime.Caching 8.0.0, System.Configuration.ConfigurationManager 8.0.0, and System.Diagnostics.DiagnosticSource 8.0.0 [#2303](https://github.com/dotnet/SqlClient/pull/2303)
+- Added the ability to generate debugging symbols in a separate package file [#2137](https://github.com/dotnet/SqlClient/pull/2137)
+
+### Changed
+
+- Changed Microsoft.IdentityModel.JsonWebTokens and Microsoft.IdentityModel.Protocols.OpenIdConnect version 6.24.0 to 6.35.0 [#2290](https://github.com/dotnet/SqlClient/pull/2290) to address [CVE-2024-21319](https://www.cve.org/CVERecord?id=CVE-2024-21319)
+
+### Fixed
+
+- Fixed connection to unsubscribe from transaction completion events before returning it to the connection pool [#2301](https://github.com/dotnet/SqlClient/pull/2301)
+- Fixed InvalidCastException when reading an Always Encrypted date or time column [#2275](https://github.com/dotnet/SqlClient/pull/2275)
+- Fixed token caching to prevent expired access tokens from being reused in a connection pool [#2273](https://github.com/dotnet/SqlClient/pull/2273)
+- Code health improvements: [#2288](https://github.com/dotnet/SqlClient/pull/2288), [#2305](https://github.com/dotnet/SqlClient/pull/2305), [#2254](https://github.com/dotnet/SqlClient/pull/2254), [#2317](https://github.com/dotnet/SqlClient/pull/2317)
+
 ## [Preview Release 5.2.0-preview4.23342.2] - 2023-12-08
 
 This update brings the below changes over the previous release:

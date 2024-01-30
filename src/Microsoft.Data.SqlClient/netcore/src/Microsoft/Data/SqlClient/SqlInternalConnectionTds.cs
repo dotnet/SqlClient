@@ -2256,6 +2256,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     // GetFedAuthToken should have updated _newDbConnectionPoolAuthenticationContext.
                     Debug.Assert(_newDbConnectionPoolAuthenticationContext != null, "_newDbConnectionPoolAuthenticationContext should not be null.");
+
+                    if (_newDbConnectionPoolAuthenticationContext != null)
+                    {
+                        _dbConnectionPool.AuthenticationContexts.TryAdd(_dbConnectionPoolAuthenticationContextKey, _newDbConnectionPoolAuthenticationContext);
+                    }
                 }
             }
             else if (!attemptRefreshTokenLocked)
