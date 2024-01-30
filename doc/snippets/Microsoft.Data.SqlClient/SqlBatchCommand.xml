@@ -3,7 +3,7 @@
   <members name="SqlBatchCommand">
     <SqlBatchCommand>
       <summary>
-      SqlBatchCommand allows for the execution of multiple SQL commands in a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />. 
+      SqlBatchCommand allows for the execution of multiple SQL commands in a <see cref="T:Microsoft.Data.SqlClient.SqlBatch"/>. 
       </summary>	
     </SqlBatchCommand>
     <ctor1>
@@ -12,7 +12,7 @@
         <format type="text/markdown">
           <![CDATA[
 ## Examples
-The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a SqlBatch, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
 
 [!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
 ]]>
@@ -23,7 +23,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       <summary>Initializes a new <see cref="SqlBatchCommand"/>.</summary>
       <param name="commandText">The text of the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand"/>.</param>
       <param name="commandType">Indicates how the <see cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.CommandText"/> property is to be interpreted.</param>
-      <param name="parameters">A <see cref="T:System.Collection.Generic.IEnumerable"/> collection of <see cref="T:Microsoft.Data.SqlClient.SqlParameter"/>s, is used to create the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection"/>.</param>
+      <param name="parameters">A <see cref="T:System.Collections.Generic.IEnumerable"/> collection of <see cref="T:Microsoft.Data.SqlClient.SqlParameter"/>s, is used to create the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection"/>.</param>
       <param name="columnEncryptionSetting">The encryption setting. For more information, see [Always Encrypted](/sql/relational-databases/security/encryption/always-encrypted-database-engine).</param>
       <remarks>
         <format type="text/markdown">
