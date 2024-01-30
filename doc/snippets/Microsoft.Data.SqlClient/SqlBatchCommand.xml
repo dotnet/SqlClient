@@ -3,7 +3,7 @@
   <members name="SqlBatchCommand">
     <SqlBatchCommand>
       <summary>
-      SqlBatchCommand allows for the execution of multiple SQL commands in a <see cref="T:Microsoft.Data.SqlClient.SqlBatch"/>. 
+      SqlBatchCommand allows for the execution of multiple SQL commands in a SqlBatch. 
       </summary>	
     </SqlBatchCommand>
     <ctor1>
