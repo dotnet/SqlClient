@@ -128,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
+    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">
