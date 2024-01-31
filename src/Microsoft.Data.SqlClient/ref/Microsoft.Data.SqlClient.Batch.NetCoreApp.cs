@@ -1,6 +1,4 @@
-﻿#if NET6_0_OR_GREATER
-
-namespace Microsoft.Data.SqlClient
+﻿namespace System.Data.Common
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
     public partial class SqlBatchCommand
@@ -9,5 +7,3 @@ namespace Microsoft.Data.SqlClient
         public Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting ColumnEncryptionSetting { get { throw null; } set { } }
     }
 }
-
-#endif

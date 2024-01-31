@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET6_0_OR_GREATER
-
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/SqlBatch/*'/>
@@ -127,5 +125,3 @@ namespace Microsoft.Data.SqlClient
         public new Microsoft.Data.SqlClient.SqlBatchCommand BatchCommand { get { throw null; } }
     }
 }
-
-#endif
