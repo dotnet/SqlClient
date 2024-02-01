@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient
         public SqlBatch() { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ctor2/*'/>
         public SqlBatch(Microsoft.Data.SqlClient.SqlConnection connection, Microsoft.Data.SqlClient.SqlTransaction transaction = null) { throw null; }
-        /// <inheritdoc />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/timeout/*'/>
         public override int Timeout { get => throw null; set { } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Timeout/*'/>
         public new Microsoft.Data.SqlClient.SqlConnection Connection { get => throw null; set { } }

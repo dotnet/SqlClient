@@ -52,29 +52,17 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
         </format>
       </remarks>
     </ctor2>
-    <BatchCommands>
-      <summary>The list of commands contained in the batch in a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
-     </summary>
-      <remarks>
-        <format type="text/markdown">
-          <![CDATA[
-## Examples
-The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
-
-[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
-]]>
-        </format>
-      </remarks>
-    </BatchCommands>
+    <timeout>
+      <inheritdoc cref="P:System.Common.DbBatch.Timeout" />
+    </timeout>
     <Commands>
       <summary>
-        The list of commands contained in the batch in a <see cref="T:System.Collection.Generic.List&lt;Microsoft.Data.SqlClient.SqlBatchCommand&gt;" />.
+        The list of commands contained in the batch in a 
+        <see cref="T:System.Collection.Generic.List"/> of
+        <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand"/> objects.
       </summary>
       <remarks>
-        <format type="text/markdown">
-          <![CDATA[
-]]>
-        </format>
+        <format type="text/markdown"></format>
       </remarks>
     </Commands>
     <Connection>
@@ -101,6 +89,22 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
         </format>
       </remarks>
     </Transaction>
+    <BatchCommands>
+      <summary>
+        The list of commands contained in the batch in a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlBatch>, then adds multiple <xref:Microsoft.Data.SqlClient.SqlBatchCommand> objects to the batch. It then executes the batch, creating a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <xref:Microsoft.Data.SqlClient.SqlDataReader> and then the <xref:Microsoft.Data.SqlClient.SqlConnection> as the `using` blocks fall out of scope.
+
+[!code-csharp[SqlCommand Example#1](~/../sqlclient/doc/samples/SqlBatch_ExecuteReader.cs#1)]
+]]>
+        </format>
+      </remarks>
+    </BatchCommands>
+    
     <ExecuteReader>
       <summary>
         Sends the
@@ -122,6 +126,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
         </format>
       </remarks>
     </ExecuteReader>
+    
     <ExecuteReaderAsync>
       <summary>
         An asynchronous version of

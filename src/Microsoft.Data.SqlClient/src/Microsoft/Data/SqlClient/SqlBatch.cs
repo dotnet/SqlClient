@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
             Connection = connection;
             Transaction = transaction;
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/timeout/*'/>
         public override int Timeout
         {
             get
