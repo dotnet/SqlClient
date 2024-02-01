@@ -210,9 +210,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SqlConnectionStringBuilder builder = new(connectionString);
 
-            DataTestUtility.ParseDataSource(builder.DataSource, out _, out _, out instanceName);
+            bool isDataSourceValid = DataTestUtility.ParseDataSource(builder.DataSource, out _, out _, out instanceName);
 
-            return !string.IsNullOrWhiteSpace(instanceName);
+            return isDataSourceValid && !string.IsNullOrWhiteSpace(instanceName);
         }
 
         private static bool IsBrowserAlive(string browserHostname)
@@ -238,7 +238,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string instanceName = "";
             int port = 0;
 
-            DataTestUtility.ParseDataSource(builder.DataSource, out hostname, out _, out instanceName);
+            bool isDataSourceValid = DataTestUtility.ParseDataSource(builder.DataSource, out hostname, out _, out instanceName);
 
             bool isBrowserRunning = IsBrowserAlive(hostname);
             Assert.True(isBrowserRunning, "Browser service is not running.");
@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool isInstanceExisting = IsValidInstance(hostname, instanceName);
             Assert.True(isInstanceExisting, "Instance name is invalid.");
 
-            if (isBrowserRunning && isInstanceExisting)
+            if (isDataSourceValid && isBrowserRunning && isInstanceExisting)
             {
                 byte[] request = CreateInstanceInfoRequest(instanceName);
                 byte[] response = QueryBrowser(hostname, request);
