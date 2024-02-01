@@ -13,11 +13,11 @@ namespace Microsoft.Data.SqlClient
         public SqlBatch(Microsoft.Data.SqlClient.SqlConnection connection, Microsoft.Data.SqlClient.SqlTransaction transaction = null) { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/timeout/*'/>
         public override int Timeout { get => throw null; set { } }
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Timeout/*'/>
-        public new Microsoft.Data.SqlClient.SqlConnection Connection { get => throw null; set { } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Connection/*'/>
-        public new Microsoft.Data.SqlClient.SqlTransaction Transaction { get => throw null; set { } }
+        public new Microsoft.Data.SqlClient.SqlConnection Connection { get => throw null; set { } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Transaction/*'/>
+        public new Microsoft.Data.SqlClient.SqlTransaction Transaction { get => throw null; set { } }
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/BatchCommands/*'/>
         public new SqlBatchCommandCollection BatchCommands { get => throw null; }
         /// <inheritdoc />
         protected override System.Data.Common.DbBatchCommandCollection DbBatchCommands { get => throw null; }
