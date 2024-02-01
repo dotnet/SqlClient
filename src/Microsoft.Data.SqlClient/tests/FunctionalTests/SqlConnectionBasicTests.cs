@@ -38,6 +38,25 @@ namespace Microsoft.Data.SqlClient.Tests
             connection.Open();
         }
 
+        /// <summary>
+        /// Runs a test where TDS Server doesn't send encryption info during pre-login response.
+        /// The driver is expected to fail when that happens, and terminate the connection during pre-login phase 
+        /// when client enables encryption using Encrypt=true or uses default encryption setting.
+        /// </summary>
+        [Fact]
+        public async Task PreLoginEncryptionExcludedTest()
+        {
+            using TestTdsServer server = TestTdsServer.StartTestServer(false, false, 5, excludeEncryption: true);
+            SqlConnectionStringBuilder builder = new(server.ConnectionString)
+            {
+                IntegratedSecurity = true
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            Exception ex = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
+            Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
         [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
         [InlineData(40613)]
         [InlineData(42108)]

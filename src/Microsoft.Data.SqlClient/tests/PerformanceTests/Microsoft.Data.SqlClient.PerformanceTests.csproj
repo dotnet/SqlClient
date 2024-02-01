@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>PerformanceTests</AssemblyName>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <Configurations>Debug;Release;</Configurations>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
@@ -21,7 +21,6 @@
     <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
     <PackageReference Include="BenchmarkDotNet" Version="$(BenchmarkDotNetVersion)" />
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
   </ItemGroup>
