@@ -239,6 +239,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int port = 0;
 
             bool isDataSourceValid = DataTestUtility.ParseDataSource(builder.DataSource, out hostname, out _, out instanceName);
+            Assert.True(isDataSourceValid, "DataSource is invalid");
 
             bool isBrowserRunning = IsBrowserAlive(hostname);
             Assert.True(isBrowserRunning, "Browser service is not running.");
