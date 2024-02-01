@@ -1,4 +1,4 @@
-﻿namespace System.Data.Common
+﻿namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
     public partial class SqlBatchCommand
