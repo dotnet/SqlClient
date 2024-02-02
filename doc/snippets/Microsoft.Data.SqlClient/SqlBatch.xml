@@ -78,7 +78,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
 ]]>
         </format>
       </remarks>
-    </Transaction>    
+    </Transaction>
     <BatchCommands>
       <summary>
         The list of commands contained in the batch in a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
@@ -105,30 +105,30 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
     </DbTransaction>
     <Cancel>
       <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.Cancel"/>       
-    </Cancel>  
+    </Cancel>
     <ExecuteNonQuery>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery"/>       
+      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery"/>       
     </ExecuteNonQuery>
     <ExecuteNonQueryAsync>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQueryAsync"/>       
-    </ExecuteNonQueryAsync>      
+      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQueryAsync"/>       
+    </ExecuteNonQueryAsync>
     <ExecuteScalar>
       <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.ExecuteScalar"/>       
-    </ExecuteScalar>     
+    </ExecuteScalar>
     <ExecuteScalarAsync>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.ExecuteScalarAsync"/>       
-    </ExecuteScalarAsync>                 
+      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteScalarAsync"/>       
+    </ExecuteScalarAsync>
     <Prepare>
       <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.Prepare"/>       
-    </Prepare>    
+    </Prepare>
     <PrepareAsync>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.PrepareAsync"/>       
+      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.PrepareAsync"/>       
     </PrepareAsync>
     <ExecuteDbDataReader>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.ExecuteDbDataReader"/>       
+      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteDbDataReader"/>       
     </ExecuteDbDataReader>
     <ExecuteDbDataReaderAsync>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.ExecuteDbDataReaderAsync"/>       
+      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteDbDataReaderAsync"/>       
     </ExecuteDbDataReaderAsync>        
     <Commands>
       <summary>
@@ -179,9 +179,9 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
 ]]>
         </format>
       </remarks>
-    </ExecuteReaderAsync>    
+    </ExecuteReaderAsync>
     <CreateDbBatchCommand>
       <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.CreateDbBatchCommand"/>       
-    </CreateDbBatchCommand>  
+    </CreateDbBatchCommand>
   </members>
 </docs>
