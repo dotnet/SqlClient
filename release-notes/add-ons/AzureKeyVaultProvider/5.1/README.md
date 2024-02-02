@@ -1,6 +1,6 @@
 # Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 5.1 Releases
 
-The following Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 3.0 stable releases have been shipped:
+The following Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 5.1 stable releases have been shipped:
 
 | Release Date | Description | Notes |
 | :-- | :-- | :--: |
