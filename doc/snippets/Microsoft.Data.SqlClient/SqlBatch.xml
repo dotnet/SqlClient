@@ -133,7 +133,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
     <Commands>
       <summary>
         The list of commands contained in the batch in a 
-        <see cref="T:System.Collections.Generic.List"/> of
+        <see cref="T:System.Collections.Generic.IList"/> of
         <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand"/> objects.
       </summary>
       <remarks>
