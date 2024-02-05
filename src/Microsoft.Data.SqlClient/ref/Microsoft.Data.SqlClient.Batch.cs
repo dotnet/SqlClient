@@ -70,6 +70,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/DbParameterCollection/*'/>
         protected override System.Data.Common.DbParameterCollection DbParameterCollection => throw null;
     }
+    /// <inheritdoc cref="System.Data.Common.DbBatchCommandCollection"/>
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/SqlBatchCommandCollection/*'/>
     public class SqlBatchCommandCollection : System.Data.Common.DbBatchCommandCollection, System.Collections.Generic.IList<SqlBatchCommand>
     {

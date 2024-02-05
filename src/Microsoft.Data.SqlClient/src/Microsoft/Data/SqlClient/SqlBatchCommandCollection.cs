@@ -9,6 +9,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <inheritdoc cref="DbBatchCommandCollection"/>
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/SqlBatchCommandCollection/*'/>
     public class SqlBatchCommandCollection : DbBatchCommandCollection, IList<SqlBatchCommand>
     {
@@ -76,7 +77,6 @@ namespace Microsoft.Data.SqlClient
         /// <inheritdoc />
         protected override void SetBatchCommand(int index, DbBatchCommand batchCommand)
             => _list[index] = (SqlBatchCommand)batchCommand;
-
     }
 }
 
