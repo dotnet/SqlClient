@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -46,10 +47,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public async Task PreLoginEncryptionExcludedTest()
         {
-            using TestTdsServer server = TestTdsServer.StartTestServer(false, false, 5, excludeEncryption: true);
+            using TestTdsServer server = TestTdsServer.StartTestServer(false, false, 5, encryptionType: TDSPreLoginTokenEncryptionType.None);
             SqlConnectionStringBuilder builder = new(server.ConnectionString)
             {
-                IntegratedSecurity = true
+                IntegratedSecurity = true,
             };
 
             using SqlConnection connection = new(builder.ConnectionString);

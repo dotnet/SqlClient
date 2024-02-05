@@ -3,9 +3,13 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.SqlServer.TDS.EndPoint;
+using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -25,7 +29,9 @@ namespace Microsoft.Data.SqlClient.Tests
             Engine = engine;
         }
 
-        public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, [CallerMemberName] string methodName = "")
+        public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false,
+            int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "",
+            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.Off)
         {
             TDSServerArguments args = new TDSServerArguments()
             {
@@ -36,12 +42,16 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 args.FedAuthRequiredPreLoginOption = SqlServer.TDS.PreLogin.TdsPreLoginFedAuthRequiredOption.FedAuthRequired;
             }
-            if (excludeEncryption)
+
+            if (encryptionCertificate != null)
             {
-                args.Encryption = SqlServer.TDS.PreLogin.TDSPreLoginTokenEncryptionType.None;
+                args.EncryptionCertificate = encryptionCertificate;
             }
 
+            args.Encryption = encryptionType;
+
             TestTdsServer server = engine == null ? new TestTdsServer(args) : new TestTdsServer(engine, args);
+            
             server._endpoint = new TDSServerEndPoint(server) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
             server._endpoint.EndpointName = methodName;
             // The server EventLog should be enabled as it logs the exceptions.
@@ -49,17 +59,25 @@ namespace Microsoft.Data.SqlClient.Tests
             server._endpoint.Start();
 
             int port = server._endpoint.ServerEndPoint.Port;
-            server._connectionStringBuilder = excludeEncryption
-                // Allow encryption to be set when encryption is to be excluded from pre-login response.
-                ? new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = SqlConnectionEncryptOption.Mandatory }
-                : new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = SqlConnectionEncryptOption.Optional };
+
+            String hostName = Dns.GetHostName().ToUpper();
+
+            server._connectionStringBuilder = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"{hostName}," + port,
+                //DataSource = $"localhost,{port}",
+                ConnectTimeout = connectionTimeout,
+                Encrypt = (encryptionType == TDSPreLoginTokenEncryptionType.Off ? SqlConnectionEncryptOption.Optional : SqlConnectionEncryptOption.Mandatory)
+            }; 
             server.ConnectionString = server._connectionStringBuilder.ConnectionString;
             return server;
         }
 
-        public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, [CallerMemberName] string methodName = "")
+        public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false,
+            int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "",
+            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.Off)
         {
-            return StartServerWithQueryEngine(null, enableFedAuth, enableLog, connectionTimeout, excludeEncryption, methodName);
+            return StartServerWithQueryEngine(null, enableFedAuth, enableLog, connectionTimeout, methodName, encryptionCertificate, encryptionType);
         }
 
         public void Dispose() => _endpoint?.Stop();

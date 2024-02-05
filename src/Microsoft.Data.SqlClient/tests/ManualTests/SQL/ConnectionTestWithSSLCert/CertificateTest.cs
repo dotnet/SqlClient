@@ -106,6 +106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Test with Mandatory encryption
             builder.Encrypt = SqlConnectionEncryptOption.Mandatory;
+            builder.TrustServerCertificate = true;
             using SqlConnection mandatoryConnection = new(builder.ConnectionString);
             mandatoryConnection.Open();
             Assert.Equal(ConnectionState.Open, mandatoryConnection.State);
@@ -113,6 +114,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 // Test with strict encryption
                 builder.Encrypt = SqlConnectionEncryptOption.Strict;
+                builder.TrustServerCertificate = true;
                 using SqlConnection strictConnection = new(builder.ConnectionString);
                 strictConnection.Open();
                 Assert.Equal(ConnectionState.Open, strictConnection.State);

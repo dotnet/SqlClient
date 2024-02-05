@@ -22,14 +22,14 @@
   <!-- Override debugtype=portable in Directory.Build.props for netfx -->
   <PropertyGroup>
     <DebugType>full</DebugType>
-  </PropertyGroup>  
+  </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
-  </ItemGroup>  
+  </ItemGroup>
   <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
@@ -701,6 +701,7 @@
       <CustomToolNamespace>System</CustomToolNamespace>
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="..\..\src\Resources\$(ResxFileName).*.resx">
       <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
