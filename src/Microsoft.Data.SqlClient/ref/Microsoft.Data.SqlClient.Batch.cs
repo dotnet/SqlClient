@@ -47,6 +47,8 @@ namespace Microsoft.Data.SqlClient
         public System.Collections.Generic.List<Microsoft.Data.SqlClient.SqlBatchCommand> Commands { get { throw null; } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReader/*'/>
         public Microsoft.Data.SqlClient.SqlDataReader ExecuteReader() => throw null;
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReaderAsync/*'/>
+        public Microsoft.Data.SqlClient.SqlDataReader ExecuteReaderAsync() => throw null;
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/CreateDbBatchCommand/*'/>
         protected override System.Data.Common.DbBatchCommand CreateDbBatchCommand() => throw null;
     }
