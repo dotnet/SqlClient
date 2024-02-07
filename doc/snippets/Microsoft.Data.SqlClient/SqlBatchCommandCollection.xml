@@ -2,8 +2,10 @@
 <docs>
   <members name="SqlBatchCommandCollection">
     <SqlBatchCommandCollection>
-      <summary>A collection of instances of <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />, contained within a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.
-    </summary>
+      <summary>A collection of instances of 
+        <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />, contained within a 
+        <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.
+      </summary>
       <remarks>
         <format type="text/markdown">
           <![CDATA[
@@ -11,8 +13,13 @@
         </format>
       </remarks>
     </SqlBatchCommandCollection>
-    <Add>
-      <summary>Add a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
+    <GetEnumerator>
+      <inheritdoc cref="M:System.Data.Common.DbBatchCommandCollection.GetEnumerator"/>
+    </GetEnumerator>
+    <Add1>
+      <summary>Add a 
+        <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> to the end of the 
+        <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
       <value></value>
       <remarks>
         <format type="text/markdown">
@@ -20,9 +27,14 @@
 ]]>
         </format>
       </remarks>
-    </Add>
-    <Contains>
-      <summary>Determines whether a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> is in the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
+    </Add1>
+    <Add2>
+      <inheritdoc cref="M:System.Data.Common.DbBatchCommandCollection.Add"/>
+    </Add2>
+    <Contains1>
+      <summary>Determines whether a 
+        <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> is in the 
+        <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
       <value></value>
       <remarks>
         <format type="text/markdown">
@@ -30,8 +42,11 @@
 ]]>
         </format>
       </remarks>
-    </Contains>
-    <CopyTo>
+    </Contains1>
+    <Contains2>
+      <inheritdoc cref="M:System.Data.Common.DbBatchCommandCollection.Contains"/>
+    </Contains2>
+    <CopyTo1>
       <summary>Copies the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> to a one dimensional array, starting at the target index of the target array.</summary>
       <value></value>
       <remarks>
@@ -40,8 +55,11 @@
 ]]>
         </format>
       </remarks>
-    </CopyTo>
-    <IndexOf>
+    </CopyTo1>
+    <CopyTo2>
+      <inheritdoc cref="M:System.Data.Common.DbBatchCommandCollection.CopyTo"/>
+    </CopyTo2>
+    <IndexOf1>
       <summary>Searches for the specified <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> within the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> and returns the zero-based index of the first occurence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.</summary>
       <returns>
         Returns the zero-based index of the first occurence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
@@ -52,8 +70,11 @@
 ]]>
         </format>
       </remarks>
-    </IndexOf>
-    <Insert>
+    </IndexOf1>
+    <IndexOf2>
+      <inheritdoc cref="M:System.Data.Common.DbBatchCommandCollection.IndexOf"/>
+    </IndexOf2>
+    <Insert1>
       <summary>Inserts an item into the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> at the specified index.</summary>
       <exception cref="T:System.ArgumentOutOfRangeException"></exception>
       <remarks>
@@ -62,9 +83,14 @@
 ]]>
         </format>
       </remarks>
-    </Insert>
-    <Remove>
-      <summary>Removes the first occurence of the specific item from the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.</summary>
+    </Insert1>
+    <Insert2>
+      <inheritdoc cref="M:System.Data.Common.DbBatchCommandCollection.Insert"/>
+    </Insert2>
+    <Remove1>
+      <summary>Removes the first occurence of the specific item from the 
+        <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.
+      </summary>
       <returns>Returns <see langword="true" /> if an item is successfully removed. Returns false if an item could not be removed or no item was not found.</returns>
       <remarks>
         <format type="text/markdown">
@@ -72,7 +98,10 @@
 ]]>
         </format>
       </remarks>
-    </Remove>
+    </Remove1>
+    <Remove2>
+      <inheritdoc cref="M:System.Data.Common.DbBatchCommandCollection.Remove"/>
+    </Remove2>
     <this1>
       <summary>Gets or Sets the element at the specified index.</summary>
       <returns>The element at the specified index.</returns>
@@ -95,5 +124,11 @@
         </format>
       </remarks>
     </this2>
+    <GetBatchCommand>
+      <inheritdoc cref="M:System.Data.Common.DbBatchCommandCollection.GetBatchCommand"/>      
+    </GetBatchCommand>
+    <SetBatchCommand>
+      <inheritdoc cref="M:System.Data.Common.DbBatchCommandCollection.SetBatchCommand"/>      
+    </SetBatchCommand>
   </members>
 </docs>

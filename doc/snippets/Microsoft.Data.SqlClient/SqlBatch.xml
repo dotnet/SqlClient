@@ -53,7 +53,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </remarks>
     </ctor2>
     <Timeout>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.Timeout"/>
+      <inheritdoc cref="P:System.Data.Common.DbBatch.Timeout"/>
     </Timeout>
     <Connection>
       <summary>
@@ -110,30 +110,25 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery"/>       
     </ExecuteNonQuery>
     <ExecuteNonQueryAsync>
-      <summary>
-        Test1 ExecuteNonQueryAsync Comment
-      </summary>
-      <remarks>
-        <format type="text/markdown"></format>
-      </remarks>
+      <inheritdoc cref="M:System.Data.Common.DbBatch.ExecuteNonQueryAsync"/>
     </ExecuteNonQueryAsync>
     <ExecuteScalar>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.ExecuteScalar"/>       
+      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteScalar"/>       
     </ExecuteScalar>
     <ExecuteScalarAsync>
-      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteScalarAsync"/>       
+      <inheritdoc cref="M:System.Data.Common.DbBatch.ExecuteScalarAsync"/>       
     </ExecuteScalarAsync>
     <Prepare>
-      <inheritdoc cref="P:System.Data.Common.DbBatch.Prepare"/>       
+      <inheritdoc cref="M:System.Data.Common.DbBatch.Prepare"/>       
     </Prepare>
     <PrepareAsync>
-      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.PrepareAsync"/>       
+      <inheritdoc cref="M:System.Data.Common.DbBatch.PrepareAsync"/>       
     </PrepareAsync>
     <ExecuteDbDataReader>
-      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteDbDataReader"/>       
+      <inheritdoc cref="M:System.Data.Common.DbBatch.ExecuteDbDataReader"/>       
     </ExecuteDbDataReader>
     <ExecuteDbDataReaderAsync>
-      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteDbDataReaderAsync"/>       
+      <inheritdoc cref="M:System.Data.Common.DbBatch.ExecuteDbDataReaderAsync"/>       
     </ExecuteDbDataReaderAsync>        
     <Commands>
       <summary>
