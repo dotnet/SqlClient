@@ -131,6 +131,19 @@ This update brings the below changes over the previous release:
 - Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
 - Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
 
+## [Stable release 5.1.5] - 2024-01-29
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed connection to unsubscribe from transaction completion events before returning it to the connection pool [#2321](https://github.com/dotnet/SqlClient/pull/2321)
+- Fixed InvalidCastException when reading an Always Encrypted date or time column [#2324](https://github.com/dotnet/SqlClient/pull/2324)
+
+### Changed
+
+- Changed Microsoft.IdentityModel.JsonWebTokens and Microsoft.IdentityModel.Protocols.OpenIdConnect version 6.24.0 to 6.35.0 [#2320](https://github.com/dotnet/SqlClient/pull/2320) to address [CVE-2024-21319](https://www.cve.org/CVERecord?id=CVE-2024-21319)
+
 ## [Stable release 5.1.4] - 2024-01-09
 
 This update brings the below changes over the previous release:
