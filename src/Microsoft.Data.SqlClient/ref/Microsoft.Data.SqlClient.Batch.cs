@@ -39,18 +39,25 @@ namespace Microsoft.Data.SqlClient
         public override void Prepare() => throw null;
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/PrepareAsync/*'/>
         public override System.Threading.Tasks.Task PrepareAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReader/*'/>
+
+
+        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)"/>
         protected override System.Data.Common.DbDataReader ExecuteDbDataReader(System.Data.CommandBehavior behavior) => throw null;
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReaderAsync/*'/>
+
+        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteDbDataReaderAsync(System.Data.CommandBehavior, System.Threading.CancellationToken)"/>
         protected override System.Threading.Tasks.Task<System.Data.Common.DbDataReader> ExecuteDbDataReaderAsync(System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken) => throw null;
+
+
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Commands/*'/>
         public System.Collections.Generic.List<Microsoft.Data.SqlClient.SqlBatchCommand> Commands { get { throw null; } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReader/*'/>
         public Microsoft.Data.SqlClient.SqlDataReader ExecuteReader() => throw null;
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteReaderAsync/*'/>
         public Microsoft.Data.SqlClient.SqlDataReader ExecuteReaderAsync() => throw null;
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/CreateDbBatchCommand/*'/>
+
+        /// <inheritdoc/>
         protected override System.Data.Common.DbBatchCommand CreateDbBatchCommand() => throw null;
+
     }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
     public partial class SqlBatchCommand : System.Data.Common.DbBatchCommand

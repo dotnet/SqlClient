@@ -110,7 +110,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery"/>       
     </ExecuteNonQuery>
     <ExecuteNonQueryAsync>
-      <inheritdoc cref="M:System.Data.Common.DbBatch.ExecuteNonQueryAsync"/>
+      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQueryAsync"/>          
     </ExecuteNonQueryAsync>
     <ExecuteScalar>
       <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteScalar"/>       
@@ -126,10 +126,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
     </PrepareAsync>
     <ExecuteDbDataReader>
       <inheritdoc cref="M:System.Data.Common.DbBatch.ExecuteDbDataReader"/>       
-    </ExecuteDbDataReader>
-    <ExecuteDbDataReaderAsync>
-      <inheritdoc cref="M:System.Data.Common.DbBatch.ExecuteDbDataReaderAsync"/>       
-    </ExecuteDbDataReaderAsync>        
+    </ExecuteDbDataReader>       
     <Commands>
       <summary>
         The list of commands contained in the batch in a 
@@ -181,7 +178,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </remarks>
     </ExecuteReaderAsync>
     <CreateDbBatchCommand>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.CreateDbBatchCommand"/>       
+      <inheritdoc/>       
     </CreateDbBatchCommand>
   </members>
 </docs>

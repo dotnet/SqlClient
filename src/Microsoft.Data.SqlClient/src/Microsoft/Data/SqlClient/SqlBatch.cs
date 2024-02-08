@@ -184,9 +184,11 @@ namespace Microsoft.Data.SqlClient
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteReaderAsync(cancellationToken);
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReader/*'/>
+        
+        
+        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)"/>
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => ExecuteReader();
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReaderAsync/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteDbDataReaderAsync(System.Data.CommandBehavior, System.Threading.CancellationToken)"/>
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
             CheckDisposed();
@@ -205,7 +207,8 @@ namespace Microsoft.Data.SqlClient
                 TaskScheduler.Default
             );
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/CreateDbBatchCommand/*'/>
+        
+        /// <inheritdoc />
         protected override DbBatchCommand CreateDbBatchCommand()
         {
             return new SqlBatchCommand();
