@@ -20,6 +20,7 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryManagedIdentity = "active directory managed identity";
         private const string ActiveDirectoryMSI = "active directory msi";
         private const string ActiveDirectoryDefault = "active directory default";
+        private const string ActiveDirectoryWorkloadIdentity = "active directory workload identity";
 
         private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;
         private readonly ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers;
