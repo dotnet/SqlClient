@@ -4,7 +4,6 @@
 
 #if NET6_0_OR_GREATER
 
-
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -33,7 +32,7 @@ namespace Microsoft.Data.SqlClient
             Connection = connection;
             Transaction = transaction;
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Timeout/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.Timeout"/>
         public override int Timeout
         {
             get
@@ -47,11 +46,11 @@ namespace Microsoft.Data.SqlClient
                 _batchCommand.CommandTimeout = value;
             }
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbBatchCommands/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.DbBatchCommands"/>
         protected override DbBatchCommandCollection DbBatchCommands => BatchCommands;
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/BatchCommands/*'/>
         public new SqlBatchCommandCollection BatchCommands => _providerCommands != null ? _providerCommands : _providerCommands = new SqlBatchCommandCollection(Commands); // Commands call will check disposed
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbConnection/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.DbConnection"/>
         protected override DbConnection DbConnection
         {
             get
@@ -65,7 +64,7 @@ namespace Microsoft.Data.SqlClient
                 Connection = (SqlConnection)value;
             }
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbTransaction/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.DbTransaction"/>
         protected override DbTransaction DbTransaction
         {
             get
@@ -79,46 +78,46 @@ namespace Microsoft.Data.SqlClient
                 Transaction = (SqlTransaction)value;
             }
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Cancel/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.Cancel"/>
         public override void Cancel()
         {
             CheckDisposed();
             _batchCommand.Cancel();
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteNonQuery/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteNonQuery"/>
         public override int ExecuteNonQuery()
         {
             CheckDisposed();
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteNonQuery();
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteNonQueryAsync/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteNonQueryAsync(System.Threading.CancellationToken)"/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken = default)
         {
             CheckDisposed();
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteNonQueryAsync(cancellationToken);
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteScalar/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteScalar"/>
         public override object ExecuteScalar()
         {
             CheckDisposed();
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteScalar();
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteScalarAsync/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteScalarAsync(System.Threading.CancellationToken)"/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken = default)
         {
             CheckDisposed();
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteScalarBatchAsync(cancellationToken);
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Prepare/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.Prepare"/>
         public override void Prepare()
         {
             CheckDisposed();
         }
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/PrepareAsync/*'/>
+        /// <inheritdoc cref="System.Data.Common.DbBatch.PrepareAsync(System.Threading.CancellationToken)"/>
         public override Task PrepareAsync(CancellationToken cancellationToken = default)
         {
             CheckDisposed();
@@ -183,9 +182,7 @@ namespace Microsoft.Data.SqlClient
             CheckDisposed();
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteReaderAsync(cancellationToken);
-        }
-        
-        
+        }        
         /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)"/>
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => ExecuteReader();
         /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteDbDataReaderAsync(System.Data.CommandBehavior, System.Threading.CancellationToken)"/>
@@ -207,13 +204,11 @@ namespace Microsoft.Data.SqlClient
                 TaskScheduler.Default
             );
         }
-        
-        /// <inheritdoc />
+        /// <inheritdoc cref="System.Data.Common.DbBatch.CreateDbBatchCommand"/>
         protected override DbBatchCommand CreateDbBatchCommand()
         {
             return new SqlBatchCommand();
         }
-
         private void CheckDisposed()
         {
             if (_batchCommand is null)
@@ -221,7 +216,6 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ObjectDisposed(this);
             }
         }
-
         private void SetupBatchCommandExecute()
         {
             SqlConnection connection = Connection;

@@ -52,9 +52,6 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
         </format>
       </remarks>
     </ctor2>
-    <Timeout>
-      <inheritdoc cref="P:System.Data.Common.DbBatch.Timeout"/>
-    </Timeout>
     <Connection>
       <summary>
         Gets or sets the
@@ -94,39 +91,6 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
         </format>
       </remarks>
     </BatchCommands>
-    <DbBatchCommands>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.DbBatchCommands"/>      
-    </DbBatchCommands>
-    <DbConnection>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.DbConnection"/>         
-    </DbConnection>
-    <DbTransaction>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.DbTransaction"/>               
-    </DbTransaction>
-    <Cancel>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatch.Cancel"/>       
-    </Cancel>
-    <ExecuteNonQuery>
-      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery"/>       
-    </ExecuteNonQuery>
-    <ExecuteNonQueryAsync>
-      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQueryAsync"/>          
-    </ExecuteNonQueryAsync>
-    <ExecuteScalar>
-      <inheritdoc cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteScalar"/>       
-    </ExecuteScalar>
-    <ExecuteScalarAsync>
-      <inheritdoc cref="M:System.Data.Common.DbBatch.ExecuteScalarAsync"/>       
-    </ExecuteScalarAsync>
-    <Prepare>
-      <inheritdoc cref="M:System.Data.Common.DbBatch.Prepare"/>       
-    </Prepare>
-    <PrepareAsync>
-      <inheritdoc cref="M:System.Data.Common.DbBatch.PrepareAsync"/>       
-    </PrepareAsync>
-    <ExecuteDbDataReader>
-      <inheritdoc cref="M:System.Data.Common.DbBatch.ExecuteDbDataReader"/>       
-    </ExecuteDbDataReader>       
     <Commands>
       <summary>
         The list of commands contained in the batch in a 
@@ -177,8 +141,5 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
         </format>
       </remarks>
     </ExecuteReaderAsync>
-    <CreateDbBatchCommand>
-      <inheritdoc/>       
-    </CreateDbBatchCommand>
   </members>
 </docs>
