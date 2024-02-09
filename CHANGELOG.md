@@ -4,6 +4,72 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+
+## [Stable release 5.1.5] - 2024-01-29
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed connection to unsubscribe from transaction completion events before returning it to the connection pool [#2321](https://github.com/dotnet/SqlClient/pull/2321)
+- Fixed InvalidCastException when reading an Always Encrypted date or time column [#2324](https://github.com/dotnet/SqlClient/pull/2324)
+
+### Changed
+
+- Changed Microsoft.IdentityModel.JsonWebTokens and Microsoft.IdentityModel.Protocols.OpenIdConnect version 6.24.0 to 6.35.0 [#2320](https://github.com/dotnet/SqlClient/pull/2320) to address [CVE-2024-21319](https://www.cve.org/CVERecord?id=CVE-2024-21319)
+
+## [Stable release 5.1.4] - 2024-01-09
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed a deadlock problem for distributed transactions when on .NET.
+
+### Changed
+
+- Upgraded `Azure.Identity` dependency version to [1.10.3](https://www.nuget.org/packages/Azure.Identity/1.10.3) to address [CVE-2023-36414](https://github.com/advisories/GHSA-5mfx-4wcx-rv27).
+
+## [Stable release 5.1.3] - 2024-01-09
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed encryption downgrade issue. [CVE-2024-0056](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-0056)
+- Fixed certificate chain validation logic flow.
+
+## [Stable release 5.1.2] - 2023-10-26
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed access violation when using SQL Express user instance. [#2101](https://github.com/dotnet/SqlClient/pull/2101)
+- Fixed Always Encrypted secure enclave retry logic for async queries. [#1988](https://github.com/dotnet/SqlClient/pull/1988)
+- Fixed LocalDb and managed SNI by improving the error messages and avoid falling back to the local service. [#2129](https://github.com/dotnet/SqlClient/pull/2129)
+- Fixed .NET and .NET Standard file version. [2093](https://github.com/dotnet/SqlClient/pull/2093)
+- Fixed non-string values and `SqlConnectionStringBuilder` property indexer issue. [#2018](https://github.com/dotnet/SqlClient/pull/2018)
+- Fixed `SqlConnectionEncryptOption` type conversion by introducing the `SqlConnectionEncryptOptionConverter` attribute when using **appsettings.json** files. [#2057](https://github.com/dotnet/SqlClient/pull/2057)
+- Fixed Transient fault handling issue with `OpenAsync`. [#1983](https://github.com/dotnet/SqlClient/pull/1983)
+- Fixed activity correlator to continue use of same GUID for connection activity. [#1997](https://github.com/dotnet/SqlClient/pull/1997)
+
+### Changed
+
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.1.1`. [#2123](https://github.com/dotnet/SqlClient/pull/2123)
+
+## [Stable release 5.1.1] - 2023-03-28
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed an incorrect exception when a symmetric key fails to decrypt a column using Always Encrypted. [#1968](https://github.com/dotnet/SqlClient/pull/1968)
+- Fixed `TransactionScope` connection issue when `Enlist` is `enabled`, `Pooling` is `disabled`, and `Network Connection Type` is set to `Redirect`. [#1967](https://github.com/dotnet/SqlClient/pull/1967)
+- Fixed throttling of token requests by calling `AcquireTokenSilent`. [#1966](https://github.com/dotnet/SqlClient/pull/1966)
+- Fixed TDS RPC error on large queries in `SqlCommand.ExecuteReaderAsync`. [#1965](https://github.com/dotnet/SqlClient/pull/1965)
+- Fixed `NullReferenceException` in `GetBytesAsync`. [#1964](https://github.com/dotnet/SqlClient/pull/1964)
+
 ## [Stable release 5.1.0] - 2023-01-19
 
 This update brings the below changes over the previous release:
