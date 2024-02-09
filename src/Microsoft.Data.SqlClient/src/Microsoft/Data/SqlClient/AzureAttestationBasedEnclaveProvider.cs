@@ -397,7 +397,7 @@ namespace Microsoft.Data.SqlClient
                     RequireExpirationTime = true,
                     ValidateLifetime = true,
                     ValidateIssuer = true,
-                    ValidateAudience = false,
+                    ValidateAudience = true,
                     RequireSignedTokens = true,
                     ValidIssuers = GenerateListOfIssuers(tokenIssuerUrl),
                     IssuerSigningKeys = issuerSigningKeys
