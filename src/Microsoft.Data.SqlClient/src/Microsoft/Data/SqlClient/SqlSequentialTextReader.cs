@@ -404,11 +404,12 @@ namespace Microsoft.Data.SqlClient
             if ((!completed) && (bytesUsed < inBufferCount))
             {
                 bool isLeftOverBufferSameAsInBuffer = _leftOverBytes == inBuffer;
-                ArrayPool<byte>.Shared.Return(_leftOverBytes);
+                if (_leftOverBytes != null)
+                    ArrayPool<byte>.Shared.Return(_leftOverBytes);
                 _leftOverBytes = ArrayPool<byte>.Shared.Rent(inBufferCount - bytesUsed);
                 Buffer.BlockCopy(inBuffer, bytesUsed, _leftOverBytes, 0, _leftOverBytes.Length);
 
-                if (!isLeftOverBufferSameAsInBuffer)
+                if (!isLeftOverBufferSameAsInBuffer && inBuffer.Length > 0)
                     ArrayPool<byte>.Shared.Return(inBuffer);
             }
             else
@@ -416,7 +417,8 @@ namespace Microsoft.Data.SqlClient
                 // If Convert() sets completed to true, then it must have used all of the bytes we gave it
                 Debug.Assert(bytesUsed >= inBufferCount, "Converted completed, but not all bytes were used");
                 _leftOverBytes = null;
-                ArrayPool<byte>.Shared.Return(inBuffer);
+                if (inBuffer.Length > 0)
+                    ArrayPool<byte>.Shared.Return(inBuffer);
             }
 
             Debug.Assert(((_reader == null) || (_reader.ColumnDataBytesRemaining() > 0) || (!completed) || (_leftOverBytes == null)), "Stream has run out of data and the decoder finished, but there are leftover bytes");
