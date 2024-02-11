@@ -394,13 +394,22 @@ namespace Microsoft.Data.SqlClient
             TokenValidationParameters validationParameters =
                 new TokenValidationParameters
                 {
+                    // The signing key must match!
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKeys = issuerSigningKeys,
+
+                    // Validate the JWT Issuer (iss) claim
+                    ValidateIssuer = true,
+                    ValidIssuers = GenerateListOfIssuers(tokenIssuerUrl),
+
+                    // Validate the JWT Audience (aud) claim
+                    ValidateAudience = true,
+
+                    // Validate the token expiry
                     RequireExpirationTime = true,
                     ValidateLifetime = true,
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    RequireSignedTokens = true,
-                    ValidIssuers = GenerateListOfIssuers(tokenIssuerUrl),
-                    IssuerSigningKeys = issuerSigningKeys
+                    
+                    RequireSignedTokens = true                    
                 };
 
             try
