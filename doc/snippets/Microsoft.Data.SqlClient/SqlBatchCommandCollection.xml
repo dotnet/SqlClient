@@ -33,8 +33,8 @@
         The object to add to the <see cref="T:System.Collections.Generic.ICollection`1" />.
       </param>
       <summary>
-        Adds the specified <see cref="T:System.Data.Common.DbBatchCommand" /> object to the <see cref="T:System.Data.Common.DbBatchCommandCollection" />.
-      </summary>
+        Adds the specified <see cref="T:System.Data.Common.DbBatchCommand" /> object to the <see cref="T:System.Collections.Generic.ICollection`1" />.
+    </summary>
       <remarks>To be added.</remarks>      
     </Add2>
     <Contains1>
@@ -160,8 +160,8 @@
         Removes the specified <see cref="T:System.Data.Common.DbBatchCommand" /> object from the collection.
       </summary>
       <returns>
-        <see langword="true" /> if <paramref name="item" /> was successfully removed; otherwise, <see langword="false" />. This method also returns <see langword="false" /> if <paramref name="item" /> was not found in the <see cref="T:System.Data.Common.DbBatchCommandCollection" />.
-      </returns>
+        <see langword="true" /> if <paramref name="item" /> was successfully removed; otherwise, <see langword="false" />. This method also returns <see langword="false" /> if <paramref name="item" /> was not found in the <see cref="T:System.Collections.Generic.ICollection`1" />.
+    </returns>
       <remarks>To be added.</remarks>      
     </Remove2>
     <this1>
