@@ -110,8 +110,9 @@ namespace Microsoft.Data.SqlClient
         public override bool Remove(System.Data.Common.DbBatchCommand item) => throw null;
         /// <inheritdoc />
         public override void RemoveAt(int index) => throw null;
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/this1/*'/>
         Microsoft.Data.SqlClient.SqlBatchCommand System.Collections.Generic.IList<SqlBatchCommand>.this[int index] { get => throw null; set { } }
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/this/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/this2/*'/>
         public new Microsoft.Data.SqlClient.SqlBatchCommand this[int index] { get => throw null; set { } }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => throw null;
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/GetBatchCommand/*'/>
