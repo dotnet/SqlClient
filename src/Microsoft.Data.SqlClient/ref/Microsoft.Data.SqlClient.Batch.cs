@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient
         public override System.Collections.Generic.IEnumerator<System.Data.Common.DbBatchCommand> GetEnumerator() => throw null;
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Add1/*'/>
         public void Add(Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
-        /// <inheritdoc cref="System.Data.Common.DbBatchCommandCollection.Add(System.Data.Common.DbBatchCommand)"/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Add2/*'/>
         public override void Add(System.Data.Common.DbBatchCommand item) => throw null;
         /// <inheritdoc />
         public override void Clear() => throw null;
@@ -94,11 +94,11 @@ namespace Microsoft.Data.SqlClient
         public override bool Contains(System.Data.Common.DbBatchCommand item) => throw null;
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/CopyTo1/*'/>
         public void CopyTo(Microsoft.Data.SqlClient.SqlBatchCommand[] array, int arrayIndex) => throw null;
-        /// <inheritdoc cref="System.Data.Common.DbBatchCommandCollection.CopyTo(System.Data.Common.DbBatchCommand[], int)"/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/CopyTo2/*'/>
         public override void CopyTo(System.Data.Common.DbBatchCommand[] array, int arrayIndex) => throw null;
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/IndexOf1/*'/>
         public int IndexOf(Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
-        /// <inheritdoc cref="System.Data.Common.DbBatchCommandCollection.IndexOf(System.Data.Common.DbBatchCommand)"/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/IndexOf2/*'/>
         public override int IndexOf(System.Data.Common.DbBatchCommand item) => throw null;
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Insert1/*'/>
         public void Insert(int index, Microsoft.Data.SqlClient.SqlBatchCommand item) => throw null;
