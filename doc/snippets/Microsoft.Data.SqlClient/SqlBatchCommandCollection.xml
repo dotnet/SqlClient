@@ -101,7 +101,7 @@
         </format>
       </remarks>
     </IndexOf1>
-    <indexOf2>
+    <IndexOf2>
       <param name="item">
         The object to locate in the <see cref="T:System.Collections.Generic.IList`1" />.
       </param>
@@ -112,7 +112,7 @@
         The index of the specified <see cref="T:System.Data.Common.DbBatchCommand" /> object.
       </returns>
       <remarks>To be added.</remarks>      
-    </indexOf2>    
+    </IndexOf2>    
     <Insert1>
       <summary>
         Inserts an item into the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> at the specified index.
@@ -125,7 +125,7 @@
         </format>
       </remarks>
     </Insert1>
-    <insert2>
+    <Insert2>
       <param name="index">
         The index at which to insert the <see cref="T:System.Data.Common.DbBatchCommand" /> object.
       </param>
@@ -136,7 +136,7 @@
         Inserts the specified index of the <see cref="T:System.Data.Common.DbBatchCommand" /> object with the specified name into the collection at the specified index.
       </summary>
       <remarks>To be added.</remarks>      
-    </insert2>
+    </Insert2>
     <Remove1>
       <summary>
         Removes the first occurence of the specific item from the
