@@ -11,8 +11,8 @@ namespace Microsoft.Data.SqlClient
         public SqlBatch() { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ctor2/*'/>
         public SqlBatch(Microsoft.Data.SqlClient.SqlConnection connection, Microsoft.Data.SqlClient.SqlTransaction transaction = null) { throw null; }
-        /// <inheritdoc cref="System.Data.Common.DbBatch.Timeout"/>
-        public override int Timeout { get => throw null; set { } }
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Timeout/*'/>
+        public override int Timeout { get => throw null; set { } }               
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Connection/*'/>
         public new Microsoft.Data.SqlClient.SqlConnection Connection { get => throw null; set { } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Transaction/*'/>
@@ -29,19 +29,19 @@ namespace Microsoft.Data.SqlClient
         public override void Cancel() => throw null;
         /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteNonQuery"/>
         public override int ExecuteNonQuery() => throw null;
-        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteNonQueryAsync(System.Threading.CancellationToken)"/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteNonQueryAsync/*'/>
         public override System.Threading.Tasks.Task<int> ExecuteNonQueryAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
         /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteScalar"/>
         public override object ExecuteScalar() => throw null;
-        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteScalarAsync(System.Threading.CancellationToken)"/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteScalarAsync/*'/>
         public override System.Threading.Tasks.Task<object> ExecuteScalarAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
         /// <inheritdoc cref="System.Data.Common.DbBatch.Prepare"/>
         public override void Prepare() => throw null;
-        /// <inheritdoc cref="System.Data.Common.DbBatch.PrepareAsync(System.Threading.CancellationToken)"/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/PrepareAsync/*'/>
         public override System.Threading.Tasks.Task PrepareAsync(System.Threading.CancellationToken cancellationToken = default) => throw null;
-        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)"/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReader/*'/>
         protected override System.Data.Common.DbDataReader ExecuteDbDataReader(System.Data.CommandBehavior behavior) => throw null;
-        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteDbDataReaderAsync(System.Data.CommandBehavior, System.Threading.CancellationToken)"/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReaderAsync/*'/>
         protected override System.Threading.Tasks.Task<System.Data.Common.DbDataReader> ExecuteDbDataReaderAsync(System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken) => throw null;
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Commands/*'/>
         public System.Collections.Generic.List<Microsoft.Data.SqlClient.SqlBatchCommand> Commands { get { throw null; } }
