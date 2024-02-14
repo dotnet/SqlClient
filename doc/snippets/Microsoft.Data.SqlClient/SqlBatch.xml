@@ -144,16 +144,6 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
     <Timeout>
       <summary>Gets or sets the wait time (in seconds) before terminating the attempt to execute the batch and generating an error.</summary>
       <value>The time in seconds to wait for the batch to execute.</value>
-      <remarks>
-        <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
-An <xref:System.ArgumentException> is generated if the assigned <xref:System.Data.Common.DbBatch.Timeout%2A> property value is less than 0.  
-  
-Note to implementers: it's recommended that 0 mean no timeout.  
-  
-]]></format>
-      </remarks>
     </Timeout>
     <ExecuteNonQueryAsync>
       <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
@@ -166,7 +156,7 @@ Do not invoke other methods and properties of the <see langword="DbCommand" /> o
     </ExecuteNonQueryAsync>
     <ExecuteScalarAsync>
       <param name="cancellationToken">To be added.</param>
-      <summary>An asynchronous version of <see cref="System.Data.Common.DbBatch.ExecuteReader" />, which executes the batch against its connection, returning a <see cref="T:System.Data.Common.DbDataReader" /> which can be used to access the results.</summary>
+      <summary>An asynchronous version, which executes the batch against its connection, returning a <see cref="T:System.Data.Common.DbDataReader" /> which can be used to access the results.</summary>
       <returns>A task representing the asynchronous operation.</returns>
     </ExecuteScalarAsync>
     <PrepareAsync>
@@ -183,10 +173,11 @@ Do not invoke other methods and properties of the <see langword="DbCommand" /> o
     <ExecuteDbDataReaderAsync>
         <param name="behavior">One of the enumeration values that specifies options for batch execution and data retrieval.</param>
         <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
-        <summary>Providers should implement this method to provide a non-default implementation for <see cref="System.Data.IDbCommand.ExecuteReader()"/> overloads.  
+        <summary>Providers should implement this method to provide a non-default implementation.  
   
- The default implementation invokes the synchronous <see cref="M:System.Data.IDbCommand.ExecuteReader()"/> 
- method and returns a completed task, blocking the calling thread. The default implementation will return a cancelled task if passed an already cancelled cancellation token. Exceptions thrown by ExecuteReader will be communicated via the returned Task Exception property.  
+ The default implementation invokes the synchronous method and returns a completed task, blocking the calling thread. 
+ The default implementation will return a cancelled task if passed an already cancelled cancellation token. 
+ Exceptions thrown by ExecuteReader will be communicated via the returned Task Exception property.  
   
  This method accepts a cancellation token that can be used to request the operation to be cancelled early. Implementations may ignore this request.</summary>
         <returns>A task representing the asynchronous operation.</returns>    
