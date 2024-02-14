@@ -125,14 +125,14 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
     <ExecuteReaderAsync>
       <summary>
         An asynchronous version of
-        <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteReader" />
+        <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteReader"/>
         , which sends the
-        <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Commands" />
+        <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Commands"/>
         to the
-        <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Connection" />
+        <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Connection"/>
         and builds a
-        <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />
-        . Exceptions will be reported via the returned Task object.
+        <see cref="T:Microsoft.Data.SqlClient.SqlDataReader"/>.
+        Exceptions will be reported via the returned Task object.
       </summary>
       <remarks>
         <format type="text/markdown">
