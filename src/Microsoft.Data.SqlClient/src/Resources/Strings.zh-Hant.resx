@@ -4465,7 +4465,7 @@
     <value>執行逾時到期。在作業完成之前超過逾時等待的時間，或是伺服器未回應。</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>驗證證明權杖失敗。該權杖簽章與使用從位於 '{0}' 的證明公開金鑰端點擷取而來之公開金鑰計算所得的簽章不符。請驗證該端點的 DNS 對應 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2157649 尋求 詳細 資訊。若其正確，請連絡客戶支援服務。</value>
+    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>初始要求失敗後，重試下載 HGS 根憑證的下載時發生內部錯誤。請連絡客戶支援服務。</value>

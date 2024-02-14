@@ -4465,7 +4465,7 @@
     <value>実行タイムアウトの期限が切れました。操作完了前にタイムアウト期間が過ぎたか、サーバーが応答していません。</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>構成証明トークンの検証に失敗しました。トークンの署名が、'{0}' の構成証明の公開キー エンドポイントから取得した公開キーを使用して計算された署名と一致しません。エンドポイントの DNS マッピングをご確認ください。詳細については、https://go.microsoft.com/fwlink/?linkid=2157649 を参照してください。適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>最初の要求が失敗した後に、HGS ルート証明書のダウンロードを再試行しているときに内部エラーが発生しました。カスタマー サポート サービスにお問い合わせください。</value>

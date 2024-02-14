@@ -4465,7 +4465,7 @@
     <value>Время ожидания выполнения истекло. Время ожидания истекло до завершения операции, или сервер не отвечает.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>Проверка токена аттестации не пройдена. Подпись токена не соответствует подписи, вычисленной на базе открытого ключа, полученного от конечной точки открытых ключей аттестации по адресу "{0}". Проверьте сопоставление DNS для конечной точки — см. https://go.microsoft.com/fwlink/?linkid=2157649 для получения дополнительных сведений. Если оно верно, обратитесь в службу поддержки пользователей.</value>
+    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Произошла внутренняя ошибка при повторной попытке скачивания корневого сертификата HGS после сбоя начального запроса. Обратитесь в службу поддержки пользователей.</value>
