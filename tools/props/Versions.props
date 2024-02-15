@@ -51,7 +51,7 @@
   <!-- NetStandard project dependencies -->
   <PropertyGroup>
     <SystemRuntimeLoaderVersion>4.3.0</SystemRuntimeLoaderVersion>
-    <SystemDiagnosticsDiagnosticSourceVersion>7.0.2</SystemDiagnosticsDiagnosticSourceVersion>
+    <SystemDiagnosticsDiagnosticSourceVersion>6.0.1</SystemDiagnosticsDiagnosticSourceVersion>
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
@@ -79,7 +79,7 @@
     <MicrosoftSqlServerTypesVersionNet>160.1000.6</MicrosoftSqlServerTypesVersionNet>
     <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
-    <MicrosoftExtensionsHosting>7.0.1</MicrosoftExtensionsHosting>
+    <MicrosoftExtensionsHosting>6.0.1</MicrosoftExtensionsHosting>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>

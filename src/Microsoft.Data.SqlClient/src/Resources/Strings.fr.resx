@@ -4465,7 +4465,7 @@
     <value>Le délai d'exécution a expiré. Le délai d'attente s'est écoulé avant la fin de l'opération ou le serveur ne répond pas.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>La validation d'un jeton d'attestation a échoué. La signature du jeton ne correspond pas à la signature calculée à l'aide d'une clé publique récupérée sur le point de terminaison de clé publique d'attestation dans « {0} ». Vérifiez le mappage DNS pour le point de terminaison - consultez https://go.microsoft.com/fwlink/?linkid=2157649 pour plus d’informations. S'il est correct, contactez le service client.</value>
+    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Une erreur interne s'est produite pendant la nouvelle tentative de téléchargement du certificat racine SGH après l'échec de la demande initiale. Contactez le service client.</value>

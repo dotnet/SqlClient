@@ -4465,7 +4465,7 @@
     <value>Se agotó el tiempo de espera de ejecución. El período de tiempo de espera transcurrió antes de la finalización de la operación o el servidor no responde.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>Error en la validación de un token de atestación. La firma del token no coincide con la firma calculada mediante una clave pública recuperada del punto de conexión de clave pública de atestación en "{0}". Compruebe la asignación de DNS del punto de conexión. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Se ha producido un error interno al reintentar la descarga del certificado raíz de HGS después de un error en la solicitud inicial. Póngase en contacto con el servicio de atención al cliente.</value>

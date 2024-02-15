@@ -4465,7 +4465,7 @@
     <value>Das Ausführungstimeout ist abgelaufen. Der Timeoutzeitraum wurde überschritten, bevor der Vorgang beendet wurde, oder der Server antwortet nicht.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>Fehler bei der Überprüfung eines Nachweistokens. Die Tokensignatur stimmt nicht mit der Signatur überein, die anhand eines öffentlichen Schlüssels berechnet wurde, der vom Endpunkt für öffentliche Nachweisschlüssel unter „{0}“ abgerufen wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn diese korrekt ist, wenden Sie sich an den Kundensupport.</value>
+    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Interner Fehler beim erneuten Download des HGS-Stammzertifikats, nachdem bei der ersten Anforderung ein Fehler aufgetreten ist. Wenden Sie sich an den Kundensupport.</value>
