@@ -140,7 +140,7 @@ catch (Exception ex) {
             <altmember cref="T:Microsoft.Data.SqlClient.SqlError" />
         </Errors>
         <GetObjectData>
-            <inheritdoc cref="System.Exception.GetObjectData" />
+          <inheritdoc cref="System.Exception.GetObjectData" />
         </GetObjectData>
         <LineNumber>
             <summary>Gets the line number within the Transact-SQL command batch or stored procedure that generated the error.</summary>
