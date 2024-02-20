@@ -4465,7 +4465,7 @@
     <value>실행 제한 시간을 초과했습니다. 작업이 완료되기 전에 실행 제한 시간이 지났거나 서버가 응답하지 않습니다.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰 서명이 '{0}'의 증명 공개 키 엔드포인트에서 검색된 공개 키를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 을 확인 하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
+    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>초기 요청이 실패한 후 HGS 루트 인증서 다운로드를 다시 시도하는 동안 내부 오류가 발생했습니다. 고객 지원 서비스에 문의하세요.</value>
