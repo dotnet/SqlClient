@@ -4,7 +4,7 @@
 
   <!-- Import parent Directory.build.props -->
   <Import Project="..\..\Directory.Build.props" />
-  
+
   <PropertyGroup>
     <OSGroup Condition="$(OSGroup) == ''">$(OS)</OSGroup>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
