@@ -4,8 +4,7 @@
 
   <!-- Import parent Directory.build.props -->
   <Import Project="..\..\Directory.Build.props" />
-  <Import Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" Project="$(ToolsDir)props\VersionsNet8OrLater.props" />
-  
+    
   <PropertyGroup>
     <OSGroup Condition="$(OSGroup) == ''">$(OS)</OSGroup>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
