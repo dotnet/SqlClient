@@ -46,11 +46,11 @@ namespace Microsoft.Data.SqlClient
                 _batchCommand.CommandTimeout = value;
             }
         }
-        /// <inheritdoc cref="System.Data.Common.DbBatch.DbBatchCommands"/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbBatchCommands/*'/>
         protected override DbBatchCommandCollection DbBatchCommands => BatchCommands;
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/BatchCommands/*'/>
         public new SqlBatchCommandCollection BatchCommands => _providerCommands != null ? _providerCommands : _providerCommands = new SqlBatchCommandCollection(Commands); // Commands call will check disposed
-        /// <inheritdoc cref="System.Data.Common.DbBatch.DbConnection"/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbConnection/*'/>
         protected override DbConnection DbConnection
         {
             get
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
                 Connection = (SqlConnection)value;
             }
         }
-        /// <inheritdoc cref="System.Data.Common.DbBatch.DbTransaction"/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbTransaction/*'/>
         protected override DbTransaction DbTransaction
         {
             get
@@ -78,13 +78,13 @@ namespace Microsoft.Data.SqlClient
                 Transaction = (SqlTransaction)value;
             }
         }
-        /// <inheritdoc cref="System.Data.Common.DbBatch.Cancel"/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Cancel/*'/>
         public override void Cancel()
         {
             CheckDisposed();
             _batchCommand.Cancel();
         }
-        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteNonQuery"/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteNonQuery/*'/>
         public override int ExecuteNonQuery()
         {
             CheckDisposed();
@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteNonQueryAsync(cancellationToken);
         }
-        /// <inheritdoc cref="System.Data.Common.DbBatch.ExecuteScalar"/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteScalar/*'/>
         public override object ExecuteScalar()
         {
             CheckDisposed();
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteScalarBatchAsync(cancellationToken);
         }
-        /// <inheritdoc cref="System.Data.Common.DbBatch.Prepare"/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Prepare/*'/>
         public override void Prepare()
         {
             CheckDisposed();
@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient
             CheckDisposed();
             return Task.CompletedTask;
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Dispose/*'/>
         public override void Dispose()
         {
             _batchCommand?.Dispose();
@@ -204,7 +204,7 @@ namespace Microsoft.Data.SqlClient
                 TaskScheduler.Default
             );
         }               
-        /// <inheritdoc cref="System.Data.Common.DbBatch.CreateDbBatchCommand"/>        
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/CreateDbBatchCommand/*'/>
         protected override DbBatchCommand CreateDbBatchCommand()
         {
             return new SqlBatchCommand();
