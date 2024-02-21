@@ -17,18 +17,18 @@ namespace Microsoft.Data.SqlClient
         {
             _list = batchCommands;
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Count/*'/>
         public override int Count => _list.Count;
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/IsReadOnly/*'/>
         public override bool IsReadOnly => false;
         IEnumerator<SqlBatchCommand> IEnumerable<SqlBatchCommand>.GetEnumerator() => _list.GetEnumerator();
-        /// <inheritdoc cref="System.Data.Common.DbBatchCommandCollection.GetEnumerator"/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/GetEnumerator/*'/>
         public override IEnumerator<DbBatchCommand> GetEnumerator() => _list.GetEnumerator();
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Add1/*'/>
         public void Add(SqlBatchCommand item) => _list.Add(item);
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Add2/*'/>
         public override void Add(DbBatchCommand item) => Add((SqlBatchCommand)item);
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Clear/*'/>
         public override void Clear() => _list.Clear();
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Contains1/*'/>
         public bool Contains(SqlBatchCommand item) => _list.Contains(item);
@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient
         public bool Remove(SqlBatchCommand item) => _list.Remove(item);
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Remove2/*'/>
         public override bool Remove(DbBatchCommand item) => Remove((SqlBatchCommand)item);
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/RemoveAt/*'/>
         public override void RemoveAt(int index) => _list.RemoveAt(index);
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/this1/*'/>
         SqlBatchCommand IList<SqlBatchCommand>.this[int index]

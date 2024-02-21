@@ -187,7 +187,15 @@
       </remarks>
     </this2>
     <GetBatchCommand>
-      <summary>To be added.</summary>
+      <param name="index">
+        The index where the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object is located.
+      </param>
+      <summary>
+        Returns the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object at the specified index in the list.
+      </summary>
+      <returns>
+        The <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object at the specified index in the list.
+      </returns>
     </GetBatchCommand>
     <SetBatchCommand>
       <param name="index">
@@ -199,5 +207,20 @@
       </summary>
       <remarks>To be added.</remarks>
     </SetBatchCommand>
+    <Count>
+      <inheritdoc cref="System.Data.Common.DbBatchCommandCollection.Count"/>
+    </Count>
+    <IsReadOnly>
+      <inheritdoc cref="System.Data.Common.DbBatchCommandCollection.IsReadOnly"/>
+    </IsReadOnly>
+    <GetEnumerator>
+      <inheritdoc cref="System.Data.Common.DbBatchCommandCollection.GetEnumerator"/>
+    </GetEnumerator>
+    <Clear>
+      <inheritdoc cref="System.Data.Common.DbBatchCommandCollection.Clear"/>
+    </Clear>
+    <RemoveAt>
+      <inheritdoc cref="System.Data.Common.DbBatchCommandCollection.RemoveAt"/>
+    </RemoveAt>
   </members>
 </docs>
