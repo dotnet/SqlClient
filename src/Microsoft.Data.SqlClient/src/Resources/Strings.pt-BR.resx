@@ -4465,7 +4465,7 @@
     <value>Tempo Limite de Execução Expirado.  O período de tempo limite terminou antes da conclusão da operação ou o servidor não está respondendo.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>A validação de um token de atestado falhou. A assinatura do token não corresponde à assinatura computada usando uma chave pública recuperada do ponto de extremidade da chave pública de atestado em'{0}'. Verifique o aplicativo DNS para o ponto de extremidade - consulte https://go.microsoft.com/fwlink/?linkid=2157649 para mais detalhes. Se estiver correto, entre em contato com os Serviços de Suporte ao Cliente.</value>
+    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Ocorreu um erro interno ao repetir o download do certificado raiz HGS após a falha da solicitação inicial. Entre em contato com os Serviços de Atendimento ao Cliente.</value>

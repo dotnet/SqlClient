@@ -4465,7 +4465,7 @@
     <value>执行超时已过期。完成操作之前已超时或服务器未响应。 </value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>无法验证证明令牌。令牌签名与使用从“{0}”处的证明公钥终结点检索的公钥计算的签名不匹配。请验证终结点的 DNS 映射 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2157649 。</value>
+    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>初始请求失败后，重试下载 HGS 根证书时出现内部错误。请联系客户支持服务。</value>
