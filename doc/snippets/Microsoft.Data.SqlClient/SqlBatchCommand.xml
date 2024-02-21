@@ -3,7 +3,7 @@
   <members name="SqlBatchCommand">
     <SqlBatchCommand>
       <summary>
-      SqlBatchCommand allows for the execution of multiple SQL commands in a SqlBatch. 
+        SqlBatchCommand allows for the execution of multiple SQL commands in a SqlBatch. 
       </summary>	
     </SqlBatchCommand>
     <ctor1>
@@ -74,16 +74,21 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </summary>
     </CanCreateParameter>
     <CommandText>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.CommandText"/>
+      <inheritdoc cref="Microsoft.Data.SqlClient.SqlCommand.CommandText"/>
     </CommandText>
     <CommandType>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.CommandType" />
+      <inheritdoc cref="Microsoft.Data.SqlClient.SqlCommand.CommandType"/>
     </CommandType>
     <DbParameterCollection>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.DbParameterCollection" />
+      <inheritdoc cref="Microsoft.Data.SqlClient.SqlCommand.DbParameterCollection"/>
     </DbParameterCollection>
     <RecordsAffected>
-      <inheritdoc cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.RecordsAffected" />
+      <summary>
+        Gets the number of rows changed, inserted, or deleted by execution of this specific <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.
+      </summary>
+      <value>
+        The number of rows changed, inserted, or deleted. -1 for SELECT statements; 0 if no rows were affected or the statement failed.
+      </value>
     </RecordsAffected>
   </members>
 </docs>
