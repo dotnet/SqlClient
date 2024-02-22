@@ -9,7 +9,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <inheritdoc />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/SqlBatchCommand/*'/>
     public partial class SqlBatchCommand
 #if NET6_0_OR_GREATER
      : DbBatchCommand
@@ -68,35 +68,37 @@ namespace Microsoft.Data.SqlClient
             _parameters = parameterCollection;
         }
 
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandText/*'/>   
         public
 #if NET6_0_OR_GREATER
         override 
 #endif
         string CommandText { get => _text; set => _text = value; }
 
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandType/*'/>  
         public
 #if NET6_0_OR_GREATER
         override 
 #endif
         CommandType CommandType { get => _type; set => SetCommandType(value); }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandBehavior/*'/>
         public CommandBehavior CommandBehavior { get => _behavior; set => _behavior = value; }
 
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/RecordsAffected/*'/>
         public
 #if NET6_0_OR_GREATER
         override 
 #endif
         int RecordsAffected { get => _recordsAffected; }
 
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/DbParameterCollection/*'/>
         protected
 #if NET6_0_OR_GREATER
         override 
 #endif
         DbParameterCollection DbParameterCollection => Parameters;
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/Parameters/*'/>
         public
 #if NET6_0_OR_GREATER
@@ -117,6 +119,7 @@ namespace Microsoft.Data.SqlClient
                 _parameters = value;
             }
         }
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/ColumnEncryptionSetting/*'/>
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting { get => _encryptionSetting; set => _encryptionSetting = value; }
 
