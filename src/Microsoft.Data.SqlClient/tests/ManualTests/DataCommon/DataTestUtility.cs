@@ -95,10 +95,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string s_sQLServerVersion = string.Empty;
         private static bool s_isTDS8Supported;
 
-        //SQL Server EnginEdition
-        private static string s_sqlServerEndinEdition;
+        //SQL Server EngineEdition
+        private static string s_sqlServerEngineEdition;
 
-        // Azure Synapse EnginEditionId == 6
+        // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
         public static bool IsAzureSynapse
         {
@@ -106,10 +106,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sqlServerEndinEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
+                    s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
                 }
-                _ = int.TryParse(s_sqlServerEndinEdition, out int enginEditon);
-                return enginEditon == 6;
+                _ = int.TryParse(s_sqlServerEngineEdition, out int engineEditon);
+                return engineEditon == 6;
             }
         }
 
