@@ -94,8 +94,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnectionStringBuilder builder = new(connectionString);
 
             int port = GetNamedInstancePortNumberFromSqlBrowser(connectionString);
-            if (port > 0)
-                builder.DataSource = $"{builder.DataSource},{port}";
+            Assert.True(port > 0, "Named instance must have a valid port number.");
+            builder.DataSource = $"{builder.DataSource},{port}";
 
             PortNumberInSPNTest(builder.ConnectionString, port);
         }
