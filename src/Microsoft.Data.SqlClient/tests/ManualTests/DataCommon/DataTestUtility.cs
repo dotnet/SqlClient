@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
         public static readonly bool UseManagedSNIOnWindows = false;
-        public static readonly bool IsAzureSynapse = false;
+
         public static Uri AKVBaseUri = null;
         public static readonly string PowerShellPath = null;
         public static string FileStreamDirectory = null;
@@ -92,8 +92,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         internal static readonly string KerberosDomainPassword = null;
 
         // SQL server Version
-        private static string s_sQLServerVersion = string.Empty;
+        private static string s_sQLServerVersion;
         private static bool s_isTDS8Supported;
+
+        //SQL Server EnginEditionId
+        private static string s_sqlServerEndinEditionId;
+
+        private static string SQLServerEnginEditionId()
+        {
+
+            if (!string.IsNullOrEmpty(TCPConnectionString))
+            {
+                s_sqlServerEndinEditionId ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
+            }
+            return s_sqlServerEndinEditionId;
+        }
+        // Azure Synapse EnginEditionId == 6
+        // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
+        public static bool IsAzureSynapse
+        {
+            get
+            {
+                return string.Equals("6", SQLServerEnginEditionId().Trim());
+            }
+        }
 
         public static string SQLServerVersion
         {
@@ -101,7 +123,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sQLServerVersion ??= GetSqlServerVersion(TCPConnectionString);
+                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, "ProductMajorVersion");
                 }
                 return s_sQLServerVersion;
             }
@@ -143,7 +165,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DNSCachingConnString = c.DNSCachingConnString;
             DNSCachingServerCR = c.DNSCachingServerCR;
             DNSCachingServerTR = c.DNSCachingServerTR;
-            IsAzureSynapse = c.IsAzureSynapse;
             IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
@@ -272,19 +293,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
-        public static string GetSqlServerVersion(string connectionString)
+        public static string GetSqlServerProperty(string connectionString, string propertyName)
         {
-            string version = string.Empty;
+            string propertyValue = string.Empty;
             using SqlConnection conn = new(connectionString);
             conn.Open();
             SqlCommand command = conn.CreateCommand();
-            command.CommandText = "SELECT SERVERProperty('ProductMajorVersion')";
+            command.CommandText = $"SELECT SERVERProperty('{propertyName}')";
             SqlDataReader reader = command.ExecuteReader();
             if (reader.Read())
             {
-                version = reader.GetString(0);
+                switch (propertyName)
+                {
+                    case "EngineEdition":
+                        propertyValue = reader.GetInt32(0).ToString();
+                        break;
+                    case "ProductMajorVersion":
+                        propertyValue = reader.GetString(0);
+                        break;
+                }
             }
-            return version;
+            return propertyValue;
         }
 
         public static bool GetSQLServerStatusOnTDS8(string connectionString)
