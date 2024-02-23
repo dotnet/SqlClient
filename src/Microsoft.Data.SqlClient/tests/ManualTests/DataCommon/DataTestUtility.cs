@@ -98,22 +98,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //SQL Server EnginEdition
         private static string s_sqlServerEndinEdition;
 
-        private static string SQLServerEnginEdition()
-        {
-
-            if (!string.IsNullOrEmpty(TCPConnectionString))
-            {
-                s_sqlServerEndinEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
-            }
-            return s_sqlServerEndinEdition;
-        }
         // Azure Synapse EnginEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
         public static bool IsAzureSynapse
         {
             get
             {
-                return string.Equals("6", SQLServerEnginEdition().Trim());
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    s_sqlServerEndinEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
+                }
+                _ = int.TryParse(s_sqlServerEndinEdition, out int enginEditon);
+                return enginEditon == 6;
             }
         }
 
