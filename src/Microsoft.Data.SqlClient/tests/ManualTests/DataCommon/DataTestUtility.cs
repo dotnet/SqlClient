@@ -1004,9 +1004,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             port = -1;
             instanceName = string.Empty;
 
-            if (dataSource.Contains(",") && dataSource.Contains("\\"))
-                return false;
-
             if (dataSource.Contains(":"))
             {
                 dataSource = dataSource.Substring(dataSource.IndexOf(":", StringComparison.Ordinal) + 1);
@@ -1018,7 +1015,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     return false;
                 }
-                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal) - 1);
+                // IndexOf is zero-based, no need to subtract one
+                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal));
             }
 
             if (dataSource.Contains("\\"))
