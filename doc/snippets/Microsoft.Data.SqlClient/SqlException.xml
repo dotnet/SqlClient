@@ -140,7 +140,7 @@ catch (Exception ex) {
             <altmember cref="T:Microsoft.Data.SqlClient.SqlError" />
         </Errors>
         <GetObjectData>
-            <inheritdoc cref="System.Exception.GetObjectData" />
+          <inheritdoc cref="System.Exception.GetObjectData" />
         </GetObjectData>
         <LineNumber>
             <summary>Gets the line number within the Transact-SQL command batch or stored procedure that generated the error.</summary>
@@ -292,6 +292,19 @@ catch (Exception ex) {
           <altmember cref="P:Microsoft.Data.SqlClient.SqlException.Procedure" />
           <altmember cref="P:Microsoft.Data.SqlClient.SqlException.LineNumber" />
         </BatchCommand>
+        <DbBatchCommand>
+            <summary>If this <see cref="T:Microsoft.Data.SqlClient.SqlException" /> was thrown when executing a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, references the specific <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> which triggered the exception.</summary>
+            <value>The specific <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> which triggered the exception.</value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+
+If this <xref:Microsoft.Data.SqlClient.SqlException> wasn't thrown when executing a <xref:Microsoft.Data.SqlClient.SqlBatch>, the value is `null`.
+
+ ]]></format>
+            </remarks>
+        </DbBatchCommand>
         <State>
             <summary>Gets a numeric error code from SQL Server that represents an error, warning or "no data found" message. For more information about how to decode these values, see <see href="/sql/relational-databases/errors-events/database-engine-events-and-errors">Database Engine Events and Errors</see>.</summary>
             <value>The number representing the error code.</value>

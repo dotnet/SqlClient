@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
             Connection = connection;
             Transaction = transaction;
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Timeout/*'/>
         public override int Timeout
         {
             get
@@ -46,11 +46,11 @@ namespace Microsoft.Data.SqlClient
                 _batchCommand.CommandTimeout = value;
             }
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbBatchCommands/*'/>
         protected override DbBatchCommandCollection DbBatchCommands => BatchCommands;
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/BatchCommands/*'/>
         public new SqlBatchCommandCollection BatchCommands => _providerCommands != null ? _providerCommands : _providerCommands = new SqlBatchCommandCollection(Commands); // Commands call will check disposed
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbConnection/*'/>
         protected override DbConnection DbConnection
         {
             get
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
                 Connection = (SqlConnection)value;
             }
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/DbTransaction/*'/>
         protected override DbTransaction DbTransaction
         {
             get
@@ -78,53 +78,52 @@ namespace Microsoft.Data.SqlClient
                 Transaction = (SqlTransaction)value;
             }
         }
-
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Cancel/*'/>
         public override void Cancel()
         {
             CheckDisposed();
             _batchCommand.Cancel();
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteNonQuery/*'/>
         public override int ExecuteNonQuery()
         {
             CheckDisposed();
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteNonQuery();
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteNonQueryAsync/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken = default)
         {
             CheckDisposed();
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteNonQueryAsync(cancellationToken);
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteScalar/*'/>
         public override object ExecuteScalar()
         {
             CheckDisposed();
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteScalar();
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteScalarAsync/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken = default)
         {
             CheckDisposed();
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteScalarBatchAsync(cancellationToken);
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Prepare/*'/>
         public override void Prepare()
         {
             CheckDisposed();
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/PrepareAsync/*'/>
         public override Task PrepareAsync(CancellationToken cancellationToken = default)
         {
             CheckDisposed();
             return Task.CompletedTask;
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/Dispose/*'/>
         public override void Dispose()
         {
             _batchCommand?.Dispose();
@@ -184,9 +183,9 @@ namespace Microsoft.Data.SqlClient
             SetupBatchCommandExecute();
             return _batchCommand.ExecuteReaderAsync(cancellationToken);
         }
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReader/*'/>
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => ExecuteReader();
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ExecuteDbDataReaderAsync/*'/>
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
             CheckDisposed();
@@ -204,8 +203,12 @@ namespace Microsoft.Data.SqlClient
                 TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, 
                 TaskScheduler.Default
             );
+        }               
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/CreateDbBatchCommand/*'/>
+        protected override DbBatchCommand CreateDbBatchCommand()
+        {
+            return new SqlBatchCommand();
         }
-
         private void CheckDisposed()
         {
             if (_batchCommand is null)
@@ -213,7 +216,6 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ObjectDisposed(this);
             }
         }
-
         private void SetupBatchCommandExecute()
         {
             SqlConnection connection = Connection;
@@ -230,11 +232,6 @@ namespace Microsoft.Data.SqlClient
                 _batchCommand.AddBatchCommand(_commands[index]);
             }
             _batchCommand.SetBatchRPCModeReadyToExecute();
-        }
-        /// <inheritdoc />
-        protected override DbBatchCommand CreateDbBatchCommand()
-        {
-            return new SqlBatchCommand();
         }
     }
 }
