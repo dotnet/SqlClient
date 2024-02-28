@@ -594,7 +594,7 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
-    </Compile>
+    </Compile>  
     <EmbeddedResource Include="..\..\src\Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
@@ -668,6 +668,7 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
   </ItemGroup>
