@@ -57,17 +57,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                     {
                                         _authority = value;
                                     }
-                                    else if (key.Equals("resource", StringComparison.InvariantCultureIgnoreCase))
-                                    {
-                                        _resource = value;
-                                    }
                                 }
                             }
                         }
                     }
                 }
                 // Since this is a test, we only create single-instance temp cache
-                _akvUrl = DataTestUtility.AKVUrl;
+                _akvUrl = _resource = DataTestUtility.AKVUrl;
             }
 
             AccessToken accessToken = await AzureActiveDirectoryAuthenticationCallback(_authority, _resource);
