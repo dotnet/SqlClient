@@ -80,6 +80,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlCommand command = connection.CreateCommand();
 
                 Helpers.TryExecute(command, "delete from TestTable2");
+
+                command.Dispose();
             }
         }
 
@@ -101,6 +103,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Johnny', 'Smith')");
                 Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Jenny', 'Doe')");
                 Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Jane', 'Smith')");
+
+                command.Dispose();
             }
         }
 
@@ -114,6 +118,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 Helpers.TryExecute(command, "drop table if exists TestTable1");
                 Helpers.TryExecute(command, "drop table if exists TestTable2");
+
+                command.Dispose();
             }
         }
 
@@ -129,7 +135,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
                 bulkCopy.DestinationTableName = "TestTable2";
 
-                return BulkCopy(bulkCopy, reader, dataRows);
+                bool result = BulkCopy(bulkCopy, reader, dataRows);
+
+                reader.Close();
+                command.Dispose();
+
+                return result;
             }
         }
 
@@ -147,7 +158,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
                 bulkCopy.DestinationTableName = "TestTable2";
 
-                return await BulkCopyAsync(bulkCopy, reader, dataRows);
+                bool result = await BulkCopyAsync(bulkCopy, reader, dataRows);  
+
+                reader.Close();
+                command.Dispose();
+
+                return result;
             }
         }
 
@@ -155,11 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                using (reader)
-                {
-                    bulkCopy.WriteToServer(reader);
-                }
-
+                bulkCopy.WriteToServer(reader);
                 bulkCopy.WriteToServer(dataRows);
 
                 return true;
@@ -174,11 +186,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                using (reader)
-                {
-                    await bulkCopy.WriteToServerAsync(reader);
-                }
-
+                await bulkCopy.WriteToServerAsync(reader);
                 await bulkCopy.WriteToServerAsync(dataRows);
 
                 return true;
