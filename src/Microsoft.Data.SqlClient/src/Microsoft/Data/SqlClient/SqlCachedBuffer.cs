@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
             // For now we  only handle Plp data from the parser directly.
-            Debug.Assert(metadata.metaType.IsPlp, "SqlCachedBuffer call on a non-plp data");
+            Debug.Assert(metadata._metaType.IsPlp, "SqlCachedBuffer call on a non-plp data");
             do
             {
                 if (plplength == 0)

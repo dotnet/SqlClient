@@ -30,14 +30,14 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed partial class _SqlMetaDataSet
     {
-        internal ReadOnlyCollection<DbColumn> dbColumnSchema;
+        internal ReadOnlyCollection<DbColumn> _dbColumnSchema;
 
         private _SqlMetaDataSet(_SqlMetaDataSet original)
         {
-            id = original.id;
+            _id = original._id;
             _hiddenColumnCount = original._hiddenColumnCount;
             _visibleColumnMap = original._visibleColumnMap;
-            dbColumnSchema = original.dbColumnSchema;
+            _dbColumnSchema = original._dbColumnSchema;
             if (original._metaDataArray == null)
             {
                 _metaDataArray = null;
@@ -69,6 +69,9 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "TLS 1.2";
             }
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
+#endif
             else if ((protocol & SslProtocols.Tls11) == SslProtocols.Tls11)
             {
                 name = "TLS 1.1";
@@ -77,13 +80,16 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "TLS 1.0";
             }
-#pragma warning disable CS0618 // Type or member is obsolete: SSL is depricated
+#if NET8_0_OR_GREATER
+#pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
+#endif
+#pragma warning disable CS0618 // Type or member is obsolete: SSL is deprecated
             else if ((protocol & SslProtocols.Ssl3) == SslProtocols.Ssl3)
             {
                 name = "SSL 3.0";
             }
             else if ((protocol & SslProtocols.Ssl2) == SslProtocols.Ssl2)
-#pragma warning restore CS0618 // Type or member is obsolete: SSL is depricated
+#pragma warning restore CS0618 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
             {
                 name = "SSL 2.0";
             }
@@ -103,9 +109,15 @@ namespace Microsoft.Data.SqlClient
         public static string GetProtocolWarning(this SslProtocols protocol)
         {
             string message = string.Empty;
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
+#endif
 #pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
             if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
 #pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+#if NET8_0_OR_GREATER
+#pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
+#endif
             {
                 message = StringsHelper.Format(Strings.SEC_ProtocolWarning, protocol.ToFriendlyName());
             }

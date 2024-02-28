@@ -58,15 +58,15 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Class encapsulating the data to be sent to the server as part of Federated Authentication Feature Extension.
     /// </summary>
-    internal class FederatedAuthenticationFeatureExtensionData
+    internal sealed class FederatedAuthenticationFeatureExtensionData
     {
-        internal TdsEnums.FedAuthLibrary libraryType;
-        internal bool fedAuthRequiredPreLoginResponse;
-        internal SqlAuthenticationMethod authentication;
-        internal byte[] accessToken;
+        internal TdsEnums.FedAuthLibrary _libraryType;
+        internal bool _fedAuthRequiredPreLoginResponse;
+        internal SqlAuthenticationMethod _authentication;
+        internal byte[] _accessToken;
     }
 
-    internal class RoutingInfo
+    internal sealed class RoutingInfo
     {
         internal byte Protocol { get; private set; }
         internal ushort Port { get; private set; }
@@ -82,49 +82,49 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed class SqlLogin
     {
-        internal SqlAuthenticationMethod authentication = SqlAuthenticationMethod.NotSpecified;  // Authentication type
-        internal int timeout;                                                       // login timeout
-        internal bool userInstance = false;                                   // user instance
-        internal string hostName = "";                                      // client machine name
-        internal string userName = "";                                      // user id
-        internal string password = "";                                      // password
-        internal string applicationName = "";                                      // application name
-        internal string serverName = "";                                      // server name
-        internal string language = "";                                      // initial language
-        internal string database = "";                                      // initial database
-        internal string attachDBFilename = "";                                      // DB filename to be attached
-        internal bool useReplication = false;                                   // user login for replication
-        internal string newPassword = "";                                   // new password for reset password
-        internal bool useSSPI = false;                                   // use integrated security
-        internal int packetSize = SqlConnectionString.DEFAULT.Packet_Size; // packet size
-        internal bool readOnlyIntent = false;                                   // read-only intent
-        internal SqlCredential credential;                                      // user id and password in SecureString
-        internal SecureString newSecurePassword;
+        internal SqlAuthenticationMethod _authentication = SqlAuthenticationMethod.NotSpecified;  // Authentication type
+        internal int _timeout;                                                       // login timeout
+        internal bool _userInstance = false;                                   // user instance
+        internal string _hostName = "";                                      // client machine name
+        internal string _userName = "";                                      // user id
+        internal string _password = "";                                      // password
+        internal string _applicationName = "";                                      // application name
+        internal string _serverName = "";                                      // server name
+        internal string _language = "";                                      // initial language
+        internal string _database = "";                                      // initial database
+        internal string _attachDBFilename = "";                                      // DB filename to be attached
+        internal bool _useReplication = false;                                   // user login for replication
+        internal string _newPassword = "";                                   // new password for reset password
+        internal bool _useSSPI = false;                                   // use integrated security
+        internal int _packetSize = SqlConnectionString.DEFAULT.Packet_Size; // packet size
+        internal bool _readOnlyIntent = false;                                   // read-only intent
+        internal SqlCredential _credential;                                      // user id and password in SecureString
+        internal SecureString _newSecurePassword;
     }
 
     internal sealed partial class SqlLoginAck
     {
-        internal byte majorVersion;
-        internal byte minorVersion;
-        internal short buildNum;
-        internal uint tdsVersion;
+        internal byte _majorVersion;
+        internal byte _minorVersion;
+        internal short _buildNum;
+        internal uint _tdsVersion;
     }
 
     internal sealed class SqlFedAuthInfo
     {
-        internal string spn;
-        internal string stsurl;
+        internal string _spn;
+        internal string _stsurl;
         public override string ToString()
         {
-            return String.Format(CultureInfo.InvariantCulture, "STSURL: {0}, SPN: {1}", stsurl ?? String.Empty, spn ?? String.Empty);
+            return $"STSURL: {_stsurl}, SPN: {_spn}";
         }
     }
 
     internal sealed class SqlFedAuthToken
     {
-        internal UInt32 dataLen;
-        internal byte[] accessToken;
-        internal long expirationFileTime;
+        internal uint _dataLen;
+        internal byte[] _accessToken;
+        internal long _expirationFileTime;
     }
 
     internal sealed class _SqlMetaData : SqlMetaDataPriv
@@ -146,58 +146,58 @@ namespace Microsoft.Data.SqlClient
             IsUpdatableMask = (Updatable | UpdateableUnknown) // two bit field (0 is read only, 1 is updatable, 2 is updatability unknown)
         }
 
-        internal string column;
-        internal string baseColumn;
-        internal MultiPartTableName multiPartTableName;
-        internal readonly int ordinal;
-        internal byte tableNum;
-        internal byte op;        // for altrow-columns only
-        internal ushort operand; // for altrow-columns only
-        private _SqlMetadataFlags flags;
+        internal string _column;
+        internal string _baseColumn;
+        internal MultiPartTableName _multiPartTableName;
+        internal readonly int _ordinal;
+        internal byte _tableNum;
+        internal byte _op;        // for altrow-columns only
+        internal ushort _operand; // for altrow-columns only
+        private _SqlMetadataFlags _flags;
 
         internal _SqlMetaData(int ordinal) : base()
         {
-            this.ordinal = ordinal;
+            _ordinal = ordinal;
         }
 
         private bool HasFlag(_SqlMetadataFlags flag)
         {
-            return (flags & flag) != 0;
+            return (_flags & flag) != 0;
         }
 
         internal string serverName
         {
             get
             {
-                return multiPartTableName.ServerName;
+                return _multiPartTableName.ServerName;
             }
         }
         internal string catalogName
         {
             get
             {
-                return multiPartTableName.CatalogName;
+                return _multiPartTableName.CatalogName;
             }
         }
         internal string schemaName
         {
             get
             {
-                return multiPartTableName.SchemaName;
+                return _multiPartTableName.SchemaName;
             }
         }
         internal string tableName
         {
             get
             {
-                return multiPartTableName.TableName;
+                return _multiPartTableName.TableName;
             }
         }
 
         public byte Updatability
         {
-            get => (byte)(flags & _SqlMetadataFlags.IsUpdatableMask);
-            set => flags = (_SqlMetadataFlags)((value & (byte)_SqlMetadataFlags.IsUpdatableMask) | ((int)flags & ~(byte)_SqlMetadataFlags.IsUpdatableMask));
+            get => (byte)(_flags & _SqlMetadataFlags.IsUpdatableMask);
+            set => _flags = (_SqlMetadataFlags)((value & (byte)_SqlMetadataFlags.IsUpdatableMask) | ((int)_flags & ~(byte)_SqlMetadataFlags.IsUpdatableMask));
         }
 
         public bool IsReadOnly
@@ -243,14 +243,14 @@ namespace Microsoft.Data.SqlClient
 
         private void Set(_SqlMetadataFlags flag, bool value)
         {
-            flags = value ? flags | flag : flags & ~flag;
+            _flags = value ? _flags | flag : _flags & ~flag;
         }
 
         internal bool Is2008DateTimeType
         {
             get
             {
-                return SqlDbType.Date == type || SqlDbType.Time == type || SqlDbType.DateTime2 == type || SqlDbType.DateTimeOffset == type;
+                return SqlDbType.Date == _type || SqlDbType.Time == _type || SqlDbType.DateTime2 == _type || SqlDbType.DateTimeOffset == _type;
             }
         }
 
@@ -258,28 +258,28 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return type == SqlDbType.Udt && length == int.MaxValue;
+                return _type == SqlDbType.Udt && _length == int.MaxValue;
             }
         }
 
         public object Clone()
         {
-            _SqlMetaData result = new _SqlMetaData(ordinal);
+            _SqlMetaData result = new(_ordinal);
             result.CopyFrom(this);
-            result.column = column;
-            result.baseColumn = baseColumn;
-            result.multiPartTableName = multiPartTableName;
-            result.tableNum = tableNum;
-            result.flags = flags;
-            result.op = op;
-            result.operand = operand;
+            result._column = _column;
+            result._baseColumn = _baseColumn;
+            result._multiPartTableName = _multiPartTableName;
+            result._tableNum = _tableNum;
+            result._flags = _flags;
+            result._op = _op;
+            result._operand = _operand;
             return result;
         }
     }
 
     internal sealed partial class _SqlMetaDataSet
     {
-        internal ushort id;             // for altrow-columns only
+        internal ushort _id;             // for altrow-columns only
 
         internal DataTable _schemaTable;
         private readonly _SqlMetaData[] _metaDataArray;
@@ -383,7 +383,7 @@ namespace Microsoft.Data.SqlClient
     internal sealed class _SqlMetaDataSetCollection
     {
         private readonly List<_SqlMetaDataSet> _altMetaDataSetArray;
-        internal _SqlMetaDataSet metaDataSet;
+        internal _SqlMetaDataSet _metaDataSet;
 
         internal _SqlMetaDataSetCollection()
         {
@@ -393,10 +393,10 @@ namespace Microsoft.Data.SqlClient
         internal void SetAltMetaData(_SqlMetaDataSet altMetaDataSet)
         {
             // If altmetadata with same id is found, override it rather than adding a new one
-            int newId = altMetaDataSet.id;
+            int newId = altMetaDataSet._id;
             for (int i = 0; i < _altMetaDataSetArray.Count; i++)
             {
-                if (_altMetaDataSetArray[i].id == newId)
+                if (_altMetaDataSetArray[i]._id == newId)
                 {
                     // override the existing metadata with the same id
                     _altMetaDataSetArray[i] = altMetaDataSet;
@@ -412,7 +412,7 @@ namespace Microsoft.Data.SqlClient
         {
             foreach (_SqlMetaDataSet altMetaDataSet in _altMetaDataSetArray)
             {
-                if (altMetaDataSet.id == id)
+                if (altMetaDataSet._id == id)
                 {
                     return altMetaDataSet;
                 }
@@ -423,8 +423,8 @@ namespace Microsoft.Data.SqlClient
 
         public object Clone()
         {
-            _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection();
-            result.metaDataSet = metaDataSet == null ? null : metaDataSet.Clone();
+            _SqlMetaDataSetCollection result = new() { _metaDataSet = _metaDataSet?.Clone() };
+            
             foreach (_SqlMetaDataSet set in _altMetaDataSetArray)
             {
                 result._altMetaDataSetArray.Add(set.Clone());
@@ -443,17 +443,17 @@ namespace Microsoft.Data.SqlClient
             IsMultiValued = 1 << 2
         }
 
-        internal SqlDbType type;    // SqlDbType enum value
-        internal byte tdsType; // underlying tds type
-        internal byte precision = TdsEnums.UNKNOWN_PRECISION_SCALE; // give default of unknown (-1)
-        internal byte scale = TdsEnums.UNKNOWN_PRECISION_SCALE; // give default of unknown (-1)
-        private SqlMetaDataPrivFlags flags;
-        internal int length;
-        internal SqlCollation collation;
-        internal int codePage;
-        internal Encoding encoding;
+        internal SqlDbType _type;    // SqlDbType enum value
+        internal byte _tdsType; // underlying tds type
+        internal byte _precision = TdsEnums.UNKNOWN_PRECISION_SCALE; // give default of unknown (-1)
+        internal byte _scale = TdsEnums.UNKNOWN_PRECISION_SCALE; // give default of unknown (-1)
+        private SqlMetaDataPrivFlags _flags;
+        internal int _length;
+        internal SqlCollation _collation;
+        internal int _codePage;
+        internal Encoding _encoding;
 
-        internal MetaType metaType; // cached metaType
+        internal MetaType _metaType; // cached metaType
         public SqlMetaDataUdt udt;
         public SqlMetaDataXmlSchemaCollection xmlSchemaCollection;
 
@@ -475,26 +475,26 @@ namespace Microsoft.Data.SqlClient
 
         private bool HasFlag(SqlMetaDataPrivFlags flag)
         {
-            return (flags & flag) != 0;
+            return (_flags & flag) != 0;
         }
 
         private void Set(SqlMetaDataPrivFlags flag, bool value)
         {
-            flags = value ? flags | flag : flags & ~flag;
+            _flags = value ? _flags | flag : _flags & ~flag;
         }
 
-        internal virtual void CopyFrom(SqlMetaDataPriv original)
+        internal void CopyFrom(SqlMetaDataPriv original)
         {
-            this.type = original.type;
-            this.tdsType = original.tdsType;
-            this.precision = original.precision;
-            this.scale = original.scale;
-            this.length = original.length;
-            this.collation = original.collation;
-            this.codePage = original.codePage;
-            this.encoding = original.encoding;
-            this.metaType = original.metaType;
-            this.flags = original.flags;
+            _type = original._type;
+            _tdsType = original._tdsType;
+            _precision = original._precision;
+            _scale = original._scale;
+            _length = original._length;
+            _collation = original._collation;
+            _codePage = original._codePage;
+            _encoding = original._encoding;
+            _metaType = original._metaType;
+            _flags = original._flags;
 
             if (original.udt != null)
             {
@@ -510,104 +510,104 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlMetaDataXmlSchemaCollection
+    internal sealed class SqlMetaDataXmlSchemaCollection
     {
-        internal string Database;
-        internal string OwningSchema;
-        internal string Name;
+        internal string _database;
+        internal string _owningSchema;
+        internal string _name;
 
         public void CopyFrom(SqlMetaDataXmlSchemaCollection original)
         {
             if (original != null)
             {
-                Database = original.Database;
-                OwningSchema = original.OwningSchema;
-                Name = original.Name;
+                _database = original._database;
+                _owningSchema = original._owningSchema;
+                _name = original._name;
             }
         }
     }
 
-    sealed internal class SqlMetaDataUdt
+    internal sealed class SqlMetaDataUdt
     {
 #if NET6_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 #endif
-        internal Type Type;
-        internal string DatabaseName;
-        internal string SchemaName;
-        internal string TypeName;
-        internal string AssemblyQualifiedName;
+        internal Type _type;
+        internal string _databaseName;
+        internal string _schemaName;
+        internal string _typeName;
+        internal string _assemblyQualifiedName;
 
         public void CopyFrom(SqlMetaDataUdt original)
         {
             if (original != null)
             {
-                Type = original.Type;
-                DatabaseName = original.DatabaseName;
-                SchemaName = original.SchemaName;
-                TypeName = original.TypeName;
-                AssemblyQualifiedName = original.AssemblyQualifiedName;
+                _type = original._type;
+                _databaseName = original._databaseName;
+                _schemaName = original._schemaName;
+                _typeName = original._typeName;
+                _assemblyQualifiedName = original._assemblyQualifiedName;
             }
         }
     }
 
     internal sealed class _SqlRPC
     {
-        internal string rpcName;
-        internal ushort ProcID;       // Used instead of name
-        internal ushort options;
+        internal string _rpcName;
+        internal ushort _procID;       // Used instead of name
+        internal ushort _options;
 
-        internal SqlParameter[] systemParams;
-        internal byte[] systemParamOptions;
-        internal int systemParamCount;
+        internal SqlParameter[] _systemParams;
+        internal byte[] _systemParamOptions;
+        internal int _systemParamCount;
 
-        internal SqlParameterCollection userParams;
-        internal long[] userParamMap;
-        internal int userParamCount;
+        internal SqlParameterCollection _userParams;
+        internal long[] _userParamMap;
+        internal int _userParamCount;
 
-        internal int? recordsAffected;
-        internal int cumulativeRecordsAffected;
+        internal int? _recordsAffected;
+        internal int _cumulativeRecordsAffected;
 
-        internal int errorsIndexStart;
-        internal int errorsIndexEnd;
-        internal SqlErrorCollection errors;
+        internal int _errorsIndexStart;
+        internal int _errorsIndexEnd;
+        internal SqlErrorCollection _errors;
 
-        internal int warningsIndexStart;
-        internal int warningsIndexEnd;
-        internal SqlErrorCollection warnings;
+        internal int _warningsIndexStart;
+        internal int _warningsIndexEnd;
+        internal SqlErrorCollection _warnings;
 
-        internal bool needsFetchParameterEncryptionMetadata;
+        internal bool _needsFetchParameterEncryptionMetadata;
 
-        internal SqlBatchCommand batchCommand;
+        internal SqlBatchCommand _batchCommand;
 
         internal string GetCommandTextOrRpcName()
         {
-            if (TdsEnums.RPC_PROCID_EXECUTESQL == ProcID)
+            if (TdsEnums.RPC_PROCID_EXECUTESQL == _procID)
             {
                 // Param 0 is the actual sql executing
-                return (string)systemParams[0].Value;
+                return (string)_systemParams[0].Value;
             }
             else
             {
-                return rpcName;
+                return _rpcName;
             }
         }
 
         internal SqlParameter GetParameterByIndex(int index, out byte options)
         {
-            options = 0;
-            SqlParameter retval = null;
-            if (index < systemParamCount)
+            SqlParameter retval;
+
+            if (index < _systemParamCount)
             {
-                retval = systemParams[index];
-                options = systemParamOptions[index];
+                retval = _systemParams[index];
+                options = _systemParamOptions[index];
             }
             else
             {
-                long data = userParamMap[index - systemParamCount];
+                long data = _userParamMap[index - _systemParamCount];
                 int paramIndex = (int)(data & int.MaxValue);
                 options = (byte)((data >> 32) & 0xFF);
-                retval = userParams[paramIndex];
+                retval = _userParams[paramIndex];
             }
             return retval;
         }
@@ -615,12 +615,12 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed partial class SqlReturnValue : SqlMetaDataPriv
     {
-        internal string parameter;
-        internal readonly SqlBuffer value;
+        internal string _parameter;
+        internal readonly SqlBuffer _value;
 
         internal SqlReturnValue() : base()
         {
-            value = new SqlBuffer();
+            _value = new SqlBuffer();
         }
     }
 
@@ -699,7 +699,5 @@ namespace Microsoft.Data.SqlClient
                 _multipartName = null;
             }
         }
-
-        internal static readonly MultiPartTableName Null = new MultiPartTableName(new string[] { null, null, null, null });
     }
 }
