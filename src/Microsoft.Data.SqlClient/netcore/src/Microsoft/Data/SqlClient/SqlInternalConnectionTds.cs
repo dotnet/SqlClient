@@ -17,8 +17,9 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+#if !CORE
 using Microsoft.Identity.Client;
-
+#endif
 namespace Microsoft.Data.SqlClient
 {
     internal sealed class SessionStateRecord
@@ -131,8 +132,9 @@ namespace Microsoft.Data.SqlClient
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
         internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
-
+#if !CORE
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
+#endif
         private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
 
         internal bool _cleanSQLDNSCaching = false;
@@ -482,8 +484,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             _accessTokenCallback = accessTokenCallback;
-
+#if !CORE
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
+#endif
             _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
 
             _identity = identity;
@@ -1588,11 +1591,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (SqlException sqlex)
                 {
+#if !CORE
                     if (AttemptRetryADAuthWithTimeoutError(sqlex, connectionOptions, timeout))
                     {
                         continue;
                     }
-
+#endif
                     if (null == _parser
                             || TdsParserState.Closed != _parser.State
                             || IsDoNotRetryConnectError(sqlex)
@@ -1644,8 +1648,9 @@ namespace Microsoft.Data.SqlClient
                 Thread.Sleep(sleepInterval);
                 sleepInterval = (sleepInterval < 500) ? sleepInterval * 2 : 1000;
             }
+#if !CORE
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
-
+#endif
             if (null != PoolGroupProviderInfo)
             {
                 // We must wait for CompleteLogin to finish for to have the
@@ -1656,6 +1661,7 @@ namespace Microsoft.Data.SqlClient
             CurrentDataSource = originalServerInfo.UserServerName;
         }
 
+#if !CORE
         // With possible MFA support in all AD auth providers, the duration for acquiring a token can be unpredictable.
         // If a timeout error (client or server) happened, we silently retry if a cached token exists from a previous auth attempt (see GetFedAuthToken)
         private bool AttemptRetryADAuthWithTimeoutError(SqlException sqlex, SqlConnectionString connectionOptions, TimeoutTimer timeout)
@@ -1674,7 +1680,7 @@ namespace Microsoft.Data.SqlClient
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.Retrying;
             return true;
         }
-
+#endif
         // Attempt to login to a host that has a failover partner
         //
         // Connection & timeout sequence is
@@ -1799,11 +1805,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (SqlException sqlex)
                 {
+#if !CORE
                     if (AttemptRetryADAuthWithTimeoutError(sqlex, connectionOptions, timeout))
                     {
                         continue;
                     }
-
+#endif
                     if (IsDoNotRetryConnectError(sqlex)
                             || timeout.IsExpired)
                     {       // no more time to try again
@@ -1842,9 +1849,10 @@ namespace Microsoft.Data.SqlClient
                 useFailoverHost = !useFailoverHost;
             }
 
+#if !CORE
             // If we get here, connection/login succeeded!  Just a few more checks & record-keeping
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
-
+#endif
             // if connected to failover host, but said host doesn't have DbMirroring set up, throw an error
             if (useFailoverHost && null == ServerProvidedFailOverPartner)
             {
@@ -2146,6 +2154,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if !CORE
         /// <summary>
         /// Generates (if appropriate) and sends a Federated Authentication Access token to the server, using the Federated Authentication Info.
         /// </summary>
@@ -2300,7 +2309,7 @@ namespace Microsoft.Data.SqlClient
             bool authenticationContextLocked = false;
 
             // Prepare CER to ensure the lock on authentication context is released.
-#if !NET6_0_OR_GREATER          
+#if !NET6_0_OR_GREATER
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try
@@ -2321,13 +2330,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.TryGetFedAuthTokenLocked> {0}, Refreshing the context is already in progress by another thread.", ObjectID);
                 }
-
+#if !CORE
                 if (authenticationContextLocked)
                 {
                     // Get the Federated Authentication Token.
                     fedAuthToken = GetFedAuthToken(fedAuthInfo);
                     Debug.Assert(fedAuthToken != null, "fedAuthToken should not be null.");
                 }
+#endif
             }
             finally
             {
@@ -2581,7 +2591,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken> {0}, Finished generating federated authentication token.", ObjectID);
             return _fedAuthToken;
         }
-
+#endif
         internal void OnFeatureExtAck(int featureId, byte[] data)
         {
             if (RoutingInfo != null && TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId)
