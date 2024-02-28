@@ -7,7 +7,7 @@ using System.Data;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.SqlBulkCopyTest
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class WriteToServerTest
     {
