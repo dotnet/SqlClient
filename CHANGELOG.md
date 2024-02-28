@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Added
 
 - Added a new `AccessTokenCallBack` API to `SqlConnection`. [#1260](https://github.com/dotnet/SqlClient/pull/1260)
-- Added `SqlBatch` support on .NET 6+ [#1825](https://github.com/dotnet/SqlClient/pull/1825), [#2223](https://github.com/dotnet/SqlClient/pull/2223),[#2372](https://github.com/dotnet/SqlClient/pull/2372), [#2373](https://github.com/dotnet/SqlClient/pull/2373)
+- Added `SqlBatch` support on .NET 6+ [#1825](https://github.com/dotnet/SqlClient/pull/1825), [#2223](https://github.com/dotnet/SqlClient/pull/2223),[#2371](https://github.com/dotnet/SqlClient/pull/2371), [#2373](https://github.com/dotnet/SqlClient/pull/2373)
 - Added support of `SqlDiagnosticListener` on **.NET Standard**. [#1931](https://github.com/dotnet/SqlClient/pull/1931)
 - Added new property `RowsCopied64` to `SqlBulkCopy`. [#2004](https://github.com/dotnet/SqlClient/pull/2004)
 - Added support for the `SuperSocketNetLib` registry option for Encrypt on .NET on Windows. [#2047](https://github.com/dotnet/SqlClient/pull/2047)
