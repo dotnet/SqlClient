@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient
         internal SecureString newSecurePassword;
     }
 
-    internal sealed class SqlLoginAck
+    internal sealed partial class SqlLoginAck
     {
         internal byte majorVersion;
         internal byte minorVersion;
@@ -281,7 +281,7 @@ namespace Microsoft.Data.SqlClient
     {
         internal ushort id;             // for altrow-columns only
 
-        internal DataTable schemaTable;
+        internal DataTable _schemaTable;
         private readonly _SqlMetaData[] _metaDataArray;
 
         private int _hiddenColumnCount;

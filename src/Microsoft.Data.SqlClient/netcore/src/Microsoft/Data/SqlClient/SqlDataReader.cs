@@ -1469,15 +1469,15 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    if (null == _metaData || null == _metaData.schemaTable)
+                    if (null == _metaData || null == _metaData._schemaTable)
                     {
                         if (null != this.MetaData)
                         {
-                            _metaData.schemaTable = BuildSchemaTable();
-                            Debug.Assert(null != _metaData.schemaTable, "No schema information yet!");
+                            _metaData._schemaTable = BuildSchemaTable();
+                            Debug.Assert(null != _metaData._schemaTable, "No schema information yet!");
                         }
                     }
-                    return _metaData?.schemaTable;
+                    return _metaData?._schemaTable;
                 }
                 finally
                 {
