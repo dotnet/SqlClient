@@ -1509,13 +1509,13 @@ namespace Microsoft.Data.SqlClient
             byte scale = metadata.scale;
             byte precision = metadata.precision;
             int length = metadata.length;
-            if (metadata.isEncrypted)
+            if (metadata._isEncrypted)
             {
                 Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
-                type = metadata.baseTI.metaType;
-                scale = metadata.baseTI.scale;
-                precision = metadata.baseTI.precision;
-                length = metadata.baseTI.length;
+                type = metadata._baseTI.metaType;
+                scale = metadata._baseTI.scale;
+                precision = metadata._baseTI.precision;
+                length = metadata._baseTI.length;
             }
 
             try
@@ -1556,11 +1556,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             catch (SqlTruncateException)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata._isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
                             catch (Exception e)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata._isEncrypted, metadata.column, value.ToString(), e);
                             }
                         }
 
@@ -1605,7 +1605,7 @@ namespace Microsoft.Data.SqlClient
                             int maxStringLength = length / 2;
                             if (str.Length > maxStringLength)
                             {
-                                if (metadata.isEncrypted)
+                                if (metadata._isEncrypted)
                                 {
                                     str = "<encrypted>";
                                 }
@@ -1649,7 +1649,7 @@ namespace Microsoft.Data.SqlClient
 
                     default:
                         Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
-                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), null);
+                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata._isEncrypted, metadata.column, value.ToString(), null);
                 }
 
                 if (typeChanged)
@@ -1666,7 +1666,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
-                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
+                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata._isEncrypted, metadata.column, value.ToString(), e);
             }
         }
 
@@ -2271,7 +2271,7 @@ namespace Microsoft.Data.SqlClient
 
                 // If column encryption is requested via connection string option, perform encryption here
                 if (!isNull && // if value is not NULL
-                    metadata.isEncrypted)
+                    metadata._isEncrypted)
                 { // If we are transparently encrypting
                     Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
                     value = _parser.EncryptColumnValue(value, metadata, metadata.column, _stateObj, isDataFeed, isSqlType);
@@ -2289,7 +2289,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // Target type shouldn't be encrypted
-                Debug.Assert(!metadata.isEncrypted, "Can't encrypt SQL Variant type");
+                Debug.Assert(!metadata._isEncrypted, "Can't encrypt SQL Variant type");
                 SqlBuffer.StorageType variantInternalType = SqlBuffer.StorageType.Empty;
                 if ((_sqlDataReaderRowSource != null) && (_connection.Is2008OrNewer))
                 {

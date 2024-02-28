@@ -542,10 +542,10 @@ namespace Microsoft.Data.SqlClient
                 // col.length is always byte count so for unicode types, half the length
                 //
                 // For MAX and XML datatypes, we get 0x7fffffff from the server. Do not divide this.
-                if (col.cipherMD != null)
+                if (col._cipherMD != null)
                 {
-                    Debug.Assert(col.baseTI != null && col.baseTI.metaType != null, "col.baseTI and col.baseTI.metaType should not be null.");
-                    schemaRow[size] = (col.baseTI.metaType.IsSizeInCharacters && (col.baseTI.length != 0x7fffffff)) ? (col.baseTI.length / 2) : col.baseTI.length;
+                    Debug.Assert(col._baseTI != null && col._baseTI.metaType != null, "col.baseTI and col.baseTI.metaType should not be null.");
+                    schemaRow[size] = (col._baseTI.metaType.IsSizeInCharacters && (col._baseTI.length != 0x7fffffff)) ? (col._baseTI.length / 2) : col._baseTI.length;
                 }
                 else
                 {
@@ -554,7 +554,7 @@ namespace Microsoft.Data.SqlClient
 
                 schemaRow[dataType] = GetFieldTypeInternal(col);
                 schemaRow[providerSpecificDataType] = GetProviderSpecificFieldTypeInternal(col);
-                schemaRow[nonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
+                schemaRow[nonVersionedProviderType] = (int)(col._cipherMD != null ? col._baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
                 schemaRow[dataTypeName] = GetDataTypeNameInternal(col);
 
                 if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
@@ -596,7 +596,7 @@ namespace Microsoft.Data.SqlClient
                     // TypeSystem.SQLServer2005 and above
 
                     // SqlDbType enum value - always the actual type for SQLServer2005.
-                    schemaRow[providerType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type);
+                    schemaRow[providerType] = (int)(col._cipherMD != null ? col._baseTI.type : col.type);
 
                     if (col.type == SqlDbType.Udt)
                     { // Additional metadata for UDTs.
@@ -619,16 +619,16 @@ namespace Microsoft.Data.SqlClient
                     schemaRow[providerType] = GetVersionedMetaType(col.metaType).SqlDbType;
                 }
 
-                if (col.cipherMD != null)
+                if (col._cipherMD != null)
                 {
-                    Debug.Assert(col.baseTI != null, @"col.baseTI should not be null.");
-                    if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.baseTI.precision)
+                    Debug.Assert(col._baseTI != null, @"col.baseTI should not be null.");
+                    if (TdsEnums.UNKNOWN_PRECISION_SCALE != col._baseTI.precision)
                     {
-                        schemaRow[precision] = col.baseTI.precision;
+                        schemaRow[precision] = col._baseTI.precision;
                     }
                     else
                     {
-                        schemaRow[precision] = col.baseTI.metaType.Precision;
+                        schemaRow[precision] = col._baseTI.metaType.Precision;
                     }
                 }
                 else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.precision)
@@ -644,16 +644,16 @@ namespace Microsoft.Data.SqlClient
                 {
                     schemaRow[scale] = MetaType.MetaNVarChar.Scale;
                 }
-                else if (col.cipherMD != null)
+                else if (col._cipherMD != null)
                 {
-                    Debug.Assert(col.baseTI != null, @"col.baseTI should not be null.");
-                    if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.baseTI.scale)
+                    Debug.Assert(col._baseTI != null, @"col.baseTI should not be null.");
+                    if (TdsEnums.UNKNOWN_PRECISION_SCALE != col._baseTI.scale)
                     {
-                        schemaRow[scale] = col.baseTI.scale;
+                        schemaRow[scale] = col._baseTI.scale;
                     }
                     else
                     {
-                        schemaRow[scale] = col.baseTI.metaType.Scale;
+                        schemaRow[scale] = col._baseTI.metaType.Scale;
                     }
                 }
                 else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale)
@@ -679,11 +679,11 @@ namespace Microsoft.Data.SqlClient
                 schemaRow[isIdentity] = col.IsIdentity;
                 schemaRow[isAutoIncrement] = col.IsIdentity;
 
-                if (col.cipherMD != null)
+                if (col._cipherMD != null)
                 {
-                    Debug.Assert(col.baseTI != null, @"col.baseTI should not be null.");
-                    Debug.Assert(col.baseTI.metaType != null, @"col.baseTI.metaType should not be null.");
-                    schemaRow[isLong] = col.baseTI.metaType.IsLong;
+                    Debug.Assert(col._baseTI != null, @"col.baseTI should not be null.");
+                    Debug.Assert(col._baseTI.metaType != null, @"col.baseTI.metaType should not be null.");
+                    schemaRow[isLong] = col._baseTI.metaType.IsLong;
                 }
                 else
                 {
@@ -1201,10 +1201,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 { // For all other types, including Xml - use data in MetaType.
-                    if (metaData.cipherMD != null)
+                    if (metaData._cipherMD != null)
                     {
-                        Debug.Assert(metaData.baseTI != null && metaData.baseTI.metaType != null, "metaData.baseTI and metaData.baseTI.metaType should not be null.");
-                        dataTypeName = metaData.baseTI.metaType.TypeName;
+                        Debug.Assert(metaData._baseTI != null && metaData._baseTI.metaType != null, "metaData.baseTI and metaData.baseTI.metaType should not be null.");
+                        dataTypeName = metaData._baseTI.metaType.TypeName;
                     }
                     else
                     {
@@ -1292,10 +1292,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 { // For all other types, including Xml - use data in MetaType.
-                    if (metaData.cipherMD != null)
+                    if (metaData._cipherMD != null)
                     {
-                        Debug.Assert(metaData.baseTI != null && metaData.baseTI.metaType != null, "metaData.baseTI and metaData.baseTI.metaType should not be null.");
-                        fieldType = metaData.baseTI.metaType.ClassType;
+                        Debug.Assert(metaData._baseTI != null && metaData._baseTI.metaType != null, "metaData.baseTI and metaData.baseTI.metaType should not be null.");
+                        fieldType = metaData._baseTI.metaType.ClassType;
                     }
                     else
                     {
@@ -1317,13 +1317,13 @@ namespace Microsoft.Data.SqlClient
             _SqlMetaData sqlMetaData = MetaData[i];
             int lcid;
 
-            if (sqlMetaData.cipherMD != null)
+            if (sqlMetaData._cipherMD != null)
             {
                 // If this column is encrypted, get the collation from baseTI
                 //
-                if (sqlMetaData.baseTI.collation != null)
+                if (sqlMetaData._baseTI.collation != null)
                 {
-                    lcid = sqlMetaData.baseTI.collation.LCID;
+                    lcid = sqlMetaData._baseTI.collation.LCID;
                 }
                 else
                 {
@@ -1406,11 +1406,11 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // For all other types, including Xml - use data in MetaType.
-                    if (metaData.cipherMD != null)
+                    if (metaData._cipherMD != null)
                     {
-                        Debug.Assert(metaData.baseTI != null && metaData.baseTI.metaType != null,
+                        Debug.Assert(metaData._baseTI != null && metaData._baseTI.metaType != null,
                             "metaData.baseTI and metaData.baseTI.metaType should not be null.");
-                        providerSpecificFieldType = metaData.baseTI.metaType.SqlType; // SqlType type.
+                        providerSpecificFieldType = metaData._baseTI.metaType.SqlType; // SqlType type.
                     }
                     else
                     {
@@ -1539,7 +1539,7 @@ namespace Microsoft.Data.SqlClient
             CheckDataIsReady(columnIndex: i);
 
             // Streaming is not supported on encrypted columns.
-            if (_metaData[i] != null && _metaData[i].cipherMD != null)
+            if (_metaData[i] != null && _metaData[i]._cipherMD != null)
             {
                 throw SQL.StreamNotSupportOnEncryptedColumn(_metaData[i].column);
             }
@@ -1647,7 +1647,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(!HasActiveStreamOrTextReaderOnColumn(i), "Column has an active Stream or TextReader");
 
-                if (_metaData[i] != null && _metaData[i].cipherMD != null)
+                if (_metaData[i] != null && _metaData[i]._cipherMD != null)
                 {
                     throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
                 }
@@ -1940,10 +1940,10 @@ namespace Microsoft.Data.SqlClient
             // Xml type is not supported
             MetaType mt = null;
 
-            if (_metaData[i].cipherMD != null)
+            if (_metaData[i]._cipherMD != null)
             {
-                Debug.Assert(_metaData[i].baseTI != null, "_metaData[i].baseTI should not be null.");
-                mt = _metaData[i].baseTI.metaType;
+                Debug.Assert(_metaData[i]._baseTI != null, "_metaData[i].baseTI should not be null.");
+                mt = _metaData[i]._baseTI.metaType;
             }
             else
             {
@@ -1960,7 +1960,7 @@ namespace Microsoft.Data.SqlClient
             // For non-variant types with sequential access, we support proper streaming
             if ((mt.SqlDbType != SqlDbType.Variant) && (IsCommandBehavior(CommandBehavior.SequentialAccess)))
             {
-                if (_metaData[i].cipherMD != null)
+                if (_metaData[i]._cipherMD != null)
                 {
                     throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
                 }
@@ -2021,10 +2021,10 @@ namespace Microsoft.Data.SqlClient
             }
 
             MetaType mt = null;
-            if (_metaData[i].cipherMD != null)
+            if (_metaData[i]._cipherMD != null)
             {
-                Debug.Assert(_metaData[i].baseTI != null, @"_metaData[i].baseTI should not be null.");
-                mt = _metaData[i].baseTI.metaType;
+                Debug.Assert(_metaData[i]._baseTI != null, @"_metaData[i].baseTI should not be null.");
+                mt = _metaData[i]._baseTI.metaType;
             }
             else
             {
@@ -2034,10 +2034,10 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(mt != null, "mt should not be null.");
 
             SqlDbType sqlDbType;
-            if (_metaData[i].cipherMD != null)
+            if (_metaData[i]._cipherMD != null)
             {
-                Debug.Assert(_metaData[i].baseTI != null, @"_metaData[i].baseTI should not be null.");
-                sqlDbType = _metaData[i].baseTI.type;
+                Debug.Assert(_metaData[i]._baseTI != null, @"_metaData[i].baseTI should not be null.");
+                sqlDbType = _metaData[i]._baseTI.type;
             }
             else
             {
@@ -2056,7 +2056,7 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.InvalidDataLength(length);
                     }
 
-                    if (_metaData[i].cipherMD != null)
+                    if (_metaData[i]._cipherMD != null)
                     {
                         throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
                     }
@@ -2905,10 +2905,10 @@ namespace Microsoft.Data.SqlClient
             {
                 // Xml type is not supported
                 MetaType metaType = metaData.metaType;
-                if (metaData.cipherMD != null)
+                if (metaData._cipherMD != null)
                 {
-                    Debug.Assert(metaData.baseTI != null, "_metaData[i].baseTI should not be null.");
-                    metaType = metaData.baseTI.metaType;
+                    Debug.Assert(metaData._baseTI != null, "_metaData[i].baseTI should not be null.");
+                    metaType = metaData._baseTI.metaType;
                 }
 
                 if (
@@ -2922,7 +2922,7 @@ namespace Microsoft.Data.SqlClient
                 // For non-variant types with sequential access, we support proper streaming
                 if ((metaType.SqlDbType != SqlDbType.Variant) && IsCommandBehavior(CommandBehavior.SequentialAccess))
                 {
-                    if (metaData.cipherMD != null)
+                    if (metaData._cipherMD != null)
                     {
                         throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(metaData.column);
                     }
@@ -2946,7 +2946,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (typeof(T) == typeof(Stream))
             {
-                if (metaData != null && metaData.cipherMD != null)
+                if (metaData != null && metaData._cipherMD != null)
                 {
                     throw SQL.StreamNotSupportOnEncryptedColumn(metaData.column);
                 }

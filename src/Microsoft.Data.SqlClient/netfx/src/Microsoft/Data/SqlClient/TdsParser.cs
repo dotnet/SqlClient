@@ -4609,7 +4609,7 @@ namespace Microsoft.Data.SqlClient
             // Check if the column is encrypted.
             if (_serverSupportsColumnEncryption)
             {
-                rec.isEncrypted = (TdsEnums.IsEncrypted == (flags & TdsEnums.IsEncrypted));
+                rec._isEncrypted = (TdsEnums.IsEncrypted == (flags & TdsEnums.IsEncrypted));
             }
 
             // read the type
@@ -4778,7 +4778,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // For encrypted parameters, read the unencrypted type and encryption information.
-            if (_serverSupportsColumnEncryption && rec.isEncrypted)
+            if (_serverSupportsColumnEncryption && rec._isEncrypted)
             {
                 if (!TryProcessTceCryptoMetadata(stateObj, rec, cipherTable: null, columnEncryptionSetting: columnEncryptionSetting, isReturnValue: true))
                 {
@@ -4857,8 +4857,8 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Read the base TypeInfo
-            col.baseTI = new SqlMetaDataPriv();
-            if (!TryProcessTypeInfo(stateObj, col.baseTI, userType))
+            col._baseTI = new SqlMetaDataPriv();
+            if (!TryProcessTypeInfo(stateObj, col._baseTI, userType))
             {
                 return false;
             }
@@ -4900,7 +4900,7 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
-            Debug.Assert(col.cipherMD == null, "col.cipherMD should be null in TryProcessTceCryptoMetadata.");
+            Debug.Assert(col._cipherMD == null, "col.cipherMD should be null in TryProcessTceCryptoMetadata.");
 
             // Check if TCE is enable and if it is set the crypto MD for the column.
             // TCE is enabled if the command is set to enabled or to resultset only and this is not a return value
@@ -4911,7 +4911,7 @@ namespace Microsoft.Data.SqlClient
                 _connHandler != null && _connHandler.ConnectionOptions != null &&
                 _connHandler.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled))
             {
-                col.cipherMD = new SqlCipherMetadata(cipherTable != null ? (SqlTceCipherInfoEntry)cipherTable[index] : null,
+                col._cipherMD = new SqlCipherMetadata(cipherTable != null ? (SqlTceCipherInfoEntry)cipherTable[index] : null,
                                                         index,
                                                         cipherAlgorithmId: cipherAlgorithmId,
                                                         cipherAlgorithmName: cipherAlgorithmName,
@@ -4921,7 +4921,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // If TCE is disabled mark the MD as not encrypted.
-                col.isEncrypted = false;
+                col._isEncrypted = false;
             }
 
             return true;
@@ -5722,7 +5722,7 @@ namespace Microsoft.Data.SqlClient
             col.IsColumnSet = (TdsEnums.IsColumnSet == (flags & TdsEnums.IsColumnSet));
             if (fColMD && _serverSupportsColumnEncryption)
             {
-                col.isEncrypted = (TdsEnums.IsEncrypted == (flags & TdsEnums.IsEncrypted));
+                col._isEncrypted = (TdsEnums.IsEncrypted == (flags & TdsEnums.IsEncrypted));
             }
 
             // Read TypeInfo
@@ -5763,7 +5763,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Read the TCE column cryptoinfo
-            if (fColMD && _serverSupportsColumnEncryption && col.isEncrypted)
+            if (fColMD && _serverSupportsColumnEncryption && col._isEncrypted)
             {
                 // If the column is encrypted, we should have a valid cipherTable
                 if (cipherTable != null && !TryProcessTceCryptoMetadata(stateObj, col, cipherTable, columnEncryptionSetting, isReturnValue: false))
@@ -6286,10 +6286,10 @@ namespace Microsoft.Data.SqlClient
             SqlDbType type = md.type;
 
             if (type == SqlDbType.VarBinary && // if its a varbinary
-                md.isEncrypted &&// and encrypted
+                md._isEncrypted &&// and encrypted
                 ShouldHonorTceForRead(columnEncryptionSetting, connection))
             {
-                type = md.baseTI.type; // the use the actual (plaintext) type
+                type = md._baseTI.type; // the use the actual (plaintext) type
             }
 
             switch (type)
@@ -6581,14 +6581,14 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.UnsupportedNormalizationVersion(normalizationVersion);
             }
 
-            byte tdsType = md.baseTI.tdsType;
+            byte tdsType = md._baseTI.tdsType;
             int length = unencryptedBytes.Length;
 
             // For normalized types, the length and scale of the actual type might be different than the value's.
-            int denormalizedLength = md.baseTI.length;
-            byte denormalizedScale = md.baseTI.scale;
+            int denormalizedLength = md._baseTI.length;
+            byte denormalizedScale = md._baseTI.scale;
 
-            Debug.Assert(false == md.baseTI.isEncrypted, "Double encryption detected");
+            Debug.Assert(false == md._baseTI._isEncrypted, "Double encryption detected");
             switch (tdsType)
             {
                 // We normalize to allow conversion across data types. All data types below are serialized into a BIGINT.
@@ -6736,7 +6736,7 @@ namespace Microsoft.Data.SqlClient
                         // If this is a fixed length type, pad with zeros to get to the fixed length size.
                         if (tdsType == TdsEnums.SQLBINARY || tdsType == TdsEnums.SQLBIGBINARY)
                         {
-                            byte[] bytes = new byte[md.baseTI.length];
+                            byte[] bytes = new byte[md._baseTI.length];
                             Buffer.BlockCopy(unencryptedBytes, 0, bytes, 0, unencryptedBytes.Length);
                             unencryptedBytes = bytes;
                         }
@@ -6762,7 +6762,7 @@ namespace Microsoft.Data.SqlClient
                         bits[i] = BitConverter.ToInt32(unencryptedBytes, index);
                         index += 4;
                     }
-                    value.SetToDecimal(md.baseTI.precision, md.baseTI.scale, fPositive, bits);
+                    value.SetToDecimal(md._baseTI.precision, md._baseTI.scale, fPositive, bits);
                     break;
 
                 case TdsEnums.SQLCHAR:
@@ -6771,7 +6771,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
                     {
-                        System.Text.Encoding encoding = md.baseTI.encoding;
+                        System.Text.Encoding encoding = md._baseTI.encoding;
 
                         if (null == encoding)
                         {
@@ -6788,7 +6788,7 @@ namespace Microsoft.Data.SqlClient
                         // If this is a fixed length type, pad with spaces to get to the fixed length size.
                         if (tdsType == TdsEnums.SQLCHAR || tdsType == TdsEnums.SQLBIGCHAR)
                         {
-                            strValue = strValue.PadRight(md.baseTI.length);
+                            strValue = strValue.PadRight(md._baseTI.length);
                         }
 
                         value.SetToString(strValue);
@@ -6804,7 +6804,7 @@ namespace Microsoft.Data.SqlClient
                         // If this is a fixed length type, pad with spaces to get to the fixed length size.
                         if (tdsType == TdsEnums.SQLNCHAR)
                         {
-                            strValue = strValue.PadRight(md.baseTI.length / ADP.CharSize);
+                            strValue = strValue.PadRight(md._baseTI.length / ADP.CharSize);
                         }
 
                         value.SetToString(strValue);
@@ -6835,7 +6835,7 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 default:
-                    MetaType metaType = md.baseTI.metaType;
+                    MetaType metaType = md._baseTI.metaType;
 
                     // If we don't have a metatype already, construct one to get the proper type name.
                     if (metaType == null)
@@ -6907,7 +6907,7 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
 
-                    if (md.isEncrypted
+                    if (md._isEncrypted
                         && ((columnEncryptionOverride == SqlCommandColumnEncryptionSetting.Enabled
                             || columnEncryptionOverride == SqlCommandColumnEncryptionSetting.ResultSetOnly)
                             || (columnEncryptionOverride == SqlCommandColumnEncryptionSetting.UseConnectionSetting
@@ -6917,7 +6917,7 @@ namespace Microsoft.Data.SqlClient
                         try
                         {
                             // CipherInfo is present, decrypt and read
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(b, md.cipherMD, _connHandler.Connection, command);
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(b, md._cipherMD, _connHandler.Connection, command);
 
                             if (unencryptedBytes != null)
                             {
@@ -11340,9 +11340,9 @@ namespace Microsoft.Data.SqlClient
                     if (null != metadataCollection[col])
                     {
                         _SqlMetaData md = metadataCollection[col];
-                        if (md.isEncrypted)
+                        if (md._isEncrypted)
                         {
-                            SqlSecurityUtility.DecryptSymmetricKey(md.cipherMD, connection, command);
+                            SqlSecurityUtility.DecryptSymmetricKey(md._cipherMD, connection, command);
                         }
                     }
                 }
@@ -11390,14 +11390,14 @@ namespace Microsoft.Data.SqlClient
             //     Note- Cek table (with 0 entries) will be present if TCE
             //     was enabled and server supports it!
             // OR if encryption was disabled in connection options
-            if (metadataCollection.cekTable == null ||
+            if (metadataCollection._cekTable == null ||
                 !ShouldEncryptValuesForBulkCopy())
             {
                 WriteShort(0x00, stateObj);
                 return;
             }
 
-            SqlTceCipherInfoTable cekTable = metadataCollection.cekTable;
+            SqlTceCipherInfoTable cekTable = metadataCollection._cekTable;
             ushort count = (ushort)cekTable.Size;
 
             WriteShort(count, stateObj);
@@ -11452,34 +11452,34 @@ namespace Microsoft.Data.SqlClient
         internal void WriteCryptoMetadata(_SqlMetaData md, TdsParserStateObject stateObj)
         {
             if (!_serverSupportsColumnEncryption || // TCE Feature supported
-                !md.isEncrypted || // Column is not encrypted
+                !md._isEncrypted || // Column is not encrypted
                 !ShouldEncryptValuesForBulkCopy())
             { // TCE disabled on connection string
                 return;
             }
 
             // Write the ordinal
-            WriteShort(md.cipherMD.CekTableOrdinal, stateObj);
+            WriteShort(md._cipherMD.CekTableOrdinal, stateObj);
 
             // Write UserType and TYPEINFO
-            WriteTceUserTypeAndTypeInfo(md.baseTI, stateObj);
+            WriteTceUserTypeAndTypeInfo(md._baseTI, stateObj);
 
             // Write Encryption Algo
-            stateObj.WriteByte(md.cipherMD.CipherAlgorithmId);
+            stateObj.WriteByte(md._cipherMD.CipherAlgorithmId);
 
-            if (TdsEnums.CustomCipherAlgorithmId == md.cipherMD.CipherAlgorithmId)
+            if (TdsEnums.CustomCipherAlgorithmId == md._cipherMD.CipherAlgorithmId)
             {
                 // Write the algorithm name
-                Debug.Assert(md.cipherMD.CipherAlgorithmName.Length < 256);
-                stateObj.WriteByte((byte)md.cipherMD.CipherAlgorithmName.Length);
-                WriteString(md.cipherMD.CipherAlgorithmName, stateObj);
+                Debug.Assert(md._cipherMD.CipherAlgorithmName.Length < 256);
+                stateObj.WriteByte((byte)md._cipherMD.CipherAlgorithmName.Length);
+                WriteString(md._cipherMD.CipherAlgorithmName, stateObj);
             }
 
             // Write Encryption Algo Type
-            stateObj.WriteByte(md.cipherMD.EncryptionType);
+            stateObj.WriteByte(md._cipherMD.EncryptionType);
 
             // Write Normalization Version
-            stateObj.WriteByte(md.cipherMD.NormalizationRuleVersion);
+            stateObj.WriteByte(md._cipherMD.NormalizationRuleVersion);
         }
 
         internal void WriteBulkCopyMetaData(_SqlMetaDataSet metadataCollection, int count, TdsParserStateObject stateObj)
@@ -11522,7 +11522,7 @@ namespace Microsoft.Data.SqlClient
                     { // TCE Supported
                         if (ShouldEncryptValuesForBulkCopy())
                         { // TCE enabled on connection options
-                            flags |= (UInt16)(md.isEncrypted ? (UInt16)(TdsEnums.IsEncrypted << 8) : (UInt16)0);
+                            flags |= (UInt16)(md._isEncrypted ? (UInt16)(TdsEnums.IsEncrypted << 8) : (UInt16)0);
                         }
                     }
 
@@ -11614,7 +11614,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             int actualLengthInBytes;
-            switch (metadata.baseTI.metaType.NullableType)
+            switch (metadata._baseTI.metaType.NullableType)
             {
                 case TdsEnums.SQLBIGBINARY:
                 case TdsEnums.SQLBIGVARBINARY:
@@ -11629,10 +11629,10 @@ namespace Microsoft.Data.SqlClient
                     // to report the size of data to be copied out (for serialization). If we underreport the
                     // size, truncation will happen for us!
                     actualLengthInBytes = (isSqlType) ? ((SqlBinary)value).Length : ((byte[])value).Length;
-                    if (metadata.baseTI.length > 0 &&
-                        actualLengthInBytes > metadata.baseTI.length)
+                    if (metadata._baseTI.length > 0 &&
+                        actualLengthInBytes > metadata._baseTI.length)
                     { // see comments agove
-                        actualLengthInBytes = metadata.baseTI.length;
+                        actualLengthInBytes = metadata._baseTI.length;
                     }
                     break;
 
@@ -11651,10 +11651,10 @@ namespace Microsoft.Data.SqlClient
                     actualLengthInBytes = _defaultEncoding.GetByteCount(stringValue);
 
                     // If the string length is > max length, then use the max length (see comments above)
-                    if (metadata.baseTI.length > 0 &&
-                        actualLengthInBytes > metadata.baseTI.length)
+                    if (metadata._baseTI.length > 0 &&
+                        actualLengthInBytes > metadata._baseTI.length)
                     {
-                        actualLengthInBytes = metadata.baseTI.length; // this ensure truncation!
+                        actualLengthInBytes = metadata._baseTI.length; // this ensure truncation!
                     }
 
                     break;
@@ -11663,16 +11663,16 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNTEXT:
                     actualLengthInBytes = ((isSqlType) ? ((SqlString)value).Value.Length : ((string)value).Length) * 2;
 
-                    if (metadata.baseTI.length > 0 &&
-                        actualLengthInBytes > metadata.baseTI.length)
+                    if (metadata._baseTI.length > 0 &&
+                        actualLengthInBytes > metadata._baseTI.length)
                     { // see comments above
-                        actualLengthInBytes = metadata.baseTI.length;
+                        actualLengthInBytes = metadata._baseTI.length;
                     }
 
                     break;
 
                 default:
-                    actualLengthInBytes = metadata.baseTI.length;
+                    actualLengthInBytes = metadata._baseTI.length;
                     break;
             }
 
@@ -11681,28 +11681,28 @@ namespace Microsoft.Data.SqlClient
             {
                 // SqlType
                 serializedValue = SerializeUnencryptedSqlValue(value,
-                                            metadata.baseTI.metaType,
+                                            metadata._baseTI.metaType,
                                             actualLengthInBytes,
                                             offset: 0,
-                                            normalizationVersion: metadata.cipherMD.NormalizationRuleVersion,
+                                            normalizationVersion: metadata._cipherMD.NormalizationRuleVersion,
                                             stateObj: stateObj);
             }
             else
             {
                 serializedValue = SerializeUnencryptedValue(value,
-                                            metadata.baseTI.metaType,
-                                            metadata.baseTI.scale,
+                                            metadata._baseTI.metaType,
+                                            metadata._baseTI.scale,
                                             actualLengthInBytes,
                                             offset: 0,
                                             isDataFeed: isDataFeed,
-                                            normalizationVersion: metadata.cipherMD.NormalizationRuleVersion,
+                                            normalizationVersion: metadata._cipherMD.NormalizationRuleVersion,
                                             stateObj: stateObj);
             }
 
             Debug.Assert(serializedValue != null, "serializedValue should not be null in TdsExecuteRPC.");
             return SqlSecurityUtility.EncryptWithKey(
                     serializedValue,
-                    metadata.cipherMD,
+                    metadata._cipherMD,
                     _connHandler.Connection,
                     null);
         }
