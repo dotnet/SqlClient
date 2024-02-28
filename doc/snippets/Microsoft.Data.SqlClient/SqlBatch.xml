@@ -111,6 +111,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </remarks>
     </ExecuteReader>
     <ExecuteReaderAsync>
+      <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
       <summary>
         An asynchronous version of
         <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteReader"/>
@@ -122,6 +123,10 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
         <see cref="T:Microsoft.Data.SqlClient.SqlDataReader"/>.
         Exceptions will be reported via the returned Task object.
       </summary>
+      <returns>A task representing the asynchronous operation.</returns>
+      <exception cref="T:Microsoft.Data.SqlClient.SqlException">An error occurred while executing the batch.</exception>
+      <exception cref="T:System.ArgumentException">The <see cref="T:System.Data.CommandBehavior" /> value is invalid.</exception>
+      <exception cref="T:System.OperationCanceledException">The cancellation token was canceled. This exception is stored into the returned task.</exception>
     </ExecuteReaderAsync>
     <DbBatchCommands>
       <summary>Gets the collection of <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects.</summary>
