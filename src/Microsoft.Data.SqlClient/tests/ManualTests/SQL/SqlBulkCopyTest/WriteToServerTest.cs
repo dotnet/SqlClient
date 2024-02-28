@@ -43,6 +43,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        private void SetupTestTables()
+        {
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                SqlCommand command = connection.CreateCommand();
+
+                Helpers.TryExecute(command, "drop table if exists TestTable1");
+                Helpers.TryExecute(command, "drop table if exists TestTable2");
+
+                Helpers.TryExecute(command, "create table TestTable1 (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
+                Helpers.TryExecute(command, "create table TestTable2 (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
+
+                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('John', 'Doe')");
+                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Johnny', 'Smith')");
+                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Jenny', 'Doe')");
+                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Jane', 'Smith')");
+
+                command.Dispose();
+            }
+        }
+
         private DataRow[] CreateDataRows()
         {
             DataTable table = new DataTable();
@@ -80,29 +103,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlCommand command = connection.CreateCommand();
 
                 Helpers.TryExecute(command, "delete from TestTable2");
-
-                command.Dispose();
-            }
-        }
-
-        private void SetupTestTables()
-        {
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
-
-                SqlCommand command = connection.CreateCommand();
-
-                Helpers.TryExecute(command, "drop table if exists TestTable1");
-                Helpers.TryExecute(command, "drop table if exists TestTable2");
-
-                Helpers.TryExecute(command, "create table TestTable1 (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
-                Helpers.TryExecute(command, "create table TestTable2 (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
-
-                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('John', 'Doe')");
-                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Johnny', 'Smith')");
-                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Jenny', 'Doe')");
-                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Jane', 'Smith')");
 
                 command.Dispose();
             }
