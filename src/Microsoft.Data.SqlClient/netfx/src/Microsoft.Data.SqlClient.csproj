@@ -172,6 +172,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ApplicationIntent.cs">
       <Link>Microsoft\Data\SqlClient\ApplicationIntent.cs</Link>
     </Compile>
@@ -633,7 +636,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbReferenceCollection.cs" />
     <Compile Include="Microsoft\Data\RelationshipConverter.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.Cng.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
