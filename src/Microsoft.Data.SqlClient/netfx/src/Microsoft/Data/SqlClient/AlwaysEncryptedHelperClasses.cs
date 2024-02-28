@@ -24,7 +24,6 @@ namespace Microsoft.Data.SqlClient
         internal string keyPath;
         internal string keyStoreName;
         internal string algorithmName;
-        internal byte normalizationRuleVersion;
     }
 
     /// <summary>
