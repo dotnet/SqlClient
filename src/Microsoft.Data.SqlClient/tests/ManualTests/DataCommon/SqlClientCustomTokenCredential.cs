@@ -57,13 +57,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                     {
                                         _authority = value;
                                     }
-                                }
+                                    else if (key.Equals("resource", StringComparison.InvariantCultureIgnoreCase))
+                                    {
+                                        _resource = value;
+                                    }
                             }
                         }
                     }
                 }
                 // Since this is a test, we only create single-instance temp cache
-                _akvUrl = _resource = DataTestUtility.AKVUrl;
+                _akvUrl = DataTestUtility.AKVUrl;
             }
 
             AccessToken accessToken = await AzureActiveDirectoryAuthenticationCallback(_authority, _resource);
@@ -95,7 +98,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using CancellationTokenSource cts = new();
             cts.CancelAfter(30000); // Hard coded for tests
-            string[] scopes = new string[] { resource };
+            string[] scopes = new string[] { resource + "/.default" };
             TokenRequestContext tokenRequestContext = new(scopes);
             int seperatorIndex = authority.LastIndexOf('/');
             string authorityHost = authority.Remove(seperatorIndex + 1);
