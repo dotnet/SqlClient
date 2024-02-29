@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlCommand command = new SqlCommand(sql, connection);
                 IDataReader reader = command.ExecuteReader();
                 SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
-                bulkCopy.DestinationTableName = $"{_tableName2}";
+                bulkCopy.DestinationTableName = _tableName2;
 
                 bool result = BulkCopy(bulkCopy, reader, dataRows);
 
@@ -158,7 +158,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 command = new SqlCommand(sql, connection);
                 IDataReader reader = await command.ExecuteReaderAsync();
                 SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
-                bulkCopy.DestinationTableName = $"{_tableName2}";
+                bulkCopy.DestinationTableName = _tableName2;
 
                 bool result = await BulkCopyAsync(bulkCopy, reader, dataRows);  
 
