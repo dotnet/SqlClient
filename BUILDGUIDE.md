@@ -184,7 +184,6 @@ Manual Tests require the below setup to run:
   |FileStreamDirectory | (Optional) If File Stream is enabled on SQL Server, pass local directory path to be used for setting up File Stream enabled database. |  `D:\\escaped\\absolute\\path\\to\\directory\\` |
   |UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
   |DNSCachingConnString | Connection string for a server that supports DNS Caching|
-  |IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
   |EnclaveAzureDatabaseConnString | (Optional) Connection string for Azure database with enclaves |
   |ManagedIdentitySupported | (Optional) When set to `false` **Managed Identity** related tests won't run. The default value is `true`. |
   |IsManagedInstance | (Optional) When set to `true` **TVP** related tests will use on non-Azure bs files to compare test results. this is needed when testing against Managed Instances or TVP Tests will fail on Test set 3. The default value is `false`. |

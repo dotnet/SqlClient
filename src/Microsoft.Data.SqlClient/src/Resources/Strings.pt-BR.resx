@@ -4465,7 +4465,7 @@
     <value>Tempo Limite de Execução Expirado.  O período de tempo limite terminou antes da conclusão da operação ou o servidor não está respondendo.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
+    <value>A validação de um token de atestado falhou. A assinatura do token não corresponde à assinatura computada usando uma chave pública recuperada do ponto final da chave pública de atestado em “{0}”. Verifique o mapeamento de DNS para o ponto de extremidade – confira https://go.microsoft.com/fwlink/?linkid=2157649 para obter mais detalhes. Se estiver correto, entre em contato com os Serviços de Suporte ao Cliente.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Ocorreu um erro interno ao repetir o download do certificado raiz HGS após a falha da solicitação inicial. Entre em contato com os Serviços de Atendimento ao Cliente.</value>
@@ -4486,10 +4486,10 @@
     <value>A validação de um token de atestado falhou. O token tem um formato inválido. Entre em contato com os Serviços de Atendimento ao Cliente. Detalhes do erro: '{0}'.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>O serviço de atestado retornou um certificado raiz HGS expirado para o URL de atestado '{0}'. Verifique o certificado raiz HGS configurado para sua instância HGS - consulte https://go.microsoft.com/fwlink/?linkid=2160553 para mais detalhes.</value>
+    <value>O serviço de atestado retornou um certificado raiz HGS expirado para a URL de atestado "{0}". Verifique o certificado raiz do HGS configurado para a sua instância do HGS – confira https://go.microsoft.com/fwlink/?linkid=2160553 para obter mais detalhes.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>O certificado raiz HGS obtido para o URL de atestado '{0}' tem um formato inválido. Verifique se o URL de atestado está correto e se o servidor HGS está online e totalmente inicializado- consulte https://go.microsoft.com/fwlink/?linkid=2160553 para mais detalhes. Para obter suporte adicional, entre em contato com os Serviços de Suporte ao Cliente. Detalhes do erro: '{1}'.</value>
+    <value>O certificado raiz HGS obtido para a URL de atestado "{0}" tem um formato inválido. Verifique se a URL de atestado está correta e se o servidor HGS está online e totalmente inicializado. Confira https://go.microsoft.com/fwlink/?linkid=2160553 para obter mais detalhes. Para obter suporte adicional, entre em contato com os Serviços de Suporte ao Cliente. Detalhes do erro: "{1}".</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>A validação de um token de atestado falhou. Não é possível recuperar uma chave pública do ponto de extremidade de chave pública de atestado ou a chave recuperada tem um formato inválido. Detalhes do erro: '{0}'.</value>
@@ -4507,16 +4507,16 @@
     <value>A validação do token de atestado falhou durante a validação de assinatura. Exceção: '{0}'.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>A validação de um token de atestado falhou. A reivindicação '{0}' no token tem um valor inválido de '{1}'. Verifique a política de atestado - consulte https://go.microsoft.com/fwlink/?linkid=2157649 para mais detalhes. Se a política estiver correta, entre em contato com os Serviços de Suporte ao Cliente.</value>
+    <value>A validação de um token de atestado falhou. A reivindicação "{0}" no token tem um valor inválido de "{1}". Verifique a política de atestado – confira https://go.microsoft.com/fwlink/?linkid=2157649 para obter mais detalhes. Se a política estiver correta, entre em contato com os Serviços de Suporte ao Cliente.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>A validação do token de atestado falhou. A reivindicação '{0}' está ausente no token. Verifique a política de atestado- consulte https://go.microsoft.com/fwlink/?linkid=2157649 para mais detalhes. Se a política estiver correta, entre em contato com os Serviços de Suporte ao Cliente.</value>
+    <value>A validação do token de atestado falhou. A reivindicação "{0}" está ausente no token. Verifique a política de atestado – confira https://go.microsoft.com/fwlink/?linkid=2157649 para obter mais detalhes. Se a política estiver correta, entre em contato com os Serviços de Suporte ao Cliente.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Falha ao verificar se o enclave está sendo executado no modo de produção. Entre em contato com os Serviços de Atendimento ao Cliente.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Não foi possível verificar a política de enclave devido a uma diferença entre os valores esperados e reais da política na propriedade '{0}'. Real: '{1}', Esperado: '{2}' - consulte https://go.microsoft.com/fwlink/?linkid=2160553 para mais detalhes.</value>
+    <value>Não foi possível verificar a política de enclave devido a uma diferença entre os valores esperados e reais da política na propriedade "{0}". Real: "{1}", Esperado: "{2}" – confira https://go.microsoft.com/fwlink/?linkid=2160553 para obter mais detalhes.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>A verificação da assinatura do relatório do enclave falhou. A assinatura do relatório não corresponde à assinatura calculada usando o certificado raiz HGS. Verifique o mapeamento DNS para o ponto de extremidade - consulte https://go.microsoft.com/fwlink/?linkid=2160553 para mais detalhes. Se estiver correto, entre em contato com os Serviços de Suporte ao Cliente.</value>

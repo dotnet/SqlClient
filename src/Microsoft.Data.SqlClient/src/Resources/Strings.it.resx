@@ -4465,7 +4465,7 @@
     <value>Il timeout di esecuzione è scaduto. Il periodo di timeout è scaduto prima del completamento dell'operazione oppure il server non risponde.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
+    <value>La convalida di un token di attestazione non è riuscita. La firma del token non corrisponde alla firma calcolata usando una chiave pubblica recuperata dall'endpoint della chiave pubblica di attestazione in "{0}". Verificare il mapping DNS per l'endpoint - vedere https://go.microsoft.com/fwlink/?linkid=2157649 per altri dettagli. Se è corretto, contattare i servizi del Supporto Clienti.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Si è verificato un errore interno durante il tentativo di eseguire il download del certificato radice HGS dopo che la richiesta iniziale non è riuscita. Contattare il Servizio Supporto Tecnico Clienti.</value>
@@ -4507,7 +4507,7 @@
     <value>La convalida del token di attestazione non è riuscita durante la convalida della firma. Eccezione: '{0}'.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>La convalida del token di attestazione non è riuscita. L'attestazione '{0}' presenta il valore non valido '{1}'. Verificare i criteri di attestazione - vedere https://go.microsoft.com/fwlink/?linkid=2157649 per altri dettagli. Se i criteri sono corretti, contattare il Servizio Supporto Tecnico Clienti.</value>
+    <value>La convalida di un token di attestazione non è riuscita. L'attestazione '{0}' presenta il valore non valido '{1}'. Verificare i criteri di attestazione - vedere https://go.microsoft.com/fwlink/?linkid=2157649 per altri dettagli. Se i criteri sono corretti, contattare il Servizio Supporto Tecnico Clienti.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
     <value>La convalida del token di attestazione non è riuscita. L'attestazione '{0}' non è presente nel token. Verificare i criteri di attestazione - vedere https://go.microsoft.com/fwlink/?linkid=2157649 per altri dettagli. Se i criteri sono corretti, contattare il Servizio Supporto Tecnico Clienti.</value>

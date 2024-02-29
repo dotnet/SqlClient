@@ -5,7 +5,7 @@
 				Lets you efficiently bulk load a SQL Server table with data from another source.
 			</summary>
 			<remarks>
-				<format ttype="text/markdown"><![CDATA[
+				<format type="text/markdown"><![CDATA[
 
 ## Remarks
 Microsoft SQL Server includes a popular command-prompt utility named **bcp** for moving data from one table to another, whether on a single server or between servers. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <xref:Microsoft.Data.SqlClient.SqlBulkCopy> offers a significant performance advantage over them. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <xref:System.Data.DataTable> instance or read with a <xref:System.Data.IDataReader> instance. <xref:Microsoft.Data.SqlClient.SqlBulkCopy> will fail when bulk loading a <xref:System.Data.DataTable> column of type <xref:System.Data.SqlTypes.SqlDateTime> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
