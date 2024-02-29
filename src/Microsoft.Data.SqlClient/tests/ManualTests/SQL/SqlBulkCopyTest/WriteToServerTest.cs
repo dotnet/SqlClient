@@ -12,6 +12,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class WriteToServerTest
     {
         private string _connectionString = null;
+        private string _tableName1 = DataTestUtility.GetUniqueName("Bulk1");
+        private string _tableName2 = DataTestUtility.GetUniqueName("Bulk2");
 
         public WriteToServerTest()
         {
@@ -51,16 +53,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 SqlCommand command = connection.CreateCommand();
 
-                Helpers.TryExecute(command, "drop table if exists TestTable1");
-                Helpers.TryExecute(command, "drop table if exists TestTable2");
+                Helpers.TryExecute(command, $"drop table if exists {_tableName1}");
+                Helpers.TryExecute(command, $"drop table if exists {_tableName2}");
 
-                Helpers.TryExecute(command, "create table TestTable1 (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
-                Helpers.TryExecute(command, "create table TestTable2 (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
+                Helpers.TryExecute(command, $"create table {_tableName1} (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
+                Helpers.TryExecute(command, $"create table {_tableName2} (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
 
-                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('John', 'Doe')");
-                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Johnny', 'Smith')");
-                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Jenny', 'Doe')");
-                Helpers.TryExecute(command, "insert into TestTable1 (Firstname, LastName) values ('Jane', 'Smith')");
+                Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('John', 'Doe')");
+                Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('Johnny', 'Smith')");
+                Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('Jenny', 'Doe')");
+                Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('Jane', 'Smith')");
 
                 command.Dispose();
             }
@@ -87,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Open();
 
-                using (SqlCommand command = new SqlCommand("select count(*) from TestTable2", connection))
+                using (SqlCommand command = new SqlCommand($"select count(*) from {_tableName2}", connection))
                 {
                     return (int)command.ExecuteScalar();
                 }
@@ -102,7 +104,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 SqlCommand command = connection.CreateCommand();
 
-                Helpers.TryExecute(command, "delete from TestTable2");
+                Helpers.TryExecute(command, $"delete from {_tableName2}");
 
                 command.Dispose();
             }
@@ -116,8 +118,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 SqlCommand command = connection.CreateCommand();
 
-                Helpers.TryExecute(command, "drop table if exists TestTable1");
-                Helpers.TryExecute(command, "drop table if exists TestTable2");
+                Helpers.TryExecute(command, $"drop table if exists {_tableName1}");
+                Helpers.TryExecute(command, $"drop table if exists {_tableName2}");
 
                 command.Dispose();
             }
@@ -129,11 +131,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Open();
 
-                string sql = "select * from TestTable1";
+                string sql = $"select * from {_tableName1}";
                 SqlCommand command = new SqlCommand(sql, connection);
                 IDataReader reader = command.ExecuteReader();
                 SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
-                bulkCopy.DestinationTableName = "TestTable2";
+                bulkCopy.DestinationTableName = $"{_tableName2}";
 
                 bool result = BulkCopy(bulkCopy, reader, dataRows);
 
@@ -152,11 +154,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 SqlCommand command = connection.CreateCommand();
 
-                string sql = "select * from TestTable1";
+                string sql = $"select * from {_tableName1}";
                 command = new SqlCommand(sql, connection);
                 IDataReader reader = await command.ExecuteReaderAsync();
                 SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
-                bulkCopy.DestinationTableName = "TestTable2";
+                bulkCopy.DestinationTableName = $"{_tableName2}";
 
                 bool result = await BulkCopyAsync(bulkCopy, reader, dataRows);  
 
