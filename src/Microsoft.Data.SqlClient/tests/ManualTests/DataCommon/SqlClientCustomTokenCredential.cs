@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SqlClientCustomTokenCredential : TokenCredential
     {
+        private const string DEFAULT_PREFIX = "/.default";
         private static readonly ConcurrentDictionary<string, ClientSecretCredential> s_clientSecretCredentials = new();
 
         string _authority = "";
@@ -61,6 +62,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                     {
                                         _resource = value;
                                     }
+                                }
                             }
                         }
                     }
@@ -98,7 +100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using CancellationTokenSource cts = new();
             cts.CancelAfter(30000); // Hard coded for tests
-            string[] scopes = new string[] { resource + "/.default" };
+            string[] scopes = new string[] { resource + DEFAULT_PREFIX };
             TokenRequestContext tokenRequestContext = new(scopes);
             int seperatorIndex = authority.LastIndexOf('/');
             string authorityHost = authority.Remove(seperatorIndex + 1);
