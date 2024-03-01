@@ -11,9 +11,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class WriteToServerTest
     {
-        private string _connectionString = null;
-        private string _tableName1 = DataTestUtility.GetUniqueName("Bulk1");
-        private string _tableName2 = DataTestUtility.GetUniqueName("Bulk2");
+        private readonly string _connectionString = null;
+        private readonly string _tableName1 = DataTestUtility.GetUniqueName("Bulk1");
+        private readonly string _tableName2 = DataTestUtility.GetUniqueName("Bulk2");
+        private static int _copiedRecordCount;
 
         public WriteToServerTest()
         {
@@ -27,17 +28,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 SetupTestTables();
 
-                DataRow[] dataRows = CreateDataRows();
+                DataRow[] dataRows = WriteToServerTest.CreateDataRows();
+                Assert.Equal(4, dataRows.Length);
 
+                _copiedRecordCount = 0;
                 bool result = DoBulkCopy(dataRows);
                 Assert.True(result, "WriteToServer with IDataReader followed by WriteToServer with data rows test failed.");
-                Assert.True(GetCopiedRecordsCount() == 8, "WriteToServer with IDataReader followed by WriteToServer with data rows test failed.");  
+                Assert.Equal(8, _copiedRecordCount);
 
                 CleanupTestTable2();
 
+                _copiedRecordCount = 0;
                 result = await DoBulkCopyAsync(dataRows);
                 Assert.True(result, "WriteToServerAsync with IDataReader followed by WriteToServerAsync with data rows test failed.");
-                Assert.True(GetCopiedRecordsCount() == 8, "WriteToServerAsync with IDataReader followed by WriteToServerAsync with data rows test failed.");
+                Assert.Equal(8, _copiedRecordCount);
             }
             finally
             {
@@ -51,24 +55,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Open();
 
-                SqlCommand command = connection.CreateCommand();
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    DataTestUtility.DropTable(connection, _tableName1);
+                    DataTestUtility.DropTable(connection, _tableName2);
 
-                Helpers.TryExecute(command, $"drop table if exists {_tableName1}");
-                Helpers.TryExecute(command, $"drop table if exists {_tableName2}");
+                    Helpers.TryExecute(command, $"create table {_tableName1} (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
+                    Helpers.TryExecute(command, $"create table {_tableName2} (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
 
-                Helpers.TryExecute(command, $"create table {_tableName1} (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
-                Helpers.TryExecute(command, $"create table {_tableName2} (Id int identity primary key, FirstName nvarchar(50), LastName nvarchar(50))");
-
-                Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('John', 'Doe')");
-                Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('Johnny', 'Smith')");
-                Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('Jenny', 'Doe')");
-                Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('Jane', 'Smith')");
-
-                command.Dispose();
+                    Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('John', 'Doe')");
+                    Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('Johnny', 'Smith')");
+                    Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('Jenny', 'Doe')");
+                    Helpers.TryExecute(command, $"insert into {_tableName1} (Firstname, LastName) values ('Jane', 'Smith')");
+                }
             }
         }
 
-        private DataRow[] CreateDataRows()
+        private static DataRow[] CreateDataRows()
         {
             DataTable table = new DataTable();
             table.Columns.Add("Id", typeof(int));
@@ -83,30 +86,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return table.Select();
         }
 
-        private int GetCopiedRecordsCount()
-        {
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
-
-                using (SqlCommand command = new SqlCommand($"select count(*) from {_tableName2}", connection))
-                {
-                    return (int)command.ExecuteScalar();
-                }
-            }
-        }
-
         private void CleanupTestTable2()
         {
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
 
-                SqlCommand command = connection.CreateCommand();
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    Helpers.TryExecute(command, $"delete from {_tableName2}");
+                }
 
-                Helpers.TryExecute(command, $"delete from {_tableName2}");
-
-                command.Dispose();
             }
         }
 
@@ -115,13 +105,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
-
-                SqlCommand command = connection.CreateCommand();
-
-                Helpers.TryExecute(command, $"drop table if exists {_tableName1}");
-                Helpers.TryExecute(command, $"drop table if exists {_tableName2}");
-
-                command.Dispose();
+                
+                DataTestUtility.DropTable(connection, _tableName1);
+                DataTestUtility.DropTable(connection, _tableName2);
             }
         }
 
@@ -131,18 +117,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Open();
 
-                string sql = $"select * from {_tableName1}";
-                SqlCommand command = new SqlCommand(sql, connection);
-                IDataReader reader = command.ExecuteReader();
-                SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
-                bulkCopy.DestinationTableName = _tableName2;
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = $"select * from {_tableName1}";
 
-                bool result = BulkCopy(bulkCopy, reader, dataRows);
+                    using IDataReader reader = command.ExecuteReader();
 
-                reader.Close();
-                command.Dispose();
+                    using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
 
-                return result;
+                    bulkCopy.DestinationTableName = _tableName2;
+
+                    bool result = BulkCopy(bulkCopy, reader, dataRows);
+
+                    return result;
+                }
             }
         }
 
@@ -152,29 +140,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 await connection.OpenAsync();
 
-                SqlCommand command = connection.CreateCommand();
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = $"select * from {_tableName1}";
 
-                string sql = $"select * from {_tableName1}";
-                command = new SqlCommand(sql, connection);
-                IDataReader reader = await command.ExecuteReaderAsync();
-                SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
-                bulkCopy.DestinationTableName = _tableName2;
+                    using IDataReader reader = await command.ExecuteReaderAsync();
 
-                bool result = await BulkCopyAsync(bulkCopy, reader, dataRows);  
+                    using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection);
 
-                reader.Close();
-                command.Dispose();
+                    bulkCopy.DestinationTableName = _tableName2;
 
-                return result;
+                    bool result = await BulkCopyAsync(bulkCopy, reader, dataRows);
+
+                    return result;
+                }
             }
         }
 
-        private bool BulkCopy(SqlBulkCopy bulkCopy, IDataReader reader, DataRow[] dataRows)
+        private static bool BulkCopy(SqlBulkCopy bulkCopy, IDataReader reader, DataRow[] dataRows)
         {
             try
             {
                 bulkCopy.WriteToServer(reader);
+                _copiedRecordCount = bulkCopy.RowsCopied;
                 bulkCopy.WriteToServer(dataRows);
+                _copiedRecordCount += bulkCopy.RowsCopied;
 
                 return true;
             }
@@ -184,12 +174,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private async Task<bool> BulkCopyAsync(SqlBulkCopy bulkCopy, IDataReader reader, DataRow[] dataRows)
+        private static async Task<bool> BulkCopyAsync(SqlBulkCopy bulkCopy, IDataReader reader, DataRow[] dataRows)
         {
             try
             {
                 await bulkCopy.WriteToServerAsync(reader);
+                _copiedRecordCount = bulkCopy.RowsCopied;
                 await bulkCopy.WriteToServerAsync(dataRows);
+                _copiedRecordCount += bulkCopy.RowsCopied;
 
                 return true;
             }
