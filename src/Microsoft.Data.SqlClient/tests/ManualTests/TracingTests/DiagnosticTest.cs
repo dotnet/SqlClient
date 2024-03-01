@@ -152,6 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cmd.CommandText = "SELECT 1 / 0;";
 
                         conn.Open();
+                        // @TODO: TestTdsServer should not throw on ExecuteReader, it should throw on reader.Read
                         Assert.Throws<SqlException>(() => cmd.ExecuteReader());
                     }
                 });
@@ -225,6 +226,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cmd.CommandText = "SELECT *, baddata = 1 / 0 FROM sys.objects FOR xml auto, xmldata;";
 
                         conn.Open();
+                        // @TODO: TestTdsServer should not throw on ExecuteXmlReader, should throw on reader.Read
                         Assert.Throws<SqlException>(() => cmd.ExecuteXmlReader());
                     }
                 });
@@ -355,6 +357,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cmd.CommandText = "SELECT 1 / 0;";
 
                         conn.Open();
+                        // @TODO: TestTdsServer should not throw on ExecuteReader, should throw on reader.Read
                         await Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteReaderAsync());
                     }
                 }).Wait();
@@ -366,6 +369,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void ExecuteXmlReaderAsyncTest()
         {
+            // @TODO: TestTdsServer does not handle xml reader, so connect to a real server as a workaround
             RemoteExecutor.Invoke(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
@@ -388,34 +392,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteXmlReaderAsyncErrorTest()
         {
-            RemoteExecutor.Invoke(cs =>
+            // @TODO: TestTdsServer does not handle xml reader, so connect to a real server as a workaround
+            RemoteExecutor.Invoke(() =>
             {
+
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    using (SqlConnection conn = new SqlConnection(cs))
-                    using (SqlCommand cmd = new SqlCommand())
+                    await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "select *, baddata = 1 / 0 from sys.objects for xml auto, xmldata;";
 
-                        try
-                        {
-                            XmlReader reader = await cmd.ExecuteXmlReaderAsync();
-                            while (reader.Read())
-                            {
-                            }
-                        }
-                        catch
-                        {
-                            Console.WriteLine("Frig.");
-                        }
+                        // @TODO: Since this test uses a real database connection, the exception is
+                        //     thrown during reader.Read. (ie, TestTdsServer does not obey proper
+                        //     exception behavior)
+                        await conn.OpenAsync();
+                        XmlReader reader = await cmd.ExecuteXmlReaderAsync();
+                        await Assert.ThrowsAsync<SqlException>(() => reader.ReadAsync());
                     }
                 }).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }, DataTestUtility.TCPConnectionString).Dispose();
+            }).Dispose();
         }
 
         [Fact]
