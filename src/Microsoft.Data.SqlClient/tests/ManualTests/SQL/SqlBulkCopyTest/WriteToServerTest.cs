@@ -96,7 +96,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Helpers.TryExecute(command, $"delete from {_tableName2}");
                 }
-
             }
         }
 
