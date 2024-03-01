@@ -102,9 +102,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cts.CancelAfter(30000); // Hard coded for tests
             string[] scopes = new string[] { resource + DEFAULT_PREFIX };
             TokenRequestContext tokenRequestContext = new(scopes);
-            int seperatorIndex = authority.LastIndexOf('/');
-            string authorityHost = authority.Remove(seperatorIndex + 1);
-            string audience = authority.Substring(seperatorIndex + 1);
+            int separatorIndex = authority.LastIndexOf('/');
+            string authorityHost = authority.Remove(separatorIndex + 1);
+            string audience = authority.Substring(separatorIndex + 1);
             TokenCredentialOptions tokenCredentialOptions = new TokenCredentialOptions() { AuthorityHost = new Uri(authorityHost) };
             ClientSecretCredential clientSecretCredential = s_clientSecretCredentials.GetOrAdd(authority + "|--|" + resource,
                 new ClientSecretCredential(audience, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret, tokenCredentialOptions));
