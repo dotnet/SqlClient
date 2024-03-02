@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
         private CommandBehavior _commandBehavior;
 
         private static int s_objectTypeCount; // EventSource Counter
-        internal static readonly int ObjectID = Interlocked.Increment(ref s_objectTypeCount);
+        internal readonly int ObjectID = Interlocked.Increment(ref s_objectTypeCount);
 
         // context
         // undone: we may still want to do this...it's nice to pass in an lpvoid (essentially) and just have the reader keep the state
@@ -5026,7 +5026,7 @@ namespace Microsoft.Data.SqlClient
             HasNextResultAsyncCallContext context = (HasNextResultAsyncCallContext)state;
             if (task != null)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.NextResultAsyncExecute> attempt retry {0}", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.NextResultAsyncExecute> attempt retry {0}", context.Reader.ObjectID);
                 context.Reader.PrepareForAsyncContinuation();
             }
 
