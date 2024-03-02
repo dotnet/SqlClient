@@ -4169,7 +4169,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false, bool forStreaming = false)
         {
-            CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn);
+            CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn, methodName: nameof(CheckDataIsReady));
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
