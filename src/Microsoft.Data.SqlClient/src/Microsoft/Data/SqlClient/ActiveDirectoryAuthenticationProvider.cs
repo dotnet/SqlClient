@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Linq;
 using System.Runtime.Caching;
 using System.Security.Cryptography;
 using System.Text;
@@ -25,8 +24,8 @@ namespace Microsoft.Data.SqlClient
         /// The purpose of this cache is to allow re-use of Access Tokens fetched for a user interactively or with any other mode
         /// to avoid interactive authentication request every-time, within application scope making use of MSAL's userTokenCache.
         /// </summary>
-        private static ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap
-            = new ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication>();
+        private static ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
+        private static ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
         private static readonly MemoryCache s_accountPwCache = new(nameof(ActiveDirectoryAuthenticationProvider));
         private static readonly int s_accountPwCacheTtlInHours = 2;
         private static readonly string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
@@ -65,6 +64,11 @@ namespace Microsoft.Data.SqlClient
             if (!s_pcaMap.IsEmpty)
             {
                 s_pcaMap.Clear();
+            }
+
+            if (!s_tokenCredentialMap.IsEmpty)
+            {
+                s_tokenCredentialMap.Clear();
             }
         }
 
@@ -142,30 +146,16 @@ namespace Microsoft.Data.SqlClient
              * More information: https://docs.microsoft.com/azure/active-directory/develop/msal-client-application-configuration
             **/
 
-            int seperatorIndex = parameters.Authority.LastIndexOf('/');
-            string authority = parameters.Authority.Remove(seperatorIndex + 1);
-            string audience = parameters.Authority.Substring(seperatorIndex + 1);
+            int separatorIndex = parameters.Authority.LastIndexOf('/');
+            string authority = parameters.Authority.Remove(separatorIndex + 1);
+            string audience = parameters.Authority.Substring(separatorIndex + 1);
             string clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDefault)
             {
-                DefaultAzureCredentialOptions defaultAzureCredentialOptions = new()
-                {
-                    AuthorityHost = new Uri(authority),
-                    SharedTokenCacheTenantId = audience,
-                    VisualStudioCodeTenantId = audience,
-                    VisualStudioTenantId = audience,
-                    ExcludeInteractiveBrowserCredential = true // Force disabled, even though it's disabled by default to respect driver specifications.
-                };
-
-                // Optionally set clientId when available
-                if (clientId is not null)
-                {
-                    defaultAzureCredentialOptions.ManagedIdentityClientId = clientId;
-                    defaultAzureCredentialOptions.SharedTokenCacheUsername = clientId;
-                    defaultAzureCredentialOptions.WorkloadIdentityClientId = clientId;
-                }
-                AccessToken accessToken = await new DefaultAzureCredential(defaultAzureCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                // Cache DefaultAzureCredenial based on scope, authority, audience, and clientId
+                TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authority, scope, audience, clientId);
+                AccessToken accessToken = await GetTokenCredentialInstance(tokenCredentialKey, string.Empty).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
@@ -174,33 +164,29 @@ namespace Microsoft.Data.SqlClient
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity || parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
-                AccessToken accessToken = await new ManagedIdentityCredential(clientId, tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                // Cache ManagedIdentityCredential based on scope, authority, and clientId
+                TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authority, scope, string.Empty, clientId);
+                AccessToken accessToken = await GetTokenCredentialInstance(tokenCredentialKey, string.Empty).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)
             {
-                AccessToken accessToken = await new ClientSecretCredential(audience, parameters.UserId, parameters.Password, tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                // Cache ClientSecretCredential based on scope, authority, audience, and clientId
+                TokenCredentialKey tokenCredentialKey = new(typeof(ClientSecretCredential), authority, scope, audience, clientId);
+                AccessToken accessToken = await GetTokenCredentialInstance(tokenCredentialKey, parameters.Password).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)
             {
-                // The WorkloadIdentityCredentialOptions object initialization populates its instance members
-                // from the environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE,
-                // and AZURE_ADDITIONALLY_ALLOWED_TENANTS. AZURE_CLIENT_ID may be overridden by the User Id.
-                WorkloadIdentityCredentialOptions options = new() { AuthorityHost = new Uri(authority) };
-
-                if (clientId is not null)
-                {
-                    options.ClientId = clientId;
-                }
-
+                // Cache WorkloadIdentityCredential based on authority and clientId
+                TokenCredentialKey tokenCredentialKey = new(typeof(WorkloadIdentityCredential), authority, string.Empty, string.Empty, clientId);
                 // If either tenant id, client id, or the token file path are not specified when fetching the token,
                 // a CredentialUnavailableException will be thrown instead
-                AccessToken accessToken = await new WorkloadIdentityCredential(options).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                AccessToken accessToken = await GetTokenCredentialInstance(tokenCredentialKey, string.Empty).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Workload Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
@@ -265,7 +251,7 @@ namespace Microsoft.Data.SqlClient
                 if (null != previousPw &&
                     previousPw is byte[] previousPwBytes &&
                     // Only get the cached token if the current password hash matches the previously used password hash
-                    currPwHash.SequenceEqual(previousPwBytes))
+                    AreEqual(currPwHash, previousPwBytes))
                 {
                     result = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
                 }
@@ -474,6 +460,26 @@ namespace Microsoft.Data.SqlClient
             return clientApplicationInstance;
         }
 
+        private static TokenCredential GetTokenCredentialInstance(TokenCredentialKey tokenCredentialKey, string secret)
+        {
+            if (!s_tokenCredentialMap.TryGetValue(tokenCredentialKey, out TokenCredentialData tokenCredentialInstance))
+            {
+                tokenCredentialInstance = CreateTokenCredentialInstance(tokenCredentialKey, secret);
+                s_tokenCredentialMap.TryAdd(tokenCredentialKey, tokenCredentialInstance);
+                return tokenCredentialInstance._tokenCredential;
+            }
+
+            if (!AreEqual(tokenCredentialInstance._secretHash, GetHash(secret)))
+            {
+                // If the secret hash has changed, we need to remove the old token credential instance and create a new one.
+                s_tokenCredentialMap.TryRemove(tokenCredentialKey, out _);
+                tokenCredentialInstance = CreateTokenCredentialInstance(tokenCredentialKey, secret);
+                s_tokenCredentialMap.TryAdd(tokenCredentialKey, tokenCredentialInstance);
+            }
+
+            return tokenCredentialInstance._tokenCredential;
+        }
+
         private static string GetAccountPwCacheKey(SqlAuthenticationParameters parameters)
         {
             return parameters.Authority + "+" + parameters.UserId;
@@ -485,6 +491,30 @@ namespace Microsoft.Data.SqlClient
             SHA256 sha256 = SHA256.Create();
             byte[] hashedBytes = sha256.ComputeHash(unhashedBytes);
             return hashedBytes;
+        }
+
+        private static bool AreEqual(byte[] a1, byte[] a2)
+        {
+            if (a1 is null && a2 is null)
+            {
+                return true;
+            }
+            else if (a1 is null || a2 is null)
+            {
+                return false;
+            }
+            else if (a1.Length != a2.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < a1.Length; i++)
+            {
+                if (a1[i] != a2[i])
+                    return false;
+            }
+
+            return true;
         }
 
         private IPublicClientApplication CreateClientAppInstance(PublicClientAppKey publicClientAppKey)
@@ -528,6 +558,59 @@ namespace Microsoft.Data.SqlClient
             }
 
             return publicClientApplication;
+        }
+
+        private static TokenCredentialData CreateTokenCredentialInstance(TokenCredentialKey tokenCredentialKey, string secret)
+        {
+            if (tokenCredentialKey._tokenCredentialType == typeof(DefaultAzureCredential))
+            {
+                DefaultAzureCredentialOptions defaultAzureCredentialOptions = new()
+                {
+                    AuthorityHost = new Uri(tokenCredentialKey._authority),
+                    SharedTokenCacheTenantId = tokenCredentialKey._audience,
+                    VisualStudioCodeTenantId = tokenCredentialKey._audience,
+                    VisualStudioTenantId = tokenCredentialKey._audience,
+                    ExcludeInteractiveBrowserCredential = true // Force disabled, even though it's disabled by default to respect driver specifications.
+                };
+
+                // Optionally set clientId when available
+                if (tokenCredentialKey._clientId is not null)
+                {
+                    defaultAzureCredentialOptions.ManagedIdentityClientId = tokenCredentialKey._clientId;
+                    defaultAzureCredentialOptions.SharedTokenCacheUsername = tokenCredentialKey._clientId;
+                    defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
+                }
+
+                return new TokenCredentialData(new DefaultAzureCredential(defaultAzureCredentialOptions), GetHash(secret));
+            }
+
+            TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
+
+            if (tokenCredentialKey._tokenCredentialType == typeof(ManagedIdentityCredential))
+            {
+                return new TokenCredentialData(new ManagedIdentityCredential(tokenCredentialKey._clientId, tokenCredentialOptions), GetHash(secret));
+            }
+            else if (tokenCredentialKey._tokenCredentialType == typeof(ClientSecretCredential))
+            {
+                return new TokenCredentialData(new ClientSecretCredential(tokenCredentialKey._audience, tokenCredentialKey._clientId, secret, tokenCredentialOptions), GetHash(secret));
+            }
+            else if (tokenCredentialKey._tokenCredentialType == typeof(WorkloadIdentityCredential))
+            {
+                // The WorkloadIdentityCredentialOptions object initialization populates its instance members
+                // from the environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE,
+                // and AZURE_ADDITIONALLY_ALLOWED_TENANTS. AZURE_CLIENT_ID may be overridden by the User Id.
+                WorkloadIdentityCredentialOptions options = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
+
+                if (tokenCredentialKey._clientId is not null)
+                {
+                    options.ClientId = tokenCredentialKey._clientId;
+                }
+
+                return new TokenCredentialData(new WorkloadIdentityCredential(options), GetHash(secret));
+            }
+
+            // This should never be reached, but if it is, throw an exception that will be noticed during development
+            throw new ArgumentException(nameof(ActiveDirectoryAuthenticationProvider));
         }
 
         internal class PublicClientAppKey
@@ -589,5 +672,52 @@ namespace Microsoft.Data.SqlClient
 #endif
                 ).GetHashCode();
         }
+
+        internal class TokenCredentialData
+        {
+            public TokenCredential _tokenCredential;
+            public byte[] _secretHash;
+
+            public TokenCredentialData(TokenCredential tokenCredential, byte[] secretHash)
+            {
+                _tokenCredential = tokenCredential;
+                _secretHash = secretHash;
+            }
+        }
+
+        internal class TokenCredentialKey
+        {
+            public readonly Type _tokenCredentialType;
+            public readonly string _authority;
+            public readonly string _scope;
+            public readonly string _audience;
+            public readonly string _clientId;
+
+            public TokenCredentialKey(Type tokenCredentialType, string authority, string scope, string audience, string clientId)
+            {
+                _tokenCredentialType = tokenCredentialType;
+                _authority = authority;
+                _scope = scope;
+                _audience = audience;
+                _clientId = clientId;
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (obj != null && obj is TokenCredentialKey tcKey)
+                {
+                    return string.CompareOrdinal(nameof(_tokenCredentialType), nameof(tcKey._tokenCredentialType)) == 0
+                        && string.CompareOrdinal(_authority, tcKey._authority) == 0
+                        && string.CompareOrdinal(_scope, tcKey._scope) == 0
+                        && string.CompareOrdinal(_audience, tcKey._audience) == 0
+                        && string.CompareOrdinal(_clientId, tcKey._clientId) == 0
+                    ;
+                }
+                return false;
+            }
+
+            public override int GetHashCode() => Tuple.Create(_tokenCredentialType, _authority, _scope, _audience, _clientId).GetHashCode();
+        }
+
     }
 }
