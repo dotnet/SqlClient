@@ -844,7 +844,6 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-
                 // iia.  if we still have bytes left from a partially read column, skip
                 if (!TryResetBlobState())
                 {
@@ -869,7 +868,6 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("Invalid token after performing CleanPartialRead: {0,-2:X2}", token));
-
             }
 #endif
             _sharedState._dataReady = false;
@@ -952,11 +950,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
-        override public void Close()
+        public override void Close()
         {
-            SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlDataReader.Close|API> {0}", ObjectID))
             {
+                SqlStatistics statistics = null;
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -1005,14 +1003,11 @@ namespace Microsoft.Data.SqlClient
 
                     if (stateObj != null)
                     {
-
                         // protect against concurrent close and cancel
                         lock (stateObj)
                         {
-
                             if (_stateObj != null)
                             {  // reader not closed while we waited for the lock
-
                                 // TryCloseInternal will clear out the snapshot when it is done
                                 if (_snapshot != null)
                                 {
@@ -1033,7 +1028,6 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     throw SQL.SynchronousCallMayNotPend();
                                 }
-
                                 // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
                             }
                         }
@@ -1069,7 +1063,6 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     if ((!_isClosed) && (parser != null) && (stateObj != null) && (stateObj.HasPendingData))
                     {
-
                         // It is possible for this to be called during connection close on a
                         // broken connection, so check state first.
                         if (parser.State == TdsParserState.OpenLoggedIn)
@@ -1227,7 +1220,6 @@ namespace Microsoft.Data.SqlClient
                                     }
                                 }
                             }
-
                             // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
                         }
 #if DEBUG
@@ -1352,7 +1344,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 Debug.Assert(!ignored, "Parser read a row token while trying to read metadata");
             }
-
 
             return true;
         }
@@ -1481,7 +1472,6 @@ namespace Microsoft.Data.SqlClient
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
-
                 if (metaData.type == SqlDbType.Udt)
                 {
                     Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
@@ -1504,7 +1494,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // TypeSystem.SQLServer2000
-
                 fieldType = GetVersionedMetaType(metaData.metaType).ClassType; // Com+ type.
             }
 
@@ -1540,6 +1529,7 @@ namespace Microsoft.Data.SqlClient
                     lcid = 0;
                 }
             }
+
             return lcid;
         }
 
@@ -1658,7 +1648,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTable/*' />
-        override public DataTable GetSchemaTable()
+        public override DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlDataReader.GetSchemaTable|API> {0}", ObjectID))
@@ -1826,7 +1816,9 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryGetBytesInternal(i, dataIndex, buffer, bufferIndex, length, out value);
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return value;
         }
 
@@ -2103,11 +2095,15 @@ namespace Microsoft.Data.SqlClient
 
                 bool result = TryReadColumnHeader(i);
                 if (!result)
-                { throw SQL.SynchronousCallMayNotPend(); }
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
 
                 result = TryGetBytesInternalSequential(i, buffer, index, length, out value);
                 if (!result)
-                { throw SQL.SynchronousCallMayNotPend(); }
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
             }
             finally
             {
@@ -2896,7 +2892,9 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryReadColumn(i, setTimeout: false);
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
 
             return GetSqlValueFromSqlBufferInternal(_data[i], _metaData[i]);
         }
@@ -3086,7 +3084,9 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryReadColumn(i, setTimeout: false);
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
 
             return GetValueFromSqlBufferInternal(_data[i], _metaData[i]);
         }
@@ -3124,7 +3124,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    var connection = _connection;
+                    SqlConnection connection = _connection;
                     if (connection != null)
                     {
                         connection.CheckGetExtendedUDTInfo(metaData, true);
@@ -3385,7 +3385,9 @@ namespace Microsoft.Data.SqlClient
                 // Read in all of the columns in one TryReadColumn call
                 bool result = TryReadColumn(maximumColumn, setTimeout: false);
                 if (!result)
-                { throw SQL.SynchronousCallMayNotPend(); }
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
 
                 for (int i = 0; i < copyLen; i++)
                 {
@@ -3489,7 +3491,6 @@ namespace Microsoft.Data.SqlClient
                             // always happens if there is a row following an altrow
                             moreResults = true;
                             return true;
-
                         // VSTFDEVDIV 926281: DONEINPROC case is missing here; we have decided to reject this bug as it would result in breaking change
                         // from VS2008 RTM/SP1 and Dev10 RTM. See the bug for more details.
                         // case TdsEnums.DONEINPROC:
@@ -3599,7 +3600,6 @@ namespace Microsoft.Data.SqlClient
                                 b == TdsEnums.SQLERROR ||
                                 b == TdsEnums.SQLINFO))
                     {
-
                         if (b == TdsEnums.SQLDONE ||
                             b == TdsEnums.SQLDONEPROC ||
                             b == TdsEnums.SQLDONEINPROC)
@@ -3699,7 +3699,9 @@ namespace Microsoft.Data.SqlClient
             result = TryNextResult(out more);
 
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return more;
         }
 
@@ -3906,7 +3908,9 @@ namespace Microsoft.Data.SqlClient
             result = TryReadInternal(true, out more);
 
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return more;
         }
 
@@ -4231,7 +4235,9 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryReadColumnHeader(i);
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
         }
 
         private bool TryReadColumnHeader(int i)
@@ -4534,7 +4540,6 @@ namespace Microsoft.Data.SqlClient
                 // Check NBC first
                 if (!_stateObj.IsNullCompressionBitSet(currentColumn))
                 {
-
                     // NOTE: This is mostly duplicated from TryProcessColumnHeaderNoNBC and TryGetTokenLength
                     var metaType = _metaData[currentColumn].metaType;
                     if ((metaType.IsLong) || (metaType.IsPlp) || (metaType.SqlDbType == SqlDbType.Udt) || (metaType.SqlDbType == SqlDbType.Structured))
@@ -4970,7 +4975,6 @@ namespace Microsoft.Data.SqlClient
             using (TryEventScope.Create("<sc.SqlDataReader.NextResultAsync|API> {0}", ObjectID))
             using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
-
                 TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
 
                 if (IsClosed)
@@ -5013,17 +5017,17 @@ namespace Microsoft.Data.SqlClient
             HasNextResultAsyncCallContext context = (HasNextResultAsyncCallContext)state;
             if (task != null)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.NextResultAsyncExecute> attempt retry {0}", context._reader.ObjectID);
-                context._reader.PrepareForAsyncContinuation();
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.NextResultAsyncExecute> attempt retry {0}", context.Reader.ObjectID);
+                context.Reader.PrepareForAsyncContinuation();
             }
 
-            if (context._reader.TryNextResult(out bool more))
+            if (context.Reader.TryNextResult(out bool more))
             {
                 // completed 
                 return more ? ADP.TrueTask : ADP.FalseTask;
             }
 
-            return context._reader.ExecuteAsyncCall(context);
+            return context.Reader.ExecuteAsyncCall(context);
         }
 
         // NOTE: This will return null if it completed sequentially
@@ -5058,12 +5062,12 @@ namespace Microsoft.Data.SqlClient
 
             var context = new GetBytesAsyncCallContext(this)
             {
-                columnIndex = columnIndex,
-                buffer = buffer,
-                index = index,
-                length = length,
-                timeout = timeout,
-                cancellationToken = cancellationToken,
+                _columnIndex = columnIndex,
+                _buffer = buffer,
+                _index = index,
+                _length = length,
+                _timeout = timeout,
+                _cancellationToken = cancellationToken,
             };
 
             // Check if we need to skip columns
@@ -5088,18 +5092,18 @@ namespace Microsoft.Data.SqlClient
                     timeoutToken = timeoutCancellationSource.Token;
                 }
 
-                context._disposable = timeoutCancellationSource;
-                context.timeoutToken = timeoutToken;
-                context._source = source;
 
                 PrepareAsyncInvocation(useSnapshot: true);
+
+                context.Set(this, source, timeoutCancellationSource);
+                context._timeoutToken = timeoutToken;
 
                 return InvokeAsyncCall(context);
             }
             else
             {
                 // We're already at the correct column, just read the data
-                context.mode = GetBytesAsyncCallContext.OperationMode.Read;
+                context._mode = GetBytesAsyncCallContext.OperationMode.Read;
 
                 // Switch to async
                 PrepareAsyncInvocation(useSnapshot: false);
@@ -5119,27 +5123,28 @@ namespace Microsoft.Data.SqlClient
         private static Task<int> GetBytesAsyncSeekExecute(Task task, object state)
         {
             GetBytesAsyncCallContext context = (GetBytesAsyncCallContext)state;
-            SqlDataReader reader = context._reader;
+            SqlDataReader reader = context.Reader;
 
-            Debug.Assert(context.mode == GetBytesAsyncCallContext.OperationMode.Seek, "context.mode must be Seek to check if seeking can resume");
+            Debug.Assert(context._mode == GetBytesAsyncCallContext.OperationMode.Seek, "context.mode must be Seek to check if seeking can resume");
 
             if (task != null)
             {
                 reader.PrepareForAsyncContinuation();
             }
+
             // Prepare for stateObj timeout
             reader.SetTimeout(reader._defaultTimeoutMilliseconds);
 
-            if (reader.TryReadColumnHeader(context.columnIndex))
+            if (reader.TryReadColumnHeader(context._columnIndex))
             {
                 // Only once we have read upto where we need to be can we check the cancellation tokens (otherwise we will be in an unknown state)
 
-                if (context.cancellationToken.IsCancellationRequested)
+                if (context._cancellationToken.IsCancellationRequested)
                 {
                     // User requested cancellation
-                    return Task.FromCanceled<int>(context.cancellationToken);
+                    return Task.FromCanceled<int>(context._cancellationToken);
                 }
-                else if (context.timeoutToken.IsCancellationRequested)
+                else if (context._timeoutToken.IsCancellationRequested)
                 {
                     // Timeout
                     return ADP.CreatedTaskWithException<int>(ADP.ExceptionWithStackTrace(ADP.IO(SQLMessage.Timeout())));
@@ -5147,7 +5152,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Upto the correct column - continue to read
-                    context.mode = GetBytesAsyncCallContext.OperationMode.Read;
+                    context._mode = GetBytesAsyncCallContext.OperationMode.Read;
                     reader.SwitchToAsyncWithoutSnapshot();
                     int totalBytesRead;
                     var readTask = reader.GetBytesAsyncReadDataStage(context, true, out totalBytesRead);
@@ -5171,18 +5176,18 @@ namespace Microsoft.Data.SqlClient
         private static Task<int> GetBytesAsyncReadExecute(Task task, object state)
         {
             var context = (GetBytesAsyncCallContext)state;
-            SqlDataReader reader = context._reader;
+            SqlDataReader reader = context.Reader;
 
-            Debug.Assert(context.mode == GetBytesAsyncCallContext.OperationMode.Read, "context.mode must be Read to check if read can resume");
+            Debug.Assert(context._mode == GetBytesAsyncCallContext.OperationMode.Read, "context.mode must be Read to check if read can resume");
 
             reader.PrepareForAsyncContinuation();
 
-            if (context.cancellationToken.IsCancellationRequested)
+            if (context._cancellationToken.IsCancellationRequested)
             {
                 // User requested cancellation
-                return Task.FromCanceled<int>(context.cancellationToken);
+                return Task.FromCanceled<int>(context._cancellationToken);
             }
-            else if (context.timeoutToken.IsCancellationRequested)
+            else if (context._timeoutToken.IsCancellationRequested)
             {
                 // Timeout
                 return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.IO(SQLMessage.Timeout())));
@@ -5194,18 +5199,18 @@ namespace Microsoft.Data.SqlClient
 
                 int bytesReadThisIteration;
                 bool result = reader.TryGetBytesInternalSequential(
-                    context.columnIndex,
-                    context.buffer,
-                    context.index + context.totalBytesRead,
-                    context.length - context.totalBytesRead,
+                    context._columnIndex,
+                    context._buffer,
+                    context._index + context._totalBytesRead,
+                    context._length - context._totalBytesRead,
                     out bytesReadThisIteration
                 );
-                context.totalBytesRead += bytesReadThisIteration;
-                Debug.Assert(context.totalBytesRead <= context.length, "Read more bytes than required");
+                context._totalBytesRead += bytesReadThisIteration;
+                Debug.Assert(context._totalBytesRead <= context._length, "Read more bytes than required");
 
                 if (result)
                 {
-                    return Task.FromResult<int>(context.totalBytesRead);
+                    return Task.FromResult<int>(context._totalBytesRead);
                 }
                 else
                 {
@@ -5216,34 +5221,32 @@ namespace Microsoft.Data.SqlClient
 
         private Task<int> GetBytesAsyncReadDataStage(GetBytesAsyncCallContext context, bool isContinuation, out int bytesRead)
         {
-            Debug.Assert(context.mode == GetBytesAsyncCallContext.OperationMode.Read, "context.Mode must be Read to read data");
+            Debug.Assert(context._mode == GetBytesAsyncCallContext.OperationMode.Read, "context.Mode must be Read to read data");
 
-            _lastColumnWithDataChunkRead = context.columnIndex;
+            _lastColumnWithDataChunkRead = context._columnIndex;
             TaskCompletionSource<int> source = null;
 
             // Prepare for stateObj timeout
             SetTimeout(_defaultTimeoutMilliseconds);
 
             // Try to read without any continuations (all the data may already be in the stateObj's buffer)
-            bool filledBuffer = context._reader.TryGetBytesInternalSequential(
-                context.columnIndex,
-                context.buffer,
-                context.index + context.totalBytesRead,
-                context.length - context.totalBytesRead,
+            bool filledBuffer = context.Reader.TryGetBytesInternalSequential(
+                context._columnIndex,
+                context._buffer,
+                context._index + context._totalBytesRead,
+                context._length - context._totalBytesRead,
                 out bytesRead
             );
-            context.totalBytesRead += bytesRead;
-            Debug.Assert(context.totalBytesRead <= context.length, "Read more bytes than required");
+            context._totalBytesRead += bytesRead;
+            Debug.Assert(context._totalBytesRead <= context._length, "Read more bytes than required");
 
             if (!filledBuffer)
             {
                 // This will be the 'state' for the callback
-                int totalBytesRead = bytesRead;
-
                 if (!isContinuation)
                 {
                     // This is the first async operation which is happening - setup the _currentTask and timeout
-                    Debug.Assert(context._source == null, "context._source should not be non-null when trying to change to async");
+                    Debug.Assert(context.Source == null, "context._source should not be non-null when trying to change to async");
                     source = new TaskCompletionSource<int>();
                     Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
                     if (original != null)
@@ -5252,7 +5255,7 @@ namespace Microsoft.Data.SqlClient
                         return source.Task;
                     }
 
-                    context._source = source;
+                    context.Source = source;
                     // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
                     if (_cancelAsyncOnCloseToken.IsCancellationRequested)
                     {
@@ -5262,14 +5265,14 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // Timeout
-                    Debug.Assert(context.timeoutToken == CancellationToken.None, "TimeoutToken is set when GetBytesAsyncReadDataStage is not a continuation");
-                    if (context.timeout > 0)
+                    Debug.Assert(context._timeoutToken == CancellationToken.None, "TimeoutToken is set when GetBytesAsyncReadDataStage is not a continuation");
+                    if (context._timeout > 0)
                     {
                         CancellationTokenSource timeoutCancellationSource = new CancellationTokenSource();
-                        timeoutCancellationSource.CancelAfter(context.timeout);
-                        Debug.Assert(context._disposable is null, "setting context.disposable would lose the previous dispoable");
-                        context._disposable = timeoutCancellationSource;
-                        context.timeoutToken = timeoutCancellationSource.Token;
+                        timeoutCancellationSource.CancelAfter(context._timeout);
+                        Debug.Assert(context.Disposable is null, "setting context.disposable would lose the previous dispoable");
+                        context.Disposable = timeoutCancellationSource;
+                        context._timeoutToken = timeoutCancellationSource.Token;
                     }
                 }
 
@@ -5281,10 +5284,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    Debug.Assert(context._source != null, "context._source shuld not be null when continuing");
+                    Debug.Assert(context.Source != null, "context._source shuld not be null when continuing");
                     // setup for cleanup\completing
                     retryTask.ContinueWith(
-                        continuationAction: AAsyncCallContext<int>.s_completeCallback,
+                        continuationAction: SqlDataReaderBaseAsyncCallContext<int>.s_completeCallback,
                         state: context,
                         TaskScheduler.Default
                     );
@@ -5341,7 +5344,6 @@ namespace Microsoft.Data.SqlClient
                     // NOTE: If we are in SingleRow mode and we've read that single row (i.e. _haltRead == true), then skip the shortcut
                     if ((!_haltRead) && ((!_sharedState._dataReady) || (WillHaveEnoughData(_metaData.Length - 1))))
                     {
-
 #if DEBUG
                         try
                         {
@@ -5419,7 +5421,7 @@ namespace Microsoft.Data.SqlClient
 
                 var context = Interlocked.Exchange(ref _cachedReadAsyncContext, null) ?? new ReadAsyncCallContext();
 
-                Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ReadAsyncCallContext was not properly disposed");
+                Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == null, "cached ReadAsyncCallContext was not properly disposed");
 
                 context.Set(this, source, registrationHolder.Take());
                 context._hasMoreData = more;
@@ -5434,7 +5436,7 @@ namespace Microsoft.Data.SqlClient
         private static Task<bool> ReadAsyncExecute(Task task, object state)
         {
             var context = (ReadAsyncCallContext)state;
-            SqlDataReader reader = context._reader;
+            SqlDataReader reader = context.Reader;
             ref bool hasMoreData = ref context._hasMoreData;
             ref bool hasReadRowToken = ref context._hasReadRowToken;
 
@@ -5580,7 +5582,7 @@ namespace Microsoft.Data.SqlClient
 
                     IsDBNullAsyncCallContext context = Interlocked.Exchange(ref _cachedIsDBNullContext, null) ?? new IsDBNullAsyncCallContext();
 
-                    Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ISDBNullAsync context not properly disposed");
+                    Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == null, "cached ISDBNullAsync context not properly disposed");
 
                     context.Set(this, source, registrationHolder.Take());
                     context._columnIndex = i;
@@ -5596,7 +5598,7 @@ namespace Microsoft.Data.SqlClient
         private static Task<bool> IsDBNullAsyncExecute(Task task, object state)
         {
             IsDBNullAsyncCallContext context = (IsDBNullAsyncCallContext)state;
-            SqlDataReader reader = context._reader;
+            SqlDataReader reader = context.Reader;
 
             if (task != null)
             {
@@ -5716,14 +5718,20 @@ namespace Microsoft.Data.SqlClient
                     registrationHolder.Set(cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command));
                 }
 
-                return InvokeAsyncCall(new GetFieldValueAsyncCallContext<T>(this, source, registrationHolder.Take(), i));
+                // Setup async
+                PrepareAsyncInvocation(useSnapshot: true);
+
+                GetFieldValueAsyncCallContext<T> context = new GetFieldValueAsyncCallContext<T>(this, source, registrationHolder.Take());
+                context._columnIndex = i;
+
+                return InvokeAsyncCall(context);
             }
         }
 
         private static Task<T> GetFieldValueAsyncExecute<T>(Task task, object state)
         {
             GetFieldValueAsyncCallContext<T> context = (GetFieldValueAsyncCallContext<T>)state;
-            SqlDataReader reader = context._reader;
+            SqlDataReader reader = context.Reader;
             int columnIndex = context._columnIndex;
             if (task != null)
             {
@@ -5786,71 +5794,62 @@ namespace Microsoft.Data.SqlClient
 
 #endif
 
-        private class Snapshot
+        internal abstract class SqlDataReaderBaseAsyncCallContext<T> : AAsyncBaseCallContext<SqlDataReader, T>
         {
-            public bool _dataReady;
-            public bool _haltRead;
-            public bool _metaDataConsumed;
-            public bool _browseModeInfoConsumed;
-            public bool _hasRows;
-            public ALTROWSTATUS _altRowStatus;
-            public int _nextColumnDataToRead;
-            public int _nextColumnHeaderToRead;
-            public long _columnDataBytesRead;
-            public long _columnDataBytesRemaining;
+            internal static readonly Action<Task<T>, object> s_completeCallback = CompleteAsyncCallCallback;
 
-            public _SqlMetaDataSet _metadata;
-            public _SqlMetaDataSetCollection _altMetaDataSetCollection;
-            public MultiPartTableName[] _tableNames;
+            internal static readonly Func<Task, object, Task<T>> s_executeCallback = ExecuteAsyncCallCallback;
 
-            public SqlSequentialStream _currentStream;
-            public SqlSequentialTextReader _currentTextReader;
-        }
-
-        private abstract class AAsyncCallContext<T> : IDisposable
-        {
-            internal static readonly Action<Task<T>, object> s_completeCallback = SqlDataReader.CompleteAsyncCallCallback<T>;
-
-            internal static readonly Func<Task, object, Task<T>> s_executeCallback = SqlDataReader.ExecuteAsyncCallCallback<T>;
-
-            internal SqlDataReader _reader;
-            internal TaskCompletionSource<T> _source;
-            internal IDisposable _disposable;
-
-            protected AAsyncCallContext()
+            protected SqlDataReaderBaseAsyncCallContext()
             {
             }
 
-            protected AAsyncCallContext(SqlDataReader reader, TaskCompletionSource<T> source, IDisposable disposable = null)
+            protected SqlDataReaderBaseAsyncCallContext(SqlDataReader owner, TaskCompletionSource<T> source)
             {
-                Set(reader, source, disposable);
-            }
-
-            internal void Set(SqlDataReader reader, TaskCompletionSource<T> source, IDisposable disposable = null)
-            {
-                this._reader = reader ?? throw new ArgumentNullException(nameof(reader));
-                this._source = source ?? throw new ArgumentNullException(nameof(source));
-                this._disposable = disposable;
-            }
-
-            internal void Clear()
-            {
-                _source = null;
-                _reader = null;
-                IDisposable copyDisposable = _disposable;
-                _disposable = null;
-                copyDisposable?.Dispose();
+                Set(owner, source);
             }
 
             internal abstract Func<Task, object, Task<T>> Execute { get; }
 
-            public virtual void Dispose()
+            internal SqlDataReader Reader { get => _owner; set => _owner = value; }
+
+            public TaskCompletionSource<T> Source { get => _source; set => _source = value; }
+
+            private static Task<T> ExecuteAsyncCallCallback(Task task, object state)
             {
-                Clear();
+                SqlDataReaderBaseAsyncCallContext<T> context = (SqlDataReaderBaseAsyncCallContext<T>)state;
+                return context.Reader.ContinueAsyncCall(task, context);
+            }
+
+            private static void CompleteAsyncCallCallback(Task<T> task, object state)
+            {
+                SqlDataReaderBaseAsyncCallContext<T> context = (SqlDataReaderBaseAsyncCallContext<T>)state;
+                context.Reader.CompleteAsyncCall(task, context);
             }
         }
 
-        private sealed class ReadAsyncCallContext : AAsyncCallContext<bool>
+        internal abstract class SqlDataReaderAsyncCallContext<T, TDisposable> : SqlDataReaderBaseAsyncCallContext<T>
+            where TDisposable : IDisposable
+        {
+            private TDisposable _disposable;
+
+            public TDisposable Disposable { get => _disposable; set => _disposable = value; }
+
+            public void Set(SqlDataReader owner, TaskCompletionSource<T> source, TDisposable disposable)
+            {
+                base.Set(owner, source);
+                _disposable = disposable;
+            }
+
+            protected override void DisposeCore()
+            {
+                TDisposable copy = _disposable;
+                _disposable = default;
+                copy?.Dispose();
+            }
+        }
+
+        internal sealed class ReadAsyncCallContext : SqlDataReaderAsyncCallContext<bool, CancellationTokenRegistration>
         {
             internal static readonly Func<Task, object, Task<bool>> s_execute = SqlDataReader.ReadAsyncExecute;
 
@@ -5863,15 +5862,13 @@ namespace Microsoft.Data.SqlClient
 
             internal override Func<Task, object, Task<bool>> Execute => s_execute;
 
-            public override void Dispose()
+            protected override void AfterCleared(SqlDataReader owner)
             {
-                SqlDataReader reader = this._reader;
-                base.Dispose();
-                reader.SetCachedReadAsyncCallContext(this);
+                owner.SetCachedReadAsyncCallContext(this);
             }
         }
 
-        private sealed class IsDBNullAsyncCallContext : AAsyncCallContext<bool>
+        internal sealed class IsDBNullAsyncCallContext : SqlDataReaderAsyncCallContext<bool, CancellationTokenRegistration>
         {
             internal static readonly Func<Task, object, Task<bool>> s_execute = SqlDataReader.IsDBNullAsyncExecute;
 
@@ -5881,27 +5878,25 @@ namespace Microsoft.Data.SqlClient
 
             internal override Func<Task, object, Task<bool>> Execute => s_execute;
 
-            public override void Dispose()
+            protected override void AfterCleared(SqlDataReader owner)
             {
-                SqlDataReader reader = this._reader;
-                base.Dispose();
-                reader.SetCachedIDBNullAsyncCallContext(this);
+                owner.SetCachedIDBNullAsyncCallContext(this);
             }
         }
 
-        private sealed class HasNextResultAsyncCallContext : AAsyncCallContext<bool>
+        private sealed class HasNextResultAsyncCallContext : SqlDataReaderAsyncCallContext<bool, CancellationTokenRegistration>
         {
             private static readonly Func<Task, object, Task<bool>> s_execute = SqlDataReader.NextResultAsyncExecute;
 
-            public HasNextResultAsyncCallContext(SqlDataReader reader, TaskCompletionSource<bool> source, IDisposable disposable)
-                : base(reader, source, disposable)
+            public HasNextResultAsyncCallContext(SqlDataReader reader, TaskCompletionSource<bool> source, CancellationTokenRegistration disposable)
             {
+                Set(reader, source, disposable);
             }
 
             internal override Func<Task, object, Task<bool>> Execute => s_execute;
         }
 
-        private sealed class GetBytesAsyncCallContext : AAsyncCallContext<int>
+        private sealed class GetBytesAsyncCallContext : SqlDataReaderAsyncCallContext<int, CancellationTokenSource>
         {
             internal enum OperationMode
             {
@@ -5912,63 +5907,58 @@ namespace Microsoft.Data.SqlClient
             private static readonly Func<Task, object, Task<int>> s_executeSeek = SqlDataReader.GetBytesAsyncSeekExecute;
             private static readonly Func<Task, object, Task<int>> s_executeRead = SqlDataReader.GetBytesAsyncReadExecute;
 
-            internal int columnIndex;
-            internal byte[] buffer;
-            internal int index;
-            internal int length;
-            internal int timeout;
-            internal CancellationToken cancellationToken;
-            internal CancellationToken timeoutToken;
-            internal int totalBytesRead;
+            internal int _columnIndex;
+            internal byte[] _buffer;
+            internal int _index;
+            internal int _length;
+            internal int _timeout;
+            internal CancellationToken _cancellationToken;
+            internal CancellationToken _timeoutToken;
+            internal int _totalBytesRead;
 
-            internal OperationMode mode;
+            internal OperationMode _mode;
 
             internal GetBytesAsyncCallContext(SqlDataReader reader)
             {
-                this._reader = reader ?? throw new ArgumentNullException(nameof(reader));
+                Reader = reader ?? throw new ArgumentNullException(nameof(reader));
             }
 
-            internal override Func<Task, object, Task<int>> Execute => mode == OperationMode.Seek ? s_executeSeek : s_executeRead;
+            internal override Func<Task, object, Task<int>> Execute => _mode == OperationMode.Seek ? s_executeSeek : s_executeRead;
 
-            public override void Dispose()
+            protected override void Clear()
             {
-                buffer = null;
-                cancellationToken = default;
-                timeoutToken = default;
-                base.Dispose();
+                _buffer = null;
+                _cancellationToken = default;
+                _timeoutToken = default;
+                base.Clear();
             }
         }
 
-        private sealed class GetFieldValueAsyncCallContext<T> : AAsyncCallContext<T>
+        private sealed class GetFieldValueAsyncCallContext<T> : SqlDataReaderAsyncCallContext<T, CancellationTokenRegistration>
         {
             private static readonly Func<Task, object, Task<T>> s_execute = SqlDataReader.GetFieldValueAsyncExecute<T>;
 
-            internal readonly int _columnIndex;
+            internal int _columnIndex;
 
-            internal GetFieldValueAsyncCallContext(SqlDataReader reader, TaskCompletionSource<T> source, IDisposable disposable, int columnIndex)
-                : base(reader, source, disposable)
+            internal GetFieldValueAsyncCallContext() { }
+
+            internal GetFieldValueAsyncCallContext(SqlDataReader reader, TaskCompletionSource<T> source, CancellationTokenRegistration disposable)
             {
-                _columnIndex = columnIndex;
+                Set(reader, source, disposable);
+            }
+
+            protected override void Clear()
+            {
+                _columnIndex = -1;
+                base.Clear();
             }
 
             internal override Func<Task, object, Task<T>> Execute => s_execute;
         }
 
-        private static Task<T> ExecuteAsyncCallCallback<T>(Task task, object state)
+        private Task<T> InvokeAsyncCall<T>(SqlDataReaderBaseAsyncCallContext<T> context)
         {
-            AAsyncCallContext<T> context = (AAsyncCallContext<T>)state;
-            return context._reader.ExecuteAsyncCall(task, context);
-        }
-
-        private static void CompleteAsyncCallCallback<T>(Task<T> task, object state)
-        {
-            AAsyncCallContext<T> context = (AAsyncCallContext<T>)state;
-            context._reader.CompleteAsyncCall<T>(task, context);
-        }
-
-        private Task<T> InvokeAsyncCall<T>(AAsyncCallContext<T> context)
-        {
-            TaskCompletionSource<T> source = context._source;
+            TaskCompletionSource<T> source = context.Source;
             try
             {
                 Task<T> task;
@@ -5988,7 +5978,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     task.ContinueWith(
-                       continuationAction: AAsyncCallContext<T>.s_completeCallback,
+                       continuationAction: SqlDataReaderBaseAsyncCallContext<T>.s_completeCallback,
                        state: context,
                        TaskScheduler.Default
                    );
@@ -6013,7 +6003,7 @@ namespace Microsoft.Data.SqlClient
         /// <typeparam name="T"></typeparam>
         /// <param name="context"></param>
         /// <returns></returns>
-        private Task<T> ExecuteAsyncCall<T>(AAsyncCallContext<T> context)
+        private Task<T> ExecuteAsyncCall<T>(AAsyncBaseCallContext<SqlDataReader, T> context)
         {
             // _networkPacketTaskSource could be null if the connection was closed
             // while an async invocation was outstanding.
@@ -6026,7 +6016,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 return completionSource.Task.ContinueWith(
-                    continuationFunction: AAsyncCallContext<T>.s_executeCallback,
+                    continuationFunction: SqlDataReaderBaseAsyncCallContext<T>.s_executeCallback,
                     state: context,
                     TaskScheduler.Default
                 ).Unwrap();
@@ -6042,7 +6032,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="task"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        private Task<T> ExecuteAsyncCall<T>(Task task, AAsyncCallContext<T> context)
+        private Task<T> ContinueAsyncCall<T>(Task task, SqlDataReaderBaseAsyncCallContext<T> context)
         {
             // this function must be an instance function called from the static callback because otherwise a compiler error
             // is caused by accessing the _cancelAsyncOnCloseToken field of a MarchalByRefObject derived class
@@ -6102,9 +6092,9 @@ namespace Microsoft.Data.SqlClient
         /// <typeparam name="T"></typeparam>
         /// <param name="task"></param>
         /// <param name="context"></param>
-        private void CompleteAsyncCall<T>(Task<T> task, AAsyncCallContext<T> context)
+        private void CompleteAsyncCall<T>(Task<T> task, SqlDataReaderBaseAsyncCallContext<T> context)
         {
-            TaskCompletionSource<T> source = context._source;
+            TaskCompletionSource<T> source = context.Source;
             context.Dispose();
 
             // If something has forced us to switch to SyncOverAsync mode while in an async task then we need to guarantee that we do the cleanup
@@ -6129,6 +6119,27 @@ namespace Microsoft.Data.SqlClient
             {
                 source.TrySetResult(task.Result);
             }
+        }
+
+        private class Snapshot
+        {
+            public bool _dataReady;
+            public bool _haltRead;
+            public bool _metaDataConsumed;
+            public bool _browseModeInfoConsumed;
+            public bool _hasRows;
+            public ALTROWSTATUS _altRowStatus;
+            public int _nextColumnDataToRead;
+            public int _nextColumnHeaderToRead;
+            public long _columnDataBytesRead;
+            public long _columnDataBytesRemaining;
+
+            public _SqlMetaDataSet _metadata;
+            public _SqlMetaDataSetCollection _altMetaDataSetCollection;
+            public MultiPartTableName[] _tableNames;
+
+            public SqlSequentialStream _currentStream;
+            public SqlSequentialTextReader _currentTextReader;
         }
 
         private void PrepareAsyncInvocation(bool useSnapshot)
