@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (this.IsClosed)
                 {
-                    throw ADP.DataReaderClosed("Depth");
+                    throw ADP.DataReaderClosed();
                 }
 
                 return 0;
@@ -177,7 +177,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (this.IsClosed)
                 {
-                    throw ADP.DataReaderClosed("FieldCount");
+                    throw ADP.DataReaderClosed();
                 }
                 if (_currentTask != null)
                 {
@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (this.IsClosed)
                 {
-                    throw ADP.DataReaderClosed("HasRows");
+                    throw ADP.DataReaderClosed();
                 }
                 if (_currentTask != null)
                 {
@@ -251,7 +251,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsClosed)
                 {
-                    throw ADP.DataReaderClosed("MetaData");
+                    throw ADP.DataReaderClosed();
                 }
                 // metaData comes in pieces: colmetadata, tabname, colinfo, etc
                 // if we have any metaData, return it.  If we have none,
@@ -452,7 +452,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (this.IsClosed)
                 {
-                    throw ADP.DataReaderClosed("VisibleFieldCount");
+                    throw ADP.DataReaderClosed();
                 }
                 _SqlMetaDataSet md = this.MetaData;
                 if (md == null)
@@ -1329,7 +1329,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
                 {
-                    // Happened for DEVDIV2:180509    (SqlDataReader.ConsumeMetaData Hangs In 100% CPU Loop Forever When TdsParser._state == TdsParserState.Broken)
+                    // Happened for DEVDIV2:180509	(SqlDataReader.ConsumeMetaData Hangs In 100% CPU Loop Forever When TdsParser._state == TdsParserState.Broken)
                     // during request for DTC address.
                     // NOTE: We doom connection for TdsParserState.Closed since it indicates that it is in some abnormal and unstable state, probably as a result of
                     // closing from another thread. In general, TdsParserState.Closed does not necessitate dooming the connection.
@@ -1582,7 +1582,6 @@ namespace Microsoft.Data.SqlClient
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
-
                 if (metaData.type == SqlDbType.Udt)
                 {
                     Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
@@ -1607,7 +1606,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // TypeSystem.SQLServer2000
-
                 providerSpecificFieldType = GetVersionedMetaType(metaData.metaType).SqlType; // SqlType type.
             }
 
@@ -1684,8 +1682,8 @@ namespace Microsoft.Data.SqlClient
         virtual public XmlReader GetXmlReader(int i)
         {
             // NOTE: sql_variant can not contain a XML data type: http://msdn.microsoft.com/en-us/library/ms173829.aspx
-            // If this ever changes, the following code should be changed to be like GetStream\GetTextReader
-            CheckDataIsReady(columnIndex: i, methodName: "GetXmlReader");
+            // If this ever changes, the following code should be changed to be like GetStream/GetTextReader
+            CheckDataIsReady(columnIndex: i);
 
             MetaType mt = _metaData[i].metaType;
 
@@ -1723,7 +1721,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetStream/*' />
         override public Stream GetStream(int i)
         {
-            CheckDataIsReady(columnIndex: i, methodName: "GetStream");
+            CheckDataIsReady(columnIndex: i);
 
             // Streaming is not supported on encrypted columns.
             if (_metaData[i] != null && _metaData[i].cipherMD != null)
@@ -1781,7 +1779,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             long cbBytes = 0;
 
-            CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetBytes");
+            CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true);
 
             // don't allow get bytes on non-long or non-binary columns
             MetaType mt = _metaData[i].metaType;
@@ -1895,7 +1893,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         if (dataIndex < 0)
-                            throw ADP.NegativeParameter("dataIndex");
+                            throw ADP.NegativeParameter(nameof(dataIndex));
 
                         if (dataIndex < _columnDataBytesRead)
                         {
@@ -1913,7 +1911,7 @@ namespace Microsoft.Data.SqlClient
 
                         // if bad buffer index, throw
                         if (bufferIndex < 0 || bufferIndex >= buffer.Length)
-                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
+                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
 
                         // if there is not enough room in the buffer for data
                         if (length + bufferIndex > buffer.Length)
@@ -1955,11 +1953,11 @@ namespace Microsoft.Data.SqlClient
                     // note that since we are caching in an array, and arrays aren't 64 bit ready yet,
                     // we need can cast to int if the dataIndex is in range
                     if (dataIndex < 0)
-                        throw ADP.NegativeParameter("dataIndex");
+                        throw ADP.NegativeParameter(nameof(dataIndex));
 
                     if (dataIndex > Int32.MaxValue)
                     {
-                        throw ADP.InvalidSourceBufferIndex(cbytes, dataIndex, "dataIndex");
+                        throw ADP.InvalidSourceBufferIndex(cbytes, dataIndex, nameof(dataIndex));
                     }
 
                     int ndataIndex = (int)dataIndex;
@@ -2030,7 +2028,7 @@ namespace Microsoft.Data.SqlClient
 
                         // if bad buffer index, throw
                         if (bufferIndex < 0 || bufferIndex >= buffer.Length)
-                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
+                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
 
                         // if there is not enough room in the buffer for data
                         if (cbytes + bufferIndex > buffer.Length)
@@ -2171,7 +2169,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // Read data (not exceeding the total amount of data available)
                         int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
-                        bool result = _stateObj.TryReadByteArray(buffer.AsSpan(start: index), bytesToRead, out bytesRead);
+                        bool result = _stateObj.TryReadByteArray(buffer.AsSpan(index), bytesToRead, out bytesRead);
                         _columnDataBytesRead += bytesRead;
                         _sharedState._columnDataBytesRemaining -= bytesRead;
                         return result;
@@ -2217,7 +2215,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTextReader/*' />
         override public TextReader GetTextReader(int i)
         {
-            CheckDataIsReady(columnIndex: i, methodName: "GetTextReader");
+            CheckDataIsReady(columnIndex: i);
 
             // Xml type is not supported
             MetaType mt = null;
@@ -2347,7 +2345,7 @@ namespace Microsoft.Data.SqlClient
                     // if bad buffer index, throw
                     if ((bufferIndex < 0) || (buffer != null && bufferIndex >= buffer.Length))
                     {
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
+                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
                     }
 
                     // if there is not enough room in the buffer for data
@@ -2360,7 +2358,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetChars");
+                            CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true);
                         }
                         catch (Exception ex)
                         {
@@ -2379,7 +2377,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetChars");
+                        CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true);
                         charsRead = GetCharsFromPlpData(i, dataIndex, buffer, bufferIndex, length);
                     }
                     _lastColumnWithDataChunkRead = i;
@@ -2409,7 +2407,7 @@ namespace Microsoft.Data.SqlClient
                 // we need can cast to int if the dataIndex is in range
                 if (dataIndex > Int32.MaxValue)
                 {
-                    throw ADP.InvalidSourceBufferIndex(cchars, dataIndex, "dataIndex");
+                    throw ADP.InvalidSourceBufferIndex(cchars, dataIndex, nameof(dataIndex));
                 }
                 int ndataIndex = (int)dataIndex;
 
@@ -2449,7 +2447,7 @@ namespace Microsoft.Data.SqlClient
 
                     // if bad buffer index, throw
                     if (bufferIndex < 0 || bufferIndex >= buffer.Length)
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
+                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
 
                     // if there is not enough room in the buffer for data
                     if (cchars + bufferIndex > buffer.Length)
@@ -2546,7 +2544,6 @@ namespace Microsoft.Data.SqlClient
                         // Clean decoder state: we do not reset it, but destroy to ensure
                         // that we do not start decoding the column with decoder from the old one
                         _stateObj._plpdecoder = null;
-
                         // TODO: for DBCS encoding skip positioning dataIndex is not in characters but is interpreted as
                         // number of chars already read + number of bytes to skip
                         cch = dataIndex - _columnDataCharsRead;
@@ -2918,11 +2915,11 @@ namespace Microsoft.Data.SqlClient
             }
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
-                // TypeSystem.SQLServer2005
+                // TypeSystem.SQLServer2005 and above
 
                 if (metaData.type == SqlDbType.Udt)
                 {
-                    var connection = _connection;
+                    SqlConnection connection = _connection;
                     if (connection != null)
                     {
                         connection.CheckGetExtendedUDTInfo(metaData, true);
@@ -2930,7 +2927,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw ADP.DataReaderClosed("GetSqlValueFromSqlBufferInternal");
+                        throw ADP.DataReaderClosed();
                     }
                 }
                 else
@@ -2963,7 +2960,7 @@ namespace Microsoft.Data.SqlClient
                 CheckDataIsReady();
                 if (null == values)
                 {
-                    throw ADP.ArgumentNull("values");
+                    throw ADP.ArgumentNull(nameof(values));
                 }
 
                 SetTimeout(_defaultTimeoutMilliseconds);
@@ -3132,7 +3129,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw ADP.DataReaderClosed("GetValueFromSqlBufferInternal");
+                        throw ADP.DataReaderClosed();
                     }
                 }
             }
@@ -3369,7 +3366,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (null == values)
                 {
-                    throw ADP.ArgumentNull("values");
+                    throw ADP.ArgumentNull(nameof(values));
                 }
 
                 CheckMetaDataIsReady();
@@ -3391,7 +3388,7 @@ namespace Microsoft.Data.SqlClient
 
                 for (int i = 0; i < copyLen; i++)
                 {
-                    // Get the usable, TypeSystem-compatible value from the iternal buffer
+                    // Get the usable, TypeSystem-compatible value from the internal buffer
                     int fieldIndex = _metaData.GetVisibleColumnIndex(i);
                     values[i] = GetValueFromSqlBufferInternal(_data[fieldIndex], _metaData[fieldIndex]);
 
@@ -3525,7 +3522,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Dev11 Bug 316483: Stuck at SqlDataReader::TryHasMoreResults using MARS
                     // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=316483
-                    // TryRun() will immediately return if the TdsParser is closed\broken, causing us to enter an infinite loop
+                    // TryRun() will immediately return if the TdsParser is closed/broken, causing us to enter an infinite loop
                     // Instead, we will throw a closed connection exception
                     if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
                     {
@@ -3609,7 +3606,7 @@ namespace Microsoft.Data.SqlClient
 
                         // Dev11 Bug 316483: Stuck at SqlDataReader::TryHasMoreResults when using MARS
                         // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=316483
-                        // TryRun() will immediately return if the TdsParser is closed\broken, causing us to enter an infinite loop
+                        // TryRun() will immediately return if the TdsParser is closed/broken, causing us to enter an infinite loop
                         // Instead, we will throw a closed connection exception
                         if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
                         {
@@ -3668,7 +3665,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                CheckHeaderIsReady(columnIndex: i, methodName: "IsDBNull");
+                CheckHeaderIsReady(columnIndex: i);
 
                 SetTimeout(_defaultTimeoutMilliseconds);
 
@@ -3731,7 +3728,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (IsClosed)
                         {
-                            throw ADP.DataReaderClosed("NextResult");
+                            throw ADP.DataReaderClosed(nameof(NextResult));
                         }
                         _fieldNameLookup = null;
 
@@ -4062,7 +4059,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         else if (IsClosed)
                         {
-                            throw ADP.DataReaderClosed("Read");
+                            throw ADP.DataReaderClosed(nameof(Read));
                         }
                         more = false;
 
@@ -4088,7 +4085,7 @@ namespace Microsoft.Data.SqlClient
                     }
 #endif //DEBUG
                 }
-                catch (System.OutOfMemoryException e)
+                catch (OutOfMemoryException e)
                 {
                     _isClosed = true;
                     SqlConnection con = _connection;
@@ -4098,7 +4095,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     throw;
                 }
-                catch (System.StackOverflowException e)
+                catch (StackOverflowException e)
                 {
                     _isClosed = true;
                     SqlConnection con = _connection;
@@ -4435,7 +4432,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        Debug.Assert(false, "we have read past the column somehow, this is an error");
+                        Debug.Assert(false, "We have read past the column somehow, this is an error");
                     }
                 }
                 else
@@ -4544,7 +4541,7 @@ namespace Microsoft.Data.SqlClient
                     var metaType = _metaData[currentColumn].metaType;
                     if ((metaType.IsLong) || (metaType.IsPlp) || (metaType.SqlDbType == SqlDbType.Udt) || (metaType.SqlDbType == SqlDbType.Structured))
                     {
-                        // Plp, Udt and TVP types have an unknownable size - so return that the estimate failed
+                        // Plp, Udt and TVP types have an unknowable size - so return that the estimate failed
                         return false;
                     }
                     int maxHeaderSize;
@@ -4901,11 +4898,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void CheckHeaderIsReady(int columnIndex, bool permitAsync = false, string methodName = null)
+        private void CheckHeaderIsReady(int columnIndex, bool permitAsync = false, [CallerMemberName] string methodName = null)
         {
             if (_isClosed)
             {
-                throw ADP.DataReaderClosed(methodName ?? "CheckHeaderIsReady");
+                throw ADP.DataReaderClosed(methodName ?? nameof(CheckHeaderIsReady));
             }
             if ((!permitAsync) && (_currentTask != null))
             {
@@ -4927,11 +4924,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void CheckDataIsReady(int columnIndex, bool allowPartiallyReadColumn = false, bool permitAsync = false, string methodName = null)
+        private void CheckDataIsReady(int columnIndex, bool allowPartiallyReadColumn = false, bool permitAsync = false, [CallerMemberName] string methodName = null)
         {
             if (_isClosed)
             {
-                throw ADP.DataReaderClosed(methodName ?? "CheckDataIsReady");
+                throw ADP.DataReaderClosed(methodName ?? nameof(CheckDataIsReady));
             }
             if ((!permitAsync) && (_currentTask != null))
             {
@@ -4979,7 +4976,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (IsClosed)
                 {
-                    source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("NextResultAsync")));
+                    source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
                     return source.Task;
                 }
 
@@ -5041,7 +5038,7 @@ namespace Microsoft.Data.SqlClient
             if (IsClosed)
             {
                 TaskCompletionSource<int> source = new TaskCompletionSource<int>();
-                source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("GetBytesAsync")));
+                source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
                 return source.Task;
             }
 
@@ -5137,7 +5134,7 @@ namespace Microsoft.Data.SqlClient
 
             if (reader.TryReadColumnHeader(context._columnIndex))
             {
-                // Only once we have read upto where we need to be can we check the cancellation tokens (otherwise we will be in an unknown state)
+                // Only once we have read up to where we need to be can we check the cancellation tokens (otherwise we will be in an unknown state)
 
                 if (context._cancellationToken.IsCancellationRequested)
                 {
@@ -5151,7 +5148,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    // Upto the correct column - continue to read
+                    // Up to the correct column - continue to read
                     context._mode = GetBytesAsyncCallContext.OperationMode.Read;
                     reader.SwitchToAsyncWithoutSnapshot();
                     int totalBytesRead;
@@ -5254,7 +5251,6 @@ namespace Microsoft.Data.SqlClient
                         source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
                         return source.Task;
                     }
-
                     context.Source = source;
                     // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
                     if (_cancelAsyncOnCloseToken.IsCancellationRequested)
@@ -5270,7 +5266,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         CancellationTokenSource timeoutCancellationSource = new CancellationTokenSource();
                         timeoutCancellationSource.CancelAfter(context._timeout);
-                        Debug.Assert(context.Disposable is null, "setting context.disposable would lose the previous dispoable");
+                        Debug.Assert(context.Disposable is null, "setting context.disposable would lose the previous disposable");
                         context.Disposable = timeoutCancellationSource;
                         context._timeoutToken = timeoutCancellationSource.Token;
                     }
@@ -5279,13 +5275,13 @@ namespace Microsoft.Data.SqlClient
                 Task<int> retryTask = ExecuteAsyncCall(context);
                 if (isContinuation)
                 {
-                    // Let the caller handle cleanup\completing
+                    // Let the caller handle cleanup/completing
                     return retryTask;
                 }
                 else
                 {
-                    Debug.Assert(context.Source != null, "context._source shuld not be null when continuing");
-                    // setup for cleanup\completing
+                    Debug.Assert(context.Source != null, "context._source should not be null when continuing");
+                    // setup for cleanup/completing
                     retryTask.ContinueWith(
                         continuationAction: SqlDataReaderBaseAsyncCallContext<int>.s_completeCallback,
                         state: context,
@@ -5312,7 +5308,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsClosed)
                 {
-                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("ReadAsync")));
+                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
                 }
 
                 // Register first to catch any already expired tokens to be able to trigger cancellation event.
@@ -5486,7 +5482,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                CheckHeaderIsReady(columnIndex: i, methodName: "IsDBNullAsync");
+                CheckHeaderIsReady(columnIndex: i);
             }
             catch (Exception ex)
             {
@@ -5508,7 +5504,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Reader was closed between the CheckHeaderIsReady and accessing _data - throw closed exception
-                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("IsDBNullAsync")));
+                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
                 }
             }
             else
@@ -5625,7 +5621,7 @@ namespace Microsoft.Data.SqlClient
         {
             try
             {
-                CheckDataIsReady(columnIndex: i, methodName: "GetFieldValueAsync");
+                CheckDataIsReady(columnIndex: i);
 
                 // Shortcut - if there are no issues and the data is already read, then just return the value
                 if ((!IsCommandBehavior(CommandBehavior.SequentialAccess)) && (_sharedState._nextColumnDataToRead > i) && (!cancellationToken.IsCancellationRequested) && (_currentTask == null))
@@ -5639,7 +5635,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // Reader was closed between the CheckDataIsReady and accessing _data\_metaData - throw closed exception
-                        return ADP.CreatedTaskWithException<T>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("GetFieldValueAsync")));
+                        return ADP.CreatedTaskWithException<T>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
                     }
                 }
             }
