@@ -3277,9 +3277,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        internal override Task<bool> TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, CancellationToken cancellationToken, DbConnectionOptions userOptions)
         {
-            return base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+            return base.TryOpenConnectionInternal(outerConnection, connectionFactory, cancellationToken, userOptions);
         }
     }
 

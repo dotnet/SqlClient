@@ -1275,22 +1275,15 @@ namespace Microsoft.Data.ProviderBase
             } while (_pendingOpens.TryPeek(out next));
         }
 
-        internal bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, out DbConnectionInternal connection)
+        internal bool TryGetConnection(DbConnection owningObject, DbConnectionOptions userOptions, out DbConnectionInternal connection)
         {
 
-            uint waitForMultipleObjectsTimeout = 0;
-            bool allowCreate = false;
+            var waitForMultipleObjectsTimeout = (uint)CreationTimeout;
+            var allowCreate = true;
 
-            if (retry == null)
-            {
-                waitForMultipleObjectsTimeout = (uint)CreationTimeout;
-
-                // VSTFDEVDIV 445531: set the wait timeout to INFINITE (-1) if the SQL connection timeout is 0 (== infinite)
-                if (waitForMultipleObjectsTimeout == 0)
-                    waitForMultipleObjectsTimeout = unchecked((uint)Timeout.Infinite);
-
-                allowCreate = true;
-            }
+            // VSTFDEVDIV 445531: set the wait timeout to INFINITE (-1) if the SQL connection timeout is 0 (== infinite)
+            if (waitForMultipleObjectsTimeout == 0)
+                waitForMultipleObjectsTimeout = unchecked((uint)Timeout.Infinite);
 
             if (_state != State.Running)
             {
@@ -1304,30 +1297,8 @@ namespace Microsoft.Data.ProviderBase
             {
                 return true;
             }
-            else if (retry == null)
-            {
-                // timed out on a sync call
-                return true;
-            }
-
-            var pendingGetConnection =
-                new PendingGetConnection(
-                    CreationTimeout == 0 ? Timeout.Infinite : ADP.TimerCurrent() + ADP.TimerFromSeconds(CreationTimeout / 1000),
-                    owningObject,
-                    retry,
-                    userOptions);
-            _pendingOpens.Enqueue(pendingGetConnection);
-
-            // it is better to StartNew too many times than not enough
-            if (_pendingOpensWaiting == 0)
-            {
-                Thread waitOpenThread = new Thread(WaitForPendingOpen);
-                waitOpenThread.IsBackground = true;
-                waitOpenThread.Start();
-            }
-
-            connection = null;
-            return false;
+            // timed out on a sync call
+            return true;
         }
 
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")] // copied from Triaged.cs
