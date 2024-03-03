@@ -2698,7 +2698,7 @@ namespace Microsoft.Data.SqlClient
             // Normally we would simply create a regular connectoin and open it but there is no other way to pass the
             // new password down to the constructor. Also it would have an unwanted impact on the connection pool
             //
-            using (SqlInternalConnectionTds con = new SqlInternalConnectionTds(null, connectionOptions, credential, null, newPassword, newSecurePassword, false, null, null, null, null))
+            using (SqlInternalConnectionTds con = SqlInternalConnectionTds.Create(null, connectionOptions, credential, null, newPassword, newSecurePassword, false, null, null, null, null).GetAwaiter().GetResult())
             {
                 if (!con.Is2005OrNewer)
                 {
