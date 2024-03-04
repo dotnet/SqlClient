@@ -7,6 +7,7 @@ namespace Microsoft.Data.ProviderBase
     sealed internal partial class DbConnectionPoolIdentity
     {
         public static readonly DbConnectionPoolIdentity NoIdentity = new DbConnectionPoolIdentity(string.Empty, false, true);
+        private static DbConnectionPoolIdentity s_lastIdentity = null;
 
         private readonly string _sidString;
         private readonly bool _isRestricted;
@@ -43,7 +44,7 @@ namespace Microsoft.Data.ProviderBase
             return _hashCode;
         }
 
-        internal static DbConnectionPoolIdentity GetCurrentManaged()
+        private static DbConnectionPoolIdentity GetCurrentManaged()
         {
             string domainString = System.Environment.UserDomainName;
             string sidString = (!string.IsNullOrWhiteSpace(domainString) ? domainString + "\\" : "") + System.Environment.UserName;
