@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>Сокет не вызвал ожидаемый "{0}" с кодом ошибки "{1}".</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>Не поддерживается в .NET Standard 2.0.</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>Сервер пытается использовать функцию, которая не поддерживается этой платформой.</value>
   </data>

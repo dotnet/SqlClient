@@ -521,7 +521,7 @@
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
     </Compile>
@@ -733,9 +733,9 @@
     </Compile>
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs" />
   </ItemGroup>
-  <!-- Manage the SNI toggle for Windows netstandard and UWP -->
+  <!-- Manage the SNI toggle for Windows UWP -->
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetsWindows)' == 'true'">
-    <!-- Manage the SNI toggle for Windows netstandard and UWP -->
+    <!-- Manage the SNI toggle for Windows UWP -->
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs" />
