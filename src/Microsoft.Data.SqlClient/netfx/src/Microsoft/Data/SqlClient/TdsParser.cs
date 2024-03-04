@@ -28,13 +28,14 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
-
     // The TdsParser Object controls reading/writing to the netlib, parsing the tds,
     // and surfacing objects to the user.
-    sealed internal class TdsParser
+    sealed internal partial class TdsParser
     {
         private static int _objectTypeCount; // EventSource Counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
+
+        private SSPIContextProvider _authenticationProvider;
 
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
@@ -236,15 +237,8 @@ namespace Microsoft.Data.SqlClient
         // NIC address caching
         private static byte[] s_nicAddress;             // cache the NIC address from the registry
 
-        // SSPI variables
-        private static bool s_fSSPILoaded = false; // bool to indicate whether library has been loaded
-
-        private volatile static UInt32 s_maxSSPILength = 0;     // variable to hold max SSPI data size, keep for token from server
-
         // textptr sequence
         private static readonly byte[] s_longDataHeader = { 0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-
-        private static object s_tdsParserLock = new object();
 
         // Various other statics
         private const int ATTENTION_TIMEOUT = 5000;  // internal attention timeout, in ticks
@@ -549,7 +543,8 @@ namespace Microsoft.Data.SqlClient
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
-                LoadSSPILibrary();
+                _authenticationProvider = _physicalStateObj.CreateSSPIContextProvider();
+
                 if (!string.IsNullOrEmpty(serverInfo.ServerSPN))
                 {
                     // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
@@ -567,7 +562,9 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
+                _authenticationProvider = null;
                 _sniSpnBuffer = null;
+
                 switch (authType)
                 {
                     case SqlAuthenticationMethod.ActiveDirectoryPassword:
@@ -654,6 +651,8 @@ namespace Microsoft.Data.SqlClient
                 _connHandler.ConnectionOptions.IPAddressPreference,
                 FQDNforDNSCache,
                 hostNameInCertificate);
+
+            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -759,6 +758,8 @@ namespace Microsoft.Data.SqlClient
                     _connHandler.ConnectionOptions.IPAddressPreference,
                     serverInfo.ResolvedServerName,
                     hostNameInCertificate);
+
+                _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {
@@ -2547,7 +2548,7 @@ namespace Microsoft.Data.SqlClient
                                     (error.Class <= TdsEnums.MAX_USER_CORRECTABLE_ERROR_CLASS))
                                 {
                                     // Fire SqlInfoMessage here
-                                    FireInfoMessageEvent(connection,cmdHandler, stateObj, error);
+                                    FireInfoMessageEvent(connection, cmdHandler, stateObj, error);
                                 }
                                 else
                                 {
@@ -8904,205 +8905,6 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
-        internal void TdsLogin(SqlLogin rec,
-                               TdsEnums.FeatureExtension requestedFeatures,
-                               SessionData recoverySessionData,
-                               FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
-                               SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo, 
-                               SqlConnectionEncryptOption encrypt)
-        {
-            _physicalStateObj.SetTimeoutSeconds(rec.timeout);
-
-            Debug.Assert(recoverySessionData == null || (requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0, "Recovery session data without session recovery feature request");
-            Debug.Assert(TdsEnums.MAXLEN_HOSTNAME >= rec.hostName.Length, "_workstationId.Length exceeds the max length for this value");
-
-            Debug.Assert(!(rec.useSSPI && _connHandler._fedAuthRequired), "Cannot use SSPI when server has responded 0x01 for FedAuthRequired PreLogin Option.");
-            Debug.Assert(!rec.useSSPI || (requestedFeatures & TdsEnums.FeatureExtension.FedAuth) == 0, "Cannot use both SSPI and FedAuth");
-            Debug.Assert(fedAuthFeatureExtensionData == null || (requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0, "fedAuthFeatureExtensionData provided without fed auth feature request");
-            Debug.Assert(fedAuthFeatureExtensionData != null || (requestedFeatures & TdsEnums.FeatureExtension.FedAuth) == 0, "Fed Auth feature requested without specifying fedAuthFeatureExtensionData.");
-
-            Debug.Assert(rec.userName == null || (rec.userName != null && TdsEnums.MAXLEN_CLIENTID >= rec.userName.Length), "_userID.Length exceeds the max length for this value");
-            Debug.Assert(rec.credential == null || (rec.credential != null && TdsEnums.MAXLEN_CLIENTID >= rec.credential.UserId.Length), "_credential.UserId.Length exceeds the max length for this value");
-
-            Debug.Assert(rec.password == null || (rec.password != null && TdsEnums.MAXLEN_CLIENTSECRET >= rec.password.Length), "_password.Length exceeds the max length for this value");
-            Debug.Assert(rec.credential == null || (rec.credential != null && TdsEnums.MAXLEN_CLIENTSECRET >= rec.credential.Password.Length), "_credential.Password.Length exceeds the max length for this value");
-
-            Debug.Assert(rec.credential != null || rec.userName != null || rec.password != null, "cannot mix the new secure password system and the connection string based password");
-            Debug.Assert(rec.newSecurePassword != null || rec.newPassword != null, "cannot have both new secure change password and string based change password");
-            Debug.Assert(TdsEnums.MAXLEN_APPNAME >= rec.applicationName.Length, "_applicationName.Length exceeds the max length for this value");
-            Debug.Assert(TdsEnums.MAXLEN_SERVERNAME >= rec.serverName.Length, "_dataSource.Length exceeds the max length for this value");
-            Debug.Assert(TdsEnums.MAXLEN_LANGUAGE >= rec.language.Length, "_currentLanguage .Length exceeds the max length for this value");
-            Debug.Assert(TdsEnums.MAXLEN_DATABASE >= rec.database.Length, "_initialCatalog.Length exceeds the max length for this value");
-            Debug.Assert(TdsEnums.MAXLEN_ATTACHDBFILE >= rec.attachDBFilename.Length, "_attachDBFileName.Length exceeds the max length for this value");
-
-            Debug.Assert(_connHandler != null, "SqlConnectionInternalTds handler can not be null at this point.");
-            _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
-            _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
-
-            // Add CTAIP Provider
-            //
-            if (originalNetworkAddressInfo != null)
-            {
-                SNINativeMethodWrapper.CTAIPProviderInfo cauthInfo = new SNINativeMethodWrapper.CTAIPProviderInfo();
-                cauthInfo.originalNetworkAddress = originalNetworkAddressInfo.Address.GetAddressBytes();
-                cauthInfo.fromDataSecurityProxy = originalNetworkAddressInfo.IsFromDataSecurityProxy;
-
-                UInt32 error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.CTAIP_PROV, cauthInfo);
-                if (error != TdsEnums.SNI_SUCCESS)
-                {
-                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                    ThrowExceptionAndWarning(_physicalStateObj);
-                }
-
-                try
-                { } // EmptyTry/Finally to avoid FXCop violation
-                finally
-                {
-                    _physicalStateObj.ClearAllWritePackets();
-                }
-            }
-
-            // get the password up front to use in sspi logic below
-            byte[] encryptedPassword = null;
-            byte[] encryptedChangePassword = null;
-            int encryptedPasswordLengthInBytes;
-            int encryptedChangePasswordLengthInBytes;
-            bool useFeatureExt = (requestedFeatures != TdsEnums.FeatureExtension.None);
-
-            string userName;
-
-            if (rec.credential != null)
-            {
-                userName = rec.credential.UserId;
-                encryptedPasswordLengthInBytes = rec.credential.Password.Length * 2;
-            }
-            else
-            {
-                userName = rec.userName;
-                encryptedPassword = TdsParserStaticMethods.ObfuscatePassword(rec.password);
-                encryptedPasswordLengthInBytes = encryptedPassword.Length;  // password in clear text is already encrypted and its length is in byte
-            }
-
-            if (rec.newSecurePassword != null)
-            {
-                encryptedChangePasswordLengthInBytes = rec.newSecurePassword.Length * 2;
-            }
-            else
-            {
-                encryptedChangePassword = TdsParserStaticMethods.ObfuscatePassword(rec.newPassword);
-                encryptedChangePasswordLengthInBytes = encryptedChangePassword.Length;
-            }
-
-
-            // set the message type
-            _physicalStateObj._outputMessageType = TdsEnums.MT_LOGIN7;
-
-            // length in bytes
-            int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
-
-            string clientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
-            Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= clientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
-
-            // add up variable-len portions (multiply by 2 for byte len of char strings)
-            //
-            checked
-            {
-                length += (rec.hostName.Length + rec.applicationName.Length +
-                            rec.serverName.Length + clientInterfaceName.Length +
-                            rec.language.Length + rec.database.Length +
-                            rec.attachDBFilename.Length) * 2;
-                if (useFeatureExt)
-                {
-                    length += 4;
-                }
-            }
-
-            // allocate memory for SSPI variables
-            byte[] outSSPIBuff = null;
-            UInt32 outSSPILength = 0;
-
-            // only add lengths of password and username if not using SSPI or requesting federated authentication info
-            if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
-            {
-                checked
-                {
-                    length += (userName.Length * 2) + encryptedPasswordLengthInBytes
-                    + encryptedChangePasswordLengthInBytes;
-                }
-            }
-            else
-            {
-                if (rec.useSSPI)
-                {
-                    // now allocate proper length of buffer, and set length
-                    outSSPIBuff = new byte[s_maxSSPILength];
-                    outSSPILength = s_maxSSPILength;
-
-                    // Call helper function for SSPI data and actual length.
-                    // Since we don't have SSPI data from the server, send null for the
-                    // byte[] buffer and 0 for the int length.
-                    Debug.Assert(SniContext.Snix_Login == _physicalStateObj.SniContext, $"Unexpected SniContext. Expecting Snix_Login, actual value is '{_physicalStateObj.SniContext}'");
-                    _physicalStateObj.SniContext = SniContext.Snix_LoginSspi;
-                    SSPIData(null, 0, outSSPIBuff, ref outSSPILength);
-                    if (outSSPILength > int.MaxValue)
-                    {
-                        throw SQL.InvalidSSPIPacketSize();  // SqlBu 332503
-                    }
-                    _physicalStateObj.SniContext = SniContext.Snix_Login;
-
-                    checked
-                    {
-                        length += (int)outSSPILength;
-                    }
-                }
-            }
-
-            int feOffset = length;
-            // calculate and reserve the required bytes for the featureEx
-            length = ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length);
-
-            WriteLoginData(rec,
-                           requestedFeatures,
-                           recoverySessionData,
-                           fedAuthFeatureExtensionData,
-                           encrypt,
-                           encryptedPassword,
-                           encryptedChangePassword,
-                           encryptedPasswordLengthInBytes,
-                           encryptedChangePasswordLengthInBytes,
-                           useFeatureExt,
-                           userName,
-                           length,
-                           feOffset,
-                           clientInterfaceName,
-                           outSSPIBuff,
-                           outSSPILength);
-
-            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
-            _physicalStateObj.ResetSecurePasswordsInformation();     // Password information is needed only from Login process; done with writing login packet and should clear information
-            _physicalStateObj.HasPendingData = true;
-            _physicalStateObj._messageStatus = 0;
-
-            // Remvove CTAIP Provider after login record is sent.
-            //
-            if (originalNetworkAddressInfo != null)
-            {
-                UInt32 error = SNINativeMethodWrapper.SNIRemoveProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.CTAIP_PROV);
-                if (error != TdsEnums.SNI_SUCCESS)
-                {
-                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                    ThrowExceptionAndWarning(_physicalStateObj);
-                }
-
-                try
-                { } // EmptyTry/Finally to avoid FXCop violation
-                finally
-                {
-                    _physicalStateObj.ClearAllWritePackets();
-                }
-            }
-        }// tdsLogin
-
         private void WriteLoginData(SqlLogin rec,
                                     TdsEnums.FeatureExtension requestedFeatures,
                                     SessionData recoverySessionData,
@@ -9470,94 +9272,6 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj._messageStatus = 0;
 
             _connHandler._federatedAuthenticationRequested = true;
-        }
-
-        private void SSPIData(byte[] receivedBuff, UInt32 receivedLength, byte[] sendBuff, ref UInt32 sendLength)
-        {
-            SNISSPIData(receivedBuff, receivedLength, sendBuff, ref sendLength);
-        }
-
-        private void SNISSPIData(byte[] receivedBuff, UInt32 receivedLength, byte[] sendBuff, ref UInt32 sendLength)
-        {
-            if (receivedBuff == null)
-            {
-                // we do not have SSPI data coming from server, so send over 0's for pointer and length
-                receivedLength = 0;
-            }
-            // we need to respond to the server's message with SSPI data
-            if (0 != SNINativeMethodWrapper.SNISecGenClientContext(_physicalStateObj.Handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer))
-            {
-                SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
-            }
-        }
-
-
-        private void ProcessSSPI(int receivedLength)
-        {
-            SniContext outerContext = _physicalStateObj.SniContext;
-            _physicalStateObj.SniContext = SniContext.Snix_ProcessSspi;
-            // allocate received buffer based on length from SSPI message
-            byte[] receivedBuff = new byte[receivedLength];
-
-            // read SSPI data received from server
-            Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            bool result = _physicalStateObj.TryReadByteArray(receivedBuff, receivedLength);
-            if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
-
-            // allocate send buffer and initialize length
-            byte[] sendBuff = new byte[s_maxSSPILength];
-            UInt32 sendLength = s_maxSSPILength;
-
-            // make call for SSPI data
-            SSPIData(receivedBuff, (UInt32)receivedLength, sendBuff, ref sendLength);
-
-            // DO NOT SEND LENGTH - TDS DOC INCORRECT!  JUST SEND SSPI DATA!
-            _physicalStateObj.WriteByteArray(sendBuff, (int)sendLength, 0);
-
-            // set message type so server knows its a SSPI response
-            _physicalStateObj._outputMessageType = TdsEnums.MT_SSPI;
-
-            // send to server
-            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
-            _physicalStateObj.SniContext = outerContext;
-        }
-
-        private void SSPIError(string error, string procedure)
-        {
-            Debug.Assert(!ADP.IsEmpty(procedure), "TdsParser.SSPIError called with an empty or null procedure string");
-            Debug.Assert(!ADP.IsEmpty(error), "TdsParser.SSPIError called with an empty or null error string");
-
-            _physicalStateObj.AddError(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, _server, error, procedure, 0));
-            ThrowExceptionAndWarning(_physicalStateObj);
-        }
-
-        private void LoadSSPILibrary()
-        {
-            // Outer check so we don't acquire lock once once it's loaded.
-            if (!s_fSSPILoaded)
-            {
-                lock (s_tdsParserLock)
-                {
-                    // re-check inside lock
-                    if (!s_fSSPILoaded)
-                    {
-                        // use local for ref param to defer setting s_maxSSPILength until we know the call succeeded.
-                        UInt32 maxLength = 0;
-                        if (0 != SNINativeMethodWrapper.SNISecInitPackage(ref maxLength))
-                            SSPIError(SQLMessage.SSPIInitializeError(), TdsEnums.INIT_SSPI_PACKAGE);
-
-                        s_maxSSPILength = maxLength;
-                        s_fSSPILoaded = true;
-
-                    }
-                }
-            }
-
-            if (s_maxSSPILength > Int32.MaxValue)
-            {
-                throw SQL.InvalidSSPIPacketSize();   // SqlBu 332503
-            }
         }
 
         internal byte[] GetDTCAddress(int timeout, TdsParserStateObject stateObj)
@@ -10123,7 +9837,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
                                 if (
-                                    !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled 
+                                    !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
                                     ||
                                     (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled))
                                 )
