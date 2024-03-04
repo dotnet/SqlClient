@@ -5,7 +5,7 @@
 using Microsoft.Data.Common;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.Data.ProviderBase
@@ -35,8 +35,8 @@ namespace Microsoft.Data.ProviderBase
 
         protected override DbReferenceCollection CreateReferenceCollection() => throw ADP.ClosedConnectionError();
 
-        internal override bool TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
-            => base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+        internal override Task<bool> TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, CancellationToken cancellationToken, DbConnectionOptions userOptions)
+            => base.TryOpenConnectionInternal(outerConnection, connectionFactory, cancellationToken, userOptions);
     }
 
     abstract internal class DbConnectionBusy : DbConnectionClosed
@@ -45,7 +45,7 @@ namespace Microsoft.Data.ProviderBase
         {
         }
 
-        internal override bool TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        internal override Task<bool> TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, CancellationToken cancellationToken, DbConnectionOptions userOptions)
             => throw ADP.ConnectionAlreadyOpen(State);
     }
 
@@ -84,32 +84,12 @@ namespace Microsoft.Data.ProviderBase
             connectionFactory.SetInnerConnectionTo(owningObject, DbConnectionClosedPreviouslyOpened.SingletonInstance);
         }
 
-        internal override bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
-            => TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
+        internal override Task<bool> TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, CancellationToken cancellationToken, DbConnectionOptions userOptions)
+            => TryOpenConnection(outerConnection, connectionFactory, cancellationToken, userOptions);
 
-        internal override bool TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        internal override Task<bool> TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, CancellationToken cancellationToken, DbConnectionOptions userOptions)
         {
-            if (retry == null || !retry.Task.IsCompleted)
-            {
-                // retry is null if this is a synchronous call
-
-                // if someone calls Open or OpenAsync while in this state, 
-                // then the retry task will not be completed
-
-                throw ADP.ConnectionAlreadyOpen(State);
-            }
-
-            // we are completing an asynchronous open
-            Debug.Assert(retry.Task.Status == TaskStatus.RanToCompletion, "retry task must be completed successfully");
-            DbConnectionInternal openConnection = retry.Task.Result;
-            if (null == openConnection)
-            {
-                connectionFactory.SetInnerConnectionTo(outerConnection, this);
-                throw ADP.InternalConnectionError(ADP.ConnectionError.GetConnectionReturnsNull);
-            }
-            connectionFactory.SetInnerConnectionEvent(outerConnection, openConnection);
-
-            return true;
+            throw ADP.ConnectionAlreadyOpen(State);
         }
     }
 
@@ -134,7 +114,7 @@ namespace Microsoft.Data.ProviderBase
         {
         }
 
-        internal override bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
-            => TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
+        internal override Task<bool> TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, CancellationToken cancellationToken, DbConnectionOptions userOptions)
+            => TryOpenConnection(outerConnection, connectionFactory, cancellationToken, userOptions);
     }
 }
