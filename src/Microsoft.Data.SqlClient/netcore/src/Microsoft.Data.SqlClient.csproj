@@ -762,9 +762,9 @@
     </Compile>
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs" />
   </ItemGroup>
-  <!-- Manage the SNI toggle for Windows netstandard and UWP -->
-  <ItemGroup Condition="('$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp') AND '$(TargetsWindows)' == 'true'">
-    <!-- Manage the SNI toggle for Windows netstandard and UWP -->
+  <!-- Manage the SNI toggle for Windows UWP -->
+  <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetsWindows)' == 'true'">
+    <!-- Manage the SNI toggle for Windows UWP -->
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs" />
