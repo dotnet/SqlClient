@@ -349,9 +349,9 @@ namespace Microsoft.Data.SqlClient
             if (!string.IsNullOrEmpty(xmlSchemaCollectionDatabase) || !string.IsNullOrEmpty(xmlSchemaCollectionOwningSchema) || !string.IsNullOrEmpty(xmlSchemaCollectionName))
             {
                 EnsureXmlSchemaCollection();
-                _xmlSchemaCollection.Database = xmlSchemaCollectionDatabase;
-                _xmlSchemaCollection.OwningSchema = xmlSchemaCollectionOwningSchema;
-                _xmlSchemaCollection.Name = xmlSchemaCollectionName;
+                _xmlSchemaCollection._database = xmlSchemaCollectionDatabase;
+                _xmlSchemaCollection._owningSchema = xmlSchemaCollectionOwningSchema;
+                _xmlSchemaCollection._name = xmlSchemaCollectionName;
             }
         }
 
@@ -427,24 +427,24 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
         public string XmlSchemaCollectionDatabase
         {
-            get => _xmlSchemaCollection?.Database ?? string.Empty;
-            set => EnsureXmlSchemaCollection().Database = value;
+            get => _xmlSchemaCollection?._database ?? string.Empty;
+            set => EnsureXmlSchemaCollection()._database = value;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*' />
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
         public string XmlSchemaCollectionOwningSchema
         {
-            get => _xmlSchemaCollection?.OwningSchema ?? string.Empty;
-            set => EnsureXmlSchemaCollection().OwningSchema = value;
+            get => _xmlSchemaCollection?._owningSchema ?? string.Empty;
+            set => EnsureXmlSchemaCollection()._owningSchema = value;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*' />
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
         public string XmlSchemaCollectionName
         {
-            get => _xmlSchemaCollection?.Name ?? string.Empty;
-            set => EnsureXmlSchemaCollection().Name = value;
+            get => _xmlSchemaCollection?._name ?? string.Empty;
+            set => EnsureXmlSchemaCollection()._name = value;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*' />

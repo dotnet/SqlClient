@@ -22,14 +22,14 @@
   <!-- Override debugtype=portable in Directory.Build.props for netfx -->
   <PropertyGroup>
     <DebugType>full</DebugType>
-  </PropertyGroup>  
+  </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
-  </ItemGroup>  
+  </ItemGroup>
   <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
@@ -171,6 +171,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ApplicationIntent.cs">
       <Link>Microsoft\Data\SqlClient\ApplicationIntent.cs</Link>
@@ -574,6 +577,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParameterSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserHelperClasses.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserHelperClasses.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
@@ -675,7 +681,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />

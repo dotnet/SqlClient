@@ -700,8 +700,8 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return (string.Format("{0:00}.{1:00}.{2:0000}", _loginAck.majorVersion,
-                       (short)_loginAck.minorVersion, _loginAck.buildNum));
+                return (string.Format("{0:00}.{1:00}.{2:0000}", _loginAck._majorVersion,
+                       (short)_loginAck._minorVersion, _loginAck._buildNum));
             }
         }
 
@@ -724,7 +724,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Validates if federated authentication is used, Access Token used by this connection is active for the value of 'accessTokenExpirationBufferTime'.
         /// </summary>
-        internal override bool IsAccessTokenExpired => _federatedAuthenticationInfoRequested && DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
+        internal override bool IsAccessTokenExpired => _federatedAuthenticationInfoRequested && DateTime.FromFileTimeUtc(_fedAuthToken._expirationFileTime) < DateTime.UtcNow.AddSeconds(accessTokenExpirationBufferTime);
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // GENERAL METHODS
@@ -1280,37 +1280,37 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            login.authentication = ConnectionOptions.Authentication;
-            login.timeout = timeoutInSeconds;
-            login.userInstance = ConnectionOptions.UserInstance;
-            login.hostName = ConnectionOptions.ObtainWorkstationId();
-            login.userName = ConnectionOptions.UserID;
-            login.password = ConnectionOptions.Password;
-            login.applicationName = ConnectionOptions.ApplicationName;
+            login._authentication = ConnectionOptions.Authentication;
+            login._timeout = timeoutInSeconds;
+            login._userInstance = ConnectionOptions.UserInstance;
+            login._hostName = ConnectionOptions.ObtainWorkstationId();
+            login._userName = ConnectionOptions.UserID;
+            login._password = ConnectionOptions.Password;
+            login._applicationName = ConnectionOptions.ApplicationName;
 
-            login.language = _currentLanguage;
-            if (!login.userInstance)
+            login._language = _currentLanguage;
+            if (!login._userInstance)
             {
                 // Do not send attachdbfilename or database to SSE primary instance
-                login.database = CurrentDatabase;
-                login.attachDBFilename = ConnectionOptions.AttachDBFilename;
+                login._database = CurrentDatabase;
+                login._attachDBFilename = ConnectionOptions.AttachDBFilename;
             }
 
             // VSTS#795621 - Ensure ServerName is Sent During TdsLogin To Enable Sql Azure Connectivity.
             // Using server.UserServerName (versus ConnectionOptions.DataSource) since TdsLogin requires
             // serverName to always be non-null.
-            login.serverName = server.UserServerName;
+            login._serverName = server.UserServerName;
 
-            login.useReplication = ConnectionOptions.Replication;
-            login.useSSPI = ConnectionOptions.IntegratedSecurity  // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
+            login._useReplication = ConnectionOptions.Replication;
+            login._useSSPI = ConnectionOptions.IntegratedSecurity  // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
                                      || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !_fedAuthRequired);
-            login.packetSize = _currentPacketSize;
-            login.newPassword = newPassword;
-            login.readOnlyIntent = ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
-            login.credential = _credential;
+            login._packetSize = _currentPacketSize;
+            login._newPassword = newPassword;
+            login._readOnlyIntent = ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
+            login._credential = _credential;
             if (newSecurePassword != null)
             {
-                login.newSecurePassword = newSecurePassword;
+                login._newSecurePassword = newSecurePassword;
             }
 
             TdsEnums.FeatureExtension requestedFeatures = TdsEnums.FeatureExtension.None;
@@ -1340,9 +1340,9 @@ namespace Microsoft.Data.SqlClient
                 _fedAuthFeatureExtensionData =
                     new FederatedAuthenticationFeatureExtensionData
                     {
-                        libraryType = TdsEnums.FedAuthLibrary.MSAL,
-                        authentication = ConnectionOptions.Authentication,
-                        fedAuthRequiredPreLoginResponse = _fedAuthRequired
+                        _libraryType = TdsEnums.FedAuthLibrary.MSAL,
+                        _authentication = ConnectionOptions.Authentication,
+                        _fedAuthRequiredPreLoginResponse = _fedAuthRequired
                     };
             }
 
@@ -1351,9 +1351,9 @@ namespace Microsoft.Data.SqlClient
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 _fedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
                 {
-                    libraryType = TdsEnums.FedAuthLibrary.SecurityToken,
-                    fedAuthRequiredPreLoginResponse = _fedAuthRequired,
-                    accessToken = _accessTokenInBytes
+                    _libraryType = TdsEnums.FedAuthLibrary.SecurityToken,
+                    _fedAuthRequiredPreLoginResponse = _fedAuthRequired,
+                    _accessToken = _accessTokenInBytes
                 };
                 // No need any further info from the server for token based authentication. So set _federatedAuthenticationRequested to true
                 _federatedAuthenticationRequested = true;
@@ -2135,14 +2135,14 @@ namespace Microsoft.Data.SqlClient
             _loginAck = rec;
             if (_recoverySessionData != null)
             {
-                if (_recoverySessionData._tdsVersion != rec.tdsVersion)
+                if (_recoverySessionData._tdsVersion != rec._tdsVersion)
                 {
                     throw SQL.CR_TDSVersionNotPreserved(this);
                 }
             }
             if (_currentSessionData != null)
             {
-                _currentSessionData._tdsVersion = rec.tdsVersion;
+                _currentSessionData._tdsVersion = rec._tdsVersion;
             }
         }
 
@@ -2180,7 +2180,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(_dbConnectionPool.AuthenticationContexts != null);
 
                 // Construct the dbAuthenticationContextKey with information from FedAuthInfo and store for later use, when inserting in to the token cache.
-                _dbConnectionPoolAuthenticationContextKey = new DbConnectionPoolAuthenticationContextKey(fedAuthInfo.stsurl, fedAuthInfo.spn);
+                _dbConnectionPoolAuthenticationContextKey = new DbConnectionPoolAuthenticationContextKey(fedAuthInfo._stsurl, fedAuthInfo._spn);
 
                 // Try to retrieve the authentication context from the pool, if one does exist for this key.
                 if (_dbConnectionPool.AuthenticationContexts.TryGetValue(_dbConnectionPoolAuthenticationContextKey, out dbConnectionPoolAuthenticationContext))
@@ -2273,11 +2273,11 @@ namespace Microsoft.Data.SqlClient
 
                 // If the code flow is here, then we are re-using the context from the cache for this connection attempt and not
                 // generating a new access token on this thread.
-                _fedAuthToken.accessToken = dbConnectionPoolAuthenticationContext.AccessToken;
-                _fedAuthToken.expirationFileTime = dbConnectionPoolAuthenticationContext.ExpirationTime.ToFileTime();
+                _fedAuthToken._accessToken = dbConnectionPoolAuthenticationContext.AccessToken;
+                _fedAuthToken._expirationFileTime = dbConnectionPoolAuthenticationContext.ExpirationTime.ToFileTime();
             }
 
-            Debug.Assert(_fedAuthToken != null && _fedAuthToken.accessToken != null, "fedAuthToken and fedAuthToken.accessToken cannot be null.");
+            Debug.Assert(_fedAuthToken != null && _fedAuthToken._accessToken != null, "fedAuthToken and fedAuthToken.accessToken cannot be null.");
             _parser.SendFedAuthToken(_fedAuthToken);
         }
 
@@ -2375,8 +2375,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     var authParamsBuilder = new SqlAuthenticationParameters.Builder(
                             authenticationMethod: ConnectionOptions.Authentication,
-                            resource: fedAuthInfo.spn,
-                            authority: fedAuthInfo.stsurl,
+                            resource: fedAuthInfo._spn,
+                            authority: fedAuthInfo._stsurl,
                             serverName: ConnectionOptions.DataSource,
                             databaseName: ConnectionOptions.InitialCatalog)
                         .WithConnectionId(_clientConnectionId)
@@ -2483,7 +2483,7 @@ namespace Microsoft.Data.SqlClient
                             break;
                     }
 
-                    Debug.Assert(_fedAuthToken.accessToken != null, "AccessToken should not be null.");
+                    Debug.Assert(_fedAuthToken._accessToken != null, "AccessToken should not be null.");
 #if DEBUG
                     if (_forceMsalRetry)
                     {
@@ -2570,13 +2570,13 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(_fedAuthToken != null, "fedAuthToken should not be null.");
-            Debug.Assert(_fedAuthToken.accessToken != null && _fedAuthToken.accessToken.Length > 0, "fedAuthToken.accessToken should not be null or empty.");
+            Debug.Assert(_fedAuthToken._accessToken != null && _fedAuthToken._accessToken.Length > 0, "fedAuthToken.accessToken should not be null or empty.");
 
             // Store the newly generated token in _newDbConnectionPoolAuthenticationContext, only if using pooling.
             if (_dbConnectionPool != null)
             {
-                DateTime expirationTime = DateTime.FromFileTimeUtc(_fedAuthToken.expirationFileTime);
-                _newDbConnectionPoolAuthenticationContext = new DbConnectionPoolAuthenticationContext(_fedAuthToken.accessToken, expirationTime);
+                DateTime expirationTime = DateTime.FromFileTimeUtc(_fedAuthToken._expirationFileTime);
+                _newDbConnectionPoolAuthenticationContext = new DbConnectionPoolAuthenticationContext(_fedAuthToken._accessToken, expirationTime);
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken> {0}, Finished generating federated authentication token.", ObjectID);
             return _fedAuthToken;
@@ -2668,7 +2668,7 @@ namespace Microsoft.Data.SqlClient
 
                         Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticationRequested == true");
 
-                        switch (_fedAuthFeatureExtensionData.libraryType)
+                        switch (_fedAuthFeatureExtensionData._libraryType)
                         {
                             case TdsEnums.FedAuthLibrary.MSAL:
                             case TdsEnums.FedAuthLibrary.SecurityToken:
@@ -2683,7 +2683,7 @@ namespace Microsoft.Data.SqlClient
                             default:
                                 Debug.Fail("Unknown _fedAuthLibrary type");
                                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Attempting to use unknown federated authentication library", ObjectID);
-                                throw SQL.ParsingErrorLibraryType(ParsingErrorState.FedAuthFeatureAckUnknownLibraryType, (int)_fedAuthFeatureExtensionData.libraryType);
+                                throw SQL.ParsingErrorLibraryType(ParsingErrorState.FedAuthFeatureAckUnknownLibraryType, (int)_fedAuthFeatureExtensionData._libraryType);
                         }
                         _federatedAuthenticationAcknowledged = true;
 

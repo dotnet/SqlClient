@@ -22,18 +22,18 @@ namespace Microsoft.Data.SqlClient
         {
             AllowDBNull = _metadata.IsNullable;
             BaseCatalogName = _metadata.catalogName;
-            BaseColumnName = _metadata.baseColumn;
+            BaseColumnName = _metadata._baseColumn;
             BaseSchemaName = _metadata.schemaName;
             BaseServerName = _metadata.serverName;
             BaseTableName = _metadata.tableName;
-            ColumnName = _metadata.column;
-            ColumnOrdinal = _metadata.ordinal;
-            ColumnSize = (_metadata.metaType.IsSizeInCharacters && (_metadata.length != 0x7fffffff)) ? (_metadata.length / 2) : _metadata.length;
+            ColumnName = _metadata._column;
+            ColumnOrdinal = _metadata._ordinal;
+            ColumnSize = (_metadata._metaType.IsSizeInCharacters && (_metadata._length != 0x7fffffff)) ? (_metadata._length / 2) : _metadata._length;
             IsAutoIncrement = _metadata.IsIdentity;
             IsIdentity = _metadata.IsIdentity;
-            IsLong = _metadata.metaType.IsLong;
+            IsLong = _metadata._metaType.IsLong;
 
-            if (SqlDbType.Timestamp == _metadata.type)
+            if (SqlDbType.Timestamp == _metadata._type)
             {
                 IsUnique = true;
             }
@@ -42,18 +42,18 @@ namespace Microsoft.Data.SqlClient
                 IsUnique = false;
             }
 
-            if (TdsEnums.UNKNOWN_PRECISION_SCALE != _metadata.precision)
+            if (TdsEnums.UNKNOWN_PRECISION_SCALE != _metadata._precision)
             {
-                NumericPrecision = _metadata.precision;
+                NumericPrecision = _metadata._precision;
             }
             else
             {
-                NumericPrecision = _metadata.metaType.Precision;
+                NumericPrecision = _metadata._metaType.Precision;
             }
 
             IsReadOnly = _metadata.IsReadOnly;
 
-            UdtAssemblyQualifiedName = _metadata.udt?.AssemblyQualifiedName;
+            UdtAssemblyQualifiedName = _metadata.udt?._assemblyQualifiedName;
 
         }
 

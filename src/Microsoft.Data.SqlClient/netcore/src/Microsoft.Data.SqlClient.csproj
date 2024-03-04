@@ -105,6 +105,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ApplicationIntent.cs">
       <Link>Microsoft\Data\SqlClient\ApplicationIntent.cs</Link>
     </Compile>
@@ -492,6 +495,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserHelperClasses.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserHelperClasses.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
     </Compile>
@@ -591,7 +597,7 @@
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
-    </Compile>
+    </Compile>  
     <EmbeddedResource Include="..\..\src\Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
@@ -628,7 +634,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
@@ -665,7 +670,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
   </ItemGroup>
