@@ -24,14 +24,14 @@ namespace Microsoft.Data.SqlClient
         /// The purpose of this cache is to allow re-use of Access Tokens fetched for a user interactively or with any other mode
         /// to avoid interactive authentication request every-time, within application scope making use of MSAL's userTokenCache.
         /// </summary>
-        private static ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
-        private static ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
+        private static readonly ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
+        private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
         private static readonly MemoryCache s_accountPwCache = new(nameof(ActiveDirectoryAuthenticationProvider));
         private static readonly int s_accountPwCacheTtlInHours = 2;
         private static readonly string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
         private static readonly string s_defaultScopeSuffix = "/.default";
         private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
-        private readonly SqlClientLogger _logger = new SqlClientLogger();
+        private readonly SqlClientLogger _logger = new();
         private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
         private ICustomWebUi _customWebUI = null;
         private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
@@ -160,7 +160,7 @@ namespace Microsoft.Data.SqlClient
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
-            TokenCredentialOptions tokenCredentialOptions = new TokenCredentialOptions() { AuthorityHost = new Uri(authority) };
+            TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(authority) };
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity || parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient
                 redirectUri = "http://localhost";
             }
 #endif
-            PublicClientAppKey pcaKey = new PublicClientAppKey(parameters.Authority, redirectUri, _applicationClientId
+            PublicClientAppKey pcaKey = new(parameters.Authority, redirectUri, _applicationClientId
 #if NETFRAMEWORK
             , _iWin32WindowFunc
 #endif
@@ -356,7 +356,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive)
                 {
-                    CancellationTokenSource ctsInteractive = new CancellationTokenSource();
+                    CancellationTokenSource ctsInteractive = new();
 #if NETCOREAPP
                     /*
                      * On .NET Core, MSAL will start the system browser as a separate process. MSAL does not have control over this browser,
