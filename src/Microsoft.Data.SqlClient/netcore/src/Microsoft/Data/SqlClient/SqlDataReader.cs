@@ -2583,7 +2583,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw ADP.DataReaderClosed(nameof(GetSqlValueFromSqlBufferInternal));
+                        throw ADP.DataReaderClosed();
                     }
                 }
                 else
@@ -2783,7 +2783,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw ADP.DataReaderClosed(nameof(GetValueFromSqlBufferInternal));
+                        throw ADP.DataReaderClosed();
                     }
                 }
             }
@@ -3896,7 +3896,6 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        // we have read past the column somehow, this is an error
                         Debug.Assert(false, "We have read past the column somehow, this is an error");
                     }
                 }
@@ -5111,7 +5110,7 @@ namespace Microsoft.Data.SqlClient
                     var metaData = _metaData;
                     if ((data != null) && (metaData != null))
                     {
-                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i], isAsync:false));
+                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i], isAsync: false));
                     }
                     else
                     {
@@ -5151,7 +5150,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _stateObj._shouldHaveEnoughData = true;
 #endif
-                        return Task.FromResult(GetFieldValueInternal<T>(i, isAsync:true));
+                        return Task.FromResult(GetFieldValueInternal<T>(i, isAsync: true));
 #if DEBUG
                     }
                     finally
@@ -5225,7 +5224,7 @@ namespace Microsoft.Data.SqlClient
 
             if (reader.TryReadColumn(columnIndex, setTimeout: false))
             {
-                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync:false));
+                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: false));
             }
             else
             {
@@ -5591,7 +5590,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        internal class Snapshot
+        internal sealed class Snapshot
         {
             public bool _dataReady;
             public bool _haltRead;
