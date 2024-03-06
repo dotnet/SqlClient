@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETCOREAPP || NETSTANDARD
+#if NETCOREAPP
         partial void SubscribeToAppDomainUnload();
 
         partial void SubscribeToAssemblyLoadContextUnload();

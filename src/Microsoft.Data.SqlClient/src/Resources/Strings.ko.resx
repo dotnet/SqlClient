@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>소켓이 오류 코드 '{1}'과(와) 예상되는 '{0}'을(를) throw하지 않았습니다.</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>.Net Standard 2.0에서는 지원되지 않습니다.</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>서버가 이 플랫폼에서 지원되지 않는 기능을 사용하려고 합니다.</value>
   </data>

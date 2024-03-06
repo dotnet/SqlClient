@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>通訊端未擲出預期的 '{0}'，錯誤碼為 '{1}'。</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>.NET Standard 2.0 中不支援。</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>伺服器正嘗試使用此平台上不支援的功能。</value>
   </data>

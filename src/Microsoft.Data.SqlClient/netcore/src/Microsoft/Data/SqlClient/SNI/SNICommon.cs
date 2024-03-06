@@ -343,6 +343,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                                           args1: remainingTimeout);
                 using CancellationTokenSource cts = new CancellationTokenSource(remainingTimeout);
                 // using this overload to support netstandard
+                //TODO Refactor?
                 Task<IPAddress[]> task = Dns.GetHostAddressesAsync(serverName);
                 task.ConfigureAwait(false);
                 task.Wait(cts.Token);
