@@ -311,9 +311,8 @@ namespace Microsoft.Data.ProviderBase
 
         }
 
-        private sealed class PoolWaitHandles : DbBuffer
+        private sealed class PoolWaitHandles
         {
-
             private readonly Semaphore _poolSemaphore;
             private readonly ManualResetEvent _errorEvent;
 
@@ -322,63 +321,19 @@ namespace Microsoft.Data.ProviderBase
             // Using an AutoResetEvent does not have that complication.
             private readonly Semaphore _creationSemaphore;
 
-            private readonly SafeHandle _poolHandle;
-            private readonly SafeHandle _errorHandle;
-            private readonly SafeHandle _creationHandle;
-
-            private readonly int _releaseFlags;
+            private readonly WaitHandle[] _handlesWithCreate;
+            private readonly WaitHandle[] _handlesWithoutCreate;
 
             [ResourceExposure(ResourceScope.None)] // SxS: this method does not create named objects
             [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-            internal PoolWaitHandles() : base(3 * IntPtr.Size)
+            internal PoolWaitHandles()
             {
-                bool mustRelease1 = false, mustRelease2 = false, mustRelease3 = false;
-
                 _poolSemaphore = new Semaphore(0, MAX_Q_SIZE);
                 _errorEvent = new ManualResetEvent(false);
                 _creationSemaphore = new Semaphore(1, 1);
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    // because SafeWaitHandle doesn't have reliability contract
-                    _poolHandle = _poolSemaphore.SafeWaitHandle;
-                    _errorHandle = _errorEvent.SafeWaitHandle;
-                    _creationHandle = _creationSemaphore.SafeWaitHandle;
-
-                    _poolHandle.DangerousAddRef(ref mustRelease1);
-                    _errorHandle.DangerousAddRef(ref mustRelease2);
-                    _creationHandle.DangerousAddRef(ref mustRelease3);
-
-                    Debug.Assert(0 == SEMAPHORE_HANDLE, "SEMAPHORE_HANDLE");
-                    Debug.Assert(1 == ERROR_HANDLE, "ERROR_HANDLE");
-                    Debug.Assert(2 == CREATION_HANDLE, "CREATION_HANDLE");
-
-                    WriteIntPtr(SEMAPHORE_HANDLE * IntPtr.Size, _poolHandle.DangerousGetHandle());
-                    WriteIntPtr(ERROR_HANDLE * IntPtr.Size, _errorHandle.DangerousGetHandle());
-                    WriteIntPtr(CREATION_HANDLE * IntPtr.Size, _creationHandle.DangerousGetHandle());
-                }
-                finally
-                {
-                    if (mustRelease1)
-                    {
-                        _releaseFlags |= 1;
-                    }
-                    if (mustRelease2)
-                    {
-                        _releaseFlags |= 2;
-                    }
-                    if (mustRelease3)
-                    {
-                        _releaseFlags |= 4;
-                    }
-                }
-            }
-
-            internal SafeHandle CreationHandle
-            {
-                [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-                get { return _creationHandle; }
+                _handlesWithCreate = new WaitHandle[] { _poolSemaphore, _errorEvent, _creationSemaphore };
+                _handlesWithoutCreate = new WaitHandle[] { _poolSemaphore, _errorEvent };
             }
 
             internal Semaphore CreationSemaphore
@@ -396,23 +351,9 @@ namespace Microsoft.Data.ProviderBase
                 get { return _poolSemaphore; }
             }
 
-            protected override bool ReleaseHandle()
+            internal WaitHandle[] GetHandles(bool withCreate)
             {
-                // NOTE: The SafeHandle class guarantees this will be called exactly once.
-                // we know we can touch these other managed objects because of our original DangerousAddRef
-                if (0 != (1 & _releaseFlags))
-                {
-                    _poolHandle.DangerousRelease();
-                }
-                if (0 != (2 & _releaseFlags))
-                {
-                    _errorHandle.DangerousRelease();
-                }
-                if (0 != (4 & _releaseFlags))
-                {
-                    _creationHandle.DangerousRelease();
-                }
-                return base.ReleaseHandle();
+                return withCreate ? _handlesWithCreate : _handlesWithoutCreate;
             }
         }
 
@@ -426,10 +367,7 @@ namespace Microsoft.Data.ProviderBase
         private const int CREATION_HANDLE = (int)0x2;
         private const int BOGUS_HANDLE = (int)0x3;
 
-        private const int WAIT_OBJECT_0 = 0;
-        private const int WAIT_TIMEOUT = (int)0x102;
         private const int WAIT_ABANDONED = (int)0x80;
-        private const int WAIT_FAILED = -1;
 
         private const int ERROR_WAIT_DEFAULT = 5 * 1000; // 5 seconds
 
@@ -1351,36 +1289,23 @@ namespace Microsoft.Data.ProviderBase
             if (null == obj)
             {
                 Interlocked.Increment(ref _waitCount);
-                uint waitHandleCount = allowCreate ? 3u : 2u;
 
                 do
                 {
                     int waitResult = BOGUS_HANDLE;
-                    int releaseSemaphoreResult = 0;
 
-                    bool mustRelease = false;
-                    int waitForMultipleObjectsExHR = 0;
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
-                        _waitHandles.DangerousAddRef(ref mustRelease);
-
                         // We absolutely must have the value of waitResult set, 
                         // or we may leak the mutex in async abort cases.
                         RuntimeHelpers.PrepareConstrainedRegions();
                         try
                         {
-                            Debug.Assert(2 == waitHandleCount || 3 == waitHandleCount, "unexpected waithandle count");
                         }
                         finally
                         {
-                            waitResult = SafeNativeMethods.WaitForMultipleObjectsEx(waitHandleCount, _waitHandles.DangerousGetHandle(), false, waitForMultipleObjectsTimeout, false);
-
-                            // VSTFDEVDIV 479551 - call GetHRForLastWin32Error immediately after after the native call
-                            if (waitResult == WAIT_FAILED)
-                            {
-                                waitForMultipleObjectsExHR = Marshal.GetHRForLastWin32Error();
-                            }
+                            waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(allowCreate), unchecked((int)waitForMultipleObjectsTimeout));
                         }
 
                         // From the WaitAny docs: "If more than one object became signaled during
@@ -1391,14 +1316,13 @@ namespace Microsoft.Data.ProviderBase
 
                         switch (waitResult)
                         {
-                            case WAIT_TIMEOUT:
+                            case WaitHandle.WaitTimeout:
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Wait timed out.", ObjectID);
                                 Interlocked.Decrement(ref _waitCount);
                                 connection = null;
                                 return false;
 
                             case ERROR_HANDLE:
-
                                 // Throw the error that PoolCreateRequest stashed.
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Errors are set.", ObjectID);
                                 Interlocked.Decrement(ref _waitCount);
@@ -1443,7 +1367,7 @@ namespace Microsoft.Data.ProviderBase
                                         {
                                             // modify handle array not to wait on creation mutex anymore
                                             Debug.Assert(2 == CREATION_HANDLE, "creation handle changed value");
-                                            waitHandleCount = 2;
+                                            allowCreate = false;
                                         }
                                     }
                                 }
@@ -1488,13 +1412,6 @@ namespace Microsoft.Data.ProviderBase
                                 }
                                 break;
 
-                            case WAIT_FAILED:
-                                Debug.Assert(waitForMultipleObjectsExHR != 0, "WaitForMultipleObjectsEx failed but waitForMultipleObjectsExHR remained 0");
-                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Wait failed.", ObjectID);
-                                Interlocked.Decrement(ref _waitCount);
-                                Marshal.ThrowExceptionForHR(waitForMultipleObjectsExHR);
-                                goto default; // if ThrowExceptionForHR didn't throw for some reason
-
                             case (WAIT_ABANDONED + SEMAPHORE_HANDLE):
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Semaphore handle abandonded.", ObjectID);
                                 Interlocked.Decrement(ref _waitCount);
@@ -1520,20 +1437,8 @@ namespace Microsoft.Data.ProviderBase
                     {
                         if (CREATION_HANDLE == waitResult)
                         {
-                            int result = SafeNativeMethods.ReleaseSemaphore(_waitHandles.CreationHandle.DangerousGetHandle(), 1, IntPtr.Zero);
-                            if (0 == result)
-                            { // failure case
-                                releaseSemaphoreResult = Marshal.GetHRForLastWin32Error();
-                            }
+                            _waitHandles.CreationSemaphore.Release(1);
                         }
-                        if (mustRelease)
-                        {
-                            _waitHandles.DangerousRelease();
-                        }
-                    }
-                    if (0 != releaseSemaphoreResult)
-                    {
-                        Marshal.ThrowExceptionForHR(releaseSemaphoreResult); // will only throw if (hresult < 0)
                     }
 
                     // Do not use this pooled connection if access token is about to expire soon before we can connect.
@@ -1708,15 +1613,11 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 return;
                             }
-                            bool mustRelease = false;
                             int waitResult = BOGUS_HANDLE;
-                            uint timeout = (uint)CreationTimeout;
 
                             RuntimeHelpers.PrepareConstrainedRegions();
                             try
                             {
-                                _waitHandles.DangerousAddRef(ref mustRelease);
-
                                 // Obtain creation mutex so we're the only one creating objects
                                 // and we must have the wait result
                                 RuntimeHelpers.PrepareConstrainedRegions();
@@ -1724,9 +1625,9 @@ namespace Microsoft.Data.ProviderBase
                                 { }
                                 finally
                                 {
-                                    waitResult = SafeNativeMethods.WaitForSingleObjectEx(_waitHandles.CreationHandle.DangerousGetHandle(), timeout, false);
+                                    waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(withCreate: true), CreationTimeout);
                                 }
-                                if (WAIT_OBJECT_0 == waitResult)
+                                if (CREATION_HANDLE == waitResult)
                                 {
                                     DbConnectionInternal newObj;
 
@@ -1735,9 +1636,19 @@ namespace Microsoft.Data.ProviderBase
                                     {
                                         while (NeedToReplenish)
                                         {
-                                            // Don't specify any user options because there is no outer connection associated with the new connection
-                                            newObj = CreateObject(owningObject: null, userOptions: null, oldConnection: null);
-
+                                            try
+                                            {
+                                                // Don't specify any user options because there is no outer connection associated with the new connection
+                                                newObj = CreateObject(owningObject: null, userOptions: null, oldConnection: null);
+                                            }
+                                            catch
+                                            {
+                                                // Catch all the exceptions occuring during CreateObject so that they 
+                                                // don't emerge as unhandled on the thread pool and don't crash applications
+                                                // The error is handled in CreateObject and surfaced to the caller of the Connection Pool
+                                                // using the ErrorEvent. Hence it is OK to swallow all exceptions here.
+                                                break;
+                                            }
                                             // We do not need to check error flag here, since we know if
                                             // CreateObject returned null, we are in error case.
                                             if (null != newObj)
@@ -1751,7 +1662,7 @@ namespace Microsoft.Data.ProviderBase
                                         }
                                     }
                                 }
-                                else if (WAIT_TIMEOUT == waitResult)
+                                else if (WaitHandle.WaitTimeout == waitResult)
                                 {
                                     // do not wait forever and potential block this worker thread
                                     // instead wait for a period of time and just requeue to try again
@@ -1778,14 +1689,10 @@ namespace Microsoft.Data.ProviderBase
                             }
                             finally
                             {
-                                if (WAIT_OBJECT_0 == waitResult)
+                                if (CREATION_HANDLE == waitResult)
                                 {
                                     // reuse waitResult and ignore its value
-                                    waitResult = SafeNativeMethods.ReleaseSemaphore(_waitHandles.CreationHandle.DangerousGetHandle(), 1, IntPtr.Zero);
-                                }
-                                if (mustRelease)
-                                {
-                                    _waitHandles.DangerousRelease();
+                                    _waitHandles.CreationSemaphore.Release(1);
                                 }
                             }
                         }
