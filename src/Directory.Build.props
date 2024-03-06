@@ -51,6 +51,7 @@
     <NetFxResources>$(ManagedSourceCode)src\Resources\</NetFxResources>
     <AddOnsPath>$(ManagedSourceCode)add-ons\</AddOnsPath>
     <SqlServerSource>$(RepoRoot)src\Microsoft.SqlServer.Server\</SqlServerSource>
+    <CommonsourceRoot>$(RepoRoot)src\Microsoft.Data.SqlClient\src\</CommonsourceRoot>
     <ObjFolder>$(Artifacts)obj\</ObjFolder>
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
     <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
