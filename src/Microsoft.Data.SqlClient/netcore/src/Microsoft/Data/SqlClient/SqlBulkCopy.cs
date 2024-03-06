@@ -1640,14 +1640,12 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _dbDataReaderRowSource = reader;
                 _sqlDataReaderRowSource = reader as SqlDataReader;
-
-                _dataTableSource = null;
                 _rowSourceType = ValueSourceType.DbDataReader;
 
-                _isAsyncBulkCopy = false;
                 WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false;
             }
             finally
@@ -1673,12 +1671,11 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _sqlDataReaderRowSource = _rowSource as SqlDataReader;
                 _dbDataReaderRowSource = _rowSource as DbDataReader;
-                _dataTableSource = null;
                 _rowSourceType = ValueSourceType.IDataReader;
-                _isAsyncBulkCopy = false;
                 WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false;
             }
             finally
@@ -1707,13 +1704,12 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                ResetWriteToServerGlobalVariables();
                 _rowStateToSkip = ((rowState == 0) || (rowState == DataRowState.Deleted)) ? DataRowState.Deleted : ~rowState | DataRowState.Deleted;
                 _rowSource = table;
                 _dataTableSource = table;
-                _sqlDataReaderRowSource = null;
                 _rowSourceType = ValueSourceType.DataTable;
                 _rowEnumerator = table.Rows.GetEnumerator();
-                _isAsyncBulkCopy = false;
 
                 WriteRowSourceToServerAsync(table.Columns.Count, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false;
             }
@@ -1746,16 +1742,14 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-
+                ResetWriteToServerGlobalVariables();
                 DataTable table = rows[0].Table;
                 Debug.Assert(null != table, "How can we have rows without a table?");
                 _rowStateToSkip = DataRowState.Deleted;      // Don't allow deleted rows
                 _rowSource = rows;
                 _dataTableSource = table;
-                _sqlDataReaderRowSource = null;
                 _rowSourceType = ValueSourceType.RowArray;
                 _rowEnumerator = rows.GetEnumerator();
-                _isAsyncBulkCopy = false;
 
                 WriteRowSourceToServerAsync(table.Columns.Count, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false;
             }
@@ -1787,7 +1781,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-
+                ResetWriteToServerGlobalVariables();
                 if (rows.Length == 0)
                 {
                     return cancellationToken.IsCancellationRequested ?
@@ -1800,7 +1794,6 @@ namespace Microsoft.Data.SqlClient
                 _rowStateToSkip = DataRowState.Deleted; // Don't allow deleted rows
                 _rowSource = rows;
                 _dataTableSource = table;
-                _sqlDataReaderRowSource = null;
                 _rowSourceType = ValueSourceType.RowArray;
                 _rowEnumerator = rows.GetEnumerator();
                 _isAsyncBulkCopy = true;
@@ -1834,10 +1827,10 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _sqlDataReaderRowSource = reader as SqlDataReader;
                 _dbDataReaderRowSource = reader;
-                _dataTableSource = null;
                 _rowSourceType = ValueSourceType.DbDataReader;
                 _isAsyncBulkCopy = true;
                 resultTask = WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken); // It returns Task since _isAsyncBulkCopy = true;
@@ -1871,10 +1864,10 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _sqlDataReaderRowSource = _rowSource as SqlDataReader;
                 _dbDataReaderRowSource = _rowSource as DbDataReader;
-                _dataTableSource = null;
                 _rowSourceType = ValueSourceType.IDataReader;
                 _isAsyncBulkCopy = true;
                 resultTask = WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken); // It returns Task since _isAsyncBulkCopy = true;
@@ -1914,9 +1907,9 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                ResetWriteToServerGlobalVariables();
                 _rowStateToSkip = ((rowState == 0) || (rowState == DataRowState.Deleted)) ? DataRowState.Deleted : ~rowState | DataRowState.Deleted;
                 _rowSource = table;
-                _sqlDataReaderRowSource = null;
                 _dataTableSource = table;
                 _rowSourceType = ValueSourceType.DataTable;
                 _rowEnumerator = table.Rows.GetEnumerator();
@@ -3092,6 +3085,18 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             return resultTask;
+        }
+
+        private void ResetWriteToServerGlobalVariables()
+        {
+            _dataTableSource = null;
+            _dbDataReaderRowSource = null;
+            _isAsyncBulkCopy = false;
+            _rowEnumerator = null;
+            _rowSource = null;
+            _rowSourceType = ValueSourceType.Unspecified;
+            _sqlDataReaderRowSource = null;
+            _sqlDataReaderRowSource = null;
         }
     }
 }
