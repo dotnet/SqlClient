@@ -2,16 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET8_0_OR_GREATER
+
 using System.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
     public partial class SqlBatchCommand
     {
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CreateParameter/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CreateParameter/*'/>
         public override DbParameter CreateParameter() => new SqlParameter();
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CanCreateParameter/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CanCreateParameter/*'/>
         public override bool CanCreateParameter => true;
     }
 }
+
+#endif

@@ -234,9 +234,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlDataRecord.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlMetaData.cs</Link>
     </Compile>
@@ -631,6 +628,7 @@
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIError.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIHandle.cs" />
@@ -648,9 +646,11 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SSRP.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlBatchCommand.Net8OrGreater.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnosticListenerExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
@@ -668,11 +668,9 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
-  </ItemGroup>
-  <!--This will exclude SqlTypeWorkarounds.netcore.cs from Net8 and greater versions-->
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND !$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netcore.cs" />
   </ItemGroup>
+
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Windows.cs">
@@ -969,14 +967,6 @@
     </Compile>
     <Compile Include="$(CommonPath)\System\Net\Security\NegotiateStreamPal.Unix.cs">
       <Link>Common\System\Net\Security\NegotiateStreamPal.Unix.cs</Link>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.NetCoreApp.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBatchCommand.Net8OrGreater.cs">
-      <Link>Microsoft\Data\SqlClient\SqlBatchCommand.Net8OrGreater.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(IsUAPAssembly)' == 'true'">

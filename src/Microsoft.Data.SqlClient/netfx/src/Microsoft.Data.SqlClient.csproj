@@ -292,9 +292,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiEventSink_Default.Common.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiEventSink_Default.netfx.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiEventSink_Default.netfx.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiGettersStream.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiGettersStream.cs</Link>
     </Compile>
@@ -322,9 +319,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlDataRecord.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlDataRecord.netfx.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.netfx.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlMetaData.cs</Link>
     </Compile>
@@ -339,9 +333,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ValueUtilsSmi.netfx.cs">
-      <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.netfx.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlSer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlSer.cs</Link>
@@ -641,13 +632,16 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiContextFactory.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventSink_Default.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventSink_DeferedProcessing.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiExecuteType.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiLink.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiRequestExecutor.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiStream.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Server\ValueUtilsSmi.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
