@@ -654,7 +654,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 Port = port;
             }
             // Instance Name Handling. 
-            if (backSlashIndex > -1)
+            else if (backSlashIndex > -1)
             {
                 // This means that there is a part separated by '\'
                 InstanceName = tokensByCommaAndSlash[1].Trim();
