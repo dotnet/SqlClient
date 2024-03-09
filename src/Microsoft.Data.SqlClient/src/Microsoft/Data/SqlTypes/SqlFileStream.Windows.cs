@@ -18,7 +18,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Microsoft.Data.SqlTypes
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SqlFileStream/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SqlFileStream/*' />
     public sealed partial class SqlFileStream : System.IO.Stream
     {
         // NOTE: if we ever unseal this class, be sure to specify the Name, SafeFileHandle, and
@@ -55,12 +55,12 @@ namespace Microsoft.Data.SqlTypes
             (byte)'T', (byte)'a', (byte)'g', (byte) '\0'
         };
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor1/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor1/*' />
         public SqlFileStream(string path, byte[] transactionContext, FileAccess access) :
             this(path, transactionContext, access, FileOptions.None, 0)
         { }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor2/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor2/*' />
         public SqlFileStream(string path, byte[] transactionContext, FileAccess access, FileOptions options, long allocationSize)
         {
             using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("SqlFileStream.ctor | API | Object Id {0} | Access {1} | Options {2} | Path '{3}'", ObjectID, (int)access, (int)options, path)))
@@ -96,13 +96,13 @@ namespace Microsoft.Data.SqlTypes
         // NOTE: this destructor will only be called only if the Dispose
         // method is not called by a client, giving the class a chance
         // to finalize properly (i.e., free unmanaged resources)
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/dtor/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/dtor/*' />
         ~SqlFileStream()
         {
             Dispose(false);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Dispose/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Dispose/*' />
         protected override void Dispose(bool disposing)
         {
             try
@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlTypes
         }
         #endregion
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Name/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Name/*' />
         public string Name
         {
             get
@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/TransactionContext/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/TransactionContext/*' />
         public byte[] TransactionContext
         {
             get
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlTypes
 
         #region System.IO.Stream methods
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanRead/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanRead/*' />
         public override bool CanRead
         {
             get
@@ -191,7 +191,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanSeek/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanSeek/*' />
         // If CanSeek is false, Position, Seek, Length, and SetLength should throw.
         public override bool CanSeek
         {
@@ -204,7 +204,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanTimeout/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanTimeout/*' />
         public override bool CanTimeout
         {
             get
@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanWrite/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanWrite/*' />
         public override bool CanWrite
         {
             get
@@ -228,7 +228,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Length/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Length/*' />
         public override long Length
         {
             get
@@ -240,7 +240,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Position/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Position/*' />
         public override long Position
         {
             get
@@ -259,7 +259,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadTimeout/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadTimeout/*' />
 #if NETFRAMEWORK
         [ComVisible(false)]
 #endif
@@ -281,7 +281,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteTimeout/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteTimeout/*' />
 #if NETFRAMEWORK
         [ComVisible(false)]
 #endif
@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Flush/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Flush/*' />
         public override void Flush()
         {
             if (_disposed)
@@ -312,7 +312,7 @@ namespace Microsoft.Data.SqlTypes
             _fs.Flush();
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginRead/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginRead/*' />
 #if !NET6_0_OR_GREATER
         [HostProtection(ExternalThreading = true)]
 #endif
@@ -324,7 +324,7 @@ namespace Microsoft.Data.SqlTypes
             return _fs.BeginRead(buffer, offset, count, callback, state);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndRead/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndRead/*' />
         public override int EndRead(IAsyncResult asyncResult)
         {
             if (_disposed)
@@ -333,8 +333,8 @@ namespace Microsoft.Data.SqlTypes
             return _fs.EndRead(asyncResult);
         }
 
-#if !NETSTANDARD2_0
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadAsync1/*' />
+#if !NETSTANDARD2_0 && !NETFRAMEWORK
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadAsync1/*' />
         public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         {
             if (_disposed)
@@ -343,7 +343,7 @@ namespace Microsoft.Data.SqlTypes
             return _fs.ReadAsync(buffer, cancellationToken);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadAsync2/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadAsync2/*' />
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             if (_disposed)
@@ -353,7 +353,7 @@ namespace Microsoft.Data.SqlTypes
         }
 #endif
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginWrite/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginWrite/*' />
 #if !NET6_0_OR_GREATER
         [HostProtection(ExternalThreading = true)]
 #endif
@@ -379,7 +379,7 @@ namespace Microsoft.Data.SqlTypes
             return asyncResult;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndWrite/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndWrite/*' />
         public override void EndWrite(IAsyncResult asyncResult)
         {
             if (_disposed)
@@ -388,8 +388,8 @@ namespace Microsoft.Data.SqlTypes
             _fs.EndWrite(asyncResult);
         }
 
-#if !NETSTANDARD2_0
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteAsync1/*' />
+#if !NETSTANDARD2_0 && !NETFRAMEWORK
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteAsync1/*' />
         public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
         {
             if (_disposed)
@@ -398,7 +398,7 @@ namespace Microsoft.Data.SqlTypes
             return _fs.WriteAsync(buffer, cancellationToken);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteAsync2/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteAsync2/*' />
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             if (_disposed)
@@ -408,7 +408,7 @@ namespace Microsoft.Data.SqlTypes
         }
 #endif
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Seek/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Seek/*' />
         public override long Seek(long offset, SeekOrigin origin)
         {
             if (_disposed)
@@ -417,7 +417,7 @@ namespace Microsoft.Data.SqlTypes
             return _fs.Seek(offset, origin);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SetLength/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SetLength/*' />
         public override void SetLength(long value)
         {
             if (_disposed)
@@ -426,7 +426,7 @@ namespace Microsoft.Data.SqlTypes
             _fs.SetLength(value);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Read/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Read/*' />
         public override int Read([In, Out] byte[] buffer, int offset, int count)
         {
             if (_disposed)
@@ -435,7 +435,7 @@ namespace Microsoft.Data.SqlTypes
             return _fs.Read(buffer, offset, count);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadByte/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadByte/*' />
         public override int ReadByte()
         {
             if (_disposed)
@@ -444,7 +444,7 @@ namespace Microsoft.Data.SqlTypes
             return _fs.ReadByte();
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Write/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Write/*' />
         public override void Write(byte[] buffer, int offset, int count)
         {
             if (_disposed)
@@ -465,7 +465,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteByte/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteByte/*' />
         public override void WriteByte(byte value)
         {
             if (_disposed)
@@ -809,7 +809,7 @@ namespace Microsoft.Data.SqlTypes
             // Ensure we have validated and normalized the path before
             AssertPathFormat(path);
             string uniqueId = Guid.NewGuid().ToString("N");
-#if NETSTANDARD
+#if NETSTANDARD || NETFRAMEWORK
             return System.IO.PathInternal.IsDeviceUNC(path.AsSpan())
 #else
             return System.IO.PathInternal.IsDeviceUNC(path)

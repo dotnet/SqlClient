@@ -702,53 +702,57 @@
   </ItemGroup>
   <!-- SqlFileStream Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
-    <Compile Include="Microsoft\Data\SqlClient\SqlFileStream.Unsupported.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlTypes\SqlFileStream.Unsupported.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlFileStream.Unsupported.cs</Link>
+    </Compile>
   </ItemGroup>
   <!-- SqlFileStream Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
-    <Compile Include="$(CommonPath)\CoreLib\Interop\Windows\kernel32\Interop.FileTypes.cs">
+    <Compile Include="..\..\src\Common\CoreLib\Interop\Windows\kernel32\Interop.FileTypes.cs">
       <Link>Common\CoreLib\Interop\Windows\kernel32\Interop.FileTypes.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\CoreLib\Interop\Windows\kernel32\Interop.GetFileType_SafeHandle.cs">
+    <Compile Include="..\..\src\Common\CoreLib\Interop\Windows\kernel32\Interop.GetFileType_SafeHandle.cs">
       <Link>Common\CoreLib\Interop\Windows\kernel32\Interop.GetFileType_SafeHandle.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\CoreLib\Interop\Windows\kernel32\Interop.SetThreadErrorMode.cs">
+    <Compile Include="..\..\src\Common\CoreLib\Interop\Windows\kernel32\Interop.SetThreadErrorMode.cs">
       <Link>Common\CoreLib\Interop\Windows\kernel32\Interop.SetThreadErrorMode.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\CoreLib\System\IO\PathInternal.Windows.cs">
+    <Compile Include="..\..\src\Common\CoreLib\System\IO\PathInternal.Windows.cs">
       <Link>Common\CoreLib\System\IO\PathInternal.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\Interop.Errors.cs">
+    <Compile Include="..\..\src\Common\Interop\Windows\Interop.Errors.cs">
       <Link>Common\Interop\Windows\Interop.Errors.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\Interop.UNICODE_STRING.cs">
+    <Compile Include="..\..\src\Common\Interop\Windows\Interop.UNICODE_STRING.cs">
       <Link>Common\Interop\Windows\Interop.UNICODE_STRING.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.CTL_CODE.cs">
+    <Compile Include="..\..\src\Common\Interop\Windows\kernel32\Interop.CTL_CODE.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.CTL_CODE.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.DeviceIoControl.cs">
+    <Compile Include="..\..\src\Common\Interop\Windows\kernel32\Interop.DeviceIoControl.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.DeviceIoControl.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.IoControlCodeAccess.cs">
+    <Compile Include="..\..\src\Common\Interop\Windows\kernel32\Interop.IoControlCodeAccess.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.IoControlTransferType.cs">
+    <Compile Include="..\..\src\Common\Interop\Windows\kernel32\Interop.IoControlTransferType.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.IoControlTransferType.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
+    <Compile Include="..\..\src\Common\Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs">
+    <Compile Include="..\..\src\Common\Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\NtDll\Interop.NtCreateFile.cs">
+    <Compile Include="..\..\src\Common\Interop\Windows\NtDll\Interop.NtCreateFile.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.NtCreateFile.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
+    <Compile Include="..\..\src\Common\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
+    </Compile>
   </ItemGroup>
   <!-- Manage the SNI toggle for Windows netstandard and UWP -->
   <ItemGroup Condition="('$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp') AND '$(TargetsWindows)' == 'true'">
@@ -792,7 +796,7 @@
   </ItemGroup>
   <!-- Windows dependencies for MANAGED_SNI build -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
-    <Compile Include="$(CommonPath)\Interop\Windows\Interop.Libraries.cs">
+    <Compile Include="..\..\src\Common\Interop\Windows\Interop.Libraries.cs">
       <Link>Common\Interop\Windows\Interop.Libraries.cs</Link>
     </Compile>
   </ItemGroup>
