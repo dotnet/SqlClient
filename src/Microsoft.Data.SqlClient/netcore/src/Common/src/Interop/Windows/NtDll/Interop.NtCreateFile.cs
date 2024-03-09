@@ -5,14 +5,14 @@
 using System;
 using System.Runtime.InteropServices;
 
-internal partial class Interop
+internal static partial class Interop
 {
-    internal partial class NtDll
+    internal static partial class NtDll
     {
         // https://msdn.microsoft.com/en-us/library/bb432380.aspx
         // https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424.aspx
         [DllImport(Libraries.NtDll, CharSet = CharSet.Unicode, ExactSpelling = true)]
-        private unsafe static extern int NtCreateFile(
+        private unsafe static extern uint NtCreateFile(
             out IntPtr FileHandle,
             DesiredAccess DesiredAccess,
             ref OBJECT_ATTRIBUTES ObjectAttributes,
@@ -25,7 +25,7 @@ internal partial class Interop
             void* EaBuffer,
             uint EaLength);
 
-        internal unsafe static (int status, IntPtr handle) CreateFile(
+        internal unsafe static (uint status, IntPtr handle) CreateFile(
             ReadOnlySpan<char> path,
             IntPtr rootDirectory,
             CreateDisposition createDisposition,
@@ -37,6 +37,8 @@ internal partial class Interop
             void* eaBuffer = null,
             uint eaLength = 0)
         {
+            SECURITY_QUALITY_OF_SERVICE anonymousImpersonationQos = new SECURITY_QUALITY_OF_SERVICE(SecurityImpersonationLevel.SecurityAnonymous, ContextTrackingMode.SecurityStaticTracking, false);
+
             fixed (char* c = &MemoryMarshal.GetReference(path))
             {
                 UNICODE_STRING name = new UNICODE_STRING
@@ -49,9 +51,10 @@ internal partial class Interop
                 OBJECT_ATTRIBUTES attributes = new OBJECT_ATTRIBUTES(
                     &name,
                     objectAttributes,
-                    rootDirectory);
+                    rootDirectory,
+                    &anonymousImpersonationQos);
 
-                int status = NtCreateFile(
+                uint status = NtCreateFile(
                     out IntPtr handle,
                     desiredAccess,
                     ref attributes,
@@ -73,7 +76,8 @@ internal partial class Interop
         /// The OBJECT_ATTRIBUTES structure specifies attributes that can be applied to objects or object handles by routines 
         /// that create objects and/or return handles to objects.
         /// </summary>
-        internal unsafe struct OBJECT_ATTRIBUTES
+        [StructLayout(LayoutKind.Sequential)]
+        private unsafe struct OBJECT_ATTRIBUTES
         {
             public uint Length;
 
@@ -100,20 +104,72 @@ internal partial class Interop
             /// Optional quality of service to be applied to the object. Used to indicate
             /// security impersonation level and context tracking mode (dynamic or static).
             /// </summary>
-            public void* SecurityQualityOfService;
+            public SECURITY_QUALITY_OF_SERVICE* SecurityQualityOfService;
 
             /// <summary>
             /// Equivalent of InitializeObjectAttributes macro with the exception that you can directly set SQOS.
             /// </summary>
-            public unsafe OBJECT_ATTRIBUTES(UNICODE_STRING* objectName, ObjectAttributes attributes, IntPtr rootDirectory)
+            public unsafe OBJECT_ATTRIBUTES(UNICODE_STRING* objectName, ObjectAttributes attributes, IntPtr rootDirectory, SECURITY_QUALITY_OF_SERVICE* securityQos)
             {
                 Length = (uint)sizeof(OBJECT_ATTRIBUTES);
                 RootDirectory = rootDirectory;
                 ObjectName = objectName;
                 Attributes = attributes;
                 SecurityDescriptor = null;
-                SecurityQualityOfService = null;
+                SecurityQualityOfService = securityQos;
             }
+        }
+
+        /// <summary>
+        /// <a href="https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-security_quality_of_service">SECURITY_QUALITY_OF_SERVICE</a> structure.
+        /// The SECURITY_QUALITY_OF_SERVICE contains information used to support client impersonation.
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential)]
+        private ref struct SECURITY_QUALITY_OF_SERVICE
+        {
+            public int Length;
+
+            /// <summary>
+            /// Specifies the information given to the server about the client, and how the server may represent,
+            /// or impersonate, the client. Security impersonation levels govern the degree to which a server
+            /// process can act on behalf of a client process.
+            /// </summary>
+            public SecurityImpersonationLevel ImpersonationLevel;
+
+            /// <summary>
+            /// Specifies whether the server is to be given a snapshot of the client's security context (called
+            /// static tracking), or is to be continually updated to track changes to the client's security
+            /// context (called dynamic tracking).
+            /// </summary>
+            public ContextTrackingMode ContextTrackingMode;
+
+            /// <summary>
+            /// Specifies whether the server may enable or disable privileges and groups that the client's
+            /// security context may include.
+            /// </summary>
+            public byte EffectiveOnly;
+
+            public unsafe SECURITY_QUALITY_OF_SERVICE(SecurityImpersonationLevel impersonationLevel, ContextTrackingMode contextTrackingMode, bool effectiveOnly)
+            {
+                Length = Marshal.SizeOf(typeof(SECURITY_QUALITY_OF_SERVICE));
+                ImpersonationLevel = impersonationLevel;
+                ContextTrackingMode = contextTrackingMode;
+                EffectiveOnly = effectiveOnly ? (byte)1 : (byte)0;
+            }
+        }
+
+        private enum SecurityImpersonationLevel : int
+        {
+            SecurityAnonymous = 0,
+            SecurityIdentification = 1,
+            SecurityImpersonation = 2,
+            SecurityDelegation = 3
+        }
+
+        private enum ContextTrackingMode : byte
+        {
+            SecurityStaticTracking = 0,
+            SecurityDynamicTracking = 1
         }
 
         [Flags]

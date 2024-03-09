@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.Permissions;
 using System.Threading;
 using Microsoft.Data.Common;
@@ -23,8 +24,8 @@ namespace Microsoft.Data.SqlTypes
         // TransactionContext accessors as virtual methods. Doing so now on a sealed class
         // generates a compiler error (CS0549)
 
-        private static int _objectTypeCount; // EventSource Counter
-        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource Counter
+        internal int ObjectID { get; } = Interlocked.Increment(ref s_objectTypeCount);
 
         // from System.IO.FileStream implementation
         // DefaultBufferSize = 4096;
@@ -34,7 +35,7 @@ namespace Microsoft.Data.SqlTypes
         // usage, will not be used and the user buffer will automatically flush directly to
         // the disk cache. In pathological scenarios where the client is writing a single
         // byte at a time, we'll explicitly call flush ourselves.
-        internal const int DefaultBufferSize = 1;
+        private const int DefaultBufferSize = 1;
 
         private const ushort IoControlCodeFunctionCode = 2392;
         private const int ERROR_MR_MID_NOT_FOUND = 317;
@@ -42,11 +43,11 @@ namespace Microsoft.Data.SqlTypes
         private const ushort FILE_DEVICE_FILE_SYSTEM = 0x0009;
         #endregion
 
-        private System.IO.FileStream _m_fs;
-        private string _m_path;
-        private byte[] _m_txn;
-        private bool _m_disposed;
-        private static byte[] s_eaNameString = new byte[]
+        private System.IO.FileStream _fs;
+        private string _path;
+        private byte[] _txn;
+        private bool _disposed;
+        private static ReadOnlySpan<byte> EaNameString => new byte[]
         {
             (byte)'F', (byte)'i', (byte)'l', (byte)'e', (byte)'s', (byte)'t', (byte)'r', (byte)'e', (byte)'a', (byte)'m', (byte)'_',
             (byte)'T', (byte)'r', (byte)'a', (byte)'n', (byte)'s', (byte)'a', (byte)'c', (byte)'t', (byte)'i', (byte)'o', (byte)'n', (byte)'_',
@@ -67,15 +68,19 @@ namespace Microsoft.Data.SqlTypes
                 // precondition validation
 
                 if (transactionContext == null)
+                {
                     throw ADP.ArgumentNull("transactionContext");
+                }
 
                 if (path == null)
+                {
                     throw ADP.ArgumentNull("path");
+                }
 
                 //-----------------------------------------------------------------
 
-                _m_disposed = false;
-                _m_fs = null;
+                _disposed = false;
+                _fs = null;
 
                 OpenSqlFileStream(path, transactionContext, access, options, allocationSize);
 
@@ -101,22 +106,22 @@ namespace Microsoft.Data.SqlTypes
         {
             try
             {
-                if (!_m_disposed)
+                if (!_disposed)
                 {
                     try
                     {
                         if (disposing)
                         {
-                            if (_m_fs != null)
+                            if (_fs != null)
                             {
-                                _m_fs.Close();
-                                _m_fs = null;
+                                _fs.Close();
+                                _fs = null;
                             }
                         }
                     }
                     finally
                     {
-                        _m_disposed = true;
+                        _disposed = true;
                     }
                 }
             }
@@ -134,16 +139,20 @@ namespace Microsoft.Data.SqlTypes
             {
                 // assert that path has been properly processed via GetFullPathInternal
                 // (e.g. m_path hasn't been set directly)
-                AssertPathFormat(_m_path);
-                return _m_path;
+                AssertPathFormat(_path);
+                return _path;
             }
+#if NETFRAMEWORK
+            [ResourceExposure(ResourceScope.None)] // SxS: the file name is not exposed
+            [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
+#endif
             private set
             {
                 // should be validated by callers of this method
                 Debug.Assert(value != null);
-                Debug.Assert(!_m_disposed);
+                Debug.Assert(!_disposed);
 
-                _m_path = GetFullPathInternal(value);
+                _path = GetFullPathInternal(value);
             }
         }
 
@@ -152,18 +161,18 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_txn == null)
+                if (_txn == null)
                     return null;
 
-                return (byte[])_m_txn.Clone();
+                return (byte[])_txn.Clone();
             }
             private set
             {
                 // should be validated by callers of this method
                 Debug.Assert(value != null);
-                Debug.Assert(!_m_disposed);
+                Debug.Assert(!_disposed);
 
-                _m_txn = (byte[])value.Clone();
+                _txn = (byte[])value.Clone();
             }
         }
 
@@ -174,10 +183,10 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_disposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.CanRead;
+                return _fs.CanRead;
             }
         }
 
@@ -187,10 +196,10 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_disposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.CanSeek;
+                return _fs.CanSeek;
             }
         }
 
@@ -199,10 +208,10 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_disposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.CanTimeout;
+                return _fs.CanTimeout;
             }
         }
 
@@ -211,10 +220,10 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_disposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.CanWrite;
+                return _fs.CanWrite;
             }
         }
 
@@ -223,10 +232,10 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_disposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.Length;
+                return _fs.Length;
             }
         }
 
@@ -235,65 +244,71 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_disposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.Position;
+                return _fs.Position;
             }
             set
             {
-                if (_m_disposed)
+                if (_disposed)
                     throw ADP.ObjectDisposed(this);
 
-                _m_fs.Position = value;
+                _fs.Position = value;
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadTimeout/*' />
+#if NETFRAMEWORK
+        [ComVisible(false)]
+#endif
         public override int ReadTimeout
         {
             get
             {
-                if (_m_disposed)
+                if (_disposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.ReadTimeout;
+                return _fs.ReadTimeout;
             }
             set
             {
-                if (_m_disposed)
+                if (_disposed)
                     throw ADP.ObjectDisposed(this);
 
-                _m_fs.ReadTimeout = value;
+                _fs.ReadTimeout = value;
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteTimeout/*' />
+#if NETFRAMEWORK
+        [ComVisible(false)]
+#endif
         public override int WriteTimeout
         {
             get
             {
-                if (_m_disposed)
+                if (_disposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.WriteTimeout;
+                return _fs.WriteTimeout;
             }
             set
             {
-                if (_m_disposed)
+                if (_disposed)
                     throw ADP.ObjectDisposed(this);
 
-                _m_fs.WriteTimeout = value;
+                _fs.WriteTimeout = value;
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Flush/*' />
         public override void Flush()
         {
-            if (_m_disposed)
+            if (_disposed)
                 throw ADP.ObjectDisposed(this);
 
-            _m_fs.Flush();
+            _fs.Flush();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginRead/*' />
@@ -302,19 +317,19 @@ namespace Microsoft.Data.SqlTypes
 #endif
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
-            if (_m_disposed)
+            if (_disposed)
                 throw ADP.ObjectDisposed(this);
 
-            return _m_fs.BeginRead(buffer, offset, count, callback, state);
+            return _fs.BeginRead(buffer, offset, count, callback, state);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndRead/*' />
         public override int EndRead(IAsyncResult asyncResult)
         {
-            if (_m_disposed)
+            if (_disposed)
                 throw ADP.ObjectDisposed(this);
 
-            return _m_fs.EndRead(asyncResult);
+            return _fs.EndRead(asyncResult);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginWrite/*' />
@@ -323,10 +338,10 @@ namespace Microsoft.Data.SqlTypes
 #endif
         public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
-            if (_m_disposed)
+            if (_disposed)
                 throw ADP.ObjectDisposed(this);
 
-            IAsyncResult asyncResult = _m_fs.BeginWrite(buffer, offset, count, callback, state);
+            IAsyncResult asyncResult = _fs.BeginWrite(buffer, offset, count, callback, state);
 
             // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
             // potential exceptions during Close/Finalization. Since System.IO.FileStream will
@@ -337,7 +352,7 @@ namespace Microsoft.Data.SqlTypes
             if (count == 1)
             {
                 // calling flush here will mimic the internal control flow of System.IO.FileStream
-                _m_fs.Flush();
+                _fs.Flush();
             }
 
             return asyncResult;
@@ -346,55 +361,55 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndWrite/*' />
         public override void EndWrite(IAsyncResult asyncResult)
         {
-            if (_m_disposed)
+            if (_disposed)
                 throw ADP.ObjectDisposed(this);
 
-            _m_fs.EndWrite(asyncResult);
+            _fs.EndWrite(asyncResult);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Seek/*' />
         public override long Seek(long offset, SeekOrigin origin)
         {
-            if (_m_disposed)
+            if (_disposed)
                 throw ADP.ObjectDisposed(this);
 
-            return _m_fs.Seek(offset, origin);
+            return _fs.Seek(offset, origin);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SetLength/*' />
         public override void SetLength(long value)
         {
-            if (_m_disposed)
+            if (_disposed)
                 throw ADP.ObjectDisposed(this);
 
-            _m_fs.SetLength(value);
+            _fs.SetLength(value);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Read/*' />
         public override int Read([In, Out] byte[] buffer, int offset, int count)
         {
-            if (_m_disposed)
+            if (_disposed)
                 throw ADP.ObjectDisposed(this);
 
-            return _m_fs.Read(buffer, offset, count);
+            return _fs.Read(buffer, offset, count);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadByte/*' />
         public override int ReadByte()
         {
-            if (_m_disposed)
+            if (_disposed)
                 throw ADP.ObjectDisposed(this);
 
-            return _m_fs.ReadByte();
+            return _fs.ReadByte();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Write/*' />
         public override void Write(byte[] buffer, int offset, int count)
         {
-            if (_m_disposed)
+            if (_disposed)
                 throw ADP.ObjectDisposed(this);
 
-            _m_fs.Write(buffer, offset, count);
+            _fs.Write(buffer, offset, count);
 
             // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
             // potential exceptions during Close/Finalization. Since System.IO.FileStream will
@@ -405,17 +420,17 @@ namespace Microsoft.Data.SqlTypes
             if (count == 1)
             {
                 // calling flush here will mimic the internal control flow of System.IO.FileStream
-                _m_fs.Flush();
+                _fs.Flush();
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteByte/*' />
         public override void WriteByte(byte value)
         {
-            if (_m_disposed)
+            if (_disposed)
                 throw ADP.ObjectDisposed(this);
 
-            _m_fs.WriteByte(value);
+            _fs.WriteByte(value);
 
             // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
             // potential exceptions during Close/Finalization. Since our internal buffer is
@@ -423,10 +438,19 @@ namespace Microsoft.Data.SqlTypes
             // As a result, we need to be sure to flush the data to disk ourselves.
 
             // calling flush here will mimic the internal control flow of System.IO.FileStream
-            _m_fs.Flush();
+            _fs.Flush();
         }
 
-#endregion
+        #endregion
+
+        static private readonly char[] s_invalidPathChars = Path.GetInvalidPathChars();
+
+        // path length limitations:
+        // 1. path length storage (in bytes) in UNICODE_STRING is limited to UInt16.MaxValue bytes = Int16.MaxValue chars
+        // 2. GetFullPathName API of kernel32 does not accept paths with length (in chars) greater than 32766
+        //    (32766 is actually Int16.MaxValue - 1, while (-1) is for NULL termination)
+        // We must check for the lowest value between the the two
+        private const int MaxWin32PathLength = short.MaxValue - 1;
 
         [Conditional("DEBUG")]
         static private void AssertPathFormat(string path)
@@ -434,9 +458,16 @@ namespace Microsoft.Data.SqlTypes
             Debug.Assert(path != null);
             Debug.Assert(path == path.Trim());
             Debug.Assert(path.Length > 0);
+            Debug.Assert(path.Length <= MaxWin32PathLength);
+            Debug.Assert(path.IndexOfAny(s_invalidPathChars) < 0);
             Debug.Assert(path.StartsWith(@"\\", StringComparison.OrdinalIgnoreCase));
+            Debug.Assert(!System.IO.PathInternal.IsDevice(path.AsSpan()));
         }
 
+#if NETFRAMEWORK
+        [ResourceExposure(ResourceScope.Machine)]
+        [ResourceConsumption(ResourceScope.Machine)]
+#endif
         static private string GetFullPathInternal(string path)
         {
             //-----------------------------------------------------------------
@@ -449,7 +480,21 @@ namespace Microsoft.Data.SqlTypes
             path = path.Trim();
             if (path.Length == 0)
             {
-                throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
+                throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidPath), "path");
+            }
+
+            // check for the path length before we normalize it with GetFullPathName
+            if (path.Length > MaxWin32PathLength)
+            {
+                // cannot use PathTooLongException here since our length limit is 32K while
+                // PathTooLongException error message states that the path should be limited to 260
+                throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidPath), "path");
+            }
+
+            // GetFullPathName does not check for invalid characters so we still have to validate them before
+            if (path.IndexOfAny(s_invalidPathChars) >= 0)
+            {
+                throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidPath), "path");
             }
 
             // make sure path is not DOS device path
@@ -461,6 +506,9 @@ namespace Microsoft.Data.SqlTypes
             // normalize the path
             path = System.IO.Path.GetFullPath(path);
 
+            // we do not expect windows API to return invalid paths
+            Debug.Assert(path.Length <= MaxWin32PathLength, "GetFullPathName returns path longer than max expected!");
+
             // make sure path is a UNC path
             if (System.IO.PathInternal.IsDeviceUNC(path.AsSpan()))
             {
@@ -470,12 +518,17 @@ namespace Microsoft.Data.SqlTypes
             return path;
         }
 
+#if NETFRAMEWORK
+        // SxS: SQL File Stream is a database resource, not a local machine one
+        [ResourceExposure(ResourceScope.None)]
+        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
+#endif
         private unsafe void OpenSqlFileStream
             (
                 string sPath,
                 byte[] transactionContext,
-                System.IO.FileAccess access,
-                System.IO.FileOptions options,
+                FileAccess access,
+                FileOptions options,
                 long allocationSize
             )
         {
@@ -486,11 +539,11 @@ namespace Microsoft.Data.SqlTypes
             Debug.Assert(sPath != null);
             Debug.Assert(transactionContext != null);
 
-            if (access != System.IO.FileAccess.Read && access != System.IO.FileAccess.Write && access != System.IO.FileAccess.ReadWrite)
+            if (access != FileAccess.Read && access != FileAccess.Write && access != FileAccess.ReadWrite)
                 throw ADP.ArgumentOutOfRange("access");
 
             // FileOptions is a set of flags, so AND the given value against the set of values we do not support
-            if ((options & ~(System.IO.FileOptions.WriteThrough | System.IO.FileOptions.Asynchronous | System.IO.FileOptions.RandomAccess | System.IO.FileOptions.SequentialScan)) != 0)
+            if ((options & ~(FileOptions.WriteThrough | FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.SequentialScan)) != 0)
                 throw ADP.ArgumentOutOfRange("options");
 
             //-----------------------------------------------------------------
@@ -559,7 +612,12 @@ namespace Microsoft.Data.SqlTypes
                 // FILESTREAM attributed column data. We will not surface the internal processing that
                 // takes place to create the mappedPath.
                 string mappedPath = InitializeNtPath(sPath);
-                int retval = 0;
+                uint retval = 0;
+                int headerSize = sizeof(Interop.NtDll.FILE_FULL_EA_INFORMATION);
+                int fullSize = headerSize + transactionContext.Length + EaNameString.Length;
+
+                byte[] buffer = ArrayPool<byte>.Shared.Rent(fullSize);
+
                 Interop.Kernel32.SetThreadErrorMode(Interop.Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
 
                 try
@@ -567,27 +625,22 @@ namespace Microsoft.Data.SqlTypes
                     if (transactionContext.Length >= ushort.MaxValue)
                         throw ADP.ArgumentOutOfRange("transactionContext");
 
-                    int headerSize = sizeof(Interop.NtDll.FILE_FULL_EA_INFORMATION);
-                    int fullSize = headerSize + transactionContext.Length + s_eaNameString.Length;
-
-                    byte[] buffer = ArrayPool<byte>.Shared.Rent(fullSize);
-
                     fixed (byte* b = buffer)
                     {
                         Interop.NtDll.FILE_FULL_EA_INFORMATION* ea = (Interop.NtDll.FILE_FULL_EA_INFORMATION*)b;
                         ea->NextEntryOffset = 0;
                         ea->Flags = 0;
-                        ea->EaNameLength = (byte)(s_eaNameString.Length - 1); // Length does not include terminating null character.
+                        ea->EaNameLength = (byte)(EaNameString.Length - 1); // Length does not include terminating null character.
                         ea->EaValueLength = (ushort)transactionContext.Length;
 
                         // We could continue to do pointer math here, chose to use Span for convenience to
                         // make sure we get the other members in the right place.
                         Span<byte> data = buffer.AsSpan(headerSize);
-                        s_eaNameString.AsSpan().CopyTo(data);
-                        data = data.Slice(s_eaNameString.Length);
+                        EaNameString.CopyTo(data);
+                        data = data.Slice(EaNameString.Length);
                         transactionContext.AsSpan().CopyTo(data);
 
-                        (int status, IntPtr handle) = Interop.NtDll.CreateFile(path: mappedPath.AsSpan(),
+                        (uint status, IntPtr handle) = Interop.NtDll.CreateFile(path: mappedPath.AsSpan(),
                                                                                 rootDirectory: IntPtr.Zero,
                                                                                 createDisposition: dwCreateDisposition,
                                                                                 desiredAccess: nDesiredAccess,
@@ -602,11 +655,11 @@ namespace Microsoft.Data.SqlTypes
                         retval = status;
                         hFile = new SafeFileHandle(handle, true);
                     }
-
-                    ArrayPool<byte>.Shared.Return(buffer);
                 }
                 finally
                 {
+                    ArrayPool<byte>.Shared.Return(buffer);
+
                     Interop.Kernel32.SetThreadErrorMode(oldMode, out oldMode);
                 }
 
@@ -621,6 +674,7 @@ namespace Microsoft.Data.SqlTypes
                     case Interop.Errors.ERROR_INVALID_PARAMETER:
                         throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
 
+                    case Interop.Errors.STATUS_OBJECT_NAME_NOT_FOUND:
                     case Interop.Errors.ERROR_FILE_NOT_FOUND:
                         {
                             System.IO.DirectoryNotFoundException e = new System.IO.DirectoryNotFoundException();
@@ -652,7 +706,7 @@ namespace Microsoft.Data.SqlTypes
                 if (Interop.Kernel32.GetFileType(hFile) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
                 {
                     hFile.Dispose();
-                    throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
+                    throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_PathNotValidDiskResource));
                 }
 
                 // if the user is opening the SQL FileStream in read/write mode, we assume that they want to scan
@@ -674,8 +728,29 @@ namespace Microsoft.Data.SqlTypes
 
                 // now that we've successfully opened a handle on the path and verified that it is a file,
                 // use the SafeFileHandle to initialize our internal System.IO.FileStream instance
-                System.Diagnostics.Debug.Assert(_m_fs == null);
-                _m_fs = new System.IO.FileStream(hFile, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
+#if NETFRAMEWORK
+                // NOTE: need to assert UnmanagedCode permissions for this constructor. This is relatively benign
+                //   in that we've done much the same validation as in the FileStream(string path, ...) ctor case
+                //   most notably, validating that the handle type corresponds to an on-disk file.
+                bool bRevertAssert = false;
+                try
+                {
+                    SecurityPermission sp = new SecurityPermission(SecurityPermissionFlag.UnmanagedCode);
+                    sp.Assert();
+                    bRevertAssert = true;
+#endif
+                    System.Diagnostics.Debug.Assert(_fs == null);
+                    _fs = new System.IO.FileStream(hFile, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
+#if NETFRAMEWORK
+                }
+                finally
+                {
+                    if (bRevertAssert)
+                    {
+                        SecurityPermission.RevertAssert();
+                    }
+                }
+#endif
             }
             catch
             {
