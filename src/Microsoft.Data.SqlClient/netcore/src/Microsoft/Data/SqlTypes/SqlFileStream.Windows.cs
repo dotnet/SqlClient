@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security.Permissions;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Win32.SafeHandles;
@@ -332,6 +333,26 @@ namespace Microsoft.Data.SqlTypes
             return _fs.EndRead(asyncResult);
         }
 
+#if !NETSTANDARD2_0
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadAsync1/*' />
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            if (_disposed)
+                throw ADP.ObjectDisposed(this);
+
+            return _fs.ReadAsync(buffer, cancellationToken);
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadAsync2/*' />
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            if (_disposed)
+                throw ADP.ObjectDisposed(this);
+
+            return _fs.ReadAsync(buffer, offset, count, cancellationToken);
+        }
+#endif
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginWrite/*' />
 #if !NET6_0_OR_GREATER
         [HostProtection(ExternalThreading = true)]
@@ -366,6 +387,26 @@ namespace Microsoft.Data.SqlTypes
 
             _fs.EndWrite(asyncResult);
         }
+
+#if !NETSTANDARD2_0
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteAsync1/*' />
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            if (_disposed)
+                throw ADP.ObjectDisposed(this);
+
+            return _fs.WriteAsync(buffer, cancellationToken);
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteAsync2/*' />
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            if (_disposed)
+                throw ADP.ObjectDisposed(this);
+
+            return _fs.WriteAsync(buffer, offset, count, cancellationToken);
+        }
+#endif
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Seek/*' />
         public override long Seek(long offset, SeekOrigin origin)
