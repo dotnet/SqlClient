@@ -205,6 +205,11 @@ namespace Microsoft.Data.SqlClient
                 DbProviderFactory providerFactory = ConnectionFactory.ProviderFactory;
                 DbCommand command = providerFactory.CreateCommand();
                 command.Connection = this;
+                if (InnerConnection is SqlInternalConnection { CurrentTransaction: { Parent: {} transaction} })
+                {
+                    command.Transaction = transaction;
+                }
+
                 return command;
             }
         }
