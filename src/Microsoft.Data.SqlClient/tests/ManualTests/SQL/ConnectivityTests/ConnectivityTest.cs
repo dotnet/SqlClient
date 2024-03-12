@@ -498,6 +498,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd.ExecuteNonQuery();
             }
         }
-
     }
 }
