@@ -9,6 +9,9 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Threading;
 using Xunit;
+#if NET6_0_OR_GREATER
+using Microsoft.Data.SqlClient.Server;
+#endif
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -305,6 +308,56 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd.ExecuteNonQuery();
             }
         }
+
+#if NET6_0_OR_GREATER
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void TestDateOnlyTVPDataTable_CommandSP()
+        {
+            string tableTypeName = "[dbo]." + DataTestUtility.GetUniqueNameForSqlServer("UDTTTestDateOnlyTVP");
+            string spName = DataTestUtility.GetUniqueNameForSqlServer("spTestDateOnlyTVP");
+            SqlConnection connection = new(s_connString);
+            try
+            {
+                connection.Open();
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = $"CREATE TYPE {tableTypeName} AS TABLE ([DateColumn] date NULL, [TimeColumn] time NULL)";
+                    cmd.ExecuteNonQuery();
+                    cmd.CommandText = $"CREATE PROCEDURE {spName} (@dates {tableTypeName} READONLY) AS SELECT COUNT(*) FROM @dates";
+                    cmd.ExecuteNonQuery();
+                }
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = spName;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    
+                    DataTable dtTest = new();
+                    dtTest.Columns.Add(new DataColumn("DateColumn", typeof(DateOnly)));
+                    dtTest.Columns.Add(new DataColumn("TimeColumn", typeof(TimeOnly)));
+                    var dataRow = dtTest.NewRow();
+                    dataRow["DateColumn"] = new DateOnly(2023, 11, 15);
+                    dataRow["TimeColumn"] = new TimeOnly(12, 30, 45);
+                    dtTest.Rows.Add(dataRow);
+
+                    cmd.Parameters.Add(new SqlParameter
+                    {
+                        ParameterName = "@dates",
+                        SqlDbType = SqlDbType.Structured,
+                        TypeName = tableTypeName,
+                        Value = dtTest,
+                    });
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            finally
+            {
+                DataTestUtility.DropStoredProcedure(connection, spName);
+                DataTestUtility.DropUserDefinedType(connection, tableTypeName);
+            }
+        }
+#endif
 
         #region Scaled Decimal Parameter & TVP Test
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
