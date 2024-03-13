@@ -21,6 +21,7 @@
     <EnableTrimAnalyzer Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">true</EnableTrimAnalyzer>
     <NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn>
     <ProduceReferenceAssmbly>true</ProduceReferenceAssmbly>
+    <ProduceReferenceAssemblyInOutDir>true</ProduceReferenceAssemblyInOutDir>
   </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
@@ -981,7 +982,5 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
-  <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
-  <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
 </Project>

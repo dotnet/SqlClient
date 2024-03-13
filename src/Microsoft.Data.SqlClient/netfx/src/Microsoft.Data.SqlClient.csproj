@@ -17,7 +17,8 @@
     <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
-    <ProduceRefrenceAssembly>true</ProduceRefrenceAssembly>
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+    <ProduceReferenceAssemblyInOutDir>true</ProduceReferenceAssemblyInOutDir>
   </PropertyGroup>
   <!-- Override debugtype=portable in Directory.Build.props for netfx -->
   <PropertyGroup>
