@@ -112,12 +112,6 @@
             <exception cref="T:System.Data.SqlTypes.SqlNullValueException">The column specified by <paramref name="ordinal" /> is null.</exception>
             <exception cref="T:System.InvalidCastException">There is a type mismatch.</exception>
         </GetChars>
-        <GetData>
-            <param name="ordinal">To be added.</param>
-            <summary>To be added.</summary>
-            <returns>To be added.</returns>
-            <remarks>To be added.</remarks>
-        </GetData>
         <GetDataTypeName>
             <param name="ordinal">The zero-based ordinal of the column.</param>
             <summary>Returns the name of the data type for the column specified by the ordinal argument.</summary>
@@ -757,12 +751,10 @@
             <summary>Sets new values for all of the columns in the <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" />. These values are expressed as common language runtime (CLR) types.</summary>
             <returns>The number of column values set as an integer.</returns>
             <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
+                <format type="text/markdown"><![CDATA[
 ## Remarks  
- The length of values must match the number of columns in the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> instance.  
-  
- ]]></format>
+ The length of values must match the number of columns in the <xref:Microsoft.Data.SqlClient.Server.SqlDataRecord> instance.
+                ]]></format>
             </remarks>
             <exception cref="T:System.ArgumentNullException">
             <paramref name="values" /> is <see langword="null" />.</exception>
@@ -772,18 +764,14 @@
             <param name="ordinal">The zero-based ordinal of the column.</param>
             <summary>Not supported in this release.</summary>
             <returns>
-            <see cref="T:System.Data.IDataReader" />  
-    
-    Always throws an exception.</returns>
+                <see cref="T:System.Data.IDataReader" /> Always throws an exception.
+            </returns>
             <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
+                <format type="text/markdown"><![CDATA[
 ## Remarks  
- This method is not supported in this release, and throws <xref:System.NotSupportedException> if called.  
-  
- ]]></format>
+ This method is not supported in this release, and throws <xref:System.NotSupportedException> if called.
+                ]]></format>
             </remarks>
-            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).</exception>
         </System.Data.IDataRecord.GetData>
     </members>
 </docs>

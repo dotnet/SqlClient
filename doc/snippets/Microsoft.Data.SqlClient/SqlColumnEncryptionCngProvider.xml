@@ -13,10 +13,6 @@
                 ]]></format>
             </remarks>
         </SqlColumnEncryptionCngProvider>
-        <ctor>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlColumnEncryptionCngProvider" /> class.</summary>
-            <remarks>To be added.</remarks>
-        </ctor>
         <DecryptColumnEncryptionKey>
             <param name="masterKeyPath">The master key path.</param>
             <param name="encryptionAlgorithm">The encryption algorithm.</param>

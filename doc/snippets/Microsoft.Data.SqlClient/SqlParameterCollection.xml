@@ -124,7 +124,7 @@ This overload is useful when you are adding a parameter of a variable-length dat
             <summary>Adds elements to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.</summary>
         </AddRange>
         <AddRangeValues1>
-            <param name="values">The <see cref="T:System.Array" /> values to add.</param>
+            <param name="values">The <see cref="T:System.Array" /> of values to add.</param>
             <summary>Adds an array of values to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.</summary>
             <remarks>To be added.</remarks>
         </AddRangeValues1>

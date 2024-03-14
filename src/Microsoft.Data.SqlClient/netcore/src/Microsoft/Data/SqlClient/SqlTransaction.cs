@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/RollbackTransactionName/*' />
 #if NET6_0_OR_GREATER
-       public override void Rollback(string transactionName)
+        public override void Rollback(string transactionName)
 #else
         public void Rollback(string transactionName)
 #endif

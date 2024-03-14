@@ -3052,17 +3052,6 @@ The default value of the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeou
 				To be added.
 			</remarks>
 		</StatementCompleted>
-		<CreateParameter>
-			<summary>
-				Creates a new instance of a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.
-			</summary>
-			<returns>
-				A <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.
-			</returns>
-			<remarks>
-				To be added.
-			</remarks>
-		</CreateParameter>
 		<Transaction>
 			<summary>
 				Gets or sets the
