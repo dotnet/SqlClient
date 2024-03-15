@@ -125,22 +125,22 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\icons\dotnet.png" target="" />
 
     <!-- ref NetFx -->
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net462\Microsoft.Data.SqlClient.dll" target="ref\net462\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net462\Microsoft.Data.SqlClient.xml" target="ref\net462\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\ref\Microsoft.Data.SqlClient.dll" target="ref\net462\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.xml" target="ref\net462\" exclude="" />
 
     <!-- ref NetCore -->
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net8.0\Microsoft.Data.SqlClient.dll" target="ref\net8.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net8.0\Microsoft.Data.SqlClient.xml" target="ref\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\net8.0\ref\Microsoft.Data.SqlClient.dll" target="ref\net8.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\net8.0\Microsoft.Data.SqlClient.xml" target="ref\net8.0\" exclude="" />
 
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net6.0\Microsoft.Data.SqlClient.dll" target="ref\net6.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net6.0\Microsoft.Data.SqlClient.xml" target="ref\net6.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\net6.0\ref\Microsoft.Data.SqlClient.dll" target="ref\net6.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\net6.0\Microsoft.Data.SqlClient.xml" target="ref\net6.0\" exclude="" />
 
     <!-- ref NetStandard -->
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.0\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.0\Microsoft.Data.SqlClient.xml" target="ref\netstandard2.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netstandard2.0\ref\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.0\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netstandard2.0\Microsoft.Data.SqlClient.xml" target="ref\netstandard2.0\" exclude="" />
 
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.1\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.1\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.1\Microsoft.Data.SqlClient.xml" target="ref\netstandard2.1\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netstandard2.1\ref\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.1\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netstandard2.1\Microsoft.Data.SqlClient.xml" target="ref\netstandard2.1\" exclude="" />
 
     <!-- Localized Resource Files for NetFx -->
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\de\" exclude="" />
