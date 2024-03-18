@@ -196,13 +196,13 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsNotInitialized(s_legacyVarTimeZeroScaleBehaviour))
                 {
-                    if (!AppContext.TryGetSwitch(LegacyVarTimeZeroScaleBehaviourString, out bool returnedValue) || !returnedValue)
+                    if (!AppContext.TryGetSwitch(LegacyVarTimeZeroScaleBehaviourString, out bool returnedValue))
                     {
-                        s_legacyVarTimeZeroScaleBehaviour = Tristate.False;
+                        s_legacyVarTimeZeroScaleBehaviour = Tristate.True;
                     }
                     else
                     {
-                        s_legacyVarTimeZeroScaleBehaviour = Tristate.True;
+                        s_legacyVarTimeZeroScaleBehaviour = returnedValue ? Tristate.False : Tristate.True;
                     }
                 }
                 return IsTrue(s_legacyVarTimeZeroScaleBehaviour);

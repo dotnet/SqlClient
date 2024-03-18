@@ -1924,6 +1924,16 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
+        [Fact]
+        public void SetLegacyVarTimeZeroScaleBehaviour_Defaults_to_True()
+        {
+            var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+
+            var legacyVarTimeZeroScaleBehaviour = (bool)switchesType.GetProperty("LegacyVarTimeZeroScaleBehaviour", BindingFlags.Public | BindingFlags.Static).GetValue(null);
+
+            Assert.True(legacyVarTimeZeroScaleBehaviour);
+        }
+
         private static bool? SetLegacyVarTimeZeroScaleBehaviour(bool? value)
         {
             var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
@@ -1932,6 +1942,6 @@ namespace Microsoft.Data.SqlClient.Tests
             byte triStateValue = value.HasValue ? value.Value ? (byte)2 : (byte)1 : (byte)0;
             switchField.SetValue(null, triStateValue);
             return originalValue == 0 ? null : originalValue == 2;
-        }
+        }       
     }
 }
