@@ -1924,16 +1924,6 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
-        [Fact]
-        public void SetLegacyVarTimeZeroScaleBehaviour_Defaults_to_True()
-        {
-            var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-
-            var legacyVarTimeZeroScaleBehaviour = (bool)switchesType.GetProperty("LegacyVarTimeZeroScaleBehaviour", BindingFlags.Public | BindingFlags.Static).GetValue(null);
-
-            Assert.True(legacyVarTimeZeroScaleBehaviour);
-        }
-
         private static bool? SetLegacyVarTimeZeroScaleBehaviour(bool? value)
         {
             var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");

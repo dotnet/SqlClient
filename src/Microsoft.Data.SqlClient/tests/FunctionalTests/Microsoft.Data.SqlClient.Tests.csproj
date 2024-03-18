@@ -55,6 +55,7 @@
     <Compile Include="SqlFacetAttributeTest.cs" />
     <Compile Include="SqlNotificationRequestTest.cs" />
     <Compile Include="SqlParameterCollectionTest.cs" />
+    <Compile Include="LocalAppContextSwitchesTests.cs" />
     <Compile Include="SqlParameterTest.cs" />
     <Compile Include="SqlClientFactoryTest.cs" />
     <Compile Include="SqlErrorCollectionTest.cs" />
