@@ -169,13 +169,13 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsNotInitialized(s_useMinimumLoginTimeout))
                 {
-                    if (AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) && returnedValue)
+                    if (!AppContext.TryGetSwitch(LegacyVarTimeZeroScaleBehaviourString, out bool returnedValue))
                     {
                         s_useMinimumLoginTimeout = Tristate.True;
                     }
                     else
                     {
-                        s_useMinimumLoginTimeout = Tristate.False;
+                        s_useMinimumLoginTimeout = returnedValue ? Tristate.False : Tristate.True;
                     }
                 }
                 return IsTrue(s_useMinimumLoginTimeout);
