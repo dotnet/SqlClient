@@ -14,17 +14,22 @@ namespace Microsoft.Data.SqlClient
             False = 1,
             True = 2
         }
+        private static bool IsNotInitialized(Tristate value) => value == Tristate.NotInitialized;
+        private static bool IsTrue(Tristate value) => value == Tristate.True;
 
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
         internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
         internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
+        internal const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
         private static Tristate s_suppressInsecureTLSWarning;
         private static Tristate s_makeReadAsyncBlocking;
         private static Tristate s_useMinimumLoginTimeout;
+        // this field is accessed through reflection in Microsoft.Data.SqlClient.Tests.SqlParameterTests and should not be renamed or have the type changed without refactoring related tests
+        private static Tristate s_legacyVarTimeZeroScaleBehaviour;
 
 #if !NETFRAMEWORK
         static LocalAppContextSwitches()
@@ -90,7 +95,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_suppressInsecureTLSWarning == Tristate.NotInitialized)
+                if (IsNotInitialized(s_suppressInsecureTLSWarning))
                 {
                     if (AppContext.TryGetSwitch(SuppressInsecureTLSWarningString, out bool returnedValue) && returnedValue)
                     {
@@ -101,7 +106,7 @@ namespace Microsoft.Data.SqlClient
                         s_suppressInsecureTLSWarning = Tristate.False;
                     }
                 }
-                return s_suppressInsecureTLSWarning == Tristate.True;
+                return IsTrue(s_suppressInsecureTLSWarning);
             }
         }
 
@@ -115,7 +120,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_legacyRowVersionNullBehavior == Tristate.NotInitialized)
+                if (IsNotInitialized(s_legacyRowVersionNullBehavior))
                 {
                     if (AppContext.TryGetSwitch(LegacyRowVersionNullString, out bool returnedValue) && returnedValue)
                     {
@@ -126,7 +131,7 @@ namespace Microsoft.Data.SqlClient
                         s_legacyRowVersionNullBehavior = Tristate.False;
                     }
                 }
-                return s_legacyRowVersionNullBehavior == Tristate.True;
+                return IsTrue(s_legacyRowVersionNullBehavior);
             }
         }
 
@@ -138,7 +143,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_makeReadAsyncBlocking == Tristate.NotInitialized)
+                if (IsNotInitialized(s_makeReadAsyncBlocking))
                 {
                     if (AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out bool returnedValue) && returnedValue)
                     {
@@ -149,7 +154,7 @@ namespace Microsoft.Data.SqlClient
                         s_makeReadAsyncBlocking = Tristate.False;
                     }
                 }
-                return s_makeReadAsyncBlocking == Tristate.True;
+                return IsTrue(s_makeReadAsyncBlocking);
             }
         }
 
@@ -162,7 +167,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_useMinimumLoginTimeout == Tristate.NotInitialized)
+                if (IsNotInitialized(s_useMinimumLoginTimeout))
                 {
                     if (AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) && returnedValue)
                     {
@@ -173,7 +178,34 @@ namespace Microsoft.Data.SqlClient
                         s_useMinimumLoginTimeout = Tristate.False;
                     }
                 }
-                return s_useMinimumLoginTimeout == Tristate.True;
+                return IsTrue(s_useMinimumLoginTimeout);
+            }
+        }
+
+
+        /// <summary>
+        /// When set to 'true' this will output a scale value of 7 (DEFAULT_VARTIME_SCALE) when the scale 
+        /// is explicitly set to zero for VarTime data types ('datetime2', 'datetimeoffset' and 'time')
+        /// If no scale is set explicitly it will continue to output scale of 7 (DEFAULT_VARTIME_SCALE)
+        /// regardsless of switch value.
+        /// This app context switch defaults to 'true'.
+        /// </summary>
+        public static bool LegacyVarTimeZeroScaleBehaviour
+        {
+            get
+            {
+                if (IsNotInitialized(s_legacyVarTimeZeroScaleBehaviour))
+                {
+                    if (!AppContext.TryGetSwitch(LegacyVarTimeZeroScaleBehaviourString, out bool returnedValue) || !returnedValue)
+                    {
+                        s_legacyVarTimeZeroScaleBehaviour = Tristate.False;
+                    }
+                    else
+                    {
+                        s_legacyVarTimeZeroScaleBehaviour = Tristate.True;
+                    }
+                }
+                return IsTrue(s_legacyVarTimeZeroScaleBehaviour);
             }
         }
     }

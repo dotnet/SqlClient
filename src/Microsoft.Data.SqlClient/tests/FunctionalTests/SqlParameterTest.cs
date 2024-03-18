@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
+using System.Reflection;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -1850,6 +1851,87 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             A = long.MinValue,
             B = long.MaxValue
+        }
+
+
+        private static readonly object _parameterLegacyScaleLock = new();
+
+        [Theory]
+        [InlineData(0, 0)]
+        [InlineData(1, 1)]
+        [InlineData(2, 2)]
+        [InlineData(3, 3)]
+        [InlineData(4, 4)]
+        [InlineData(5, 5)]
+        [InlineData(6, 6)]
+        [InlineData(7, 7)]
+        public void SqlTypes_Datetime2_Scale(byte setScale, byte outputScale)
+        {
+            lock (_parameterLegacyScaleLock)
+            {
+                var originalValue = SetLegacyVarTimeZeroScaleBehaviour(false);
+                try
+                {
+                    var parameter = new SqlParameter
+                    {
+                        DbType = DbType.DateTime2,
+                        Scale = setScale
+                    };
+
+                    var actualScale = (byte)typeof(SqlParameter).GetMethod("GetActualScale", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(parameter, null);
+
+                    Assert.Equal(outputScale, actualScale);
+                }
+
+                finally
+                {
+                    SetLegacyVarTimeZeroScaleBehaviour(originalValue);
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData(0, 7)]
+        [InlineData(1, 1)]
+        [InlineData(2, 2)]
+        [InlineData(3, 3)]
+        [InlineData(4, 4)]
+        [InlineData(5, 5)]
+        [InlineData(6, 6)]
+        [InlineData(7, 7)]
+        public void SqlDatetime2Scale_Legacy(byte setScale, byte outputScale)
+        {
+            lock (_parameterLegacyScaleLock)
+            {
+                var originalValue = SetLegacyVarTimeZeroScaleBehaviour(true);
+                try
+                {
+                    var parameter = new SqlParameter
+                    {
+                        DbType = DbType.DateTime2,
+                        Scale = setScale
+                    };
+
+                    var actualScale = (byte)typeof(SqlParameter).GetMethod("GetActualScale", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(parameter, null);
+
+                    Assert.Equal(outputScale, actualScale);
+                }
+
+                finally
+                {
+                    SetLegacyVarTimeZeroScaleBehaviour(originalValue);
+                }
+            }
+        }
+
+        private static bool? SetLegacyVarTimeZeroScaleBehaviour(bool? value)
+        {
+            var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+            var switchField = switchesType.GetField("s_legacyVarTimeZeroScaleBehaviour", BindingFlags.NonPublic | BindingFlags.Static);
+            var originalValue = (byte)switchField.GetValue(null);
+            byte triStateValue = value.HasValue ? value.Value ? (byte)2 : (byte)1 : (byte)0;
+            switchField.SetValue(null, triStateValue);
+            return originalValue == 0 ? null : originalValue == 2;
         }
     }
 }
