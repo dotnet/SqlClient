@@ -293,7 +293,7 @@ namespace Microsoft.Data.SqlClient.Telemetry
 
             foreach (KeyValuePair<string, DbConnectionFactoryTelemetry> poolMetric in connectionPoolMetrics)
                 yield return new Measurement<long>(poolMetric.Value.TotalMinPoolSize,
-                    new KeyValuePair<string, object>(MetricAttributes.PoolName, poolMetric.Key));
+                    new KeyValuePair<string, object>(MetricTagNames.PoolName, poolMetric.Key));
         }
 
         private IEnumerable<Measurement<long>> GetMaxConnectionPoolSizes()
@@ -302,7 +302,7 @@ namespace Microsoft.Data.SqlClient.Telemetry
 
             foreach (KeyValuePair<string, DbConnectionFactoryTelemetry> poolMetric in connectionPoolMetrics)
                 yield return new Measurement<long>(poolMetric.Value.TotalMaxPoolSize,
-                    new KeyValuePair<string, object>(MetricAttributes.PoolName, poolMetric.Key));
+                    new KeyValuePair<string, object>(MetricTagNames.PoolName, poolMetric.Key));
         }
         #endregion
     }

@@ -214,81 +214,81 @@ namespace Microsoft.Data.SqlClient.Telemetry
             switch (metricName)
             {
                 case MetricNames.Connections.Usage:
-                    associatedTag = GetTagByName(MetricAttributes.State, 1, in tagList);
+                    associatedTag = GetTagByName(MetricTagNames.State, 1, in tagList);
 
-                    if (string.Equals((string)associatedTag.Value, MetricAttributeValues.ActiveState, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.ActiveState, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _activeConnectionsCounter;
                     }
-                    else if(string.Equals((string)associatedTag.Value, MetricAttributeValues.IdleState, StringComparison.OrdinalIgnoreCase))
+                    else if(string.Equals((string)associatedTag.Value, MetricTagValues.IdleState, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _freeConnectionsCounter;
                     }
-                    else if (string.Equals((string)associatedTag.Value, MetricAttributeValues.StasisState, StringComparison.OrdinalIgnoreCase))
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.StasisState, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _stasisConnectionsCounter;
                     }
-                    else if (string.Equals((string)associatedTag.Value, MetricAttributeValues.ReclaimedState, StringComparison.OrdinalIgnoreCase))
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.ReclaimedState, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _reclaimedConnectionsCounter;
                     }
                     break;
                 case MetricNames.ConnectionPoolGroups.Usage:
-                    associatedTag = GetTagByName(MetricAttributes.State, 1, in tagList);
+                    associatedTag = GetTagByName(MetricTagNames.State, 1, in tagList);
 
-                    if (string.Equals((string)associatedTag.Value, MetricAttributeValues.ActiveState, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.ActiveState, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _activeConnectionPoolGroupsCounter;
                     }
-                    else if (string.Equals((string)associatedTag.Value, MetricAttributeValues.IdleState, StringComparison.OrdinalIgnoreCase))
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.IdleState, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _inactiveConnectionPoolGroupsCounter;
                     }
                     break;
                 case MetricNames.ConnectionPools.Usage:
-                    associatedTag = GetTagByName(MetricAttributes.State, 1, in tagList);
+                    associatedTag = GetTagByName(MetricTagNames.State, 1, in tagList);
 
-                    if (string.Equals((string)associatedTag.Value, MetricAttributeValues.ActiveState, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.ActiveState, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _activeConnectionPoolsCounter;
                     }
-                    else if (string.Equals((string)associatedTag.Value, MetricAttributeValues.IdleState, StringComparison.OrdinalIgnoreCase))
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.IdleState, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _inactiveConnectionPoolsCounter;
                     }
                     break;
                 case MetricNames.Connections.HardUsage:
-                    associatedTag = GetTagByName(MetricAttributes.Type, 1, in tagList);
+                    associatedTag = GetTagByName(MetricTagNames.Type, 1, in tagList);
 
-                    if (string.Equals((string)associatedTag.Value, MetricAttributeValues.PooledConnectionType, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.PooledConnectionType, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _pooledConnectionsCounter;
                     }
-                    else if (string.Equals((string)associatedTag.Value, MetricAttributeValues.NonPooledConnectionType, StringComparison.OrdinalIgnoreCase))
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.NonPooledConnectionType, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _nonPooledConnectionsCounter;
                     }
                     break;
                 case MetricNames.Connections.Connects:
-                    associatedTag = GetTagByName(MetricAttributes.Type, 1, in tagList);
+                    associatedTag = GetTagByName(MetricTagNames.Type, 1, in tagList);
 
-                    if (string.Equals((string)associatedTag.Value, MetricAttributeValues.HardActionType, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.HardActionType, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _hardConnectsCounter;
                     }
-                    else if (string.Equals((string)associatedTag.Value, MetricAttributeValues.SoftActionType, StringComparison.OrdinalIgnoreCase))
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.SoftActionType, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _softConnectsCounter;
                     }
                     break;
                 case MetricNames.Connections.Disconnects:
-                    associatedTag = GetTagByName(MetricAttributes.Type, 1, in tagList);
+                    associatedTag = GetTagByName(MetricTagNames.Type, 1, in tagList);
 
-                    if (string.Equals((string)associatedTag.Value, MetricAttributeValues.HardActionType, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.HardActionType, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _hardDisconnectsCounter;
                     }
-                    else if (string.Equals((string)associatedTag.Value, MetricAttributeValues.SoftActionType, StringComparison.OrdinalIgnoreCase))
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.SoftActionType, StringComparison.OrdinalIgnoreCase))
                     {
                         return ref _softDisconnectsCounter;
                     }

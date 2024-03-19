@@ -60,17 +60,17 @@ namespace Microsoft.Data.SqlClient.Telemetry
 
         public ConnectionMetricTagListCollection(string poolName, params KeyValuePair<string, object>[] additionalTags)
         {
-            KeyValuePair<string, object> poolNameKVP = new(MetricAttributes.PoolName, poolName);
+            KeyValuePair<string, object> poolNameKVP = new(MetricTagNames.PoolName, poolName);
 
             GenericConnectionPoolTags = new TagList() { poolNameKVP };
 
-            ActiveConnectionsTags = new TagList() { poolNameKVP, { MetricAttributes.State, MetricAttributeValues.ActiveState } };
-            IdleConnectionsTags = new TagList() { poolNameKVP, { MetricAttributes.State, MetricAttributeValues.IdleState } };
-            StasisConnectionsTags = new TagList() { poolNameKVP, { MetricAttributes.State, MetricAttributeValues.StasisState } };
-            ReclaimedConnectionsTags = new TagList() { poolNameKVP, { MetricAttributes.State, MetricAttributeValues.ReclaimedState } };
+            ActiveConnectionsTags = new TagList() { poolNameKVP, { MetricTagNames.State, MetricTagValues.ActiveState } };
+            IdleConnectionsTags = new TagList() { poolNameKVP, { MetricTagNames.State, MetricTagValues.IdleState } };
+            StasisConnectionsTags = new TagList() { poolNameKVP, { MetricTagNames.State, MetricTagValues.StasisState } };
+            ReclaimedConnectionsTags = new TagList() { poolNameKVP, { MetricTagNames.State, MetricTagValues.ReclaimedState } };
 
-            HardConnectionsTags = new TagList() { poolNameKVP, { MetricAttributes.Type, MetricAttributeValues.HardConnectionType } };
-            SoftConnectionsTags = new TagList() { poolNameKVP, { MetricAttributes.Type, MetricAttributeValues.SoftConnectionType } };
+            HardConnectionsTags = new TagList() { poolNameKVP, { MetricTagNames.Type, MetricTagValues.HardConnectionType } };
+            SoftConnectionsTags = new TagList() { poolNameKVP, { MetricTagNames.Type, MetricTagValues.SoftConnectionType } };
 
             TimeoutsTags = new TagList() { poolNameKVP };
 
@@ -80,19 +80,19 @@ namespace Microsoft.Data.SqlClient.Telemetry
             ConnectionWaitTimeTags = new TagList() { poolNameKVP };
             ConnectionUsageTimeTags = new TagList() { poolNameKVP };
 
-            ActiveConnectionPoolGroupsTags = new TagList() { poolNameKVP, { MetricAttributes.State, MetricAttributeValues.ActiveState } };
-            IdleConnectionPoolGroupsTags = new TagList() { poolNameKVP, { MetricAttributes.State, MetricAttributeValues.IdleState } };
+            ActiveConnectionPoolGroupsTags = new TagList() { poolNameKVP, { MetricTagNames.State, MetricTagValues.ActiveState } };
+            IdleConnectionPoolGroupsTags = new TagList() { poolNameKVP, { MetricTagNames.State, MetricTagValues.IdleState } };
 
-            ActiveConnectionPoolsTags = new TagList() { poolNameKVP, { MetricAttributes.State, MetricAttributeValues.ActiveState } };
-            IdleConnectionPoolsTags = new TagList() { poolNameKVP, { MetricAttributes.State, MetricAttributeValues.IdleState } };
+            ActiveConnectionPoolsTags = new TagList() { poolNameKVP, { MetricTagNames.State, MetricTagValues.ActiveState } };
+            IdleConnectionPoolsTags = new TagList() { poolNameKVP, { MetricTagNames.State, MetricTagValues.IdleState } };
 
-            PooledHardConnectionUsageTags = new TagList() { poolNameKVP, { MetricAttributes.Type, MetricAttributeValues.PooledConnectionType } };
-            NonPooledHardConnectionUsageTags = new TagList() { poolNameKVP, { MetricAttributes.Type, MetricAttributeValues.NonPooledConnectionType } };
+            PooledHardConnectionUsageTags = new TagList() { poolNameKVP, { MetricTagNames.Type, MetricTagValues.PooledConnectionType } };
+            NonPooledHardConnectionUsageTags = new TagList() { poolNameKVP, { MetricTagNames.Type, MetricTagValues.NonPooledConnectionType } };
 
-            HardConnectsTags = new TagList() { poolNameKVP, { MetricAttributes.Type, MetricAttributeValues.HardActionType } };
-            SoftConnectsTags = new TagList() { poolNameKVP, { MetricAttributes.Type, MetricAttributeValues.SoftActionType } };
-            HardDisconnectsTags = new TagList() { poolNameKVP, { MetricAttributes.Type, MetricAttributeValues.HardActionType } };
-            SoftDisconnectsTags = new TagList() { poolNameKVP, { MetricAttributes.Type, MetricAttributeValues.SoftActionType } };
+            HardConnectsTags = new TagList() { poolNameKVP, { MetricTagNames.Type, MetricTagValues.HardActionType } };
+            SoftConnectsTags = new TagList() { poolNameKVP, { MetricTagNames.Type, MetricTagValues.SoftActionType } };
+            HardDisconnectsTags = new TagList() { poolNameKVP, { MetricTagNames.Type, MetricTagValues.HardActionType } };
+            SoftDisconnectsTags = new TagList() { poolNameKVP, { MetricTagNames.Type, MetricTagValues.SoftActionType } };
 
             foreach (KeyValuePair<string, object> additionalTag in additionalTags)
             {

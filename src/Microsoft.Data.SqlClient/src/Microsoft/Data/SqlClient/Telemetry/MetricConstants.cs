@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClient.Telemetry
         }
     }
 
-    internal static class MetricAttributes
+    internal static class MetricTagNames
     {
         public const string PoolName = "pool.name";
 
@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlClient.Telemetry
         public const string Type = "type";
     }
 
-    internal static class MetricAttributeValues
+    internal static class MetricTagValues
     {
         public const string IdleState = "idle";
 
