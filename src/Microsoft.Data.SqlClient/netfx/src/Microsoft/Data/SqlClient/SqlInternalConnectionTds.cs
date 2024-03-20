@@ -1845,7 +1845,7 @@ namespace Microsoft.Data.SqlClient
                 if (_parser != null)
                     _parser.Disconnect();
 
-                _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
+                _parser = TdsParser.Instance(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
                 Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, String.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
 
                 try
@@ -2104,7 +2104,7 @@ namespace Microsoft.Data.SqlClient
                 if (_parser != null)
                     _parser.Disconnect();
 
-                _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
+                _parser = TdsParser.Instance(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
                 Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, String.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
 
                 ServerInfo currentServerInfo;
@@ -2156,7 +2156,7 @@ namespace Microsoft.Data.SqlClient
                         if (_parser != null)
                             _parser.Disconnect();
 
-                        _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
+                        _parser = TdsParser.Instance(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
                         Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
 
                         currentServerInfo = new ServerInfo(ConnectionOptions, _routingInfo, currentServerInfo.ResolvedServerName, currentServerInfo.ServerSPN);

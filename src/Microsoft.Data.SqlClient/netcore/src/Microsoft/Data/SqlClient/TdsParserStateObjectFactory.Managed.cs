@@ -24,12 +24,12 @@ namespace Microsoft.Data.SqlClient
 
         public TdsParserStateObject CreateTdsParserStateObject(TdsParser parser)
         {
-            return new TdsParserStateObjectManaged(parser);
+            return TdsParserStateObjectManaged.Instance(parser);
         }
 
         internal TdsParserStateObject CreateSessionObject(TdsParser tdsParser, TdsParserStateObject _pMarsPhysicalConObj, bool v)
         {
-            return new TdsParserStateObjectManaged(tdsParser, _pMarsPhysicalConObj, true);
+            return TdsParserStateObjectManaged.Instance(tdsParser, _pMarsPhysicalConObj, true);
         }
     }
 }

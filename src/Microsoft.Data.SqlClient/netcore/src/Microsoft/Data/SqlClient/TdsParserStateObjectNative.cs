@@ -44,6 +44,9 @@ namespace Microsoft.Data.SqlClient
 
         public TdsParserStateObjectNative(TdsParser parser) : base(parser) { }
 
+        public static TdsParserStateObjectNative Instance(TdsParser parser)
+            => new TdsParserStateObjectNative(parser);
+
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
 
         private Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
@@ -52,6 +55,10 @@ namespace Microsoft.Data.SqlClient
             base(parser, physicalConnection, async)
         {
         }
+
+        public static TdsParserStateObjectNative Instance(TdsParser parser, TdsParserStateObject physicalConnection,
+            bool async)
+            => new TdsParserStateObjectNative(parser, physicalConnection, async);
 
         internal SNIHandle Handle => _sessionHandle;
 

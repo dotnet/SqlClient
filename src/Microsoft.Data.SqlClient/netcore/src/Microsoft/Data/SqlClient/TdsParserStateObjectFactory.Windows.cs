@@ -34,13 +34,13 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | Found AppContext switch '{0}' enabled, managed networking implementation will be used."
                    , UseManagedNetworkingOnWindows);
-                return new TdsParserStateObjectManaged(parser);
+                return TdsParserStateObjectManaged.Instance(parser);
             }
             else
             {
                 SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | AppContext switch '{0}' not enabled, native networking implementation will be used."
                    , UseManagedNetworkingOnWindows);
-                return new TdsParserStateObjectNative(parser);
+                return TdsParserStateObjectNative.Instance(parser);
             }
         }
 
@@ -48,11 +48,11 @@ namespace Microsoft.Data.SqlClient
         {
             if (TdsParserStateObjectFactory.UseManagedSNI)
             {
-                return new TdsParserStateObjectManaged(tdsParser, _pMarsPhysicalConObj, true);
+                return TdsParserStateObjectManaged.Instance(tdsParser, _pMarsPhysicalConObj, true);
             }
             else
             {
-                return new TdsParserStateObjectNative(tdsParser, _pMarsPhysicalConObj, true);
+                return TdsParserStateObjectNative.Instance(tdsParser, _pMarsPhysicalConObj, true);
             }
         }
     }
