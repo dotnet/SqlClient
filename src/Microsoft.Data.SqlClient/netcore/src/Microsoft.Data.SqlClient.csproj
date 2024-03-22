@@ -344,6 +344,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBatchCommand.cs">
       <Link>Microsoft\Data\SqlClient\SqlBatchCommand.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBatchCommand.Net8OrGreater.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBatchCommand.Net8OrGreater.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBatchCommandCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlBatchCommandCollection.cs</Link>
     </Compile>
