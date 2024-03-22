@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -42,7 +41,7 @@ namespace Microsoft.Data.ProviderBase
             private int _refInfo;              // information about the reference
             private WeakReference<object> _weakReference;   // the reference itself.
 
-            public void SetTNewTarget(int refInfo, object target)
+            public void SetNewTarget(int refInfo, object target)
             {
                 Debug.Assert(!TryGetTarget(out object _), "Entry already has a valid target");
                 Debug.Assert(refInfo != 0, "Bad reference info");
