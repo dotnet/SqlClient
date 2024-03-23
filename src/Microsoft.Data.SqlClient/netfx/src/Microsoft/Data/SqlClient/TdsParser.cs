@@ -6306,11 +6306,11 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.Binary:
                 case SqlDbType.VarBinary:
                 case SqlDbType.Image:
-                    nullVal.SqlBinary = SqlBinary.Null;
+                    nullVal.SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
                     break;
 
                 case SqlDbType.UniqueIdentifier:
-                    nullVal.SqlGuid = SqlGuid.Null;
+                    nullVal.SetToNullOfType(SqlBuffer.StorageType.SqlGuid);
                     break;
 
                 case SqlDbType.Bit:
@@ -6741,7 +6741,7 @@ namespace Microsoft.Data.SqlClient
                             unencryptedBytes = bytes;
                         }
 
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(unencryptedBytes, true);   // doesn't copy the byte array
+                        value.ByteArray = unencryptedBytes;   // doesn't copy the byte array
                         break;
                     }
 
@@ -6938,7 +6938,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);   // doesn't copy the byte array
+                        value.ByteArray = b;   // doesn't copy the byte array
                     }
                     break;
 
@@ -7238,8 +7238,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);   // doesn't copy the byte array
 
+                        value.ByteArray = b;   // doesn't copy the byte array
                         break;
                     }
 
