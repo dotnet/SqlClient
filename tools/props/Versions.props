@@ -75,7 +75,7 @@
     <MicrosoftSqlServerSqlManagementObjectsVersion>170.8.0</MicrosoftSqlServerSqlManagementObjectsVersion>
     <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
     <MicrosoftSqlServerTypesVersionNet>160.1000.6</MicrosoftSqlServerTypesVersionNet>
-    <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
+    <BenchmarkDotNetVersion>0.13.12</BenchmarkDotNetVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
     <MicrosoftExtensionsHosting>6.0.1</MicrosoftExtensionsHosting>
   </PropertyGroup>

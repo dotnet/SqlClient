@@ -350,12 +350,61 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
+#if NET6_0_OR_GREATER
+        internal static async ValueTask<IPAddress[]> GetDnsIpAddresses(string serverName, TimeoutTimer timeout, bool async)
+#else
+        internal static ValueTask<IPAddress[]> GetDnsIpAddresses(string serverName, TimeoutTimer timeout, bool async)
+#endif
+        {
+            using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
+            {
+                int remainingTimeout = timeout.MillisecondsRemainingInt;
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO,
+                                                          "Getting DNS host entries for serverName {0} within {1} milliseconds.",
+                                                          args0: serverName,
+                                                          args1: remainingTimeout);
+                using CancellationTokenSource cts = new CancellationTokenSource(remainingTimeout);
+
+#if NET6_0_OR_GREATER
+                Task<IPAddress[]> task = Dns.GetHostAddressesAsync(serverName, cts.Token);
+
+                if (async)
+                {
+                    return await task.ConfigureAwait(false);
+                }
+                else
+                {
+                    task.Wait();
+                    return task.Result;
+                }
+#else
+                // using this overload to support netstandard
+                Task<IPAddress[]> task = Dns.GetHostAddressesAsync(serverName);
+
+                task.Wait(cts.Token);
+                return new ValueTask<IPAddress[]>(task.Result);
+#endif
+            }
+        }
+
         internal static IPAddress[] GetDnsIpAddresses(string serverName)
         {
             using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "Getting DNS host entries for serverName {0}.", args0: serverName);
                 return Dns.GetHostAddresses(serverName);
+            }
+        }
+
+        internal static async ValueTask<IPAddress[]> GetDnsIpAddresses(string serverName, bool async)
+        {
+            using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "Getting DNS host entries for serverName {0}.", args0: serverName);
+
+                return async
+                    ? await Dns.GetHostAddressesAsync(serverName)
+                    : Dns.GetHostAddresses(serverName);
             }
         }
 
