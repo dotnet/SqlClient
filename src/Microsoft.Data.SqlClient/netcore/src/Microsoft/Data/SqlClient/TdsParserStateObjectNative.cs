@@ -101,17 +101,17 @@ namespace Microsoft.Data.SqlClient
                 result = SNINativeMethodWrapper.SniGetConnectionIPString(Handle, ref IPStringFromSNI);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionIPString");
 
-                pendingDNSInfo = new SQLDNSInfo(DNSCacheKey, null, null, portFromSNI.ToString());
+                pendingDNSInfo = new SQLDNSInfo(DNSCacheKey, null, null, portFromSNI);
 
                 if (IPAddress.TryParse(IPStringFromSNI, out IPFromSNI))
                 {
                     if (System.Net.Sockets.AddressFamily.InterNetwork == IPFromSNI.AddressFamily)
                     {
-                        pendingDNSInfo.AddrIPv4 = IPStringFromSNI;
+                        pendingDNSInfo.AddrIPv4 = IPFromSNI;
                     }
                     else if (System.Net.Sockets.AddressFamily.InterNetworkV6 == IPFromSNI.AddressFamily)
                     {
-                        pendingDNSInfo.AddrIPv6 = IPStringFromSNI;
+                        pendingDNSInfo.AddrIPv6 = IPFromSNI;
                     }
                 }
             }

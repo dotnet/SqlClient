@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Net;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -28,13 +29,12 @@ namespace Microsoft.Data.SqlClient
         {
             if (null != item)
             {
-                if (DNSInfoCache.ContainsKey(item.FQDN))
-                {
-
-                    DeleteDNSInfo(item.FQDN);
-                }
-
-                return DNSInfoCache.TryAdd(item.FQDN, item);
+#if NET6_0_OR_GREATER || NETSTANDARD2_1
+                DNSInfoCache.AddOrUpdate(item.FQDN, static (key, state) => state, static (key, value, state) => state, item);
+#else
+                DNSInfoCache.AddOrUpdate(item.FQDN, item, (key, value) => item);
+#endif
+                return true;
             }
 
             return false;
@@ -42,8 +42,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool DeleteDNSInfo(string FQDN)
         {
-            SQLDNSInfo value;
-            return DNSInfoCache.TryRemove(FQDN, out value);
+            return DNSInfoCache.TryRemove(FQDN, out _);
         }
 
         internal bool GetDNSInfo(string FQDN, out SQLDNSInfo result)
@@ -71,11 +70,11 @@ namespace Microsoft.Data.SqlClient
     internal sealed class SQLDNSInfo
     {
         public string FQDN { get; set; }
-        public string AddrIPv4 { get; set; }
-        public string AddrIPv6 { get; set; }
-        public string Port { get; set; }
+        public IPAddress AddrIPv4 { get; set; }
+        public IPAddress AddrIPv6 { get; set; }
+        public int Port { get; set; }
 
-        internal SQLDNSInfo(string FQDN, string ipv4, string ipv6, string port)
+        internal SQLDNSInfo(string FQDN, IPAddress ipv4, IPAddress ipv6, int port)
         {
             this.FQDN = FQDN;
             AddrIPv4 = ipv4;

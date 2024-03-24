@@ -187,21 +187,21 @@ namespace Microsoft.Data.SqlClient.SNI
                             }
                             else
                             {
-                                int portRetry = string.IsNullOrEmpty(cachedDNSInfo.Port) ? port : int.Parse(cachedDNSInfo.Port);
+                                int portRetry = cachedDNSInfo.Port == 0 ? port : cachedDNSInfo.Port;
                                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Retrying with cached DNS IP Address {1} and port {2}", args0: _connectionId, args1: cachedDNSInfo.AddrIPv4, args2: cachedDNSInfo.Port);
 
-                                string firstCachedIP;
-                                string secondCachedIP;
+                                IPAddress[] firstCachedIP;
+                                IPAddress[] secondCachedIP;
 
                                 if (SqlConnectionIPAddressPreference.IPv6First == ipPreference)
                                 {
-                                    firstCachedIP = cachedDNSInfo.AddrIPv6;
-                                    secondCachedIP = cachedDNSInfo.AddrIPv4;
+                                    firstCachedIP = new[] { cachedDNSInfo.AddrIPv6 };
+                                    secondCachedIP = new[] { cachedDNSInfo.AddrIPv4 };
                                 }
                                 else
                                 {
-                                    firstCachedIP = cachedDNSInfo.AddrIPv4;
-                                    secondCachedIP = cachedDNSInfo.AddrIPv6;
+                                    firstCachedIP = new[] { cachedDNSInfo.AddrIPv4 };
+                                    secondCachedIP = new[] { cachedDNSInfo.AddrIPv6 };
                                 }
 
                                 try
@@ -300,11 +300,7 @@ namespace Microsoft.Data.SqlClient.SNI
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private Socket TryConnectParallel(string hostName, int port, TimeoutTimer timeout, ref bool callerReportError, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            Socket availableSocket = null;
-            Task<Socket> connectTask;
-            bool isInfiniteTimeOut = timeout.IsInfinite;
-
-            IPAddress[] serverAddresses = isInfiniteTimeOut
+            IPAddress[] serverAddresses = timeout.IsInfinite
                     ? SNICommon.GetDnsIpAddresses(hostName)
                     : SNICommon.GetDnsIpAddresses(hostName, timeout);
 
@@ -314,27 +310,35 @@ namespace Microsoft.Data.SqlClient.SNI
                 callerReportError = false;
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0} serverAddresses.Length {1} Exception: {2}", args0: _connectionId, args1: serverAddresses.Length, args2: Strings.SNI_ERROR_47);
                 ReportTcpSNIError(0, SNICommon.MultiSubnetFailoverWithMoreThan64IPs, Strings.SNI_ERROR_47);
-                return availableSocket;
+                return null;
             }
 
-            string IPv4String = null;
-            string IPv6String = null;
+            return TryConnectParallel(serverAddresses, port, timeout, ref callerReportError, cachedFQDN, ref pendingDNSInfo);
+        }
+
+        private Socket TryConnectParallel(IPAddress[] serverAddresses, int port, TimeoutTimer timeout, ref bool callerReportError, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        {
+            Socket availableSocket = null;
+            Task<Socket> connectTask;
+            bool isInfiniteTimeOut = timeout.IsInfinite;
+            IPAddress ipv4Address = null;
+            IPAddress ipv6Address = null;
 
             foreach (IPAddress ipAddress in serverAddresses)
             {
                 if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
                 {
-                    IPv4String = ipAddress.ToString();
+                    ipv4Address = ipAddress;
                 }
                 else if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
                 {
-                    IPv6String = ipAddress.ToString();
+                    ipv6Address = ipAddress;
                 }
             }
 
-            if (IPv4String != null || IPv6String != null)
+            if (ipv4Address != null || ipv6Address != null)
             {
-                pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
+                pendingDNSInfo = new SQLDNSInfo(cachedFQDN, ipv4Address, ipv6Address, port);
             }
 
             connectTask = ParallelConnectAsync(serverAddresses, port);
@@ -355,9 +359,10 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Returns array of IP addresses for the given server name, sorted according to the given preference.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException">Thrown when ipPreference is not supported</exception>
-        private static IEnumerable<IPAddress> GetHostAddressesSortedByPreference(string serverName, SqlConnectionIPAddressPreference ipPreference)
+        private static IPAddress[] GetHostAddressesSortedByPreference(string serverName, SqlConnectionIPAddressPreference ipPreference)
         {
-            IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);
+            IPAddress[] dnsIPAddresses = Dns.GetHostAddresses(serverName);
+            IPAddress[] ipAddresses;
             AddressFamily? prioritiesFamily = ipPreference switch
             {
                 SqlConnectionIPAddressPreference.IPv4First => AddressFamily.InterNetwork,
@@ -366,29 +371,44 @@ namespace Microsoft.Data.SqlClient.SNI
                 _ => throw ADP.NotSupportedEnumerationValue(typeof(SqlConnectionIPAddressPreference), ipPreference.ToString(), nameof(GetHostAddressesSortedByPreference))
             };
 
-            // Return addresses of the preferred family first
-            if (prioritiesFamily != null)
+            if (prioritiesFamily == null)
             {
-                foreach (IPAddress ipAddress in ipAddresses)
+                ipAddresses = dnsIPAddresses;
+            }
+            else
+            {
+                int resultArrayIndex = 0;
+
+                ipAddresses = new IPAddress[dnsIPAddresses.Length];
+
+                // Return addresses of the preferred family first
+                for (int i = 0; i < dnsIPAddresses.Length; i++)
                 {
-                    if (ipAddress.AddressFamily == prioritiesFamily)
+                    if (dnsIPAddresses[i].AddressFamily == prioritiesFamily)
                     {
-                        yield return ipAddress;
+                        ipAddresses[resultArrayIndex++] = dnsIPAddresses[i];
                     }
+                }
+
+                // Return addresses of the other family
+                for (int i = 0; i < dnsIPAddresses.Length; i++)
+                {
+                    if (dnsIPAddresses[i].AddressFamily is AddressFamily.InterNetwork or AddressFamily.InterNetworkV6
+                        && dnsIPAddresses[i].AddressFamily != prioritiesFamily)
+                    {
+                        ipAddresses[resultArrayIndex++] = dnsIPAddresses[i];
+                    }
+                }
+
+                // If the DNS resolution returned records of types other than A and AAAA, the original array size will be
+                // too large, and must thus be resized. This is very unlikely, so we only try to do this post-hoc.
+                if (resultArrayIndex + 1 < ipAddresses.Length)
+                {
+                    Array.Resize(ref ipAddresses, resultArrayIndex + 1);
                 }
             }
 
-            // Return addresses of the other family
-            foreach (IPAddress ipAddress in ipAddresses)
-            {
-                if (ipAddress.AddressFamily is AddressFamily.InterNetwork or AddressFamily.InterNetworkV6)
-                {
-                    if (prioritiesFamily == null || ipAddress.AddressFamily != prioritiesFamily)
-                    {
-                        yield return ipAddress;
-                    }
-                }
-            }
+            return ipAddresses;
         }
 
         // Connect to server with hostName and port.
@@ -396,10 +416,15 @@ namespace Microsoft.Data.SqlClient.SNI
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private static Socket Connect(string serverName, int port, TimeoutTimer timeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
+            IPAddress[] ipAddresses = GetHostAddressesSortedByPreference(serverName, ipPreference);
+
+            return Connect(ipAddresses, port, timeout, ipPreference, cachedFQDN, ref pendingDNSInfo);
+        }
+
+        private static Socket Connect(IPAddress[] ipAddresses, int port, TimeoutTimer timeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        {
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "IP preference : {0}", Enum.GetName(typeof(SqlConnectionIPAddressPreference), ipPreference));
             bool isInfiniteTimeout = timeout.IsInfinite;
-
-            IEnumerable<IPAddress> ipAddresses = GetHostAddressesSortedByPreference(serverName, ipPreference);
 
             foreach (IPAddress ipAddress in ipAddresses)
             {
@@ -436,8 +461,12 @@ namespace Microsoft.Data.SqlClient.SNI
                             {
                                 return null;
                             }
+#if NET6_0_OR_GREATER
+                            Task socketConnectTask = socket.ConnectAsync(ipAddress, port);
+#else
                             // Socket.Connect does not support infinite timeouts, so we use Task to simulate it
                             Task socketConnectTask = new Task(() => socket.Connect(ipAddress, port));
+#endif
                             socketConnectTask.ConfigureAwait(false);
                             socketConnectTask.Start();
                             int remainingTimeout = timeout.MillisecondsRemainingInt;
@@ -494,17 +523,21 @@ namespace Microsoft.Data.SqlClient.SNI
                     if (isConnected)
                     {
                         socket.Blocking = true;
-                        string iPv4String = null;
-                        string iPv6String = null;
-                        if (socket.AddressFamily == AddressFamily.InterNetwork)
+
+                        IPAddress ipv4Address = null;
+                        IPAddress ipv6Address = null;
+
+                        if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
                         {
-                            iPv4String = ipAddress.ToString();
+                            ipv4Address = ipAddress;
                         }
                         else
                         {
-                            iPv6String = ipAddress.ToString();
+                            ipv6Address = ipAddress;
                         }
-                        pendingDNSInfo = new SQLDNSInfo(cachedFQDN, iPv4String, iPv6String, port.ToString());
+
+                        pendingDNSInfo = new SQLDNSInfo(cachedFQDN, ipv4Address, ipv6Address, port);
+
                         isSocketSelected = true;
                         return socket;
                     }

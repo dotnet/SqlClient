@@ -854,17 +854,17 @@ namespace Microsoft.Data.SqlClient
                 result = SNINativeMethodWrapper.SniGetConnectionIPString(_physicalStateObj.Handle, ref IPStringFromSNI);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionIPString");
 
-                _connHandler.pendingSQLDNSObject = new SQLDNSInfo(DNSCacheKey, null, null, portFromSNI.ToString());
+                _connHandler.pendingSQLDNSObject = new SQLDNSInfo(DNSCacheKey, null, null, portFromSNI);
 
                 if (IPAddress.TryParse(IPStringFromSNI, out IPFromSNI))
                 {
                     if (System.Net.Sockets.AddressFamily.InterNetwork == IPFromSNI.AddressFamily)
                     {
-                        _connHandler.pendingSQLDNSObject.AddrIPv4 = IPStringFromSNI;
+                        _connHandler.pendingSQLDNSObject.AddrIPv4 = IPFromSNI;
                     }
                     else if (System.Net.Sockets.AddressFamily.InterNetworkV6 == IPFromSNI.AddressFamily)
                     {
-                        _connHandler.pendingSQLDNSObject.AddrIPv6 = IPStringFromSNI;
+                        _connHandler.pendingSQLDNSObject.AddrIPv6 = IPFromSNI;
                     }
                 }
             }
