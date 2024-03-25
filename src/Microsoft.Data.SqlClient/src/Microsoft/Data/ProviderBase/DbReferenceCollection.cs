@@ -95,7 +95,7 @@ namespace Microsoft.Data.ProviderBase
                 {
                     if (_items[i].RefInfo == 0)
                     {
-                        _items[i].SetTNewTarget(refInfo, value);
+                        _items[i].SetNewTarget(refInfo, value);
                         Debug.Assert(_items[i].TryGetTarget(out object _), "missing expected target");
                         itemAdded = true;
                         break;
@@ -106,7 +106,7 @@ namespace Microsoft.Data.ProviderBase
                 if ((!itemAdded) && (_lastItemIndex + 1 < _items.Length))
                 {
                     _lastItemIndex++;
-                    _items[_lastItemIndex].SetTNewTarget(refInfo, value);
+                    _items[_lastItemIndex].SetNewTarget(refInfo, value);
                     itemAdded = true;
                 }
 
@@ -117,7 +117,7 @@ namespace Microsoft.Data.ProviderBase
                     {
                         if (!_items[i].TryGetTarget(out object _))
                         {
-                            _items[i].SetTNewTarget(refInfo, value);
+                            _items[i].SetNewTarget(refInfo, value);
                             Debug.Assert(_items[i].TryGetTarget(out object _), "missing expected target");
                             itemAdded = true;
                             break;
@@ -130,7 +130,7 @@ namespace Microsoft.Data.ProviderBase
                 {
                     Array.Resize<CollectionEntry>(ref _items, _items.Length * 2);
                     _lastItemIndex++;
-                    _items[_lastItemIndex].SetTNewTarget(refInfo, value);
+                    _items[_lastItemIndex].SetNewTarget(refInfo, value);
                 }
 
                 _estimatedCount++;
