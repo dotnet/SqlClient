@@ -786,7 +786,7 @@ namespace Microsoft.Data.SqlClient
         {
             string message = string.Empty;
 #pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
-            if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
+            if ((protocol & (SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
 #pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
             {
                 message = StringsHelper.Format(Strings.SEC_ProtocolWarning, protocol.ToFriendlyName());
