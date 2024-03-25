@@ -4,10 +4,6 @@
             <summary>Represents a SQL client logger.</summary>
             <remarks>To be added.</remarks>
         </SqlClientLogger>
-        <ctor>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlClientLogger" /> class.</summary>
-            <remarks>To be added.</remarks>
-        </ctor>
         <IsLoggingEnabled>
             <summary>Gets a value that indicates whether bid tracing is enabled.</summary>
             <value>

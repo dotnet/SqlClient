@@ -2,14 +2,15 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
+#if NETCOREAPP
+
 using System.Diagnostics;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.ProviderBase
 {
-    sealed internal partial class DbConnectionPool
+    internal sealed partial class DbConnectionPool
     {
         private bool IsBlockingPeriodEnabled()
         {
@@ -44,3 +45,5 @@ namespace Microsoft.Data.ProviderBase
         }
     }
 }
+
+#endif

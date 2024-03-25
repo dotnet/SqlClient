@@ -4,7 +4,7 @@
         <SqlConnection>
             <summary>Represents a connection to a SQL Server database. This class cannot be inherited.</summary>
             <remarks>
-            <format type="text/markdown"><![CDATA[  
+            <format type="text/markdown"><![CDATA[
   
 ## Remarks  
  A <xref:Microsoft.Data.SqlClient.SqlConnection> object represents a unique session to a SQL Server data source. With a client/server database system, it is equivalent to a network connection to the server. <xref:Microsoft.Data.SqlClient.SqlConnection> is used together with <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and <xref:Microsoft.Data.SqlClient.SqlCommand> to increase performance when connecting to a Microsoft SQL Server database. For all third-party SQL Server products and other OLE DB-supported data sources, use <xref:System.Data.OleDb.OleDbConnection>.  
@@ -1245,11 +1245,11 @@ The following sample tries to open a connection to an invalid database to simula
   
  <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ServerVersion" /> was called while the returned Task was not completed and the connection was not opened after a call to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync(System.Threading.CancellationToken)" />.</exception>
         </ServerVersion>
-      <ServerProcessId>
-        <summary>Gets the server process Id (SPID) of the active connection.</summary>
-        <value>The server process Id (SPID) of the active connection.</value>
-        <remarks>Returns 0 if the connection is inactive on the client side.</remarks>
-      </ServerProcessId>
+        <ServerProcessId>
+          <summary>Gets the server process Id (SPID) of the active connection.</summary>
+          <value>The server process Id (SPID) of the active connection.</value>
+          <remarks>Returns 0 if the connection is inactive on the client side.</remarks>
+        </ServerProcessId>
         <State>
             <summary>Indicates the state of the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> during the most recent network operation performed on the connection.</summary>
             <value>An <see cref="T:System.Data.ConnectionState" /> enumeration.</value>

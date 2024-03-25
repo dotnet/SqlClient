@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET6_0_OR_GREATER
+
 using System.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -18,3 +20,5 @@ namespace Microsoft.Data.SqlClient
         public override DbBatchCommand CreateBatchCommand() => new SqlBatchCommand();
     }
 }
+
+#endif
