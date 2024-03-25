@@ -4465,7 +4465,7 @@
     <value>Se agotó el tiempo de espera de ejecución. El período de tiempo de espera transcurrió antes de la finalización de la operación o el servidor no responde.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>Error en la validación de un token de atestación. La firma del token no coincide con la firma calculada mediante una clave pública recuperada del punto de conexión de clave pública de atestación en "{0}". Compruebe la asignación de DNS del punto de conexión. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>Error en la validación de un token de atestación. La firma del token no coincide con la firma calculada mediante una clave pública recuperada del punto de conexión de clave pública de atestación en '{0}'. Compruebe la asignación de DNS para el punto de conexión. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles. Si es correcto, póngase en contacto con los servicios de soporte al cliente.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Se ha producido un error interno al reintentar la descarga del certificado raíz de HGS después de un error en la solicitud inicial. Póngase en contacto con el servicio de atención al cliente.</value>
@@ -4486,10 +4486,10 @@
     <value>Error en la validación de un token de atestación. El token tiene un formato no válido. Póngase en contacto con el servicio de atención al cliente. Detalles del error: "{0}".</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>El servicio de atestación devolvió un certificado raíz de HGS expirado para la dirección URL de atestación "{0}". Compruebe el certificado raíz de HGS configurado para su instancia de HGS. Vea https://go.microsoft.com/fwlink/?linkid=2160553 para obtener más detalles.</value>
+    <value>El servicio de atestación devolvió un certificado raíz HGS expirado para la dirección URL de atestación "{0}". Compruebe el certificado raíz de HGS configurado para la instancia de HGS. Consulte https://go.microsoft.com/fwlink/?linkid=2160553 para obtener más detalles.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>El certificado raíz de HGS obtenido para la dirección URL de atestación "{0}" tiene un formato no válido. Compruebe que la dirección URL de atestación sea correcta y que el servidor HGS esté en línea y completamente inicializado. Vea https://go.microsoft.com/fwlink/?linkid=2160553 para obtener más información. Para obtener soporte técnico adicional, póngase en contacto con los servicios de atención al cliente. Detalles del error: "{1}".</value>
+    <value>El certificado raíz de HGS obtenido para la dirección URL de atestación "{0}" tiene un formato no válido. Compruebe que la dirección URL de atestación es correcta y que el servidor HGS está en línea y completamente inicializado. Consulte https://go.microsoft.com/fwlink/?linkid=2160553 para obtener más detalles. Si necesita más ayuda, póngase en contacto con los servicios de asistencia al cliente. Detalles del error: "{1}".</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Error en la validación de un token de atestación. No se puede recuperar una clave pública del punto de conexión de clave pública de atestación o la clave recuperada tiene un formato no válido. Detalles del error: "{0}".</value>
@@ -4507,16 +4507,16 @@
     <value>Error en la validación del token de atestación durante la validación de la firma. Excepción: "{0}".</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>Error en la validación de un token de atestación. La notificación "{0}" en el token tiene un valor no válido para "{1}". Compruebe la directiva de atestación. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles. Si ka directiva es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>Error en la validación de un token de atestación. La notificación "{0}" en el token tiene un valor no válido de "{1}". Compruebe la directiva de atestación. Para obtener más ayuda, consulte https://go.microsoft.com/fwlink/?linkid=2157649. Si la directiva es correcta, póngase en contacto con los servicios de asistencia al cliente.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>Error en la validación del token de atestación. Falta la notificación "{0}" en el token. Compruebe la directiva de atestación. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles. Si ka directiva es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>Error en la validación del token de atestación. Falta la notificación "{0}" en el token. Compruebe la directiva de atestación. Para obtener más ayuda, consulte https://go.microsoft.com/fwlink/?linkid=2157649. Si la directiva es correcta, póngase en contacto con los servicios de asistencia al cliente.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>No se pudo comprobar si el enclave se está ejecutando en modo de producción. Póngase en contacto con el servicio de atención al cliente.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>No se pudo comprobar la directiva de enclave debido a una diferencia entre los valores reales y esperados de la directiva en la propiedad "{0}". Valores reales: "{1}"; valores esperados: "{2}". Vea https://go.microsoft.com/fwlink/?linkid=2160553 para obtener más detalles.</value>
+    <value>No se pudo comprobar la directiva de enclave debido a una diferencia entre los valores reales y esperados de la directiva en la propiedad "{0}". Valores reales: "{1}"; valores esperados: "{2}". Para obtener más ayuda, consulte https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Error de comprobación de firma del informe de enclave. La firma del informe no coincide con la firma calculada mediante el certificado raíz de HGS. Compruebe la asignación de DNS del punto de conexión. Vea https://go.microsoft.com/fwlink/?linkid=2160553 para más detalles. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>

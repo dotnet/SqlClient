@@ -4465,7 +4465,7 @@
     <value>실행 제한 시간을 초과했습니다. 작업이 완료되기 전에 실행 제한 시간이 지났거나 서버가 응답하지 않습니다.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰 서명이 '{0}'의 증명 공개 키 엔드포인트에서 검색된 공개 키를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 을 확인 하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
+    <value>증명 토큰이 유효성 검사에 실패했습니다. 토큰 서명이 '{0}'의 증명 공개 키 엔드포인트에서 검색된 공개 키를 사용한 컴퓨팅 디지털 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649를 참조하세요. 매핑이 올바른 경우 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>초기 요청이 실패한 후 HGS 루트 인증서 다운로드를 다시 시도하는 동안 내부 오류가 발생했습니다. 고객 지원 서비스에 문의하세요.</value>
@@ -4486,10 +4486,10 @@
     <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰의 형식이 유효하지 않습니다. 고객 지원 서비스에 문의하세요. 오류 세부 정보: '{0}'.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>증명 서비스가 증명 URL '{0}'에 대해 만료된 HGS 루트 인증서를 반환했습니다. HGS 인스턴스에 대해 구성된 HGS 루트 인증서를 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 을 확인 하세요.</value>
+    <value>증명 서비스가 증명 URL '{0}'에 대해 만료된 HGS 루트 인증서를 반환했습니다. HGS 인스턴스에 대해 구성된 HGS 루트 인증서를 확인하고 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 페이지를 참조하세요.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>증명 URL '{0}'에 대해 가져온 HGS 루트 인증서의 형식이 유효하지 않습니다. 증명 URL이 올바르며 HGS 서버가 온라인 상태이고 완전히 초기화되었는지 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 을 확인 하세요. 추가 지원은 고객 지원 서비스 팀에 문의하세요. 오류 세부 정보: '{1}'.</value>
+    <value>증명 URL '{0}'에 대해 가져온 HGS 루트 인증서의 형식이 잘못되었습니다. 증명 URL이 올바르고 HGS 서버가 온라인 상태이고 완전히 초기화되었는지 확인합니다. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 페이지를 참조하세요. 추가 지원은 고객 지원 서비스에 문의하세요. 오류 세부 정보: '{1}'.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>증명 토큰의 유효성을 검사하지 못했습니다. 증명 공개 키 엔드포인트에서 공개 키를 검색할 수 없거나, 검색된 키의 형식이 유효하지 않습니다. 오류 세부 정보: '{0}'.</value>
@@ -4507,16 +4507,16 @@
     <value>서명 유효성 검사 도중 증명 토큰의 유효성을 검사하지 못했습니다. 예외: '{0}'.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰의 클레임 '{0}'의 '{1}'의 값이 유효하지 않습니다. 증명 정책을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 을 확인 하세요. 정책이 올바르면 고객 지원 서비스에 문의하세요.</value>
+    <value>증명 토큰이 유효성 검사에 실패했습니다. 토큰의 클레임 '{0}'에 잘못된 값 '{1}'이(가) 있습니다. 증명 정책을 확인합니다. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 페이지를 참조하세요. 정책이 올바른 경우 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>증명 토큰의 유효성을 검사하지 못했습니다. 클레임 '{0}'이(가) 토큰에 없습니다. 증명 정책을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 을 확인 하세요. 정책이 올바르면 고객 지원 서비스에 문의하세요.</value>
+    <value>증명 토큰이 유효성 검사에 실패했습니다. 토큰에 클레임 '{0}'이(가) 없습니다. 증명 정책을 확인합니다. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 페이지를 참조하세요. 정책이 올바른 경우 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>enclave가 프로덕션 모드에서 실행되고 있는지 확인하지 못했습니다. 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>속성 '{0}'의 예상 값과 실제 값 간의 차이로 인해 enclave 정책을 확인할 수 없습니다. 실제: '{1}', 예상: '{2}'. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 을 확인 하세요.</value>
+    <value>속성 '{0}'의 예상 값과 실제 값 간의 차이로 인해 enclave 정책을 확인할 수 없습니다. 실제: '{1}', 예상: '{2}' - 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 링크를 참조하세요.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>enclave 보고서의 서명을 확인하지 못했습니다. 보고서 서명이 HGS 루트 인증서를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553을 확인 하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>

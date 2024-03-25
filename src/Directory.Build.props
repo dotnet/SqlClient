@@ -51,6 +51,7 @@
     <NetFxResources>$(ManagedSourceCode)src\Resources\</NetFxResources>
     <AddOnsPath>$(ManagedSourceCode)add-ons\</AddOnsPath>
     <SqlServerSource>$(RepoRoot)src\Microsoft.SqlServer.Server\</SqlServerSource>
+    <CommonsourceRoot>$(RepoRoot)src\Microsoft.Data.SqlClient\src\</CommonsourceRoot>
     <ObjFolder>$(Artifacts)obj\</ObjFolder>
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
     <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
@@ -95,5 +96,10 @@
   <Import Project="$(ToolsDir)props\Tools.props" />
   <!-- Provides Build properties -->
   <Import Project="$(ToolsDir)props\AssemblyInfo.props" /> 
-  <Import Project="$(ToolsDir)props\AssemblyRef.props" />  
+  <Import Project="$(ToolsDir)props\AssemblyRef.props" />
+
+  <!-- Fix GetTargetPath issues - see https://github.com/dotnet/msbuild/issues/4303#issuecomment-482345617 -->
+  <PropertyGroup>
+    <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
+  </PropertyGroup>
 </Project>

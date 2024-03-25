@@ -1793,10 +1793,10 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NET6_0_OR_GREATER
-        /// <inheritdoc />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CanCreateBatch/*'/>
         public override bool CanCreateBatch => true;
 
-        /// <inheritdoc />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbBatch/*'/>
         protected override DbBatch CreateDbBatch() => new SqlBatch(this);
 #endif
 
