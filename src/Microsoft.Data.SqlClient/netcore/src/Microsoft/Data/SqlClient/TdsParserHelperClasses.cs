@@ -769,6 +769,11 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "SSL 3.0";
             }
+            else if ((protocol & SslProtocols.Ssl2) == SslProtocols.Ssl2) // CodeQL [SM00395] False Positive: Suppressing CodeQL warning as this is a legacy code
+#pragma warning restore CS0618 // Type or member is obsolete: SSL is depricated
+            {
+                name = "SSL 2.0";
+            }
             else
             {
                 name = protocol.ToString();
@@ -786,7 +791,7 @@ namespace Microsoft.Data.SqlClient
         {
             string message = string.Empty;
 #pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
-            if ((protocol & (SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
+            if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None) // CodeQL [SM00395] False Positive: Suppressing CodeQL warning as this is a legacy code
 #pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
             {
                 message = StringsHelper.Format(Strings.SEC_ProtocolWarning, protocol.ToFriendlyName());
