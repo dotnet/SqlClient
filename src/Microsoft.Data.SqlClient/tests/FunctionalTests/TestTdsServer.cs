@@ -60,12 +60,9 @@ namespace Microsoft.Data.SqlClient.Tests
 
             int port = server._endpoint.ServerEndPoint.Port;
 
-            String hostName = Dns.GetHostName().ToUpper();
-
             server._connectionStringBuilder = new SqlConnectionStringBuilder()
             {
-                DataSource = $"{hostName}," + port,
-                //DataSource = $"localhost,{port}",
+                DataSource = "localhost," + port,
                 ConnectTimeout = connectionTimeout,
                 Encrypt = (encryptionType == TDSPreLoginTokenEncryptionType.Off ? SqlConnectionEncryptOption.Optional : SqlConnectionEncryptOption.Mandatory)
             }; 

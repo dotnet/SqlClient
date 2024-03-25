@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+//using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
@@ -263,6 +264,21 @@ namespace Microsoft.SqlServer.TDS
 
                 // Calculate how much data can be read until the end of the packet is reached
                 long packetDataAvailable = IncomingPacketHeader.Length - IncomingPacketPosition;
+
+                // set count to actual size of data to be read from the buffer
+                if (packetDataAvailable < count)
+                    count = (int)packetDataAvailable;
+
+                //if (packetDataAvailable < count)
+                //{
+                //    Debug.WriteLine($"packetDataAvailable is only {packetDataAvailable} bytes but was expecting to get {count} bytes.");
+                //    Debug.WriteLine($"Changing expected data size to {packetDataAvailable} bytes only.");
+                //    count = (int)packetDataAvailable;
+                //}
+                //else
+                //{
+                //    Debug.WriteLine($"packetDataAvailable is {packetDataAvailable} bytes and expecting to get {count} bytes.");
+                //}
 
                 // Check how much data we should give back in the current iteration
                 int packetDataToRead = Math.Min((int)packetDataAvailable, count - bufferReadPosition);
