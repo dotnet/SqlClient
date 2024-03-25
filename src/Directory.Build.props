@@ -24,6 +24,10 @@
     -->
     <ReferenceType Condition="$(ReferenceType) == ''">Project</ReferenceType>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+
+    <WarningsAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>low</NuGetAuditLevel>
   </PropertyGroup>
   <PropertyGroup Condition="$(BuildForRelease) == 'true'">
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
