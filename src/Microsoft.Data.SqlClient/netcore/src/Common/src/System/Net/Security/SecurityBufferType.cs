@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if !NET8_0_OR_GREATER
+
 namespace System.Net.Security
 {
     // sspi.h
@@ -26,3 +28,5 @@ namespace System.Net.Security
         SECBUFFER_READONLY_WITH_CHECKSUM = 0x10000000
     }
 }
+
+#endif

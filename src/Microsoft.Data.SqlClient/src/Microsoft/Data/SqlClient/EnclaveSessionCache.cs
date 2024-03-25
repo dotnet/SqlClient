@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if !NETSTANDARD2_0
+
 using System;
 using System.Runtime.Caching;
 using System.Threading;
@@ -12,7 +14,7 @@ namespace Microsoft.Data.SqlClient
     internal class EnclaveSessionCache
     {
         private readonly MemoryCache enclaveMemoryCache = new MemoryCache("EnclaveMemoryCache");
-        private readonly Object enclaveCacheLock = new Object();
+        private readonly object enclaveCacheLock = new object();
 
         // Nonce for each message sent by the client to the server to prevent replay attacks by the server,
         // given that for Always Encrypted scenarios, the server is considered an "untrusted" man-in-the-middle.
@@ -37,8 +39,7 @@ namespace Microsoft.Data.SqlClient
 
             lock (enclaveCacheLock)
             {
-                long counter;
-                SqlEnclaveSession enclaveSession = GetEnclaveSession(enclaveSessionParameters, out counter);
+                SqlEnclaveSession enclaveSession = GetEnclaveSession(enclaveSessionParameters, out _);
 
                 if (enclaveSession != null && enclaveSession.SessionId == enclaveSessionToInvalidate.SessionId)
                 {
@@ -73,3 +74,5 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
+
+#endif
