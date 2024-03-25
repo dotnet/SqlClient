@@ -769,11 +769,6 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "SSL 3.0";
             }
-            else if ((protocol & SslProtocols.Ssl2) == SslProtocols.Ssl2)
-#pragma warning restore CS0618 // Type or member is obsolete: SSL is depricated
-            {
-                name = "SSL 2.0";
-            }
             else
             {
                 name = protocol.ToString();
