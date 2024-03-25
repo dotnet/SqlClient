@@ -18,13 +18,12 @@ namespace Microsoft.Data.ProviderBase
     {
         private static readonly Action<Task<DbConnectionInternal>, object> s_tryGetConnectionCompletedContinuation = TryGetConnectionCompletedContinuation;
 
-        internal bool TryGetConnection(DbConnection owningConnection, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, DbConnectionInternal oldConnection, out DbConnectionInternal connection)
+        internal async Task<DbConnectionInternal> TryGetConnection(DbConnection owningConnection, CancellationToken cancellationToken, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
         {
             Debug.Assert(null != owningConnection, "null owningConnection?");
-
+            DbConnectionInternal connection;
             DbConnectionPoolGroup poolGroup;
             DbConnectionPool connectionPool;
-            connection = null;
 
             //  Work around race condition with clearing the pool between GetConnectionPool obtaining pool 
             //  and GetConnection on the pool checking the pool state.  Clearing the pool in this window
@@ -49,65 +48,7 @@ namespace Microsoft.Data.ProviderBase
                     // this connection should not be pooled via DbConnectionPool
                     // or have a disabled pool entry.
                     poolGroup = GetConnectionPoolGroup(owningConnection); // previous entry have been disabled
-
-                    if (retry != null)
-                    {
-                        Task<DbConnectionInternal> newTask;
-                        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-                        lock (s_pendingOpenNonPooled)
-                        {
-                            // look for an available task slot (completed or empty)
-                            int idx;
-                            for (idx = 0; idx < s_pendingOpenNonPooled.Length; idx++)
-                            {
-                                Task task = s_pendingOpenNonPooled[idx];
-                                if (task == null)
-                                {
-                                    s_pendingOpenNonPooled[idx] = GetCompletedTask();
-                                    break;
-                                }
-                                else if (task.IsCompleted)
-                                {
-                                    break;
-                                }
-                            }
-
-                            // if didn't find one, pick the next one in round-robin fashion
-                            if (idx == s_pendingOpenNonPooled.Length)
-                            {
-                                idx = (int)(s_pendingOpenNonPooledNext % s_pendingOpenNonPooled.Length);
-                                unchecked
-                                {
-                                    s_pendingOpenNonPooledNext++;
-                                }
-                            }
-
-                            // now that we have an antecedent task, schedule our work when it is completed.
-                            // If it is a new slot or a completed task, this continuation will start right away.
-                            newTask = CreateReplaceConnectionContinuation(s_pendingOpenNonPooled[idx], owningConnection, retry, userOptions, oldConnection, poolGroup, cancellationTokenSource);
-
-                            // Place this new task in the slot so any future work will be queued behind it
-                            s_pendingOpenNonPooled[idx] = newTask;
-                        }
-
-                        // Set up the timeout (if needed)
-                        if (owningConnection.ConnectionTimeout > 0)
-                        {
-                            int connectionTimeoutMilliseconds = owningConnection.ConnectionTimeout * 1000;
-                            cancellationTokenSource.CancelAfter(connectionTimeoutMilliseconds);
-                        }
-
-                        // once the task is done, propagate the final results to the original caller
-                        newTask.ContinueWith(
-                            continuationAction: s_tryGetConnectionCompletedContinuation, 
-                            state: Tuple.Create(cancellationTokenSource, retry),
-                            scheduler: TaskScheduler.Default
-                        );
-
-                        return false;
-                    }
-
-                    connection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
+                    connection = await CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
                     SqlClientEventSource.Log.EnterNonPooledConnection();
                 }
                 else
@@ -115,14 +56,11 @@ namespace Microsoft.Data.ProviderBase
                     if (((SqlClient.SqlConnection)owningConnection).ForceNewConnection)
                     {
                         Debug.Assert(!(oldConnection is DbConnectionClosed), "Force new connection, but there is no old connection");
-                        connection = connectionPool.ReplaceConnection(owningConnection, userOptions, oldConnection);
+                        connection = await connectionPool.ReplaceConnection(owningConnection, userOptions, oldConnection);
                     }
                     else
                     {
-                        if (!connectionPool.TryGetConnection(owningConnection, retry, userOptions, out connection))
-                        {
-                            return false;
-                        }
+                        connection = await connectionPool.TryGetConnection(owningConnection, cancellationToken, userOptions);
                     }
 
                     if (connection == null)
@@ -153,35 +91,7 @@ namespace Microsoft.Data.ProviderBase
                 throw ADP.PooledOpenTimeout();
             }
 
-            return true;
-        }
-
-        private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(Task<DbConnectionInternal> task, DbConnection owningConnection, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, DbConnectionInternal oldConnection, DbConnectionPoolGroup poolGroup, CancellationTokenSource cancellationTokenSource)
-        {
-            return task.ContinueWith(
-                (_) =>
-                {
-                    Transaction originalTransaction = ADP.GetCurrentTransaction();
-                    try
-                    {
-                        ADP.SetCurrentTransaction(retry.Task.AsyncState as Transaction);
-                        var newConnection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
-                        if ((oldConnection != null) && (oldConnection.State == ConnectionState.Open))
-                        {
-                            oldConnection.PrepareForReplaceConnection();
-                            oldConnection.Dispose();
-                        }
-                        return newConnection;
-                    }
-                    finally
-                    {
-                        ADP.SetCurrentTransaction(originalTransaction);
-                    }
-                },
-                cancellationTokenSource.Token,
-                TaskContinuationOptions.LongRunning,
-                TaskScheduler.Default
-            );
+            return connection;
         }
 
         private static void TryGetConnectionCompletedContinuation(Task<DbConnectionInternal> task, object state)

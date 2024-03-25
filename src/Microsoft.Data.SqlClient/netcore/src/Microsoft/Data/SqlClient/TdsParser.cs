@@ -8108,7 +8108,7 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
-        internal void TdsLogin(SqlLogin rec, TdsEnums.FeatureExtension requestedFeatures, SessionData recoverySessionData, FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData, SqlConnectionEncryptOption encrypt)
+        internal async Task TdsLogin(SqlLogin rec, TdsEnums.FeatureExtension requestedFeatures, SessionData recoverySessionData, FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData, SqlConnectionEncryptOption encrypt)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
 
@@ -8261,7 +8261,7 @@ namespace Microsoft.Data.SqlClient
                 ArrayPool<byte>.Shared.Return(rentedSSPIBuff, clearArray: true);
             }
 
-            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
+            await _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
             _physicalStateObj.ResetSecurePasswordsInformation();
             _physicalStateObj.HasPendingData = true;
             _physicalStateObj._messageStatus = 0;

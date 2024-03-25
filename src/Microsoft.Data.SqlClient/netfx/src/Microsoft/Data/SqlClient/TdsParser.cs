@@ -493,7 +493,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void Connect(ServerInfo serverInfo,
+        internal async Task Connect(ServerInfo serverInfo,
                               SqlInternalConnectionTds connHandler,
                               TimeoutTimer timeout,
                               SqlConnectionString connectionOptions,
@@ -711,7 +711,7 @@ namespace Microsoft.Data.SqlClient
             // UNDONE - send "" for instance now, need to fix later
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
 
-            SendPreLoginHandshake(
+            await SendPreLoginHandshake(
                 instanceName,
                 encrypt,
                 integratedSecurity,
@@ -775,7 +775,7 @@ namespace Microsoft.Data.SqlClient
                 // for DNS Caching phase 1
                 AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache);
 
-                SendPreLoginHandshake(
+                await SendPreLoginHandshake(
                     instanceName,
                     encrypt,
                     integratedSecurity,
@@ -1038,7 +1038,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void SendPreLoginHandshake(
+        private async Task SendPreLoginHandshake(
             byte[] instanceName,
             SqlConnectionEncryptOption encrypt,
             bool integratedSecurity,
@@ -1229,10 +1229,10 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.WriteByte((byte)PreLoginOptions.LASTOPT);
 
             // Write out payload
-            _physicalStateObj.WriteByteArray(payload, payloadLength, 0);
+            await _physicalStateObj.WriteByteArray(payload, payloadLength, 0);
 
             // Flush packet
-            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
+            await _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
         }
 
         private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificate, ServerCertificateValidationCallback serverCallback, ClientCertificateRetrievalCallback clientCallback)
@@ -2547,7 +2547,7 @@ namespace Microsoft.Data.SqlClient
                                     (error.Class <= TdsEnums.MAX_USER_CORRECTABLE_ERROR_CLASS))
                                 {
                                     // Fire SqlInfoMessage here
-                                    FireInfoMessageEvent(connection,cmdHandler, stateObj, error);
+                                    FireInfoMessageEvent(connection, cmdHandler, stateObj, error);
                                 }
                                 else
                                 {
@@ -8904,7 +8904,7 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
-        internal void TdsLogin(SqlLogin rec,
+        internal async Task TdsLogin(SqlLogin rec,
                                TdsEnums.FeatureExtension requestedFeatures,
                                SessionData recoverySessionData,
                                FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
@@ -9078,7 +9078,7 @@ namespace Microsoft.Data.SqlClient
                            outSSPIBuff,
                            outSSPILength);
 
-            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
+            await _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
             _physicalStateObj.ResetSecurePasswordsInformation();     // Password information is needed only from Login process; done with writing login packet and should clear information
             _physicalStateObj.HasPendingData = true;
             _physicalStateObj._messageStatus = 0;

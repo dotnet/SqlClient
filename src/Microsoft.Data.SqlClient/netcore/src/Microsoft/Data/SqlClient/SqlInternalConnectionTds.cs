@@ -431,10 +431,24 @@ namespace Microsoft.Data.SqlClient
         private string _routingDestination = null;
         private readonly TimeoutTimer _timeout;
 
+        private SqlInternalConnectionTds(
+            SqlConnectionString connectionOptions,
+            Func<SqlAuthenticationParameters, CancellationToken,
+            Task<SqlAuthenticationToken>> accessTokenCallback,
+            object providerInfo
+        ) : base(connectionOptions)
+        {
+            _accessTokenCallback = accessTokenCallback;
+            _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
+            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
+            _poolGroupProviderInfo = (SqlConnectionPoolGroupProviderInfo)providerInfo;
+            _timeout = TimeoutTimer.StartSecondsTimeout(connectionOptions.ConnectTimeout);
+        }
+
         // although the new password is generally not used it must be passed to the ctor
         // the new Login7 packet will always write out the new password (or a length of zero and no bytes if not present)
         //
-        internal SqlInternalConnectionTds(
+        internal static async Task<SqlInternalConnectionTds> Create(
             DbConnectionPoolIdentity identity,
             SqlConnectionString connectionOptions,
             SqlCredential credential,
@@ -448,7 +462,7 @@ namespace Microsoft.Data.SqlClient
             string accessToken = null,
             DbConnectionPool pool = null,
             Func<SqlAuthenticationParameters, CancellationToken,
-            Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
+            Task<SqlAuthenticationToken>> accessTokenCallback = null)
 
         {
 #if DEBUG
@@ -458,58 +472,56 @@ namespace Microsoft.Data.SqlClient
             }
 #endif
             Debug.Assert(reconnectSessionData == null || connectionOptions.ConnectRetryCount > 0, "Reconnect data supplied with CR turned off");
-
-            _dbConnectionPool = pool;
+            var instance = new SqlInternalConnectionTds(
+                connectionOptions,
+                accessTokenCallback,
+                providerInfo
+            )
+            {
+                _dbConnectionPool = pool
+            };
 
             if (connectionOptions.ConnectRetryCount > 0)
             {
-                _recoverySessionData = reconnectSessionData;
+                instance._recoverySessionData = reconnectSessionData;
                 if (reconnectSessionData == null)
                 {
-                    _currentSessionData = new SessionData();
+                    instance._currentSessionData = new SessionData();
                 }
                 else
                 {
-                    _currentSessionData = new SessionData(_recoverySessionData);
-                    _originalDatabase = _recoverySessionData._initialDatabase;
-                    _originalLanguage = _recoverySessionData._initialLanguage;
+                    instance._currentSessionData = new SessionData(instance._recoverySessionData);
+                    instance._originalDatabase = instance._recoverySessionData._initialDatabase;
+                    instance._originalLanguage = instance._recoverySessionData._initialLanguage;
                 }
             }
 
             if (accessToken != null)
             {
-                _accessTokenInBytes = System.Text.Encoding.Unicode.GetBytes(accessToken);
+                instance._accessTokenInBytes = System.Text.Encoding.Unicode.GetBytes(accessToken);
             }
 
-            _accessTokenCallback = accessTokenCallback;
-
-            _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
-
-            _identity = identity;
+            instance._identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");
             Debug.Assert(credential == null || (string.IsNullOrEmpty(connectionOptions.UserID) && string.IsNullOrEmpty(connectionOptions.Password)), "cannot mix the new secure password system and the connection string based password");
 
             Debug.Assert(credential == null || !connectionOptions.IntegratedSecurity, "Cannot use SqlCredential and Integrated Security");
 
-            _poolGroupProviderInfo = (SqlConnectionPoolGroupProviderInfo)providerInfo;
-            _fResetConnection = connectionOptions.ConnectionReset;
-            if (_fResetConnection && _recoverySessionData == null)
+            instance._fResetConnection = connectionOptions.ConnectionReset;
+            if (instance._fResetConnection && instance._recoverySessionData == null)
             {
-                _originalDatabase = connectionOptions.InitialCatalog;
-                _originalLanguage = connectionOptions.CurrentLanguage;
+                instance._originalDatabase = connectionOptions.InitialCatalog;
+                instance._originalLanguage = connectionOptions.CurrentLanguage;
             }
 
-            _timeoutErrorInternal = new SqlConnectionTimeoutErrorInternal();
-            _credential = credential;
+            instance._timeoutErrorInternal = new SqlConnectionTimeoutErrorInternal();
+            instance._credential = credential;
 
-            _parserLock.Wait(canReleaseFromAnyThread: false);
-            ThreadHasParserLockForClose = true;   // In case of error, let ourselves know that we already own the parser lock
+            instance._parserLock.Wait(canReleaseFromAnyThread: false);
+            instance.ThreadHasParserLockForClose = true;   // In case of error, let ourselves know that we already own the parser lock
 
             try
             {
-                _timeout = TimeoutTimer.StartSecondsTimeout(connectionOptions.ConnectTimeout);
-
                 // If transient fault handling is enabled then we can retry the login up to the ConnectRetryCount.
                 int connectionEstablishCount = applyTransientFaultHandling ? connectionOptions.ConnectRetryCount + 1 : 1;
                 int transientRetryIntervalInMilliSeconds = connectionOptions.ConnectRetryInterval * 1000; // Max value of transientRetryInterval is 60*1000 ms. The max value allowed for ConnectRetryInterval is 60
@@ -517,7 +529,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        OpenLoginEnlist(_timeout, connectionOptions, credential, newPassword, newSecurePassword, redirectedUserInstance);
+                        await instance.OpenLoginEnlist(instance._timeout, connectionOptions, credential, newPassword, newSecurePassword, redirectedUserInstance);
 
                         break;
                     }
@@ -525,9 +537,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (i + 1 == connectionEstablishCount
                             || !applyTransientFaultHandling
-                            || _timeout.IsExpired
-                            || _timeout.MillisecondsRemaining < transientRetryIntervalInMilliSeconds
-                            || !IsTransientError(sqlex))
+                            || instance._timeout.IsExpired
+                            || instance._timeout.MillisecondsRemaining < transientRetryIntervalInMilliSeconds
+                            || !instance.IsTransientError(sqlex))
                         {
                             throw;
                         }
@@ -540,10 +552,11 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                ThreadHasParserLockForClose = false;
-                _parserLock.Release();
+                instance.ThreadHasParserLockForClose = false;
+                instance._parserLock.Release();
             }
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.ctor|ADV> {0}, constructed new TDS internal connection", ObjectID);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.ctor|ADV> {0}, constructed new TDS internal connection", instance.ObjectID);
+            return instance;
         }
 
         // Returns true if the Sql error is a transient.
@@ -1249,7 +1262,7 @@ namespace Microsoft.Data.SqlClient
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
         }
 
-        private void Login(ServerInfo server, TimeoutTimer timeout, string newPassword, SecureString newSecurePassword, SqlConnectionEncryptOption encrypt)
+        private async Task Login(ServerInfo server, TimeoutTimer timeout, string newPassword, SecureString newSecurePassword, SqlConnectionEncryptOption encrypt)
         {
             // create a new login record
             SqlLogin login = new SqlLogin();
@@ -1365,7 +1378,7 @@ namespace Microsoft.Data.SqlClient
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
-            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
+            await _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 
         private void LoginFailure()
@@ -1382,7 +1395,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void OpenLoginEnlist(TimeoutTimer timeout,
+        private async Task OpenLoginEnlist(TimeoutTimer timeout,
                                     SqlConnectionString connectionOptions,
                                     SqlCredential credential,
                                     string newPassword,
@@ -1416,7 +1429,7 @@ namespace Microsoft.Data.SqlClient
                 if (hasFailoverPartner)
                 {
                     _timeoutErrorInternal.SetFailoverScenario(true); // this is a failover scenario
-                    LoginWithFailover(
+                    await LoginWithFailover(
                                 useFailoverPartner,
                                 dataSource,
                                 failoverPartner,
@@ -1430,7 +1443,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     _timeoutErrorInternal.SetFailoverScenario(false); // not a failover scenario
-                    LoginNoFailover(
+                    await LoginNoFailover(
                             dataSource,
                             newPassword,
                             newSecurePassword,
@@ -1475,7 +1488,7 @@ namespace Microsoft.Data.SqlClient
         //  DEVNOTE: The logic in this method is paralleled by the logic in LoginWithFailover.
         //           Changes to either one should be examined to see if they need to be reflected in the other
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        private void LoginNoFailover(ServerInfo serverInfo,
+        private async Task LoginNoFailover(ServerInfo serverInfo,
                                      string newPassword,
                                      SecureString newSecurePassword,
                                      bool redirectedUserInstance,
@@ -1541,7 +1554,7 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    AttemptOneLogin(serverInfo,
+                    await AttemptOneLogin(serverInfo,
                                     newPassword,
                                     newSecurePassword,
                                     connectionOptions.MultiSubnetFailover ? intervalTimer : timeout);
@@ -1625,7 +1638,7 @@ namespace Microsoft.Data.SqlClient
                     _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PreLoginBegin);
                     _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.Failover);
                     _timeoutErrorInternal.SetFailoverScenario(true); // this is a failover scenario
-                    LoginWithFailover(
+                    await LoginWithFailover(
                                 true,   // start by using failover partner, since we already failed to connect to the primary
                                 serverInfo,
                                 ServerProvidedFailOverPartner,
@@ -1641,7 +1654,7 @@ namespace Microsoft.Data.SqlClient
                 // Sleep for a bit to prevent clogging the network with requests,
                 //  then update sleep interval for next iteration (max 1 second interval)
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginNoFailover|ADV> {0}, sleeping {1}[milisec]", ObjectID, sleepInterval);
-                Thread.Sleep(sleepInterval);
+                await Task.Delay(sleepInterval);
                 sleepInterval = (sleepInterval < 500) ? sleepInterval * 2 : 1000;
             }
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
@@ -1691,7 +1704,7 @@ namespace Microsoft.Data.SqlClient
         //  DEVNOTE: The logic in this method is paralleled by the logic in LoginNoFailover.
         //           Changes to either one should be examined to see if they need to be reflected in the other
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        private void LoginWithFailover(
+        private async Task LoginWithFailover(
                 bool useFailoverHost,
                 ServerInfo primaryServerInfo,
                 string failoverHost,
@@ -1778,7 +1791,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     // Attempt login.  Use timerInterval for attempt timeout unless infinite timeout was requested.
-                    AttemptOneLogin(
+                    await AttemptOneLogin(
                             currentServerInfo,
                             newPassword,
                             newSecurePassword,
@@ -1905,7 +1918,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Common code path for making one attempt to establish a connection and log in to server.
-        private void AttemptOneLogin(
+        private async Task AttemptOneLogin(
                                 ServerInfo serverInfo,
                                 string newPassword,
                                 SecureString newSecurePassword,
@@ -1927,7 +1940,7 @@ namespace Microsoft.Data.SqlClient
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
-            this.Login(serverInfo, timeout, newPassword, newSecurePassword, ConnectionOptions.Encrypt);
+            await this.Login(serverInfo, timeout, newPassword, newSecurePassword, ConnectionOptions.Encrypt);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
@@ -2850,9 +2863,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        internal override Task<bool> TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, CancellationToken cancellationToken, DbConnectionOptions userOptions)
         {
-            return base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+            return base.TryOpenConnectionInternal(outerConnection, connectionFactory, cancellationToken, userOptions);
         }
     }
 

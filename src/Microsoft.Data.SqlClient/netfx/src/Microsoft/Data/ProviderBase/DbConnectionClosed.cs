@@ -7,6 +7,7 @@ namespace Microsoft.Data.ProviderBase
     using System.Data;
     using System.Data.Common;
     using System.Diagnostics;
+    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Data.Common;
     using SysTx = System.Transactions;
@@ -66,9 +67,9 @@ namespace Microsoft.Data.ProviderBase
             throw ADP.ClosedConnectionError();
         }
 
-        internal override bool TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        internal override Task<bool> TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, CancellationToken cancellationToken, DbConnectionOptions userOptions)
         {
-            return base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+            return base.TryOpenConnectionInternal(outerConnection, connectionFactory, cancellationToken, userOptions);
         }
     }
 
@@ -77,11 +78,6 @@ namespace Microsoft.Data.ProviderBase
 
         protected DbConnectionBusy(ConnectionState state) : base(state, true, false)
         {
-        }
-
-        internal override bool TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
-        {
-            throw ADP.ConnectionAlreadyOpen(State);
         }
     }
 
@@ -120,35 +116,9 @@ namespace Microsoft.Data.ProviderBase
             connectionFactory.SetInnerConnectionTo(owningObject, DbConnectionClosedPreviouslyOpened.SingletonInstance);
         }
 
-        internal override bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        internal override Task<bool> TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, CancellationToken cancellationToken, DbConnectionOptions userOptions)
         {
-            return TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
-        }
-
-        internal override bool TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
-        {
-
-            if (retry == null || !retry.Task.IsCompleted)
-            {
-                // retry is null if this is a synchronous call
-
-                // if someone calls Open or OpenAsync while in this state, 
-                // then the retry task will not be completed
-
-                throw ADP.ConnectionAlreadyOpen(State);
-            }
-
-            // we are completing an asynchronous open
-            Debug.Assert(retry.Task.Status == TaskStatus.RanToCompletion, "retry task must be completed successfully");
-            DbConnectionInternal openConnection = retry.Task.Result;
-            if (null == openConnection)
-            {
-                connectionFactory.SetInnerConnectionTo(outerConnection, this);
-                throw ADP.InternalConnectionError(ADP.ConnectionError.GetConnectionReturnsNull);
-            }
-            connectionFactory.SetInnerConnectionEvent(outerConnection, openConnection);
-
-            return true;
+            return TryOpenConnection(outerConnection, connectionFactory, cancellationToken, userOptions);
         }
     }
 
@@ -172,9 +142,9 @@ namespace Microsoft.Data.ProviderBase
         {
         }
 
-        internal override bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        internal override Task<bool> TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, CancellationToken cancellationToken, DbConnectionOptions userOptions)
         {
-            return TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
+            return TryOpenConnection(outerConnection, connectionFactory, cancellationToken, userOptions);
         }
     }
 }

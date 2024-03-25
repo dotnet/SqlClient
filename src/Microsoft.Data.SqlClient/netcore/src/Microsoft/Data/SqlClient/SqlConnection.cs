@@ -43,9 +43,6 @@ namespace Microsoft.Data.SqlClient
 
         private bool _fireInfoMessageEventOnUserErrors; // False by default
 
-        // root task associated with current async invocation
-        private Tuple<TaskCompletionSource<DbConnectionInternal>, Task> _currentCompletion;
-
         private SqlCredential _credential;
         private string _connectionString;
         private int _connectRetryCount;
@@ -1319,7 +1316,6 @@ namespace Microsoft.Data.SqlClient
                             OnStateChange(DbConnectionInternal.StateChangeClosed);
                         }
                     }
-                    CancelOpenAndWait();
                     CloseInnerConnection();
                     GC.SuppressFinalize(this);
 
@@ -1388,8 +1384,8 @@ namespace Microsoft.Data.SqlClient
             Open(SqlConnectionOverrides.None);
         }
 
-        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides)
-            => RetryLogicProvider.Execute(this, () => TryOpen(retry, overrides));
+        private Task<bool> TryOpenWithRetry(CancellationToken cancellationToken, SqlConnectionOverrides overrides)
+            => RetryLogicProvider.ExecuteAsync(this, () => TryOpen(cancellationToken, overrides), cancellationToken);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
@@ -1398,38 +1394,46 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
 
-                Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
+                InternalOpenAsync(CancellationToken.None, overrides)
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+        }
 
-                PrepareStatisticsForNewConnection();
+        private async Task InternalOpenAsync(CancellationToken cancellationToken, SqlConnectionOverrides overrides)
+        {
+            Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
 
-                SqlStatistics statistics = null;
+            PrepareStatisticsForNewConnection();
 
-                Exception e = null;
-                try
+            SqlStatistics statistics = null;
+
+            Exception e = null;
+            try
+            {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                if (!await (IsProviderRetriable ? TryOpenWithRetry(cancellationToken, overrides) : TryOpen(cancellationToken, overrides)))
                 {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, overrides) : TryOpen(null, overrides)))
-                    {
-                        throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
-                    }
+                    throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                 }
-                catch (Exception ex)
-                {
-                    e = ex;
-                    throw;
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
+            }
+            catch (Exception ex)
+            {
+                e = ex;
+                throw;
+            }
+            finally
+            {
+                SqlStatistics.StopTimer(statistics);
 
-                    if (e != null)
-                    {
-                        s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
-                    }
-                    else
-                    {
-                        s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
-                    }
+                if (e != null)
+                {
+                    s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
+                }
+                else
+                {
+                    s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
                 }
             }
         }
@@ -1648,103 +1652,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void CancelOpenAndWait()
-        {
-            // copy from member to avoid changes by background thread
-            var completion = _currentCompletion;
-            if (completion != null)
-            {
-                completion.Item1.TrySetCanceled();
-                ((IAsyncResult)completion.Item2).AsyncWaitHandle.WaitOne();
-            }
-            Debug.Assert(_currentCompletion == null, "After waiting for an async call to complete, there should be no completion source");
-        }
-
-        private Task InternalOpenWithRetryAsync(CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(cancellationToken), cancellationToken);
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
-        public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsProviderRetriable ?
-                InternalOpenWithRetryAsync(cancellationToken) :
-                InternalOpenAsync(cancellationToken);
-
-        private Task InternalOpenAsync(CancellationToken cancellationToken)
+        public override async Task OpenAsync(CancellationToken cancellationToken)
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("SqlConnection.InternalOpenAsync | API | Object Id {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.InternalOpenAsync | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
-                Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
-
-                PrepareStatisticsForNewConnection();
-
-                SqlStatistics statistics = null;
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-
-                    System.Transactions.Transaction transaction = ADP.GetCurrentTransaction();
-                    TaskCompletionSource<DbConnectionInternal> completion = new TaskCompletionSource<DbConnectionInternal>(transaction);
-                    TaskCompletionSource<object> result = new TaskCompletionSource<object>(state: this);
-
-                    if (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection) ||
-                        s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
-                    {
-                        result.Task.ContinueWith(
-                            continuationAction: s_openAsyncComplete,
-                            state: operationId, // connection is passed in TaskCompletionSource async state
-                            scheduler: TaskScheduler.Default
-                        );
-                    }
-
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        result.SetCanceled();
-                        return result.Task;
-                    }
-
-                    bool completed;
-
-                    try
-                    {
-                        completed = TryOpen(completion);
-                    }
-                    catch (Exception e)
-                    {
-                        s_diagnosticListener.WriteConnectionOpenError(operationId, this, e);
-                        result.SetException(e);
-                        return result.Task;
-                    }
-
-                    if (completed)
-                    {
-                        result.SetResult(null);
-                    }
-                    else
-                    {
-                        CancellationTokenRegistration registration = new CancellationTokenRegistration();
-                        if (cancellationToken.CanBeCanceled)
-                        {
-                            registration = cancellationToken.Register(s_openAsyncCancel, completion);
-                        }
-                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, registration);
-                        _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
-                        completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
-                        return result.Task;
-                    }
-
-                    return result.Task;
-                }
-                catch (Exception ex)
-                {
-                    s_diagnosticListener.WriteConnectionOpenError(operationId, this, ex);
-                    throw;
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                }
+                await InternalOpenAsync(cancellationToken, SqlConnectionOverrides.None);
             }
             finally
             {
@@ -1815,64 +1730,6 @@ namespace Microsoft.Data.SqlClient
                 _registration = registration;
                 SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OpenAsyncRetry | Info | Object Id {0}", _parent?.ObjectID);
             }
-
-            internal void Retry(Task<DbConnectionInternal> retryTask)
-            {
-                SqlClientEventSource.Log.TryTraceEvent("SqlConnection.Retry | Info | Object Id {0}", _parent?.ObjectID);
-                _registration.Dispose();
-                try
-                {
-                    SqlStatistics statistics = null;
-                    try
-                    {
-                        statistics = SqlStatistics.StartTimer(_parent.Statistics);
-
-                        if (retryTask.IsFaulted)
-                        {
-                            Exception e = retryTask.Exception.InnerException;
-                            _parent.CloseInnerConnection();
-                            _parent._currentCompletion = null;
-                            _result.SetException(retryTask.Exception.InnerException);
-                        }
-                        else if (retryTask.IsCanceled)
-                        {
-                            _parent.CloseInnerConnection();
-                            _parent._currentCompletion = null;
-                            _result.SetCanceled();
-                        }
-                        else
-                        {
-                            bool result;
-                            // protect continuation from races with close and cancel
-                            lock (_parent.InnerConnection)
-                            {
-                                result = _parent.TryOpen(_retry);
-                            }
-                            if (result)
-                            {
-                                _parent._currentCompletion = null;
-                                _result.SetResult(null);
-                            }
-                            else
-                            {
-                                _parent.CloseInnerConnection();
-                                _parent._currentCompletion = null;
-                                _result.SetException(ADP.ExceptionWithStackTrace(ADP.InternalError(ADP.InternalErrorCode.CompletedConnectReturnedPending)));
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        SqlStatistics.StopTimer(statistics);
-                    }
-                }
-                catch (Exception e)
-                {
-                    _parent.CloseInnerConnection();
-                    _parent._currentCompletion = null;
-                    _result.SetException(e);
-                }
-            }
         }
 
         private void PrepareStatisticsForNewConnection()
@@ -1892,7 +1749,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool TryOpen(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides = SqlConnectionOverrides.None)
+        private async Task<bool> TryOpen(CancellationToken cancellationToken, SqlConnectionOverrides overrides = SqlConnectionOverrides.None)
         {
             SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
 
@@ -1954,14 +1811,14 @@ namespace Microsoft.Data.SqlClient
 
             if (ForceNewConnection)
             {
-                if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, UserConnectionOptions))
+                if (!await InnerConnection.TryReplaceConnection(this, ConnectionFactory, cancellationToken, UserConnectionOptions))
                 {
                     return false;
                 }
             }
             else
             {
-                if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry, UserConnectionOptions))
+                if (!await InnerConnection.TryOpenConnection(this, ConnectionFactory, cancellationToken, UserConnectionOptions))
                 {
                     return false;
                 }
@@ -2293,7 +2150,10 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnectionTds con = null;
             try
             {
-                con = new SqlInternalConnectionTds(null, connectionOptions, credential, null, newPassword, newSecurePassword, false);
+                con = SqlInternalConnectionTds.Create(null, connectionOptions, credential, null, newPassword, newSecurePassword, false)
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
             }
             finally
             {
