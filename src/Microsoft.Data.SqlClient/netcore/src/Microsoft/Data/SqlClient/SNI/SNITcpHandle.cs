@@ -343,7 +343,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             connectTask = ParallelConnectAsync(serverAddresses, port);
 
-            if (!(connectTask.Wait(isInfiniteTimeOut ? -1: timeout.MillisecondsRemainingInt)))
+            if (connectTask.Status != TaskStatus.RanToCompletion && !(connectTask.Wait(isInfiniteTimeOut ? -1: timeout.MillisecondsRemainingInt)))
             {
                 callerReportError = false;
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0} Connection timed out, Exception: {1}", args0: _connectionId, args1: Strings.SNI_ERROR_40);
@@ -425,11 +425,21 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "IP preference : {0}", Enum.GetName(typeof(SqlConnectionIPAddressPreference), ipPreference));
             bool isInfiniteTimeout = timeout.IsInfinite;
+            IPEndPoint ipEndPoint = null;
 
             foreach (IPAddress ipAddress in ipAddresses)
             {
                 bool isSocketSelected = false;
                 Socket socket = null;
+
+                if (ipEndPoint == null)
+                {
+                    ipEndPoint = new IPEndPoint(ipAddress, port);
+                }
+                else
+                {
+                    ipEndPoint.Address = ipAddress;
+                }
 
                 try
                 {
@@ -453,7 +463,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         if (isInfiniteTimeout)
                         {
-                            socket.Connect(ipAddress, port);
+                            socket.Connect(ipEndPoint);
                         }
                         else
                         {
@@ -462,10 +472,10 @@ namespace Microsoft.Data.SqlClient.SNI
                                 return null;
                             }
 #if NET6_0_OR_GREATER
-                            Task socketConnectTask = socket.ConnectAsync(ipAddress, port);
+                            Task socketConnectTask = socket.ConnectAsync(ipEndPoint);
 #else
                             // Socket.Connect does not support infinite timeouts, so we use Task to simulate it
-                            Task socketConnectTask = new Task(() => socket.Connect(ipAddress, port));
+                            Task socketConnectTask = new Task(() => socket.Connect(ipEndPoint));
 #endif
                             socketConnectTask.ConfigureAwait(false);
                             socketConnectTask.Start();
@@ -558,7 +568,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return null;
         }
 
-        private static Task<Socket> ParallelConnectAsync(IPAddress[] serverAddresses, int port)
+        private static async Task<Socket> ParallelConnectAsync(IPAddress[] serverAddresses, int port)
         {
             if (serverAddresses == null)
             {
@@ -569,93 +579,100 @@ namespace Microsoft.Data.SqlClient.SNI
                 throw new ArgumentOutOfRangeException(nameof(serverAddresses));
             }
 
-            var sockets = new List<Socket>(serverAddresses.Length);
-            var connectTasks = new List<Task>(serverAddresses.Length);
-            var tcs = new TaskCompletionSource<Socket>();
-            var lastError = new StrongBox<Exception>();
-            var pendingCompleteCount = new StrongBox<int>(serverAddresses.Length);
+            using var connectCancellationTokenSource = new CancellationTokenSource();
+            Exception lastException = null;
+            IPEndPoint ipEndPoint = null;
+
+            List<Socket> emptySocketList = new List<Socket>();
+            List<Socket> socketErrorCheckList = new List<Socket>(1);
+            Dictionary<Task, Socket> socketConnectionTasks = new(serverAddresses.Length);
+            Socket completedSocket;
 
             foreach (IPAddress address in serverAddresses)
             {
                 var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                sockets.Add(socket);
+
+                if (ipEndPoint == null)
+                {
+                    ipEndPoint = new IPEndPoint(address, port);
+                }
+                else
+                {
+                    ipEndPoint.Address = address;
+                }
 
                 // Start all connection tasks now, to prevent possible race conditions with
                 // calling ConnectAsync on disposed sockets.
                 try
                 {
-                    connectTasks.Add(socket.ConnectAsync(address, port));
+#if NET6_0_OR_GREATER
+                    socketConnectionTasks.Add(socket.ConnectAsync(ipEndPoint, connectCancellationTokenSource.Token).AsTask(), socket);
+#else
+                    socketConnectionTasks.Add(socket.ConnectAsync(ipEndPoint), socket);
+#endif
                 }
                 catch (Exception e)
                 {
-                    connectTasks.Add(Task.FromException(e));
+                    socketConnectionTasks.Add(Task.FromException(e), socket);
                 }
             }
 
-            for (int i = 0; i < sockets.Count; i++)
-            {
-                ParallelConnectHelper(sockets[i], connectTasks[i], tcs, pendingCompleteCount, lastError, sockets);
-            }
-
-            return tcs.Task;
-        }
-
-        private static async void ParallelConnectHelper(
-            Socket socket,
-            Task connectTask,
-            TaskCompletionSource<Socket> tcs,
-            StrongBox<int> pendingCompleteCount,
-            StrongBox<Exception> lastError,
-            List<Socket> sockets)
-        {
-            bool success = false;
             try
             {
-                // Try to connect.  If we're successful, store this task into the result task.
-                await connectTask.ConfigureAwait(false);
-                success = tcs.TrySetResult(socket);
-                if (success)
+                while (socketConnectionTasks.Count > 0)
                 {
-                    // Whichever connection completes the return task is responsible for disposing
-                    // all of the sockets (except for whichever one is stored into the result task).
-                    // This ensures that only one thread will attempt to dispose of a socket.
-                    // This is also the closest thing we have to canceling connect attempts.
-                    foreach (Socket otherSocket in sockets)
+                    Task completedTask = await Task.WhenAny(socketConnectionTasks.Keys).ConfigureAwait(false);
+                    Socket taskSocket = socketConnectionTasks[completedTask];
+
+                    if (completedTask.Status == TaskStatus.RanToCompletion)
                     {
-                        if (otherSocket != socket)
+                        // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
+                        if (socketErrorCheckList.Count > 0)
                         {
-                            otherSocket.Dispose();
+                            socketErrorCheckList.Clear();
                         }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                // Store an exception to be published if no connection succeeds
-                Interlocked.Exchange(ref lastError.Value, e);
-            }
-            finally
-            {
-                // If we didn't successfully transition the result task to completed,
-                // then someone else did and they would have cleaned up, so there's nothing
-                // more to do.  Otherwise, no one completed it yet or we failed; either way,
-                // see if we're the last outstanding connection, and if we are, try to complete
-                // the task, and if we're successful, it's our responsibility to dispose all of the sockets.
-                if (!success && Interlocked.Decrement(ref pendingCompleteCount.Value) == 0)
-                {
-                    if (lastError.Value != null)
-                    {
-                        tcs.TrySetException(lastError.Value);
+                        socketErrorCheckList.Add(taskSocket);
+
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Determining the status of the socket following completion of ConnectAsync.");
+
+                        Socket.Select(emptySocketList, emptySocketList, socketErrorCheckList, 0);
+                        if (taskSocket.Connected && socketErrorCheckList.Count == 0)
+                        {
+
+                            completedSocket = taskSocket;
+                            connectCancellationTokenSource.Cancel();
+                            socketConnectionTasks.Remove(completedTask);
+
+                            lastException = null;
+                            return completedSocket;
+                        }
                     }
                     else
                     {
-                        tcs.TrySetCanceled();
+                        if (completedTask.Status == TaskStatus.Faulted)
+                        {
+                            lastException = completedTask.Exception;
+                        }
                     }
 
-                    foreach (Socket s in sockets)
-                    {
-                        s.Dispose();
-                    }
+                    taskSocket.Dispose();
+                    socketConnectionTasks.Remove(completedTask);
+                }
+
+                if (lastException != null)
+                    throw lastException;
+
+                connectCancellationTokenSource.Token.ThrowIfCancellationRequested();
+                // This return statement can never be reached. socketConnectionsTasks would need to have been drained, but this can only happen if all tasks
+                // inside it have succeeded, failed or have been cancelled. Success will result in an early return, failure results in a thrown exception,
+                // cancellation results in another exception.
+                return null;
+            }
+            finally
+            {
+                foreach (KeyValuePair<Task, Socket> socketConnectionTaskMapping in socketConnectionTasks)
+                {
+                    socketConnectionTaskMapping.Value.Dispose();
                 }
             }
         }
