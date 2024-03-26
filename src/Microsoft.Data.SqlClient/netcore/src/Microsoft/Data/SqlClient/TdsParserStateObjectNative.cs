@@ -432,7 +432,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
             {
-                protocolVersion = (int)SslProtocols.Ssl2;
+                protocolVersion = (int)SslProtocols.Ssl2; // CodeQL [SM00395] False Positive: Suppressing CodeQL warning as this is a legacy code
 #pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
             }
             else //if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
