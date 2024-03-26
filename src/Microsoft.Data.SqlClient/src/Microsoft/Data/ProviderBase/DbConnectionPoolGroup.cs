@@ -34,6 +34,7 @@ namespace Microsoft.Data.ProviderBase
         private readonly DbConnectionOptions _connectionOptions;
         private readonly DbConnectionPoolKey _poolKey;
         private readonly DbConnectionPoolGroupOptions _poolGroupOptions;
+        private readonly SqlClient.Telemetry.DbConnectionPoolTelemetry _telemetry;
         private ConcurrentDictionary<DbConnectionPoolIdentity, DbConnectionPool> _poolCollection;
 
         private int _state;          // see PoolGroupState* below
@@ -66,6 +67,8 @@ namespace Microsoft.Data.ProviderBase
             // we check _poolGroupOptions first
             _poolCollection = new ConcurrentDictionary<DbConnectionPoolIdentity, DbConnectionPool>();
             _state = PoolGroupStateActive;
+            // Keep and maintain a single instance of the current telemetry
+            _telemetry = new SqlClient.Telemetry.DbConnectionPoolTelemetry(poolGroupOptions);
         }
 
         internal DbConnectionOptions ConnectionOptions => _connectionOptions;
@@ -107,6 +110,8 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
+        internal SqlClient.Telemetry.DbConnectionPoolTelemetry Telemetry => _telemetry;
+
         internal int Clear()
         {
             // must be multi-thread safe with competing calls by Clear and Prune via background thread
@@ -123,7 +128,7 @@ namespace Microsoft.Data.ProviderBase
                 }
             }
 
-            // Then, if a new collection was created, release the pools from the old collection
+            // Then, if a new collection was created, release the pools from the old collection and reset telemetry to zero
             if (oldPoolCollection != null)
             {
                 foreach (KeyValuePair<DbConnectionPoolIdentity, DbConnectionPool> entry in oldPoolCollection)
@@ -138,6 +143,7 @@ namespace Microsoft.Data.ProviderBase
                         connectionFactory.QueuePoolForRelease(pool, true);
                     }
                 }
+                _telemetry.Reset();
             }
 
             // Finally, return the pool collection count - this may be non-zero if something was added while we were clearing
@@ -198,6 +204,7 @@ namespace Microsoft.Data.ProviderBase
                                     bool addResult = _poolCollection.TryAdd(currentIdentity, newPool);
                                     Debug.Assert(addResult, "No other pool with current identity should exist at this point");
                                     SqlClientEventSource.Log.EnterActiveConnectionPool();
+                                    _telemetry.ReportNewPool();
 #if NETFRAMEWORK
                                     connectionFactory.PerformanceCounters.NumberOfActiveConnectionPools.Increment();
 #endif
@@ -279,6 +286,7 @@ namespace Microsoft.Data.ProviderBase
 #if NETFRAMEWORK
                                 connectionFactory.PerformanceCounters.NumberOfActiveConnectionPools.Decrement();
 #endif
+                                _telemetry.ReportRemovedPool();
                                 connectionFactory.QueuePoolForRelease(pool, false);
                             }
                             else
