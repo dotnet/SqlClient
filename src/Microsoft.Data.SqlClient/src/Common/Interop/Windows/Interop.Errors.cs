@@ -11,5 +11,7 @@ internal partial class Interop
         internal const int ERROR_INVALID_HANDLE = 0x6;
         internal const int ERROR_SHARING_VIOLATION = 0x20;
         internal const int ERROR_INVALID_PARAMETER = 0x57;
+
+        internal const uint STATUS_OBJECT_NAME_NOT_FOUND = 0xc0000034;
     }
 }
