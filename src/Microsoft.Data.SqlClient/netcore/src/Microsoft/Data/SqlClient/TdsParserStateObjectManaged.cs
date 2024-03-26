@@ -28,10 +28,17 @@ namespace Microsoft.Data.SqlClient.SNI
 #endif
         public TdsParserStateObjectManaged(TdsParser parser) : base(parser) { }
 
+        public static TdsParserStateObjectManaged Instance(TdsParser parser) 
+            => new TdsParserStateObjectManaged(parser);
+
         internal TdsParserStateObjectManaged(TdsParser parser, TdsParserStateObject physicalConnection, bool async) :
             base(parser, physicalConnection, async)
         { }
-
+        
+        
+        public static TdsParserStateObjectManaged Instance(TdsParser parser, TdsParserStateObject physicalConnection, bool async) 
+            => new TdsParserStateObjectManaged(parser, physicalConnection, async);
+        
         internal override uint Status => _sessionHandle != null ? _sessionHandle.Status : TdsEnums.SNI_UNINITIALIZED;
 
         internal override SessionHandle SessionHandle => SessionHandle.FromManagedSession(_sessionHandle);

@@ -325,6 +325,10 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj = new TdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
+        
+        public static TdsParser Instance(bool MARS, bool fAsynchronous)
+            => new TdsParser(MARS, fAsynchronous);
+
 
         internal SqlInternalConnectionTds Connection
         {

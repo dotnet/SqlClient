@@ -209,6 +209,9 @@ namespace Microsoft.Data.SqlClient
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
 
+        public static TdsParser Instance(bool MARS, bool fAsynchronous)
+            => new TdsParser(MARS, fAsynchronous);
+
         internal SqlInternalConnectionTds Connection
         {
             get
