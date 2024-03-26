@@ -38,6 +38,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal SqlRetryLogicBaseProvider CommandProvider { get; private set; }
 
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode("Types specified in the configuration sections may be removed by trimming")]
+#endif
         public SqlConfigurableRetryLogicLoader(ISqlConfigurableRetryConnectionSection connectionRetryConfigs,
                                                ISqlConfigurableRetryCommandSection commandRetryConfigs,
                                                string cnnSectionName = SqlConfigurableRetryConnectionSection.Name,
@@ -54,6 +57,9 @@ namespace Microsoft.Data.SqlClient
                             commandRetryConfigs == null ? null : CreateRetryLogicProvider(cmdSectionName, commandRetryConfigs));
         }
 
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode("The type specified in configuration section might be removed")]
+#endif
         private static SqlRetryLogicBaseProvider CreateRetryLogicProvider(string sectionName, ISqlConfigurableRetryConnectionSection configSection)
         {
             string methodName = nameof(CreateRetryLogicProvider);
@@ -101,6 +107,9 @@ namespace Microsoft.Data.SqlClient
             return SqlConfigurableRetryFactory.CreateNoneRetryProvider();
         }
 
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode("The type might be removed")]
+#endif
         private static SqlRetryLogicBaseProvider ResolveRetryLogicProvider(string configurableRetryType, string retryMethod, SqlRetryLogicOption option)
         {
             string methodName = nameof(ResolveRetryLogicProvider);

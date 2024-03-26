@@ -10,6 +10,7 @@
 
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -50,6 +51,8 @@ namespace System.Net
 #endif
     internal sealed partial class NetEventSource : EventSource
     {
+        private const string EventSourceSuppressMessage = "Parameters to this method are primitive and are trimmer safe";
+
         /// <summary>The single event source instance to use for all logging.</summary>
         public static readonly NetEventSource Log = new NetEventSource();
 
@@ -518,6 +521,8 @@ namespace System.Net
         #region Custom WriteEvent overloads
 
         [NonEvent]
+        [SuppressMessage("ReflectionAnalysis", "IL2026:UnrecognizedReflectionPattern",
+                   Justification = EventSourceSuppressMessage)]
         private unsafe void WriteEvent(int eventId, string arg1, string arg2, string arg3, string arg4)
         {
             if (IsEnabled())
@@ -566,6 +571,8 @@ namespace System.Net
         }
 
         [NonEvent]
+        [SuppressMessage("ReflectionAnalysis", "IL2026:UnrecognizedReflectionPattern",
+                   Justification = EventSourceSuppressMessage)]
         private unsafe void WriteEvent(int eventId, string arg1, string arg2, byte[] arg3)
         {
             if (IsEnabled())
@@ -612,6 +619,8 @@ namespace System.Net
         }
 
         [NonEvent]
+        [SuppressMessage("ReflectionAnalysis", "IL2026:UnrecognizedReflectionPattern",
+                   Justification = EventSourceSuppressMessage)]
         private unsafe void WriteEvent(int eventId, string arg1, int arg2, int arg3, int arg4)
         {
             if (IsEnabled())
@@ -651,6 +660,8 @@ namespace System.Net
         }
 
         [NonEvent]
+        [SuppressMessage("ReflectionAnalysis", "IL2026:UnrecognizedReflectionPattern",
+                   Justification = EventSourceSuppressMessage)]
         private unsafe void WriteEvent(int eventId, string arg1, int arg2, string arg3)
         {
             if (IsEnabled())
@@ -688,6 +699,8 @@ namespace System.Net
         }
 
         [NonEvent]
+        [SuppressMessage("ReflectionAnalysis", "IL2026:UnrecognizedReflectionPattern",
+                   Justification = EventSourceSuppressMessage)]
         private unsafe void WriteEvent(int eventId, string arg1, string arg2, int arg3)
         {
             if (IsEnabled())
@@ -725,6 +738,8 @@ namespace System.Net
         }
 
         [NonEvent]
+        [SuppressMessage("ReflectionAnalysis", "IL2026:UnrecognizedReflectionPattern",
+                   Justification = EventSourceSuppressMessage)]
         private unsafe void WriteEvent(int eventId, string arg1, string arg2, string arg3, int arg4)
         {
             if (IsEnabled())
