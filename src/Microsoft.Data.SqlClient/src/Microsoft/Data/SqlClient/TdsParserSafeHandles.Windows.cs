@@ -164,6 +164,8 @@ namespace Microsoft.Data.SqlClient
             string hostNameInCertificate)
             : base(IntPtr.Zero, true)
         {
+            Span<byte> instanceNameBuffer = stackalloc byte[256];
+
 #if !NET6_0_OR_GREATER
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
@@ -172,7 +174,6 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 _fSync = fSync;
-                instanceName = new byte[256]; // Size as specified by netlibs.
                 // Option ignoreSniOpenTimeout is no longer available
                 //if (ignoreSniOpenTimeout)
                 //{
@@ -185,12 +186,16 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                 int transparentNetworkResolutionStateNo = (int)transparentNetworkResolutionState;
                 _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
-                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, transparentNetworkResolutionStateNo, totalTimeout,
+                            spnBuffer, instanceNameBuffer, flushCache, fSync, timeout, fParallel, transparentNetworkResolutionStateNo, totalTimeout,
                             ADP.IsAzureSqlServerEndpoint(serverName), ipPreference, cachedDNSInfo, hostNameInCertificate);
 #else
                 _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
-                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
+                            spnBuffer, instanceNameBuffer, flushCache, fSync, timeout, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
 #endif // NETFRAMEWORK
+
+                int instanceNameLength = instanceNameBuffer.IndexOf((byte)0);
+
+                instanceName = instanceNameLength < 1 ? Array.Empty<byte>() : instanceNameBuffer.Slice(0, instanceNameLength).ToArray();
             }
         }
 

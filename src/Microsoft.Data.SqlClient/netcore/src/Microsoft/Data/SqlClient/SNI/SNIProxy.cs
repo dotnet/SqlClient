@@ -132,7 +132,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="fullServerName">Full server name from connection string</param>
         /// <param name="timeout">Timer expiration</param>
-        /// <param name="instanceName">Instance name</param>
         /// <param name="spnBuffer">SPN</param>
         /// <param name="serverSPN">pre-defined SPN</param>
         /// <param name="flushCache">Flush packet cache</param>
@@ -149,7 +148,6 @@ namespace Microsoft.Data.SqlClient.SNI
         internal static SNIHandle CreateConnectionHandle(
             string fullServerName,
             TimeoutTimer timeout,
-            out byte[] instanceName,
             ref byte[][] spnBuffer,
             string serverSPN,
             bool flushCache,
@@ -163,8 +161,6 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            instanceName = new byte[1];
-
             bool errorWithLocalDBProcessing;
             string localDBDataSource = GetLocalDBDataSource(fullServerName, out errorWithLocalDBProcessing);
 

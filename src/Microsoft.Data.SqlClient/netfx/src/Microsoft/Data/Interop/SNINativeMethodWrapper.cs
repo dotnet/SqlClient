@@ -1107,7 +1107,7 @@ namespace Microsoft.Data.SqlClient
             string constring,
             ref IntPtr pConn,
             byte[] spnBuffer,
-            byte[] instanceName,
+            Span<byte> instanceName,
             bool fOverrideCache,
             bool fSync,
             int timeout,
@@ -1119,7 +1119,7 @@ namespace Microsoft.Data.SqlClient
             SQLDNSInfo cachedDNSInfo,
             string hostNameInCertificate)
         {
-            fixed (byte* pin_instanceName = &instanceName[0])
+            fixed (byte* pin_instanceName = instanceName)
             {
                 SNI_CLIENT_CONSUMER_INFO clientConsumerInfo = new SNI_CLIENT_CONSUMER_INFO();
 

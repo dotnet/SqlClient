@@ -19,6 +19,7 @@ namespace Microsoft.Data.SqlClient.SNI
 {
     internal sealed class TdsParserStateObjectManaged : TdsParserStateObject
     {
+        private static readonly byte[] s_staticInstanceName = Array.Empty<byte>();
         private SNIMarsConnection? _marsConnection;
         private SNIHandle? _sessionHandle;
 #if NET7_0_OR_GREATER
@@ -98,9 +99,11 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spnBuffer, serverSPN,
+            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, ref spnBuffer, serverSPN,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                 hostNameInCertificate, serverCertificateFilename);
+
+            instanceName = s_staticInstanceName;
 
             if (sessionHandle is not null)
             {
