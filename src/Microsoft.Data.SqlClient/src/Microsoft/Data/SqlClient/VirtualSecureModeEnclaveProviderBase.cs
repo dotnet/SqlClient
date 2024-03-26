@@ -251,7 +251,7 @@ namespace Microsoft.Data.SqlClient
             {
                 chain.ChainPolicy.ExtraStore.Add(cert);
             }
-            // CodeQL [SM00395] False Positive: Suppressing CodeQL warning as this is a legacy code
+            // CodeQL [SM00395] False Positive: Suppressing CodeQL warning 
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
             if (!chain.Build(healthReportCert))
