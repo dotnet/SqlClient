@@ -15,19 +15,19 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class CertificateTestWithTdsServerTest
+    public class CertificateTestWithTdsServer
     {
         private static readonly string s_fullPathToPowershellScript = Path.Combine(Directory.GetCurrentDirectory(), "makepfxcert.ps1");
         private static readonly string s_fullPathToPfx = Path.Combine(Directory.GetCurrentDirectory(), "localhostcert.pfx");
 
-        public CertificateTestWithTdsServerTest()
+        public CertificateTestWithTdsServer()
         {
             CreatePfxCertificate(s_fullPathToPowershellScript);
         }
 
         [Theory]
         [MemberData(nameof(ConnectionTestParametersData.GetConnectionTestParameters), MemberType = typeof(ConnectionTestParametersData))]
-        public void ConnectionTestTest(ConnectionTestParameters connectionTestParameters)
+        public void ConnectionTest(ConnectionTestParameters connectionTestParameters)
         {
             string userId = string.Empty;
             string password = string.Empty;
