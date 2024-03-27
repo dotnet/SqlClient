@@ -31,11 +31,6 @@ function Invoke-SqlServerCertificateCommand {
 
     # Create a self-signed certificate
     if ($OS -eq "Unix") {
-        # Install OpenSSL module
-        Install-Module -Name OpenSSL -Repository PSGallery -Force
-        # Show version of OpenSSL just to make sure it is installed
-        openssl --version
-
         # Create self signed certificate using openssl
         Write-Output "Creating certificate for linux..."
         openssl req -x509 -newkey rsa:4096 -sha256 -days 1095 -nodes -keyout ./localhostcert.key -out ./localhostcert.cer -subj "/CN=$fqdn" -addext "subjectAltName=DNS:$fqdn,DNS:localhost,IP:127.0.0.1,IP:::1"
