@@ -114,11 +114,11 @@ function Invoke-SqlServerCertificateCommand {
       $msg += "`n" + $e.Message
     }
 
+    Write-Output "Certificate generation was not successfull. $msg"
     if ($OS -eq "Unix") {
         # Display the contents of result.txt for debugging
         cat result.txt
     }
-    Write-Output "Certificate generation was not successfull. $msg"
   }
 
   Write-Output "Certificate generation task completed."
