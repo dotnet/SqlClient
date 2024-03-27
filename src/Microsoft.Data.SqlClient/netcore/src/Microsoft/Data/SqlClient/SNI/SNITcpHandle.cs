@@ -458,7 +458,10 @@ namespace Microsoft.Data.SqlClient.SNI
                         ipAddress.AddressFamily,
                         isInfiniteTimeout);
 
+                    CancellationTokenSource timeoutConnectionCancellationTokenSource = null;
+                    int remainingTimeout = timeout.MillisecondsRemainingInt;
                     bool isConnected;
+
                     try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
                     {
                         if (isInfiniteTimeout)
@@ -471,34 +474,50 @@ namespace Microsoft.Data.SqlClient.SNI
                             {
                                 return null;
                             }
+
 #if NET6_0_OR_GREATER
-                            Task socketConnectTask = socket.ConnectAsync(ipEndPoint);
+                            timeoutConnectionCancellationTokenSource = new CancellationTokenSource(remainingTimeout);
+                            ValueTask socketConnectValueTask = socket.ConnectAsync(ipEndPoint, timeoutConnectionCancellationTokenSource.Token);
+
+                            if (! socketConnectValueTask.IsCompleted)
+                            {
+                                try
+                                {
+                                    socketConnectValueTask.AsTask().Wait();
+                                }
+                                catch (OperationCanceledException)
+                                {
+                                    throw ADP.TimeoutException($"The socket couldn't connect during the expected {remainingTimeout} remaining time.");
+                                }
+                            }
+
 #else
                             // Socket.Connect does not support infinite timeouts, so we use Task to simulate it
                             Task socketConnectTask = new Task(() => socket.Connect(ipEndPoint));
-#endif
                             socketConnectTask.ConfigureAwait(false);
                             socketConnectTask.Start();
-                            int remainingTimeout = timeout.MillisecondsRemainingInt;
+
                             if (!socketConnectTask.Wait(remainingTimeout))
                             {
+                                timeoutConnectionCancellationTokenSource.Cancel();
                                 throw ADP.TimeoutException($"The socket couldn't connect during the expected {remainingTimeout} remaining time.");
                             }
+
                             throw SQL.SocketDidNotThrow();
+#endif
                         }
 
                         isConnected = true;
                     }
-                    catch (AggregateException aggregateException) when (!isInfiniteTimeout
-                                                                        && aggregateException.InnerException is SocketException socketException
-                                                                        && socketException.SocketErrorCode == SocketError.WouldBlock)
+                    catch (SocketException socketException) when (!isInfiniteTimeout
+                                                                    && socketException.SocketErrorCode == SocketError.WouldBlock)
                     {
                         // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
                         // Socket.Select is used because it supports timeouts, while Socket.Connect does not
 
-                        List<Socket> checkReadLst;
-                        List<Socket> checkWriteLst;
-                        List<Socket> checkErrorLst;
+                        List<Socket> checkReadLst = new (1);
+                        List<Socket> checkWriteLst = new(1);
+                        List<Socket> checkErrorLst = new(1);
 
                         // Repeating Socket.Select several times if our timeout is greater
                         // than int.MaxValue microseconds because of 
@@ -508,15 +527,16 @@ namespace Microsoft.Data.SqlClient.SNI
                         {
                             if (timeout.IsExpired)
                             {
-                                return null;
+                                throw ADP.TimeoutException($"The socket couldn't connect during the expected {remainingTimeout} remaining time.");
+                                //return null;
                             }
 
                             int socketSelectTimeout =
                                 checked((int)(Math.Min(timeout.MillisecondsRemainingInt, int.MaxValue / 1000) * 1000));
 
-                            checkReadLst = new List<Socket>(1) { socket };
-                            checkWriteLst = new List<Socket>(1) { socket };
-                            checkErrorLst = new List<Socket>(1) { socket };
+                            checkReadLst.Add(socket);
+                            checkWriteLst.Add(socket);
+                            checkErrorLst.Add(socket);
 
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
                                                                       "Determining the status of the socket during the remaining timeout of {0} microseconds.",
@@ -528,6 +548,10 @@ namespace Microsoft.Data.SqlClient.SNI
 
                         // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
                         isConnected = socket.Connected && checkErrorLst.Count == 0;
+                    }
+                    finally
+                    {
+                        timeoutConnectionCancellationTokenSource?.Dispose();
                     }
 
                     if (isConnected)
@@ -697,9 +721,11 @@ namespace Microsoft.Data.SqlClient.SNI
                         // TODO: Resolve whether to send _serverNameIndication or _targetServer. _serverNameIndication currently results in error. Why?
                         _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
                     }
+                    _sslStream.Flush();
                     if (_sslOverTdsStream is not null)
                     {
                         _sslOverTdsStream.FinishHandshake();
+                        _sslOverTdsStream.Flush();
                     }
                 }
                 catch (AuthenticationException aue)
@@ -724,11 +750,14 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public override void DisableSsl()
         {
+            _sslStream.Flush();
             _sslStream.Dispose();
             _sslStream = null;
+            _sslOverTdsStream?.Flush();
             _sslOverTdsStream?.Dispose();
             _sslOverTdsStream = null;
             _stream = _tcpStream;
+            _stream.Flush();
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL Disabled. Communication will continue on TCP Stream.", args0: _connectionId);
         }
 

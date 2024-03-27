@@ -860,7 +860,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.WriteByteSpan(preLoginPacketBuffer);
 
             // Flush packet
-            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
+            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH)?.Wait();
         }
 
         private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificateFilename)
@@ -942,7 +942,11 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.ParsingError();
             }
-            byte[] payload = new byte[_physicalStateObj._inBytesPacket];
+            // Most of the time, this response packet will be very small (less than 512 bytes.)
+            // In such a situation, borrow stack space rather than requesting an array.
+            Span<byte> payload = _physicalStateObj._inBytesPacket < 512
+                ? stackalloc byte[_physicalStateObj._inBytesPacket]
+                : new byte[_physicalStateObj._inBytesPacket];
 
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             result = _physicalStateObj.TryReadByteArray(payload, payload.Length);
@@ -958,24 +962,22 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.InvalidSQLServerVersionUnknown();
             }
 
-            int offset = 0;
-            int payloadOffset = 0;
-            int payloadLength = 0;
-            int option = payload[offset++];
+            int headerOffset = 0;
+            ushort payloadOffset = 0;
+            ushort payloadLength = 0;
+            byte option = payload[headerOffset++];
             bool serverSupportsEncryption = false;
 
             while (option != (byte)PreLoginOptions.LASTOPT)
             {
+                payloadOffset = BinaryPrimitives.ReadUInt16BigEndian(payload.Slice(headerOffset));
+                payloadLength = BinaryPrimitives.ReadUInt16BigEndian(payload.Slice(headerOffset + 2));
+
                 switch (option)
                 {
-                    case (int)PreLoginOptions.VERSION:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
-
+                    case (byte)PreLoginOptions.VERSION:
                         byte majorVersion = payload[payloadOffset];
                         byte minorVersion = payload[payloadOffset + 1];
-                        int level = (payload[payloadOffset + 2] << 8) |
-                                             payload[payloadOffset + 3];
 
                         is2005OrLater = majorVersion >= 9;
                         if (!is2005OrLater)
@@ -985,16 +987,12 @@ namespace Microsoft.Data.SqlClient
 
                         break;
 
-                    case (int)PreLoginOptions.ENCRYPT:
+                    case (byte)PreLoginOptions.ENCRYPT:
                         if (tlsFirst)
                         {
                             // Can skip/ignore this option if we are doing TDS 8.
-                            offset += 4;
                             break;
                         }
-
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
 
                         EncryptionOptions serverOption = (EncryptionOptions)payload[payloadOffset];
 
@@ -1048,11 +1046,8 @@ namespace Microsoft.Data.SqlClient
 
                         break;
 
-                    case (int)PreLoginOptions.INSTANCE:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
-
-                        byte ERROR_INST = 0x1;
+                    case (byte)PreLoginOptions.INSTANCE:
+                        const byte ERROR_INST = 0x1;
                         byte instanceResult = payload[payloadOffset];
 
                         if (instanceResult == ERROR_INST)
@@ -1065,29 +1060,21 @@ namespace Microsoft.Data.SqlClient
 
                         break;
 
-                    case (int)PreLoginOptions.THREADID:
+                    case (byte)PreLoginOptions.THREADID:
                         // DO NOTHING FOR THREADID
-                        offset += 4;
                         break;
 
-                    case (int)PreLoginOptions.MARS:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
-
-                        marsCapable = (payload[payloadOffset] == 0 ? false : true);
+                    case (byte)PreLoginOptions.MARS:
+                        marsCapable = payload[payloadOffset] != 0;
 
                         Debug.Assert(payload[payloadOffset] == 0 || payload[payloadOffset] == 1, "Value for Mars PreLoginHandshake option not equal to 1 or 0!");
                         break;
 
-                    case (int)PreLoginOptions.TRACEID:
+                    case (byte)PreLoginOptions.TRACEID:
                         // DO NOTHING FOR TRACEID
-                        offset += 4;
                         break;
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
-
                         // Only 0x00 and 0x01 are accepted values from the server.
                         if (payload[payloadOffset] != 0x00 && payload[payloadOffset] != 0x01)
                         {
@@ -1108,17 +1095,16 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     default:
-                        Debug.Fail("UNKNOWN option in ConsumePreLoginHandshake, option:" + option);
-
                         // DO NOTHING FOR THESE UNKNOWN OPTIONS
-                        offset += 4;
-
+                        Debug.Fail("UNKNOWN option in ConsumePreLoginHandshake, option:" + option);
                         break;
                 }
 
-                if (offset < payload.Length)
+                headerOffset += sizeof(ushort) + sizeof(ushort);
+
+                if (headerOffset < payload.Length)
                 {
-                    option = payload[offset++];
+                    option = payload[headerOffset++];
                 }
                 else
                 {

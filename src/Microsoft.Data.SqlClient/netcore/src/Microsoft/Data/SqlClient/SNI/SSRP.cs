@@ -16,6 +16,7 @@ namespace Microsoft.Data.SqlClient.SNI
 {
     internal sealed class SSRP
     {
+        private static readonly List<IPAddress> s_emptyList = new(0);
         private static readonly TimeSpan s_sendTimeout = TimeSpan.FromSeconds(1.0);
         private static readonly TimeSpan s_receiveTimeout = TimeSpan.FromSeconds(1.0);
 
@@ -214,10 +215,10 @@ namespace Microsoft.Data.SqlClient.SNI
                     : SNICommon.GetDnsIpAddresses(browserHostname, timeout, async));
 
                 Debug.Assert(ipAddresses.Length > 0, "DNS should throw if zero addresses resolve");
-                IPAddress[] ipv4Addresses = null;
+                List<IPAddress> ipv4Addresses = null;
                 byte[] response4 = null;
 
-                IPAddress[] ipv6Addresses = null;
+                List<IPAddress> ipv6Addresses = null;
                 byte[] response6 = null;
 
                 Exception responseException = null;
@@ -297,7 +298,7 @@ namespace Microsoft.Data.SqlClient.SNI
                             break;
                         }
                     default:
-                        return await SendUDPRequest(ipAddresses, port, requestPacket, true, async); // allIPsInParallel);
+                        return await SendUDPRequest(ipAddresses, port, requestPacket, true, async).ConfigureAwait(false); // allIPsInParallel);
                 }
 
                 return null;
@@ -313,18 +314,18 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="allIPsInParallel">query all resolved IP addresses in parallel</param>
         /// <param name="async">If true, this method will be run asynchronously</param>
         /// <returns>response packet from UDP server</returns>
-        private static async ValueTask<byte[]> SendUDPRequest(IPAddress[] ipAddresses, int port, byte[] requestPacket, bool allIPsInParallel, bool async)
+        private static async ValueTask<byte[]> SendUDPRequest(IList<IPAddress> ipAddresses, int port, byte[] requestPacket, bool allIPsInParallel, bool async)
         {
-            if (ipAddresses.Length == 0)
+            if (ipAddresses.Count == 0)
                 return null;
 
             if (allIPsInParallel) // Used for MultiSubnetFailover
             {
-                List<Task<byte[]>> tasks = new(ipAddresses.Length);
+                List<Task<byte[]>> tasks = new(ipAddresses.Count);
                 Task<byte[]> firstFailedTask = null;
                 CancellationTokenSource cts = new CancellationTokenSource();
 
-                for (int i = 0; i < ipAddresses.Length; i++)
+                for (int i = 0; i < ipAddresses.Count; i++)
                 {
                     IPEndPoint endPoint = new IPEndPoint(ipAddresses[i], port);
                     tasks.Add(SendUDPRequest(endPoint, requestPacket, async, cts.Token));
@@ -493,15 +494,15 @@ namespace Microsoft.Data.SqlClient.SNI
 #endif
         }
 
-        private static void SplitIPv4AndIPv6(IPAddress[] input, out IPAddress[] ipv4Addresses, out IPAddress[] ipv6Addresses)
+        private static void SplitIPv4AndIPv6(IPAddress[] input, out List<IPAddress> ipv4Addresses, out List<IPAddress> ipv6Addresses)
         {
-            ipv4Addresses = Array.Empty<IPAddress>();
-            ipv6Addresses = Array.Empty<IPAddress>();
+            List<IPAddress> v4 = null;
+            List<IPAddress> v6 = null;
 
             if (input != null && input.Length > 0)
             {
-                List<IPAddress> v4 = new List<IPAddress>(1);
-                List<IPAddress> v6 = new List<IPAddress>(0);
+                v4 = new List<IPAddress>(1);
+                v6 = new List<IPAddress>(0);
 
                 for (int index = 0; index < input.Length; index++)
                 {
@@ -515,17 +516,10 @@ namespace Microsoft.Data.SqlClient.SNI
                             break;
                     }
                 }
-
-                if (v4.Count > 0)
-                {
-                    ipv4Addresses = v4.ToArray();
-                }
-
-                if (v6.Count > 0)
-                {
-                    ipv6Addresses = v6.ToArray();
-                }
             }
+
+            ipv4Addresses = v4 ?? s_emptyList;
+            ipv6Addresses = v6 ?? s_emptyList;
         }
     }
 }
