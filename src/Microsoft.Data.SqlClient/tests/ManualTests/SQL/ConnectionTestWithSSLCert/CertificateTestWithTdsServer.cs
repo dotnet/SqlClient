@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         RedirectStandardError = true,
                         RedirectStandardOutput = true,
                         UseShellExecute = false,
-                        Arguments = $"{script} > result.txt",
+                        Arguments = $"{script} -OutDir {Directory.GetCurrentDirectory()}> result.txt",
                         CreateNoWindow = false,
                         Verb = "runas"
                     }

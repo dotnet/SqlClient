@@ -7,11 +7,13 @@
 # Comments: This scripts creates SQL Server SSL Self-Signed Certificate.
 # This script is not intended to be used in production environments.
 
+param ($OutDir)
+
 function Invoke-SqlServerCertificateCommand {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory = $false)]
-    [string] $certificateName = ".\localhostcert.cer",
+    [string] $certificateName = "$OutDir\localhostcert.cer",
     [string] $myCertStoreLocation = "Cert:\LocalMachine\My",
     [string] $rootCertStoreLocation = "Cert:\LocalMachine\Root",
     [string] $sqlAliasName = "SQLAliasName",
@@ -40,18 +42,18 @@ function Invoke-SqlServerCertificateCommand {
 
         # Create self signed certificate using openssl
         Write-Output "Creating certificate for linux..."
-        openssl req -x509 -newkey rsa:4096 -sha256 -days 1095 -nodes -keyout ./localhostcert.key -out ./localhostcert.cer -subj "/CN=$fqdn" -addext "subjectAltName=DNS:$fqdn,DNS:localhost,IP:127.0.0.1,IP:::1"
+        openssl req -x509 -newkey rsa:4096 -sha256 -days 1095 -nodes -keyout $OutDir/localhostcert.key -out $OutDir/localhostcert.cer -subj "/CN=$fqdn" -addext "subjectAltName=DNS:$fqdn,DNS:localhost,IP:127.0.0.1,IP:::1"
         # Export the certificate to pfx
         Write-Output "Exporting certificate to pfx..."
-        openssl pkcs12 -export -in ./localhostcert.cer -inkey ./localhostcert.key -out ./localhostcert.pfx -password pass:nopassword
+        openssl pkcs12 -export -in $OutDir/localhostcert.cer -inkey $OutDir/localhostcert.key -out $OutDir/localhostcert.pfx -password pass:nopassword
 
         Write-Output "Converting certificate to pem..."
         # Create pem from cer
-        cp ./localhostcert.cer ./localhostcert.pem
+        cp $OutDir/localhostcert.cer $OutDir/localhostcert.pem
 
         # Add trust to the pem certificate
         Write-Output "Adding trust to pem certificate..."
-        openssl x509 -trustout -addtrust "serverAuth" -in ./localhostcert.pem
+        openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/localhostcert.pem
         
         # Import the certificate to the Root store ------------------------------------------------------------------------------
         # NOTE:  The process must have root privileges to add the certificate to the Root store. If not, then use  
@@ -59,7 +61,7 @@ function Invoke-SqlServerCertificateCommand {
         # Copy the certificate to /usr/local/share/ca-certificates folder while changing the extension to "crt". 
         # Only certificates with extension "crt" gets added for some reason.
         Write-Output "Copy the pem certificate to /usr/local/share/ca-certificates folder..."
-        cp ./localhostcert.pem /usr/local/share/ca-certificates/localhostcert.crt
+        cp $OutDir/localhostcert.pem /usr/local/share/ca-certificates/localhostcert.crt
 
         # Update the certificates store
         Write-Output "Updating the certificates store..."
@@ -101,7 +103,7 @@ function Invoke-SqlServerCertificateCommand {
 
         $pwd = ConvertTo-SecureString -String 'nopassword' -Force -AsPlainText
         # Export the certificate to a pfx format
-        Export-PfxCertificate -Password $pwd -FilePath ".\localhostcert.pfx" -Cert "Cert:\LocalMachine\my\$($certificate.Thumbprint)"
+        Export-PfxCertificate -Password $pwd -FilePath "$OutDir\localhostcert.pfx" -Cert "Cert:\LocalMachine\my\$($certificate.Thumbprint)"
     } 
 
     Write-Output "Done creating pfx certificate..."
