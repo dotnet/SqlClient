@@ -29,6 +29,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(ConnectionTestParametersData.GetConnectionTestParameters), MemberType = typeof(ConnectionTestParametersData))]
         public void ConnectionTest(ConnectionTestParameters connectionTestParameters)
         {
+
+            Debug.WriteLine($"Certificate is at {s_fullPathToPfx}");
+
             string userId = string.Empty;
             string password = string.Empty;
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
