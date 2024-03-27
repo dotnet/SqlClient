@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly string _targetServer;
         private readonly object _sendSync;
         private readonly Socket _socket;
-        private NetworkStream _tcpStream;
+        private SNINetworkStream _tcpStream;
         private readonly string _hostNameInCertificate;
         private readonly string _serverCertificateFilename;
         private readonly bool _tlsFirst;
@@ -274,7 +274,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         _sslOverTdsStream = new SslOverTdsStream(_tcpStream, _connectionId);
                         stream = _sslOverTdsStream;
                     }
-                    _sslStream = new SNISslStream(stream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
+                    _sslStream = new SNISslStream(stream, true, ValidateServerCertificate);
                 }
                 catch (SocketException se)
                 {
@@ -740,6 +740,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 _stream = _sslStream;
+                _tcpStream.SynchronizeIO = false;
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
                 return TdsEnums.SNI_SUCCESS;
             }
@@ -750,6 +751,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public override void DisableSsl()
         {
+            _tcpStream.SynchronizeIO = true;
             _sslStream.Flush();
             _sslStream.Dispose();
             _sslStream = null;
