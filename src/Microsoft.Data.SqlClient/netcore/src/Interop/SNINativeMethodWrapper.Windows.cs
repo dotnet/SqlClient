@@ -434,7 +434,7 @@ namespace Microsoft.Data.SqlClient
                 clientConsumerInfo.DNSCacheInfo.wszCachedFQDN = cachedDNSInfo?.FQDN;
                 clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4?.ToString();
                 clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6?.ToString();
-                clientConsumerInfo.DNSCacheInfo.wszCachedTcpPort = cachedDNSInfo?.Port == 0 ? null : cachedDNSInfo.Port.ToString();
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpPort = cachedDNSInfo?.Port == null ? null : cachedDNSInfo.Port.ToString();
 
                 if (spnBuffer != null)
                 {
