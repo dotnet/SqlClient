@@ -36,6 +36,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnStringAndsortOrderSortOrder"]/*'/>
         public SqlBulkCopyColumnOrderHint Add(string column, SortOrder sortOrder) => Add(new SqlBulkCopyColumnOrderHint(column, sortOrder));
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Clear/*'/>
+        public new void Clear() => base.Clear();
+
         /// <summary>
         /// Invoked before the collection is cleared using Clear(). Unregisters each order hint.
         /// </summary>
@@ -82,6 +85,9 @@ namespace Microsoft.Data.SqlClient
             // OnRemove only works with the List instance and not the InnerList instance
             List.Remove(columnOrderHint);
         }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/RemoveAt/*'/>
+        public new void RemoveAt(int index) => base.RemoveAt(index);
 
         /// <summary>
         /// Invoked before the order hint is removed using Remove() or RemoveAt(). Unregisters the order hint.

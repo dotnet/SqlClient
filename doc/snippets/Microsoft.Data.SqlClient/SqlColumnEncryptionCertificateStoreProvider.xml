@@ -6,10 +6,6 @@
             </summary>
             <remarks>To be added.</remarks>
         </SqlColumnEncryptionCertificateStoreProvider>
-        <ctor>
-            <summary>Key store provider for Windows Certificate Store.</summary>
-            <remarks>To be added.</remarks>
-        </ctor>
         <DecryptColumnEncryptionKey>
             <param name="masterKeyPath">The master key path.</param>
             <param name="encryptionAlgorithm">The encryption algorithm. Currently, the only valid value is: <c>RSA_OAEP</c>

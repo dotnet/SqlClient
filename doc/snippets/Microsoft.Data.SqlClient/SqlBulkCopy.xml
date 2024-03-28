@@ -364,7 +364,7 @@ During the execution of a bulk copy operation, this collection can be accessed, 
 ]]></format>
 			</remarks>
 		</ColumnMappings>
-        <ColumnOrderHints>
+    <ColumnOrderHints>
 			<summary>
 				Returns a collection of
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" />
