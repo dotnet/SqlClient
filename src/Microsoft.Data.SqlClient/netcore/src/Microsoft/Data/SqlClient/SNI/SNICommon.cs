@@ -45,55 +45,50 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// SMUX packet header
     /// </summary>
-    internal sealed class SNISMUXHeader
+    internal ref struct SNISMUXHeader
     {
         public const int HEADER_LENGTH = 16;
 
-        public byte SMID;
-        public byte flags;
-        public ushort sessionId;
-        public uint length;
-        public uint sequenceNumber;
-        public uint highwater;
+        public readonly byte Flags;
+        public readonly ushort SessionId;
+        public readonly uint Length;
+        public readonly uint SequenceNumber;
+        public readonly uint Highwater;
 
-        public void Read(byte[] bytes)
+        public SNISMUXHeader(byte flags, ushort sessionId, uint length, uint sequenceNumber, uint highwater)
         {
-            SMID = bytes[0];
-            flags = bytes[1];
-            Span<byte> span = bytes.AsSpan();
-            sessionId = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(2));
-            length = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(4)) - SNISMUXHeader.HEADER_LENGTH;
-            sequenceNumber = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(8));
-            highwater = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(12));
+            Flags = flags;
+            SessionId = sessionId;
+            Length = length;
+            SequenceNumber = sequenceNumber;
+            Highwater = highwater;
+        }
+
+        public SNISMUXHeader(Span<byte> bytes)
+        {
+            // As per the MC-SMP spec, the first byte of the header will always be 0x53
+            Debug.Assert(bytes[0] == 0x53, "First byte of the SNI SMUX header was not 0x53");
+
+            Flags = bytes[1];
+            SessionId = BinaryPrimitives.ReadUInt16LittleEndian(bytes.Slice(2));
+            Length = BinaryPrimitives.ReadUInt32LittleEndian(bytes.Slice(4)) - SNISMUXHeader.HEADER_LENGTH;
+            SequenceNumber = BinaryPrimitives.ReadUInt32LittleEndian(bytes.Slice(8));
+            Highwater = BinaryPrimitives.ReadUInt32LittleEndian(bytes.Slice(12));
         }
 
         public void Write(Span<byte> bytes)
         {
-            uint value = highwater;
             // access the highest element first to cause the largest range check in the jit, then fill in the rest of the value and carry on as normal
-            bytes[15] = (byte)((value >> 24) & 0xff);
-            bytes[12] = (byte)(value & 0xff); // BitConverter.GetBytes(_currentHeader.highwater).CopyTo(headerBytes, 12);
-            bytes[13] = (byte)((value >> 8) & 0xff);
-            bytes[14] = (byte)((value >> 16) & 0xff);
+            BinaryPrimitives.WriteUInt32LittleEndian(bytes.Slice(12), Highwater);
 
-            bytes[0] = SMID; // BitConverter.GetBytes(_currentHeader.SMID).CopyTo(headerBytes, 0);
-            bytes[1] = flags; // BitConverter.GetBytes(_currentHeader.flags).CopyTo(headerBytes, 1);
+            bytes[0] = 0x53; // BitConverter.GetBytes(_currentHeader.SMID).CopyTo(headerBytes, 0);
+            bytes[1] = Flags; // BitConverter.GetBytes(_currentHeader.flags).CopyTo(headerBytes, 1);
 
-            value = sessionId;
-            bytes[2] = (byte)(value & 0xff); // BitConverter.GetBytes(_currentHeader.sessionId).CopyTo(headerBytes, 2);
-            bytes[3] = (byte)((value >> 8) & 0xff);
+            BinaryPrimitives.WriteUInt16LittleEndian(bytes.Slice(2), SessionId);
 
-            value = length;
-            bytes[4] = (byte)(value & 0xff); // BitConverter.GetBytes(_currentHeader.length).CopyTo(headerBytes, 4);
-            bytes[5] = (byte)((value >> 8) & 0xff);
-            bytes[6] = (byte)((value >> 16) & 0xff);
-            bytes[7] = (byte)((value >> 24) & 0xff);
+            BinaryPrimitives.WriteUInt32LittleEndian(bytes.Slice(4), Length);
 
-            value = sequenceNumber;
-            bytes[8] = (byte)(value & 0xff); // BitConverter.GetBytes(_currentHeader.sequenceNumber).CopyTo(headerBytes, 8);
-            bytes[9] = (byte)((value >> 8) & 0xff);
-            bytes[10] = (byte)((value >> 16) & 0xff);
-            bytes[11] = (byte)((value >> 24) & 0xff);
+            BinaryPrimitives.WriteUInt32LittleEndian(bytes.Slice(8), SequenceNumber);
 
         }
     }

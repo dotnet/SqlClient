@@ -4,6 +4,7 @@
 
 using System;
 using System.Buffers;
+using System.Buffers.Binary;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -63,7 +64,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     } while (headerBytesRead < TdsEnums.HEADER_LEN);
 
                     // read the packet data size from the header and store it in case it is needed for a subsequent call
-                    _packetBytes = ((headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8) | headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
+                    _packetBytes = BinaryPrimitives.ReadUInt16BigEndian(headerBytes.Slice(TdsEnums.HEADER_LEN_FIELD_OFFSET)) - TdsEnums.HEADER_LEN;
 
                     // read as much from the packet as the caller can accept
                     int packetBytesRead = _stream.Read(buffer.Slice(0, Math.Min(buffer.Length, _packetBytes)));
@@ -149,7 +150,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     } while (headerBytesRead < TdsEnums.HEADER_LEN);
 
                     // read the packet data size from the header and store it in case it is needed for a subsequent call
-                    _packetBytes = ((headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8) | headerBytes[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
+                    _packetBytes = BinaryPrimitives.ReadUInt16BigEndian(headerBytes.AsSpan(TdsEnums.HEADER_LEN_FIELD_OFFSET)) - TdsEnums.HEADER_LEN;
 
                     ArrayPool<byte>.Shared.Return(headerBytes, clearArray: true);
 

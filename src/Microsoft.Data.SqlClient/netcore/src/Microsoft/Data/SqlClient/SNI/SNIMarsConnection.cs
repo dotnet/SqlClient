@@ -17,7 +17,6 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly Guid _connectionId;
         private readonly Dictionary<int, SNIMarsHandle> _sessions;
         private readonly byte[] _headerBytes;
-        private readonly SNISMUXHeader _currentHeader;
         private readonly object _sync;
         private SNIHandle _lowerHandle;
         private ushort _nextSessionId;
@@ -44,7 +43,6 @@ namespace Microsoft.Data.SqlClient.SNI
             _connectionId = Guid.NewGuid();
             _sessions = new Dictionary<int, SNIMarsHandle>();
             _headerBytes = new byte[SNISMUXHeader.HEADER_LENGTH];
-            _currentHeader = new SNISMUXHeader();
             _nextSessionId = 0;
             _currentHeaderByteCount = 0;
             _dataBytesLeft = 0;
@@ -53,7 +51,7 @@ namespace Microsoft.Data.SqlClient.SNI
             _lowerHandle.SetAsyncCallbacks(HandleReceiveComplete, HandleSendComplete);
         }
 
-        public SNIMarsHandle CreateMarsSession(object callbackObject, bool async)
+        public SNIMarsHandle CreateMarsSession(TdsParserStateObject callbackObject, bool async)
         {
             lock (DemuxerSync)
             {
@@ -204,7 +202,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             using (TrySNIEventScope.Create(nameof(SNIMarsConnection)))
             {
-                SNISMUXHeader currentHeader = null;
+                SNISMUXHeader currentHeader = default;
                 SNIPacket currentPacket = null;
                 SNIMarsHandle currentSession = null;
 
@@ -224,7 +222,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         if (_currentHeaderByteCount != SNISMUXHeader.HEADER_LENGTH)
                         {
-                            currentHeader = null;
+                            currentHeader = default;
                             currentPacket = null;
                             currentSession = null;
 
@@ -249,18 +247,17 @@ namespace Microsoft.Data.SqlClient.SNI
                                 }
                             }
 
-                            _currentHeader.Read(_headerBytes);
-                            _dataBytesLeft = (int)_currentHeader.length;
-                            _currentPacket = _lowerHandle.RentPacket(headerSize: 0, dataSize: (int)_currentHeader.length);
+                            currentHeader = new SNISMUXHeader(_headerBytes);
+                            _dataBytesLeft = (int)currentHeader.Length;
+                            _currentPacket = _lowerHandle.RentPacket(headerSize: 0, dataSize: (int)currentHeader.Length);
 #if DEBUG
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, _dataBytesLeft {1}, _currentPacket {2}, Reading data of length: _currentHeader.length {3}", args0: _lowerHandle?.ConnectionId, args1: _dataBytesLeft, args2: currentPacket?._id, args3: _currentHeader?.length);
 #endif
                         }
 
-                        currentHeader = _currentHeader;
                         currentPacket = _currentPacket;
 
-                        if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_DATA)
+                        if (currentHeader.Flags == (byte)SNISMUXFlags.SMUX_DATA)
                         {
                             if (_dataBytesLeft > 0)
                             {
@@ -286,44 +283,44 @@ namespace Microsoft.Data.SqlClient.SNI
 
                         _currentHeaderByteCount = 0;
 
-                        if (!_sessions.ContainsKey(_currentHeader.sessionId))
+                        if (!_sessions.ContainsKey(currentHeader.SessionId))
                         {
                             SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, Strings.SNI_ERROR_5);
                             HandleReceiveError(packet);
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "Current Header Session Id {0} not found, MARS Session Id {1} will be destroyed, New SNI error created: {2}", args0: _currentHeader?.sessionId, args1: _lowerHandle?.ConnectionId, args2: sniErrorCode);
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "Current Header Session Id {0} not found, MARS Session Id {1} will be destroyed, New SNI error created: {2}", args0: currentHeader.SessionId, args1: _lowerHandle?.ConnectionId, args2: sniErrorCode);
                             _lowerHandle.Dispose();
                             _lowerHandle = null;
                             return;
                         }
 
-                        if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_FIN)
+                        if (currentHeader.Flags == (byte)SNISMUXFlags.SMUX_FIN)
                         {
-                            _sessions.Remove(_currentHeader.sessionId);
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_FIN | MARS Session Id {0}, SMUX_FIN flag received, Current Header Session Id {1} removed", args0: _lowerHandle?.ConnectionId, args1: _currentHeader?.sessionId);
+                            _sessions.Remove(currentHeader.SessionId);
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_FIN | MARS Session Id {0}, SMUX_FIN flag received, Current Header Session Id {1} removed", args0: _lowerHandle?.ConnectionId, args1: currentHeader.SessionId);
                         }
                         else
                         {
-                            currentSession = _sessions[_currentHeader.sessionId];
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, Current Session assigned to Session Id {1}", args0: _lowerHandle?.ConnectionId, args1: _currentHeader?.sessionId);
+                            currentSession = _sessions[currentHeader.SessionId];
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, Current Session assigned to Session Id {1}", args0: _lowerHandle?.ConnectionId, args1: currentHeader.SessionId);
                         }
                     }
 
-                    if (currentHeader.flags == (byte)SNISMUXFlags.SMUX_DATA)
+                    if (currentHeader.Flags == (byte)SNISMUXFlags.SMUX_DATA)
                     {
-                        currentSession.HandleReceiveComplete(currentPacket, currentHeader);
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_DATA | MARS Session Id {0}, Current Session {1} completed receiving Data", args0: _lowerHandle?.ConnectionId, args1: _currentHeader?.sessionId);
+                        currentSession.HandleReceiveComplete(currentPacket, in currentHeader);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_DATA | MARS Session Id {0}, Current Session {1} completed receiving Data", args0: _lowerHandle?.ConnectionId, args1: currentHeader.SessionId);
                     }
 
-                    if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_ACK)
+                    if (currentHeader.Flags == (byte)SNISMUXFlags.SMUX_ACK)
                     {
                         try
                         {
-                            currentSession.HandleAck(currentHeader.highwater);
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_ACK | MARS Session Id {0}, Current Session {1} handled ack", args0: _lowerHandle?.ConnectionId, args1: _currentHeader?.sessionId);
+                            currentSession.HandleAck(currentHeader.Highwater);
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_ACK | MARS Session Id {0}, Current Session {1} handled ack", args0: _lowerHandle?.ConnectionId, args1: currentHeader.SessionId);
                         }
                         catch (Exception e)
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "SMUX_ACK | MARS Session Id {0}, Exception occurred: {2}", args0: _currentHeader?.sessionId, args1: e?.Message);
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "SMUX_ACK | MARS Session Id {0}, Exception occurred: {2}", args0: currentHeader.SessionId, args1: e?.Message);
                             SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
                         }
 #if DEBUG
