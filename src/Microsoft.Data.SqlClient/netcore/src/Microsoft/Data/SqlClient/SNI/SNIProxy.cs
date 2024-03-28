@@ -653,10 +653,10 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 Port = port;
             }
-            // Instance Name Handling. 
-            if (backSlashIndex > -1)
+            // Instance Name Handling. Only if we found a '\' and we did not find a port in the Data Source
+            else if (backSlashIndex > -1)
             {
-                // This means that there is a part separated by '\'
+                // This means that there will not be any part separated by comma.
                 InstanceName = tokensByCommaAndSlash[1].Trim();
 
                 if (string.IsNullOrWhiteSpace(InstanceName))
