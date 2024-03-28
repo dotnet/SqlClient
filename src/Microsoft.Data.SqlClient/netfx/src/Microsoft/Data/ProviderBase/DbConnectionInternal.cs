@@ -18,11 +18,10 @@ namespace Microsoft.Data.ProviderBase
     using SysTx = System.Transactions;
 
     internal abstract class DbConnectionInternal
-    { // V1.1.3300
-
-
+    {
         private static int _objectTypeCount;
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        private SysTx.TransactionCompletedEventHandler _transactionCompletedEventHandler = null;
 
         internal static readonly StateChangeEventArgs StateChangeClosed = new StateChangeEventArgs(ConnectionState.Open, ConnectionState.Closed);
         internal static readonly StateChangeEventArgs StateChangeOpen = new StateChangeEventArgs(ConnectionState.Closed, ConnectionState.Open);
@@ -900,15 +899,18 @@ namespace Microsoft.Data.ProviderBase
             // potentially a multi-threaded event, so lock the connection to make sure we don't enlist in a new
             // transaction between compare and assignment. No need to short circuit outside of lock, since failed comparisons should
             // be the exception, not the rule.
-            lock (this)
+            // locking on anything other than the transaction object would lead to a thread deadlock with sys.Transaction.TransactionCompleted event.
+            lock (transaction)
             {
                 // Detach if detach-on-end behavior, or if outer connection was closed
-                DbConnection owner = (DbConnection)Owner;
-                if (isExplicitlyReleasing || UnbindOnTransactionCompletion || null == owner)
+                DbConnection owner = Owner;
+                if (isExplicitlyReleasing || UnbindOnTransactionCompletion || owner is null)
                 {
                     SysTx.Transaction currentEnlistedTransaction = _enlistedTransaction;
                     if (currentEnlistedTransaction != null && transaction.Equals(currentEnlistedTransaction))
                     {
+                        // We need to remove the transaction completed event handler to cease listening for the transaction to end.
+                        currentEnlistedTransaction.TransactionCompleted -= _transactionCompletedEventHandler;
 
                         EnlistedTransaction = null;
 
@@ -947,7 +949,8 @@ namespace Microsoft.Data.ProviderBase
         [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.UnmanagedCode)]
         private void TransactionOutcomeEnlist(SysTx.Transaction transaction)
         {
-            transaction.TransactionCompleted += new SysTx.TransactionCompletedEventHandler(TransactionCompletedEvent);
+            _transactionCompletedEventHandler ??= new SysTx.TransactionCompletedEventHandler(TransactionCompletedEvent);
+            transaction.TransactionCompleted += _transactionCompletedEventHandler;
         }
 
         internal void SetInStasis()

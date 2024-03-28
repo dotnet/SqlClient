@@ -16,6 +16,7 @@ namespace Microsoft.Data.ProviderBase
     {
         private static int _objectTypeCount;
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        private TransactionCompletedEventHandler _transactionCompletedEventHandler = null;
 
         private bool _isInStasis;
 
@@ -437,15 +438,19 @@ namespace Microsoft.Data.ProviderBase
             // potentially a multi-threaded event, so lock the connection to make sure we don't enlist in a new
             // transaction between compare and assignment. No need to short circuit outside of lock, since failed comparisons should
             // be the exception, not the rule.
-            lock (this)
+            // locking on anything other than the transaction object would lead to a thread deadlock with sys.Transaction.TransactionCompleted event.
+            lock (transaction)
             {
                 // Detach if detach-on-end behavior, or if outer connection was closed
-                DbConnection owner = (DbConnection)Owner;
-                if (isExplicitlyReleasing || UnbindOnTransactionCompletion || null == owner)
+                DbConnection owner = Owner;
+                if (isExplicitlyReleasing || UnbindOnTransactionCompletion || owner is null)
                 {
                     Transaction currentEnlistedTransaction = _enlistedTransaction;
                     if (currentEnlistedTransaction != null && transaction.Equals(currentEnlistedTransaction))
                     {
+                        // We need to remove the transaction completed event handler to cease listening for the transaction to end.
+                        currentEnlistedTransaction.TransactionCompleted -= _transactionCompletedEventHandler;
+
                         EnlistedTransaction = null;
 
                         if (IsTxRootWaitingForTxEnd)
@@ -479,7 +484,8 @@ namespace Microsoft.Data.ProviderBase
 
         private void TransactionOutcomeEnlist(Transaction transaction)
         {
-            transaction.TransactionCompleted += new TransactionCompletedEventHandler(TransactionCompletedEvent);
+            _transactionCompletedEventHandler ??= new TransactionCompletedEventHandler(TransactionCompletedEvent);
+            transaction.TransactionCompleted += _transactionCompletedEventHandler;
         }
 
         internal void SetInStasis()
