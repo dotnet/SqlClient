@@ -251,6 +251,11 @@ namespace Microsoft.Data.SqlClient
             {
                 chain.ChainPolicy.ExtraStore.Add(cert);
             }
+
+            // Per AE Team - "An Always Encrypted-enabled driver doesn't verify an expiration date or a certificate authority chain.
+            // A certificate is simply used as a key pair consisting of a public and private key. Please go with no-check option and
+            // do add the comment in the code so that in future next dev knows why we decided to do it."
+
             // CodeQL [SM00395] False Positive: Suppressing CodeQL warning 
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
