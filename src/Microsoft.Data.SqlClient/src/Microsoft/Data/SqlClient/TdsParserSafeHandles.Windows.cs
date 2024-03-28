@@ -18,8 +18,8 @@ namespace Microsoft.Data.SqlClient
     {
         internal static readonly SNILoadHandle SingletonInstance = new SNILoadHandle();
 
-        internal readonly SNINativeMethodWrapper.SqlAsyncCallbackDelegate ReadAsyncCallbackDispatcher = new SNINativeMethodWrapper.SqlAsyncCallbackDelegate(ReadDispatcher);
-        internal readonly SNINativeMethodWrapper.SqlAsyncCallbackDelegate WriteAsyncCallbackDispatcher = new SNINativeMethodWrapper.SqlAsyncCallbackDelegate(WriteDispatcher);
+        internal readonly SNINativeMethodWrapper.SqlAsyncCallbackDelegate ReadAsyncCallbackDispatcher = ReadDispatcher;
+        internal readonly SNINativeMethodWrapper.SqlAsyncCallbackDelegate WriteAsyncCallbackDispatcher = WriteDispatcher;
 
         private readonly uint _sniStatus = TdsEnums.SNI_UNINITIALIZED;
         private readonly EncryptionOptions _encryptionOption = EncryptionOptions.OFF;

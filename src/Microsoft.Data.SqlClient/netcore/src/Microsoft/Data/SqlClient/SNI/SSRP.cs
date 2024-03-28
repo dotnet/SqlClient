@@ -108,12 +108,12 @@ namespace Microsoft.Data.SqlClient.SNI
             using (TrySNIEventScope.Create(nameof(SSRP)))
             {
                 const byte ClntUcastInst = 0x04;
-                instanceName += char.MinValue;
                 int byteCount = Encoding.ASCII.GetByteCount(instanceName);
 
-                byte[] requestPacket = new byte[byteCount + 1];
+                byte[] requestPacket = new byte[byteCount + 1 + 1];
                 requestPacket[0] = ClntUcastInst;
                 Encoding.ASCII.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 1);
+                requestPacket[byteCount + 1] = 0;
 
                 return requestPacket;
             }
@@ -175,13 +175,13 @@ namespace Microsoft.Data.SqlClient.SNI
 
             const byte ClntUcastDac = 0x0F;
             const byte ProtocolVersion = 0x01;
-            instanceName += char.MinValue;
             int byteCount = Encoding.ASCII.GetByteCount(instanceName);
 
-            byte[] requestPacket = new byte[byteCount + 2];
+            byte[] requestPacket = new byte[byteCount + 2 + 1];
             requestPacket[0] = ClntUcastDac;
             requestPacket[1] = ProtocolVersion;
             Encoding.ASCII.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 2);
+            requestPacket[2 + byteCount] = 0;
 
             return requestPacket;
         }
@@ -319,134 +319,159 @@ namespace Microsoft.Data.SqlClient.SNI
             if (ipAddresses.Count == 0)
                 return null;
 
-            if (allIPsInParallel) // Used for MultiSubnetFailover
+            IPEndPoint endPoint = new IPEndPoint(ipAddresses[0], port);
+
+            if (allIPsInParallel && ipAddresses.Count > 1) // Used for MultiSubnetFailover
             {
                 List<Task<byte[]>> tasks = new(ipAddresses.Count);
                 Task<byte[]> firstFailedTask = null;
                 CancellationTokenSource cts = new CancellationTokenSource();
+                // Cache the UdpClients for each of the address families to save disposing them
+                UdpClient ipv4UdpClient = null;
+                UdpClient ipv6UdpClient = null;
 
                 for (int i = 0; i < ipAddresses.Count; i++)
                 {
-                    IPEndPoint endPoint = new IPEndPoint(ipAddresses[i], port);
-                    tasks.Add(SendUDPRequest(endPoint, requestPacket, async, cts.Token));
+                    if (i > 0)
+                    {
+                        endPoint.Address = ipAddresses[i];
+                    }
+
+                    if (endPoint.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        ipv4UdpClient ??= new UdpClient(AddressFamily.InterNetwork);
+
+                        tasks.Add(SendUDPRequest(endPoint, ipv4UdpClient, requestPacket, async, cts.Token));
+                    }
+                    else if (endPoint.AddressFamily == AddressFamily.InterNetworkV6)
+                    {
+                        ipv6UdpClient ??= new UdpClient(AddressFamily.InterNetworkV6);
+
+                        tasks.Add(SendUDPRequest(endPoint, ipv4UdpClient, requestPacket, async, cts.Token));
+                    }
                 }
 
-                while (tasks.Count > 0)
+                using (ipv4UdpClient)
+                using (ipv6UdpClient)
                 {
-                    Task<byte[]> completedTask;
-
-                    if (async)
+                    while (tasks.Count > 0)
                     {
-                        completedTask = await Task.WhenAny(tasks).ConfigureAwait(false);
+                        Task<byte[]> completedTask;
 
-                        if (completedTask.Status == TaskStatus.RanToCompletion)
+                        if (async)
                         {
-                            cts.Cancel();
-                            return completedTask.Result;
+                            completedTask = await Task.WhenAny(tasks).ConfigureAwait(false);
+
+                            if (completedTask.Status == TaskStatus.RanToCompletion)
+                            {
+                                cts.Cancel();
+                                return completedTask.Result;
+                            }
+                        }
+                        else
+                        {
+                            int completedTaskIndex = Task.WaitAny(tasks.ToArray());
+
+                            completedTask = tasks[completedTaskIndex];
+                            if (completedTask.Status == TaskStatus.RanToCompletion)
+                            {
+                                cts.Cancel();
+                                return completedTask.Result;
+                            }
+                        }
+
+                        if (completedTask.Status == TaskStatus.Faulted)
+                        {
+                            tasks.Remove(completedTask);
+                            firstFailedTask ??= completedTask;
                         }
                     }
-                    else
-                    {
-                        int completedTaskIndex = Task.WaitAny(tasks.ToArray());
 
-                        completedTask = tasks[completedTaskIndex];
-                        if (completedTask.Status == TaskStatus.RanToCompletion)
-                        {
-                            cts.Cancel();
-                            return completedTask.Result;
-                        }
-                    }
+                    Debug.Assert(firstFailedTask != null, "firstFailedTask should never be null");
 
-                    if (completedTask.Status == TaskStatus.Faulted)
-                    {
-                        tasks.Remove(completedTask);
-                        firstFailedTask ??= completedTask;
-                    }
+                    // All tasks failed. Return the error from the first failure.
+                    throw firstFailedTask.Exception;
                 }
-
-                Debug.Assert(firstFailedTask != null, "firstFailedTask should never be null");
-
-                // All tasks failed. Return the error from the first failure.
-                throw firstFailedTask.Exception;
             }
             else
             {
-                // If not parallel, use the first IP address provided
-                IPEndPoint endPoint = new IPEndPoint(ipAddresses[0], port);
-                return await SendUDPRequest(endPoint, requestPacket, async, CancellationToken.None);
+                using (UdpClient oneShotUdpClient = new UdpClient(endPoint.AddressFamily))
+                {
+                    // If not parallel, use the first IP address provided
+                    return await SendUDPRequest(endPoint, oneShotUdpClient, requestPacket, async, CancellationToken.None);
+                }
             }
         }
 
 #if NET6_0_OR_GREATER
-        private static async Task<byte[]> SendUDPRequest(IPEndPoint endPoint, byte[] requestPacket, bool async, CancellationToken token)
+        private static async Task<byte[]> SendUDPRequest(IPEndPoint endPoint, UdpClient client, byte[] requestPacket, bool async, CancellationToken token)
 #else
-        private static Task<byte[]> SendUDPRequest(IPEndPoint endPoint, byte[] requestPacket, bool async, CancellationToken token)
+        private static Task<byte[]> SendUDPRequest(IPEndPoint endPoint, UdpClient client, byte[] requestPacket, bool async, CancellationToken token)
 #endif
         {
             byte[] responsePacket = null;
 
             try
             {
-                using (UdpClient client = new UdpClient(endPoint.AddressFamily))
+
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Waiting for UDP Client to fetch Port info.");
+
+                using (CancellationTokenSource sendTimeoutCancellationTokenSource = new CancellationTokenSource(s_sendTimeout))
+                using (CancellationTokenSource sendCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token, sendTimeoutCancellationTokenSource.Token))
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Waiting for UDP Client to fetch Port info.");
-
-                    using (CancellationTokenSource sendTimeoutCancellationTokenSource = new CancellationTokenSource(s_sendTimeout))
-                    using (CancellationTokenSource sendCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token, sendTimeoutCancellationTokenSource.Token))
-                    {
 #if NET6_0_OR_GREATER
-                        ValueTask<int> sendTask = client.SendAsync(requestPacket.AsMemory(), endPoint, sendCancellationTokenSource.Token);
+                    ValueTask<int> sendTask = client.SendAsync(requestPacket.AsMemory(), endPoint, sendCancellationTokenSource.Token);
 
-                        if (async)
-                        {
-                            await sendTask.ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            if (!sendTask.IsCompleted)
-                            {
-                                sendTask.AsTask().Wait();
-                            }
-                        }
-#else
-                        Task<int> sendTask = client.SendAsync(requestPacket, requestPacket.Length, endPoint);
-
-                        sendTask.Wait(sendCancellationTokenSource.Token);
-#endif
-                    }
-
-                    UdpReceiveResult receiveResult;
-
-                    using (CancellationTokenSource receiveTimeoutCancellationTokenSource = new CancellationTokenSource(s_receiveTimeout))
-                    using (CancellationTokenSource receiveCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token, receiveTimeoutCancellationTokenSource.Token))
+                    if (async)
                     {
-#if NET6_0_OR_GREATER
-                        ValueTask<UdpReceiveResult> receiveTask = client.ReceiveAsync(receiveCancellationTokenSource.Token);
-
-                        if (async)
-                        {
-                            receiveResult = await receiveTask.ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            if (!receiveTask.IsCompleted)
-                            {
-                                receiveTask.AsTask().Wait();
-                            }
-
-                            receiveResult = receiveTask.Result;
-                        }
-#else
-                        Task<UdpReceiveResult> receiveTask = client.ReceiveAsync();
-
-                        receiveTask.Wait(receiveCancellationTokenSource.Token);
-                        receiveResult = receiveTask.Result;
-#endif
-
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received Port info from UDP Client.");
-                        responsePacket = receiveResult.Buffer;
+                        await sendTask.ConfigureAwait(false);
                     }
+                    else
+                    {
+                        if (!sendTask.IsCompleted)
+                        {
+                            sendTask.AsTask().Wait();
+                        }
+                    }
+#else
+                    Task<int> sendTask = client.SendAsync(requestPacket, requestPacket.Length, endPoint);
+
+                    sendTask.Wait(sendCancellationTokenSource.Token);
+#endif
                 }
+
+                UdpReceiveResult receiveResult;
+
+                using (CancellationTokenSource receiveTimeoutCancellationTokenSource = new CancellationTokenSource(s_receiveTimeout))
+                using (CancellationTokenSource receiveCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token, receiveTimeoutCancellationTokenSource.Token))
+                {
+#if NET6_0_OR_GREATER
+                    ValueTask<UdpReceiveResult> receiveTask = client.ReceiveAsync(receiveCancellationTokenSource.Token);
+
+                    if (async)
+                    {
+                        receiveResult = await receiveTask.ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        if (!receiveTask.IsCompleted)
+                        {
+                            receiveTask.AsTask().Wait();
+                        }
+
+                        receiveResult = receiveTask.Result;
+                    }
+#else
+                    Task<UdpReceiveResult> receiveTask = client.ReceiveAsync();
+
+                    receiveTask.Wait(receiveCancellationTokenSource.Token);
+                    receiveResult = receiveTask.Result;
+#endif
+
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received Port info from UDP Client.");
+                    responsePacket = receiveResult.Buffer;
+                }
+
             }
             catch (OperationCanceledException)
             {

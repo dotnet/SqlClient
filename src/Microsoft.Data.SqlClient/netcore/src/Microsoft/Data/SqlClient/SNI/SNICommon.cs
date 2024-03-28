@@ -49,11 +49,11 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         public const int HEADER_LENGTH = 16;
 
-        public readonly byte Flags;
-        public readonly ushort SessionId;
-        public readonly uint Length;
-        public readonly uint SequenceNumber;
-        public readonly uint Highwater;
+        public byte Flags;
+        public ushort SessionId;
+        public uint Length;
+        public uint SequenceNumber;
+        public uint Highwater;
 
         public SNISMUXHeader(byte flags, ushort sessionId, uint length, uint sequenceNumber, uint highwater)
         {
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.SNI
             Highwater = highwater;
         }
 
-        public SNISMUXHeader(Span<byte> bytes)
+        public void Read(Span<byte> bytes)
         {
             // As per the MC-SMP spec, the first byte of the header will always be 0x53
             Debug.Assert(bytes[0] == 0x53, "First byte of the SNI SMUX header was not 0x53");
@@ -96,8 +96,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// SMUX packet flags
     /// </summary>
-    [Flags]
-    internal enum SNISMUXFlags
+    internal enum SNISMUXFlags : byte
     {
         SMUX_SYN = 1,       // Begin SMUX connection
         SMUX_ACK = 2,       // Acknowledge SMUX packets

@@ -247,7 +247,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                 }
                             }
 
-                            currentHeader = new SNISMUXHeader(_headerBytes);
+                            currentHeader.Read(_headerBytes);
                             _dataBytesLeft = (int)currentHeader.Length;
                             _currentPacket = _lowerHandle.RentPacket(headerSize: 0, dataSize: (int)currentHeader.Length);
 #if DEBUG
