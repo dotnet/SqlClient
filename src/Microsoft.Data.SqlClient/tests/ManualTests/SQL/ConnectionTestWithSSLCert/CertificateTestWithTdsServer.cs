@@ -95,6 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void CreatePfxCertificate(string script)
         {
+            string currentDirectory = Directory.GetCurrentDirectory();  
             string powerShellCommand = "powershell.exe";
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -112,7 +113,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         RedirectStandardError = true,
                         RedirectStandardOutput = true,
                         UseShellExecute = false,
-                        Arguments = $"{script} -OutDir {Directory.GetCurrentDirectory()}> result.txt",
+                        Arguments = $"{script} -OutDir {currentDirectory} > result.txt",
                         CreateNoWindow = false,
                         Verb = "runas"
                     }

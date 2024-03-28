@@ -13,7 +13,7 @@ function Invoke-SqlServerCertificateCommand {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory = $false)]
-    [string] $certificateName = "$OutDir\localhostcert.cer",
+    [string] $certificateName = "localhostcert.cer",
     [string] $myCertStoreLocation = "Cert:\LocalMachine\My",
     [string] $rootCertStoreLocation = "Cert:\LocalMachine\Root",
     [string] $sqlAliasName = "SQLAliasName",
@@ -22,6 +22,12 @@ function Invoke-SqlServerCertificateCommand {
     [string] $LoopBackIPV6 = "::1"
   )
   Write-Output "Certificate generation started..."
+
+  # Change directory to where the tests are
+  Write-Output "Change directory to $OutDir ..."
+  cd $OutDir
+  pwd
+
   try {
     # Get FQDN of the machine
     Write-Output "Get FQDN of the machine..."
@@ -88,12 +94,12 @@ function Invoke-SqlServerCertificateCommand {
 
         # Export the certificate to a file
         Write-Output "Exporting the certificate to a file..."
-        Export-Certificate -Cert $certificate -FilePath "$certificateName" -Type CERT
+        Export-Certificate -Cert $certificate -FilePath "$OutDir/$certificateName" -Type CERT
 
         # Import the certificate to the Root store
         Write-Output "Importing the certificate to the Root store..."
         $params = @{
-          FilePath          = "$certificateName"
+          FilePath          = "$OutDir/$certificateName"
           CertStoreLocation = $rootCertStoreLocation
         }
         Import-Certificate @params
