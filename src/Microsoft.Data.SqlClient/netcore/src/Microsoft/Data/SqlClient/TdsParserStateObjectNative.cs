@@ -427,7 +427,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
             {
-// SSL 2.0 and 3.0 are provided for backward compatibility
+// SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
 #pragma warning disable CS0618, CA5397
                 protocolVersion = (int)SslProtocols.Ssl3;
             }
