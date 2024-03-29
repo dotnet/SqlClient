@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient.SNI
                             firstSocketException = e;
                         }
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
-                            "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: e.Message);
+                            "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint, args1: e.Message);
                     }
 
                     // Throw first error if we didn't find a SocketException
@@ -501,14 +501,14 @@ namespace Microsoft.Data.SqlClient.SNI
                 else
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
-                        "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: ae.Message);
+                        "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint, args1: ae.Message);
                     throw;
                 }
             }
             catch (Exception e)
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
-                    "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: e.Message);
+                    "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint, args1: e.Message);
                 throw;
             }
 
