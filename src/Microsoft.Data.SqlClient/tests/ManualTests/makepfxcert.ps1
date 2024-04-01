@@ -48,7 +48,7 @@ function Invoke-SqlServerCertificateCommand {
 
         # Create self signed certificate using openssl
         Write-Output "Creating certificate for linux..."
-        if ($fqdn.length -gt 1) {
+        if ($fqdn.length -gt 64) {
             $machineId = $fqdn.Substring(0,15)
             openssl req -x509 -newkey rsa:4096 -sha256 -days 1095 -nodes -keyout $OutDir/localhostcert.key -out $OutDir/localhostcert.cer -subj "/CN=$machineId" -addext "subjectAltName=DNS:$fqdn,DNS:localhost,IP:127.0.0.1,IP:::1"
         }
