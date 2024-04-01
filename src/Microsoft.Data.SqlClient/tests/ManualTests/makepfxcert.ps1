@@ -39,6 +39,11 @@ function Invoke-SqlServerCertificateCommand {
 
     # Create a self-signed certificate
     if ($OS -eq "Unix") {
+        # Install OpenSSL module
+        Install-Module -Name OpenSSL -Repository PSGallery -Force
+        # Show version of OpenSSL just to make sure it is installed
+        openssl version
+
         # Where is this executing, print working directory
         Write-Output "print working directory..."
         pwd
