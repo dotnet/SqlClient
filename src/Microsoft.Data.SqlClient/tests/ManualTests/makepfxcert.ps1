@@ -32,10 +32,10 @@ function Invoke-SqlServerCertificateCommand {
     # Get FQDN of the machine
     Write-Output "Get FQDN of the machine..."
     $fqdn = [System.Net.Dns]::GetHostByName(($env:computerName)).HostName
-    Write-Output "FQDN = $fqdn..."
+    Write-Output "FQDN = $fqdn"
 
     $OS = [System.Environment]::OSVersion.Platform
-    Write-Output "Operating System is $OS..."
+    Write-Output "Operating System is $OS"
 
     # Create a self-signed certificate
     if ($OS -eq "Unix") {
@@ -43,13 +43,6 @@ function Invoke-SqlServerCertificateCommand {
         Install-Module -Name OpenSSL -Repository PSGallery -Force
         # Show version of OpenSSL just to make sure it is installed
         openssl version
-
-        # Where is this executing, print working directory
-        Write-Output "print working directory..."
-        pwd
-        # What folder is this executing in, list the contents
-        Write-Output "list the contents of working directory..."
-        ls -l
 
         # Create self signed certificate using openssl
         Write-Output "Creating certificate for linux..."
@@ -134,10 +127,6 @@ function Invoke-SqlServerCertificateCommand {
     }
 
     Write-Output "Certificate generation was not successfull. $msg"
-    if ($OS -eq "Unix") {
-        # Display the contents of result.txt for debugging
-        cat result.txt
-    }
   }
 
   Write-Output "Certificate generation task completed."

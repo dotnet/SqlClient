@@ -13,7 +13,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
     {
         private static readonly string s_fullPathToCer = Path.Combine(Directory.GetCurrentDirectory(), "localhostcert.cer");
         private static string s_hostName = System.Net.Dns.GetHostName();
-
         public static ConnectionTestParametersData Data { get; } = new ConnectionTestParametersData();
         public List<ConnectionTestParameters> ConnectionTestParametersList { get; set; }
 
@@ -41,7 +40,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
         {
             ConnectionTestParametersList = new List<ConnectionTestParameters>
             {
-                // First batch with TdsEncryptionType = Off
                 new ConnectionTestParameters
                 {
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
@@ -114,7 +112,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     HostNameInCertificate = s_hostName,
                     TestResult = true
                 },
-                // Second batch with TdsEncryptionType = On
                 new ConnectionTestParameters
                 {
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,

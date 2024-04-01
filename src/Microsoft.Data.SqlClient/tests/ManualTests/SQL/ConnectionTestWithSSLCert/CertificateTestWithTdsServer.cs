@@ -29,9 +29,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(ConnectionTestParametersData.GetConnectionTestParameters), MemberType = typeof(ConnectionTestParametersData))]
         public void ConnectionTest(ConnectionTestParameters connectionTestParameters)
         {
-
-            Debug.WriteLine($"Certificate is at {s_fullPathToPfx}");
-
             string userId = string.Empty;
             string password = string.Empty;
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
@@ -79,23 +76,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 builder.HostNameInCertificate = connectionTestParameters.HostNameInCertificate;
             }
 
-            try
-            {
-                using SqlConnection connection = new(builder.ConnectionString);
-                connection.Open();
-                Debug.WriteLine($">>>>>>>>>>>> Connected to {builder.ConnectionString} with encrypt={connectionTestParameters.Encrypt}, trustServerCertificate={connectionTestParameters.TrustServerCertificate} <<<<<<<<<<<<<<<");
-                Assert.Equal(connectionTestParameters.TestResult, (connection.State == ConnectionState.Open));
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"{ex.Message} {ex.InnerException?.Message}" );
-                Debug.WriteLine($">>>>>>>>>>>> Failed to connect using {builder.ConnectionString} with encrypt={connectionTestParameters.Encrypt}, trustServerCertificate={connectionTestParameters.TrustServerCertificate} <<<<<<<<<<<<<<<");
-            }
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+            Assert.Equal(connectionTestParameters.TestResult, (connection.State == ConnectionState.Open));
         }
 
         private static void CreatePfxCertificate(string script)
         {
-            string currentDirectory = Directory.GetCurrentDirectory();  
+            string currentDirectory = Directory.GetCurrentDirectory();
             string powerShellCommand = "powershell.exe";
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -121,7 +109,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 proc.EnableRaisingEvents = true;
 
-                // Use async event handlers to avoid deadlocks
                 proc.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
                 {
                     output.AppendLine(e.Data);
@@ -140,15 +127,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (!proc.WaitForExit(60000))
                 {
                     proc.Kill();
-                    // allow async output to process
                     proc.WaitForExit(2000);
                     throw new Exception($"Could not generate certificate.Error out put: {output}");
                 }
 
                 System.Threading.Thread.Sleep(1000);
-                if (!File.Exists(s_fullPathToPfx)) 
+                if (!File.Exists(s_fullPathToPfx))
                 {
-                    System.Threading.Thread.Sleep(1000); 
+                    System.Threading.Thread.Sleep(1000);
                 }
             }
             else
