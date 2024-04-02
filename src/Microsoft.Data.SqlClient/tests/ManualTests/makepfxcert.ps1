@@ -64,7 +64,7 @@ function Invoke-SqlServerCertificateCommand {
         # Add trust to the pem certificate
         Write-Output "Adding trust to pem certificate..."
         openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/localhostcert.pem
-        
+
         # Import the certificate to the Root store ------------------------------------------------------------------------------
         # NOTE:  The process must have root privileges to add the certificate to the Root store. If not, then use  
         #        "chmod 777 /usr/local/share/ca-certificates" to give read, write and execute privileges to anyone on that folder 
@@ -72,6 +72,11 @@ function Invoke-SqlServerCertificateCommand {
         # Only certificates with extension "crt" gets added for some reason.
         Write-Output "Copy the pem certificate to /usr/local/share/ca-certificates folder..."
         cp $OutDir/localhostcert.pem /usr/local/share/ca-certificates/localhostcert.crt
+
+        # Add trust to the mismatched certificate as well
+        $ openssl x509 -in $OutDir/mismatchedcert.cer -inform der -out $OutDir/mismatchedcert.pem
+        openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/mismatchedcert.pem
+        cp $OutDir/mismatchedcert.pem /usr/local/share/ca-certificates/mismatchedcert.crt
 
         # Update the certificates store
         Write-Output "Updating the certificates store..."

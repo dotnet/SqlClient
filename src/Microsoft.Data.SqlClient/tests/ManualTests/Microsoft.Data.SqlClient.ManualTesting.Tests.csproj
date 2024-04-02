@@ -356,6 +356,9 @@
     <None Update="makepfxcert.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="mismatchedcert.cer">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="SQL\ConnectionTestWithSSLCert\GenerateSelfSignedCertificate.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

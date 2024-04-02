@@ -12,6 +12,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
     public class ConnectionTestParametersData
     {
         private static readonly string s_fullPathToCer = Path.Combine(Directory.GetCurrentDirectory(), "localhostcert.cer");
+        private static readonly string s_mismatchedcert = Path.Combine(Directory.GetCurrentDirectory(), "mismatchedcert.cer");
+
         private static string s_hostName = System.Net.Dns.GetHostName();
         public static ConnectionTestParametersData Data { get; } = new ConnectionTestParametersData();
         public List<ConnectionTestParameters> ConnectionTestParametersList { get; set; }
@@ -34,6 +36,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
             yield return new object[] { Data.ConnectionTestParametersList[13] };
             yield return new object[] { Data.ConnectionTestParametersList[14] };
             yield return new object[] { Data.ConnectionTestParametersList[15] };
+            yield return new object[] { Data.ConnectionTestParametersList[16] };
+            yield return new object[] { Data.ConnectionTestParametersList[17] };
+            yield return new object[] { Data.ConnectionTestParametersList[18] };
+            yield return new object[] { Data.ConnectionTestParametersList[19] };
         }
 
         public ConnectionTestParametersData() 
@@ -182,6 +188,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TrustServerCertificate = true,
                     Certificate = null,
                     HostNameInCertificate = s_hostName,
+                    TestResult = true
+                },
+                new ConnectionTestParameters
+                {
+                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
+                    Encrypt = SqlConnectionEncryptOption.Mandatory,
+                    TrustServerCertificate = false,
+                    Certificate = s_mismatchedcert,
+                    HostNameInCertificate = null,
+                    TestResult = false,
+                },
+                new ConnectionTestParameters
+                {
+                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
+                    Encrypt = SqlConnectionEncryptOption.Mandatory,
+                    TrustServerCertificate = true,
+                    Certificate = s_mismatchedcert,
+                    HostNameInCertificate = null,
+                    TestResult = true
+                },
+                new ConnectionTestParameters
+                {
+                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
+                    Encrypt = SqlConnectionEncryptOption.Mandatory,
+                    TrustServerCertificate = false,
+                    Certificate = s_mismatchedcert,
+                    HostNameInCertificate = null,
+                    TestResult = false,
+                },
+                new ConnectionTestParameters
+                {
+                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
+                    Encrypt = SqlConnectionEncryptOption.Mandatory,
+                    TrustServerCertificate = true,
+                    Certificate = s_mismatchedcert,
+                    HostNameInCertificate = null,
                     TestResult = true
                 },
             };

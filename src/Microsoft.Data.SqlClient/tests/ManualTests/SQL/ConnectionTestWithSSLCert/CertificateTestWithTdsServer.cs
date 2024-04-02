@@ -76,8 +76,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             using SqlConnection connection = new(builder.ConnectionString);
-            connection.Open();
-            Assert.Equal(connectionTestParameters.TestResult, (connection.State == ConnectionState.Open));
+            try
+            {
+                connection.Open();
+                Assert.Equal(connectionTestParameters.TestResult, (connection.State == ConnectionState.Open));
+            }
+            catch(Exception)
+            {
+                Assert.False(connectionTestParameters.TestResult);
+            }
         }
 
         private static void CreatePfxCertificate(string script)

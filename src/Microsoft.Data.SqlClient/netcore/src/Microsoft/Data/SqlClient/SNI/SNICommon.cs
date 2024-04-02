@@ -9,11 +9,10 @@ using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using Microsoft.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
-using System.Linq;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -186,7 +185,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 if (validationCertificate != null)
                 {
-                    if (serverCert.GetRawCertData().SequenceEqual(validationCertificate.GetRawCertData()))
+                    if (ByteArrayCompare(serverCert.GetRawCertData(), validationCertificate.GetRawCertData()))
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "Connection Id {0}, ServerCertificate matches the certificate provided by the server. Certificate validation passed.", args0: connectionId);
                         return true;
@@ -234,12 +233,12 @@ namespace Microsoft.Data.SqlClient.SNI
                     if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch))
                     {
 #if NET7_0_OR_GREATER
-                    X509Certificate2 cert2 = serverCert as X509Certificate2;
-                    if (!cert2.MatchesHostname(serverNameToValidate))
-                    {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "Connection Id {0}, serverNameToValidate {1}, Target Server name or HNIC does not match the Subject/SAN in Certificate.", args0: connectionId, args1: serverNameToValidate);
-                        messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
-                    }
+                        X509Certificate2 cert2 = serverCert as X509Certificate2;
+                        if (!cert2.MatchesHostname(serverNameToValidate))
+                        {
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "Connection Id {0}, serverNameToValidate {1}, Target Server name or HNIC does not match the Subject/SAN in Certificate.", args0: connectionId, args1: serverNameToValidate);
+                            messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
+                        }
 #else
                         // To Do: include certificate SAN (Subject Alternative Name) check.
                         string certServerName = serverCert.Subject.Substring(serverCert.Subject.IndexOf('=') + 1);
@@ -356,5 +355,35 @@ namespace Microsoft.Data.SqlClient.SNI
             SNILoadHandle.SingletonInstance.LastError = error;
             return TdsEnums.SNI_ERROR;
         }
+
+        internal static unsafe bool ByteArrayCompare(byte[] original, byte[] variant)
+        {
+            unchecked
+            {
+                if (original == variant)
+                    return true;
+
+                if (original == null || variant == null || original.Length != variant.Length)
+                    return false;
+
+                fixed (byte* originalStartPosition = original, variantStartPosition = variant)
+                {
+                    byte* originalCurrentPosition = originalStartPosition, variantCurrentPosition = variantStartPosition;
+                    int originalLength = original.Length;
+                    for (int i = 0; i < originalLength / 8; i++, originalCurrentPosition += 8, variantCurrentPosition += 8)
+                        if (*((long*)originalCurrentPosition) != *((long*)variantCurrentPosition))
+                            return false;
+                    if ((originalLength & 4) != 0)
+                    { if (*((int*)originalCurrentPosition) != *((int*)variantCurrentPosition)) return false; originalCurrentPosition += 4; variantCurrentPosition += 4; }
+                    if ((originalLength & 2) != 0)
+                    { if (*((short*)originalCurrentPosition) != *((short*)variantCurrentPosition)) return false; originalCurrentPosition += 2; variantCurrentPosition += 2; }
+                    if ((originalLength & 1) != 0)
+                        if (*((byte*)originalCurrentPosition) != *((byte*)variantCurrentPosition))
+                            return false;
+                    return true;
+                }
+            }
+        }
+
     }
 }
