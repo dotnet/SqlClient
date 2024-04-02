@@ -356,34 +356,9 @@ namespace Microsoft.Data.SqlClient.SNI
             return TdsEnums.SNI_ERROR;
         }
 
-        internal static unsafe bool ByteArrayCompare(byte[] original, byte[] variant)
+        internal static bool ByteArrayCompare(byte[] original, byte[] variant)
         {
-            unchecked
-            {
-                if (original == variant)
-                    return true;
-
-                if (original == null || variant == null || original.Length != variant.Length)
-                    return false;
-
-                fixed (byte* originalStartPosition = original, variantStartPosition = variant)
-                {
-                    byte* originalCurrentPosition = originalStartPosition, variantCurrentPosition = variantStartPosition;
-                    int originalLength = original.Length;
-                    for (int i = 0; i < originalLength / 8; i++, originalCurrentPosition += 8, variantCurrentPosition += 8)
-                        if (*((long*)originalCurrentPosition) != *((long*)variantCurrentPosition))
-                            return false;
-                    if ((originalLength & 4) != 0)
-                    { if (*((int*)originalCurrentPosition) != *((int*)variantCurrentPosition)) return false; originalCurrentPosition += 4; variantCurrentPosition += 4; }
-                    if ((originalLength & 2) != 0)
-                    { if (*((short*)originalCurrentPosition) != *((short*)variantCurrentPosition)) return false; originalCurrentPosition += 2; variantCurrentPosition += 2; }
-                    if ((originalLength & 1) != 0)
-                        if (*((byte*)originalCurrentPosition) != *((byte*)variantCurrentPosition))
-                            return false;
-                    return true;
-                }
-            }
+            return original.AsSpan().SequenceEqual(variant.AsSpan());
         }
-
     }
 }
