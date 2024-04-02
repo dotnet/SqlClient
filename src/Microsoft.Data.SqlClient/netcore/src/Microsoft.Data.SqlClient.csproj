@@ -783,7 +783,7 @@
     <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs">
       <Link>Common\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs</Link>
     </Compile>    
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs" Link="Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs" />
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs" Link="Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
@@ -1027,9 +1027,6 @@
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Microsoft\Data\SqlClient\SSPI\" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
