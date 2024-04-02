@@ -51,7 +51,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
    
   
 ## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a <xref:Microsoft.Data.SqlClient.SqlConnection>. The <xref:Microsoft.Data.SqlClient.SqlConnection> is opened and set as the <xref:Microsoft.Data.SqlClient.SqlCommand.Connection%2A> for the <xref:Microsoft.Data.SqlClient.SqlCommand>. The example then calls <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A>. To accomplish this, the <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A> is passed a connection string and a query string that is a Transact-SQL INSERT statement. The connection is closed automatically when the code exits the using block.  
+ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a <xref:Microsoft.Data.SqlClient.SqlConnection>. The <xref:Microsoft.Data.SqlClient.SqlConnection> is opened and set as the <xref:Microsoft.Data.SqlClient.SqlCommand.Connection%2A> for the <xref:Microsoft.Data.SqlClient.SqlCommand>. The example then calls <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A>. To accomplish this, the <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A> is passed a SqlConnection and a query string that is a Transact-SQL INSERT statement. The connection is closed automatically when the code exits the using block.  
   
  [!code-csharp[SqlCommand_ExecuteNonQuery Example#1](~/../sqlclient/doc/samples/SqlCommand_ExecuteNonQuery.cs#1)]
   
@@ -145,10 +145,11 @@ using (SqlConnection connection = new SqlConnection(connectionString))
           <value>
             The Func that takes a <see cref="SqlAuthenticationParameters" /> and <see cref="System.Threading.CancellationToken" /> and returns a <see cref="SqlAuthenticationToken" />.</value>
           <remarks>
-            <format type="text/markdown"><![CDATA[
+            <format type="text/markdown">
+  <![CDATA[
 
 ## Examples  
- The following example demonstrates how to define and set an <xref:Microsoft.Data.SqlClient.AccessTokenCallback>.  
+ The following example demonstrates how to define and set an <xref:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback%2A>.  
   
  [!code-csharp[SqlConnection_AccessTokenCallback Example#1](~/../sqlclient/doc/samples/SqlConnection_AccessTokenCallback.cs#1)]
   
@@ -299,6 +300,21 @@ using (SqlConnection connection = new SqlConnection(connectionString))
             <exception cref="T:Microsoft.Data.SqlClient.SqlException">Parallel transactions are not allowed when using Multiple Active Result Sets (MARS).</exception>
             <exception cref="T:System.InvalidOperationException">Parallel transactions are not supported.</exception>
         </BeginTransactionIsoTransactionName>
+        <CanCreateBatch>
+            <summary>Gets a value that indicates whether this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> instance supports the <see cref="T:System.Data.Common.DbBatch" /> class.</summary>
+            <value>
+                <see langword="true" /> if this instance supports the <see cref="T:System.Data.Common.DbBatch" /> class; otherwise, <see langword="false" />. The default is <see langword="true" />.
+            </value>
+            <remarks>
+                <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+
+ADO.net SQL provider implemented <xref:System.Data.Common.DbBatch> and overrides `CanCreateBatch` property to return `true`.
+
+ ]]></format>
+            </remarks>
+        </CanCreateBatch>
         <ChangeDatabase>
             <param name="database">The name of the database to use instead of the current database.</param>
             <summary>Changes the current database for an open <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />.</summary>
@@ -659,6 +675,10 @@ End Module
  ]]></format>
             </remarks>
         </CreateCommand>
+        <CreateDbBatch>
+            <summary>Returns a new instance of the <see cref="T:Mictosoft.Data.SqlClient.SqlBatch" /> class that implements the <see cref="T:System.Data.Common.DbBatch" /> class.</summary>
+            <returns>A new instance of <see cref="T:Mictosoft.Data.SqlClient.SqlBatch" />.</returns>
+        </CreateDbBatch>
         <CreateDbCommand>
             <summary>To be added.</summary>
             <returns>To be added.</returns>

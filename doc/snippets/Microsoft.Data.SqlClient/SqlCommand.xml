@@ -1339,10 +1339,10 @@ The <xref:Microsoft.Data.SqlClient.SqlCommand.CreateParameter%2A> method is a st
 		</DbConnection>
 		<DbParameterCollection>
 			<summary>
-				To be added.
+				Gets the collection of <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> objects.
 			</summary>
 			<value>
-				To be added.
+				The parameters of the SQL statement or stored procedure.
 			</value>
 			<remarks>
 				To be added.

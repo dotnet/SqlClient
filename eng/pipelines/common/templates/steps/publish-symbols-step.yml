@@ -1,0 +1,29 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: SymAccount
+    type: string
+
+  - name: PublishSymbols
+    type: string
+    default: '$(PublishSymbols)'
+
+steps:
+- powershell: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.SymAccount}}"'
+  displayName: 'Update Symbol.AccountName ${{parameters.SymAccount}}'
+- task: PublishSymbols@2
+  displayName: 'Publish symbols path'
+  inputs:
+    SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\Project\bin'
+    SearchPattern: |
+      Windows_NT/$(Configuration).AnyCPU/**/Microsoft.Data.SqlClient.pdb
+      Unix/$(Configuration).AnyCPU/**/Microsoft.Data.SqlClient.pdb
+    IndexSources: false
+    SymbolServerType: TeamServices
+    SymbolsMaximumWaitTime: 60
+    SymbolsProduct: Microsoft.Data.SqlClient
+    SymbolsVersion: '$(NuGetPackageVersion)'
+  condition: and(succeeded(), eq('${{ parameters.PublishSymbols }}', 'true'))

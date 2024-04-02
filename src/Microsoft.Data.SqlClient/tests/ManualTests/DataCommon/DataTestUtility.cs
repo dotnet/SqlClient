@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
         public static readonly bool UseManagedSNIOnWindows = false;
-        public static readonly bool IsAzureSynapse = false;
+
         public static Uri AKVBaseUri = null;
         public static readonly string PowerShellPath = null;
         public static string FileStreamDirectory = null;
@@ -95,13 +95,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string s_sQLServerVersion = string.Empty;
         private static bool s_isTDS8Supported;
 
+        //SQL Server EngineEdition
+        private static string s_sqlServerEngineEdition;
+
+        // Azure Synapse EngineEditionId == 6
+        // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
+        public static bool IsAzureSynapse
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
+                }
+                _ = int.TryParse(s_sqlServerEngineEdition, out int engineEditon);
+                return engineEditon == 6;
+            }
+        }
+
         public static string SQLServerVersion
         {
             get
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sQLServerVersion ??= GetSqlServerVersion(TCPConnectionString);
+                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, "ProductMajorVersion");
                 }
                 return s_sQLServerVersion;
             }
@@ -143,7 +161,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DNSCachingConnString = c.DNSCachingConnString;
             DNSCachingServerCR = c.DNSCachingServerCR;
             DNSCachingServerTR = c.DNSCachingServerTR;
-            IsAzureSynapse = c.IsAzureSynapse;
             IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
@@ -272,19 +289,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
-        public static string GetSqlServerVersion(string connectionString)
+        public static string GetSqlServerProperty(string connectionString, string propertyName)
         {
-            string version = string.Empty;
+            string propertyValue = string.Empty;
             using SqlConnection conn = new(connectionString);
             conn.Open();
             SqlCommand command = conn.CreateCommand();
-            command.CommandText = "SELECT SERVERProperty('ProductMajorVersion')";
+            command.CommandText = $"SELECT SERVERProperty('{propertyName}')";
             SqlDataReader reader = command.ExecuteReader();
             if (reader.Read())
             {
-                version = reader.GetString(0);
+                switch (propertyName)
+                {
+                    case "EngineEdition":
+                        propertyValue = reader.GetInt32(0).ToString();
+                        break;
+                    case "ProductMajorVersion":
+                        propertyValue = reader.GetString(0);
+                        break;
+                }
             }
-            return version;
+            return propertyValue;
         }
 
         public static bool GetSQLServerStatusOnTDS8(string connectionString)
@@ -979,9 +1004,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             port = -1;
             instanceName = string.Empty;
 
-            if (dataSource.Contains(",") && dataSource.Contains("\\"))
-                return false;
-
             if (dataSource.Contains(":"))
             {
                 dataSource = dataSource.Substring(dataSource.IndexOf(":", StringComparison.Ordinal) + 1);
@@ -993,7 +1015,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     return false;
                 }
-                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal) - 1);
+                // IndexOf is zero-based, no need to subtract one
+                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal));
             }
 
             if (dataSource.Contains("\\"))

@@ -163,6 +163,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\TableLock.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\DataConversionErrorMessageTest.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CopyWidenNullInexactNumerics.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\WriteToServerTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ('$(TestSet)' == '' OR '$(TestSet)' == '2')">
     <Compile Include="SQL\SqlDSEnumeratorTest\SqlDataSourceEnumeratorTest.cs" />
@@ -174,6 +175,7 @@
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
+    <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
     <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
@@ -279,6 +281,7 @@
     <Compile Include="SQL\Common\SystemDataInternals\ConnectionHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\ConnectionPoolHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\DataReaderHelper.cs" />
+    <Compile Include="SQL\Common\SystemDataInternals\FedAuthTokenHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
     <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTest.cs" />
@@ -330,25 +333,24 @@
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" Version="$(MicrosoftDotNetXUnitExtensionsVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Win32.Registry" Version="$(MicrosoftWin32RegistryVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
-    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="$(MicrosoftIdentityModelClientsActiveDirectoryVersion)" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="$(SystemIdentityModelTokensJwtVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersionNet)" />
-    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotnetRemoteExecutorVersion)" /> 
+    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotnetRemoteExecutorVersion)" />
     <PackageReference Condition="'$(TargetGroup)'!='netfx'" Include="System.ServiceProcess.ServiceController" Version="$(SystemServiceProcessServiceControllerVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />
+   <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <TargetPath>%(Filename)%(Extension)</TargetPath>
+   </ContentWithTargetPath>
   </ItemGroup>
   <ItemGroup>
     <None Update="SQL\ConnectionTestWithSSLCert\GenerateSelfSignedCertificate.ps1">
