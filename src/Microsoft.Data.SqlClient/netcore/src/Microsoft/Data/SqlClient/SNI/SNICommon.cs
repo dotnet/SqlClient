@@ -185,7 +185,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 if (validationCertificate != null)
                 {
-                    if (ByteArrayCompare(serverCert.GetRawCertData(), validationCertificate.GetRawCertData()))
+                    if (serverCert.GetRawCertData().AsSpan().SequenceEqual(validationCertificate.GetRawCertData().AsSpan()))
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "Connection Id {0}, ServerCertificate matches the certificate provided by the server. Certificate validation passed.", args0: connectionId);
                         return true;
@@ -354,11 +354,6 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             SNILoadHandle.SingletonInstance.LastError = error;
             return TdsEnums.SNI_ERROR;
-        }
-
-        internal static bool ByteArrayCompare(byte[] original, byte[] variant)
-        {
-            return original.AsSpan().SequenceEqual(variant.AsSpan());
         }
     }
 }
