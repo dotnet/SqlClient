@@ -379,14 +379,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>true if valid</returns>
         private bool ValidateServerCertificate(object sender, X509Certificate serverCertificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
-            if (!_validateCert)
-            {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Certificate validation not requested.", args0: ConnectionId);
-                return true;
-            }
+            using (TrySNIEventScope.Create(nameof(SNINpHandle)))
+            {			
+                if (!_validateCert)
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Certificate validation not requested.", args0: ConnectionId);
+                    return true;
+                }
 
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Proceeding to SSL certificate validation.", args0: ConnectionId);
-            return SNICommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Proceeding to SSL certificate validation.", args0: ConnectionId);
+                return SNICommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
+			}	
         }
 
         /// <summary>
