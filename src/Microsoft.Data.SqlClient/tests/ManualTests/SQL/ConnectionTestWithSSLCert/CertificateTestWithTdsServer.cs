@@ -136,12 +136,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     proc.WaitForExit(2000);
                     throw new Exception($"Could not generate certificate.Error out put: {output}");
                 }
-
-                System.Threading.Thread.Sleep(1000);
-                if (!File.Exists(s_fullPathToPfx))
-                {
-                    System.Threading.Thread.Sleep(1000);
-                }
             }
             else
             {
