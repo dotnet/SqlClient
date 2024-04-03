@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.TCP:
                     sniHandle = CreateTcpHandle(details, timeout, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
                         tlsFirst, hostNameInCertificate, serverCertificateFilename);
-                     break;
+                    break;
                 case DataSource.Protocol.NP:
                     sniHandle = CreateNpHandle(details, timeout, parallel, tlsFirst);
                     break;
@@ -652,6 +652,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 Port = port;
+
+                if (InstanceName == null && backSlashIndex > -1 && tokensByCommaAndSlash.Length == 3)
+                {
+                    InstanceName = tokensByCommaAndSlash[1].Trim();
+                }
             }
             // Instance Name Handling. Only if we found a '\' and we did not find a port in the Data Source
             else if (backSlashIndex > -1)
@@ -694,7 +699,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 if (!_dataSourceAfterTrimmingProtocol.Contains(PipeBeginning))
                 {
                     // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance, 
-                    // separate servername and instance and prepend instance with MSSQL$ and append default pipe path 
+                    // separate server name and instance and prepend instance with MSSQL$ and append default pipe path 
                     // https://learn.microsoft.com/en-us/sql/tools/configuration-manager/named-pipes-properties?view=sql-server-ver16
                     if (_dataSourceAfterTrimmingProtocol.Contains(PathSeparator) && _connectionProtocol == Protocol.NP)
                     {
@@ -719,6 +724,10 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
 
                     InferLocalServerName();
+
+                    if (InstanceName == null)
+                        InstanceName = GetInstanceNameFromDataSource();
+
                     return true;
                 }
 
@@ -800,5 +809,17 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private static bool IsLocalHost(string serverName)
             => ".".Equals(serverName) || "(local)".Equals(serverName) || "localhost".Equals(serverName);
+
+        private string GetInstanceNameFromDataSource()
+        {
+            string instanceName = "";
+            string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter);
+            if (tokensByBackSlash.Length > 1)
+            {
+                instanceName = tokensByBackSlash[1];
+            }
+
+            return instanceName;
+        }
     }
 }
