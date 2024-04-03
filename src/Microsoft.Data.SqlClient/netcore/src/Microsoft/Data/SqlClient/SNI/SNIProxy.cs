@@ -812,7 +812,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private string GetInstanceNameFromDataSource()
         {
-            string instanceName = "";
+            string instanceName = string.Empty;
             string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter);
             if (tokensByBackSlash.Length > 1)
             {

@@ -107,8 +107,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connectionString = DataTestUtility.NPConnectionString;
             SqlConnectionStringBuilder builder = new(connectionString);
 
-            string instanceName = "";
-            DataTestUtility.ParseDataSource(builder.DataSource, out _, out _, out instanceName);
+            DataTestUtility.ParseDataSource(builder.DataSource, out _, out _, out string instanceName);
 
             Assert.True(!string.IsNullOrEmpty(instanceName), "Instance name must be included in data source.");
             PortNumberInSPNTest(connectionString: builder.ConnectionString, expectedInstanceName: instanceName.ToUpper());
