@@ -42,9 +42,6 @@
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
       <Link>Common\Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
-      <Link>Common\Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)\System\Net\ContextFlagsPal.cs">
       <Link>Common\System\Net\ContextFlagsPal.cs</Link>
     </Compile>
@@ -76,7 +73,6 @@
       <Link>Common\System\Net\SecurityStatusPal.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\System\NotImplemented.cs" />
-
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
     </Compile>
@@ -127,6 +123,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
+      <Link>Common\Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\FieldNameLookup.cs">
       <Link>Microsoft\Data\ProviderBase\FieldNameLookup.cs</Link>
