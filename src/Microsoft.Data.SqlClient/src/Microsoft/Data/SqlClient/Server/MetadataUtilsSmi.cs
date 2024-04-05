@@ -500,11 +500,7 @@ namespace Microsoft.Data.SqlClient.Server
                                             source.Scale,
                                             source.LocaleId,
                                             source.CompareOptions,
-#if NETFRAMEWORK
                                             source.Type,
-#else
-                                            null,
-#endif
                                             source.Name,
                                             typeSpecificNamePart1,
                                             typeSpecificNamePart2,
