@@ -13,6 +13,7 @@ using Microsoft.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
+using System.Net.Sockets;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -326,28 +327,14 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        internal static IPAddress[] GetDnsIpAddresses(string serverName, TimeoutTimer timeout)
-        {
-            using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
-            {
-                int remainingTimeout = timeout.MillisecondsRemainingInt;
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO,
-                                                          "Getting DNS host entries for serverName {0} within {1} milliseconds.",
-                                                          args0: serverName,
-                                                          args1: remainingTimeout);
-                using CancellationTokenSource cts = new CancellationTokenSource(remainingTimeout);
-                // using this overload to support netstandard
-                Task<IPAddress[]> task = Dns.GetHostAddressesAsync(serverName);
-                task.ConfigureAwait(false);
-                task.Wait(cts.Token);
-                return task.Result;
-            }
-        }
-
+        /// <summary>
+        /// Returns array of IP addresses for the given server name, sorted according to the given preference.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when ipPreference is not supported</exception>
 #if NET6_0_OR_GREATER
-        internal static async ValueTask<IPAddress[]> GetDnsIpAddresses(string serverName, TimeoutTimer timeout, bool async)
+        internal static async ValueTask<IPAddress[]> GetDnsIpAddresses(string serverName, TimeoutTimer timeout, SqlConnectionIPAddressPreference ipPreference, bool async)
 #else
-        internal static ValueTask<IPAddress[]> GetDnsIpAddresses(string serverName, TimeoutTimer timeout, bool async)
+        internal static ValueTask<IPAddress[]> GetDnsIpAddresses(string serverName, TimeoutTimer timeout, SqlConnectionIPAddressPreference ipPreference, bool async)
 #endif
         {
             using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
@@ -364,41 +351,86 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 if (async)
                 {
-                    return await task.ConfigureAwait(false);
+                    return SortIpAddressesByPreference(await task.ConfigureAwait(false), ipPreference);
                 }
                 else
                 {
                     task.Wait();
-                    return task.Result;
+                    return SortIpAddressesByPreference(task.Result, ipPreference);
                 }
 #else
                 // using this overload to support netstandard
                 Task<IPAddress[]> task = Dns.GetHostAddressesAsync(serverName);
 
                 task.Wait(cts.Token);
-                return new ValueTask<IPAddress[]>(task.Result);
+                return new ValueTask<IPAddress[]>(SortIpAddressesByPreference(task.Result, ipPreference));
 #endif
             }
         }
 
-        internal static IPAddress[] GetDnsIpAddresses(string serverName)
+        /// <summary>
+        /// Returns array of IP addresses for the given server name, sorted according to the given preference.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when ipPreference is not supported</exception>
+        internal static async ValueTask<IPAddress[]> GetDnsIpAddresses(string serverName, SqlConnectionIPAddressPreference ipPreference, bool async)
         {
             using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "Getting DNS host entries for serverName {0}.", args0: serverName);
-                return Dns.GetHostAddresses(serverName);
+
+                return SortIpAddressesByPreference(async
+                    ? await Dns.GetHostAddressesAsync(serverName)
+                    : Dns.GetHostAddresses(serverName),
+                    ipPreference);
             }
         }
 
-        internal static async ValueTask<IPAddress[]> GetDnsIpAddresses(string serverName, bool async)
+        private static IPAddress[] SortIpAddressesByPreference(IPAddress[] dnsIPAddresses, SqlConnectionIPAddressPreference ipPreference)
         {
-            using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
+            AddressFamily? prioritiesFamily = ipPreference switch
             {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "Getting DNS host entries for serverName {0}.", args0: serverName);
+                SqlConnectionIPAddressPreference.IPv4First => AddressFamily.InterNetwork,
+                SqlConnectionIPAddressPreference.IPv6First => AddressFamily.InterNetworkV6,
+                SqlConnectionIPAddressPreference.UsePlatformDefault => null,
+                _ => throw ADP.NotSupportedEnumerationValue(typeof(SqlConnectionIPAddressPreference), ipPreference.ToString(), nameof(SortIpAddressesByPreference))
+            };
 
-                return async
-                    ? await Dns.GetHostAddressesAsync(serverName)
-                    : Dns.GetHostAddresses(serverName);
+            if (prioritiesFamily == null)
+            {
+                return dnsIPAddresses;
+            }
+            else
+            {
+                int resultArrayIndex = 0;
+                IPAddress[] ipAddresses = new IPAddress[dnsIPAddresses.Length];
+
+                // Return addresses of the preferred family first
+                for (int i = 0; i < dnsIPAddresses.Length; i++)
+                {
+                    if (dnsIPAddresses[i].AddressFamily == prioritiesFamily)
+                    {
+                        ipAddresses[resultArrayIndex++] = dnsIPAddresses[i];
+                    }
+                }
+
+                // Return addresses of the other family
+                for (int i = 0; i < dnsIPAddresses.Length; i++)
+                {
+                    if (dnsIPAddresses[i].AddressFamily is AddressFamily.InterNetwork or AddressFamily.InterNetworkV6
+                        && dnsIPAddresses[i].AddressFamily != prioritiesFamily)
+                    {
+                        ipAddresses[resultArrayIndex++] = dnsIPAddresses[i];
+                    }
+                }
+
+                // If the DNS resolution returned records of types other than A and AAAA, the original array size will be
+                // too large, and must thus be resized. This is very unlikely, so we only try to do this post-hoc.
+                if (resultArrayIndex + 1 < ipAddresses.Length)
+                {
+                    Array.Resize(ref ipAddresses, resultArrayIndex + 1);
+                }
+
+                return ipAddresses;
             }
         }
 

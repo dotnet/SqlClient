@@ -107,11 +107,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (System.Net.Sockets.AddressFamily.InterNetwork == IPFromSNI.AddressFamily)
                     {
-                        pendingDNSInfo.AddrIPv4 = IPFromSNI;
+                        pendingDNSInfo.CachedIPv4Address = IPFromSNI;
                     }
                     else if (System.Net.Sockets.AddressFamily.InterNetworkV6 == IPFromSNI.AddressFamily)
                     {
-                        pendingDNSInfo.AddrIPv6 = IPFromSNI;
+                        pendingDNSInfo.CachedIPv6Address = IPFromSNI;
                     }
                 }
             }

@@ -861,11 +861,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (System.Net.Sockets.AddressFamily.InterNetwork == IPFromSNI.AddressFamily)
                     {
-                        _connHandler.pendingSQLDNSObject.AddrIPv4 = IPFromSNI;
+                        _connHandler.pendingSQLDNSObject.CachedIPv4Address = IPFromSNI;
                     }
                     else if (System.Net.Sockets.AddressFamily.InterNetworkV6 == IPFromSNI.AddressFamily)
                     {
-                        _connHandler.pendingSQLDNSObject.AddrIPv6 = IPFromSNI;
+                        _connHandler.pendingSQLDNSObject.CachedIPv6Address = IPFromSNI;
                     }
                 }
             }

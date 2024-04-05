@@ -188,20 +188,20 @@ namespace Microsoft.Data.SqlClient.SNI
                             else
                             {
                                 int portRetry = cachedDNSInfo.Port == 0 ? port : cachedDNSInfo.Port;
-                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Retrying with cached DNS IP Address {1} and port {2}", args0: _connectionId, args1: cachedDNSInfo.AddrIPv4, args2: cachedDNSInfo.Port);
+                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Retrying with cached DNS IP Address {1} and port {2}", args0: _connectionId, args1: cachedDNSInfo.CachedIPv4Address, args2: cachedDNSInfo.Port);
 
                                 IPAddress[] firstCachedIP;
                                 IPAddress[] secondCachedIP;
 
                                 if (SqlConnectionIPAddressPreference.IPv6First == ipPreference)
                                 {
-                                    firstCachedIP = new[] { cachedDNSInfo.AddrIPv6 };
-                                    secondCachedIP = new[] { cachedDNSInfo.AddrIPv4 };
+                                    firstCachedIP = new[] { cachedDNSInfo.CachedIPv6Address };
+                                    secondCachedIP = new[] { cachedDNSInfo.CachedIPv4Address };
                                 }
                                 else
                                 {
-                                    firstCachedIP = new[] { cachedDNSInfo.AddrIPv4 };
-                                    secondCachedIP = new[] { cachedDNSInfo.AddrIPv6 };
+                                    firstCachedIP = new[] { cachedDNSInfo.CachedIPv4Address };
+                                    secondCachedIP = new[] { cachedDNSInfo.CachedIPv6Address };
                                 }
 
                                 try
@@ -300,9 +300,10 @@ namespace Microsoft.Data.SqlClient.SNI
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private Socket TryConnectParallel(string hostName, int port, TimeoutTimer timeout, ref bool callerReportError, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            IPAddress[] serverAddresses = timeout.IsInfinite
-                    ? SNICommon.GetDnsIpAddresses(hostName)
-                    : SNICommon.GetDnsIpAddresses(hostName, timeout);
+            IPAddress[] serverAddresses = pendingDNSInfo?.SpeculativeIPAddresses ??
+                (timeout.IsInfinite
+                    ? SNICommon.GetDnsIpAddresses(hostName, SqlConnectionIPAddressPreference.UsePlatformDefault, false).Result
+                    : SNICommon.GetDnsIpAddresses(hostName, timeout, SqlConnectionIPAddressPreference.UsePlatformDefault, false).Result);
 
             if (serverAddresses.Length > MaxParallelIpAddresses)
             {
@@ -355,68 +356,12 @@ namespace Microsoft.Data.SqlClient.SNI
             return availableSocket;
         }
 
-        /// <summary>
-        /// Returns array of IP addresses for the given server name, sorted according to the given preference.
-        /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException">Thrown when ipPreference is not supported</exception>
-        private static IPAddress[] GetHostAddressesSortedByPreference(string serverName, SqlConnectionIPAddressPreference ipPreference)
-        {
-            IPAddress[] dnsIPAddresses = Dns.GetHostAddresses(serverName);
-            IPAddress[] ipAddresses;
-            AddressFamily? prioritiesFamily = ipPreference switch
-            {
-                SqlConnectionIPAddressPreference.IPv4First => AddressFamily.InterNetwork,
-                SqlConnectionIPAddressPreference.IPv6First => AddressFamily.InterNetworkV6,
-                SqlConnectionIPAddressPreference.UsePlatformDefault => null,
-                _ => throw ADP.NotSupportedEnumerationValue(typeof(SqlConnectionIPAddressPreference), ipPreference.ToString(), nameof(GetHostAddressesSortedByPreference))
-            };
-
-            if (prioritiesFamily == null)
-            {
-                ipAddresses = dnsIPAddresses;
-            }
-            else
-            {
-                int resultArrayIndex = 0;
-
-                ipAddresses = new IPAddress[dnsIPAddresses.Length];
-
-                // Return addresses of the preferred family first
-                for (int i = 0; i < dnsIPAddresses.Length; i++)
-                {
-                    if (dnsIPAddresses[i].AddressFamily == prioritiesFamily)
-                    {
-                        ipAddresses[resultArrayIndex++] = dnsIPAddresses[i];
-                    }
-                }
-
-                // Return addresses of the other family
-                for (int i = 0; i < dnsIPAddresses.Length; i++)
-                {
-                    if (dnsIPAddresses[i].AddressFamily is AddressFamily.InterNetwork or AddressFamily.InterNetworkV6
-                        && dnsIPAddresses[i].AddressFamily != prioritiesFamily)
-                    {
-                        ipAddresses[resultArrayIndex++] = dnsIPAddresses[i];
-                    }
-                }
-
-                // If the DNS resolution returned records of types other than A and AAAA, the original array size will be
-                // too large, and must thus be resized. This is very unlikely, so we only try to do this post-hoc.
-                if (resultArrayIndex + 1 < ipAddresses.Length)
-                {
-                    Array.Resize(ref ipAddresses, resultArrayIndex + 1);
-                }
-            }
-
-            return ipAddresses;
-        }
-
         // Connect to server with hostName and port.
         // The IP information will be collected temporarily as the pendingDNSInfo but is not stored in the DNS cache at this point.
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private static Socket Connect(string serverName, int port, TimeoutTimer timeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            IPAddress[] ipAddresses = GetHostAddressesSortedByPreference(serverName, ipPreference);
+            IPAddress[] ipAddresses = pendingDNSInfo?.SpeculativeIPAddresses ?? SNICommon.GetDnsIpAddresses(serverName, ipPreference, false).Result;
 
             return Connect(ipAddresses, port, timeout, ipPreference, cachedFQDN, ref pendingDNSInfo);
         }

@@ -16,7 +16,6 @@ namespace Microsoft.Data.SqlClient.SNI
 {
     internal sealed class SSRP
     {
-        private static readonly List<IPAddress> s_emptyList = new(0);
         private static readonly TimeSpan s_sendTimeout = TimeSpan.FromSeconds(1.0);
         private static readonly TimeSpan s_receiveTimeout = TimeSpan.FromSeconds(1.0);
 
@@ -211,83 +210,69 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 IPAddress[] ipAddresses = await (timeout.IsInfinite
-                    ? SNICommon.GetDnsIpAddresses(browserHostname, async)
-                    : SNICommon.GetDnsIpAddresses(browserHostname, timeout, async));
+                    ? SNICommon.GetDnsIpAddresses(browserHostname, ipPreference, async)
+                    : SNICommon.GetDnsIpAddresses(browserHostname, timeout, ipPreference, async));
 
                 Debug.Assert(ipAddresses.Length > 0, "DNS should throw if zero addresses resolve");
-                List<IPAddress> ipv4Addresses = null;
-                byte[] response4 = null;
 
-                List<IPAddress> ipv6Addresses = null;
-                byte[] response6 = null;
-
+                byte[] response = null;
                 Exception responseException = null;
 
                 switch (ipPreference)
                 {
                     case SqlConnectionIPAddressPreference.IPv4First:
-                        {
-                            SplitIPv4AndIPv6(ipAddresses, out ipv4Addresses, out ipv6Addresses);
-                            
-                            try
-                            {
-                                response4 = await SendUDPRequest(ipv4Addresses, port, requestPacket, allIPsInParallel, async).ConfigureAwait(false);
-
-                                if (response4 != null)
-                                {
-                                    return response4;
-                                }
-                            }
-                            catch(Exception e)
-                            { responseException ??= e; }
-
-                            try
-                            {
-                                response6 = await SendUDPRequest(ipv6Addresses, port, requestPacket, allIPsInParallel, async).ConfigureAwait(false);
-
-                                if (response6 != null)
-                                {
-                                    return response6;
-                                }
-                            }
-                            catch (Exception e)
-                            { responseException ??= e; }
-
-                            // No responses so throw first error
-                            if (responseException != null)
-                            {
-                                throw responseException;
-                            }
-
-                            break;
-                        }
                     case SqlConnectionIPAddressPreference.IPv6First:
                         {
-                            SplitIPv4AndIPv6(ipAddresses, out ipv4Addresses, out ipv6Addresses);
+                            // If the ipPreference has been specified and IP addresses of a certain address family are attempted first,
+                            // then slice the array at the point where the address family changes.
+                            AddressFamily previousAddressFamily = ipAddresses[0].AddressFamily;
+                            int firstAddressFamilyLength = 0;
+                            Memory<IPAddress> primaryIpAddressList;
+                            Memory<IPAddress> secondaryIpAddressList = Memory<IPAddress>.Empty;
+
+                            for (int i = 0; i < ipAddresses.Length; i++)
+                            {
+                                if (ipAddresses[i].AddressFamily != previousAddressFamily)
+                                {
+                                    firstAddressFamilyLength = i;
+                                    break;
+                                }
+
+                                previousAddressFamily = ipAddresses[i].AddressFamily;
+                            }
+                            primaryIpAddressList = firstAddressFamilyLength == 0
+                                ? ipAddresses.AsMemory()
+                                : ipAddresses.AsMemory(0, firstAddressFamilyLength);
 
                             try
                             {
-                                response6 = await SendUDPRequest(ipv6Addresses, port, requestPacket, allIPsInParallel, async).ConfigureAwait(false);
+                                response = await SendUDPRequest(primaryIpAddressList, port, requestPacket, allIPsInParallel, async).ConfigureAwait(false);
 
-                                if (response6 != null)
+                                if (response != null)
                                 {
-                                    return response6;
+                                    return response;
                                 }
                             }
                             catch (Exception e)
                             { responseException ??= e; }
 
-                            try
-                            {
-                                response4 = await SendUDPRequest(ipv4Addresses, port, requestPacket, allIPsInParallel, async).ConfigureAwait(false);
 
-                                if (response4 != null)
+                            if (firstAddressFamilyLength > 0)
+                            {
+                                secondaryIpAddressList = ipAddresses.AsMemory(firstAddressFamilyLength);
+
+                                try
                                 {
-                                    return response4;
+                                    response = await SendUDPRequest(secondaryIpAddressList, port, requestPacket, allIPsInParallel, async).ConfigureAwait(false);
+
+                                    if (response != null)
+                                    {
+                                        return response;
+                                    }
                                 }
+                                catch (Exception e)
+                                { responseException ??= e; }
                             }
-                            catch (Exception e)
-                            { responseException ??= e; }
 
                             // No responses so throw first error
                             if (responseException != null)
@@ -314,27 +299,27 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="allIPsInParallel">query all resolved IP addresses in parallel</param>
         /// <param name="async">If true, this method will be run asynchronously</param>
         /// <returns>response packet from UDP server</returns>
-        private static async ValueTask<byte[]> SendUDPRequest(IList<IPAddress> ipAddresses, int port, byte[] requestPacket, bool allIPsInParallel, bool async)
+        private static async ValueTask<byte[]> SendUDPRequest(Memory<IPAddress> ipAddresses, int port, byte[] requestPacket, bool allIPsInParallel, bool async)
         {
-            if (ipAddresses.Count == 0)
+            if (ipAddresses.IsEmpty)
                 return null;
 
-            IPEndPoint endPoint = new IPEndPoint(ipAddresses[0], port);
+            IPEndPoint endPoint = new IPEndPoint(ipAddresses.Span[0], port);
 
-            if (allIPsInParallel && ipAddresses.Count > 1) // Used for MultiSubnetFailover
+            if (allIPsInParallel && ipAddresses.Length > 1) // Used for MultiSubnetFailover
             {
-                List<Task<byte[]>> tasks = new(ipAddresses.Count);
+                List<Task<byte[]>> tasks = new(ipAddresses.Length);
                 Task<byte[]> firstFailedTask = null;
                 CancellationTokenSource cts = new CancellationTokenSource();
                 // Cache the UdpClients for each of the address families to save disposing them
                 UdpClient ipv4UdpClient = null;
                 UdpClient ipv6UdpClient = null;
 
-                for (int i = 0; i < ipAddresses.Count; i++)
+                for (int i = 0; i < ipAddresses.Length; i++)
                 {
                     if (i > 0)
                     {
-                        endPoint.Address = ipAddresses[i];
+                        endPoint.Address = ipAddresses.Span[i];
                     }
 
                     if (endPoint.AddressFamily == AddressFamily.InterNetwork)
@@ -517,34 +502,6 @@ namespace Microsoft.Data.SqlClient.SNI
 #else
             return Task.FromResult(responsePacket);
 #endif
-        }
-
-        private static void SplitIPv4AndIPv6(IPAddress[] input, out List<IPAddress> ipv4Addresses, out List<IPAddress> ipv6Addresses)
-        {
-            List<IPAddress> v4 = null;
-            List<IPAddress> v6 = null;
-
-            if (input != null && input.Length > 0)
-            {
-                v4 = new List<IPAddress>(1);
-                v6 = new List<IPAddress>(0);
-
-                for (int index = 0; index < input.Length; index++)
-                {
-                    switch (input[index].AddressFamily)
-                    {
-                        case AddressFamily.InterNetwork:
-                            v4.Add(input[index]);
-                            break;
-                        case AddressFamily.InterNetworkV6:
-                            v6.Add(input[index]);
-                            break;
-                    }
-                }
-            }
-
-            ipv4Addresses = v4 ?? s_emptyList;
-            ipv6Addresses = v6 ?? s_emptyList;
         }
     }
 }

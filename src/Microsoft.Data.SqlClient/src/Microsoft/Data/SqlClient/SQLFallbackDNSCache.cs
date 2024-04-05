@@ -57,8 +57,8 @@ namespace Microsoft.Data.SqlClient
                 SQLDNSInfo oldItem;
                 if (GetDNSInfo(newItem.FQDN, out oldItem))
                 {
-                    return (newItem.AddrIPv4 == oldItem.AddrIPv4 &&
-                            newItem.AddrIPv6 == oldItem.AddrIPv6 &&
+                    return (newItem.CachedIPv4Address == oldItem.CachedIPv4Address &&
+                            newItem.CachedIPv6Address == oldItem.CachedIPv6Address &&
                             newItem.Port == oldItem.Port);
                 }
             }
@@ -70,16 +70,23 @@ namespace Microsoft.Data.SqlClient
     internal sealed class SQLDNSInfo
     {
         public string FQDN { get; set; }
-        public IPAddress AddrIPv4 { get; set; }
-        public IPAddress AddrIPv6 { get; set; }
+        public IPAddress CachedIPv4Address { get; set; }
+        public IPAddress CachedIPv6Address { get; set; }
         public int Port { get; set; }
+        public IPAddress[] SpeculativeIPAddresses { get; set; }
 
-        internal SQLDNSInfo(string FQDN, IPAddress ipv4, IPAddress ipv6, int port)
+        internal SQLDNSInfo(string fqdn, IPAddress ipv4, IPAddress ipv6, int port)
         {
-            this.FQDN = FQDN;
-            AddrIPv4 = ipv4;
-            AddrIPv6 = ipv6;
+            FQDN = fqdn;
+            CachedIPv4Address = ipv4;
+            CachedIPv6Address = ipv6;
             Port = port;
+        }
+
+        internal SQLDNSInfo(string fqdn, IPAddress[] speculativeIPAddresses)
+        {
+            FQDN = fqdn;
+            SpeculativeIPAddresses = speculativeIPAddresses;
         }
     }
 }
