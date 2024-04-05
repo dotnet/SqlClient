@@ -255,8 +255,8 @@ namespace Microsoft.Data.SqlClient
             // An Always Encrypted-enabled driver doesn't verify an expiration date or a certificate authority chain.
             // A certificate is simply used as a key pair consisting of a public and private key. This is by design.
 
-            // CodeQL [SM00395] By design. Always Encrypted certificates should not be checked.
             #pragma warning disable IA5352
+            // CodeQL [SM00395] By design. Always Encrypted certificates should not be checked.
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
             #pragma warning restore IA5352
 
