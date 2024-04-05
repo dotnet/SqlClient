@@ -11,6 +11,7 @@
     <DefineConstants Condition="$(ReferenceType.Contains('NetStandard'))">NETSTANDARDREFERNCE</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AlwaysEncryptedTests\ExceptionsAlgorithmErrors.cs" />
