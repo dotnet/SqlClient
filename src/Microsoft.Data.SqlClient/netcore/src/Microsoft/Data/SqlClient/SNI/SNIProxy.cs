@@ -313,9 +313,13 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 try
                 {
-                    details.ResolvedPort = port = isAdminConnection ?
+                    SSRP.SSRPResult portDetails = isAdminConnection ?
                             SSRP.GetDacPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference) :
                             SSRP.GetPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference);
+
+
+                    details.ResolvedPort = port = portDetails.Port;
+                    pendingDNSInfo = new SQLDNSInfo(hostName, portDetails.ResolvedIPAddresses);
                 }
                 catch (SocketException se)
                 {

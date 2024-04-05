@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -10,12 +11,28 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
 using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
     internal sealed class SSRP
     {
+        public sealed class SSRPResult
+        {
+            internal byte[] Buffer { get; set; }
+
+            public ushort Port { get; set; }
+
+            public IPAddress[] ResolvedIPAddresses { get; }
+
+            public SSRPResult(IPAddress[] resolvedIPAddresses, byte[] buffer)
+            {
+                ResolvedIPAddresses = resolvedIPAddresses;
+                Buffer = buffer;
+            }
+        }
+
         private static readonly TimeSpan s_sendTimeout = TimeSpan.FromSeconds(1.0);
         private static readonly TimeSpan s_receiveTimeout = TimeSpan.FromSeconds(1.0);
 
@@ -36,8 +53,8 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="timeout">Connection timer expiration</param>
         /// <param name="allIPsInParallel">query all resolved IP addresses in parallel</param>
         /// <param name="ipPreference">IP address preference</param>
-        /// <returns>port number for given instance name</returns>
-        internal static int GetPortByInstanceName(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
+        /// <returns>port number and resolved IP addresses for given instance name</returns>
+        internal static SSRPResult GetPortByInstanceName(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
             => GetPortByInstanceNameCore(browserHostName, instanceName, timeout, allIPsInParallel, ipPreference, false).Result;
 
         /// <summary>
@@ -48,21 +65,23 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="timeout">Connection timer expiration</param>
         /// <param name="allIPsInParallel">query all resolved IP addresses in parallel</param>
         /// <param name="ipPreference">IP address preference</param>
-        /// <returns>port number for given instance name</returns>
-        internal static ValueTask<int> GetPortByInstanceNameAsync(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
+        /// <returns>port number and resolved IP addresses for given instance name</returns>
+        internal static ValueTask<SSRPResult> GetPortByInstanceNameAsync(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
             => GetPortByInstanceNameCore(browserHostName, instanceName, timeout, allIPsInParallel, ipPreference, true);
 
-        private static async ValueTask<int> GetPortByInstanceNameCore(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference, bool async)
+        private static async ValueTask<SSRPResult> GetPortByInstanceNameCore(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference, bool async)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(browserHostName), "browserHostName should not be null, empty, or whitespace");
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
             using (TrySNIEventScope.Create(nameof(SSRP)))
             {
                 byte[] instanceInfoRequest = CreateInstanceInfoRequest(instanceName);
+                SSRPResult response = null;
                 byte[] responsePacket = null;
                 try
                 {
-                    responsePacket = await SendUDPRequest(browserHostName, SqlServerBrowserPort, instanceInfoRequest, timeout, allIPsInParallel, ipPreference, async);
+                    response = await SendUDPRequest(browserHostName, SqlServerBrowserPort, instanceInfoRequest, timeout, allIPsInParallel, ipPreference, async);
+                    responsePacket = response?.Buffer;
                 }
                 catch (SocketException se)
                 {
@@ -92,7 +111,10 @@ namespace Microsoft.Data.SqlClient.SNI
                     throw new SocketException();
                 }
 
-                return ushort.Parse(elements[tcpIndex + 1]);
+                response.Port = ushort.Parse(elements[tcpIndex + 1]);
+                response.Buffer = null;
+
+                return response;
             }
         }
 
@@ -127,7 +149,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="allIPsInParallel">query all resolved IP addresses in parallel</param>
         /// <param name="ipPreference">IP address preference</param>
         /// <returns>DAC port for given instance name</returns>
-        internal static int GetDacPortByInstanceName(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
+        internal static SSRPResult GetDacPortByInstanceName(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
             => GetDacPortByInstanceNameCore(browserHostName, instanceName, timeout, allIPsInParallel, ipPreference, false).Result;
 
         /// <summary>
@@ -139,16 +161,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="allIPsInParallel">query all resolved IP addresses in parallel</param>
         /// <param name="ipPreference">IP address preference</param>
         /// <returns>DAC port for given instance name</returns>
-        internal static ValueTask<int> GetDacPortByInstanceNameAsync(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
+        internal static ValueTask<SSRPResult> GetDacPortByInstanceNameAsync(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
             => GetDacPortByInstanceNameCore(browserHostName, instanceName, timeout, allIPsInParallel, ipPreference, true);
 
-        private static async ValueTask<int> GetDacPortByInstanceNameCore(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference, bool async)
+        private static async ValueTask<SSRPResult> GetDacPortByInstanceNameCore(string browserHostName, string instanceName, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference, bool async)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(browserHostName), "browserHostName should not be null, empty, or whitespace");
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
 
             byte[] dacPortInfoRequest = CreateDacPortInfoRequest(instanceName);
-            byte[] responsePacket = await SendUDPRequest(browserHostName, SqlServerBrowserPort, dacPortInfoRequest, timeout, allIPsInParallel, ipPreference, async);
+            SSRPResult response = await SendUDPRequest(browserHostName, SqlServerBrowserPort, dacPortInfoRequest, timeout, allIPsInParallel, ipPreference, async);
+            byte[] responsePacket = response?.Buffer;
 
             const byte SvrResp = 0x05;
             const byte ProtocolVersion = 0x01;
@@ -159,8 +182,9 @@ namespace Microsoft.Data.SqlClient.SNI
                 throw new SocketException();
             }
 
-            int dacPort = BitConverter.ToUInt16(responsePacket, 4);
-            return dacPort;
+            response.Port = BitConverter.ToUInt16(responsePacket, 4);
+            response.Buffer = null;
+            return response;
         }
 
         /// <summary>
@@ -196,7 +220,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="ipPreference">IP address preference</param>
         /// <param name="async">If true, this method will be run asynchronously</param>
         /// <returns>response packet from UDP server</returns>
-        private static async ValueTask<byte[]> SendUDPRequest(string browserHostname, int port, byte[] requestPacket, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference, bool async)
+        private static async ValueTask<SSRPResult> SendUDPRequest(string browserHostname, int port, byte[] requestPacket, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference, bool async)
         {
             using (TrySNIEventScope.Create(nameof(SSRP)))
             {
@@ -204,14 +228,18 @@ namespace Microsoft.Data.SqlClient.SNI
                 Debug.Assert(port >= 0 && port <= 65535, "Invalid port");
                 Debug.Assert(requestPacket != null && requestPacket.Length > 0, "requestPacket should not be null or 0-length array");
 
+                IPAddress[] ipAddresses;
+
                 if (IPAddress.TryParse(browserHostname, out IPAddress address))
                 {
-                    return await SendUDPRequest(new IPAddress[] { address }, port, requestPacket, allIPsInParallel, async);
+                    ipAddresses = new IPAddress[1] { address };
                 }
-
-                IPAddress[] ipAddresses = await (timeout.IsInfinite
-                    ? SNICommon.GetDnsIpAddresses(browserHostname, ipPreference, async)
-                    : SNICommon.GetDnsIpAddresses(browserHostname, timeout, ipPreference, async));
+                else
+                {
+                    ipAddresses = await (timeout.IsInfinite
+                        ? SNICommon.GetDnsIpAddresses(browserHostname, ipPreference, async)
+                        : SNICommon.GetDnsIpAddresses(browserHostname, timeout, ipPreference, async));
+                }
 
                 Debug.Assert(ipAddresses.Length > 0, "DNS should throw if zero addresses resolve");
 
@@ -250,7 +278,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                                 if (response != null)
                                 {
-                                    return response;
+                                    return new SSRPResult(ipAddresses, response);
                                 }
                             }
                             catch (Exception e)
@@ -267,7 +295,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                                     if (response != null)
                                     {
-                                        return response;
+                                        return new SSRPResult(ipAddresses, response);
                                     }
                                 }
                                 catch (Exception e)
@@ -283,7 +311,13 @@ namespace Microsoft.Data.SqlClient.SNI
                             break;
                         }
                     default:
-                        return await SendUDPRequest(ipAddresses, port, requestPacket, true, async).ConfigureAwait(false); // allIPsInParallel);
+                        byte[] buffer = await SendUDPRequest(ipAddresses, port, requestPacket, true, async).ConfigureAwait(false);
+
+                        if (response != null)
+                        {
+                            return new SSRPResult(ipAddresses, response);
+                        }
+                        break;
                 }
 
                 return null;
