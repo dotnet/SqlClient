@@ -329,9 +329,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             record.SetValue(0, value);
 
-            var checkValue = record.GetValue(0);
-
-            Assert.NotNull(checkValue);
+            Assert.Equal(value.ToString(), record.GetValue(0).ToString());
         }
 
         [Theory]
