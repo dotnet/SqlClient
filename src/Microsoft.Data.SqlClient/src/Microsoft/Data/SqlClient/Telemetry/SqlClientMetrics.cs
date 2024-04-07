@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.Telemetry
         /// Extended: db.client.connections.usage{pool.name="", state="stasis"}
         /// Extended: db.client.connections.usage{pool.name="", type="hard|soft"}
         /// </summary>
-        private readonly Counter<long> _connectionUsageCounter;
+        private readonly UpDownCounter<long> _connectionUsageCounter;
         /// <summary>
         /// Standard: db.client.connections.idle.max{pool.name=""}
         /// </summary>
@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.Telemetry
         /// <summary>
         /// Standard: db.client.connections.pending_requests{pool.name=""}
         /// </summary>
-        private readonly Counter<long> _connectionPendingRequestsCounter;
+        private readonly UpDownCounter<long> _connectionPendingRequestsCounter;
         /// <summary>
         /// Standard: db.client.connections.timeouts{pool.name=""}
         /// </summary>
@@ -62,15 +62,15 @@ namespace Microsoft.Data.SqlClient.Telemetry
         /// <summary>
         /// Extended: sqlclient.db.client.connection_pools.usage{pool.name="", state="active|idle"}
         /// </summary>
-        private readonly Counter<long> _connectionPoolUsageCounter;
+        private readonly UpDownCounter<long> _connectionPoolUsageCounter;
         /// <summary>
         /// Extended: sqlclient.db.client.connection_pool_groups.usage{pool.name="", state="active|idle"}
         /// </summary>
-        private readonly Counter<long> _connectionPoolGroupUsageCounter;
+        private readonly UpDownCounter<long> _connectionPoolGroupUsageCounter;
         /// <summary>
         /// Extended: sqlclient.db.client.connections.hard.usage{pool.name="", type="pooled|unpooled"}
         /// </summary>
-        private readonly Counter<long> _connectionHardUsageCounter;
+        private readonly UpDownCounter<long> _connectionHardUsageCounter;
         /// <summary>
         /// Extended: sqlclient.db.client.connections.connects{pool.name="", type="hard|soft"}
         /// </summary>
@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.Telemetry
             _enablePlatformSpecificMetrics = enablePlatformSpecificMetrics;
 
             _meter = new Meter("Microsoft.Data.SqlClient", MeteringVersion);
-            _connectionUsageCounter = _meter.CreateCounter<long>(MetricNames.Connections.Usage, MetricUnits.Connection);
+            _connectionUsageCounter = _meter.CreateUpDownCounter<long>(MetricNames.Connections.Usage, MetricUnits.Connection);
             _connectionMaxIdleCounter = _meter.CreateObservableCounter<long>(MetricNames.Connections.MaxIdle, GetMaxConnectionPoolSizes, MetricUnits.Connection);
             _connectionMinIdleCounter = _meter.CreateObservableCounter<long>(MetricNames.Connections.MinIdle, GetMinConnectionPoolSizes, MetricUnits.Connection);
             _connectionMaxCounter = _meter.CreateObservableCounter<long>(MetricNames.Connections.Max, GetMaxConnectionPoolSizes, MetricUnits.Connection);
@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient.Telemetry
             // 3. It times out
             // 4. Its underlying connection times out/is broken
             // It does not leave and re-enter the pending state when it's being retried.
-            _connectionPendingRequestsCounter = _meter.CreateCounter<long>(MetricNames.Connections.PendingRequests, MetricUnits.Request);
+            _connectionPendingRequestsCounter = _meter.CreateUpDownCounter<long>(MetricNames.Connections.PendingRequests, MetricUnits.Request);
             
             // This is to be reported from TdsParserStateObject.OnTimeoutCore for both .NET Core and Framework. The connection string will come from
             // _parser.Connection.ConnectionOptions.UsersConnectionStringForTrace.
@@ -125,9 +125,9 @@ namespace Microsoft.Data.SqlClient.Telemetry
             // This is the time difference between the connection's open and close timestamps. It is not affected by disabling and enabling SqlStatistics.
             _connectionUsageTimeHistogram = _meter.CreateHistogram<double>(MetricNames.Connections.UsageTime, MetricUnits.Millisecond);
 
-            _connectionPoolUsageCounter = _meter.CreateCounter<long>(MetricNames.ConnectionPools.Usage, MetricUnits.ConnectionPool);
-            _connectionPoolGroupUsageCounter = _meter.CreateCounter<long>(MetricNames.ConnectionPoolGroups.Usage, MetricUnits.ConnectionPoolGroup);
-            _connectionHardUsageCounter = _meter.CreateCounter<long>(MetricNames.Connections.HardUsage, MetricUnits.Connection);
+            _connectionPoolUsageCounter = _meter.CreateUpDownCounter<long>(MetricNames.ConnectionPools.Usage, MetricUnits.ConnectionPool);
+            _connectionPoolGroupUsageCounter = _meter.CreateUpDownCounter<long>(MetricNames.ConnectionPoolGroups.Usage, MetricUnits.ConnectionPoolGroup);
+            _connectionHardUsageCounter = _meter.CreateUpDownCounter<long>(MetricNames.Connections.HardUsage, MetricUnits.Connection);
             _connectionConnectCounter = _meter.CreateCounter<long>(MetricNames.Connections.Connects, MetricUnits.Connect);
             _connectionDisconnectCounter = _meter.CreateCounter<long>(MetricNames.Connections.Disconnects, MetricUnits.Disconnect);
 
@@ -165,6 +165,15 @@ namespace Microsoft.Data.SqlClient.Telemetry
         // This method is designed to handle backwards compatibility with the older performance counters (.NET Framework) and event counters.
         // Since they're all counters, we only need to implement the compatibility layer here.
         private void WriteInstrumentValue(Counter<long> counter, long value, in TagList tagList)
+        {
+            counter.Add(value, in tagList);
+            if (_enablePlatformSpecificMetrics && value > 0)
+            {
+                IncrementPlatformSpecificMetric(counter.Name, in tagList);
+            }
+        }
+
+        private void WriteInstrumentValue(UpDownCounter<long> counter, long value, in TagList tagList)
         {
             counter.Add(value, in tagList);
             if (_enablePlatformSpecificMetrics)
