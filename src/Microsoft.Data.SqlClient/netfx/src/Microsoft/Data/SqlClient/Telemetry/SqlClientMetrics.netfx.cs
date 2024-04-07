@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.ConstrainedExecution;
@@ -16,7 +17,6 @@ namespace Microsoft.Data.SqlClient.Telemetry
     internal sealed partial class SqlClientMetrics
     {
         private const string PerformanceCounterCategoryName = ".NET Data Provider for SqlServer";
-        private const string PerformanceCounterCategoryHelp = "Counters for Microsoft.Data.SqlClient";
 
         private const int PerformanceCounterInstanceNameMaxLength = 127;
 
@@ -46,15 +46,14 @@ namespace Microsoft.Data.SqlClient.Telemetry
 
         private void InitializePlatformSpecificMetrics()
         {
+            TraceSwitch perfCtrSwitch = new TraceSwitch("ConnectionPoolPerformanceCounterDetail", "level of detail to track with connection pool performance counters");
+
             AppDomain.CurrentDomain.DomainUnload += UnloadEventHandler;
             AppDomain.CurrentDomain.ProcessExit += ExitEventHandler;
             AppDomain.CurrentDomain.UnhandledException += ExceptionEventHandler;
 
             _hardConnectsPerSecond = CreatePerformanceCounter("HardConnectsPerSecond", PerformanceCounterType.RateOfCountsPerSecond64);
             _hardDisconnectsPerSecond = CreatePerformanceCounter("HardDisconnectsPerSecond", PerformanceCounterType.RateOfCountsPerSecond64);
-
-            _softConnectsPerSecond = CreatePerformanceCounter("SoftConnectsPerSecond", PerformanceCounterType.RateOfCountsPerSecond64);
-            _softDisconnectsPerSecond = CreatePerformanceCounter("SoftDisconnectsPerSecond", PerformanceCounterType.RateOfCountsPerSecond64);
 
             _numberOfNonPooledConnections = CreatePerformanceCounter("NumberOfNonPooledConnections", PerformanceCounterType.NumberOfItems64);
             _numberOfPooledConnections = CreatePerformanceCounter("NumberOfPooledConnections", PerformanceCounterType.NumberOfItems64);
@@ -65,16 +64,38 @@ namespace Microsoft.Data.SqlClient.Telemetry
             _numberOfActiveConnectionPools = CreatePerformanceCounter("NumberOfActiveConnectionPools", PerformanceCounterType.NumberOfItems64);
             _numberOfInactiveConnectionPools = CreatePerformanceCounter("NumberOfInactiveConnectionPools", PerformanceCounterType.NumberOfItems64);
 
-            _numberOfActiveConnections = CreatePerformanceCounter("NumberOfActiveConnections", PerformanceCounterType.NumberOfItems64);
-            _numberOfFreeConnections = CreatePerformanceCounter("NumberOfFreeConnections", PerformanceCounterType.NumberOfItems64);
-
             _numberOfStasisConnections = CreatePerformanceCounter("NumberOfStasisConnections", PerformanceCounterType.NumberOfItems64);
             _numberOfReclaimedConnections = CreatePerformanceCounter("NumberOfReclaimedConnections", PerformanceCounterType.NumberOfItems64);
+
+            if (perfCtrSwitch.TraceVerbose)
+            {
+                _softConnectsPerSecond = CreatePerformanceCounter("SoftConnectsPerSecond", PerformanceCounterType.RateOfCountsPerSecond64);
+                _softDisconnectsPerSecond = CreatePerformanceCounter("SoftDisconnectsPerSecond", PerformanceCounterType.RateOfCountsPerSecond64);
+
+                _numberOfActiveConnections = CreatePerformanceCounter("NumberOfActiveConnections", PerformanceCounterType.NumberOfItems64);
+                _numberOfFreeConnections = CreatePerformanceCounter("NumberOfFreeConnections", PerformanceCounterType.NumberOfItems64);
+            }
         }
 
-        private void IncrementPlatformSpecificMetric(string metricName, in TagList tagList) { }
+        private void IncrementPlatformSpecificMetric(string metricName, in TagList tagList)
+        {
+            PerformanceCounter counter = GetPlatformSpecificMetric(metricName, in tagList, out bool successful);
 
-        private void DecrementPlatformSpecificMetric(string metricName, in TagList tagList) { }
+            if (successful)
+            {
+                counter.Increment();
+            }
+        }
+
+        private void DecrementPlatformSpecificMetric(string metricName, in TagList tagList)
+        {
+            PerformanceCounter counter = GetPlatformSpecificMetric(metricName, in tagList, out bool successful);
+
+            if (successful)
+            {
+                counter.Decrement();
+            }
+        }
 
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         private void DisposePlatformSpecificMetrics()
@@ -184,6 +205,130 @@ namespace Microsoft.Data.SqlClient.Telemetry
         void UnloadEventHandler(object sender, EventArgs e)
         {
             Dispose();
+        }
+
+        private KeyValuePair<string, object> GetTagByName(string tagName, int likelyIndex, in TagList tagList)
+        {
+            KeyValuePair<string, object> tagValue;
+
+            // We have control over the initial tag list, so in almost every circumstance this shortcut will be used.
+            // It spares us from a loop, however small.
+            // In most cases, index 0 is the connection pool name.
+            if (likelyIndex > 0 && likelyIndex < tagList.Count)
+            {
+                tagValue = tagList[likelyIndex];
+
+                if (string.Equals(tagValue.Key, tagName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return tagValue;
+                }
+            }
+
+            for (int i = 0; i < tagList.Count; i++)
+            {
+                tagValue = tagList[i];
+
+                if (string.Equals(tagValue.Key, tagName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return tagValue;
+                }
+            }
+
+            throw ADP.CollectionIndexString(typeof(KeyValuePair<string, object>), nameof(KeyValuePair<string, object>.Key), tagName, typeof(TagList));
+        }
+
+        private PerformanceCounter GetPlatformSpecificMetric(string metricName, in TagList tagList, out bool successful)
+        {
+            KeyValuePair<string, object> associatedTag;
+
+            successful = true;
+
+            switch (metricName)
+            {
+                case MetricNames.Connections.Usage:
+                    associatedTag = GetTagByName(MetricTagNames.State, 1, in tagList);
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.ActiveState, StringComparison.OrdinalIgnoreCase))
+                    {
+                        successful = _numberOfActiveConnections != null;
+                        return _numberOfActiveConnections;
+                    }
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.IdleState, StringComparison.OrdinalIgnoreCase))
+                    {
+                        successful = _numberOfFreeConnections != null;
+                        return _numberOfFreeConnections;
+                    }
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.StasisState, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _numberOfStasisConnections;
+                    }
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.ReclaimedState, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _numberOfReclaimedConnections;
+                    }
+                    break;
+                case MetricNames.ConnectionPoolGroups.Usage:
+                    associatedTag = GetTagByName(MetricTagNames.State, 1, in tagList);
+
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.ActiveState, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _numberOfActiveConnectionPoolGroups;
+                    }
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.IdleState, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _numberOfInactiveConnectionPoolGroups;
+                    }
+                    break;
+                case MetricNames.ConnectionPools.Usage:
+                    associatedTag = GetTagByName(MetricTagNames.State, 1, in tagList);
+
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.ActiveState, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _numberOfActiveConnectionPools;
+                    }
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.IdleState, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _numberOfInactiveConnectionPools;
+                    }
+                    break;
+                case MetricNames.Connections.HardUsage:
+                    associatedTag = GetTagByName(MetricTagNames.Type, 1, in tagList);
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.PooledConnectionType, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _numberOfPooledConnections;
+                    }
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.NonPooledConnectionType, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _numberOfNonPooledConnections;
+                    }
+                    break;
+                case MetricNames.Connections.Connects:
+                    associatedTag = GetTagByName(MetricTagNames.Type, 1, in tagList);
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.HardActionType, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _hardConnectsPerSecond;
+                    }
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.SoftConnectionType, StringComparison.OrdinalIgnoreCase))
+                    {
+                        successful = _softConnectsPerSecond != null;
+                        return _softConnectsPerSecond;
+                    }
+                    break;
+                case MetricNames.Connections.Disconnects:
+                    associatedTag = GetTagByName(MetricTagNames.Type, 1, in tagList);
+                    if (string.Equals((string)associatedTag.Value, MetricTagValues.HardActionType, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _hardDisconnectsPerSecond;
+                    }
+                    else if (string.Equals((string)associatedTag.Value, MetricTagValues.SoftConnectionType, StringComparison.OrdinalIgnoreCase))
+                    {
+                        successful = _softDisconnectsPerSecond != null;
+                        return _softDisconnectsPerSecond;
+                    }
+                    break;
+            }
+
+            successful = false;
+            return null;
         }
     }
 }
