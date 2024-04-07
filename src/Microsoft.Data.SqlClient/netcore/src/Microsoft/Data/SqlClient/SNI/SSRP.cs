@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
             }
-            catch (OperationCanceledException)
+            catch (AggregateException ae) when (ae.InnerException is OperationCanceledException)
             {
                 responsePacket = null;
             }
