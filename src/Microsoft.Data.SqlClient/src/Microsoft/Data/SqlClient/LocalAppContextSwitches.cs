@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient
                         s_legacyRowVersionNullBehavior = Tristate.False;
                     }
                 }
-                return s_legacyRowVersionNullBehavior== Tristate.True;
+                return s_legacyRowVersionNullBehavior == Tristate.True;
             }
         }
 
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient
                         s_makeReadAsyncBlocking = Tristate.False;
                     }
                 }
-                return s_makeReadAsyncBlocking== Tristate.True;
+                return s_makeReadAsyncBlocking == Tristate.True;
             }
         }
 
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient
                         s_useMinimumLoginTimeout = Tristate.False;
                     }
                 }
-                return s_useMinimumLoginTimeout== Tristate.True;
+                return s_useMinimumLoginTimeout == Tristate.True;
             }
         }
 
@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient
                         s_legacyVarTimeZeroScaleBehaviour = returnedValue ? Tristate.False : Tristate.True;
                     }
                 }
-                return s_legacyVarTimeZeroScaleBehaviour== Tristate.True;
+                return s_legacyVarTimeZeroScaleBehaviour == Tristate.True;
             }
         }
     }
