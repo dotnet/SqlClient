@@ -583,6 +583,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private bool ShouldSerializeScale_Legacy() => _scale != 0; // V1.0 compat, ignore _hasScale
+
         private bool ShouldSerializeScale()
         {
             if (LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour)
@@ -596,14 +598,6 @@ namespace Microsoft.Data.SqlClient
             return false;
         }
 
-        private bool ShouldSerializeScale_Legacy()
-        {
-            if (_scale != 0)
-            {
-                return true;
-            }
-            return false;
-        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*' />
         [

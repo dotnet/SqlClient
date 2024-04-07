@@ -1927,7 +1927,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void SetLegacyVarTimeZeroScaleBehaviour_Defaults_to_True()
         {
-            var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+            Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
 
             var legacyVarTimeZeroScaleBehaviour = (bool)switchesType.GetProperty("LegacyVarTimeZeroScaleBehaviour", BindingFlags.Public | BindingFlags.Static).GetValue(null);
 
@@ -1936,8 +1936,8 @@ namespace Microsoft.Data.SqlClient.Tests
 
         private static bool? SetLegacyVarTimeZeroScaleBehaviour(bool? value)
         {
-            var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-            var switchField = switchesType.GetField("s_legacyVarTimeZeroScaleBehaviour", BindingFlags.NonPublic | BindingFlags.Static);
+            Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+            FieldInfo switchField = switchesType.GetField("s_legacyVarTimeZeroScaleBehaviour", BindingFlags.NonPublic | BindingFlags.Static);
             var originalValue = (byte)switchField.GetValue(null);
             byte triStateValue = value.HasValue ? value.Value ? (byte)2 : (byte)1 : (byte)0;
             switchField.SetValue(null, triStateValue);

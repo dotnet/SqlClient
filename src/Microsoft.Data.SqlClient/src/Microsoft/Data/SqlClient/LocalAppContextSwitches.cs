@@ -14,8 +14,6 @@ namespace Microsoft.Data.SqlClient
             False = 1,
             True = 2
         }
-        private static bool IsNotInitialized(Tristate value) => value == Tristate.NotInitialized;
-        private static bool IsTrue(Tristate value) => value == Tristate.True;
 
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
@@ -95,7 +93,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (IsNotInitialized(s_suppressInsecureTLSWarning))
+                if (s_suppressInsecureTLSWarning == Tristate.NotInitialized)
                 {
                     if (AppContext.TryGetSwitch(SuppressInsecureTLSWarningString, out bool returnedValue) && returnedValue)
                     {
@@ -106,7 +104,7 @@ namespace Microsoft.Data.SqlClient
                         s_suppressInsecureTLSWarning = Tristate.False;
                     }
                 }
-                return IsTrue(s_suppressInsecureTLSWarning);
+                return s_suppressInsecureTLSWarning == Tristate.True;
             }
         }
 
@@ -120,7 +118,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (IsNotInitialized(s_legacyRowVersionNullBehavior))
+                if (s_legacyRowVersionNullBehavior == Tristate.NotInitialized)
                 {
                     if (AppContext.TryGetSwitch(LegacyRowVersionNullString, out bool returnedValue) && returnedValue)
                     {
@@ -131,7 +129,7 @@ namespace Microsoft.Data.SqlClient
                         s_legacyRowVersionNullBehavior = Tristate.False;
                     }
                 }
-                return IsTrue(s_legacyRowVersionNullBehavior);
+                return s_legacyRowVersionNullBehavior== Tristate.True;
             }
         }
 
@@ -143,7 +141,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (IsNotInitialized(s_makeReadAsyncBlocking))
+                if (s_makeReadAsyncBlocking == Tristate.NotInitialized)
                 {
                     if (AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out bool returnedValue) && returnedValue)
                     {
@@ -154,7 +152,7 @@ namespace Microsoft.Data.SqlClient
                         s_makeReadAsyncBlocking = Tristate.False;
                     }
                 }
-                return IsTrue(s_makeReadAsyncBlocking);
+                return s_makeReadAsyncBlocking== Tristate.True;
             }
         }
 
@@ -167,7 +165,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (IsNotInitialized(s_useMinimumLoginTimeout))
+                if (s_useMinimumLoginTimeout == Tristate.NotInitialized)
                 {
                     if (AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) && returnedValue)
                     {
@@ -178,7 +176,7 @@ namespace Microsoft.Data.SqlClient
                         s_useMinimumLoginTimeout = Tristate.False;
                     }
                 }
-                return IsTrue(s_useMinimumLoginTimeout);
+                return s_useMinimumLoginTimeout== Tristate.True;
             }
         }
 
@@ -194,7 +192,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (IsNotInitialized(s_legacyVarTimeZeroScaleBehaviour))
+                if (s_legacyVarTimeZeroScaleBehaviour == Tristate.NotInitialized)
                 {
                     if (!AppContext.TryGetSwitch(LegacyVarTimeZeroScaleBehaviourString, out bool returnedValue))
                     {
@@ -205,7 +203,7 @@ namespace Microsoft.Data.SqlClient
                         s_legacyVarTimeZeroScaleBehaviour = returnedValue ? Tristate.False : Tristate.True;
                     }
                 }
-                return IsTrue(s_legacyVarTimeZeroScaleBehaviour);
+                return s_legacyVarTimeZeroScaleBehaviour== Tristate.True;
             }
         }
     }
