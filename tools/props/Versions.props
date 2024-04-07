@@ -24,6 +24,7 @@
   <!-- NetFx project dependencies -->
   <PropertyGroup>
     <MicrosoftDataSqlClientSniVersion>5.2.0</MicrosoftDataSqlClientSniVersion>
+    <SystemDiagnosticsDiagnosticSourceVersion>8.0.0</SystemDiagnosticsDiagnosticSourceVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>

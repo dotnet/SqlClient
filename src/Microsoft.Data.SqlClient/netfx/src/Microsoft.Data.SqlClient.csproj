@@ -346,6 +346,24 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlSer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlSer.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Telemetry\ComponentTelemetry.cs">
+      <Link>Microsoft\Data\SqlClient\Telemetry\ComponentTelemetry.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Telemetry\MetricConstants.cs">
+      <Link>Microsoft\Data\SqlClient\Telemetry\MetricConstants.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Telemetry\SqlClientMetrics.cs">
+      <Link>Microsoft\Data\SqlClient\Telemetry\SqlClientMetrics.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Telemetry\SqlClientTelemetry.cs">
+      <Link>Microsoft\Data\SqlClient\Telemetry\SqlClientTelemetry.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Telemetry\DbConnectionFactoryTelemetry.cs">
+      <Link>Microsoft\Data\SqlClient\Telemetry\DbConnectionFactoryTelemetry.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Telemetry\TelemetryInterfaces.cs">
+      <Link>Microsoft\Data\SqlClient\Telemetry\TelemetryInterfaces.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
     </Compile>
@@ -648,6 +666,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiRequestExecutor.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Telemetry\SqlClientMetrics.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
@@ -744,6 +763,9 @@
     </PackageReference>
     <PackageReference Include="System.Buffers">
       <Version>$(SystemBuffersVersion)</Version>
+    </PackageReference>
+    <PackageReference Include="System.Diagnostics.DiagnosticSource">
+      <Version>$(SystemDiagnosticsDiagnosticSourceVersion)</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
