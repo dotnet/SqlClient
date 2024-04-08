@@ -4,9 +4,7 @@
 
 using System;
 using System.Data;
-using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Server;
-using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
 {
@@ -17,6 +15,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
         {
             this.SetValues(dateTimeOffset);
         }
-
     }
 }
