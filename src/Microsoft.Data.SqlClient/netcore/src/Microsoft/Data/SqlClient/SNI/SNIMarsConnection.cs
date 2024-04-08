@@ -17,13 +17,13 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly Guid _connectionId;
         private readonly Dictionary<int, SNIMarsHandle> _sessions;
         private readonly byte[] _headerBytes;
+        private readonly SNISMUXHeader _currentHeader;
         private readonly object _sync;
         private SNIHandle _lowerHandle;
         private ushort _nextSessionId;
         private int _currentHeaderByteCount;
         private int _dataBytesLeft;
         private SNIPacket _currentPacket;
-        private SNISMUXHeader _currentHeader;
 
         /// <summary>
         /// Connection ID
