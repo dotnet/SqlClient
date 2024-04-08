@@ -203,6 +203,7 @@
     <Compile Include="SQL\TransactionTest\TransactionEnlistmentTest.cs" />
     <Compile Include="SQL\UdtTest\SqlServerTypesTest.cs" />
     <Compile Include="SQL\UdtTest\UdtBulkCopyTest.cs" />
+    <Compile Include="SQL\UdtTest\UdtDateTimeOffsetTest.cs" />
     <Compile Include="SQL\UdtTest\UdtTest.cs" />
     <Compile Include="SQL\UdtTest\UdtTest2.cs" />
     <Compile Include="SQL\UdtTest\UdtTestHelpers.cs" />
@@ -270,6 +271,7 @@
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
     <Compile Include="DataCommon\DataSourceBuilder.cs" />
     <Compile Include="DataCommon\DataTestUtility.cs" />
+    <Compile Include="DataCommon\DateTimeOffsetList.cs" />
     <Compile Include="DataCommon\ProxyServer.cs" />
     <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
