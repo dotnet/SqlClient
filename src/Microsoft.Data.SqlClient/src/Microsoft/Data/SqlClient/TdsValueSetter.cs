@@ -699,8 +699,8 @@ namespace Microsoft.Data.SqlClient
 #if NETCOREAPP
             Span<byte> result = stackalloc byte[9];
             BinaryPrimitives.WriteInt64LittleEndian(result, time);
-            BinaryPrimitives.WriteInt32LittleEndian(result.Slice(5), days);
-            _stateObj.WriteByteSpan(result.Slice(0, 8));
+            BinaryPrimitives.WriteInt32LittleEndian(result.Slice(3), days);
+            _stateObj.WriteByteSpan(result.Slice(0, 6));
 #else
             _stateObj.WriteByteArray(BitConverter.GetBytes(time), length - 5, 0); // time
             _stateObj.WriteByteArray(BitConverter.GetBytes(days), 3, 0); // date
