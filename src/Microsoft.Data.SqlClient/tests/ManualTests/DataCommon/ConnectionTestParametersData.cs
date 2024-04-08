@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TrustServerCertificate = false,
                     Certificate = null,
                     HostNameInCertificate = null,
-                    TestResult = true
+                    TestResult = false
                 },
                 new ConnectionTestParameters
                 {
@@ -211,7 +211,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TrustServerCertificate = false,
                     Certificate = null,
                     HostNameInCertificate = null,
-                    TestResult = true
+                    TestResult = false
                 },
                 new ConnectionTestParameters
                 {
