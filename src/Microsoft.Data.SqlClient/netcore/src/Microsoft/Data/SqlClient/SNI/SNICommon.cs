@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// SMUX packet header
     /// </summary>
-    internal ref struct SNISMUXHeader
+    internal struct SNISMUXHeader
     {
         public const int HEADER_LENGTH = 16;
 
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.SNI
             Highwater = BinaryPrimitives.ReadUInt32LittleEndian(bytes.Slice(12));
         }
 
-        public void Write(Span<byte> bytes)
+        public readonly void Write(Span<byte> bytes)
         {
             // access the highest element first to cause the largest range check in the jit, then fill in the rest of the value and carry on as normal
             BinaryPrimitives.WriteUInt32LittleEndian(bytes.Slice(12), Highwater);
