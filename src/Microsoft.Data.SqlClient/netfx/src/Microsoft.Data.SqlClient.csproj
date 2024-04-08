@@ -22,14 +22,14 @@
   <!-- Override debugtype=portable in Directory.Build.props for netfx -->
   <PropertyGroup>
     <DebugType>full</DebugType>
-  </PropertyGroup>  
+  </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
-  </ItemGroup>  
+  </ItemGroup>
   <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
@@ -689,21 +689,48 @@
     <Compile Include="$(CommonSourceRoot)Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Resources\Strings.Designer.cs">
+    <Compile Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.Designer.cs">
       <Link>Resources\Strings.Designer.cs</Link>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
+    <EmbeddedResource Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
       <CustomToolNamespace>System</CustomToolNamespace>
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Include="$(CommonSourceRoot)Resources\$(ResxFileName).*.resx">
-      <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    <EmbeddedResource Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.de.resx">
+      <Link>Resources\Strings.de.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.es.resx">
+      <Link>Resources\Strings.es.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.fr.resx">
+      <Link>Resources\Strings.fr.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.it.resx">
+      <Link>Resources\Strings.it.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.ja.resx">
+      <Link>Resources\Strings.ja.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.ko.resx">
+      <Link>Resources\Strings.ko.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.pt-BR.resx">
+      <Link>Resources\Strings.pt-BR.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.ru.resx">
+      <Link>Resources\Strings.ru.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.zh-Hans.resx">
+      <Link>Resources\Strings.zh-Hans.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="C:\Users\edwar\source\repos\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Resources\Strings.zh-Hant.resx">
+      <Link>Resources\Strings.zh-Hant.resx</Link>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>

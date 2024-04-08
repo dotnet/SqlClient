@@ -12025,7 +12025,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Specified type is not registered on the target server.{0}..
+        ///   Looks up a localized string similar to Specified type is not registered on the target server. {0}..
         /// </summary>
         internal static string SQLUDT_InvalidSqlType {
             get {

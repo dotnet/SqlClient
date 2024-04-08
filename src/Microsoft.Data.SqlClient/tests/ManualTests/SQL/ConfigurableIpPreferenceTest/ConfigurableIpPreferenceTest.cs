@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Open();
                 Assert.Equal(ConnectionState.Open, connection.State);
-                Tuple<string, string, string, string> DNSInfo = connection.GetSQLDNSInfo();
+                Tuple<string, System.Net.IPAddress, System.Net.IPAddress, int> DNSInfo = connection.GetSQLDNSInfo();
                 if(ipPreference == CnnPrefIPv4)
                 {
                     Assert.NotNull(DNSInfo.Item2); //IPv4
@@ -95,8 +95,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SQLFallbackDNSCacheGetDNSInfo.Invoke(SQLFallbackDNSCacheInstance, parameters);
                 var dnsCacheEntry = parameters[1];
 
-                const string AddrIPv4Property = "AddrIPv4";
-                const string AddrIPv6Property = "AddrIPv6";
+                const string AddrIPv4Property = "CachedIPv6Address";
+                const string AddrIPv6Property = "CachedIPv6Address";
                 const string FQDNProperty = "FQDN";
 
                 Assert.NotNull(dnsCacheEntry);

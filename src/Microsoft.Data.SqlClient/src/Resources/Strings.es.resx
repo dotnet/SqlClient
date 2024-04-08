@@ -3559,7 +3559,7 @@
     <value>La propiedad UdtTypeName debe establecerse sólo para los parámetros UDT.</value>
   </data>
   <data name="SQLUDT_InvalidSqlType" xml:space="preserve">
-    <value>El tipo especificado no está registrado en el servidor de destino.{0}.</value>
+    <value>El tipo especificado no está registrado en el servidor de destino. {0}.</value>
   </data>
   <data name="SQLUDT_InWhereClause" xml:space="preserve">
     <value>No se permiten parámetros UDT en la cláusula where, salvo que formen parte de la clave principal.</value>

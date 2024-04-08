@@ -29,8 +29,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static FieldInfo s_enforcedTimeoutDelayInMilliSeconds = s_tdsParserStateObject.GetField("_enforcedTimeoutDelayInMilliSeconds", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo s_pendingSQLDNSObject = s_sqlInternalConnectionTds.GetField("pendingSQLDNSObject", BindingFlags.Instance | BindingFlags.NonPublic);
         private static PropertyInfo s_pendingSQLDNS_FQDN = s_SQLDNSInfo.GetProperty("FQDN", BindingFlags.Instance | BindingFlags.Public);
-        private static PropertyInfo s_pendingSQLDNS_AddrIPv4 = s_SQLDNSInfo.GetProperty("AddrIPv4", BindingFlags.Instance | BindingFlags.Public);
-        private static PropertyInfo s_pendingSQLDNS_AddrIPv6 = s_SQLDNSInfo.GetProperty("AddrIPv6", BindingFlags.Instance | BindingFlags.Public);
+        private static PropertyInfo s_pendingSQLDNS_AddrIPv4 = s_SQLDNSInfo.GetProperty("CachedIPv4Address", BindingFlags.Instance | BindingFlags.Public);
+        private static PropertyInfo s_pendingSQLDNS_AddrIPv6 = s_SQLDNSInfo.GetProperty("CachedIPv6Address", BindingFlags.Instance | BindingFlags.Public);
         private static PropertyInfo s_pendingSQLDNS_Port = s_SQLDNSInfo.GetProperty("Port", BindingFlags.Instance | BindingFlags.Public);
         private static PropertyInfo dbConnectionInternalIsTransRoot = s_dbConnectionInternal.GetProperty("IsTransactionRoot", BindingFlags.Instance | BindingFlags.NonPublic);
         private static PropertyInfo dbConnectionInternalEnlistedTrans = s_sqlInternalConnection.GetProperty("EnlistedTransaction", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -112,16 +112,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         /// </summary>
         /// <param name="connection">Active connection to extract the requested data</param>
         /// <returns>FQDN, AddrIPv4, AddrIPv6, and Port in sequence</returns>
-        public static Tuple<string, string, string, string> GetSQLDNSInfo(this SqlConnection connection)
+        public static Tuple<string, System.Net.IPAddress, System.Net.IPAddress, int> GetSQLDNSInfo(this SqlConnection connection)
         {
             object internalConnection = GetInternalConnection(connection);
             VerifyObjectIsInternalConnection(internalConnection);
             object pendingSQLDNSInfo = s_pendingSQLDNSObject.GetValue(internalConnection);
             string fqdn = s_pendingSQLDNS_FQDN.GetValue(pendingSQLDNSInfo) as string;
-            string ipv4 = s_pendingSQLDNS_AddrIPv4.GetValue(pendingSQLDNSInfo) as string;
-            string ipv6 = s_pendingSQLDNS_AddrIPv6.GetValue(pendingSQLDNSInfo) as string;
-            string port = s_pendingSQLDNS_Port.GetValue(pendingSQLDNSInfo) as string;
-            return new Tuple<string, string, string, string>(fqdn, ipv4, ipv6, port);
+            System.Net.IPAddress ipv4 = s_pendingSQLDNS_AddrIPv4.GetValue(pendingSQLDNSInfo) as System.Net.IPAddress;
+            System.Net.IPAddress ipv6 = s_pendingSQLDNS_AddrIPv6.GetValue(pendingSQLDNSInfo) as System.Net.IPAddress;
+            int port = (int)s_pendingSQLDNS_Port.GetValue(pendingSQLDNSInfo);
+            return new Tuple<string, System.Net.IPAddress, System.Net.IPAddress, int>(fqdn, ipv4, ipv6, port);
         }
     }
 }

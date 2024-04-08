@@ -251,7 +251,7 @@ namespace Microsoft.Data.SqlClient.SNI
                             _dataBytesLeft = (int)currentHeader.Length;
                             _currentPacket = _lowerHandle.RentPacket(headerSize: 0, dataSize: (int)currentHeader.Length);
 #if DEBUG
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, _dataBytesLeft {1}, _currentPacket {2}, Reading data of length: _currentHeader.length {3}", args0: _lowerHandle?.ConnectionId, args1: _dataBytesLeft, args2: currentPacket?._id, args3: _currentHeader?.length);
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, _dataBytesLeft {1}, _currentPacket {2}, Reading data of length: _currentHeader.length {3}", args0: _lowerHandle?.ConnectionId, args1: _dataBytesLeft, args2: currentPacket?._id, args3: currentHeader.Length);
 #endif
                         }
 

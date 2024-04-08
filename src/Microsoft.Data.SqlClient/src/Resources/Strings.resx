@@ -3559,7 +3559,7 @@
     <value>UdtTypeName property must be set only for UDT parameters.</value>
   </data>
   <data name="SQLUDT_InvalidSqlType" xml:space="preserve">
-    <value>Specified type is not registered on the target server.{0}.</value>
+    <value>Specified type is not registered on the target server. {0}.</value>
   </data>
   <data name="SQLUDT_InWhereClause" xml:space="preserve">
     <value>UDT parameters not permitted in the where clause unless part of the primary key.</value>
