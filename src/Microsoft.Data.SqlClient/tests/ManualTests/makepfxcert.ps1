@@ -4,7 +4,7 @@
 # Script: Invoke-SqlServerCertificateCommand# 
 # Author: SqlClient Team
 # Date: March 20, 2024
-# Comments: This scripts creates SQL Server SSL Self-Signed Certificate.
+# Comments: This scripts creates SSL Self-Signed Certificate for TestTdsServer in pfx format.
 # This script is not intended to be used in production environments.
 
 param ($OutDir)
