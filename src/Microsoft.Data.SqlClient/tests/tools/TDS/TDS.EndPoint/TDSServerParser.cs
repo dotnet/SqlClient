@@ -71,14 +71,16 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                         {
                             if ((Session.Encryption == TDSEncryptionType.None || Session.Encryption == TDSEncryptionType.Off) &&
                                 (MessageBeingReceived[0] as TDSPreLoginToken).Encryption != TDSPreLoginTokenEncryptionType.On)
-                            //if (Session.Encryption == TDSEncryptionType.None)
                             {
-                                (MessageBeingReceived[0] as TDSPreLoginToken).Encryption = TDSPreLoginTokenEncryptionType.None;
+                                if (Session.Encryption == TDSEncryptionType.None)
+                                    (MessageBeingReceived[0] as TDSPreLoginToken).Encryption = TDSPreLoginTokenEncryptionType.None;
+                                else
+                                    (MessageBeingReceived[0] as TDSPreLoginToken).Encryption = TDSPreLoginTokenEncryptionType.Off;
                             }
 
                             // Call into the subscriber to process the packet
                             responseMessages = Server.OnPreLoginRequest(Session, MessageBeingReceived);
-          
+
                             if (Session.Encryption == TDSEncryptionType.None || Session.Encryption == TDSEncryptionType.Off)
                             {
                                 DisableTransportEncryption();
