@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Diagnostics;
 using Microsoft.Data.Common;
 
@@ -11,8 +12,6 @@ namespace Microsoft.Data.SqlClient
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
         private protected TdsParserStateObject _physicalStateObj = null!;
-
-        internal virtual uint MaxSSPILength => 4096; // TODO: what is a good default here?
 
         internal void Initialize(ServerInfo serverInfo, TdsParserStateObject physicalStateObj, TdsParser parser)
         {
@@ -27,16 +26,16 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        internal abstract void GenerateSspiClientContext(ReadOnlyMemory<byte> input, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer);
+        protected abstract void GenerateSspiClientContext(ReadOnlyMemory<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, byte[][] _sniSpnBuffer);
 
-        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref UInt32 sendLength, byte[] sniSpnBuffer)
-            => SSPIData(receivedBuff, ref sendBuff, ref sendLength, new[] { sniSpnBuffer });
+        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, byte[] sniSpnBuffer)
+            => SSPIData(receivedBuff, outgoingBlobWriter, new[] { sniSpnBuffer });
 
-        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref UInt32 sendLength, byte[][] sniSpnBuffer)
+        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, byte[][] sniSpnBuffer)
         {
             try
             {
-                GenerateSspiClientContext(receivedBuff, ref sendBuff, ref sendLength, sniSpnBuffer);
+                GenerateSspiClientContext(receivedBuff, outgoingBlobWriter, sniSpnBuffer);
             }
             catch (Exception e)
             {

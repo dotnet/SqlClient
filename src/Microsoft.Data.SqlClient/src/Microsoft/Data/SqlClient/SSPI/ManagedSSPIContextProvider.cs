@@ -1,6 +1,7 @@
 ﻿#if !NETFRAMEWORK && !NET7_0_OR_GREATER
 
 using System;
+using System.Buffers;
 using Microsoft.Data.SqlClient.SNI;
 
 #nullable enable
@@ -11,13 +12,12 @@ namespace Microsoft.Data.SqlClient
     {
         private SspiClientContextStatus? _sspiClientContextStatus;
 
-        internal override void GenerateSspiClientContext(ReadOnlyMemory<byte> received, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer)
+        protected override void GenerateSspiClientContext(ReadOnlyMemory<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, byte[][] _sniSpnBuffer)
         {
             _sspiClientContextStatus ??= new SspiClientContextStatus();
 
-            SNIProxy.GenSspiClientContext(_sspiClientContextStatus, received, ref sendBuff, _sniSpnBuffer);
+            SNIProxy.GenSspiClientContext(_sspiClientContextStatus, incomingBlob, outgoingBlobWriter, _sniSpnBuffer);
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}", _physicalStateObj.SessionId);
-            sendLength = (uint)(sendBuff != null ? sendBuff.Length : 0);
         }
     }
 }

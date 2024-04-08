@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient
             [In] SNIHandle pConn,
             [In, Out] byte* pIn,
             uint cbIn,
-            [In, Out] byte[] pOut,
+            [In, Out] byte* pOut,
             [In] ref uint pcbOut,
             [MarshalAsAttribute(UnmanagedType.Bool)] out bool pfDone,
             byte* szServerInfo,
