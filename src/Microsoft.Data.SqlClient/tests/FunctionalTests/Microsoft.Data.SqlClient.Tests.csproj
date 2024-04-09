@@ -33,6 +33,7 @@
     <Compile Include="LocalizationTest.cs" />
     <Compile Include="MultipartIdentifierTests.cs" />
     <Compile Include="SqlAuthenticationProviderTest.cs" />
+    <Compile Include="SqlBufferTests.cs" />
     <Compile Include="SqlClientLoggerTest.cs" />
     <Compile Include="SqlCommandSetTest.cs" />
     <Compile Include="SqlConfigurableRetryLogicTest.cs" />
