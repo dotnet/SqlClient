@@ -25,6 +25,8 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.SynchronousCallMayNotPend();
             }
 
+            receivedBuff.AsSpan(receivedLength, receivedBuff.Length - receivedLength).Clear();
+
             // allocate send buffer and initialize length
             byte[] rentedSendBuff = ArrayPool<byte>.Shared.Rent((int)_authenticationProvider!.MaxSSPILength);
             byte[] sendBuff = rentedSendBuff; // need to track these separately in case someone updates the ref parameter
