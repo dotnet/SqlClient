@@ -2045,7 +2045,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, registration);
                         _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
-                        completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
+                        retry.Retry(completion.Task);
                         return result.Task;
                     }
 
