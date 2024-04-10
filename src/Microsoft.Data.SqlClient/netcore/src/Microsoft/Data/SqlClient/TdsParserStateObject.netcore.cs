@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
                 AddError(parser.ProcessSNIError(this));
                 ThrowExceptionAndWarning();
             }
-
+                       
             // we post a callback that represents the call to dispose; once the
             // object is disposed, the next callback will cause the GC Handle to
             // be released.
@@ -75,6 +75,7 @@ namespace Microsoft.Data.SqlClient
         ////////////////
         internal abstract uint DisableSsl();
 
+        internal abstract SSPIContextProvider CreateSSPIContextProvider();
 
         internal abstract uint EnableMars(ref uint info);
 
@@ -82,6 +83,8 @@ namespace Microsoft.Data.SqlClient
         {
             get;
         }
+
+        internal abstract Guid? SessionId { get; }
 
         internal abstract SessionHandle SessionHandle
         {
@@ -235,8 +238,6 @@ namespace Microsoft.Data.SqlClient
         internal abstract PacketHandle AddPacketToPendingList(PacketHandle packet);
 
         protected abstract void RemovePacketFromPendingList(PacketHandle pointer);
-
-        internal abstract uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer);
 
         internal int DecrementPendingCallbacks(bool release)
         {

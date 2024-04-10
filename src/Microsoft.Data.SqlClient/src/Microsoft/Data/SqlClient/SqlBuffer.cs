@@ -811,7 +811,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (StorageType.Guid == _type)
                 {
-                    return new SqlGuid(_value._guid);
+                    return IsNull ? SqlGuid.Null : new SqlGuid(_value._guid);
                 }
                 else if (StorageType.SqlGuid == _type)
                 {
