@@ -58,6 +58,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             DatabaseHelper.ValidateResultSet(sqlDataReader);
         }
 
+        // This test encrypts column(s) with a key from Azure KeyVault 
+        // and then attempts to decrypt it with a certificate from Windows Certificate. The reverse process is also tested.
+        // The key in Azure KeyVault needs to be built based on the certificate (TestCertificate1) created in CertificateUtility.cs.
+        // If the test fails with an error message indicating different signatures, import TestCertificate1 as PFX format and upload it to Azure KeyVault.
+        // Remember that the key name must match the one in DataTestUtility AKVKeyName.
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRoundTripWithAKVAndCertStoreProvider()
