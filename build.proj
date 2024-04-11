@@ -199,6 +199,11 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
   </Target>
 
+  <Target Name="CleanTests">
+     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories("artifacts\Project\","$(Configuration).$(Platform).FunctionalTests", SearchOption.AllDirectories))' />
+     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories("artifacts\Project\","$(Configuration).$(Platform).ManualTests", SearchOption.AllDirectories))' />
+  </Target>
+
   <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
     <Message Text=">>> Building AKVNetFx [$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties)] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
