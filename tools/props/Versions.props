@@ -27,8 +27,8 @@
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
-    <AzureIdentityVersion>1.10.3</AzureIdentityVersion>
-    <MicrosoftIdentityClientVersion>4.56.0</MicrosoftIdentityClientVersion>
+    <AzureIdentityVersion>1.11.0</AzureIdentityVersion>
+    <MicrosoftIdentityClientVersion>4.60.1</MicrosoftIdentityClientVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.5.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>7.5.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
