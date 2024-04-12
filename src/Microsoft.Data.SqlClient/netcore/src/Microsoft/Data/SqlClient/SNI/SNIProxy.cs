@@ -651,6 +651,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     return false;
                 }
 
+                // If user is connecting to a managed instance with port, e.g. localhost\INSTANCENAME,1434
                 Port = port;
 
                 if (InstanceName == null && backSlashIndex > -1 && tokensByCommaAndSlash.Length == 3)
@@ -708,7 +709,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         {
                             // NamedPipeClientStream object will create the network path using PipeHostName and PipeName
                             // and can be seen in its _normalizedPipePath variable in the format \\servername\pipe\MSSQL$<instancename>\sql\query
-                            PipeHostName = ServerName = tokensByBackSlash[0];
+                            PipeHostName = ServerName = tokensByBackSlash[0].Trim();
                             PipeName = $"{InstancePrefix}{tokensByBackSlash[1]}{PathSeparator}{DefaultPipeName}";
                         }
                         else
@@ -744,7 +745,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         return false;
                     }
 
-                    string host = tokensByBackSlash[2];
+                    string host = tokensByBackSlash[2].Trim();
 
                     if (string.IsNullOrEmpty(host))
                     {
@@ -761,7 +762,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (tokensByBackSlash[4].StartsWith(NamedPipeInstanceNameHeader, StringComparison.Ordinal))
                     {
-                        InstanceName = tokensByBackSlash[4].Substring(NamedPipeInstanceNameHeader.Length);
+                        InstanceName = tokensByBackSlash[4].Substring(NamedPipeInstanceNameHeader.Length).Trim();
                     }
 
                     StringBuilder pipeNameBuilder = new StringBuilder();
@@ -816,7 +817,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter);
             if (tokensByBackSlash.Length > 1)
             {
-                instanceName = tokensByBackSlash[1];
+                instanceName = tokensByBackSlash[1].Trim();
             }
 
             return instanceName;
