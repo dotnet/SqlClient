@@ -552,6 +552,8 @@ namespace Microsoft.Data.SqlClient.SNI
             Exception lastException = null;
             IPEndPoint ipEndPoint = null;
 
+            Task lastTask = null;
+
             List<Socket> emptySocketList = new List<Socket>();
             List<Socket> socketErrorCheckList = new List<Socket>(1);
             Dictionary<Task, Socket> socketConnectionTasks = new(serverAddresses.Length);
@@ -575,10 +577,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 try
                 {
 #if NET6_0_OR_GREATER
-                    socketConnectionTasks.Add(socket.ConnectAsync(ipEndPoint, connectCancellationTokenSource.Token).AsTask(), socket);
+                    lastTask = socket.ConnectAsync(ipEndPoint, connectCancellationTokenSource.Token).AsTask();
 #else
-                    socketConnectionTasks.Add(socket.ConnectAsync(ipEndPoint), socket);
+                    lastTask = socket.ConnectAsync(ipEndPoint);
 #endif
+                    socketConnectionTasks.Add(lastTask, socket);
                 }
                 catch (Exception e)
                 {
@@ -590,7 +593,32 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 while (socketConnectionTasks.Count > 0)
                 {
-                    Task completedTask = await Task.WhenAny(socketConnectionTasks.Keys).ConfigureAwait(false);
+                    Task completedTask;
+
+                    // If there's only one IP address, we can avoid the implicit Task allocation of Task.WhenAny
+                    if (socketConnectionTasks.Count == 1)
+                    {
+                        completedTask = lastTask;
+
+                        try
+                        {
+                            if (completedTask.Status != TaskStatus.Faulted)
+                            {
+                                await completedTask.ConfigureAwait(false);
+                            }
+                        }
+                        catch (Exception connectException)
+                        {
+                            // This exception is silently swallowed here, but is thrown later in the method
+                            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                                $"{nameof(SNITCPHandle)}.{nameof(ParallelConnectAsync)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {connectException}");
+                        }
+                    }
+                    else
+                    {
+                        completedTask = await Task.WhenAny(socketConnectionTasks.Keys).ConfigureAwait(false);
+                    }
+
                     Socket taskSocket = socketConnectionTasks[completedTask];
 
                     if (completedTask.Status == TaskStatus.RanToCompletion)
