@@ -58,42 +58,42 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
     <file src="..\..\icons\dotnet.png" target="" />
 
     <!--  NetFx Files  -->
-    <file src="..\..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="lib\net462\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="lib\net462\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.xml" target="lib\net462\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\win\lib\net462\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\win\lib\net462\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="lib\net462\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="lib\net462\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.xml" target="lib\net462\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\win\lib\net462\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net462\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\win\lib\net462\" exclude="" />
 
     <!--  NetCore Files  -->
-    <file src="..\..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="lib\net8.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\win\lib\net8.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\unix\lib\net8.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="lib\net8.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\win\lib\net8.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\unix\lib\net8.0\" exclude="" />
 
-    <file src="..\..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="lib\net8.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\win\lib\net8.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\unix\lib\net8.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="lib\net8.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\win\lib\net8.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\unix\lib\net8.0\" exclude="" />
 
-    <file src="..\..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.xml" target="lib\net8.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net8.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.xml" target="lib\net8.0\" exclude="" />
   
-    <file src="..\..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="lib\net6.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\win\lib\net6.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\unix\lib\net6.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="lib\net6.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\win\lib\net6.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\unix\lib\net6.0\" exclude="" />
 
-    <file src="..\..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="lib\net6.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\win\lib\net6.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\unix\lib\net6.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="lib\net6.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\win\lib\net6.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\unix\lib\net6.0\" exclude="" />
 
-    <file src="..\..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.xml" target="lib\net6.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\net6.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.xml" target="lib\net6.0\" exclude="" />
   
     <!-- NetStandard Files -->
-    <file src="..\..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="lib\netstandard2.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\win\lib\netstandard2.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\unix\lib\netstandard2.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="lib\netstandard2.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\win\lib\netstandard2.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" target="runtimes\unix\lib\netstandard2.0\" exclude="" />
 
-    <file src="..\..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="lib\netstandard2.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\win\lib\netstandard2.0\" exclude="" />
-    <file src="..\..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\unix\lib\netstandard2.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="lib\netstandard2.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Windows_NT\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\win\lib\netstandard2.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\Unix\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" target="runtimes\unix\lib\netstandard2.0\" exclude="" />
     
-    <file src="..\..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.xml" target="lib\netstandard2.0\" exclude="" />
+    <file src="..\..\..\artifacts\$ReferenceType$\bin\AnyOS\$Configuration$.AnyCPU\AzureKeyVaultProvider\netstandard2.0\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.xml" target="lib\netstandard2.0\" exclude="" />
   </files>
 </package>
