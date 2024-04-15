@@ -1,0 +1,80 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: symbolsFolder
+    type: string
+    default: symbols
+  - name: softwareFolder
+    type: string
+    default: software
+
+jobs:
+- job: build_signed_package
+  pool:
+    type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+    
+  variables:
+  - template: ../../../libraries/variables.yml@self
+
+  steps:
+  - script: SET
+    displayName: 'Print Environment Variables'
+  - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
+  - template: ../steps/code-analyze-step.yml@self
+    parameters:
+      analyzeType: all
+  - template: ../steps/esrp-code-signing-step.yml@self
+    parameters:
+      artifactType: dll
+  - template: ../steps/generate-nuget-package-step.yml@self
+    parameters:
+      OutputDirectory: $(artifactDirectory)
+  - template: ../steps/esrp-code-signing-step.yml@self
+    parameters:
+      artifactType: pkg
+  - powershell: |
+      $software = '${{parameters.softwareFolder}}'
+      md $software
+      md $software\win
+      md $software\win\net46
+      md $software\win\net6.0
+      md $software\win\net8.0
+      md $software\win\netstandard2.0
+      md $software\win\netstandard2.1
+      
+      Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" "$software\win\net46" -recurse
+      Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.dll" "$software\win\net6.0" -recurse
+      Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.dll" "$software\win\net8.0" -recurse
+      Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.0\Microsoft.Data.SqlClient.dll" "$software\win\netstandard2.0" -recurse
+      Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.1\Microsoft.Data.SqlClient.dll" "$software\win\netstandard2.1" -recurse
+      
+      $symbols = '${{parameters.symbolsFolder}}'
+      md $symbols
+      md $symbols\win
+      md $symbols\win\net46
+      md $symbols\win\net6.0
+      md $symbols\win\net8.0
+      md $symbols\win\netstandard2.0
+      md $symbols\win\netstandard2.1
+      
+      Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" "$symbols\win\net46" -recurse
+      Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.pdb" "$symbols\win\net6.0" -recurse
+      Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.pdb" "$symbols\win\net8.0" -recurse
+      Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.0\Microsoft.Data.SqlClient.pdb" "$symbols\win\netstandard2.0" -recurse
+      Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.1\Microsoft.Data.SqlClient.pdb" "$symbols\win\netstandard2.1" -recurse
+      
+      Write-Host "Artifacts fetched for testing"
+      dir
+      Get-Location
+    displayName: 'Prepare Arifacts for Testing'
+  # Publish symbols to private server
+  - template: ../steps/publish-symbols-step.yml@self
+    parameters:
+      SymAccount: $(PrivateSymAccount)
+  # Publish symbols to public server
+  - template: ../steps/publish-symbols-step.yml@self
+    parameters:
+      SymAccount: $(PublicSymAccount)

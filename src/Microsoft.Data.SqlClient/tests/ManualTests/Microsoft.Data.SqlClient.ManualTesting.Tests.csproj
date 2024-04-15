@@ -12,6 +12,7 @@
     <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFRAMEWORK</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard')) and ('$(TestSet)' == '' or '$(TestSet)' == 'AE')">
     <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
@@ -347,7 +348,10 @@
     <PackageReference Condition="'$(TargetGroup)'!='netfx'" Include="System.ServiceProcess.ServiceController" Version="$(SystemServiceProcessServiceControllerVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />
+   <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <TargetPath>%(Filename)%(Extension)</TargetPath>
+   </ContentWithTargetPath>
   </ItemGroup>
   <ItemGroup>
     <None Update="SQL\ConnectionTestWithSSLCert\GenerateSelfSignedCertificate.ps1">

@@ -51,7 +51,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
    
   
 ## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a <xref:Microsoft.Data.SqlClient.SqlConnection>. The <xref:Microsoft.Data.SqlClient.SqlConnection> is opened and set as the <xref:Microsoft.Data.SqlClient.SqlCommand.Connection%2A> for the <xref:Microsoft.Data.SqlClient.SqlCommand>. The example then calls <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A>. To accomplish this, the <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A> is passed a connection string and a query string that is a Transact-SQL INSERT statement. The connection is closed automatically when the code exits the using block.  
+ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a <xref:Microsoft.Data.SqlClient.SqlConnection>. The <xref:Microsoft.Data.SqlClient.SqlConnection> is opened and set as the <xref:Microsoft.Data.SqlClient.SqlCommand.Connection%2A> for the <xref:Microsoft.Data.SqlClient.SqlCommand>. The example then calls <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A>. To accomplish this, the <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A> is passed a SqlConnection and a query string that is a Transact-SQL INSERT statement. The connection is closed automatically when the code exits the using block.  
   
  [!code-csharp[SqlCommand_ExecuteNonQuery Example#1](~/../sqlclient/doc/samples/SqlCommand_ExecuteNonQuery.cs#1)]
   
