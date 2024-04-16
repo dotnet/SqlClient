@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
     public class UdtDateTimeOffsetTest
     {
         private readonly string _connectionString = null;
-        private readonly string _udtTableType = DataTestUtility.GetUniqueName("DataTimeOffsetTableType");
+        private readonly string _udtTableType = DataTestUtility.GetUniqueNameForSqlServer("DataTimeOffsetTableType");
 
         public UdtDateTimeOffsetTest()
         {
@@ -22,45 +22,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SelectFromSqlParameterShouldSucceed()
         {
-            using (SqlConnection connection = SetupUserDefinedTableType(_connectionString, _udtTableType))
-            {
-                try
-                {
-                    DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 12, 34, 56, TimeSpan.Zero);
-                    var param = new SqlParameter
-                    {
-                        ParameterName = "@params",
-                        SqlDbType = SqlDbType.Structured,
-                        TypeName = $"dbo.{_udtTableType}",
-                        Value = new DateTimeOffsetList[] { new DateTimeOffsetList(dateTimeOffset) }
-                    };
+            using SqlConnection connection = new(_connectionString);
+            connection.Open();
+            SetupUserDefinedTableType(connection, _udtTableType);
 
-                    using (var cmd = connection.CreateCommand())
-                    {
-                        cmd.CommandText = "SELECT * FROM @params";
-                        cmd.Parameters.Add(param);
-                        var result = cmd.ExecuteScalar();
-                        Assert.Equal(dateTimeOffset, result);
-                    }
-                }
-                finally
+            try
+            {
+                DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 12, 34, 56, TimeSpan.Zero);
+                var param = new SqlParameter
                 {
-                    DataTestUtility.DropUserDefinedType(connection, _udtTableType);
+                    ParameterName = "@params",
+                    SqlDbType = SqlDbType.Structured,
+                    TypeName = $"dbo.{_udtTableType}",
+                    Value = new DateTimeOffsetList[] { new DateTimeOffsetList(dateTimeOffset) }
+                };
+
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT * FROM @params";
+                    cmd.Parameters.Add(param);
+                    var result = cmd.ExecuteScalar();
+                    Assert.Equal(dateTimeOffset, result);
                 }
+            }
+            finally
+            {
+                DataTestUtility.DropUserDefinedType(connection, _udtTableType);
             }
         }
 
-        private static SqlConnection SetupUserDefinedTableType(string connectionString, string tableTypeName)
+        private static void SetupUserDefinedTableType(SqlConnection connection, string tableTypeName)
         {
-            SqlConnection connection = new(connectionString);
-            connection.Open();
             using (SqlCommand cmd = connection.CreateCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.CommandText = $"CREATE TYPE {tableTypeName} AS TABLE ([Value] DATETIMEOFFSET(1) NOT NULL) ";
                 cmd.ExecuteNonQuery();
             }
-            return connection;
         }
     }
 }
