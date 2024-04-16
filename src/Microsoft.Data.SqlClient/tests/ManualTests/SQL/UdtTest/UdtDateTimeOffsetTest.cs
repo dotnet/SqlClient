@@ -4,11 +4,20 @@
 
 using System;
 using System.Data;
-using Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon;
+using Microsoft.Data.SqlClient.Server;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
 {
+    public class DateTimeOffsetList : SqlDataRecord
+    {
+        public DateTimeOffsetList(DateTimeOffset dateTimeOffset)
+            : base(new SqlMetaData("dateTimeOffset", SqlDbType.DateTimeOffset, 0, 1))
+        {
+            this.SetValues(dateTimeOffset);
+        }
+    }
+
     public class UdtDateTimeOffsetTest
     {
         private readonly string _connectionString = null;
