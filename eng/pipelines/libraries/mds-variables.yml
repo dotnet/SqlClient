@@ -5,6 +5,11 @@
 #################################################################################
 
 variables:
-  - template: common-variables.yml@self
-  - template: akv-variables.yml@self
-  - template: mds-variables.yml@self
+  - group: Release Variables
+
+  - name: NugetPackageVersion
+    value: $(Major).$(Minor).$(Patch)
+  - name: AssemblyFileVersion
+    value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
+  - name: nuspecPath
+    value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'

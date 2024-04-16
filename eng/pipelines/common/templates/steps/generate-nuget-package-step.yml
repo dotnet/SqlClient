@@ -23,6 +23,12 @@ parameters:
   - name: Configuration
     type: string
     default: '$(Configuration)'
+  
+  - name: referenceType
+    default: project
+    values:
+    - project
+    - package
 
 steps:
 - task: NuGetToolInstaller@1
@@ -37,4 +43,4 @@ steps:
   displayName: 'NuGet pack with snupkg'
   inputs:
     command: custom
-    arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=${{parameters.CommitHead}};Configuration=${{parameters.Configuration}}"'
+    arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=${{parameters.CommitHead}};Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'

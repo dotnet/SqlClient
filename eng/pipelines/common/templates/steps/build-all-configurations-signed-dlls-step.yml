@@ -12,15 +12,50 @@ parameters:
     type: string
     default: '$(Configuration)'
 
+  - name: nugetPackageRefVersion
+    type: string
+    default: ''
+
+  - name: product
+    default: MDS
+    values:
+    - MDS
+    - AKV
+    - MSS
+
 steps:
-  - task: DownloadSecureFile@1
-    displayName: 'Download Key Pair'
-    inputs:
-      secureFile: netfxKeypair.snk
-      retryCount: 5
+- task: DownloadSecureFile@1
+  displayName: 'Download Key Pair'
+  inputs:
+    secureFile: netfxKeypair.snk
+    retryCount: 5
+
+- ${{ if eq(parameters.product, 'MDS') }}:
   - task: MSBuild@1
     displayName: 'BuildAllConfigurations using build.proj'
     inputs:
       solution: '**/build.proj'
       configuration: '${{parameters.Configuration }}'  
-      msbuildArguments: '/p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} /t:BuildAllConfigurations /p:GenerateNuget=false /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=$(Agent.TempDirectory)\netfxKeypair.snk'
+      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SignAssembly=true -p:AssemblyOriginatorKeyFile=$(Agent.TempDirectory)\netfxKeypair.snk'
+
+- ${{ if eq(parameters.product, 'AKV') }}:
+  - task: MSBuild@1
+    displayName: 'BuildAKVNetStAllOS using build.proj'
+    inputs:
+      solution: '**/build.proj'
+      configuration: '$(Configuration)'
+      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAKVNetStAllOS -p:NugetPackageVersion=${{parameters.nugetPackageRefVersion }} -p:ReferenceType=Package -p:SignAssembly=true -p:AssemblyOriginatorKeyFile=$(Agent.TempDirectory)\netfxKeypair.snk'
+
+  - task: MSBuild@1
+    displayName: 'BuildAKVNetFx using build.proj'
+    inputs:
+      solution: '**/build.proj'
+      configuration: '$(Configuration)'
+      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAKVNetFx -p:NugetPackageVersion=${{parameters.nugetPackageRefVersion }} -p:ReferenceType=Package -p:SignAssembly=true -p:AssemblyOriginatorKeyFile=$(Agent.TempDirectory)\netfxKeypair.snk'
+
+  - task: MSBuild@1
+    displayName: 'BuildAKVNetCoreAllOS using build.proj'
+    inputs:
+      solution: '**/build.proj'
+      configuration: '$(Configuration)'
+      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAKVNetCoreAllOS -p:NugetPackageVersion=${{parameters.nugetPackageRefVersion }} -p:ReferenceType=Package -p:SignAssembly=true -p:AssemblyOriginatorKeyFile=$(Agent.TempDirectory)\netfxKeypair.snk'

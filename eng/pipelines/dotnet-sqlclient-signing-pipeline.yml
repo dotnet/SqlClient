@@ -5,7 +5,27 @@
 #################################################################################
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.rr)
-trigger: none # https://aka.ms/obpipelines/triggers
+trigger:
+  branches:
+    include:
+    - internal/main
+  paths:
+    exclude:
+    - src
+    - eng
+    - tools
+    - .config
+    - build.proj
+    - Nuget.config
+    - '*.cmd'
+    - '*.sh'
+
+schedules:
+- cron: '30 21 * * 0'
+  displayName: Weekly Sunday 9:30 pm Build
+  branches:
+    include:
+    - internal/main
 
 parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
@@ -16,7 +36,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
   - name: packageFolderName
-    value: drop_build_build_signed_package
+    value: drop_buildMDS_build_signed_package
 
 resources:
   repositories: 
@@ -70,17 +90,24 @@ extends:
         tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
-    - stage: build
+    - stage: buildAKV
+      jobs:
+      - template: eng/pipelines/common/templates/jobs/build-signed-akv-package-job.yml@self
+        parameters:
+          symbolsFolder: $(symbolsFolder)
+          softwareFolder: $(softwareFolder)
+
+    - stage: buildMDS
       jobs:
       - template: eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
         parameters:
           symbolsFolder: $(symbolsFolder)
           softwareFolder: $(softwareFolder)
-    
+
     - stage: package_validation
-      dependsOn: build
+      dependsOn: buildMDS
       jobs:
-      - template: eng/pipelines/common/templates/jobs/verify-signed-package-job.yml@self
+      - template: eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
         parameters:
           packageFolderName: $(packageFolderName)
           downloadPackageStep:
@@ -88,6 +115,7 @@ extends:
             artifact: $(packageFolderName)
             patterns: '**/*.*nupkg'
             displayName: 'Download NuGet Package'
+
       - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
         parameters:
           packageFolderName: $(packageFolderName)
