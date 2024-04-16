@@ -5,7 +5,9 @@
 #################################################################################
 
 variables:
-  - template: build-variables.yml@self
+  - template: common-variables.yml@self
+  - template: mds-variables.yml@self
+
   - name: TempFolderName # extract the nuget package here
     value: temp
   - name: extractedNugetPath

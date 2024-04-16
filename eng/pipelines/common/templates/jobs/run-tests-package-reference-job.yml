@@ -28,8 +28,7 @@ jobs:
     vmImage: 'ADO-MMS22-SQL19'
     
   variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
-  - template: ../../../libraries/build-variables.yml@self
-  - template: ../../../libraries/validation-variables.yml@self
+  - template: ../../../libraries/mds-validation-variables.yml@self
 
   steps:
   - template: ../steps/pre-build-step.yml

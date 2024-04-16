@@ -5,6 +5,11 @@
 #################################################################################
 
 variables:
-  - template: common-variables.yml@self
-  - template: akv-variables.yml@self
-  - template: mds-variables.yml@self
+  - group: AKV Release Variables
+
+  - name: AKVNugetPackageVersion
+    value: $(AKVMajor).$(AKVMinor).$(AKVPatch)
+  - name: AKVAssemblyFileVersion
+    value: '$(AKVMajor).$(AKVMinor)$(AKVPatch).$(Build.BuildNumber)'
+  - name: akvNuspecPath
+    value: tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec
