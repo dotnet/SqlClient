@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 using System.Net.Security;
 
@@ -10,6 +11,8 @@ namespace System.Net
     internal sealed partial class NetEventSource
     {
         [Event(AcquireDefaultCredentialId, Keywords = Keywords.Default, Level = EventLevel.Informational)]
+        [SuppressMessage("ReflectionAnalysis", "IL2026:UnrecognizedReflectionPattern",
+                   Justification = EventSourceSuppressMessage)]
         public void AcquireDefaultCredential(string packageName, Interop.SspiCli.CredentialUse intent)
         {
             if (IsEnabled())
@@ -61,6 +64,8 @@ namespace System.Net
             WriteEvent(AcceptSecurityContextId, credential, context, (int)inFlags);
 
         [Event(OperationReturnedSomethingId, Keywords = Keywords.Default, Level = EventLevel.Informational)]
+        [SuppressMessage("ReflectionAnalysis", "IL2026:UnrecognizedReflectionPattern",
+                   Justification = EventSourceSuppressMessage)]
         public void OperationReturnedSomething(string operation, Interop.SECURITY_STATUS errorCode)
         {
             if (IsEnabled())

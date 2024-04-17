@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using Microsoft.Data.Common;
@@ -18,7 +19,9 @@ namespace Microsoft.Data.SqlClient
         private const string ServerVersionNormalized90 = "09.00.0000";
         private const string ServerVersionNormalized10 = "10.00.0000";
 
-
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode("Metadata loaded from XML stream may require types which was trimmed out")]
+#endif
         public SqlMetaDataFactory(Stream XMLStream,
                                     string serverVersion,
                                     string serverVersionNormalized) :

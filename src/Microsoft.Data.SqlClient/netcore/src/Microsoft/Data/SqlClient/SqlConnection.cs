@@ -121,6 +121,9 @@ namespace Microsoft.Data.SqlClient
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SqlRetryLogicBaseProvider RetryLogicProvider
         {
+#if NET6_0_OR_GREATER
+            [RequiresUnreferencedCode("RetryLogicProvider can be read from app.config which is unsafe for trimming")]
+#endif
             get
             {
                 if (_retryLogicProvider == null)

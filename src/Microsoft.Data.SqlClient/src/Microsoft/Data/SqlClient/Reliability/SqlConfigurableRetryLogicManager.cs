@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -15,18 +16,27 @@ namespace Microsoft.Data.SqlClient
     {
         private const string TypeName = nameof(SqlConfigurableRetryLogicManager);
 
+#if NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code",
+            Justification = "Usages of this property annotated with RequiresUnreferencedCode")]
+#endif
         private static readonly Lazy<SqlConfigurableRetryLogicLoader> s_loader =
-            new Lazy<SqlConfigurableRetryLogicLoader>(() =>
-            {
-                ISqlConfigurableRetryConnectionSection cnnConfig = null;
-                ISqlConfigurableRetryCommandSection cmdConfig = null;
+            new Lazy<SqlConfigurableRetryLogicLoader>(InitializeSqlConfigurableRetryLogicProvider);
 
-                // Fetch the section attributes values from the configuration section of the app config file.
-                cnnConfig = AppConfigManager.FetchConfigurationSection<SqlConfigurableRetryConnectionSection>(SqlConfigurableRetryConnectionSection.Name);
-                cmdConfig = AppConfigManager.FetchConfigurationSection<SqlConfigurableRetryCommandSection>(SqlConfigurableRetryCommandSection.Name);
+#if NET6_0_OR_GREATER
+        [RequiresUnreferencedCode("Calls Microsoft.Data.SqlClient.SqlConfigurableRetryLogicLoader.SqlConfigurableRetryLogicLoader(ISqlConfigurableRetryConnectionSection, ISqlConfigurableRetryCommandSection, String, String)")]
+#endif
+        private static SqlConfigurableRetryLogicLoader InitializeSqlConfigurableRetryLogicProvider()
+        {
+            ISqlConfigurableRetryConnectionSection cnnConfig = null;
+            ISqlConfigurableRetryCommandSection cmdConfig = null;
 
-                return new SqlConfigurableRetryLogicLoader(cnnConfig, cmdConfig);
-            });
+            // Fetch the section attributes values from the configuration section of the app config file.
+            cnnConfig = AppConfigManager.FetchConfigurationSection<SqlConfigurableRetryConnectionSection>(SqlConfigurableRetryConnectionSection.Name);
+            cmdConfig = AppConfigManager.FetchConfigurationSection<SqlConfigurableRetryCommandSection>(SqlConfigurableRetryCommandSection.Name);
+
+            return new SqlConfigurableRetryLogicLoader(cnnConfig, cmdConfig);
+        }
 
         private SqlConfigurableRetryLogicManager() {/*prevent external object creation*/}
 
@@ -35,6 +45,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal static SqlRetryLogicBaseProvider ConnectionProvider
         {
+#if NET6_0_OR_GREATER
+            [RequiresUnreferencedCode("ConnectionProvider may read configuration from app.config which is unsafe for trimming")]
+#endif
             get
             {
                 try
@@ -63,6 +76,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal static SqlRetryLogicBaseProvider CommandProvider
         {
+#if NET6_0_OR_GREATER
+            [RequiresUnreferencedCode("CommandProvider may read configuration from app.config which is unsafe for trimming")]
+#endif
             get
             {
                 try
