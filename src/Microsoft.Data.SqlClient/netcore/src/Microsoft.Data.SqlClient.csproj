@@ -310,6 +310,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlSer.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlSer.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
     </Compile>
@@ -559,14 +562,23 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlTransaction.Common.cs">
       <Link>Microsoft\Data\SqlClient\SqlTransaction.Common.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlSer.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlSer.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsEnums.cs">
       <Link>Microsoft\Data\SqlClient\TdsEnums.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParameterSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObject.cs</Link>
@@ -909,6 +921,9 @@
   <ItemGroup Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'">
     <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs">
       <Link>Common\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs</Link>
     </Compile>
     <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs" />
