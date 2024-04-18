@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient.SNI
         internal const int LocalDBBadRuntime = 57;
 
         /// <summary>
-        /// We either validate that the provided validationCert matches the serverCert or validate Server name in the serverCert matches "targetServerName".
+        /// We either validate that the provided 'validationCert' matches the 'serverCert', or we validate that the server name in the 'serverCert' matches 'targetServerName'.
         /// Certificate validation and chain trust validations are done by SSLStream class [System.Net.Security.SecureChannel.VerifyRemoteCertificate method]
         /// This method is called as a result of callback for SSL Stream Certificate validation.
         /// </summary>
