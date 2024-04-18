@@ -1,0 +1,126 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+name: $(Year:YY)$(DayOfYear)$(Rev:.rr)
+trigger:
+  branches:
+    include:
+    - internal/main
+  paths:
+    exclude:
+    - src
+    - eng
+    - tools
+    - .config
+    - build.proj
+    - Nuget.config
+    - '*.cmd'
+    - '*.sh'
+
+schedules:
+- cron: '30 21 * * 0'
+  displayName: Weekly Sunday 9:30 pm Build
+  branches:
+    include:
+    - internal/main
+
+parameters: # parameters are shown up in ADO UI in a build queue time
+- name: 'debug'
+  displayName: 'Enable debug output'
+  type: boolean
+  default: true
+
+variables:
+  - template: /eng/pipelines/libraries/variables.yml@self
+  - name: packageFolderName
+    value: drop_buildMDS_build_signed_package
+
+resources:
+  repositories: 
+    - repository: templates
+      type: git
+      name: OneBranch.Pipelines/GovernedTemplates
+      ref: refs/heads/main
+
+extends:
+  template: v2/OneBranch.Official.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  parameters:
+    featureFlags:
+      WindowsHostVersion: 1ESWindows2022
+    globalSdl: # https://aka.ms/obpipelines/sdl
+      apiscan:
+        enabled: true
+        softwareFolder: $(softwareFolder)
+        symbolsFolder: $(symbolsFolder)
+        softwarename: Microsoft.Data.SqlClient
+        versionNumber: $(AssemblyFileVersion)
+      asyncSdl:
+        enabled: false
+        tsa:
+          enabled: true # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
+        credscan:
+          enabled: true
+          suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
+        binskim:
+          enabled: true
+        policheck:
+          enabled: true
+          break: true # always break the build on policheck issues. You can disable it by setting to 'false'
+          exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
+        armory:
+          enabled: true
+          break: true
+        eslint: # TypeScript and JavaScript
+          enabled: false
+        roslyn:
+          enabled: true
+          break: true
+        publishLogs:
+          enabled: true
+        sbom:
+          enabled: true
+          packageName: Microsoft.Data.SqlClient
+          pacakgeVersion: $(NugetPackageVersion)
+        codeql:
+          compiled:
+            enabled: true
+        tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
+        disableLegacyManifest: true
+    stages:
+    - stage: buildAKV
+      jobs:
+      - template: eng/pipelines/common/templates/jobs/build-signed-akv-package-job.yml@self
+        parameters:
+          symbolsFolder: $(symbolsFolder)
+          softwareFolder: $(softwareFolder)
+
+    - stage: buildMDS
+      jobs:
+      - template: eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
+        parameters:
+          symbolsFolder: $(symbolsFolder)
+          softwareFolder: $(softwareFolder)
+
+    - stage: package_validation
+      dependsOn: buildMDS
+      jobs:
+      - template: eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
+        parameters:
+          packageFolderName: $(packageFolderName)
+          downloadPackageStep:
+            download: current
+            artifact: $(packageFolderName)
+            patterns: '**/*.*nupkg'
+            displayName: 'Download NuGet Package'
+
+      - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
+        parameters:
+          packageFolderName: $(packageFolderName)
+          downloadPackageStep:
+            download: current
+            artifact: $(packageFolderName)
+            patterns: '**/*.nupkg'
+            displayName: 'Download NuGet Package'

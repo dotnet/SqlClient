@@ -1,0 +1,55 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: symbolsFolder
+    type: string
+    default: symbols
+  - name: softwareFolder
+    type: string
+    default: software
+
+jobs:
+- job: build_signed_package
+  pool:
+    type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+    
+  variables:
+  - template: ../../../libraries/variables.yml@self 
+
+  steps:
+  - script: SET
+    displayName: 'Print Environment Variables'
+  
+  - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
+  
+  - template: ../steps/code-analyze-step.yml@self
+    parameters:
+      analyzeType: all
+  
+  - template: ../steps/esrp-code-signing-step.yml@self
+    parameters:
+      artifactType: dll
+  
+  - template: ../steps/generate-nuget-package-step.yml@self
+    parameters:
+      OutputDirectory: $(artifactDirectory)
+  
+  - template: ../steps/esrp-code-signing-step.yml@self
+    parameters:
+      artifactType: pkg
+  
+  - template: ../steps/copy-dlls-for-test-step.yml@self
+    parameters:
+      product: MDS
+
+  # Publish symbols to private server
+  - template: ../steps/publish-symbols-step.yml@self
+    parameters:
+      SymAccount: $(PrivateSymAccount)
+  # Publish symbols to public server
+  - template: ../steps/publish-symbols-step.yml@self
+    parameters:
+      SymAccount: $(PublicSymAccount)

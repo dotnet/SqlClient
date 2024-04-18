@@ -1,0 +1,63 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: SymAccount
+    type: string
+
+  - name: PublishSymbols
+    type: string
+    default: '$(PublishSymbols)'
+
+  - name: symbolsVersion
+    type: string
+    default: '$(NuGetPackageVersion)'
+
+  - name: referenceType
+    default: project
+    values:
+    - project
+    - package
+
+  - name: product
+    default: MDS
+    values:
+    - MDS
+    - AKV
+    - MSS
+
+steps:
+- powershell: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.SymAccount}}"'
+  displayName: 'Update Symbol.AccountName ${{parameters.SymAccount}}'
+
+- ${{ if eq(parameters.product, 'MDS') }}:
+  - task: PublishSymbols@2
+    displayName: 'Publish symbols path'
+    inputs:
+      SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\${{parameters.referenceType }}\bin'
+      SearchPattern: |
+        Windows_NT/$(Configuration).AnyCPU/**/Microsoft.Data.SqlClient.pdb
+        Unix/$(Configuration).AnyCPU/**/Microsoft.Data.SqlClient.pdb
+      IndexSources: false
+      SymbolServerType: TeamServices
+      SymbolsMaximumWaitTime: 60
+      SymbolsProduct: Microsoft.Data.SqlClient
+      SymbolsVersion: '{{parameters.symbolsVersion }}'
+    condition: and(succeeded(), eq('${{ parameters.PublishSymbols }}', 'true'))
+
+- ${{ if eq(parameters.product, 'AKV') }}:
+  - task: PublishSymbols@2
+    displayName: 'Publish symbols path'
+    inputs:
+      SymbolsFolder: '$(Build.SourcesDirectory)\artifacts\${{parameters.referenceType }}\bin'
+      SearchPattern: |
+        Windows_NT/$(Configuration).AnyCPU/AzureKeyVaultProvider/**/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb
+        AnyOS/$(Configuration).AnyCPU/AzureKeyVaultProvider/**/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb
+      IndexSources: false
+      SymbolServerType: TeamServices
+      SymbolsMaximumWaitTime: 60
+      SymbolsProduct: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+      SymbolsVersion: '{{parameters.symbolsVersion }}'
+    condition: and(succeeded(), eq('${{ parameters.PublishSymbols }}', 'true'))

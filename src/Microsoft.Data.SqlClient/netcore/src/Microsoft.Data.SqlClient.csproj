@@ -519,6 +519,21 @@
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
       <Link>Common\System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>
+    </Compile>  
+     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
+      <Link>Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
@@ -615,9 +630,6 @@
     </Compile>
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
       <Link>Common\Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
-      <Link>Common\Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\System\NotImplemented.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
@@ -770,6 +782,9 @@
   <ItemGroup Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'">
     <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs">
       <Link>Common\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs</Link>
     </Compile>
     <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs" />

@@ -12,6 +12,7 @@
     <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFRAMEWORK</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard')) and ('$(TestSet)' == '' or '$(TestSet)' == 'AE')">
     <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />

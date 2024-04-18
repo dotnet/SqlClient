@@ -1,0 +1,46 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: CommitHead
+    type: string
+    default: '' # the value will grab from the repo's head
+
+  - name: nuspecPath
+    type: string
+    default: '$(nuspecPath)'
+
+  - name: NugetPackageVersion
+    type: string
+    default: '$(NugetPackageVersion)'
+
+  - name: OutputDirectory
+    type: string
+    default: '$(Build.SourcesDirectory)/packages'
+
+  - name: Configuration
+    type: string
+    default: '$(Configuration)'
+  
+  - name: referenceType
+    default: project
+    values:
+    - project
+    - package
+
+steps:
+- task: NuGetToolInstaller@1
+  displayName: 'Install Latest Nuget'
+  inputs:
+    checkLatest: true
+- powershell: |
+    $Commit=git rev-parse HEAD
+    Write-Host "##vso[task.setvariable variable=CommitHead;]$Commit"
+  displayName: CommitHead
+- task: NuGetCommand@2
+  displayName: 'NuGet pack with snupkg'
+  inputs:
+    command: custom
+    arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=${{parameters.CommitHead}};Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'

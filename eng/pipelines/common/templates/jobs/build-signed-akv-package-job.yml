@@ -1,0 +1,64 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+jobs:
+- job: build_signed_akv_package
+  pool:
+    type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+    
+  variables:
+  - template: ../../../libraries/variables.yml@self
+
+  steps:
+  - script: SET
+    displayName: 'Print Environment Variables'
+
+  - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
+    parameters:
+      product: AKV
+      nugetPackageRefVersion: $(MDS_PackageRef_Version)
+      AssemblyFileVersion: $(AKVAssemblyFileVersion)
+
+  - template: ../steps/code-analyze-step.yml@self
+    parameters:
+      analyzeType: all
+      product: AKV
+      nugetPackageRefVersion: $(MDS_PackageRef_Version)
+
+  - template: ../steps/esrp-code-signing-step.yml@self
+    parameters:
+      artifactType: dll
+
+  - template: ../steps/generate-nuget-package-step.yml@self
+    parameters:
+      OutputDirectory: $(artifactDirectory)
+      nuspecPath: ${{variables.akvNuspecPath }}
+      NugetPackageVersion: ${{variables.AKVNuGetPackageVersion }}
+      referenceType: package
+
+  - template: ../steps/esrp-code-signing-step.yml@self
+    parameters:
+      artifactType: pkg
+
+  - template: ../steps/copy-dlls-for-test-step.yml@self
+    parameters:
+      product: AKV
+      referenceType: package
+
+  # Publish symbols to private server
+  - template: ../steps/publish-symbols-step.yml@self
+    parameters:
+      SymAccount: $(PrivateSymAccount)
+      referenceType: package
+      symbolsVersion: ${{variables.AKVNuGetPackageVersion }}
+      product: AKV
+
+  # Publish symbols to public server
+  - template: ../steps/publish-symbols-step.yml@self
+    parameters:
+      SymAccount: $(PublicSymAccount)
+      referenceType: package
+      symbolsVersion: ${{variables.AKVNuGetPackageVersion }}
+      product: AKV
