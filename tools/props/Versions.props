@@ -24,6 +24,7 @@
   <!-- NetFx project dependencies -->
   <PropertyGroup>
     <MicrosoftDataSqlClientSniVersion>5.2.0</MicrosoftDataSqlClientSniVersion>
+    <SystemDiagnosticsDiagnosticSourceVersion>8.0.0</SystemDiagnosticsDiagnosticSourceVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
@@ -51,7 +52,7 @@
   <!-- NetStandard project dependencies -->
   <PropertyGroup>
     <SystemRuntimeLoaderVersion>4.3.0</SystemRuntimeLoaderVersion>
-    <SystemDiagnosticsDiagnosticSourceVersion>6.0.1</SystemDiagnosticsDiagnosticSourceVersion>
+    <SystemDiagnosticsDiagnosticSourceVersion>8.0.0</SystemDiagnosticsDiagnosticSourceVersion>
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using System;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Telemetry;
 
 namespace Microsoft.Data.ProviderBase
 {
@@ -88,6 +89,32 @@ namespace Microsoft.Data.ProviderBase
                     poolGroup.Clear();
                 }
             }
+        }
+
+        public Dictionary<string, DbConnectionFactoryTelemetry> GetFactoryMetrics()
+        {
+            Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
+            Dictionary<string, DbConnectionFactoryTelemetry> telemetry = new(connectionPoolGroups.Count);
+
+            foreach (DbConnectionPoolGroup poolGroup in connectionPoolGroups.Values)
+            {
+                // This will ensure that the connection string has does not reveal its credentials
+                string connectionString = poolGroup.ConnectionOptions.UsersConnectionStringForTrace();
+
+                // This will return true if the connection string uses integrated authentication and a second connection has
+                // been opened in an impersonated context. The specification doesn't handle this well, so the only thing to
+                // do is to roll all of the contexts up into a single connection string.
+                if (telemetry.ContainsKey(connectionString))
+                {
+                    telemetry[connectionString].AddConnectionPool(poolGroup.Telemetry);
+                }
+                else
+                {
+                    telemetry.Add(connectionString, new DbConnectionFactoryTelemetry(poolGroup.Telemetry));
+                }
+            }
+
+            return telemetry;
         }
 
         internal virtual DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
