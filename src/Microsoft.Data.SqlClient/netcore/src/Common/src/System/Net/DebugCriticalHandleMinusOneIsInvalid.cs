@@ -2,11 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if DEBUG && !NET8_0_OR_GREATER
+
 using Microsoft.Win32.SafeHandles;
 
 namespace System.Net
 {
-#if DEBUG
     //
     // This is a helper class for debugging GC-ed handles that we define.
     // As a general rule normal code path should always destroy handles explicitly
@@ -38,5 +39,6 @@ namespace System.Net
                 NetEventSource.Info(this, _trace);
         }
     }
-#endif // DEBUG
 }
+
+#endif
