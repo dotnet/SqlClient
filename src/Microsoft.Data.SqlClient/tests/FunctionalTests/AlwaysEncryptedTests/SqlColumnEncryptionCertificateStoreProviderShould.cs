@@ -368,7 +368,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
         }
 
-        [Theory]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsWindows))]
         [PlatformSpecific(TestPlatforms.Windows)]
         [ValidCertificatePathsParameters]
         public void TestValidCertificatePaths(string certificateStoreNameAndLocation, object location)
