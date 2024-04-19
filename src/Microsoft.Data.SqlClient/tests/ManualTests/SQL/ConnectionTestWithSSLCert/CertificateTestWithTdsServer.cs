@@ -65,12 +65,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 builder.Password = "password";
             }
 
-            if (connectionTestParameters.Certificate != null)
+            if (connectionTestParameters.Certificate != string.Empty)
             {
                 builder.ServerCertificate = connectionTestParameters.Certificate;
             }
 
-            if (connectionTestParameters.HostNameInCertificate != null)
+            if (connectionTestParameters.HostNameInCertificate != string.Empty)
             {
                 builder.HostNameInCertificate = connectionTestParameters.HostNameInCertificate;
             }

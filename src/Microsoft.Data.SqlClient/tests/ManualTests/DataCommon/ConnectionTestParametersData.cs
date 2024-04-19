@@ -15,6 +15,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
 {
     public class ConnectionTestParametersData
     {
+        private const int CASES = 30;
+        private string _empty = string.Empty;
         private static readonly string s_fullPathToCer = Path.Combine(Directory.GetCurrentDirectory(), "localhostcert.cer");
         private static readonly string s_mismatchedcert = Path.Combine(Directory.GetCurrentDirectory(), "mismatchedcert.cer");
 
@@ -24,40 +26,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
 
         public static IEnumerable<object[]> GetConnectionTestParameters()
         {
-            yield return new object[] { Data.ConnectionTestParametersList[0] };
-            yield return new object[] { Data.ConnectionTestParametersList[1] };
-            yield return new object[] { Data.ConnectionTestParametersList[2] };
-            yield return new object[] { Data.ConnectionTestParametersList[3] };
-            yield return new object[] { Data.ConnectionTestParametersList[4] };
-            yield return new object[] { Data.ConnectionTestParametersList[5] };
-            yield return new object[] { Data.ConnectionTestParametersList[6] };
-            yield return new object[] { Data.ConnectionTestParametersList[7] };
-            yield return new object[] { Data.ConnectionTestParametersList[8] };
-            yield return new object[] { Data.ConnectionTestParametersList[9] };
-            yield return new object[] { Data.ConnectionTestParametersList[10] };
-            yield return new object[] { Data.ConnectionTestParametersList[11] };
-            yield return new object[] { Data.ConnectionTestParametersList[12] };
-            yield return new object[] { Data.ConnectionTestParametersList[13] };
-            yield return new object[] { Data.ConnectionTestParametersList[14] };
-            yield return new object[] { Data.ConnectionTestParametersList[15] };
-            yield return new object[] { Data.ConnectionTestParametersList[16] };
-            yield return new object[] { Data.ConnectionTestParametersList[17] };
-            yield return new object[] { Data.ConnectionTestParametersList[18] };
-            yield return new object[] { Data.ConnectionTestParametersList[19] };
-            yield return new object[] { Data.ConnectionTestParametersList[20] };
-            yield return new object[] { Data.ConnectionTestParametersList[21] };
-            yield return new object[] { Data.ConnectionTestParametersList[22] };
-            yield return new object[] { Data.ConnectionTestParametersList[23] };
-            yield return new object[] { Data.ConnectionTestParametersList[24] };
-            yield return new object[] { Data.ConnectionTestParametersList[25] };
-            yield return new object[] { Data.ConnectionTestParametersList[26] };
-            yield return new object[] { Data.ConnectionTestParametersList[27] };
-            yield return new object[] { Data.ConnectionTestParametersList[28] };
-            yield return new object[] { Data.ConnectionTestParametersList[29] };
+            for(int i=0; i < CASES; i++)
+            {
+                yield return new object[] { Data.ConnectionTestParametersList[i] };
+            }
         }
 
         public ConnectionTestParametersData() 
         {
+            // Test cases possible field values for connection parameters:
+            //     Possible values for TdsEncryptionType are Off, On, Required
+            //     Possible values for Encrypt are Optional, Mandatory
+            //     Possible values for TrustServerCertificate are true, false
+            //     Possible values for Certificate are valid path to certificate, empty
+            //     Possible values for HostNameInCertificate are valid hostname, empty
+            //     TestResult is the expected result of the connection test
+            // These combinations are based on the possible values of Encrypt, TrustServerCertificate, Certificate, HostNameInCertificate
             ConnectionTestParametersList = new List<ConnectionTestParameters>
             {
                 new ConnectionTestParameters
@@ -65,8 +49,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
                     Encrypt = SqlConnectionEncryptOption.Optional,
                     TrustServerCertificate = false,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -74,8 +58,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = false
                 },
                 new ConnectionTestParameters
@@ -83,8 +67,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
                     Encrypt = SqlConnectionEncryptOption.Optional,
                     TrustServerCertificate = true,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -92,8 +76,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -102,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
                     Certificate = s_fullPathToCer,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -111,7 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
                     Certificate = s_fullPathToCer,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -119,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
-                    Certificate = null,
+                    Certificate = _empty,
                     HostNameInCertificate = s_hostName,
                     TestResult = false
                 },
@@ -128,7 +112,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
-                    Certificate = null,
+                    Certificate = _empty,
                     HostNameInCertificate = s_hostName,
                     TestResult = true
                 },
@@ -137,8 +121,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
                     Encrypt = SqlConnectionEncryptOption.Optional,
                     TrustServerCertificate = false,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = false
                 },
                 new ConnectionTestParameters
@@ -146,8 +130,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = false
                 },
                 new ConnectionTestParameters
@@ -155,8 +139,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
                     Encrypt = SqlConnectionEncryptOption.Optional,
                     TrustServerCertificate = true,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -164,8 +148,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -174,7 +158,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
                     Certificate = s_fullPathToCer,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -183,7 +167,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
                     Certificate = s_fullPathToCer,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -191,7 +175,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
-                    Certificate = null,
+                    Certificate = _empty,
                     HostNameInCertificate = s_hostName,
                     TestResult = false
                 },
@@ -200,7 +184,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
-                    Certificate = null,
+                    Certificate = _empty,
                     HostNameInCertificate = s_hostName,
                     TestResult = true
                 },
@@ -209,8 +193,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
                     Encrypt = SqlConnectionEncryptOption.Optional,
                     TrustServerCertificate = false,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = false
                 },
                 new ConnectionTestParameters
@@ -218,8 +202,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = false
                 },
                 new ConnectionTestParameters
@@ -227,8 +211,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
                     Encrypt = SqlConnectionEncryptOption.Optional,
                     TrustServerCertificate = true,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -236,8 +220,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
-                    Certificate = null,
-                    HostNameInCertificate = null,
+                    Certificate = _empty,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -246,7 +230,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
                     Certificate = s_fullPathToCer,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -255,7 +239,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
                     Certificate = s_fullPathToCer,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -263,7 +247,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
-                    Certificate = null,
+                    Certificate = _empty,
                     HostNameInCertificate = s_hostName,
                     TestResult = false
                 },
@@ -272,7 +256,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
-                    Certificate = null,
+                    Certificate = _empty,
                     HostNameInCertificate = s_hostName,
                     TestResult = true
                 },
@@ -282,7 +266,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
                     Certificate = s_mismatchedcert,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = false,
                 },
                 new ConnectionTestParameters
@@ -291,7 +275,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
                     Certificate = s_mismatchedcert,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -300,7 +284,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
                     Certificate = s_mismatchedcert,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = false,
                 },
                 new ConnectionTestParameters
@@ -309,7 +293,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
                     Certificate = s_mismatchedcert,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
                 new ConnectionTestParameters
@@ -318,7 +302,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = false,
                     Certificate = s_mismatchedcert,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = false,
                 },
                 new ConnectionTestParameters
@@ -327,7 +311,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
                     Certificate = s_mismatchedcert,
-                    HostNameInCertificate = null,
+                    HostNameInCertificate = _empty,
                     TestResult = true
                 },
             };
