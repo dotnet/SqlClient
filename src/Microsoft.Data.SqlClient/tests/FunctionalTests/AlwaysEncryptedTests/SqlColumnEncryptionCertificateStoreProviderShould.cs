@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
@@ -489,6 +490,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
         }
 
+        [PlatformSpecific(TestPlatforms.Windows)]
         public class CEKEncryptionReversalParameters : DataAttribute
         {
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
@@ -502,8 +504,10 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
         }
 
+
         public class ValidCertificatePathsParameters : DataAttribute
         {
+
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
                 yield return new object[2] { CurrentUserMyPathPrefix, StoreLocation.CurrentUser };
