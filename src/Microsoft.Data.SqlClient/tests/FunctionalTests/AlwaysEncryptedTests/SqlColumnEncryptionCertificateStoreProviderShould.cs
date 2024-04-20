@@ -490,7 +490,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
         }
 
-        [PlatformSpecific(TestPlatforms.Windows)]
+#if NETCOREAPP
+    [SupportedOSPlatform("Windows")]
+#endif
         public class CEKEncryptionReversalParameters : DataAttribute
         {
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
@@ -632,6 +634,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
     }
 
+#if NETCOREAPP
+    [SupportedOSPlatform("Windows")]
+#endif
     public class CertificateFixture : IDisposable
     {
         public static bool IsAdmin
