@@ -6,8 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
+#if NETCOREAPP
 using System.Runtime.Versioning;
+#endif
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
@@ -17,6 +18,9 @@ using static Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests.TestFixtures;
 
 namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 {
+#if NETCOREAPP
+    [SupportedOSPlatform("Windows")]
+#endif
     public class SqlColumnEncryptionCertificateStoreProviderWindowsShould : IClassFixture<CertificateFixture>
     {
         private const string MASTER_KEY_PATH = "CurrentUser/My/C74D53B816A971E3FF9714FE1DD2E57E1710D946";
@@ -217,7 +221,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.Equal(input, output);
         }
 
-        [Theory]
+        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsWindows))]
         [CEKEncryptionReversalParameters]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestCEKEncryptionReversal(StoreLocation certificateStoreLocation, String certificateStoreNameAndLocation)
