@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+
 #if NETCOREAPP
 using System.Runtime.Versioning;
 #endif
@@ -504,7 +506,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             {
                 yield return new object[2] { StoreLocation.CurrentUser, CurrentUserMyPathPrefix };
                 // use localmachine cert path only when current user is Admin.
-                if (CertificateFixture.IsAdmin)
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && CertificateFixture.IsAdmin)
                 {
                     yield return new object[2] { StoreLocation.LocalMachine, LocalMachineMyPathPrefix };
                 }
