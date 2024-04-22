@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if !NET8_0_OR_GREATER
+
 internal static partial class Interop
 {
     internal enum SECURITY_STATUS
@@ -358,3 +360,5 @@ internal static partial class Interop
         }
 #endif // TRACE_VERBOSE
 }
+
+#endif // !NET8_OR_GREATER
