@@ -523,7 +523,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 yield return new object[2] { MyPathPrefix, null };
                 yield return new object[2] { @"", null };
                 // use localmachine cert path only when current user is Admin.
-                if (RuntimeInformation.IsOSPlatform(OSPlatform) && CertificateFixture.IsAdmin)
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && CertificateFixture.IsAdmin)
                 {
                     yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
                 }
