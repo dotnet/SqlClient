@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if !NETSTANDARD2_0
-
 using System;
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -106,5 +104,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-
-#endif
