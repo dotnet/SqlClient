@@ -1857,26 +1857,48 @@ namespace Microsoft.Data.SqlClient.Tests
         private static readonly object _parameterLegacyScaleLock = new();
 
         [Theory]
-        [InlineData(0, 0)]
-        [InlineData(1, 1)]
-        [InlineData(2, 2)]
-        [InlineData(3, 3)]
-        [InlineData(4, 4)]
-        [InlineData(5, 5)]
-        [InlineData(6, 6)]
-        [InlineData(7, 7)]
-        public void SqlTypes_Datetime2_Scale(byte setScale, byte outputScale)
+        [InlineData(null, 7, true)]
+        [InlineData(0, 7, true)]
+        [InlineData(1, 1, true)]
+        [InlineData(2, 2, true)]
+        [InlineData(3, 3, true)]
+        [InlineData(4, 4, true)]
+        [InlineData(5, 5, true)]
+        [InlineData(6, 6, true)]
+        [InlineData(7, 7, true)]
+        [InlineData(null, 7, false)]
+        [InlineData(0, 0, false)]
+        [InlineData(1, 1, false)]
+        [InlineData(2, 2, false)]
+        [InlineData(3, 3, false)]
+        [InlineData(4, 4, false)]
+        [InlineData(5, 5, false)]
+        [InlineData(6, 6, false)]
+        [InlineData(7, 7, false)]
+        [InlineData(null, 7, null)]
+        [InlineData(0, 7, null)]
+        [InlineData(1, 1, null)]
+        [InlineData(2, 2, null)]
+        [InlineData(3, 3, null)]
+        [InlineData(4, 4, null)]
+        [InlineData(5, 5, null)]
+        [InlineData(6, 6, null)]
+        [InlineData(7, 7, null)]
+        public void SqlDatetime2Scale_Legacy(int? setScale, byte outputScale, bool? legacyVarTimeZeroScaleSwitchValue)
         {
             lock (_parameterLegacyScaleLock)
             {
-                var originalValue = SetLegacyVarTimeZeroScaleBehaviour(false);
+                var originalLegacyVarTimeZeroScaleSwitchValue = SetLegacyVarTimeZeroScaleBehaviour(legacyVarTimeZeroScaleSwitchValue);
                 try
                 {
                     var parameter = new SqlParameter
                     {
-                        DbType = DbType.DateTime2,
-                        Scale = setScale
+                        DbType = DbType.DateTime2
                     };
+                    if (setScale.HasValue)
+                    {
+                        parameter.Scale = (byte)setScale.Value;
+                    }
 
                     var actualScale = (byte)typeof(SqlParameter).GetMethod("GetActualScale", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(parameter, null);
 
@@ -1885,41 +1907,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
                 finally
                 {
-                    SetLegacyVarTimeZeroScaleBehaviour(originalValue);
-                }
-            }
-        }
-
-        [Theory]
-        [InlineData(0, 7)]
-        [InlineData(1, 1)]
-        [InlineData(2, 2)]
-        [InlineData(3, 3)]
-        [InlineData(4, 4)]
-        [InlineData(5, 5)]
-        [InlineData(6, 6)]
-        [InlineData(7, 7)]
-        public void SqlDatetime2Scale_Legacy(byte setScale, byte outputScale)
-        {
-            lock (_parameterLegacyScaleLock)
-            {
-                var originalValue = SetLegacyVarTimeZeroScaleBehaviour(true);
-                try
-                {
-                    var parameter = new SqlParameter
-                    {
-                        DbType = DbType.DateTime2,
-                        Scale = setScale
-                    };
-
-                    var actualScale = (byte)typeof(SqlParameter).GetMethod("GetActualScale", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(parameter, null);
-
-                    Assert.Equal(outputScale, actualScale);
-                }
-
-                finally
-                {
-                    SetLegacyVarTimeZeroScaleBehaviour(originalValue);
+                    SetLegacyVarTimeZeroScaleBehaviour(originalLegacyVarTimeZeroScaleSwitchValue);
                 }
             }
         }
@@ -1927,21 +1915,40 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void SetLegacyVarTimeZeroScaleBehaviour_Defaults_to_True()
         {
-            Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-
-            var legacyVarTimeZeroScaleBehaviour = (bool)switchesType.GetProperty("LegacyVarTimeZeroScaleBehaviour", BindingFlags.Public | BindingFlags.Static).GetValue(null);
+            var legacyVarTimeZeroScaleBehaviour = (bool)LocalAppContextSwitchesType.GetProperty("LegacyVarTimeZeroScaleBehaviour", BindingFlags.Public | BindingFlags.Static).GetValue(null);
 
             Assert.True(legacyVarTimeZeroScaleBehaviour);
         }
 
+        private static Type LocalAppContextSwitchesType => typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+
         private static bool? SetLegacyVarTimeZeroScaleBehaviour(bool? value)
         {
-            Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-            FieldInfo switchField = switchesType.GetField("s_legacyVarTimeZeroScaleBehaviour", BindingFlags.NonPublic | BindingFlags.Static);
-            var originalValue = (byte)switchField.GetValue(null);
-            byte triStateValue = value.HasValue ? value.Value ? (byte)2 : (byte)1 : (byte)0;
-            switchField.SetValue(null, triStateValue);
-            return originalValue == 0 ? null : originalValue == 2;
+            const string LegacyVarTimeZeroScaleBehaviourSwitchname = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
+
+            //reset internal state to "NotInitialized" so we pick up the value via AppContext
+            FieldInfo switchField = LocalAppContextSwitchesType.GetField("s_legacyVarTimeZeroScaleBehaviour", BindingFlags.NonPublic | BindingFlags.Static);
+            switchField.SetValue(null, (byte)0);
+
+            bool? returnValue = null;
+            if (AppContext.TryGetSwitch(LegacyVarTimeZeroScaleBehaviourSwitchname, out var originalValue))
+            {
+                returnValue = originalValue;
+            }
+
+            if (value.HasValue)
+            {
+                AppContext.SetSwitch(LegacyVarTimeZeroScaleBehaviourSwitchname, value.Value);
+            }
+            else
+            {
+                //need to remove the switch value via reflection as AppContext does not expose a means to do that.
+                var switches = typeof(AppContext).GetField("s_switchMap", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+                MethodInfo removeMethod = switches.GetType().GetMethod("Remove", BindingFlags.Public | BindingFlags.Instance);
+                removeMethod.Invoke(switches, new[] { LegacyVarTimeZeroScaleBehaviourSwitchname });
+            }
+
+            return returnValue;
         }
     }
 }

@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        s_legacyVarTimeZeroScaleBehaviour = returnedValue ? Tristate.False : Tristate.True;
+                        s_legacyVarTimeZeroScaleBehaviour = returnedValue ? Tristate.True : Tristate.False;
                     }
                 }
                 return s_legacyVarTimeZeroScaleBehaviour == Tristate.True;
