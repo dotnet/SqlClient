@@ -523,7 +523,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 yield return new object[2] { MyPathPrefix, null };
                 yield return new object[2] { @"", null };
                 // use localmachine cert path only when current user is Admin.
-                if (CertificateFixture.IsAdmin)
+                if (RuntimeInformation.IsOSPlatform(OSPlatform) && CertificateFixture.IsAdmin)
                 {
                     yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
                 }
@@ -641,9 +641,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
     }
 
-#if NETCOREAPP
-    [SupportedOSPlatform("Windows")]
-#endif
     public class CertificateFixture : IDisposable
     {
         public static bool IsAdmin
@@ -669,7 +666,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             AddCertificateToStore(certificate1, StoreLocation.CurrentUser);
             AddCertificateToStore(certificate2, StoreLocation.CurrentUser);
             AddCertificateToStore(certificate3, StoreLocation.CurrentUser);
-            if (IsAdmin)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsAdmin)
             {
                 AddCertificateToStore(certificate3, StoreLocation.LocalMachine);
             }
