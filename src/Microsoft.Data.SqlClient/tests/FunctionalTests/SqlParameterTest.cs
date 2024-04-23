@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
+using System.Linq;
 using System.Reflection;
 using Xunit;
 
@@ -1943,9 +1944,18 @@ namespace Microsoft.Data.SqlClient.Tests
             else
             {
                 //need to remove the switch value via reflection as AppContext does not expose a means to do that.
+#if NET5_0_OR_GREATER
+                var switches = typeof(AppContext).GetField("s_switches", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+                if (switches is not null) //may be null if not initialised yet
+                {
+                    MethodInfo removeMethod = switches.GetType().GetMethod("Remove", BindingFlags.Public | BindingFlags.Instance, new Type[] { typeof(string) });
+                    removeMethod.Invoke(switches, new[] { LegacyVarTimeZeroScaleBehaviourSwitchname });
+                }
+#else
                 var switches = typeof(AppContext).GetField("s_switchMap", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
                 MethodInfo removeMethod = switches.GetType().GetMethod("Remove", BindingFlags.Public | BindingFlags.Instance);
                 removeMethod.Invoke(switches, new[] { LegacyVarTimeZeroScaleBehaviourSwitchname });
+#endif
             }
 
             return returnValue;
