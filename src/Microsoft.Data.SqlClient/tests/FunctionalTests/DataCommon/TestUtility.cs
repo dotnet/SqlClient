@@ -12,6 +12,5 @@ namespace Microsoft.Data.SqlClient.Tests
         public static readonly bool IsNotArmProcess = RuntimeInformation.ProcessArchitecture != Architecture.Arm;
         public static bool IsFullFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework");
         public static bool NetNative => RuntimeInformation.FrameworkDescription.StartsWith(".NET Native");
-        public static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
     }
 }
