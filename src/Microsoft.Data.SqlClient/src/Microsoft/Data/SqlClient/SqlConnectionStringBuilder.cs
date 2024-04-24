@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient
         private string _certificate = DbConnectionStringDefaults.Certificate;
 #endif
 #else
-        internal const int DeprecatedKeywordsCount = 3;
+        internal const int DeprecatedKeywordsCount = 5;
 #endif
         #endregion //Fields
 
