@@ -41,8 +41,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AKVUrl = null;
         public static readonly string AKVOriginalUrl = null;
         public static readonly string AKVTenantId = null;
-        public static readonly string AKVClientId = null;
-        public static readonly string AKVClientSecret = null;
         public static readonly string LocalDbAppName = null;
         public static readonly string LocalDbSharedInstanceName = null;
         public static List<string> AEConnStrings = new List<string>();
@@ -194,8 +192,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             AKVTenantId = c.AzureKeyVaultTenantId;
-            AKVClientId = c.AzureKeyVaultClientId;
-            AKVClientSecret = c.AzureKeyVaultClientSecret;
 
             if (EnclaveEnabled)
             {
@@ -458,7 +454,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool IsAKVSetupAvailable()
         {
-            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
         }
 
         public static bool IsTargetReadyForAeWithKeyStore()

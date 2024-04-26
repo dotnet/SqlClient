@@ -86,7 +86,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.AKVEventListener AKVListener = new();
 
-            //ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
             ManagedIdentityCredential miCredential = new(DataTestUtility.UserManagedIdentityClientId);
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(miCredential);
             byte[] encryptedCek = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, s_columnEncryptionKey);
@@ -105,7 +104,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // SqlClientCustomTokenCredential implements a legacy authentication callback to request the access token from the client-side.
             SqlColumnEncryptionAzureKeyVaultProvider oldAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
 
-            //ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
             ManagedIdentityCredential miCredential = new(DataTestUtility.UserManagedIdentityClientId);
             SqlColumnEncryptionAzureKeyVaultProvider newAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(miCredential);
 
@@ -131,7 +129,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 string keyName = keyPathUri.Segments[2];
                 string keyVersion = keyPathUri.Segments[3];
-                //ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
                 ManagedIdentityCredential miCredential = new(DataTestUtility.UserManagedIdentityClientId);
                 KeyClient keyClient = new KeyClient(vaultUri, miCredential);
                 KeyVaultKey currentVersionKey = keyClient.GetKey(keyName);

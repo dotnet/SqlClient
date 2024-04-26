@@ -141,7 +141,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private static async Task SetupAKVKeysAsync()
         {
-            //ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
             ManagedIdentityCredential miCredential = new(DataTestUtility.UserManagedIdentityClientId);
             KeyClient keyClient = new KeyClient(DataTestUtility.AKVBaseUri, miCredential);
             AsyncPageable<KeyProperties> keys = keyClient.GetPropertiesOfKeysAsync();
