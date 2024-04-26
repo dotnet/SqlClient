@@ -697,9 +697,30 @@ namespace Microsoft.Data.SqlClient
             short offset = (short)value.Offset.TotalMinutes;
 
 #if NETCOREAPP
+            // In TDS protocol: 
+            // https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/786f5b8a-f87d-4980-9070-b9b7274c681d
+            //
+            //   date is represented as one 3 - byte unsigned integer that represents the number of days since January 1, year 1.
+            //
+            //   time(n) is represented as one unsigned integer that represents the number of 10 - n second increments since 12 AM within a day.
+            //     The length, in bytes, of that integer depends on the scale n as follows:
+            //       3 bytes if 0 <= n < = 2.
+            //       4 bytes if 3 <= n < = 4.
+            //       5 bytes if 5 <= n < = 7.
+            //     For example:
+            //       DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero); 
+            //       time = 23:59:59 is represented as 863990 in 3 bytes or { 246, 46, 13, 0, 0, 0, 0, 0 } in bytes array
+
             Span<byte> result = stackalloc byte[8];
+
+            // https://learn.microsoft.com/en-us/dotnet/api/system.buffers.binary.binaryprimitives.writeint64bigendian?view=net-8.0
+            // WriteInt64LittleEndian requires 8 bytes to write the value.
+            // However, the maximum time of day value is 863990 which can be represented in 3 bytes only. Thus, the last 5 bytes are not used.
             BinaryPrimitives.WriteInt64LittleEndian(result, time);
-            _stateObj.WriteByteSpan(result.Slice(0, length - 5));
+            // DateTimeOffset has a length of 8 bytes. So, 8 - 5 = 3 bytes, for time which is what is stored in the result byte array.
+            _stateObj.WriteByteSpan(result.Slice(0, length - 5)); // this writes the 3 bytes time value to the state object
+            
+            // Date is represented as 3 bytes. So, 3 bytes are written to the state object.
             BinaryPrimitives.WriteInt32LittleEndian(result, days);
             _stateObj.WriteByteSpan(result.Slice(0, 3));
 #else
