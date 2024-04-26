@@ -1,0 +1,35 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: TCPConnectionString
+    type: string
+    default: ''
+
+  - name: NPConnectionString
+    type: string
+    default: ''
+  
+  - name: SupportsIntegratedSecurity
+    type: boolean
+    default: false
+
+steps:
+# All properties should be added here, and this template should be used for any manipulation of the config.json file.
+- powershell: |
+    $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
+    foreach ($p in $jdata)
+    {
+        if ("${{parameters.TCPConnectionString }}" -ne ""){
+          $p.TCPConnectionString="${{parameters.TCPConnectionString }}"}
+
+        if ("${{parameters.NPConnectionString }}" -ne ""){
+          $p.NPConnectionString="${{parameters.NPConnectionString }}"}
+
+        $p.SupportsIntegratedSecurity=[System.Convert]::ToBoolean("${{parameters.SupportsIntegratedSecurity }}")
+    }
+    $jdata | ConvertTo-Json | Set-Content "config.json"
+  workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
+  displayName: 'Update config.json'
