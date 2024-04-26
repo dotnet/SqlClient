@@ -4,10 +4,6 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: CommitHead
-    type: string
-    default: '' # the value will grab from the repo's head
-
   - name: nuspecPath
     type: string
     default: '$(nuspecPath)'
@@ -43,4 +39,4 @@ steps:
   displayName: 'NuGet pack with snupkg'
   inputs:
     command: custom
-    arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=${{parameters.CommitHead}};Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+    arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
