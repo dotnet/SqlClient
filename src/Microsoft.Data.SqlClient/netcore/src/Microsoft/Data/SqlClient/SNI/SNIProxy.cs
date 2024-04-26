@@ -653,11 +653,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 // If user is connecting to a managed instance with port, e.g. localhost\INSTANCENAME,1434
                 Port = port;
-
-                if (InstanceName == null && backSlashIndex > -1 && tokensByCommaAndSlash.Length == 3)
-                {
-                    InstanceName = tokensByCommaAndSlash[1].Trim();
-                }
             }
             // Instance Name Handling. Only if we found a '\' and we did not find a port in the Data Source
             else if (backSlashIndex > -1)
@@ -725,9 +720,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
 
                     InferLocalServerName();
-
-                    if (InstanceName == null)
-                        InstanceName = GetInstanceNameFromDataSource();
 
                     return true;
                 }
@@ -810,17 +802,5 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private static bool IsLocalHost(string serverName)
             => ".".Equals(serverName) || "(local)".Equals(serverName) || "localhost".Equals(serverName);
-
-        private string GetInstanceNameFromDataSource()
-        {
-            string instanceName = string.Empty;
-            string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter);
-            if (tokensByBackSlash.Length > 1)
-            {
-                instanceName = tokensByBackSlash[1].Trim();
-            }
-
-            return instanceName;
-        }
     }
 }

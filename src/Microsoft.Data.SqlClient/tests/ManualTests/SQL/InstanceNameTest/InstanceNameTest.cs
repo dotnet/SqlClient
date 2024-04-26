@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Open();
 
-                string spnInfo = GetSPNInfo(builder.DataSource);
+                string spnInfo = GetSPNInfo(builder.DataSource, instanceName);
                 if (expectedPortNumber > 0)
                 {
                     Assert.Matches(@"MSSQLSvc\/.*:[\d]", spnInfo);
@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static string GetSPNInfo(string dataSource)
+        private static string GetSPNInfo(string dataSource, string inInstanceName)
         {
             Assembly sqlConnectionAssembly = Assembly.GetAssembly(typeof(SqlConnection));
 
@@ -197,6 +197,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             PropertyInfo serverInfo = dataSrcInfo.GetType().GetProperty("ServerName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             string serverName = serverInfo.GetValue(dataSrcInfo, null).ToString();
+
+            PropertyInfo instanceNameToSetInfo = dataSrcInfo.GetType().GetProperty("InstanceName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            instanceNameToSetInfo.SetValue(dataSrcInfo, inInstanceName, null);
 
             PropertyInfo instanceNameInfo = dataSrcInfo.GetType().GetProperty("InstanceName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             string instanceName = instanceNameInfo.GetValue(dataSrcInfo, null).ToString().ToUpper();
