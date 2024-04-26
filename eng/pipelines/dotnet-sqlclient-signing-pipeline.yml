@@ -10,7 +10,7 @@ trigger:
     include:
     - internal/release/5.2
   paths:
-    exclude:
+    include:
     - src
     - eng
     - tools
