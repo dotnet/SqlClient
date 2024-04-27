@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.AKVEventListener AKVListener = new();
 
-            DefaultAzureCredential defaultAzureCredential = new(); = new();
+            DefaultAzureCredential defaultAzureCredential = new();
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(defaultAzureCredential);
             byte[] encryptedCek = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, s_columnEncryptionKey);
             byte[] decryptedCek = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, encryptedCek);
