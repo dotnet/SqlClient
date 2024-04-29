@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public async Task PreLoginEncryptionExcludedTest()
         {
-            using TestTdsServer server = TestTdsServer.StartTestServer(false, false, 5, encryptionType: TDSPreLoginTokenEncryptionType.None);
+            using TestTdsServer server = TestTdsServer.StartTestServer(false, false, 5, excludeEncryption: true);
             SqlConnectionStringBuilder builder = new(server.ConnectionString)
             {
                 IntegratedSecurity = true,
