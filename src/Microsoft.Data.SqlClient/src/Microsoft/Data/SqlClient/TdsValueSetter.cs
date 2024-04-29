@@ -709,7 +709,7 @@ namespace Microsoft.Data.SqlClient
             //       5 bytes if 5 <= n < = 7.
             //     For example:
             //       DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);  // using scale of 0
-            //       time = 23:59:59, zero scale, is represented as 863990 in 3 bytes or { 246, 46, 13, 0, 0, 0, 0, 0 } in bytes array
+            //       time = 23:59:59, scale is 1, is represented as 863990 in 3 bytes or { 246, 46, 13, 0, 0, 0, 0, 0 } in bytes array
 
             Span<byte> result = stackalloc byte[8];
 

@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
 
             try
             {
-                DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);
+                DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, 500, TimeSpan.Zero);
                 var param = new SqlParameter
                 {
                     ParameterName = "@params",
