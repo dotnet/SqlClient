@@ -3,12 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
-using Azure.Identity;
 using Xunit;
 using Azure.Security.KeyVault.Keys;
 using System.Reflection;
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics.Tracing;

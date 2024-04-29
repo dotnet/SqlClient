@@ -22,6 +22,8 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Security.Principal;
 using System.Runtime.InteropServices;
+using Azure.Identity;
+using Azure.Core;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -457,11 +459,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
         }
 
-        private static DefaultAzureCredential defaultCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId });
+        private static readonly DefaultAzureCredential s_defaultCredential = new(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId });
 
         public static TokenCredential GetTokenCredential()
         {
-            return defaultCredential;
+            return s_defaultCredential;
         }
 
         public static bool IsTargetReadyForAeWithKeyStore()
