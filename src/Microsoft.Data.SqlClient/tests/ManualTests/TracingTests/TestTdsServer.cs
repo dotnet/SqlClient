@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false,
             int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "",
-            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.Off)
+            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.None)
         {
             TDSServerArguments args = new TDSServerArguments()
             {
@@ -64,8 +64,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 DataSource = "localhost," + port,
                 ConnectTimeout = connectionTimeout,
-                Encrypt = (encryptionType == TDSPreLoginTokenEncryptionType.Off ? SqlConnectionEncryptOption.Optional : SqlConnectionEncryptOption.Mandatory)
             };
+
+            if ((encryptionType == TDSPreLoginTokenEncryptionType.Off) || (encryptionType == TDSPreLoginTokenEncryptionType.None))
+            {
+                server._connectionStringBuilder.Encrypt = SqlConnectionEncryptOption.Optional;
+            }
+            else
+            {
+                server._connectionStringBuilder.Encrypt = SqlConnectionEncryptOption.Mandatory;
+            }
+
             server.ConnectionString = server._connectionStringBuilder.ConnectionString;
             return server;
         }
