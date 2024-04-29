@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
         public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false,
             int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "",
-            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.Off)
+            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.NotSupported)
         {
             TDSServerArguments args = new TDSServerArguments()
             {
