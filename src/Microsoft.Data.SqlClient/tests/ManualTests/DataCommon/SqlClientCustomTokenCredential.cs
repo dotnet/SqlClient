@@ -106,8 +106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string authorityHost = authority.Remove(separatorIndex + 1);
             string audience = authority.Substring(separatorIndex + 1);
             TokenCredentialOptions tokenCredentialOptions = new TokenCredentialOptions() { AuthorityHost = new Uri(authorityHost) };
-            ManagedIdentityCredential miCredential = new(DataTestUtility.UserManagedIdentityClientId);
-            AccessToken accessToken = await miCredential.GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+            AccessToken accessToken = await DataTestUtility.GetTokenCredential().GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
             return accessToken;
         }
     }

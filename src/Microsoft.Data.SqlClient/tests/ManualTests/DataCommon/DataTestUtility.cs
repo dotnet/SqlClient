@@ -457,6 +457,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
         }
 
+        private static DefaultAzureCredential defaultCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId });
+
+        public static TokenCredential GetTokenCredential()
+        {
+            return defaultCredential;
+        }
+
         public static bool IsTargetReadyForAeWithKeyStore()
         {
             return DataTestUtility.AreConnStringSetupForAE()
