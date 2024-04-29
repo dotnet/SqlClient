@@ -91,6 +91,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void Dispose() => _endpoint?.Stop();
 
         public string ConnectionString { get; private set; }
-
     }
 }
