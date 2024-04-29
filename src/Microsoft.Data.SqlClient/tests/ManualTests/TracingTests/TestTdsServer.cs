@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false,
             int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "",
-            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.None)
+            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.NotSupported)
         {
             TDSServerArguments args = new TDSServerArguments()
             {
@@ -66,7 +66,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = connectionTimeout,
             };
 
-            if ((encryptionType == TDSPreLoginTokenEncryptionType.Off) || (encryptionType == TDSPreLoginTokenEncryptionType.None))
+            if (encryptionType == TDSPreLoginTokenEncryptionType.Off || 
+                encryptionType == TDSPreLoginTokenEncryptionType.None || 
+                encryptionType == TDSPreLoginTokenEncryptionType.NotSupported)
             {
                 server._connectionStringBuilder.Encrypt = SqlConnectionEncryptOption.Optional;
             }
@@ -81,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false,
             int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "",
-            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.Off)
+            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.NotSupported)
         {
             return StartServerWithQueryEngine(null, enableFedAuth, enableLog, connectionTimeout, methodName, encryptionCertificate, encryptionType);
         }
