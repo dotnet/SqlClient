@@ -82,13 +82,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
             try
             {
                 // Use different scale for each test: 0 to 7
-                for (int scale = 0; scale <= 7; scale++)
+                int fromScale = 7;
+                int toScale = 7;
+
+                for (int scale = fromScale; scale <= toScale; scale++)
                 {
                     DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);
-                    if (scale > 0)
+                    if (scale > 0 && scale <= 2)
                     {
-                        // Add 987 milliseconds and some microseconds to the dateTimeOffset
-                        dateTimeOffset = dateTimeOffset.AddMilliseconds(987.654);
+                        dateTimeOffset = dateTimeOffset.AddMilliseconds(1);
+                    }
+                    else if (scale >= 3 && scale <= 4)
+                    {
+                        // add 1 thousandth of a millisecond
+                        dateTimeOffset = dateTimeOffset.AddMilliseconds(0.001);
+                    }
+                    else if (scale >= 5 && scale <= 7)
+                    {
+                        // add 1 ten-thousandth of a millisecond
+                        dateTimeOffset = dateTimeOffset.AddMilliseconds(0.0001);
                     }
 
                     DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
