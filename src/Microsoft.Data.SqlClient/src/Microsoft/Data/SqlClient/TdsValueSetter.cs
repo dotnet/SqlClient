@@ -715,10 +715,11 @@ namespace Microsoft.Data.SqlClient
 
             // https://learn.microsoft.com/en-us/dotnet/api/system.buffers.binary.binaryprimitives.writeint64bigendian?view=net-8.0
             // WriteInt64LittleEndian requires 8 bytes to write the value.
-            // However, the maximum time of day value of 863990 which can be represented in 3 bytes only. Thus, the last 5 bytes are not used.
             BinaryPrimitives.WriteInt64LittleEndian(result, time);
-            // DateTimeOffset has a length of 8 bytes. So, 8 - 5 = 3 bytes, for time which is what is stored in the result byte array.
-            _stateObj.WriteByteSpan(result.Slice(0, length - 5)); // this writes the 3 bytes time value to the state object
+            // The DateTimeOffset length is variable depending on the scale, 1 to 7, used.
+            // If length = 8, 8 - 5 = 3 bytes is used for time.
+            // If length = 10, 10 - 5 = 5 bytes is used for time.
+            _stateObj.WriteByteSpan(result.Slice(0, length - 5)); // this writes the time value to the state object using dynamic length based on the scale.
             
             // Date is represented as 3 bytes. So, 3 bytes are written to the state object.
             BinaryPrimitives.WriteInt32LittleEndian(result, days);
