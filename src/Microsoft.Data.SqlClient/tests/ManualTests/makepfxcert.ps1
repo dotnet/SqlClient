@@ -78,6 +78,9 @@ function Invoke-SqlServerCertificateCommand {
         openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/mismatchedcert.pem
         cp $OutDir/mismatchedcert.pem /usr/local/share/ca-certificates/mismatchedcert.crt
 
+        # enable certificate as CA certificate
+        dpkg-reconfigure ca-certificates
+
         # Update the certificates store
         Write-Output "Updating the certificates store..."
         update-ca-certificates -v
@@ -87,7 +90,7 @@ function Invoke-SqlServerCertificateCommand {
           Type              = "SSLServerAuthentication"
           Subject           = "CN=$fqdn"
           KeyAlgorithm      = "RSA"
-          KeyLength         = 2048
+          KeyLength         = 4096
           HashAlgorithm     = "SHA256"
           TextExtension     = "2.5.29.37={text}1.3.6.1.5.5.7.3.1", "2.5.29.17={text}DNS=$fqdn&DNS=$localhost&IPAddress=$LoopBackIPV4&DNS=$sqlAliasName&IPAddress=$LoopBackIPV6"
           NotAfter          = (Get-Date).AddMonths(36)
