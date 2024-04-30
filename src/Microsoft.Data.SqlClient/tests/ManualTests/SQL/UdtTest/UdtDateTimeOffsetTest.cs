@@ -141,17 +141,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
                 cmd.ExecuteNonQuery();
             }
         }
-
-        private static void xsql(SqlConnection conn, string sql)
-        {
-            using SqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = sql;
-            cmd.ExecuteNonQuery();
-        }
-
-        private static void DropType(SqlConnection conn, string typeName)
-        {
-            xsql(conn, string.Format("if exists(select 1 from sys.types where name='{0}') begin drop type {1} end", typeName.Substring(1, typeName.Length - 2), typeName));
-        }
     }
 }
