@@ -112,10 +112,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
                     }
                 }
             }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
             finally
             {
                 DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
