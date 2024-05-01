@@ -99,11 +99,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 for (int scale = fromScale; scale <= toScale; scale++)
                 {
                     DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);
-                    // This additional precision is to compare the time part of the DateTimeOffset with the scale used in the test.
-                    dateTimeOffset = dateTimeOffset.AddSeconds(.123456789012);
+
+                    // Add sub-second offset corresponding to the scale being tested
+                    TimeSpan subSeconds = TimeSpan.FromTicks((long)(TimeSpan.TicksPerSecond / Math.Pow(10, scale)));
+                    dateTimeOffset = dateTimeOffset.Add(subSeconds);
 
                     DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
-                    SetupDateTimeOffsetTableType(connection,tvpTypeName, scale);
+                    SetupDateTimeOffsetTableType(connection, tvpTypeName, scale);
 
                     var param = new SqlParameter
                     {
@@ -119,20 +121,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cmd.CommandText = "SELECT * FROM @params";
                         cmd.Parameters.Add(param);
                         var result = cmd.ExecuteScalar();
-
-                        if (dateTimeOffset != (DateTimeOffset)result)
-                        {
-                            Console.WriteLine($"Scale: {scale}    dateTimeOffset:  {dateTimeOffset}   result:  {result}");
-                        }
-
-                        // Get the time part of the DateTimeOffset and scale it to the scale used in the test.
-                        long timeScaledInput = dateTimeOffset.TimeOfDay.Ticks / TICKS_FROM_SCALE[scale];
-                        // Get the time part of the result and scale it to the scale used in the test
-                        long timeScaledOutput = ((DateTimeOffset)result).TimeOfDay.Ticks / TICKS_FROM_SCALE[scale];
-
-                        // Both time parts should be the same. The parameter passed in would have been scaled (rounded off).
-                        // So, scaling the input parameter to the same scale used should match the result that was scaled.
-                        Assert.Equal(timeScaledInput, timeScaledOutput);
+                        Assert.Equal(dateTimeOffset, result);
                     }
                 }
             }
