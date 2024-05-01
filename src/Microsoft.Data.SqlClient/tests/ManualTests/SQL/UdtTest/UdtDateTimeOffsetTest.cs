@@ -130,7 +130,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         // Get the time part of the result and scale it to the scale used in the test
                         long timeScaledOutput = ((DateTimeOffset)result).TimeOfDay.Ticks / TICKS_FROM_SCALE[scale];
 
-                        // Both time parts should be the same. The parameter passed in should be identical to the output regardless of scale used. 
+                        // Both time parts should be the same. The parameter passed in would have been scaled (rounded off).
+                        // So, scaling the input parameter to the same scale used should match the result that was scaled.
                         Assert.Equal(timeScaledInput, timeScaledOutput);
                     }
                 }
