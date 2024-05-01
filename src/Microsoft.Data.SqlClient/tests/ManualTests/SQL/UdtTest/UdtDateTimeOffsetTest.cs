@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
             try
             {
                 // Use different scale for each test: 0 to 7
-                int fromScale = 7;
+                int fromScale = 0;
                 int toScale = 7;
 
                 for (int scale = fromScale; scale <= toScale; scale++)
