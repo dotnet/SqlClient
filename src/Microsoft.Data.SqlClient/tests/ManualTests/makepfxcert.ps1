@@ -53,13 +53,16 @@ function Invoke-SqlServerCertificateCommand {
         else {
             openssl req -x509 -newkey rsa:4096 -sha256 -days 1095 -nodes -keyout $OutDir/localhostcert.key -out $OutDir/localhostcert.cer -subj "/CN=$fqdn" -addext "subjectAltName=DNS:$fqdn,DNS:localhost,IP:127.0.0.1,IP:::1"
         }
+        sudo chmod 777 $OutDir/localhostcert.key $OutDir/localhostcert.cer
         # Export the certificate to pfx
         Write-Output "Exporting certificate to pfx..."
         openssl pkcs12 -export -in $OutDir/localhostcert.cer -inkey $OutDir/localhostcert.key -out $OutDir/localhostcert.pfx -password pass:nopassword
+        sudo chmod 777 $OutDir/localhostcert.pfx
 
         Write-Output "Converting certificate to pem..."
         # Create pem from cer
         cp $OutDir/localhostcert.cer $OutDir/localhostcert.pem
+        sudo chmod 777 $OutDir/localhostcert.pem
 
         # Add trust to the pem certificate
         Write-Output "Adding trust to pem certificate..."
@@ -79,7 +82,8 @@ function Invoke-SqlServerCertificateCommand {
         cp $OutDir/mismatchedcert.pem /usr/local/share/ca-certificates/mismatchedcert.crt
 
         # enable certificate as CA certificate
-        dpkg-reconfigure ca-certificates
+        # ---- this causes it to fail in Mac ---- 
+        #dpkg-reconfigure ca-certificates
 
         # Update the certificates store
         Write-Output "Updating the certificates store..."
