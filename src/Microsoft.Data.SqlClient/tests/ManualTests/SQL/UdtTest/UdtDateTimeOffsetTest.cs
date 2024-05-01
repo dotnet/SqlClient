@@ -7,7 +7,7 @@ using System.Data;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class DateTimeOffsetList : SqlDataRecord
     {
@@ -29,6 +29,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
 
     public class UdtDateTimeOffsetTest
     {
+        private static readonly long[] TICKS_FROM_SCALE = {
+            10000000,
+            1000000,
+            100000,
+            10000,
+            1000,
+            100,
+            10,
+            1,
+        };
+
         private readonly string _connectionString = null;
         private readonly string _udtTableType = DataTestUtility.GetUniqueNameForSqlServer("DataTimeOffsetTableType");
 
@@ -70,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
             }
         }
 
-        // This unit test is to ensure that DateTimeOffset with all scales are working as expected
+        // This unit test is to ensure that time in DateTimeOffset with all scales are working as expected
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void DateTimeOffsetAllScalesTestShouldSucceed()
         {
@@ -83,25 +94,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
             {
                 // Use different scale for each test: 0 to 7
                 int fromScale = 0;
-                int toScale = 2;
+                int toScale = 7;
 
                 for (int scale = fromScale; scale <= toScale; scale++)
                 {
                     DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);
-                    if (scale > 0 && scale <= 2)
-                    {
-                        dateTimeOffset = dateTimeOffset.AddMilliseconds(1);
-                    }
-                    else if (scale >= 3 && scale <= 4)
-                    {
-                        // add 1 thousandth of a millisecond
-                        dateTimeOffset = dateTimeOffset.AddMilliseconds(0.001);
-                    }
-                    else if (scale >= 5 && scale <= 7)
-                    {
-                        // add 1 ten-thousandth of a millisecond
-                        dateTimeOffset = dateTimeOffset.AddMilliseconds(0.0001);
-                    }
+                    // This additional precision is to compare the time part of the DateTimeOffset with the scale used in the test.
+                    dateTimeOffset = dateTimeOffset.AddSeconds(.123456789012);
 
                     DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
                     SetupDateTimeOffsetTableType(connection,tvpTypeName, scale);
@@ -120,7 +119,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.UdtTest
                         cmd.CommandText = "SELECT * FROM @params";
                         cmd.Parameters.Add(param);
                         var result = cmd.ExecuteScalar();
-                        Assert.Equal(dateTimeOffset, result);
+
+                        if (dateTimeOffset != (DateTimeOffset)result)
+                        {
+                            Console.WriteLine($"Scale: {scale}    dateTimeOffset:  {dateTimeOffset}   result:  {result}");
+                        }
+
+                        // Get the time part of the DateTimeOffset and scale it to the scale used in the test.
+                        long timeScaledInput = dateTimeOffset.TimeOfDay.Ticks / TICKS_FROM_SCALE[scale];
+                        // Get the time part of the result and scale it to the scale used in the test
+                        long timeScaledOutput = ((DateTimeOffset)result).TimeOfDay.Ticks / TICKS_FROM_SCALE[scale];
+
+                        // Both time parts should be the same. The parameter passed in should be identical to the output regardless of scale used. 
+                        Assert.Equal(timeScaledInput, timeScaledOutput);
                     }
                 }
             }
