@@ -702,7 +702,8 @@ namespace Microsoft.Data.SqlClient
             //
             //   date is represented as one 3 - byte unsigned integer that represents the number of days since January 1, year 1.
             //
-            //   time(n) is represented as one unsigned integer that represents the number of 10^-n second increments since 12 AM within a day.
+            //   time(n) is represented as one unsigned integer that represents the number of 10^-n,
+            //   (10 to the power of negative n), second increments since 12 AM within a day.
             //     The length, in bytes, of that integer depends on the scale n as follows:
             //       3 bytes if 0 <= n < = 2.
             //       4 bytes if 3 <= n < = 4.
