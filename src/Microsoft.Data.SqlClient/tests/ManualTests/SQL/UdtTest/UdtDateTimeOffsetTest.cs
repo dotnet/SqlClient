@@ -29,17 +29,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
     public class UdtDateTimeOffsetTest
     {
-        private static readonly long[] TICKS_FROM_SCALE = {
-            10000000,
-            1000000,
-            100000,
-            10000,
-            1000,
-            100,
-            10,
-            1,
-        };
-
         private readonly string _connectionString = null;
         private readonly string _udtTableType = DataTestUtility.GetUniqueNameForSqlServer("DataTimeOffsetTableType");
 
