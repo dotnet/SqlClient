@@ -38,8 +38,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
             //     Possible values for TdsEncryptionType are Off, On, Required
             //     Possible values for Encrypt are Optional, Mandatory
             //     Possible values for TrustServerCertificate are true, false
-            //     Possible values for Certificate are valid path to certificate, empty
-            //     Possible values for HostNameInCertificate are valid hostname, empty
+            //     Possible values for Certificate are valid path to certificate, mismatched certificate, or empty
+            //     Possible values for HostNameInCertificate are valid hostname, or empty
             //     TestResult is the expected result of the connection test
             // These combinations are based on the possible values of Encrypt, TrustServerCertificate, Certificate, HostNameInCertificate
             ConnectionTestParametersList = new List<ConnectionTestParameters>
