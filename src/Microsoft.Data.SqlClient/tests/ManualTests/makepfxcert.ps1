@@ -39,6 +39,7 @@ function Invoke-SqlServerCertificateCommand {
 
     # Create a self-signed certificate
     if ($OS -eq "Unix") {
+        chmod 777 $OutDir
         # Install OpenSSL module
         Install-Module -Name OpenSSL -Repository PSGallery -Force
         # Show version of OpenSSL just to make sure it is installed
@@ -53,16 +54,16 @@ function Invoke-SqlServerCertificateCommand {
         else {
             openssl req -x509 -newkey rsa:4096 -sha256 -days 1095 -nodes -keyout $OutDir/localhostcert.key -out $OutDir/localhostcert.cer -subj "/CN=$fqdn" -addext "subjectAltName=DNS:$fqdn,DNS:localhost,IP:127.0.0.1,IP:::1"
         }
-        sudo chmod 777 $OutDir/localhostcert.key $OutDir/localhostcert.cer
+        chmod 777 $OutDir/localhostcert.key $OutDir/localhostcert.cer
         # Export the certificate to pfx
         Write-Output "Exporting certificate to pfx..."
         openssl pkcs12 -export -in $OutDir/localhostcert.cer -inkey $OutDir/localhostcert.key -out $OutDir/localhostcert.pfx -password pass:nopassword
-        sudo chmod 777 $OutDir/localhostcert.pfx
+        chmod 777 $OutDir/localhostcert.pfx
 
         Write-Output "Converting certificate to pem..."
         # Create pem from cer
         cp $OutDir/localhostcert.cer $OutDir/localhostcert.pem
-        sudo chmod 777 $OutDir/localhostcert.pem
+        chmod 777 $OutDir/localhostcert.pem
 
         # Add trust to the pem certificate
         Write-Output "Adding trust to pem certificate..."
@@ -83,7 +84,7 @@ function Invoke-SqlServerCertificateCommand {
 
         # enable certificate as CA certificate
         # ---- this causes it to fail in Mac ---- 
-        #dpkg-reconfigure ca-certificates
+        dpkg-reconfigure ca-certificates
 
         # Update the certificates store
         Write-Output "Updating the certificates store..."
