@@ -83,8 +83,7 @@ function Invoke-SqlServerCertificateCommand {
         cp $OutDir/mismatchedcert.pem /usr/local/share/ca-certificates/mismatchedcert.crt
 
         # enable certificate as CA certificate
-        # ---- this causes it to fail in Mac ---- 
-        dpkg-reconfigure ca-certificates
+        dpkg-reconfigure ca-certificates -f noninteractive -p critical
 
         # Update the certificates store
         Write-Output "Updating the certificates store..."
