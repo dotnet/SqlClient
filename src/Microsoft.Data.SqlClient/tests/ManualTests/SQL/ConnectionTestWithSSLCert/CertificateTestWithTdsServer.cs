@@ -26,7 +26,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [Theory]
         [MemberData(nameof(ConnectionTestParametersData.GetConnectionTestParameters), MemberType = typeof(ConnectionTestParametersData))]
-        public void ConnectionTest(ConnectionTestParameters connectionTestParameters)
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void BeginWindowsConnectionTest(ConnectionTestParameters connectionTestParameters)
+        {
+            ConnectionTest(connectionTestParameters);
+        }
+
+        [Theory]
+        [MemberData(nameof(ConnectionTestParametersData.GetConnectionTestParameters), MemberType = typeof(ConnectionTestParametersData))]
+        [PlatformSpecific(TestPlatforms.Linux)]
+        public void BeginLinuxConnectionTest(ConnectionTestParameters connectionTestParameters)
+        {
+            ConnectionTest(connectionTestParameters);
+        }
+
+        private void ConnectionTest(ConnectionTestParameters connectionTestParameters)
         {
             string userId = string.Empty;
             string password = string.Empty;
