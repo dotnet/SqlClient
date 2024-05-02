@@ -5,10 +5,10 @@
 #if !NETSTANDARD2_0
 
 using System;
-using System.Runtime.Caching;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
     {
         #region Members
 
-        private static readonly MemoryCache rootSigningCertificateCache = new MemoryCache("RootSigningCertificateCache");
+        private static readonly MemoryCache rootSigningCertificateCache = new MemoryCache(new MemoryCacheOptions());
 
         #endregion
 
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient
         private X509Certificate2Collection GetSigningCertificate(string attestationUrl, bool forceUpdate)
         {
             attestationUrl = GetAttestationUrl(attestationUrl);
-            X509Certificate2Collection signingCertificates = (X509Certificate2Collection)rootSigningCertificateCache[attestationUrl];
+            X509Certificate2Collection signingCertificates = rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);
             if (forceUpdate || signingCertificates == null || AnyCertificatesExpired(signingCertificates))
             {
                 byte[] data = MakeRequest(attestationUrl);
@@ -209,10 +209,14 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
                 }
 
-                rootSigningCertificateCache.Add(attestationUrl, certificateCollection, DateTime.Now.AddDays(1));
+                var options = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1)
+                };
+                rootSigningCertificateCache.Set<X509Certificate2Collection>(attestationUrl, certificateCollection, options);
             }
 
-            return (X509Certificate2Collection)rootSigningCertificateCache[attestationUrl];
+            return rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);
         }
 
         // Return the endpoint for given attestation url

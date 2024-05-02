@@ -3,9 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Runtime.Caching;
 using System.Text;
 using System.Threading;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
 
         private ColumnMasterKeyMetadataSignatureVerificationCache()
         {
-            _cache = new MemoryCache(_className);
+            _cache = new MemoryCache(new MemoryCacheOptions());
             _inTrim = 0;
         }
 
@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient
 
             string cacheLookupKey = GetCacheLookupKey(masterKeyPath, allowEnclaveComputations, signature, keyStoreName);
 
-            return _cache.Get(cacheLookupKey) as bool?;
+            return _cache.TryGetValue<bool>(cacheLookupKey, out bool value);
         }
 
         /// <summary>
@@ -79,7 +79,11 @@ namespace Microsoft.Data.SqlClient
             TrimCacheIfNeeded();
 
             // By default evict after 10 days.
-            _cache.Set(cacheLookupKey, result, DateTimeOffset.UtcNow.AddDays(10));
+            var options = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(10)
+            };
+            _cache.Set<bool>(cacheLookupKey, result, options);
         }
 
         private void ValidateSignatureNotNullOrEmpty(byte[] signature, string methodName)
@@ -115,15 +119,17 @@ namespace Microsoft.Data.SqlClient
         private void TrimCacheIfNeeded()
         {
             // If the size of the cache exceeds the threshold, set that we are in trimming and trim the cache accordingly.
-            long currentCacheSize = _cache.GetCount();
+            long currentCacheSize = _cache.Count;
             if ((currentCacheSize > _cacheSize + _cacheTrimThreshold) && (0 == Interlocked.CompareExchange(ref _inTrim, 1, 0)))
             {
                 try
                 {
-                    _cache.Trim((int)(((double)(currentCacheSize - _cacheSize) / (double)currentCacheSize) * 100));
+                    // Example: 2301 - 2000 = 301; 301 / 2301 = 0.1308 * 100 = 13% compacting
+                    _cache.Compact((int)(((double)(currentCacheSize - _cacheSize) / (double)currentCacheSize) * 100));
                 }
                 finally
                 {
+                    // Reset _inTrim flag
                     Interlocked.CompareExchange(ref _inTrim, 0, 1);
                 }
             }
