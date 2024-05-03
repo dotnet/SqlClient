@@ -9817,7 +9817,7 @@ namespace Microsoft.Data.SqlClient
                         int parametersLength = rpcext.userParamCount + rpcext.systemParamCount;
 
                         bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
-                        bool enableOptimizedParameterBinding = cmd.EnableOptimizedParameterBinding;
+                        bool enableOptimizedParameterBinding = cmd.EnableOptimizedParameterBinding && cmd.CommandType == CommandType.Text;
 
                         for (int i = (ii == startRpc) ? startParam : 0; i < parametersLength; i++)
                         {
