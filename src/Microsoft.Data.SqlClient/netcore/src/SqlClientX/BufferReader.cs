@@ -60,32 +60,6 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             }
         }
 
-        private async void EnsureBytesAsync(int count)
-        {
-            // If the required bytes are not available in the buffer, read more data from the stream only 
-            // if the the buffer has enough space for the required count of bytes.
-            if (offset + count > lengthRead)
-            {
-                // If the caller requests a length, which will exceed the buffer size, then we need to throw an exception.
-                if (offset + count < inBuffer.Length)
-                {
-                    // The required bytes are not available in the buffer.
-                    // Read more data from the stream.
-                    // TODO: Need a case where the stream has more data than the buffer size. This would lead 
-                    // to dataloss since the underlying stream will be read, and then discarded.
-
-                    int bytesRead = await this.transportStream.ReadAtLeastAsync(, count);
-                    lengthRead += bytesRead;
-                }
-                else
-                {
-                    // The buffer is full. 
-                    // We need to read more data from the stream.
-                    // We need to resize the buffer.
-                    throw new Exception("Buffer is full. Cannot read more data.");
-                }
-            }
-        }
 
         internal byte ReadByte()
         {

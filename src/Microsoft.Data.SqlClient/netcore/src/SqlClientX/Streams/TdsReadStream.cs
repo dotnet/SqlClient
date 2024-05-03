@@ -7,11 +7,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using simplesqlclient;
 
-namespace Microsoft.Data.SqlClient.SqlClientX
+namespace Microsoft.Data.SqlClient.SqlClientX.Streams
 {
     internal class TdsReadStream : Stream
     {
-
         private byte[] Buffer;
         private Stream _UnderlyingStream;
 
@@ -29,7 +28,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         internal TdsReadStream(Stream underlyingStream, int bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE)
         {
             Buffer = new byte[bufferSize];
-            this._UnderlyingStream = underlyingStream;
+            _UnderlyingStream = underlyingStream;
         }
 
         internal void UpdateBuffersize(int bufferSize)
@@ -74,7 +73,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             int totalRead = 0;
             while (lengthToFill > 0)
             {
-                if ((PacketDataLeft == 0) || (ReadBufferDataLength == ReadBufferOffset))
+                if (PacketDataLeft == 0 || ReadBufferDataLength == ReadBufferOffset)
                     PrepareBuffer();
 
                 // We can only read the minimum of what is left in the packet, what is left in the buffer, and what we need to fill
@@ -99,7 +98,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             int totalRead = 0;
             while (lengthToFill > 0)
             {
-                if ((PacketDataLeft == 0) || (ReadBufferDataLength == ReadBufferOffset))
+                if (PacketDataLeft == 0 || ReadBufferDataLength == ReadBufferOffset)
                     await PrepareBufferAsync();
 
                 // We can only read the minimum of what is left in the packet, what is left in the buffer, and what we need to fill
@@ -128,7 +127,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         private void PrepareBuffer()
         {
             // Either we have read all the data from the packet, and we have data left in the buffer
-            if (PacketDataLeft == 0 && (ReadBufferDataLength > ReadBufferOffset))
+            if (PacketDataLeft == 0 && ReadBufferDataLength > ReadBufferOffset)
             {
                 ProcessHeader();
             }
@@ -156,7 +155,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         private async ValueTask PrepareBufferAsync()
         {
             // Either we have read all the data from the packet, and we have data left in the buffer
-            if (PacketDataLeft == 0 && (ReadBufferDataLength > ReadBufferOffset))
+            if (PacketDataLeft == 0 && ReadBufferDataLength > ReadBufferOffset)
             {
                 await ProcessHeaderAsync();
             }

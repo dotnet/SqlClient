@@ -7,6 +7,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.SqlClientX;
+using Microsoft.Data.SqlClient.SqlClientX.Streams;
 
 namespace simplesqlclient
 {
@@ -15,8 +16,11 @@ namespace simplesqlclient
         private NetworkStream _tcpStream;
         private SslOverTdsStream _sslOverTdsStream;
         private SslStream _sslStream;
-        private BufferWriter _bufferWriter;
+        
         private BufferReader _bufferReader;
+
+        private TdsWriteStream _writeStream;
+        //private TdsReadStream _readStream;
         private string _hostname;
         private int _port;
         //private readonly string applicationName;
@@ -104,19 +108,19 @@ namespace simplesqlclient
             // The payload is the bytes for all the options and the maximum length of the payload
             byte[] payload = new byte[preloginOptionsCount * 5 + TdsConstants.MAX_PRELOGIN_PAYLOAD_LENGTH];
             int payLoadIndex = 0;
-            _bufferWriter = new BufferWriter(TdsConstants.DEFAULT_LOGIN_PACKET_SIZE, _tcpStream);
-            _bufferWriter.PacketType = PacketType.PRELOGIN;
+            _writeStream = new TdsWriteStream(_tcpStream, TdsConstants.DEFAULT_LOGIN_PACKET_SIZE);
+            _writeStream.PacketHeaderType = TdsEnums.MT_PRELOGIN;
 
             for (int option = 0; option < preloginOptionsCount; option++)
             {
                 int optionDataSize = 0;
 
                 // Fill in the option
-                _bufferWriter.WriteByte((byte)option);
+                _writeStream.WriteByte((byte)option);
 
                 // Fill in the offset of the option data
-                _bufferWriter.WriteByte((byte)((offset & 0xff00) >> 8)); // send upper order byte
-                _bufferWriter.WriteByte((byte)(offset & 0x00ff)); // send lower order byte
+                _writeStream.WriteByte((byte)((offset & 0xff00) >> 8)); // send upper order byte
+                _writeStream.WriteByte((byte)(offset & 0x00ff)); // send lower order byte
 
                 switch (option)
                 {
@@ -216,12 +220,12 @@ namespace simplesqlclient
                 }
 
                 // Write data length
-                _bufferWriter.WriteByte((byte)((optionDataSize & 0xff00) >> 8));
-                _bufferWriter.WriteByte((byte)(optionDataSize & 0x00ff));
+                _writeStream.WriteByte((byte)((optionDataSize & 0xff00) >> 8));
+                _writeStream.WriteByte((byte)(optionDataSize & 0x00ff));
             }
-            _bufferWriter.WriteByte((byte)255);
-            _bufferWriter.WriteByteArray(payload.AsSpan(0, payLoadIndex));
-            _bufferWriter.FlushPacket(PacketFlushMode.HARDFLUSH);
+            _writeStream.WriteByte((byte)255);
+            _writeStream.Write(payload.AsSpan(0, payLoadIndex));
+            _writeStream.Flush();
 
         }
 
@@ -234,7 +238,7 @@ namespace simplesqlclient
                 _sslOverTdsStream.FinishHandshake();
             }
 
-            _bufferWriter.UpdateStream(_sslStream);
+            _writeStream.UpdateStream(_sslStream);
             _bufferReader.UpdateStream(_sslStream);
         }
 
@@ -244,7 +248,7 @@ namespace simplesqlclient
             _sslOverTdsStream?.Dispose();
             _sslStream = null;
             _sslOverTdsStream = null;
-            _bufferWriter.UpdateStream(_tcpStream);
+            _writeStream.UpdateStream(_tcpStream);
             _bufferReader.UpdateStream(_tcpStream);
         }
 
@@ -497,19 +501,19 @@ namespace simplesqlclient
             packet.RequestedFeatures = requestedFeatures;
             packet.FeatureExtensionData.requestedFeatures = requestedFeatures;
 
-            this._bufferWriter.PacketType = PacketType.LOGIN;
+            this._writeStream.PacketHeaderType = TdsEnums.MT_LOGIN7;
             int length = packet.Length;
-            _bufferWriter.WriteInt(length);
+            this._writeStream.WriteInt(length);
             // Write TDS Version. We support 7.4
-            _bufferWriter.WriteInt(packet.ProtocolVersion);
+            this._writeStream.WriteInt(packet.ProtocolVersion);
             // Negotiate the packet size.
-            _bufferWriter.WriteInt(packet.PacketSize);
+            this._writeStream.WriteInt(packet.PacketSize);
             // Client Prog Version
-            _bufferWriter.WriteInt(packet.ClientProgramVersion);
+            this._writeStream.WriteInt(packet.ClientProgramVersion);
             // Current Process Id
-            _bufferWriter.WriteInt(packet.ProcessIdForTdsLogin);
+            this._writeStream.WriteInt(packet.ProcessIdForTdsLogin);
             // Unused Connection Id 
-            _bufferWriter.WriteInt(0);
+            this._writeStream.WriteInt(0);
 
             int log7Flags = 0;
 
@@ -563,104 +567,104 @@ namespace simplesqlclient
             // Always say that we are using Feature extensions
             log7Flags |= 1 << 28;
 
-            _bufferWriter.WriteInt(log7Flags);
+            this._writeStream.WriteInt(log7Flags);
             // Time Zone
-            _bufferWriter.WriteInt(0);
+            this._writeStream.WriteInt(0);
 
             // LCID
-            _bufferWriter.WriteInt(0);
+            this._writeStream.WriteInt(0);
 
             int offset = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
-            _bufferWriter.WriteShort(offset);
+            this._writeStream.WriteShort((short)offset);
 
-            _bufferWriter.WriteShort(packet.ClientHostName.Length);
+            this._writeStream.WriteShort((short)packet.ClientHostName.Length);
 
             offset += packet.ClientHostName.Length * 2;
 
             // Support User name and password
             if (authOptions.AuthenticationType == AuthenticationType.SQLAUTH)
             {
-                _bufferWriter.WriteShort(offset);
-                _bufferWriter.WriteShort(this.authOptions.AuthDetails.UserName.Length);
+                this._writeStream.WriteShort((short)offset);
+                this._writeStream.WriteShort((short)this.authOptions.AuthDetails.UserName.Length);
                 offset += this.authOptions.AuthDetails.UserName.Length * 2;
 
-                _bufferWriter.WriteShort(offset);
-                _bufferWriter.WriteShort(this.authOptions.AuthDetails.EncryptedPassword.Length / 2);
+                this._writeStream.WriteShort((short)offset);
+                this._writeStream.WriteShort((short)this.authOptions.AuthDetails.EncryptedPassword.Length / 2);
                 offset += this.authOptions.AuthDetails.EncryptedPassword.Length;
             }
             else
             {
-                _bufferWriter.WriteShort(0);  // userName offset
-                _bufferWriter.WriteShort(0);
-                _bufferWriter.WriteShort(0);  // password offset
-                _bufferWriter.WriteShort(0);
+                this._writeStream.WriteShort(0);  // userName offset
+                this._writeStream.WriteShort(0);
+                this._writeStream.WriteShort(0);  // password offset
+                this._writeStream.WriteShort(0);
             }
 
-            _bufferWriter.WriteShort(offset);
-            _bufferWriter.WriteShort(this.connectionSettings.ApplicationName.Length);
+            this._writeStream.WriteShort((short)offset);
+            this._writeStream.WriteShort((short)this.connectionSettings.ApplicationName.Length);
             offset += this.connectionSettings.ApplicationName.Length * 2;
 
-            _bufferWriter.WriteShort(offset);
-            _bufferWriter.WriteShort(this._hostname.Length);
+            this._writeStream.WriteShort((short)offset);
+            this._writeStream.WriteShort((short)this._hostname.Length);
             offset += this._hostname.Length * 2;
 
-            _bufferWriter.WriteShort(offset);
+            this._writeStream.WriteShort(offset);
             // Feature extension being used 
-            _bufferWriter.WriteShort(4);
+            this._writeStream.WriteShort(4);
 
             offset += 4;
 
-            _bufferWriter.WriteShort(offset);
-            _bufferWriter.WriteShort(packet.ClientInterfaceName.Length);
+            this._writeStream.WriteShort(offset);
+            this._writeStream.WriteShort(packet.ClientInterfaceName.Length);
             offset += packet.ClientInterfaceName.Length * 2;
 
-            _bufferWriter.WriteShort(offset);
-            _bufferWriter.WriteShort(packet.Language.Length);
+            this._writeStream.WriteShort(offset);
+            this._writeStream.WriteShort(packet.Language.Length);
             offset += packet.Language.Length * 2;
 
-            _bufferWriter.WriteShort(offset);
-            _bufferWriter.WriteShort(packet.Database.Length);
+            this._writeStream.WriteShort(offset);
+            this._writeStream.WriteShort(packet.Database.Length);
             offset += packet.Database.Length * 2;
 
             byte[] nicAddress = new byte[TdsEnums.MAX_NIC_SIZE];
             Random random = new Random();
             random.NextBytes(nicAddress);
-            _bufferWriter.WriteByteArray(nicAddress);
+            this._writeStream.Write(nicAddress);
 
-            _bufferWriter.WriteShort(offset);
+            this._writeStream.WriteShort(offset);
 
             // No Integrated Auth
-            _bufferWriter.WriteShort(0);
+            this._writeStream.WriteShort(0);
 
             // Attach DB Filename
-            _bufferWriter.WriteShort(offset);
-            _bufferWriter.WriteShort(string.Empty.Length);
+            _writeStream.WriteShort(offset);
+            _writeStream.WriteShort(string.Empty.Length);
             offset += string.Empty.Length * 2;
 
-            _bufferWriter.WriteShort(offset);
-            _bufferWriter.WriteShort(packet.NewPassword.Length / 2);
+            _writeStream.WriteShort(offset);
+            _writeStream.WriteShort(packet.NewPassword.Length / 2);
 
             // reserved for chSSPI
-            _bufferWriter.WriteInt(0);
+            _writeStream.WriteInt(0);
 
-            _bufferWriter.WriteString(packet.ClientHostName);
+            _writeStream.WriteString(packet.ClientHostName);
 
             // Consider User Name auth only
-            _bufferWriter.WriteString(packet.UserName);
-            _bufferWriter.WriteByteArray(packet.ObfuscatedPassword);
+            _writeStream.WriteString(packet.UserName);
+            _writeStream.Write(packet.ObfuscatedPassword);
 
-            _bufferWriter.WriteString(packet.ApplicationName);
-            _bufferWriter.WriteString(packet.ServerHostname);
+            _writeStream.WriteString(packet.ApplicationName);
+            _writeStream.WriteString(packet.ServerHostname);
 
-            _bufferWriter.WriteInt(packet.Length - packet.FeatureExtensionData.Length);
-            _bufferWriter.WriteString(packet.ClientInterfaceName);
-            _bufferWriter.WriteString(packet.Language);
-            _bufferWriter.WriteString(packet.Database);
+            _writeStream.WriteInt(packet.Length - packet.FeatureExtensionData.Length);
+            _writeStream.WriteString(packet.ClientInterfaceName);
+            _writeStream.WriteString(packet.Language);
+            _writeStream.WriteString(packet.Database);
             // Attach DB File Name
-            _bufferWriter.WriteString(string.Empty);
+            _writeStream.WriteString(string.Empty);
 
-            _bufferWriter.WriteByteArray(packet.NewPassword);
+            _writeStream.Write(packet.NewPassword);
             // Apply feature extension data
 
 
@@ -668,32 +672,32 @@ namespace simplesqlclient
 
             Span<byte> tceData = stackalloc byte[5];
             featureExtensionData.colEncryptionData.FillData(tceData);
-            _bufferWriter.WriteByte((byte)featureExtensionData.colEncryptionData.FeatureExtensionFlag);
-            _bufferWriter.WriteByteArray(tceData);
+            _writeStream.WriteByte((byte)featureExtensionData.colEncryptionData.FeatureExtensionFlag);
+            _writeStream.Write(tceData);
 
 
             Span<byte> globalTransaction = stackalloc byte[4];
             featureExtensionData.globalTransactionsFeature.FillData(globalTransaction);
-            _bufferWriter.WriteByte((byte)featureExtensionData.globalTransactionsFeature.FeatureExtensionFlag);
-            _bufferWriter.WriteByteArray(globalTransaction);
+            _writeStream.WriteByte((byte)featureExtensionData.globalTransactionsFeature.FeatureExtensionFlag);
+            _writeStream.Write(globalTransaction);
 
             Span<byte> dataClassificationFeatureData = stackalloc byte[5];
             packet.FeatureExtensionData.dataClassificationFeature.FillData(dataClassificationFeatureData);
-            _bufferWriter.WriteByte((byte)packet.FeatureExtensionData.dataClassificationFeature.FeatureExtensionFlag);
-            _bufferWriter.WriteByteArray(dataClassificationFeatureData);
+            _writeStream.WriteByte((byte)packet.FeatureExtensionData.dataClassificationFeature.FeatureExtensionFlag);
+            _writeStream.Write(dataClassificationFeatureData);
 
             Span<byte> utf8SupportData = stackalloc byte[4];
             packet.FeatureExtensionData.uTF8SupportFeature.FillData(utf8SupportData);
-            _bufferWriter.WriteByte((byte)packet.FeatureExtensionData.uTF8SupportFeature.FeatureExtensionFlag);
-            _bufferWriter.WriteByteArray(utf8SupportData);
+            _writeStream.WriteByte((byte)packet.FeatureExtensionData.uTF8SupportFeature.FeatureExtensionFlag);
+            _writeStream.Write(utf8SupportData);
 
             Span<byte> dnsCaching = stackalloc byte[4];
             packet.FeatureExtensionData.sQLDNSCaching.FillData(dnsCaching);
-            _bufferWriter.WriteByte((byte)packet.FeatureExtensionData.sQLDNSCaching.FeatureExtensionFlag);
-            _bufferWriter.WriteByteArray(dnsCaching);
+            _writeStream.WriteByte((byte)packet.FeatureExtensionData.sQLDNSCaching.FeatureExtensionFlag);
+            _writeStream.Write(dnsCaching);
 
-            _bufferWriter.WriteByte(0xFF);
-            _bufferWriter.FlushPacket(PacketFlushMode.HARDFLUSH);
+            _writeStream.WriteByte(0xFF);
+            _writeStream.Flush();
 
             DisableSsl();
         }
@@ -704,24 +708,24 @@ namespace simplesqlclient
             int marsHeaderSize = 18;
             int notificationHeaderSize = 0; // TODO: Needed for sql notifications feature. Not implemetned yet
             int totalHeaderLength = 4 + marsHeaderSize + notificationHeaderSize;
-            this._bufferWriter.WriteInt(totalHeaderLength);
+            _writeStream.WriteInt(totalHeaderLength);
 
-            this._bufferWriter.WriteInt(marsHeaderSize);
+            _writeStream.WriteInt(marsHeaderSize);
 
             // Write the MARS header data. 
-            this._bufferWriter.WriteShort(TdsEnums.HEADERTYPE_MARS);
+            _writeStream.WriteShort(TdsEnums.HEADERTYPE_MARS);
             int transactionId = 0; // TODO: Needed for txn support
-            this._bufferWriter.WriteLong(transactionId);
+            _writeStream.WriteLong(transactionId);
 
             int resultCount = 0;
             // TODO Increment and add the open results count per connection.
-            this._bufferWriter.WriteInt(++resultCount);
-            _bufferWriter.PacketType = PacketType.MT_SQL;
+            _writeStream.WriteInt(++resultCount);
+            _writeStream.PacketHeaderType = TdsEnums.MT_SQL;
 
             // TODO: Add the enclave support. The server doesnt support Enclaves yet.
 
-            _bufferWriter.WriteString(query);
-            this._bufferWriter.FlushPacket(PacketFlushMode.HARDFLUSH);
+            _writeStream.WriteString(query);
+            this._writeStream.Flush();
         }
 
         internal void ProcessQueryResults()

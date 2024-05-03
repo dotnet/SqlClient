@@ -958,7 +958,9 @@
     <Compile Include="SqlClientX\TDS.Objects\Packets\PacketHeader.cs" />
     <Compile Include="SqlClientX\TdsEnums.cs" />
     <Compile Include="SqlClientX\TdsPacket.cs" />
-    <Compile Include="SqlClientX\TdsWriteStream.cs" />
+    <Compile Include="SqlClientX\Streams\TdsReadStream.cs" />
+    <Compile Include="SqlClientX\Streams\TdsWriteStream.cs" />
+    <Compile Include="SqlClientX\Streams\TdsWriteStreamExtensions.cs" />
     <Compile Include="SqlClientX\Utilities.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
