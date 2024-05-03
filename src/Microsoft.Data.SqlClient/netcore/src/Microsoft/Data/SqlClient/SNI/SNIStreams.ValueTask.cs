@@ -68,7 +68,11 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         {
-            await _readAsyncSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (SynchronizeIO)
+            {
+                await _readAsyncSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
+
             try
             {
                 return await base.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
@@ -80,7 +84,10 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                _readAsyncSemaphore.Release();
+                if (SynchronizeIO)
+                {
+                    _readAsyncSemaphore.Release();
+                }
             }
         }
 
@@ -92,7 +99,11 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
         {
-            await _writeAsyncSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (SynchronizeIO)
+            {
+                await _writeAsyncSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
+
             try
             {
                 await base.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
@@ -104,7 +115,10 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                _writeAsyncSemaphore.Release();
+                if (SynchronizeIO)
+                {
+                    _writeAsyncSemaphore.Release();
+                }
             }
         }
     }

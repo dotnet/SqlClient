@@ -19,6 +19,7 @@ namespace Microsoft.Data.SqlClient.SNI
 {
     internal sealed class TdsParserStateObjectManaged : TdsParserStateObject
     {
+        private static readonly byte[] s_staticInstanceName = Array.Empty<byte>();
         private SNIMarsConnection? _marsConnection;
         private SNIHandle? _sessionHandle;
 
@@ -52,7 +53,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        internal SNIMarsHandle CreateMarsSession(object callbackObject, bool async)
+        internal SNIMarsHandle CreateMarsSession(TdsParserStateObject callbackObject, bool async)
         {
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.CreateMarsSession | Info | State Object Id {0}, Session Id {1}, Async = {2}", _objectID, _sessionHandle?.ConnectionId, async);
             if (_marsConnection is null)
@@ -94,9 +95,11 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spnBuffer, serverSPN,
+            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, ref spnBuffer, serverSPN,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                 hostNameInCertificate, serverCertificateFilename);
+
+            instanceName = s_staticInstanceName;
 
             if (sessionHandle is not null)
             {

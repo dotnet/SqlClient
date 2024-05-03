@@ -931,12 +931,10 @@ namespace Microsoft.Data.SqlClient
                     {
                         // All read
                         _partialHeaderBytesRead = 0;
-                        _inBytesPacket = ((int)_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
-                                  (int)_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+                        _inBytesPacket = BinaryPrimitives.ReadUInt16BigEndian(_partialHeaderBuffer.AsSpan(TdsEnums.HEADER_LEN_FIELD_OFFSET)) - _inputHeaderLen;
 
                         _messageStatus = _partialHeaderBuffer[1];
-                        _spid = _partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 |
-                                  _partialHeaderBuffer[TdsEnums.SPID_OFFSET + 1];
+                        _spid = BinaryPrimitives.ReadUInt16BigEndian(_partialHeaderBuffer.AsSpan(TdsEnums.SPID_OFFSET));
 
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
                     }
@@ -972,10 +970,8 @@ namespace Microsoft.Data.SqlClient
             {
                 // normal header processing...
                 _messageStatus = _inBuff[_inBytesUsed + 1];
-                _inBytesPacket = (_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
-                                              _inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
-                _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
-                                              _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
+                _inBytesPacket = BinaryPrimitives.ReadUInt16BigEndian(_inBuff.AsSpan(_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET)) - _inputHeaderLen;
+                _spid = BinaryPrimitives.ReadUInt16BigEndian(_inBuff.AsSpan(_inBytesUsed + TdsEnums.SPID_OFFSET));
 #if !NETFRAMEWORK
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
 #endif

@@ -3559,7 +3559,7 @@
     <value>UdtTypeName 속성은 UDT 매개 변수에 대해서만 설정해야 합니다.</value>
   </data>
   <data name="SQLUDT_InvalidSqlType" xml:space="preserve">
-    <value>지정한 유형이 대상 서버에 등록되어 있지 않습니다.{0}.</value>
+    <value>지정한 유형이 대상 서버에 등록되어 있지 않습니다. {0}.</value>
   </data>
   <data name="SQLUDT_InWhereClause" xml:space="preserve">
     <value>기본 키의 일부가 아닌 경우 UDT 매개 변수는 where 절에서 허용되지 않습니다.</value>

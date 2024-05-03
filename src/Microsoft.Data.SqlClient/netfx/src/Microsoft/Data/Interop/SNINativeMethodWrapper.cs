@@ -1095,9 +1095,9 @@ namespace Microsoft.Data.SqlClient
 
             SNI_DNSCache_Info native_cachedDNSInfo = new SNI_DNSCache_Info();
             native_cachedDNSInfo.wszCachedFQDN = cachedDNSInfo?.FQDN;
-            native_cachedDNSInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4;
-            native_cachedDNSInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
-            native_cachedDNSInfo.wszCachedTcpPort = cachedDNSInfo?.Port;
+            native_cachedDNSInfo.wszCachedTcpIPv4 = cachedDNSInfo?.CachedIPv4Address?.ToString();
+            native_cachedDNSInfo.wszCachedTcpIPv6 = cachedDNSInfo?.CachedIPv6Address?.ToString();
+            native_cachedDNSInfo.wszCachedTcpPort = cachedDNSInfo?.Port == 0 ? null : cachedDNSInfo?.Port.ToString();
 
             return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ipPreference, ref native_cachedDNSInfo);
         }
@@ -1107,7 +1107,7 @@ namespace Microsoft.Data.SqlClient
             string constring,
             ref IntPtr pConn,
             byte[] spnBuffer,
-            byte[] instanceName,
+            Span<byte> instanceName,
             bool fOverrideCache,
             bool fSync,
             int timeout,
@@ -1119,7 +1119,7 @@ namespace Microsoft.Data.SqlClient
             SQLDNSInfo cachedDNSInfo,
             string hostNameInCertificate)
         {
-            fixed (byte* pin_instanceName = &instanceName[0])
+            fixed (byte* pin_instanceName = instanceName)
             {
                 SNI_CLIENT_CONSUMER_INFO clientConsumerInfo = new SNI_CLIENT_CONSUMER_INFO();
 
@@ -1154,9 +1154,9 @@ namespace Microsoft.Data.SqlClient
 
                 clientConsumerInfo.ipAddressPreference = ipPreference;
                 clientConsumerInfo.DNSCacheInfo.wszCachedFQDN = cachedDNSInfo?.FQDN;
-                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4;
-                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
-                clientConsumerInfo.DNSCacheInfo.wszCachedTcpPort = cachedDNSInfo?.Port;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv4 = cachedDNSInfo?.CachedIPv4Address?.ToString();
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = cachedDNSInfo?.CachedIPv6Address?.ToString();
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpPort = cachedDNSInfo?.Port == 0 ? null : cachedDNSInfo?.Port.ToString();
 
                 if (spnBuffer != null)
                 {

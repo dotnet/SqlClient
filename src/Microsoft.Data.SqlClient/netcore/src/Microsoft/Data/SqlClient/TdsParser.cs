@@ -729,6 +729,14 @@ namespace Microsoft.Data.SqlClient
                 // prelogin so that we don't try to negotiate encryption again during ConsumePreLoginHandshake.
                 _encryptionOption = EncryptionOptions.NOT_SUP;
             }
+            else if (encrypt == SqlConnectionEncryptOption.Mandatory)
+            {
+                _encryptionOption = EncryptionOptions.ON;
+            }
+            else
+            {
+                _encryptionOption = EncryptionOptions.OFF;
+            }
 
             // PreLoginHandshake buffer consists of:
             // 1) Standard header, with type = MT_PRELOGIN
@@ -742,126 +750,94 @@ namespace Microsoft.Data.SqlClient
 
             // Initialize option offset into payload buffer
             // 5 bytes for each option (1 byte length, 2 byte offset, 2 byte payload length)
-            int offset = (int)PreLoginOptions.NUMOPT * 5 + 1;
+            ushort headerOffset = 0;
+            ushort headerLength = (ushort)PreLoginOptions.NUMOPT * 5;
 
-            byte[] payload = new byte[(int)PreLoginOptions.NUMOPT * 5 + TdsEnums.MAX_PRELOGIN_PAYLOAD_LENGTH];
-            int payloadLength = 0;
+            ushort payloadStart = (ushort)(headerLength + 1);
+            ushort payloadOffset = payloadStart;
+            // The payload length is static for each connection string. The lengths of each option are well-known
+            // Version: 6 bytes; Encryption: 1 byte; Instance: (instanceName.Length + 1) bytes;
+            // Thread ID: 4 bytes; MARS enablement: 1 byte; Trace: (2 * GUID + 1 * uint); Federated Authentication: 1 byte
+            // End-of-payload marker: 1 byte
+            // .NET Core uses a static zero-length instance name, which suggests a 51-byte payload.
+            // .NET Framework allows a variable-length instance name (up to 254 bytes). This is up to 305 bytes at most.
+            int payloadLength = 6 + 1 + (instanceName.Length + 1) + 4 + 1 + (GUID_SIZE + GUID_SIZE + 4) + 1 + 1;
 
-            for (int option = (int)PreLoginOptions.VERSION; option < (int)PreLoginOptions.NUMOPT; option++)
+            int totalBufferLength = headerLength + payloadLength;
+            Span<byte> preLoginPacketBuffer = stackalloc byte[totalBufferLength];
+
+            for (byte option = (byte)PreLoginOptions.VERSION; option < (byte)PreLoginOptions.NUMOPT; option++)
             {
-                int optionDataSize = 0;
+                ushort optionDataSize = 0;
 
+                // Structure header:
                 // Fill in the option
-                _physicalStateObj.WriteByte((byte)option);
+                preLoginPacketBuffer[headerOffset] = option;
 
                 // Fill in the offset of the option data
-                _physicalStateObj.WriteByte((byte)((offset & 0xff00) >> 8)); // send upper order byte
-                _physicalStateObj.WriteByte((byte)(offset & 0x00ff)); // send lower order byte
+                BinaryPrimitives.WriteUInt16BigEndian(preLoginPacketBuffer.Slice(headerOffset + 1), payloadOffset);
 
                 switch (option)
                 {
-                    case (int)PreLoginOptions.VERSION:
+                    case (byte)PreLoginOptions.VERSION:
                         Version systemDataVersion = ADP.GetAssemblyVersion();
 
                         // Major and minor
-                        payload[payloadLength++] = (byte)(systemDataVersion.Major & 0xff);
-                        payload[payloadLength++] = (byte)(systemDataVersion.Minor & 0xff);
+                        preLoginPacketBuffer[payloadOffset] = (byte)(systemDataVersion.Major & 0xff);
+                        preLoginPacketBuffer[payloadOffset + 1] = (byte)(systemDataVersion.Minor & 0xff);
 
                         // Build (Big Endian)
-                        payload[payloadLength++] = (byte)((systemDataVersion.Build & 0xff00) >> 8);
-                        payload[payloadLength++] = (byte)(systemDataVersion.Build & 0xff);
+                        BinaryPrimitives.WriteUInt16BigEndian(preLoginPacketBuffer.Slice(payloadOffset + 2), (ushort)(systemDataVersion.Build & 0xFFFF));
 
                         // Sub-build (Little Endian)
-                        payload[payloadLength++] = (byte)(systemDataVersion.Revision & 0xff);
-                        payload[payloadLength++] = (byte)((systemDataVersion.Revision & 0xff00) >> 8);
-                        offset += 6;
+                        BinaryPrimitives.WriteUInt16LittleEndian(preLoginPacketBuffer.Slice(payloadOffset + 2 + sizeof(ushort)), (ushort)(systemDataVersion.Revision & 0xFFFF));
+                        
                         optionDataSize = 6;
                         break;
 
-                    case (int)PreLoginOptions.ENCRYPT:
-                        if (_encryptionOption == EncryptionOptions.NOT_SUP)
-                        {
-                            //If OS doesn't support encryption and encryption is not required, inform server "not supported" by client.
-                            payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
-                        }
-                        else
-                        {
-                            // Else, inform server of user request.
-                            if (encrypt == SqlConnectionEncryptOption.Mandatory)
-                            {
-                                payload[payloadLength] = (byte)EncryptionOptions.ON;
-                                _encryptionOption = EncryptionOptions.ON;
-                            }
-                            else
-                            {
-                                payload[payloadLength] = (byte)EncryptionOptions.OFF;
-                                _encryptionOption = EncryptionOptions.OFF;
-                            }
-                        }
+                    case (byte)PreLoginOptions.ENCRYPT:
+                        preLoginPacketBuffer[payloadOffset] = (byte)_encryptionOption;
 
-                        payloadLength += 1;
-                        offset += 1;
                         optionDataSize = 1;
                         break;
 
-                    case (int)PreLoginOptions.INSTANCE:
-                        int i = 0;
+                    case (byte)PreLoginOptions.INSTANCE:
+                        instanceName.CopyTo(preLoginPacketBuffer.Slice(payloadOffset));
+                        preLoginPacketBuffer[payloadOffset + instanceName.Length] = 0;
 
-                        while (instanceName[i] != 0)
-                        {
-                            payload[payloadLength] = instanceName[i];
-                            payloadLength++;
-                            i++;
-                        }
-
-                        payload[payloadLength] = 0; // null terminate
-                        payloadLength++;
-                        i++;
-
-                        offset += i;
-                        optionDataSize = i;
+                        optionDataSize = (ushort)(instanceName.Length + 1);
                         break;
 
-                    case (int)PreLoginOptions.THREADID:
+                    case (byte)PreLoginOptions.THREADID:
                         int threadID = TdsParserStaticMethods.GetCurrentThreadIdForTdsLoginOnly();
 
-                        payload[payloadLength++] = (byte)((0xff000000 & threadID) >> 24);
-                        payload[payloadLength++] = (byte)((0x00ff0000 & threadID) >> 16);
-                        payload[payloadLength++] = (byte)((0x0000ff00 & threadID) >> 8);
-                        payload[payloadLength++] = (byte)(0x000000ff & threadID);
-                        offset += 4;
+                        BinaryPrimitives.WriteInt32BigEndian(preLoginPacketBuffer.Slice(payloadOffset), threadID);
+                        
                         optionDataSize = 4;
                         break;
 
-                    case (int)PreLoginOptions.MARS:
-                        payload[payloadLength++] = (byte)(_fMARS ? 1 : 0);
-                        offset += 1;
-                        optionDataSize += 1;
+                    case (byte)PreLoginOptions.MARS:
+                        preLoginPacketBuffer[payloadOffset] = (byte)(_fMARS ? 1 : 0);
+                        
+                        optionDataSize = 1;
                         break;
 
-                    case (int)PreLoginOptions.TRACEID:
-                        FillGuidBytes(_connHandler._clientConnectionId, payload.AsSpan(payloadLength, GUID_SIZE));
-                        payloadLength += GUID_SIZE;
-                        offset += GUID_SIZE;
-                        optionDataSize = GUID_SIZE;
+                    case (byte)PreLoginOptions.TRACEID:
+                        FillGuidBytes(_connHandler._clientConnectionId, preLoginPacketBuffer.Slice(payloadOffset));
 
                         ActivityCorrelator.ActivityId actId = ActivityCorrelator.Next();
-                        FillGuidBytes(actId.Id, payload.AsSpan(payloadLength, GUID_SIZE));
-                        payloadLength += GUID_SIZE;
-                        payload[payloadLength++] = (byte)(0x000000ff & actId.Sequence);
-                        payload[payloadLength++] = (byte)((0x0000ff00 & actId.Sequence) >> 8);
-                        payload[payloadLength++] = (byte)((0x00ff0000 & actId.Sequence) >> 16);
-                        payload[payloadLength++] = (byte)((0xff000000 & actId.Sequence) >> 24);
-                        int actIdSize = GUID_SIZE + sizeof(uint);
-                        offset += actIdSize;
-                        optionDataSize += actIdSize;
+
+                        FillGuidBytes(actId.Id, preLoginPacketBuffer.Slice(payloadOffset + GUID_SIZE));
+                        BinaryPrimitives.WriteUInt32LittleEndian(preLoginPacketBuffer.Slice(payloadOffset + GUID_SIZE + GUID_SIZE), actId.Sequence);
+
+                        optionDataSize = GUID_SIZE + GUID_SIZE + sizeof(uint);
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", _connHandler?._clientConnectionId, actId);
                         break;
 
-                    case (int)PreLoginOptions.FEDAUTHREQUIRED:
-                        payload[payloadLength++] = 0x01;
-                        offset += 1;
-                        optionDataSize += 1;
+                    case (byte)PreLoginOptions.FEDAUTHREQUIRED:
+                        preLoginPacketBuffer[payloadOffset] = 0x01;
+
+                        optionDataSize = 1;
                         break;
 
                     default:
@@ -869,19 +845,22 @@ namespace Microsoft.Data.SqlClient
                         break;
                 }
 
+                payloadOffset += optionDataSize;
+
                 // Write data length
-                _physicalStateObj.WriteByte((byte)((optionDataSize & 0xff00) >> 8));
-                _physicalStateObj.WriteByte((byte)(optionDataSize & 0x00ff));
+                BinaryPrimitives.WriteUInt16BigEndian(preLoginPacketBuffer.Slice(headerOffset + 1 + sizeof(ushort)), optionDataSize);
+
+                headerOffset += 1 + sizeof(ushort) + sizeof(ushort);
             }
 
             // Write out last option - to let server know the second part of packet completed
-            _physicalStateObj.WriteByte((byte)PreLoginOptions.LASTOPT);
+            preLoginPacketBuffer[headerOffset] = (byte)PreLoginOptions.LASTOPT;
 
-            // Write out payload
-            _physicalStateObj.WriteByteArray(payload, payloadLength, 0);
+            // Write out the full byte buffer
+            _physicalStateObj.WriteByteSpan(preLoginPacketBuffer);
 
             // Flush packet
-            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
+            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH)?.Wait();
         }
 
         private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificateFilename)
@@ -963,7 +942,11 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.ParsingError();
             }
-            byte[] payload = new byte[_physicalStateObj._inBytesPacket];
+            // Most of the time, this response packet will be very small (less than 512 bytes.)
+            // In such a situation, borrow stack space rather than requesting an array.
+            Span<byte> payload = _physicalStateObj._inBytesPacket < 512
+                ? stackalloc byte[_physicalStateObj._inBytesPacket]
+                : new byte[_physicalStateObj._inBytesPacket];
 
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             result = _physicalStateObj.TryReadByteArray(payload, payload.Length);
@@ -979,24 +962,22 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.InvalidSQLServerVersionUnknown();
             }
 
-            int offset = 0;
-            int payloadOffset = 0;
-            int payloadLength = 0;
-            int option = payload[offset++];
+            int headerOffset = 0;
+            ushort payloadOffset = 0;
+            ushort payloadLength = 0;
+            byte option = payload[headerOffset++];
             bool serverSupportsEncryption = false;
 
             while (option != (byte)PreLoginOptions.LASTOPT)
             {
+                payloadOffset = BinaryPrimitives.ReadUInt16BigEndian(payload.Slice(headerOffset));
+                payloadLength = BinaryPrimitives.ReadUInt16BigEndian(payload.Slice(headerOffset + 2));
+
                 switch (option)
                 {
-                    case (int)PreLoginOptions.VERSION:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
-
+                    case (byte)PreLoginOptions.VERSION:
                         byte majorVersion = payload[payloadOffset];
                         byte minorVersion = payload[payloadOffset + 1];
-                        int level = (payload[payloadOffset + 2] << 8) |
-                                             payload[payloadOffset + 3];
 
                         is2005OrLater = majorVersion >= 9;
                         if (!is2005OrLater)
@@ -1006,16 +987,12 @@ namespace Microsoft.Data.SqlClient
 
                         break;
 
-                    case (int)PreLoginOptions.ENCRYPT:
+                    case (byte)PreLoginOptions.ENCRYPT:
                         if (tlsFirst)
                         {
                             // Can skip/ignore this option if we are doing TDS 8.
-                            offset += 4;
                             break;
                         }
-
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
 
                         EncryptionOptions serverOption = (EncryptionOptions)payload[payloadOffset];
 
@@ -1069,11 +1046,8 @@ namespace Microsoft.Data.SqlClient
 
                         break;
 
-                    case (int)PreLoginOptions.INSTANCE:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
-
-                        byte ERROR_INST = 0x1;
+                    case (byte)PreLoginOptions.INSTANCE:
+                        const byte ERROR_INST = 0x1;
                         byte instanceResult = payload[payloadOffset];
 
                         if (instanceResult == ERROR_INST)
@@ -1086,29 +1060,21 @@ namespace Microsoft.Data.SqlClient
 
                         break;
 
-                    case (int)PreLoginOptions.THREADID:
+                    case (byte)PreLoginOptions.THREADID:
                         // DO NOTHING FOR THREADID
-                        offset += 4;
                         break;
 
-                    case (int)PreLoginOptions.MARS:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
-
-                        marsCapable = (payload[payloadOffset] == 0 ? false : true);
+                    case (byte)PreLoginOptions.MARS:
+                        marsCapable = payload[payloadOffset] != 0;
 
                         Debug.Assert(payload[payloadOffset] == 0 || payload[payloadOffset] == 1, "Value for Mars PreLoginHandshake option not equal to 1 or 0!");
                         break;
 
-                    case (int)PreLoginOptions.TRACEID:
+                    case (byte)PreLoginOptions.TRACEID:
                         // DO NOTHING FOR TRACEID
-                        offset += 4;
                         break;
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
-
                         // Only 0x00 and 0x01 are accepted values from the server.
                         if (payload[payloadOffset] != 0x00 && payload[payloadOffset] != 0x01)
                         {
@@ -1129,17 +1095,16 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     default:
-                        Debug.Fail("UNKNOWN option in ConsumePreLoginHandshake, option:" + option);
-
                         // DO NOTHING FOR THESE UNKNOWN OPTIONS
-                        offset += 4;
-
+                        Debug.Fail("UNKNOWN option in ConsumePreLoginHandshake, option:" + option);
                         break;
                 }
 
-                if (offset < payload.Length)
+                headerOffset += sizeof(ushort) + sizeof(ushort);
+
+                if (headerOffset < payload.Length)
                 {
-                    option = payload[offset++];
+                    option = payload[headerOffset++];
                 }
                 else
                 {

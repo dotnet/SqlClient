@@ -21,14 +21,14 @@
   <!-- Override debugtype=portable in Directory.Build.props for netfx -->
   <PropertyGroup>
     <DebugType>full</DebugType>
-  </PropertyGroup>  
+  </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)\$(TargetFramework)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
-  </ItemGroup>  
+  </ItemGroup>
   <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
@@ -705,7 +705,7 @@
     <Compile Include="$(CommonSourceRoot)Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Resources\Strings.Designer.cs">
+    <Compile Include="$(CommonSourceRoot)\Resources\Strings.Designer.cs">
       <Link>Resources\Strings.Designer.cs</Link>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

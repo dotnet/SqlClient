@@ -37,5 +37,9 @@ namespace Microsoft.Data.SqlClient.SNI
             _writeAsyncSemaphore = new ConcurrentQueueSemaphore(1);
             _readAsyncSemaphore = new ConcurrentQueueSemaphore(1);
         }
+
+        // This class is often wrapped in an SNISslStream, which also performs its own synchronisation.
+        // Setting this to false will disable the inner layer, since it's always synchronised by the wrapper.
+        public bool SynchronizeIO { get; set; } = true;
     }
 }

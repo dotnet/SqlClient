@@ -3559,7 +3559,7 @@
     <value>Свойство UdtTypeName должно быть установлено только для параметров UDT.</value>
   </data>
   <data name="SQLUDT_InvalidSqlType" xml:space="preserve">
-    <value>Указанный тип не зарегистрирован на сервере назначения.{0}.</value>
+    <value>Указанный тип не зарегистрирован на сервере назначения. {0}.</value>
   </data>
   <data name="SQLUDT_InWhereClause" xml:space="preserve">
     <value>Не допускается использование параметров UDT в составе конструкции Where, кроме случаев, когда они являются частью первичного ключа.</value>
