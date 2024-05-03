@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         /// <param name="readBufferSize"></param>
         public void UpdateBufferSize(int readBufferSize)
         {
-            this._WriteBuffer = new byte[readBufferSize];
+            _WriteBuffer = new byte[readBufferSize];
         }
 
         public override bool CanRead => throw new NotImplementedException();
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
 
         public override async Task FlushAsync(CancellationToken ct)
         {
-            await FlushAsync(ct, true);
+            await FlushAsync(ct, true).ConfigureAwait(false);
         }
 
         public override void Flush()
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             _WriteBuffer[5] = 0;
             _WriteBuffer[7] = 0;
 
-            await this._underlyingStream.WriteAsync(_WriteBuffer.AsMemory<byte>(), ct);
+            await _underlyingStream.WriteAsync(_WriteBuffer.AsMemory<byte>(), ct).ConfigureAwait(false);
 
             // Reset the offset since we will start filling up the packet again.
             WriteBufferOffset = TdsEnums.HEADER_LEN;
@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             // If we are doing a hard flush, then make sure that the data definitely goes out.
             if (hardFlush)
             {
-                await this._underlyingStream.FlushAsync(ct);
+                await this._underlyingStream.FlushAsync(ct).ConfigureAwait(false);
             }
         }
 
@@ -183,5 +183,33 @@ namespace Microsoft.Data.SqlClient.SqlClientX
                 }
             }
         }
+
+        public async override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            int len = buffer.Length;
+            // The buffer may not have enough space. Write what we can and then flush the buffer with a soft flush.
+            while (len > 0)
+            {
+                if (len > _WriteBuffer.Length - WriteBufferOffset)
+                {
+                    // Only a part of the length fits in the buffer.
+                    int bytesToWrite = _WriteBuffer.Length - WriteBufferOffset;
+                    buffer.Slice(0, bytesToWrite).CopyTo(_WriteBuffer.AsMemory<byte>(WriteBufferOffset));
+                    WriteBufferOffset += bytesToWrite;
+                    len -= bytesToWrite;
+                    await FlushAsync(cancellationToken, false).ConfigureAwait(false); // Send to network.
+                }
+                else
+                {
+                    // The whole length can be added to the buffer.
+                    buffer.CopyTo(_WriteBuffer.AsMemory<byte>(WriteBufferOffset));
+                    WriteBufferOffset += len;
+                    len = 0;
+                }
+            }
+
+        }
+
+
     }
 }

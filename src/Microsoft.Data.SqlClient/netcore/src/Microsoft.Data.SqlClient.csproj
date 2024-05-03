@@ -954,10 +954,11 @@
     <Compile Include="SqlClientX\SqlError.cs" />
     <Compile Include="SqlClientX\SqlPhysicalConnection.cs" />
     <Compile Include="SqlClientX\SslOverTdsStream.cs" />
-    <Compile Include="SqlClientX\TDS.Identifiers\TdsPacketHeader.cs" />
+    <Compile Include="SqlClientX\TDS.Identifiers\PacketHeaderTypes.cs" />
+    <Compile Include="SqlClientX\TDS.Objects\Packets\PacketHeader.cs" />
     <Compile Include="SqlClientX\TdsEnums.cs" />
     <Compile Include="SqlClientX\TdsPacket.cs" />
-    <Compile Include="SqlClientX\TdsStream.cs" />
+    <Compile Include="SqlClientX\TdsWriteStream.cs" />
     <Compile Include="SqlClientX\Utilities.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
@@ -995,7 +996,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="SqlClientX\TDS.Objects\Tokens\" />
-    <Folder Include="SqlClientX\TDS.Objects\Packets\" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
