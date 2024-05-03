@@ -7,25 +7,11 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class AADUtility
     {
-        public static async Task<string> AzureActiveDirectoryAuthenticationCallback(string authority, string resource, string scope)
-        {
-            var authContext = new AuthenticationContext(authority);
-            ClientCredential clientCred = new ClientCredential(DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
-            AuthenticationResult result = await authContext.AcquireTokenAsync(resource, clientCred);
-            if (result == null)
-            {
-                throw new Exception($"Failed to retrieve an access token for {resource}");
-            }
-
-            return result.AccessToken;
-        }
-
         public static async Task<string> GetManagedIdentityToken(string clientId = null) =>
             await new MockManagedIdentityTokenProvider().AcquireTokenAsync(clientId).ConfigureAwait(false);
 

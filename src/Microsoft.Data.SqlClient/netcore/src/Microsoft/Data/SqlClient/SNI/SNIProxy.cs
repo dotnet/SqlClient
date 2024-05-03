@@ -524,10 +524,8 @@ namespace Microsoft.Data.SqlClient.SNI
         internal static string GetLocalDBInstance(string dataSource, out bool error)
         {
             string instanceName = null;
-            // ReadOnlySpan is not supported in netstandard 2.0, but installing System.Memory solves the issue
             ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
             error = false;
-            // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
             int index = input.IndexOf(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase);
             if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
             {
@@ -653,10 +651,10 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 Port = port;
             }
-            // Instance Name Handling. 
-            if (backSlashIndex > -1)
+            // Instance Name Handling. Only if we found a '\' and we did not find a port in the Data Source
+            else if (backSlashIndex > -1)
             {
-                // This means that there is a part separated by '\'
+                // This means that there will not be any part separated by comma.
                 InstanceName = tokensByCommaAndSlash[1].Trim();
 
                 if (string.IsNullOrWhiteSpace(InstanceName))

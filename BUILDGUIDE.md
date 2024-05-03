@@ -176,8 +176,6 @@ Manual Tests require the below setup to run:
   |AADSecurePrincipalSecret | (Optional) A Secret defined for a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Secret} |
   |AzureKeyVaultURL | (Optional) Azure Key Vault Identifier URL | `https://{keyvaultname}.vault.azure.net/` |
   |AzureKeyVaultTenantId | (Optional) The Azure Active Directory tenant (directory) Id of the service principal. | _{Tenant ID of Active Directory}_ |
-  |AzureKeyVaultClientId | (Optional) "Application (client) ID" of an Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL`. Requires the key permissions Get, List, Import, Decrypt, Encrypt, Unwrap, Wrap, Verify, and Sign. | _{Client Application ID}_ |
-  |AzureKeyVaultClientSecret | (Optional) "Client Secret" of the Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL` | _{Client Application Secret}_ |
   |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|  
   |LocalDbAppName | (Optional) If Local Db Testing is supported, this property configures the name of Local DB App instance available in client environment. Empty string value disables Local Db testing. | Name of Local Db App to connect to.|
   |LocalDbSharedInstanceName | (Optional) If LocalDB testing is supported and the instance is shared, this property configures the name of the shared instance of LocalDB to connect to. | Name of shared instance of LocalDB. |
@@ -233,17 +231,15 @@ Tests can be built and run with custom "Reference Type" property that enables di
 
 - "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
 - "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
-- "NetStandard" => Build and run tests with Microsoft.Data.SqlClient as Project Reference via .NET Standard Library
-- "NetStandardPackage" => Build and run tests with Microsoft.Data.SqlClient as Package Reference via .NET Standard Library
 
-> ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" AND "NETSTANDARDPACKAGE" REFERENCE TYPES ***************
+> ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" REFERENCE TYPE ***************
 > CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION
 >
 > ```bash
 >  msbuild -p:configuration=Release
 > ```
 
-A non-AnyCPU platform reference can only be used with package and NetStandardPackage reference types. Otherwise, the specified platform will be replaced with AnyCPU in the build process.
+A non-AnyCPU platform reference can only be used with package reference type. Otherwise, the specified platform will be replaced with AnyCPU in the build process.
 
 ### Building Tests with Reference Type
 
@@ -254,10 +250,6 @@ msbuild -t:BuildTestsNetCore -p:ReferenceType=Project
 # Default setting uses Project Reference.
 
 msbuild -t:BuildTestsNetCore -p:ReferenceType=Package
-
-msbuild -t:BuildTestsNetCore -p:ReferenceType=NetStandard
-
-msbuild -t:BuildTestsNetCore -p:ReferenceType=NetStandardPackage
 ```
 
 For .NET Framework, below reference types are supported:

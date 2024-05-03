@@ -104,13 +104,6 @@ namespace Microsoft.Data.SqlClient
             _logger.LogInfo(_type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
         }
 
-#if NETSTANDARD
-        private Func<object> _parentActivityOrWindowFunc = null;
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetParentActivityOrWindowFunc/*'/>
-        public void SetParentActivityOrWindowFunc(Func<object> parentActivityOrWindowFunc) => this._parentActivityOrWindowFunc = parentActivityOrWindowFunc;
-#endif
-
 #if NETFRAMEWORK
         private Func<System.Windows.Forms.IWin32Window> _iWin32WindowFunc = null;
 
@@ -209,9 +202,6 @@ namespace Microsoft.Data.SqlClient
             PublicClientAppKey pcaKey = new(parameters.Authority, redirectUri, _applicationClientId
 #if NETFRAMEWORK
             , _iWin32WindowFunc
-#endif
-#if NETSTANDARD
-            , _parentActivityOrWindowFunc
 #endif
                 );
 
@@ -521,18 +511,6 @@ namespace Microsoft.Data.SqlClient
         {
             IPublicClientApplication publicClientApplication;
 
-#if NETSTANDARD
-            if (_parentActivityOrWindowFunc != null)
-            {
-                publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
-                .WithAuthority(publicClientAppKey._authority)
-                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
-                .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
-                .WithRedirectUri(publicClientAppKey._redirectUri)
-                .WithParentActivityOrWindow(_parentActivityOrWindowFunc)
-                .Build();
-            }
-#endif
 #if NETFRAMEWORK
             if (_iWin32WindowFunc != null)
             {
@@ -621,16 +599,10 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
             public readonly Func<System.Windows.Forms.IWin32Window> _iWin32WindowFunc;
 #endif
-#if NETSTANDARD
-            public readonly Func<object> _parentActivityOrWindowFunc;
-#endif
 
             public PublicClientAppKey(string authority, string redirectUri, string applicationClientId
 #if NETFRAMEWORK
             , Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc
-#endif
-#if NETSTANDARD
-            , Func<object> parentActivityOrWindowFunc
 #endif
                 )
             {
@@ -639,9 +611,6 @@ namespace Microsoft.Data.SqlClient
                 _applicationClientId = applicationClientId;
 #if NETFRAMEWORK
                 _iWin32WindowFunc = iWin32WindowFunc;
-#endif
-#if NETSTANDARD
-                _parentActivityOrWindowFunc = parentActivityOrWindowFunc;
 #endif
             }
 
@@ -655,9 +624,6 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                         && pcaKey._iWin32WindowFunc == _iWin32WindowFunc
 #endif
-#if NETSTANDARD
-                        && pcaKey._parentActivityOrWindowFunc == _parentActivityOrWindowFunc
-#endif
                     );
                 }
                 return false;
@@ -666,9 +632,6 @@ namespace Microsoft.Data.SqlClient
             public override int GetHashCode() => Tuple.Create(_authority, _redirectUri, _applicationClientId
 #if NETFRAMEWORK
                 , _iWin32WindowFunc
-#endif
-#if NETSTANDARD
-                , _parentActivityOrWindowFunc
 #endif
                 ).GetHashCode();
         }

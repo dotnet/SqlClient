@@ -22,8 +22,6 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string AADServicePrincipalSecret = null;
         public string AzureKeyVaultURL = null;
         public string AzureKeyVaultTenantId = null;
-        public string AzureKeyVaultClientId = null;
-        public string AzureKeyVaultClientSecret = null;
         public string LocalDbAppName = null;
         public string LocalDbSharedInstanceName = null;
         public bool EnclaveEnabled = false;
