@@ -52,6 +52,12 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   displayName: 'Lowest supported .NET Framework version (MDS validation)'
   type: string
   default: 'net462'
+- name: oneBranchType
+  displayName: 'Select OneBranch template'
+  default: Official
+  values:
+  - NonOfficial
+  - Official
 
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
@@ -74,7 +80,7 @@ resources:
       ref: refs/heads/main
 
 extends:
-  template: v2/OneBranch.Official.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  template: v2/OneBranch.${{parameters.oneBranchType }}.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
   parameters:
     featureFlags:
       WindowsHostVersion: 1ESWindows2022
