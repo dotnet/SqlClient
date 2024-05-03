@@ -231,17 +231,15 @@ Tests can be built and run with custom "Reference Type" property that enables di
 
 - "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
 - "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
-- "NetStandard" => Build and run tests with Microsoft.Data.SqlClient as Project Reference via .NET Standard Library
-- "NetStandardPackage" => Build and run tests with Microsoft.Data.SqlClient as Package Reference via .NET Standard Library
 
-> ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" AND "NETSTANDARDPACKAGE" REFERENCE TYPES ***************
+> ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" REFERENCE TYPE ***************
 > CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION
 >
 > ```bash
 >  msbuild -p:configuration=Release
 > ```
 
-A non-AnyCPU platform reference can only be used with package and NetStandardPackage reference types. Otherwise, the specified platform will be replaced with AnyCPU in the build process.
+A non-AnyCPU platform reference can only be used with package reference type. Otherwise, the specified platform will be replaced with AnyCPU in the build process.
 
 ### Building Tests with Reference Type
 
@@ -252,10 +250,6 @@ msbuild -t:BuildTestsNetCore -p:ReferenceType=Project
 # Default setting uses Project Reference.
 
 msbuild -t:BuildTestsNetCore -p:ReferenceType=Package
-
-msbuild -t:BuildTestsNetCore -p:ReferenceType=NetStandard
-
-msbuild -t:BuildTestsNetCore -p:ReferenceType=NetStandardPackage
 ```
 
 For .NET Framework, below reference types are supported:

@@ -8340,7 +8340,7 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeEncodingChar(string s, int numChars, int offset, Encoding encoding)
         {
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK
             char[] charData;
             byte[] byteData = null;
 
@@ -8377,7 +8377,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK
                 var charData = s.ToCharArray(offset, numChars);
                 var byteData = encoding.GetBytes(charData, 0, numChars);
                 Debug.Assert(byteData != null, "no data from encoding");
