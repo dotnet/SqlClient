@@ -353,97 +353,100 @@ namespace simplesqlclient
 
         public void ProcessPacket()
         {
-            //this._readStream.ResetPacket();
-
-            // Read a 1 byte token
-            TdsToken token = this._readStream.ProcessToken();
-
-            SqlEnvChange envChange = null;
-            switch (token.TokenType)
+            this._readStream.ResetPacket();
+            Span<byte> temp = stackalloc byte[20];
+            do
             {
-                case TdsTokens.SQLENVCHANGE:
-                    byte envType = (byte)this._readStream.ReadByte();
-                    switch (envType)
-                    {
-                        case TdsEnums.ENV_DATABASE:
-                        case TdsEnums.ENV_LANG:
-                            envChange = ReadTwoStrings();
-                            break;
-                        case TdsEnums.ENV_PACKETSIZE:
-                            envChange = ReadTwoStrings();
-                            // Read 
-                            break;
-                        case TdsEnums.ENV_COLLATION:
-                            _ = this._readStream.ReadByte();
-                            _ = this._readStream.ReadInt32();
-                            _ = this._readStream.ReadByte();
+                // Read a 1 byte token
+                TdsToken token = this._readStream.ProcessToken();
 
-                            _ = this._readStream.ReadByte();
-                            _ = this._readStream.ReadInt32();
-                            _ = this._readStream.ReadByte();
-                            break;
+                SqlEnvChange envChange = null;
+                switch (token.TokenType)
+                {
+                    case TdsTokens.SQLENVCHANGE:
+                        byte envType = (byte)this._readStream.ReadByte();
+                        switch (envType)
+                        {
+                            case TdsEnums.ENV_DATABASE:
+                            case TdsEnums.ENV_LANG:
+                                envChange = ReadTwoStrings();
+                                break;
+                            case TdsEnums.ENV_PACKETSIZE:
+                                envChange = ReadTwoStrings();
+                                // Read 
+                                break;
+                            case TdsEnums.ENV_COLLATION:
+                                _ = this._readStream.ReadByte();
+                                _ = this._readStream.ReadInt32();
+                                _ = this._readStream.ReadByte();
 
-                    }
-                    break;
-                case TdsTokens.SQLERROR:
-                // TODO : Process error
+                                _ = this._readStream.ReadByte();
+                                _ = this._readStream.ReadInt32();
+                                _ = this._readStream.ReadByte();
+                                break;
+
+                        }
+                        break;
+                    case TdsTokens.SQLERROR:
+                    // TODO : Process error
 
 
-                case TdsTokens.SQLINFO:
-                    simplesqlclient.SqlError error = this._readStream.ProcessError(token);
-                    if (token.TokenType == TdsTokens.SQLERROR)
-                    {
-                        throw new Exception("Error received from server " + error.Message);
-                    }
-                    if (token.TokenType == TdsTokens.SQLINFO)
-                    {
-                        // TODO: Accumulate the information packet to be dispatched later
-                        // to SqlConnection.
-                    }
-                    break;
-                case TdsTokens.SQLLOGINACK:
-                    // TODO: Login ack needs to be processed to have some server side information 
-                    // readily 
-                    // Right now simply read it and ignore it.
-                    // First byte skip
-                    this._readStream.ReadByte();
-                    // TdsEnums.Version_size skip
-                    this._readStream.Read(stackalloc byte[4]);
-                    // One byte length skip
-                    byte lenSkip = (byte)this._readStream.ReadByte();
-                    // skip length * 2 bytes
-                    this._readStream.Read(stackalloc byte[lenSkip * 2]);
-                    // skip major version byte
-                    this._readStream.ReadByte();
-                    // skip minor version byte
-                    this._readStream.ReadByte();
-                    // skip build version byte
-                    this._readStream.ReadByte();
-                    // skip sub build version byte
-                    this._readStream.ReadByte();
-                    // Do nothing.
-                    break;
-                case TdsTokens.SQLDONE:
-                    ushort status = this._readStream.ReadUInt16();
-                    ushort curCmd = this._readStream.ReadUInt16();
-                    long longCount = this._readStream.ReadInt64();
-                    int count = (int)longCount;
+                    case TdsTokens.SQLINFO:
+                        simplesqlclient.SqlError error = this._readStream.ProcessError(token);
+                        if (token.TokenType == TdsTokens.SQLERROR)
+                        {
+                            throw new Exception("Error received from server " + error.Message);
+                        }
+                        if (token.TokenType == TdsTokens.SQLINFO)
+                        {
+                            // TODO: Accumulate the information packet to be dispatched later
+                            // to SqlConnection.
+                        }
+                        break;
+                    case TdsTokens.SQLLOGINACK:
+                        // TODO: Login ack needs to be processed to have some server side information 
+                        // readily 
+                        // Right now simply read it and ignore it.
+                        // First byte skip
+                        this._readStream.ReadByte();
+                        // TdsEnums.Version_size skip
+                        this._readStream.Read(temp.Slice(0, 4));
+                        // One byte length skip
+                        byte lenSkip = (byte)this._readStream.ReadByte();
+                        // skip length * 2 bytes
+                        this._readStream.Read(temp.Slice(0, lenSkip * 2));
+                        // skip major version byte
+                        this._readStream.ReadByte();
+                        // skip minor version byte
+                        this._readStream.ReadByte();
+                        // skip build version byte
+                        this._readStream.ReadByte();
+                        // skip sub build version byte
+                        this._readStream.ReadByte();
+                        // Do nothing.
+                        break;
+                    case TdsTokens.SQLDONE:
+                        ushort status = this._readStream.ReadUInt16();
+                        ushort curCmd = this._readStream.ReadUInt16();
+                        long longCount = this._readStream.ReadInt64();
+                        int count = (int)longCount;
 
-                    if (TdsEnums.DONE_MORE != (status & TdsEnums.DONE_MORE))
-                    {
-                    }
-                    break;
-                case TdsTokens.SQLCOLMETADATA:
-                    if (token.Length != TdsEnums.VARNULL) // TODO: What does this mean? 
-                    {
+                        if (TdsEnums.DONE_MORE != (status & TdsEnums.DONE_MORE))
+                        {
+                        }
+                        break;
+                    case TdsTokens.SQLCOLMETADATA:
+                        if (token.Length != TdsEnums.VARNULL) // TODO: What does this mean? 
+                        {
 
-                    }
-                    throw new NotImplementedException();
-                case TdsTokens.SQLROW:
-                    throw new NotImplementedException();
-                default:
-                    throw new NotImplementedException("The token type is not implemented. " + token.TokenType);
-            }
+                        }
+                        throw new NotImplementedException();
+                    case TdsTokens.SQLROW:
+                        throw new NotImplementedException();
+                    default:
+                        throw new NotImplementedException("The token type is not implemented. " + token.TokenType);
+                }
+            } while(this._readStream.PacketDataLeft > 0);
         }
 
         private SqlEnvChange ReadTwoStrings()

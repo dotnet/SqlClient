@@ -226,5 +226,10 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             throw new NotImplementedException();
         }
 
+        internal void ResetPacket()
+        {
+            ReadBufferDataLength = 0;
+            ReadBufferOffset = 0;
+        }
     }
 }
