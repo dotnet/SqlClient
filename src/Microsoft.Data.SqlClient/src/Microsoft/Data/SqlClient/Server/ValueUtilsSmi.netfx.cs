@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.Server
             if (isDbNull)
             {
                 // "null" stream
-                data = new byte[0];
+                data = Array.Empty<byte>();
             }
             else
             {
@@ -147,15 +147,6 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     result = DBNull.Value;
                 }
-                else if (SqlBuffer.StorageType.SqlBinary == stype)
-                {
-                    // special case SqlBinary, 'cause tds parser never sets SqlBuffer to null, just to empty!
-                    targetBuffer.SqlBinary = SqlBinary.Null;
-                }
-                else if (SqlBuffer.StorageType.SqlGuid == stype)
-                {
-                    targetBuffer.SqlGuid = SqlGuid.Null;
-                }
                 else
                 {
                     targetBuffer.SetToNullOfType(stype);
@@ -190,7 +181,7 @@ namespace Microsoft.Data.SqlClient.Server
                     case SqlDbType.Image:
                     case SqlDbType.Timestamp:
                     case SqlDbType.VarBinary:
-                        targetBuffer.SqlBinary = GetSqlBinary_Unchecked(sink, getters, ordinal);
+                        targetBuffer.ByteArray = GetByteArray_Unchecked(sink, getters, ordinal);
                         break;
                     case SqlDbType.Bit:
                         targetBuffer.Boolean = GetBoolean_Unchecked(sink, getters, ordinal);

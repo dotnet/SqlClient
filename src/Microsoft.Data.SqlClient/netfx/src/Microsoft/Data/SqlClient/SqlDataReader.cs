@@ -1720,7 +1720,7 @@ namespace Microsoft.Data.SqlClient
                 if (_data[i].IsNull)
                 {
                     // A 'null' stream
-                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(new byte[0], writable: false), closeInput: true, async: false);
+                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(Array.Empty<byte>(), writable: false), closeInput: true, async: false);
                 }
                 else
                 {
@@ -1765,12 +1765,12 @@ namespace Microsoft.Data.SqlClient
                 if (_data[i].IsNull)
                 {
                     // A 'null' stream
-                    data = new byte[0];
+                    data = Array.Empty<byte>();
                 }
                 else
                 {
                     // Grab already read data
-                    data = _data[i].SqlBinary.Value;
+                    data = _data[i].ByteArray;
                 }
 
                 // If non-sequential then we just have a read-only MemoryStream
@@ -3308,7 +3308,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    byte[] value = data.IsNull ? Array.Empty<byte>() : data.SqlBinary.Value;
+                    byte[] value = data.IsNull ? Array.Empty<byte>() : data.ByteArray;
                     return (T)(object)new MemoryStream(value, writable: false);
                 }
             }

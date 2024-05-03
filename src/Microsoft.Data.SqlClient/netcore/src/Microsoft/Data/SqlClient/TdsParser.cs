@@ -5500,11 +5500,11 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.Binary:
                 case SqlDbType.VarBinary:
                 case SqlDbType.Image:
-                    nullVal.SqlBinary = SqlBinary.Null;
+                    nullVal.SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
                     break;
 
                 case SqlDbType.UniqueIdentifier:
-                    nullVal.SqlGuid = SqlGuid.Null;
+                    nullVal.SetToNullOfType(SqlBuffer.StorageType.SqlGuid);
                     break;
 
                 case SqlDbType.Bit:
@@ -5932,7 +5932,11 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(length == 16, "invalid length for SqlGuid type!");
+#if NET8_0_OR_GREATER
                         value.SqlGuid = new SqlGuid(unencryptedBytes);   // doesn't copy the byte array
+#else
+                        value.SqlGuid = SqlTypeWorkarounds.SqlGuidCtor(unencryptedBytes, true);   // doesn't copy the byte array
+#endif
                         break;
                     }
 
@@ -5953,7 +5957,7 @@ namespace Microsoft.Data.SqlClient
                             unencryptedBytes = bytes;
                         }
 
-                        value.SqlBinary = new SqlBinary(unencryptedBytes);   // doesn't copy the byte array
+                        value.ByteArray = unencryptedBytes;   // doesn't copy the byte array
                         break;
                     }
 
@@ -6146,11 +6150,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-#if NET7_0_OR_GREATER
-                        value.SqlBinary = SqlBinary.WrapBytes(b);
-#else
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);   // doesn't copy the byte array
-#endif
+                        value.ByteArray = b;   // doesn't copy the byte array
                     }
                     break;
 
@@ -6443,12 +6443,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-#if NET7_0_OR_GREATER
-                        value.SqlBinary = SqlBinary.WrapBytes(b);
-#else
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);
-#endif
 
+                        value.ByteArray = b;   // doesn't copy byte array
                         break;
                     }
 
