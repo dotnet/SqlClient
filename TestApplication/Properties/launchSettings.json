@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "TestApplication": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "SQL_PWD": "HappyPass1234"
+      }
+    }
+  }
+}
