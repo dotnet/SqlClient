@@ -941,6 +941,24 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
+    <Compile Include="..\..\..\GlobalSuppressions.cs" Link="GlobalSuppressions.cs" />
+    <Compile Include="SqlClientX\AuthenticationOptions.cs" />
+    <Compile Include="SqlClientX\AuthenticationType.cs" />
+    <Compile Include="SqlClientX\BufferReader.cs" />
+    <Compile Include="SqlClientX\BufferWriter.cs" />
+    <Compile Include="SqlClientX\ConnectionSettings.cs" />
+    <Compile Include="SqlClientX\Constants.cs" />
+    <Compile Include="SqlClientX\Program.cs" />
+    <Compile Include="SqlClientX\SqlConnectionX.cs" />
+    <Compile Include="SqlClientX\SqlEnvChange.cs" />
+    <Compile Include="SqlClientX\SqlError.cs" />
+    <Compile Include="SqlClientX\SqlPhysicalConnection.cs" />
+    <Compile Include="SqlClientX\SslOverTdsStream.cs" />
+    <Compile Include="SqlClientX\TDS.Identifiers\TdsPacketHeader.cs" />
+    <Compile Include="SqlClientX\TdsEnums.cs" />
+    <Compile Include="SqlClientX\TdsPacket.cs" />
+    <Compile Include="SqlClientX\TdsStream.cs" />
+    <Compile Include="SqlClientX\Utilities.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
@@ -974,6 +992,10 @@
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="SqlClientX\TDS.Objects\Tokens\" />
+    <Folder Include="SqlClientX\TDS.Objects\Packets\" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />

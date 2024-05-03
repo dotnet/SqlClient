@@ -999,7 +999,7 @@ namespace Microsoft.Data.SqlClient
 
         // This ensure that there is data available to be read in the buffer and that the header has been processed
         // NOTE: This method (and all it calls) should be retryable without replaying a snapshot
-        internal bool TryPrepareBuffer()
+        internal bool TryPrepareTdsPayloadInPacketBuffer()
         {
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadBuffer");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_inBuff != null, "packet buffer should not be null!");
@@ -1211,7 +1211,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
                 {
-                    if (!TryPrepareBuffer())
+                    if (!TryPrepareTdsPayloadInPacketBuffer())
                     {
                         return false;
                     }
@@ -1266,7 +1266,7 @@ namespace Microsoft.Data.SqlClient
 
             if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
             {
-                if (!TryPrepareBuffer())
+                if (!TryPrepareTdsPayloadInPacketBuffer())
                 {
                     return false;
                 }
@@ -1378,7 +1378,7 @@ namespace Microsoft.Data.SqlClient
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadInt64");  // you need to setup for a thread abort somewhere before you call this method
             if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
             {
-                if (!TryPrepareBuffer())
+                if (!TryPrepareTdsPayloadInPacketBuffer())
                 {
                     value = 0;
                     return false;
@@ -1457,7 +1457,7 @@ namespace Microsoft.Data.SqlClient
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadUInt32");  // you need to setup for a thread abort somewhere before you call this method
             if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
             {
-                if (!TryPrepareBuffer())
+                if (!TryPrepareTdsPayloadInPacketBuffer())
                 {
                     value = 0;
                     return false;
