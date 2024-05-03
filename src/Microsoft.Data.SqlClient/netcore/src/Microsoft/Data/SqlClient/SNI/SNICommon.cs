@@ -342,11 +342,11 @@ namespace Microsoft.Data.SqlClient.SNI
                                                           args0: serverName,
                                                           args1: remainingTimeout);
                 using CancellationTokenSource cts = new CancellationTokenSource(remainingTimeout);
-                // using this overload to support netstandard
-                Task<IPAddress[]> task = Dns.GetHostAddressesAsync(serverName);
-                task.ConfigureAwait(false);
-                task.Wait(cts.Token);
-                return task.Result;
+
+                return Dns.GetHostAddressesAsync(serverName, cts.Token)
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
             }
         }
 

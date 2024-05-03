@@ -693,11 +693,7 @@ namespace Microsoft.Data.SqlTypes
             // Ensure we have validated and normalized the path before
             AssertPathFormat(path);
             string uniqueId = Guid.NewGuid().ToString("N");
-#if NETSTANDARD
-            return System.IO.PathInternal.IsDeviceUNC(path.AsSpan())
-#else
             return System.IO.PathInternal.IsDeviceUNC(path)
-#endif
                 ? string.Format(CultureInfo.InvariantCulture, @"{0}\{1}", path.Replace(@"\\.", @"\??"), uniqueId)
                 : string.Format(CultureInfo.InvariantCulture, @"\??\UNC\{0}\{1}", path.Trim('\\'), uniqueId);
         }

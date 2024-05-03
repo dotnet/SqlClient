@@ -10504,15 +10504,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Not supported in .Net Standard 2.0..
-        /// </summary>
-        internal static string SQL_TDS8_NotSupported_Netstandard2_0 {
-            get {
-                return ResourceManager.GetString("SQL_TDS8_NotSupported_Netstandard2_0", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Processing of results from SQL Server failed because of an invalid multipart name.
         /// </summary>
         internal static string SQL_TDSParserTableName {
