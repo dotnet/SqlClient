@@ -88,7 +88,6 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 ReadBufferOffset += lengthToCopy;
                 PacketDataLeft -= lengthToCopy;
             }
-
             return totalRead;
         }
 
@@ -226,5 +225,6 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
         {
             throw new NotImplementedException();
         }
+
     }
 }

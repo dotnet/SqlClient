@@ -954,6 +954,7 @@
     <Compile Include="SqlClientX\SqlError.cs" />
     <Compile Include="SqlClientX\SqlPhysicalConnection.cs" />
     <Compile Include="SqlClientX\SslOverTdsStream.cs" />
+    <Compile Include="SqlClientX\Streams\TdsReadStreamExtensions.cs" />
     <Compile Include="SqlClientX\TDS.Identifiers\PacketHeaderTypes.cs" />
     <Compile Include="SqlClientX\TDS.Objects\Packets\PacketHeader.cs" />
     <Compile Include="SqlClientX\TdsEnums.cs" />

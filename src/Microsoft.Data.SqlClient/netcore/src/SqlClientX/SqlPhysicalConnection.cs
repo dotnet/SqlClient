@@ -17,10 +17,10 @@ namespace simplesqlclient
         private SslOverTdsStream _sslOverTdsStream;
         private SslStream _sslStream;
         
-        private BufferReader _bufferReader;
+        //private BufferReader _bufferReader;
 
         private TdsWriteStream _writeStream;
-        //private TdsReadStream _readStream;
+        private TdsReadStream _readStream;
         private string _hostname;
         private int _port;
         //private readonly string applicationName;
@@ -239,7 +239,7 @@ namespace simplesqlclient
             }
 
             _writeStream.UpdateStream(_sslStream);
-            _bufferReader.UpdateStream(_sslStream);
+            _readStream.UpdateStream(_sslStream);
         }
 
         private void DisableSsl()
@@ -249,30 +249,30 @@ namespace simplesqlclient
             _sslStream = null;
             _sslOverTdsStream = null;
             _writeStream.UpdateStream(_tcpStream);
-            _bufferReader.UpdateStream(_tcpStream);
+            _readStream.UpdateStream(_tcpStream);
         }
 
         internal bool TryConsumePrelogin()
         {
             byte[] payload = new byte[TdsConstants.DEFAULT_LOGIN_PACKET_SIZE];
-            if (_bufferReader == null)
+            if (_readStream == null)
             {
-                _bufferReader = new BufferReader(_tcpStream);
+                _readStream = new TdsReadStream(_tcpStream);
             }
-            TdsPacketHeader header = _bufferReader.ProcessPacketHeader();
-            Debug.Assert(header.PacketType == (byte)PacketType.SERVERSTREAM);
+            //TdsPacketHeader header = _bufferReader.ProcessPacketHeader();
+            //Debug.Assert(header.PacketType == (byte)PacketType.SERVERSTREAM);
 
             Span<PreLoginOption> options = stackalloc PreLoginOption[7];
             for (int i = 0; i < 8; i++)
             {
                 PreLoginOption option;
-                option.Option = _bufferReader.ReadByte();
+                option.Option = (byte)_readStream.ReadByte();
                 if (option.Option == (int)PreLoginOptions.LASTOPT)
                 {
                     break;
                 }
-                option.Offset = _bufferReader.ReadByte() << 8 | _bufferReader.ReadByte() - 36;
-                option.Length = _bufferReader.ReadByte() << 8 | _bufferReader.ReadByte();
+                option.Offset = _readStream.ReadByte() << 8 | _readStream.ReadByte() - 36;
+                option.Length = _readStream.ReadByte() << 8 | _readStream.ReadByte();
                 options[i] = option;
             }
 
@@ -283,7 +283,7 @@ namespace simplesqlclient
             }
 
             Span<byte> preLoginPacket = stackalloc byte[optionsDataLength];
-            _bufferReader.ReadByteArray(preLoginPacket);
+            _readStream.Read(preLoginPacket);
 
             for (int i = 0; i < 7; i++)
             {
@@ -353,21 +353,16 @@ namespace simplesqlclient
 
         public void ProcessPacket()
         {
-            this._bufferReader.ResetPacket();
-            TdsPacketHeader packetHeader = this._bufferReader.ProcessPacketHeader();
-            if (packetHeader.PacketType != (byte)PacketType.SERVERSTREAM)
-            {
-                throw new Exception("Expected a server stream packet");
-            }
+            //this._readStream.ResetPacket();
 
             // Read a 1 byte token
-            TdsToken token = this._bufferReader.ProcessToken();
+            TdsToken token = this._readStream.ProcessToken();
 
             SqlEnvChange envChange = null;
             switch (token.TokenType)
             {
                 case TdsTokens.SQLENVCHANGE:
-                    byte envType = this._bufferReader.ReadByte();
+                    byte envType = (byte)this._readStream.ReadByte();
                     switch (envType)
                     {
                         case TdsEnums.ENV_DATABASE:
@@ -379,13 +374,13 @@ namespace simplesqlclient
                             // Read 
                             break;
                         case TdsEnums.ENV_COLLATION:
-                            _ = this._bufferReader.ReadByte();
-                            _ = this._bufferReader.ReadInt32();
-                            _ = this._bufferReader.ReadByte();
+                            _ = this._readStream.ReadByte();
+                            _ = this._readStream.ReadInt32();
+                            _ = this._readStream.ReadByte();
 
-                            _ = this._bufferReader.ReadByte();
-                            _ = this._bufferReader.ReadInt32();
-                            _ = this._bufferReader.ReadByte();
+                            _ = this._readStream.ReadByte();
+                            _ = this._readStream.ReadInt32();
+                            _ = this._readStream.ReadByte();
                             break;
 
                     }
@@ -395,7 +390,7 @@ namespace simplesqlclient
 
 
                 case TdsTokens.SQLINFO:
-                    simplesqlclient.SqlError error = this._bufferReader.ProcessError(token);
+                    simplesqlclient.SqlError error = this._readStream.ProcessError(token);
                     if (token.TokenType == TdsTokens.SQLERROR)
                     {
                         throw new Exception("Error received from server " + error.Message);
@@ -411,27 +406,27 @@ namespace simplesqlclient
                     // readily 
                     // Right now simply read it and ignore it.
                     // First byte skip
-                    this._bufferReader.ReadByte();
+                    this._readStream.ReadByte();
                     // TdsEnums.Version_size skip
-                    this._bufferReader.ReadByteArray(stackalloc byte[4]);
+                    this._readStream.Read(stackalloc byte[4]);
                     // One byte length skip
-                    byte lenSkip = this._bufferReader.ReadByte();
+                    byte lenSkip = (byte)this._readStream.ReadByte();
                     // skip length * 2 bytes
-                    this._bufferReader.ReadByteArray(stackalloc byte[lenSkip * 2]);
+                    this._readStream.Read(stackalloc byte[lenSkip * 2]);
                     // skip major version byte
-                    this._bufferReader.ReadByte();
+                    this._readStream.ReadByte();
                     // skip minor version byte
-                    this._bufferReader.ReadByte();
+                    this._readStream.ReadByte();
                     // skip build version byte
-                    this._bufferReader.ReadByte();
+                    this._readStream.ReadByte();
                     // skip sub build version byte
-                    this._bufferReader.ReadByte();
+                    this._readStream.ReadByte();
                     // Do nothing.
                     break;
                 case TdsTokens.SQLDONE:
-                    ushort status = this._bufferReader.ReadUInt16();
-                    ushort curCmd = this._bufferReader.ReadUInt16();
-                    long longCount = this._bufferReader.ReadInt64();
+                    ushort status = this._readStream.ReadUInt16();
+                    ushort curCmd = this._readStream.ReadUInt16();
+                    long longCount = this._readStream.ReadInt64();
                     int count = (int)longCount;
 
                     if (TdsEnums.DONE_MORE != (status & TdsEnums.DONE_MORE))
@@ -455,10 +450,10 @@ namespace simplesqlclient
         {
             SqlEnvChange env = new SqlEnvChange();
             // Used by ProcessEnvChangeToken
-            byte newLength = this._bufferReader.ReadByte();
-            string newValue = this._bufferReader.ReadString(newLength);
-            byte oldLength = this._bufferReader.ReadByte();
-            string oldValue = this._bufferReader.ReadString(oldLength);
+            byte newLength = (byte)this._readStream.ReadByte();
+            string newValue = this._readStream.ReadString(newLength);
+            byte oldLength = (byte)this._readStream.ReadByte();
+            string oldValue = this._readStream.ReadString(oldLength);
 
             env._newLength = newLength;
             env._newValue = newValue;
@@ -704,7 +699,7 @@ namespace simplesqlclient
 
         public void SendQuery(string query)
         {
-            this._bufferReader.ResetPacket();
+            //this._readStream.ResetPacket();
             int marsHeaderSize = 18;
             int notificationHeaderSize = 0; // TODO: Needed for sql notifications feature. Not implemetned yet
             int totalHeaderLength = 4 + marsHeaderSize + notificationHeaderSize;
