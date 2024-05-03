@@ -38,6 +38,11 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             _WriteBuffer = new byte[readBufferSize];
         }
 
+        public void UpdateStream(Stream stream)
+        {
+            _underlyingStream = stream;
+        }
+
         public override bool CanRead => throw new NotImplementedException();
 
         public override bool CanSeek => throw new NotImplementedException();
