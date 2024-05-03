@@ -16,7 +16,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class SqlClientCustomTokenCredential : TokenCredential
     {
         private const string DEFAULT_PREFIX = "/.default";
-        private static readonly ConcurrentDictionary<string, ClientSecretCredential> s_clientSecretCredentials = new();
 
         string _authority = "";
         string _resource = "";
