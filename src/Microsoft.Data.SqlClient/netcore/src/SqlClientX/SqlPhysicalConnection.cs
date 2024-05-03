@@ -354,7 +354,7 @@ namespace simplesqlclient
         public void ProcessPacket()
         {
             this._readStream.ResetPacket();
-            Span<byte> temp = stackalloc byte[20];
+            Span<byte> temp = stackalloc byte[100];
             do
             {
                 // Read a 1 byte token
@@ -376,13 +376,18 @@ namespace simplesqlclient
                                 // Read 
                                 break;
                             case TdsEnums.ENV_COLLATION:
-                                _ = this._readStream.ReadByte();
-                                _ = this._readStream.ReadInt32();
-                                _ = this._readStream.ReadByte();
-
-                                _ = this._readStream.ReadByte();
-                                _ = this._readStream.ReadInt32();
-                                _ = this._readStream.ReadByte();
+                                int newLen = this._readStream.ReadByte();
+                                if (newLen == 5)
+                                { 
+                                    _ = this._readStream.ReadInt32();
+                                    _ = this._readStream.ReadByte();
+                                }
+                                int oldLen = this._readStream.ReadByte();
+                                if (oldLen == 5)
+                                { 
+                                    _ = this._readStream.ReadInt32();
+                                    _ = this._readStream.ReadByte();
+                                }
                                 break;
 
                         }
@@ -423,6 +428,7 @@ namespace simplesqlclient
                         this._readStream.ReadByte();
                         // skip sub build version byte
                         this._readStream.ReadByte();
+                        // Fix this.
                         // Do nothing.
                         break;
                     case TdsTokens.SQLDONE:
@@ -441,6 +447,20 @@ namespace simplesqlclient
 
                         }
                         throw new NotImplementedException();
+                    case TdsTokens.SQLFEATUREEXTACK:
+                        byte featureId;
+                        do
+                        {
+                            featureId = (byte)this._readStream.ReadByte();
+                            if (featureId != 0xff)
+                            {
+                                uint datalen = this._readStream.ReadUInt32();
+
+                                Span<byte> data = new byte[datalen];
+                                this._readStream.Read(data);
+                            }
+                        } while (featureId != 0xff);
+                        break;
                     case TdsTokens.SQLROW:
                         throw new NotImplementedException();
                     default:

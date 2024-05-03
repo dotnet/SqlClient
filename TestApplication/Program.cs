@@ -19,22 +19,22 @@ namespace TestApplication
             if (testX)
                 SimpleConnectionTestX(connectionString);
             else
-                SimpleConnectionTest(connectionString).Wait();
+                SimpleConnectionTest(connectionString);
         }
 
-        private static async Task SimpleConnectionTest(string connectionString)
+        private static void SimpleConnectionTest(string connectionString)
         {
             //AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
 
             SqlConnection connection = new SqlConnection(connectionString);
-            await connection.OpenAsync();
+            connection.Open();
             
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT @@VERSION";
                 Console.WriteLine("Executing command");
 
-                object result = await command.ExecuteScalarAsync();
+                object result = command.ExecuteScalar();
                 Console.WriteLine(result);
             }
         }

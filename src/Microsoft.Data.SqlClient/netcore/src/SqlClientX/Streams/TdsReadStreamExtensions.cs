@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             string procedure = stream.ReadString(byteLen);
 
 
-            int line = stream.ReadUInt16();
+            int line = stream.ReadInt32();
 
             int batchIndex = -1;
 
@@ -73,6 +73,13 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             Span<byte> buffer = stackalloc byte[sizeof(int)];
             stream.Read(buffer);
             return (buffer[3] << 24) + (buffer[2] << 16) + (buffer[1] << 8) + buffer[0];
+        }
+
+        internal static uint ReadUInt32(this TdsReadStream stream)
+        {
+            Span<byte> buffer = stackalloc byte[sizeof(uint)];
+            stream.Read(buffer);
+            return BinaryPrimitives.ReadUInt32LittleEndian(buffer);
         }
 
         internal static TdsToken ProcessToken(this TdsReadStream stream)
