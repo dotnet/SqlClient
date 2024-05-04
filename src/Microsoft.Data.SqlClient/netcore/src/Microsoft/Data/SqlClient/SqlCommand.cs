@@ -4721,7 +4721,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlDataReader RunExecuteReader(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, [CallerMemberName] string method = "")
+        internal SqlDataReader RunExecuteReader(CommandBehavior cmdBehavior, 
+            RunBehavior runBehavior, 
+            bool returnStream, 
+            [CallerMemberName] string method = "")
         {
             Task unused; // sync execution
             SqlDataReader reader = RunExecuteReader(cmdBehavior, runBehavior, returnStream, completion: null, timeout: CommandTimeout, task: out unused, usedCache: out bool usedCache, method: method);
@@ -4730,7 +4733,16 @@ namespace Microsoft.Data.SqlClient
         }
 
         // task is created in case of pending asynchronous write, returned SqlDataReader should not be utilized until that task is complete
-        internal SqlDataReader RunExecuteReader(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, TaskCompletionSource<object> completion, int timeout, out Task task, out bool usedCache, bool asyncWrite = false, bool inRetry = false, [CallerMemberName] string method = "")
+        internal SqlDataReader RunExecuteReader(CommandBehavior cmdBehavior, 
+            RunBehavior runBehavior, 
+            bool returnStream, 
+            TaskCompletionSource<object> completion, 
+            int timeout, 
+            out Task task, 
+            out bool usedCache, 
+            bool asyncWrite = false, 
+            bool inRetry = false, 
+            [CallerMemberName] string method = "")
         {
             bool isAsync = (null != completion);
             usedCache = false;
