@@ -147,7 +147,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         /// <exception cref="NotImplementedException"></exception>
         protected override DbCommand CreateDbCommand()
         {
-            throw new NotImplementedException();
+            return new SqlCommandX(null, this);
         }
 
         /// <summary>
