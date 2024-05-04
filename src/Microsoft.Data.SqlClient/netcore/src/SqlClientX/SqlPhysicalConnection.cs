@@ -472,6 +472,7 @@ namespace simplesqlclient
 
                                 Span<byte> data = new byte[datalen];
                                 this._readStream.Read(data);
+                                this._protocolMetadata.AddFeature(featureId, data);
                             }
                         } while (featureId != 0xff);
                         break;

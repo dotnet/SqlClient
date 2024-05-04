@@ -15,9 +15,9 @@ namespace TestApplication
             $"Min Pool Size=120;Max Pool Size = 200;User Id=sa; pwd={Environment.GetEnvironmentVariable("SQL_PWD")}; " +
             "Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database=master;Pooling=False;" +
             "Application Name=TestAppX"; // pooled
-
-            bool testX = false;
-            if (testX)
+            Console.WriteLine("1 for X else default MDS");
+            char testX = Console.ReadKey().KeyChar;
+            if (testX == '1')
                 SimpleConnectionTestX(connectionString);
             else
                 SimpleConnectionTest(connectionString);
@@ -49,7 +49,7 @@ namespace TestApplication
 
             using (SqlCommandX command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT @@VERSION, @@SPID";
+                command.CommandText = "SELECT @@VERSION";
                 Console.WriteLine("Executing command");
 
                 object result = command.ExecuteScalar();

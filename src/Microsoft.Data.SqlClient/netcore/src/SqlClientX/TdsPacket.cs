@@ -178,11 +178,18 @@ namespace simplesqlclient
             }
         }
 
+        public byte[] AckData { get; private set; }
+
         public void FillData(Span<byte> buffer)
         {
             Debug.Assert(buffer.Length == 5, "Expected a 5 byte buffer for int");
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer, 1);
             buffer[4] = TdsEnums.MAX_SUPPORTED_TCE_VERSION;
+        }
+
+        public void SetAcknowledgedData(Span<byte> data)
+        {
+            this.AckData = data.ToArray();
         }
     }
 
@@ -205,7 +212,7 @@ namespace simplesqlclient
         }
     }
 
-    internal struct FedAuthFeature
+    internal struct FedAuthFeature : IServerFeature
     {
         public int Length
         {
@@ -237,9 +244,22 @@ namespace simplesqlclient
 
         internal byte[] AccessToken;
         internal TdsEnums.FedAuthLibrary FedAuthLibrary;
+        
+        private byte[] AckData { get; set; }
+
+        public void FillData(Span<byte> buffer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IServerFeature SetAcknowledgedData(Span<byte> buffer)
+        {
+            this.AckData = buffer.ToArray();
+            return this;
+        }
     }
 
-    internal struct DataClassificationFeature
+    internal struct DataClassificationFeature : IServerFeature
     {
         public uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_DATACLASSIFICATION;
 
@@ -251,17 +271,41 @@ namespace simplesqlclient
             }
         }
 
+        private byte[] AckData { get; set; }
+
         public void FillData(Span<byte> buffer)
         {
             Debug.Assert(buffer.Length == 5, "Expected a 5 byte buffer");
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer.Slice(0,4), 1);
             buffer[4] = TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED;
         }
+
+        public ReadOnlySpan<byte> GetAckData()
+        {
+            return AckData;
+        }
+
+        IServerFeature IServerFeature.SetAcknowledgedData(Span<byte> buffer)
+        {
+            this.AckData = buffer.ToArray();
+            return this;
+        }
     }
 
-    internal struct UTF8SupportFeature
+    internal interface IServerFeature
+    {
+        public ReadOnlySpan<byte> GetAckData();
+
+        public void FillData(Span<byte> buffer);
+
+        public IServerFeature SetAcknowledgedData(Span<byte> buffer);
+    }
+
+    internal struct UTF8SupportFeature : IServerFeature
     {
         public uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_UTF8SUPPORT;
+
+        public byte[] AckData { get; private set; }
 
         public int Length
         {
@@ -275,6 +319,16 @@ namespace simplesqlclient
         {
             Debug.Assert(buffer.Length == 4, "Expected a 4 byte buffer for int");
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer, 0);
+        }
+
+        public ReadOnlySpan<byte> GetAckData()
+        {
+            return AckData;
+        }
+
+        public IServerFeature SetAcknowledgedData(Span<byte> buffer)
+        {
+            throw new NotImplementedException();
         }
     }
 
