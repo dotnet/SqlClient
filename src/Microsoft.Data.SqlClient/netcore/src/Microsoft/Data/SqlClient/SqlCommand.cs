@@ -3984,9 +3984,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SqlDataReader GetParameterEncryptionDataReader(out Task returnTask, Task fetchInputParameterEncryptionInfoTask,
+        private SqlDataReader GetParameterEncryptionDataReader(out Task returnTask, 
+            Task fetchInputParameterEncryptionInfoTask,
             SqlDataReader describeParameterEncryptionDataReader,
-            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool describeParameterEncryptionNeeded, bool inRetry)
+            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
+            bool describeParameterEncryptionNeeded, 
+            bool inRetry)
         {
             returnTask = AsyncHelper.CreateContinuationTaskWithState(fetchInputParameterEncryptionInfoTask, this,
                 (object state) =>
@@ -4154,8 +4157,14 @@ namespace Microsoft.Data.SqlClient
                 EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, true, isRetry, out sqlEnclaveSession, out customData, out customDataLength);
                 if (sqlEnclaveSession == null)
                 {
-                    enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(attestationProtocol, enclaveType, enclaveSessionParameters.AttestationUrl, customData, customDataLength);
-                    serializedAttestationParameters = EnclaveDelegate.Instance.GetSerializedAttestationParameters(enclaveAttestationParameters, enclaveType);
+                    enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(
+                        attestationProtocol, 
+                        enclaveType, 
+                        enclaveSessionParameters.AttestationUrl, 
+                        customData, 
+                        customDataLength);
+                    serializedAttestationParameters = 
+                        EnclaveDelegate.Instance.GetSerializedAttestationParameters(enclaveAttestationParameters, enclaveType);
                 }
             }
 
@@ -4177,8 +4186,13 @@ namespace Microsoft.Data.SqlClient
                         _SqlRPC rpcDescribeParameterEncryptionRequest = new _SqlRPC();
 
                         // Prepare the describe parameter encryption request.
-                        PrepareDescribeParameterEncryptionRequest(_RPCList[i], ref rpcDescribeParameterEncryptionRequest, i == 0 ? serializedAttestationParameters : null);
-                        Debug.Assert(rpcDescribeParameterEncryptionRequest != null, "rpcDescribeParameterEncryptionRequest should not be null, after call to PrepareDescribeParameterEncryptionRequest.");
+                        PrepareDescribeParameterEncryptionRequest(
+                            _RPCList[i],
+                            ref rpcDescribeParameterEncryptionRequest, 
+                            i == 0 ? serializedAttestationParameters : null);
+                        
+                        Debug.Assert(rpcDescribeParameterEncryptionRequest != null, 
+                            "rpcDescribeParameterEncryptionRequest should not be null, after call to PrepareDescribeParameterEncryptionRequest.");
 
                         Debug.Assert(!describeParameterEncryptionRpcOriginalRpcDictionary.ContainsKey(rpcDescribeParameterEncryptionRequest),
                             "There should not already be a key referring to the current rpcDescribeParameterEncryptionRequest, in the dictionary describeParameterEncryptionRpcOriginalRpcDictionary.");
@@ -4222,7 +4236,10 @@ namespace Microsoft.Data.SqlClient
                 rpc.userParams = _parameters;
 
                 // Prepare the RPC request for describe parameter encryption procedure.
-                PrepareDescribeParameterEncryptionRequest(rpc, ref _sqlRPCParameterEncryptionReqArray[0], serializedAttestationParameters);
+                PrepareDescribeParameterEncryptionRequest(
+                    rpc, 
+                    ref _sqlRPCParameterEncryptionReqArray[0], 
+                    serializedAttestationParameters);
                 Debug.Assert(_sqlRPCParameterEncryptionReqArray[0] != null, "_sqlRPCParameterEncryptionReqArray[0] should not be null, after call to PrepareDescribeParameterEncryptionRequest.");
             }
 
@@ -4240,7 +4257,16 @@ namespace Microsoft.Data.SqlClient
 #endif
 
                 // Execute the RPC.
-                return RunExecuteReaderTds(CommandBehavior.Default, runBehavior: RunBehavior.ReturnImmediately, returnStream: true, isAsync: isAsync, timeout: timeout, task: out task, asyncWrite: asyncWrite, inRetry: false, ds: null, describeParameterEncryptionRequest: true);
+                return RunExecuteReaderTds(CommandBehavior.Default,
+                    runBehavior: RunBehavior.ReturnImmediately,
+                    returnStream: true,
+                    isAsync: isAsync,
+                    timeout: timeout,
+                    task: out task,
+                    asyncWrite: asyncWrite,
+                    inRetry: false,
+                    ds: null,
+                    describeParameterEncryptionRequest: true);
             }
             else
             {
@@ -4255,21 +4281,28 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         private SqlParameter GetSqlParameterWithQueryText(string queryText)
         {
-            SqlParameter sqlParam = new SqlParameter(null, ((queryText.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText, queryText.Length);
+            SqlParameter sqlParam = new SqlParameter(null,
+                ((queryText.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText,
+                queryText.Length);
             sqlParam.Value = queryText;
 
             return sqlParam;
         }
 
 
-        private void PrepareDescribeParameterEncryptionRequest(_SqlRPC originalRpcRequest, ref _SqlRPC describeParameterEncryptionRequest, byte[] attestationParameters = null)
+        private void PrepareDescribeParameterEncryptionRequest(_SqlRPC originalRpcRequest, 
+            ref _SqlRPC describeParameterEncryptionRequest, 
+            byte[] attestationParameters = null)
         {
             Debug.Assert(originalRpcRequest != null);
 
             // Construct the RPC request for sp_describe_parameter_encryption
             // sp_describe_parameter_encryption always has 2 parameters (stmt, paramlist).
             // sp_describe_parameter_encryption can have an optional 3rd parameter (attestationParameters), used to identify and execute attestation protocol
-            GetRPCObject(attestationParameters == null ? 2 : 3, 0, ref describeParameterEncryptionRequest, forSpDescribeParameterEncryption: true);
+            GetRPCObject(attestationParameters == null ? 2 : 3,
+                0, 
+                ref describeParameterEncryptionRequest, 
+                forSpDescribeParameterEncryption: true);
             describeParameterEncryptionRequest.rpcName = "sp_describe_parameter_encryption";
 
             // Prepare @tsql parameter
@@ -4295,7 +4328,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     // For stored procedures, we need to prepare @tsql in the following format
                     // N'EXEC sp_name @param1=@param1, @param1=@param2, ..., @paramN=@paramN'
-                    describeParameterEncryptionRequest.systemParams[0] = BuildStoredProcedureStatementForColumnEncryption(text, originalRpcRequest.userParams);
+                    describeParameterEncryptionRequest.systemParams[0] = 
+                        BuildStoredProcedureStatementForColumnEncryption(
+                            text, 
+                            originalRpcRequest.userParams);
                 }
                 else
                 {
@@ -4674,7 +4710,12 @@ namespace Microsoft.Data.SqlClient
 
                         int attestationInfoLength = (int)ds.GetBytes((int)DescribeParameterEncryptionResultSet3.AttestationInfo, 0, null, 0, 0);
                         byte[] attestationInfo = new byte[attestationInfoLength];
-                        ds.GetBytes((int)DescribeParameterEncryptionResultSet3.AttestationInfo, 0, attestationInfo, 0, attestationInfoLength);
+                        ds.GetBytes(
+                            (int)DescribeParameterEncryptionResultSet3.AttestationInfo, 
+                            0, 
+                            attestationInfo, 
+                            0, 
+                            attestationInfoLength);
 
                         SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
                         string enclaveType = this._activeConnection.Parser.EnclaveType;
@@ -4883,7 +4924,14 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                return RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, timeout, out task, asyncWrite && isAsync, inRetry: inRetry);
+                return RunExecuteReaderTds(cmdBehavior,
+                    runBehavior,
+                    returnStream,
+                    isAsync,
+                    timeout,
+                    out task,
+                    asyncWrite && isAsync,
+                    inRetry: inRetry);
             }
         }
 
