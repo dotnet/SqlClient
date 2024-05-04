@@ -56,7 +56,15 @@ namespace Microsoft.Data.SqlClient
 
     internal enum RunBehavior
     {
+        /// <summary>
+        /// 
+        /// </summary>
         UntilDone = 1, // 0001 binary
+
+        /// <summary>
+        ///  Typically used when we want to execute a query and then return immideately,
+        ///  instead of waiting for the results to come back and iterating over them
+        /// </summary>
         ReturnImmediately = 2, // 0010 binary
         Clean = 5, // 0101 binary - Clean AND UntilDone
         Attention = 13  // 1101 binary - Clean AND UntilDone AND Attention

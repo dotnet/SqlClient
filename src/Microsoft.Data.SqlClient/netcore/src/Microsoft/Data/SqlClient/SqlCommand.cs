@@ -4727,7 +4727,17 @@ namespace Microsoft.Data.SqlClient
             [CallerMemberName] string method = "")
         {
             Task unused; // sync execution
-            SqlDataReader reader = RunExecuteReader(cmdBehavior, runBehavior, returnStream, completion: null, timeout: CommandTimeout, task: out unused, usedCache: out bool usedCache, method: method);
+            SqlDataReader reader = RunExecuteReader(cmdBehavior, 
+                runBehavior, 
+                returnStream, 
+                completion: null, 
+                timeout: 
+                CommandTimeout, 
+                task: 
+                out unused, 
+                usedCache: 
+                out bool usedCache, 
+                method: method);
             Debug.Assert(unused == null, "returned task during synchronous execution");
             return reader;
         }
@@ -4794,8 +4804,17 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    return RunExecuteReaderTdsWithTransparentParameterEncryption(cmdBehavior, runBehavior, returnStream, isAsync, timeout, out task, asyncWrite && isAsync, inRetry: inRetry, ds: null,
-                        describeParameterEncryptionRequest: false, describeParameterEncryptionTask: returnTask);
+                    return RunExecuteReaderTdsWithTransparentParameterEncryption(cmdBehavior, 
+                        runBehavior, 
+                        returnStream, 
+                        isAsync, 
+                        timeout, 
+                        out task, 
+                        asyncWrite && isAsync, 
+                        inRetry: inRetry, 
+                        ds: null,
+                        describeParameterEncryptionRequest: false, 
+                        describeParameterEncryptionTask: returnTask);
                 }
 
                 catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
@@ -4811,7 +4830,16 @@ namespace Microsoft.Data.SqlClient
 
                     InvalidateEnclaveSession();
 
-                    return RunExecuteReader(cmdBehavior, runBehavior, returnStream, completion, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, isAsync, inRetry: true, method: method);
+                    return RunExecuteReader(cmdBehavior, 
+                        runBehavior, 
+                        returnStream, 
+                        completion, 
+                        TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), 
+                        out task, 
+                        out usedCache, 
+                        isAsync, 
+                        inRetry: true, 
+                        method: method);
                 }
 
                 catch (SqlException ex)
@@ -4969,7 +4997,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SqlDataReader RunExecuteReaderTds(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, bool isAsync, int timeout, out Task task, bool asyncWrite, bool inRetry, SqlDataReader ds = null, bool describeParameterEncryptionRequest = false)
+        private SqlDataReader RunExecuteReaderTds(CommandBehavior cmdBehavior,
+            RunBehavior runBehavior, 
+            bool returnStream, 
+            bool isAsync, 
+            int timeout, 
+            out Task task, 
+            bool asyncWrite, 
+            bool inRetry, 
+            SqlDataReader ds = null, 
+            bool describeParameterEncryptionRequest = false)
         {
             Debug.Assert(!asyncWrite || isAsync, "AsyncWrite should be always accompanied by Async");
 
@@ -4988,7 +5025,17 @@ namespace Microsoft.Data.SqlClient
                     TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                     _activeConnection.RegisterWaitingForReconnect(completion.Task);
                     _reconnectionCompletionSource = completion;
-                    RunExecuteReaderTdsSetupReconnectContinuation(cmdBehavior, runBehavior, returnStream, isAsync, timeout, asyncWrite, inRetry, ds, reconnectTask, reconnectionStart, completion);
+                    RunExecuteReaderTdsSetupReconnectContinuation(cmdBehavior, 
+                        runBehavior, 
+                        returnStream, 
+                        isAsync, 
+                        timeout, 
+                        asyncWrite, 
+                        inRetry, 
+                        ds, 
+                        reconnectTask, 
+                        reconnectionStart, 
+                        completion);
                     task = completion.Task;
                     return ds;
                 }
@@ -5041,7 +5088,14 @@ namespace Microsoft.Data.SqlClient
 #endif
 
                     Debug.Assert(_sqlRPCParameterEncryptionReqArray != null, "RunExecuteReader rpc array not provided for describe parameter encryption request.");
-                    writeTask = _stateObj.Parser.TdsExecuteRPC(this, _sqlRPCParameterEncryptionReqArray, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
+                    writeTask = _stateObj.Parser.TdsExecuteRPC(this, 
+                        _sqlRPCParameterEncryptionReqArray, 
+                        timeout, 
+                        inSchema, 
+                        this.Notification, 
+                        _stateObj, 
+                        CommandType.StoredProcedure == CommandType, 
+                        sync: !asyncWrite);
                 }
                 else if (_batchRPCMode)
                 {
@@ -5049,9 +5103,19 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(!IsPrepared, "Batch RPC should not be prepared!");
                     Debug.Assert(!IsDirty, "Batch RPC should not be marked as dirty!");
                     Debug.Assert(_RPCList != null, "RunExecuteReader rpc array not provided");
-                    writeTask = _stateObj.Parser.TdsExecuteRPC(this, _RPCList, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
+                    writeTask = _stateObj.Parser.TdsExecuteRPC(this, 
+                        _RPCList, 
+                        timeout, 
+                        inSchema, 
+                        this.Notification, 
+                        _stateObj, 
+                        CommandType.StoredProcedure == CommandType, 
+                        sync: !asyncWrite);
                 }
-                else if ((CommandType.Text == this.CommandType) && (0 == GetParameterCount(_parameters)))
+                else if (
+                    (CommandType.Text == this.CommandType) 
+                    && (0 == GetParameterCount(_parameters))
+                    )
                 {
                     // Send over SQL Batch command if we are not a stored proc and have no parameters
                     Debug.Assert(!IsUserPrepared, "CommandType.Text with no params should not be prepared!");
@@ -5068,15 +5132,25 @@ namespace Microsoft.Data.SqlClient
 
                         if (this.enclavePackage == null)
                         {
-                            throw SQL.NullEnclavePackageForEnclaveBasedQuery(this._activeConnection.Parser.EnclaveType, this._activeConnection.EnclaveAttestationUrl);
+                            throw SQL.NullEnclavePackageForEnclaveBasedQuery(
+                                this._activeConnection.Parser.EnclaveType, 
+                                this._activeConnection.EnclaveAttestationUrl);
                         }
 
-                        writeTask = _stateObj.Parser.TdsExecuteSQLBatch(text, timeout, this.Notification, _stateObj,
-                            sync: !asyncWrite, enclavePackage: this.enclavePackage.EnclavePackageBytes);
+                        writeTask = _stateObj.Parser.TdsExecuteSQLBatch(text, 
+                            timeout, 
+                            this.Notification, 
+                            _stateObj,
+                            sync: !asyncWrite, 
+                            enclavePackage: this.enclavePackage.EnclavePackageBytes);
                     }
                     else
                     {
-                        writeTask = _stateObj.Parser.TdsExecuteSQLBatch(text, timeout, this.Notification, _stateObj, sync: !asyncWrite);
+                        writeTask = _stateObj.Parser.TdsExecuteSQLBatch(text, 
+                            timeout, 
+                            this.Notification, 
+                            _stateObj, 
+                            sync: !asyncWrite);
                     }
                 }
                 else if (System.Data.CommandType.Text == this.CommandType)
@@ -5124,7 +5198,15 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     Debug.Assert(_rpcArrayOf1[0] == rpc);
-                    writeTask = _stateObj.Parser.TdsExecuteRPC(this, _rpcArrayOf1, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
+                    writeTask = _stateObj.Parser.TdsExecuteRPC(
+                        this, 
+                        _rpcArrayOf1, 
+                        timeout, 
+                        inSchema, 
+                        this.Notification, 
+                        _stateObj, 
+                        CommandType.StoredProcedure == CommandType, 
+                        sync: !asyncWrite);
                 }
                 else
                 {
@@ -5144,10 +5226,21 @@ namespace Microsoft.Data.SqlClient
                     // turn set options ON
                     if (null != optionSettings)
                     {
-                        Task executeTask = _stateObj.Parser.TdsExecuteSQLBatch(optionSettings, timeout, this.Notification, _stateObj, sync: true);
+                        Task executeTask = _stateObj.Parser.TdsExecuteSQLBatch(
+                            optionSettings, 
+                            timeout, 
+                            this.Notification, 
+                            _stateObj, 
+                            sync: true);
                         Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
                         Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                        bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out bool dataReady);
+                        bool result = _stateObj.Parser.TryRun(
+                            RunBehavior.UntilDone, 
+                            this, 
+                            null, 
+                            null, 
+                            _stateObj, 
+                            out bool dataReady);
                         if (!result)
                         { throw SQL.SynchronousCallMayNotPend(); }
                         // and turn OFF when the ds exhausts the stream on Close()
@@ -5156,7 +5249,15 @@ namespace Microsoft.Data.SqlClient
 
                     // execute sp
                     Debug.Assert(_rpcArrayOf1[0] == rpc);
-                    writeTask = _stateObj.Parser.TdsExecuteRPC(this, _rpcArrayOf1, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
+                    writeTask = _stateObj.Parser.TdsExecuteRPC(
+                        this, 
+                        _rpcArrayOf1, 
+                        timeout, 
+                        inSchema, 
+                        this.Notification, 
+                        _stateObj, 
+                        CommandType.StoredProcedure == CommandType, 
+                        sync: !asyncWrite);
                 }
 
                 Debug.Assert(writeTask == null || isAsync, "Returned task in sync mode");
@@ -5166,17 +5267,29 @@ namespace Microsoft.Data.SqlClient
                     decrementAsyncCountOnFailure = false;
                     if (writeTask != null)
                     {
-                        task = RunExecuteReaderTdsSetupContinuation(runBehavior, ds, optionSettings, writeTask);
+                        task = RunExecuteReaderTdsSetupContinuation(
+                            runBehavior, 
+                            ds, 
+                            optionSettings, 
+                            writeTask);
                     }
                     else
                     {
-                        cachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
+                        cachedAsyncState.SetAsyncReaderState(
+                            ds, 
+                            runBehavior, 
+                            optionSettings);
                     }
                 }
                 else
                 {
                     // Always execute - even if no reader!
-                    FinishExecuteReader(ds, runBehavior, optionSettings, isInternal: false, forDescribeParameterEncryption: false, shouldCacheForAlwaysEncrypted: !describeParameterEncryptionRequest);
+                    FinishExecuteReader(ds,
+                        runBehavior, 
+                        optionSettings, 
+                        isInternal: false, 
+                        forDescribeParameterEncryption: false, 
+                        shouldCacheForAlwaysEncrypted: !describeParameterEncryptionRequest);
                 }
             }
             catch (Exception e)
@@ -5205,7 +5318,11 @@ namespace Microsoft.Data.SqlClient
             return ds;
         }
 
-        private Task RunExecuteReaderTdsSetupContinuation(RunBehavior runBehavior, SqlDataReader ds, string optionSettings, Task writeTask)
+        private Task RunExecuteReaderTdsSetupContinuation(
+            RunBehavior runBehavior, 
+            SqlDataReader ds, 
+            string optionSettings, 
+            Task writeTask)
         {
             Task task = AsyncHelper.CreateContinuationTaskWithState(
                 task: writeTask,
@@ -5225,7 +5342,18 @@ namespace Microsoft.Data.SqlClient
         }
 
         // This is in its own method to avoid always allocating the lambda in RunExecuteReaderTds
-        private void RunExecuteReaderTdsSetupReconnectContinuation(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, bool isAsync, int timeout, bool asyncWrite, bool inRetry, SqlDataReader ds, Task reconnectTask, long reconnectionStart, TaskCompletionSource<object> completion)
+        private void RunExecuteReaderTdsSetupReconnectContinuation(
+            CommandBehavior cmdBehavior, 
+            RunBehavior runBehavior, 
+            bool returnStream, 
+            bool isAsync, 
+            int timeout, 
+            bool asyncWrite, 
+            bool inRetry, 
+            SqlDataReader ds, 
+            Task reconnectTask, 
+            long reconnectionStart, 
+            TaskCompletionSource<object> completion)
         {
             CancellationTokenSource timeoutCTS = new CancellationTokenSource();
             AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
@@ -5239,7 +5367,15 @@ namespace Microsoft.Data.SqlClient
                     Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
                     timeoutCTS.Cancel();
                     Task subTask;
-                    RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart), out subTask, asyncWrite, inRetry, ds);
+                    RunExecuteReaderTds(cmdBehavior,
+                        runBehavior, 
+                        returnStream, 
+                        isAsync, 
+                        TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart), 
+                        out subTask, 
+                        asyncWrite, 
+                        inRetry, 
+                        ds);
                     if (subTask == null)
                     {
                         completion.SetResult(null);
