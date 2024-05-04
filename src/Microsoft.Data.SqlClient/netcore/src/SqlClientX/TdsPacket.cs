@@ -166,7 +166,7 @@ namespace simplesqlclient
         }
     }
 
-    internal struct ColumnEncryptionData
+    internal struct ColumnEncryptionData : IServerFeature
     {
         public readonly uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_TCE;
 
@@ -187,9 +187,20 @@ namespace simplesqlclient
             buffer[4] = TdsEnums.MAX_SUPPORTED_TCE_VERSION;
         }
 
+        public ReadOnlySpan<byte> GetAckData()
+        {
+            return AckData;
+        }
+
         public void SetAcknowledgedData(Span<byte> data)
         {
             this.AckData = data.ToArray();
+        }
+
+        IServerFeature IServerFeature.SetAcknowledgedData(Span<byte> buffer)
+        {
+            this.AckData = buffer.ToArray();
+            return this;
         }
     }
 

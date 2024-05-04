@@ -16,12 +16,12 @@ namespace simplesqlclient
         public int DefaultCodePage { get; internal set; }
 
         public Encoding DefaultEncoding { get; internal set; }
-        public ColumnEncryptionData ColumnEncryptionFeature { get; internal set; }
+        public IServerFeature ColumnEncryptionFeature { get; internal set; }
 
-        public FedAuthFeature FedAuthFeature { get; internal set;}
+        public IServerFeature FedAuthFeature { get; internal set;}
 
-        public UTF8SupportFeature UTF8SupportFeature { get; internal set; }
-        public DataClassificationFeature DataClassificationFeature { get; internal set; }
+        public IServerFeature UTF8SupportFeature { get; internal set; }
+        public IServerFeature DataClassificationFeature { get; internal set; }
         public HashSet<byte> FeatureIdList { get; internal set; } = new HashSet<byte>();
 
         public bool IsFeatureSupported ( byte featureId ) => FeatureIdList.Contains(featureId);
@@ -39,9 +39,17 @@ namespace simplesqlclient
                     ColumnEncryptionFeature.SetAcknowledgedData(featureData);
                     break;
                 case TdsEnums.FEATUREEXT_DATACLASSIFICATION:
-                    DataClassificationFeature = new DataClassificationFeature().SetAcknowledgedData(featureData);
+                    DataClassificationFeature = new DataClassificationFeature();
+                    DataClassificationFeature.SetAcknowledgedData(featureData);
                     break;
-                case TdsEnums.FEATUREEXT_UTF8SUPPORT
+                case TdsEnums.FEATUREEXT_UTF8SUPPORT:
+                    UTF8SupportFeature = new UTF8SupportFeature();
+                    UTF8SupportFeature.SetAcknowledgedData(featureData);
+                    break;
+                case TdsEnums.FEATUREEXT_FEDAUTH:
+                    FedAuthFeature = new FedAuthFeature();
+                    FedAuthFeature.SetAcknowledgedData(featureData);
+                    break;
                 default:
                     throw new NotImplementedException($"FeatureId {featureId} is not implemented.");
             }
