@@ -20,6 +20,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         private string _database;
         private SqlPhysicalConnection physicalConnection;
 
+        internal SqlPhysicalConnection PhysicalConnection => physicalConnection;
         /// <summary>
         /// Constructor with Connection String.
         /// </summary>
@@ -126,7 +127,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             physicalConnection.EnableSsl();
             // Send login
             physicalConnection.SendLogin();
-            physicalConnection.ProcessPacket();
+            physicalConnection.ProcessTokenStreamPackets();
         }
 
         /// <summary>
@@ -163,6 +164,15 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         private ValueTask OpenCore(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Create a SqlCommand X 
+        /// </summary>
+        /// <returns></returns>
+        new public SqlCommandX CreateCommand()
+        {
+            return new SqlCommandX(null, this);
         }
     }
 }

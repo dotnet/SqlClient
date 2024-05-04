@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Xml.Schema;
+using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SqlClientX;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
 
@@ -25,8 +30,10 @@ namespace simplesqlclient
         private int _port;
         //private readonly string applicationName;
         private ConnectionSettings connectionSettings;
+        private readonly ProtocolMetadata _protocolMetadata;
         private bool IsMarsEnabled;
         private bool ServerSupportsFedAuth;
+        private ParserFlags _flags;
         private readonly AuthenticationOptions authOptions;
         private readonly string database;
 
@@ -43,6 +50,7 @@ namespace simplesqlclient
             this.authOptions = authOptions;
             this.database = database;
             this.connectionSettings = connectionSettings;
+            this._protocolMetadata = new ProtocolMetadata();
         }
 
         public void TcpConnect()
@@ -348,10 +356,17 @@ namespace simplesqlclient
             SendLogin();
 
             // Process packet for login.
-            ProcessPacket();
+            ProcessTokenStreamPackets();
         }
 
-        public void ProcessPacket()
+        /// <summary>
+        /// This needs to be a producer of information. The 
+        /// information produced will be handed out to the listeners of the information
+        /// The information production can be controlled by passing down flags.
+        /// </summary>
+        /// <exception cref="Exception"></exception>
+        /// <exception cref="NotImplementedException"></exception>
+        public void ProcessTokenStreamPackets()
         {
             this._readStream.ResetPacket();
             Span<byte> temp = stackalloc byte[100];
@@ -389,7 +404,6 @@ namespace simplesqlclient
                                     _ = this._readStream.ReadByte();
                                 }
                                 break;
-
                         }
                         break;
                     case TdsTokens.SQLERROR:
@@ -444,7 +458,7 @@ namespace simplesqlclient
                     case TdsTokens.SQLCOLMETADATA:
                         if (token.Length != TdsEnums.VARNULL) // TODO: What does this mean? 
                         {
-
+                            _SqlMetaDataSet metadataSet = ProcessMetadataSet(token.Length);
                         }
                         throw new NotImplementedException();
                     case TdsTokens.SQLFEATUREEXTACK:
@@ -467,6 +481,336 @@ namespace simplesqlclient
                         throw new NotImplementedException("The token type is not implemented. " + token.TokenType);
                 }
             } while(this._readStream.PacketDataLeft > 0);
+        }
+
+        private _SqlMetaDataSet ProcessMetadataSet(int columnCount)
+        {
+            _SqlMetaDataSet newMetaData = new _SqlMetaDataSet(columnCount, null);
+
+            for (int i = 0; i < columnCount; i++)
+            {
+                CommonProcessMetaData(newMetaData[i]);
+            }
+
+            return newMetaData;
+        }
+
+        private void CommonProcessMetaData(_SqlMetaData col)
+        {
+            uint userType = this._readStream.ReadUInt32();
+            byte flags = (byte)this._readStream.ReadByte();
+
+            col.Updatability = (byte)((flags & TdsEnums.Updatability) >> 2);
+            col.IsNullable = (TdsEnums.Nullable == (flags & TdsEnums.Nullable));
+            col.IsIdentity = (TdsEnums.Identity == (flags & TdsEnums.Identity));
+
+            flags = (byte)this._readStream.ReadByte();
+            col.IsColumnSet = (TdsEnums.IsColumnSet == (flags & TdsEnums.IsColumnSet));
+
+            ProcessTypeInfo(col, userType);
+
+
+            // Read table name
+            if (col.metaType.IsLong && !col.metaType.IsPlp)
+            {
+                int unusedLen = 0xFFFF;      //We ignore this value
+                col.multiPartTableName = ProcessOneTable(ref unusedLen);
+            }
+
+            byte byteLen = this._readStream.ReadByteCast();
+            col.column = this._readStream.ReadString(byteLen);
+            UpdateFlags(ParserFlags.HasReceivedColumnMetadata, true);
+        }
+
+        private MultiPartTableName ProcessOneTable(ref int length)
+        {
+            ushort tableLen;
+            MultiPartTableName mpt;
+            string value;
+
+            MultiPartTableName multiPartTableName = default(MultiPartTableName);
+
+            mpt = new MultiPartTableName();
+            byte nParts = this._readStream.ReadByteCast();
+
+            length--;
+            if (nParts == 4)
+            {
+                tableLen = this._readStream.ReadUInt16();
+                length -= 2;
+                value = this._readStream.ReadString(tableLen);
+                mpt.ServerName = value;
+                nParts--;
+                length -= (tableLen * 2); // wide bytes
+            }
+            if (nParts == 3)
+            {
+                tableLen = this._readStream.ReadUInt16();
+                length -= 2;
+                value = this._readStream.ReadString(tableLen);
+                mpt.CatalogName = value;
+                length -= (tableLen * 2); // wide bytes
+                nParts--;
+            }
+            if (nParts == 2)
+            {
+                tableLen = this._readStream.ReadUInt16();
+                length -= 2;
+                value = this._readStream.ReadString(tableLen);
+                mpt.SchemaName = value;
+                length -= (tableLen * 2); // wide bytes
+                nParts--;
+            }
+            if (nParts == 1)
+            {
+                tableLen = this._readStream.ReadUInt16();
+                length -= 2;
+                value = this._readStream.ReadString(tableLen);
+                mpt.TableName = value;
+                length -= (tableLen * 2); // wide bytes
+                nParts--;
+            }
+            Debug.Assert(nParts == 0, "ProcessTableName:Unidentified parts in the table name token stream!");
+
+            multiPartTableName = mpt;
+            return multiPartTableName;
+        }
+
+        private void UpdateFlags(ParserFlags flag, bool value)
+        {
+            _flags = value ? _flags | flag : _flags & ~flag;
+        }
+
+        private void ProcessTypeInfo(_SqlMetaData col, uint userType)
+        {
+            byte tdsType = (byte)this._readStream.ReadByte();
+            
+            if (tdsType == TdsEnums.SQLXMLTYPE)
+            {
+                col.length = TdsEnums.SQL_USHORTVARMAXLEN;
+            } 
+            else if (Utilities.IsVarTimeTds(tdsType))
+            {
+                col.length = 0;
+            }
+            else if (tdsType == TdsEnums.SQLUDT)
+            {
+                col.length = 3;
+            }
+            else
+            {
+                col.length = Utilities.GetSpecialTokenLength(tdsType, this._readStream);
+            }
+
+            col.metaType = MetaType.GetSqlDataType(tdsType, userType, col.length);
+            col.type = col.metaType.SqlDbType;
+            col.tdsType = (col.IsNullable ? col.metaType.NullableType : col.metaType.TDSType);
+
+            if (TdsEnums.SQLUDT == tdsType)
+            {
+                throw new NotImplementedException("Udt type is not implemented");
+            }
+
+            if (col.length == TdsEnums.SQL_USHORTVARMAXLEN)
+            {
+                Debug.Assert(tdsType == TdsEnums.SQLXMLTYPE ||
+                             tdsType == TdsEnums.SQLBIGVARCHAR ||
+                             tdsType == TdsEnums.SQLBIGVARBINARY ||
+                             tdsType == TdsEnums.SQLNVARCHAR ||
+                             tdsType == TdsEnums.SQLUDT,
+                             "Invalid streaming datatype");
+
+                col.metaType = MetaType.GetMaxMetaTypeFromMetaType(col.metaType);
+                Debug.Assert(col.metaType.IsLong, "Max datatype not IsLong");
+                col.length = int.MaxValue;
+
+                byte byteLen;
+                if (tdsType == TdsEnums.SQLXMLTYPE)
+                {
+                    byte schemapresent = (byte)this._readStream.ReadByte();
+                    
+                    if ((schemapresent & 1) != 0)
+                    {
+                        byteLen = (byte)this._readStream.ReadByte();
+                        col.xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+                        col.xmlSchemaCollection.Database = this._readStream.ReadString(byteLen);
+                        
+                        byteLen = (byte)this._readStream.ReadByte();
+
+                        col.xmlSchemaCollection.OwningSchema = this._readStream.ReadString(byteLen);
+                        
+                        short shortLen = this._readStream.ReadInt16();
+                        col.xmlSchemaCollection.Name = this._readStream.ReadString(shortLen);
+                    }
+                }
+            }
+
+            if (col.type == System.Data.SqlDbType.Decimal)
+            {
+                col.precision = this._readStream.ReadByteCast();
+                col.scale = this._readStream.ReadByteCast();
+            }
+
+            if (col.metaType.IsVarTime)
+            {
+                col.scale = this._readStream.ReadByteCast();
+                Debug.Assert(0 <= col.scale && col.scale <= 7);
+
+                switch (col.metaType.SqlDbType)
+                {
+                    case SqlDbType.Time:
+                        col.length = MetaType.GetTimeSizeFromScale(col.scale);
+                        break;
+                    case SqlDbType.DateTime2:
+                        // Date in number of days (3 bytes) + time
+                        col.length = 3 + MetaType.GetTimeSizeFromScale(col.scale);
+                        break;
+                    case SqlDbType.DateTimeOffset:
+                        // Date in days (3 bytes) + offset in minutes (2 bytes) + time
+                        col.length = 5 + MetaType.GetTimeSizeFromScale(col.scale);
+                        break;
+
+                    default:
+                        Debug.Fail("Unknown VariableTime type!");
+                        break;
+                }
+
+            }
+
+            if (col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE))
+            {
+                col.collation = ProcessCollation();
+
+                // UTF8 collation
+                if (col.collation.IsUTF8)
+                {
+                    col.encoding = Encoding.UTF8;
+                }
+                else
+                {
+                    int codePage = GetCodePage(col.collation);
+
+                    if (codePage == _protocolMetadata.DefaultCodePage)
+                    {
+                        col.codePage = _protocolMetadata.DefaultCodePage;
+                        col.encoding = _protocolMetadata.DefaultEncoding;
+                    }
+                    else
+                    {
+                        col.codePage = codePage;
+                        col.encoding = System.Text.Encoding.GetEncoding(col.codePage);
+                    }
+                }
+            }
+        }
+
+        private SqlCollation ProcessCollation()
+        {
+            uint info = this._readStream.ReadUInt32();
+            byte sortId = this._readStream.ReadByteCast();
+
+            SqlCollation collation = null;
+            if (SqlCollation.Equals(this._protocolMetadata.Collation, info, sortId))
+            {
+                collation = this._protocolMetadata.Collation;
+            }
+            else
+            {
+                collation = new SqlCollation(info, sortId);
+                this._protocolMetadata.Collation = collation;
+            }
+            return collation;
+        }
+
+        internal int GetCodePage(SqlCollation collation)
+        {
+            int codePage = 0;
+
+            if (0 != collation._sortId)
+            {
+                codePage = TdsEnums.CODE_PAGE_FROM_SORT_ID[collation._sortId];
+                Debug.Assert(0 != codePage, "GetCodePage accessed codepage array and produced 0!, sortID =" + ((Byte)(collation._sortId)).ToString((IFormatProvider)null));
+            }
+            else
+            {
+                int cultureId = collation.LCID;
+                bool success = false;
+
+                try
+                {
+                    codePage = CultureInfo.GetCultureInfo(cultureId).TextInfo.ANSICodePage;
+
+                    // SqlHot 50001398: CodePage can be zero, but we should defer such errors until
+                    //  we actually MUST use the code page (i.e. don't error if no ANSI data is sent).
+                    success = true;
+                }
+                catch (ArgumentException)
+                {
+                }
+
+                // If we failed, it is quite possible this is because certain culture id's
+                // were removed in Win2k and beyond, however Sql Server still supports them.
+                // In this case we will mask off the sort id (the leading 1). If that fails,
+                // or we have a culture id other than the cases below, we throw an error and
+                // throw away the rest of the results.
+
+                //  Sometimes GetCultureInfo will return CodePage 0 instead of throwing.
+                //  This should be treated as an error and functionality switches into the following logic.
+                if (!success || codePage == 0)
+                {
+                    switch (cultureId)
+                    {
+                        case 0x10404: // zh-TW
+                        case 0x10804: // zh-CN
+                        case 0x10c04: // zh-HK
+                        case 0x11004: // zh-SG
+                        case 0x11404: // zh-MO
+                        case 0x10411: // ja-JP
+                        case 0x10412: // ko-KR
+                                      // If one of the following special cases, mask out sortId and
+                                      // retry.
+                            cultureId = cultureId & 0x03fff;
+
+                            try
+                            {
+                                codePage = new CultureInfo(cultureId).TextInfo.ANSICodePage;
+                                success = true;
+                            }
+                            catch (ArgumentException)
+                            {
+                            }
+                            break;
+                        case 0x827:     // Mapping Non-supported Lithuanian code page to supported Lithuanian.
+                            try
+                            {
+                                codePage = new CultureInfo(0x427).TextInfo.ANSICodePage;
+                                success = true;
+                            }
+                            catch (ArgumentException)
+                            {
+                            }
+                            break;
+                        case 0x43f:
+                            codePage = 1251;  // Kazakh code page based on SQL Server
+                            break;
+                        case 0x10437:
+                            codePage = 1252;  // Georgian code page based on SQL Server
+                            break;
+                        default:
+                            break;
+                    }
+
+                    if (!success)
+                    {
+                        throw new Exception("Unsupported collation. Drain data.");
+                    }
+
+                    Debug.Assert(codePage >= 0,
+                        $"Invalid code page. codePage: {codePage}. cultureId: {cultureId}");
+                }
+            }
+
+            return codePage;
         }
 
         private SqlEnvChange ReadTwoStrings()
@@ -748,7 +1092,7 @@ namespace simplesqlclient
 
         internal void ProcessQueryResults()
         {
-            ProcessPacket();
+            ProcessTokenStreamPackets();
         }
     }
 }

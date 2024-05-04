@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Microsoft.Data.SqlClient.SqlClientX.DevAPIs
+namespace Microsoft.Data.SqlClient.SqlClientX
 {
     /// <summary>
     /// Represents a Sql command
@@ -40,11 +40,16 @@ namespace Microsoft.Data.SqlClient.SqlClientX.DevAPIs
         {
 
         }
+        
+        /// <summary>
+        /// Gets the SqlConnectionX for the command.
+        /// </summary>
+        new public SqlConnectionX Connection { get; set; }
 
         /// <summary>
         /// The command text
         /// </summary>
-        public override string CommandText { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override string CommandText { get ; set ; }
 
         /// <summary>
         /// The command timeout
@@ -108,7 +113,32 @@ namespace Microsoft.Data.SqlClient.SqlClientX.DevAPIs
         public override object ExecuteScalar()
         {
             // TODO: Implemet the execute scalar.
-            SqlDataReaderX reader = (SqlDataReaderX)ExecuteReader();
+            SqlDataReaderX reader = (SqlDataReaderX)ExecuteReaderOnPhysicalConnection(this.CommandText);
+            object result = null;
+
+            // Read the first result and return.
+            try
+            { 
+                if (reader.Read())
+                {
+                    if (reader.FieldCount > 0)
+                    { 
+                        result = reader.GetValue(0);
+                    }
+                }
+            }
+            finally
+            {
+                reader.Close();
+            }
+            return result;
+        }
+
+        private SqlDataReaderX ExecuteReaderOnPhysicalConnection(string commandText)
+        {
+            this.Connection.PhysicalConnection.SendQuery(commandText);
+            this.Connection.PhysicalConnection.ProcessQueryResults();
+            return new SqlDataReaderX(this);
         }
 
         /// <summary>

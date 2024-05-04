@@ -8763,7 +8763,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Task TdsExecuteSQLBatch(string text, int timeout, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false, byte[] enclavePackage = null)
+        internal Task TdsExecuteSQLBatch(string text, 
+            int timeout, 
+            SqlNotificationRequest notificationRequest, 
+            TdsParserStateObject stateObj, 
+            bool sync, 
+            bool callerHasConnectionLock = false, 
+            byte[] enclavePackage = null)
         {
             if (TdsParserState.Broken == State || TdsParserState.Closed == State)
             {

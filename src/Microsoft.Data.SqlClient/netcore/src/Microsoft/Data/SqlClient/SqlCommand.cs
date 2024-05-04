@@ -4154,7 +4154,16 @@ namespace Microsoft.Data.SqlClient
                 EnclaveSessionParameters enclaveSessionParameters = GetEnclaveSessionParameters();
 
                 SqlEnclaveSession sqlEnclaveSession = null;
-                EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, true, isRetry, out sqlEnclaveSession, out customData, out customDataLength);
+                EnclaveDelegate.Instance.GetEnclaveSession(
+                    attestationProtocol, 
+                    enclaveType, 
+                    enclaveSessionParameters, 
+                    true, 
+                    isRetry, 
+                    out sqlEnclaveSession, 
+                    out customData, 
+                    out customDataLength);
+
                 if (sqlEnclaveSession == null)
                 {
                     enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(
@@ -4163,8 +4172,11 @@ namespace Microsoft.Data.SqlClient
                         enclaveSessionParameters.AttestationUrl, 
                         customData, 
                         customDataLength);
+
                     serializedAttestationParameters = 
-                        EnclaveDelegate.Instance.GetSerializedAttestationParameters(enclaveAttestationParameters, enclaveType);
+                        EnclaveDelegate.Instance.GetSerializedAttestationParameters(
+                            enclaveAttestationParameters,
+                            enclaveType);
                 }
             }
 
@@ -4696,7 +4708,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (!ds.NextResult())
                     {
-                        throw SQL.UnexpectedDescribeParamFormatAttestationInfo(this._activeConnection.Parser.EnclaveType);
+                        throw SQL.UnexpectedDescribeParamFormatAttestationInfo(
+                            this._activeConnection.Parser.EnclaveType);
                     }
 
                     bool attestationInfoRead = false;

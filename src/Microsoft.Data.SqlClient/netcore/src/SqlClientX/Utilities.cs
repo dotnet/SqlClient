@@ -1,4 +1,8 @@
-﻿namespace simplesqlclient
+﻿using System.Diagnostics;
+using System.IO;
+using Microsoft.Data.SqlClient.SqlClientX.Streams;
+
+namespace simplesqlclient
 {
     internal class Utilities
     {
@@ -39,6 +43,39 @@
             }
             return bObfuscated;
         }
+
+        internal static bool IsVarTimeTds(byte tdsType) => tdsType == TdsEnums.SQLTIME || tdsType == TdsEnums.SQLDATETIME2 || tdsType == TdsEnums.SQLDATETIMEOFFSET;
+
+        internal static int GetSpecialTokenLength(byte tokenType, TdsReadStream stream)
+        {
+            int length = 0;
+            switch (tokenType)
+            {
+                // Handle special tokens.
+                case TdsTokens.SQLFEATUREEXTACK:
+                    length = -1;
+                    
+                    break;
+                case TdsTokens.SQLSESSIONSTATE:
+                    length = stream.ReadInt32();
+                    break;
+                case TdsTokens.SQLFEDAUTHINFO:
+                    length = stream.ReadInt32();
+                    break;
+                case TdsTokens.SQLUDT:
+                case TdsTokens.SQLRETURNVALUE:
+                    length = -1;
+                    break;
+                case TdsTokens.SQLXMLTYPE:
+                    length = stream.ReadUInt16();
+                    break;
+                default:
+                    Debug.Assert(false, "Unknown token length!");
+                    break;
+            }
+            return length;
+        }
     }
+
 
 }

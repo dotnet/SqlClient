@@ -5,13 +5,21 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Microsoft.Data.SqlClient.SqlClientX.DevAPIs
+namespace Microsoft.Data.SqlClient.SqlClientX
 {
     /// <summary>
     /// Data Reader X 
     /// </summary>
     public class SqlDataReaderX : DbDataReader, IDataReader, IDbColumnSchemaGenerator
     {
+        private SqlCommandX _sqlCommandX;
+
+
+        internal SqlDataReaderX(SqlCommandX sqlCommandX)
+        {
+            _sqlCommandX = sqlCommandX;
+        }
+
         /// <summary>
         /// Indexer
         /// </summary>

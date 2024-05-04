@@ -13,9 +13,10 @@ namespace TestApplication
         {
             string connectionString = $"Server=tcp:127.0.0.1;" +
             $"Min Pool Size=120;Max Pool Size = 200;User Id=sa; pwd={Environment.GetEnvironmentVariable("SQL_PWD")}; " +
-            "Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database=master"; // pooled
+            "Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database=master;Pooling=False;" +
+            "Application Name=TestAppX"; // pooled
 
-            bool testX = true;
+            bool testX = false;
             if (testX)
                 SimpleConnectionTestX(connectionString);
             else
@@ -46,9 +47,9 @@ namespace TestApplication
             SqlConnectionX connection = new SqlConnectionX(connectionString);
             connection.Open();
 
-            using (var command = connection.CreateCommand())
+            using (SqlCommandX command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT @@VERSION";
+                command.CommandText = "SELECT @@VERSION, @@SPID";
                 Console.WriteLine("Executing command");
 
                 object result = command.ExecuteScalar();

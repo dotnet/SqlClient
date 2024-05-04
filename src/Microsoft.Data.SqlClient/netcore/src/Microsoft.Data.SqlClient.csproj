@@ -948,8 +948,12 @@
     <Compile Include="SqlClientX\BufferWriter.cs" />
     <Compile Include="SqlClientX\ConnectionSettings.cs" />
     <Compile Include="SqlClientX\Constants.cs" />
+    <Compile Include="SqlClientX\DevAPIs\SqlCommandX.cs" />
+    <Compile Include="SqlClientX\DevAPIs\SqlDataReaderX.cs" />
+    <Compile Include="SqlClientX\ParserFlags.cs" />
     <Compile Include="SqlClientX\Program.cs" />
-    <Compile Include="SqlClientX\SqlConnectionX.cs" />
+    <Compile Include="SqlClientX\DevAPIs\SqlConnectionX.cs" />
+    <Compile Include="SqlClientX\ProtocolMetadata.cs" />
     <Compile Include="SqlClientX\SqlEnvChange.cs" />
     <Compile Include="SqlClientX\SqlError.cs" />
     <Compile Include="SqlClientX\SqlPhysicalConnection.cs" />

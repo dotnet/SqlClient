@@ -14,9 +14,19 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
 {
     internal static class TdsReadStreamExtensions
     {
+        internal static byte ReadByteCast(this TdsReadStream stream) => (byte)stream.ReadByte();
+            
         internal static string ReadString(this TdsReadStream stream, ushort shortLen)
         {
             int byteCount = shortLen << 1;
+            Span<byte> stringBytes = stackalloc byte[byteCount];
+            stream.Read(stringBytes);
+            return Encoding.Unicode.GetString(stringBytes);
+        }
+
+        internal static string ReadString(this TdsReadStream stream, int length)
+        {
+            int byteCount = length << 1;
             Span<byte> stringBytes = stackalloc byte[byteCount];
             stream.Read(stringBytes);
             return Encoding.Unicode.GetString(stringBytes);
@@ -27,6 +37,13 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             Span<byte> buffer = stackalloc byte[2];
             stream.Read(buffer);
             return (ushort)((buffer[1] << 8) + buffer[0]);
+        }
+
+        internal static short ReadInt16(this TdsReadStream stream)
+        {
+            Span<byte> buffer = stackalloc byte[2];
+            stream.Read(buffer);
+            return (short)((buffer[1] << 8) + buffer[0]);
         }
 
         internal static long ReadInt64(this TdsReadStream stream)
