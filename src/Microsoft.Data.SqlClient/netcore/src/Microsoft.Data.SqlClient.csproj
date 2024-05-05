@@ -726,6 +726,9 @@
     <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.IoControlTransferType.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.IoControlTransferType.cs</Link>
     </Compile>
+    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs">
+      <Link>Common\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonPath)\Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
     </Compile>
@@ -826,16 +829,25 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
 
+    <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
+    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Common.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Windows.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs" />
   </ItemGroup>
@@ -894,31 +906,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Managed.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(IsUAPAssembly)' == 'true'">
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.uap.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Unix.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Unix.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.uap.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Managed.cs" />
-  </ItemGroup>
-
-  <!-- Assets needed on Windows but should be avoided on UAP to avoid sni.dll -->
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'">
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs">
-      <Link>Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs</Link>
-    </Compile>
-    <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
-  </ItemGroup>
 
   <!-- Resources -->
   <ItemGroup>
@@ -947,10 +934,6 @@
   </ItemGroup>
 
   <!-- Package References Etc -->
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(IsUAPAssembly)' == 'true'">
-    <Reference Include="System.Collections.NonGeneric" />
-    <Reference Include="System.Memory" />
-  </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />

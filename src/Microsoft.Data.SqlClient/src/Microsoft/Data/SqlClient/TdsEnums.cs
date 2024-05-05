@@ -998,47 +998,6 @@ namespace Microsoft.Data.SqlClient
         internal const byte DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT = 0x01;
         internal const byte DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED = 0x02;
 
-        // Needed for UapAot, since we cannot use Enum.GetName() on SniContext.
-        // Enum.GetName() uses reflection, which is blocked on UapAot for internal types
-        // like SniContext.
-        internal static string GetSniContextEnumName(SniContext sniContext)
-        {
-            switch (sniContext)
-            {
-                case SniContext.Undefined:
-                    return "Undefined";
-                case SniContext.Snix_Connect:
-                    return "Snix_Connect";
-                case SniContext.Snix_PreLoginBeforeSuccessfulWrite:
-                    return "Snix_PreLoginBeforeSuccessfulWrite";
-                case SniContext.Snix_PreLogin:
-                    return "Snix_PreLogin";
-                case SniContext.Snix_LoginSspi:
-                    return "Snix_LoginSspi";
-                case SniContext.Snix_ProcessSspi:
-                    return "Snix_ProcessSspi";
-                case SniContext.Snix_Login:
-                    return "Snix_Login";
-                case SniContext.Snix_EnableMars:
-                    return "Snix_EnableMars";
-                case SniContext.Snix_AutoEnlist:
-                    return "Snix_AutoEnlist";
-                case SniContext.Snix_GetMarsSession:
-                    return "Snix_GetMarsSession";
-                case SniContext.Snix_Execute:
-                    return "Snix_Execute";
-                case SniContext.Snix_Read:
-                    return "Snix_Read";
-                case SniContext.Snix_Close:
-                    return "Snix_Close";
-                case SniContext.Snix_SendRows:
-                    return "Snix_SendRows";
-                default:
-                    Debug.Fail($"Received unknown SniContext enum. Value: {sniContext}");
-                    return null;
-            }
-        }
-
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x03; // max version
         internal const byte MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT = 0x02; // min version with enclave support
