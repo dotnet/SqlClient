@@ -23,6 +23,7 @@ using System.Text;
 using System.Security.Principal;
 using Azure.Identity;
 using Azure.Core;
+using System.Runtime.InteropServices;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -132,6 +133,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return s_isTDS8Supported;
             }
         }
+
+        public static bool IsNotX86Architecture => RuntimeInformation.ProcessArchitecture != Architecture.X86;
 
         static DataTestUtility()
         {
