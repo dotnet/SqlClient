@@ -2,14 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Data.Common;
-using System.Net;
-using System.Net.Sockets;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.DataSourceParserTest
 {
     public class DataSourceParserTest
@@ -20,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.DataSourceParserTest
         [InlineData("np:localhost")]
         [InlineData(" localhost ")]
         [InlineData("tcp: localhost ")]
-        [InlineData("np: localhost" )]
+        [InlineData("np: localhost")]
         public void ParseDataSourceWithoutInstanceNorPortTestShouldSucceed(string dataSource)
         {
             DataTestUtility.ParseDataSource(dataSource, out string hostname, out _, out _);
@@ -50,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.DataSourceParserTest
         [InlineData("np:localhost \\ MSSQLSERVER02 ")]
         public void ParseDataSourceWithInstanceButWithoutPortTestShouldSucceed(string dataSource)
         {
-            DataTestUtility.ParseDataSource(dataSource, out string hostname, out _, out string instanceName );
+            DataTestUtility.ParseDataSource(dataSource, out string hostname, out _, out string instanceName);
             Assert.Equal("localhost", hostname);
             Assert.Equal("MSSQLSERVER02", instanceName);
         }
