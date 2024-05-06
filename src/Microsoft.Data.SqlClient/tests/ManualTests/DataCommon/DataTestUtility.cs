@@ -11,19 +11,19 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.Principal;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Microsoft.Identity.Client;
 using Xunit;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Security.Principal;
-using Azure.Identity;
-using Azure.Core;
-using System.Runtime.InteropServices;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -133,8 +133,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return s_isTDS8Supported;
             }
         }
-
-        public static bool IsNotX86Architecture => RuntimeInformation.ProcessArchitecture != Architecture.X86;
 
         static DataTestUtility()
         {
@@ -327,6 +325,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return isTDS8Supported;
         }
+
+        public static bool IsNotX86Architecture => RuntimeInformation.ProcessArchitecture != Architecture.X86;
 
         public static bool IsDatabasePresent(string name)
         {
