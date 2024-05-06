@@ -951,12 +951,14 @@
     <Compile Include="SqlClientX\DevAPIs\SqlCommandX.cs" />
     <Compile Include="SqlClientX\DevAPIs\SqlDataReaderX.cs" />
     <Compile Include="SqlClientX\ParserFlags.cs" />
+    <Compile Include="SqlClientX\ParsingBehavior.cs" />
     <Compile Include="SqlClientX\Program.cs" />
     <Compile Include="SqlClientX\DevAPIs\SqlConnectionX.cs" />
     <Compile Include="SqlClientX\ProtocolMetadata.cs" />
     <Compile Include="SqlClientX\SqlEnvChange.cs" />
     <Compile Include="SqlClientX\SqlError.cs" />
     <Compile Include="SqlClientX\SqlPhysicalConnection.cs" />
+    <Compile Include="SqlClientX\SqlValuesProcessing\SqlValuesProcessor.cs" />
     <Compile Include="SqlClientX\SslOverTdsStream.cs" />
     <Compile Include="SqlClientX\Streams\TdsReadStreamExtensions.cs" />
     <Compile Include="SqlClientX\TDS.Identifiers\PacketHeaderTypes.cs" />

@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient
 
         protected readonly TdsParser _parser;                            // TdsParser pointer
         private readonly WeakReference<object> _owner = new(null);   // the owner of this session, used to track when it's been orphaned
-        internal SqlDataReader.SharedState _readerState;                    // susbset of SqlDataReader state (if it is the owner) necessary for parsing abandoned results in TDS
+        internal SqlDataReader.SqlDataReaderState _readerState;                    // susbset of SqlDataReader state (if it is the owner) necessary for parsing abandoned results in TDS
         private int _activateCount;                     // 0 when we're in the pool, 1 when we're not, all others are an error
         private SnapshottedStateFlags _snapshottedState;
 
@@ -394,7 +394,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(value == null || !_owner.TryGetTarget(out object target) || value is SqlDataReader reader1 && reader1.Command == target, "Should not be changing the owner of an owned stateObj");
                 if (value is SqlDataReader reader)
                 {
-                    _readerState = reader._sharedState;
+                    _readerState = reader._dataReadState;
                 }
                 else
                 {

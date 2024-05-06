@@ -5,6 +5,8 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Microsoft.Data.SqlClient.SqlClientX
 {
@@ -113,7 +115,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         public override object ExecuteScalar()
         {
             // TODO: Implemet the execute scalar.
-            SqlDataReaderX reader = (SqlDataReaderX)ExecuteReaderOnPhysicalConnection(this.CommandText);
+            SqlDataReaderX reader = ExecuteReaderOnPhysicalConnection(this.CommandText);
             object result = null;
 
             // Read the first result and return.
@@ -136,9 +138,15 @@ namespace Microsoft.Data.SqlClient.SqlClientX
 
         private SqlDataReaderX ExecuteReaderOnPhysicalConnection(string commandText)
         {
-            this.Connection.PhysicalConnection.SendQuery(commandText);
-            this.Connection.PhysicalConnection.ProcessQueryResults();
-            return new SqlDataReaderX(this);
+            Connection.PhysicalConnection.SendQuery(commandText);
+            
+            var mdSet = Connection.PhysicalConnection.ProcessMetadata();
+            var reader = new SqlDataReaderX(this);
+            bool hasMoreInformation = false;
+            reader.SetMetadata(mdSet, hasMoreInformation);
+            //Connection.PhysicalConnection.AdvancePastRow();
+            //var buffer = Connection.PhysicalConnection.ReadSqlValue(mdSet);
+            return reader;
         }
 
         /// <summary>
@@ -169,6 +177,16 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Return an executed reader.
+        /// </summary>
+        /// <returns></returns>
+        new public SqlDataReaderX ExecuteReader()
+        {
+            SqlDataReaderX reader = ExecuteReaderOnPhysicalConnection(this.CommandText);
+            return reader;
         }
     }
 }

@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
+using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
 
 namespace simplesqlclient
@@ -48,32 +50,98 @@ namespace simplesqlclient
 
         internal static int GetSpecialTokenLength(byte tokenType, TdsReadStream stream)
         {
+            bool specialToken = false;
             int length = 0;
             switch (tokenType)
             {
                 // Handle special tokens.
                 case TdsTokens.SQLFEATUREEXTACK:
                     length = -1;
-                    
+                    specialToken = true;
                     break;
                 case TdsTokens.SQLSESSIONSTATE:
                     length = stream.ReadInt32();
+                    specialToken = true;
                     break;
                 case TdsTokens.SQLFEDAUTHINFO:
                     length = stream.ReadInt32();
+                    specialToken = true;
                     break;
                 case TdsTokens.SQLUDT:
                 case TdsTokens.SQLRETURNVALUE:
                     length = -1;
+                    specialToken = true;
                     break;
                 case TdsTokens.SQLXMLTYPE:
                     length = stream.ReadUInt16();
+                    specialToken = true;
                     break;
+
                 default:
-                    Debug.Assert(false, "Unknown token length!");
+                    specialToken = false;
                     break;
             }
+
+            int tokenLength = 0;
+            if (!specialToken)
+            {
+                switch (tokenType & TdsEnums.SQLLenMask)
+                {
+                    case TdsEnums.SQLFixedLen:
+                        tokenLength = (0x01 << ((tokenType & 0x0c) >> 2)) & 0xff;
+                        break;
+                    case TdsEnums.SQLZeroLen:
+                        tokenLength = 0;
+                        break;
+                    case TdsEnums.SQLVarLen:
+                    case TdsEnums.SQLVarCnt:
+                        if (0 != (tokenType & 0x80))
+                        {
+                            tokenLength = stream.ReadUInt16();
+                            break;
+                        }
+                        else if (0 == (tokenType & 0x0c))
+                        {
+                            tokenLength = stream.ReadInt32();
+                            break;
+                        }
+                        else
+                        {
+                            byte value = stream.ReadByteCast();
+                            break;
+                        }
+                    default:
+                        Debug.Fail("Unknown token length!");
+                        tokenLength = 0;
+                        break;
+                }
+                length = tokenLength;
+            }
+            // Read the length
+
+            // Read the data
+
             return length;
+        }
+
+        internal static bool IsNull(MetaType mt, int length)
+        {
+            // null bin and char types have a length of -1 to represent null
+            if (mt.IsPlp)
+            {
+                throw new NotImplementedException("PLP not implemented");
+            }
+
+            // HOTFIX #50000415: for image/text, 0xFFFF is the length, not representing null
+            if ((TdsEnums.VARNULL == length) && !mt.IsLong)
+            {
+                return true;
+            }
+
+            // other types have a length of 0 to represent null
+            // long and non-PLP types will always return false because these types are either char or binary
+            // this is expected since for long and non-plp types isnull is checked based on textptr field and not the length
+            return ((TdsEnums.FIXEDNULL == length) && !mt.IsCharType && !mt.IsBinType);
         }
     }
 

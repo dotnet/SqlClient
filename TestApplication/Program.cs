@@ -32,11 +32,24 @@ namespace TestApplication
             
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT @@VERSION";
+                command.CommandText = "SELECT @@SPID, 1, @@VERSION";
                 Console.WriteLine("Executing command");
 
-                object result = command.ExecuteScalar();
-                Console.WriteLine(result);
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    do
+                    {
+                        while (reader.Read())
+                        {
+                            // Process each row
+                            // REad in reverse to cached the data in the reader buffers.
+                            for (int i = reader.FieldCount -1; i >= 0; i--)
+                            {
+                                Console.WriteLine(reader.GetValue(i));
+                            }
+                        }
+                    } while (reader.NextResult()); // Move to the next result set
+                }
             }
         }
 
@@ -49,11 +62,24 @@ namespace TestApplication
 
             using (SqlCommandX command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT @@VERSION";
+                command.CommandText = "Select @@VERSION, cast(2 as varchar), cast(@@SPID as varchar) ";
                 Console.WriteLine("Executing command");
 
-                object result = command.ExecuteScalar();
-                Console.WriteLine(result);
+                using (SqlDataReaderX reader = command.ExecuteReader())
+                {
+                    do
+                    {
+                        while (reader.Read())
+                        {
+                            // Process each row
+                            // REad in reverse to cached the data in the reader buffers.
+                            for (int i = reader.FieldCount - 1; i >= 0; i--)
+                            {
+                                Console.WriteLine(reader.GetValue(i));
+                            }
+                        }
+                    } while (reader.NextResult()); // Move to the next result set
+                }
             }
         }
     }

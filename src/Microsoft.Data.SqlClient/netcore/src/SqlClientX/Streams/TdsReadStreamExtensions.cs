@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Buffers;
 using System.Buffers.Binary;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Data.SqlClient.SqlClientX.Streams;
 using simplesqlclient;
 
 namespace Microsoft.Data.SqlClient.SqlClientX.Streams
@@ -99,6 +93,41 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             return BinaryPrimitives.ReadUInt32LittleEndian(buffer);
         }
 
+        internal static string ReadStringWithEncoding(this TdsReadStream stream, int length, System.Text.Encoding encoding, bool isPlp)
+        {
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadStringWithEncoding");  // you need to setup for a thread abort somewhere before you call this method
+
+            if (null == encoding)
+            {
+                // Need to skip the current column before throwing the error - this ensures that the state shared between this and the data reader is consistent when calling DrainData
+                if (isPlp)
+                {
+                    throw new NotImplementedException();
+                }
+                else
+                {
+                    stream.Read(stackalloc byte[8]);
+                }
+
+                throw new Exception("Unsupported encoding exception");
+            }
+            byte[] buf = null;
+            int offset = 0;
+
+            if (isPlp)
+            {
+                throw new NotImplementedException();
+            }
+            else
+            {
+                buf = new byte[length];
+                stream.Read(buf);
+            }
+
+            // BCL optimizes to not use char[] underneath
+            return encoding.GetString(buf, offset, length);
+        }
+
         internal static TdsToken ProcessToken(this TdsReadStream stream)
         {
             TdsToken token = new();
@@ -173,7 +202,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                         }
                         else
                         {
-                            byte value = (byte)stream.ReadByte();
+                            tokenLength = (byte)stream.ReadByte();
                             break;
                         }
                     default:

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -12,6 +14,7 @@ using System.Text;
 using System.Xml.Schema;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SqlClientX;
+using Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
 
 namespace simplesqlclient
@@ -26,17 +29,26 @@ namespace simplesqlclient
 
         private TdsWriteStream _writeStream;
         private TdsReadStream _readStream;
+        private SqlValuesProcessor _sqlValuesProcessor;
         private string _hostname;
         private int _port;
         //private readonly string applicationName;
-        private ConnectionSettings connectionSettings;
+        private ConnectionSettings _connectionSettings;
         private readonly ProtocolMetadata _protocolMetadata;
-        private bool IsMarsEnabled;
-        private bool ServerSupportsFedAuth;
+        private bool _isMarsEnabled;
+        private bool _serverSupportsFedAuth;
         private ParserFlags _flags;
-        private readonly AuthenticationOptions authOptions;
-        private readonly string database;
+        private readonly AuthenticationOptions _authOptions;
+        private readonly string _database;
 
+        static SqlPhysicalConnection()
+        {
+            // For CoreCLR, we need to register the ANSI Code Page encoding provider before attempting to get an Encoding from a CodePage
+            // For a default installation of SqlServer the encoding exchanged during Login is 1252. This encoding is not loaded by default
+            // See Remarks at https://msdn.microsoft.com/en-us/library/system.text.encodingprovider(v=vs.110).aspx 
+            // SqlClient needs to register the encoding providers to make sure that even basic scenarios work with Sql Server.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        }
 
         public SqlPhysicalConnection(
             string hostname,
@@ -45,12 +57,13 @@ namespace simplesqlclient
             string database,
             ConnectionSettings connectionSettings)
         {
-            this._hostname = hostname;
-            this._port = port;
-            this.authOptions = authOptions;
-            this.database = database;
-            this.connectionSettings = connectionSettings;
-            this._protocolMetadata = new ProtocolMetadata();
+            _hostname = hostname;
+            _port = port;
+            _authOptions = authOptions;
+            _database = database;
+            _connectionSettings = connectionSettings;
+            _protocolMetadata = new ProtocolMetadata();
+            
         }
 
         public void TcpConnect()
@@ -95,11 +108,11 @@ namespace simplesqlclient
             }
             //socket.NoDelay = true;
 
-            this._tcpStream = new NetworkStream(socket, true);
+            _tcpStream = new NetworkStream(socket, true);
 
-            this._sslOverTdsStream = new SslOverTdsStream(_tcpStream);
+            _sslOverTdsStream = new SslOverTdsStream(_tcpStream);
 
-            this._sslStream = new SslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
+            _sslStream = new SslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
         }
 
         private bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
@@ -240,7 +253,7 @@ namespace simplesqlclient
 
         internal void EnableSsl()
         {
-            _sslStream.AuthenticateAsClient(this._hostname, null, System.Security.Authentication.SslProtocols.None, false);
+            _sslStream.AuthenticateAsClient(_hostname, null, System.Security.Authentication.SslProtocols.None, false);
             if (_sslOverTdsStream is not null)
             {
                 _sslOverTdsStream.FinishHandshake();
@@ -266,6 +279,7 @@ namespace simplesqlclient
             if (_readStream == null)
             {
                 _readStream = new TdsReadStream(_tcpStream);
+                _sqlValuesProcessor = new SqlValuesProcessor(_readStream);
             }
             //TdsPacketHeader header = _bufferReader.ProcessPacketHeader();
             //Debug.Assert(header.PacketType == (byte)PacketType.SERVERSTREAM);
@@ -320,13 +334,13 @@ namespace simplesqlclient
                         // Ignore 
                         break;
                     case (int)PreLoginOptions.MARS:
-                        IsMarsEnabled = preLoginPacket[currentOption.Offset] == 1;
+                        _isMarsEnabled = preLoginPacket[currentOption.Offset] == 1;
                         break;
                     case (int)PreLoginOptions.TRACEID:
                         // Ignore
                         break;
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
-                        ServerSupportsFedAuth = preLoginPacket[currentOption.Offset] == 1;
+                        _serverSupportsFedAuth = preLoginPacket[currentOption.Offset] == 1;
                         break;
                     default:
                         Debug.Fail("Unknown option");
@@ -338,26 +352,6 @@ namespace simplesqlclient
         }
         #endregion
 
-        public void Connect()
-        {
-            //Console.WriteLine("Connecting to {0}:{1} with user {2} and database {3}", hostname, port, database);
-            // Establish TCP connection
-            TcpConnect();
-            // Send prelogin
-            SendPrelogin();
-
-            if (!TryConsumePrelogin())
-            {
-                throw new Exception("Failed to consume prelogin");
-            }
-
-            EnableSsl();
-            // Send login
-            SendLogin();
-
-            // Process packet for login.
-            ProcessTokenStreamPackets();
-        }
 
         /// <summary>
         /// This needs to be a producer of information. The 
@@ -366,20 +360,26 @@ namespace simplesqlclient
         /// </summary>
         /// <exception cref="Exception"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public void ProcessTokenStreamPackets()
+        public void ProcessTokenStreamPackets(ParsingBehavior parsingBehavior, byte? expectedTdsToken = null, bool resetPacket = true)
         {
-            this._readStream.ResetPacket();
+            if (resetPacket )
+                _readStream.ResetPacket();
             Span<byte> temp = stackalloc byte[100];
             do
             {
                 // Read a 1 byte token
-                TdsToken token = this._readStream.ProcessToken();
+                TdsToken token = _readStream.ProcessToken();
 
+                if (expectedTdsToken != null && expectedTdsToken != token.TokenType)
+                {
+                    //throw new Exception("Expected token type " + expectedTdsToken + " but got " + token.TokenType);
+                } 
+                    
                 SqlEnvChange envChange = null;
                 switch (token.TokenType)
                 {
                     case TdsTokens.SQLENVCHANGE:
-                        byte envType = (byte)this._readStream.ReadByte();
+                        byte envType = (byte)_readStream.ReadByte();
                         switch (envType)
                         {
                             case TdsEnums.ENV_DATABASE:
@@ -391,17 +391,17 @@ namespace simplesqlclient
                                 // Read 
                                 break;
                             case TdsEnums.ENV_COLLATION:
-                                int newLen = this._readStream.ReadByte();
+                                int newLen = _readStream.ReadByte();
                                 if (newLen == 5)
                                 { 
-                                    _ = this._readStream.ReadInt32();
-                                    _ = this._readStream.ReadByte();
+                                    _ = _readStream.ReadInt32();
+                                    _ = _readStream.ReadByte();
                                 }
-                                int oldLen = this._readStream.ReadByte();
+                                int oldLen = _readStream.ReadByte();
                                 if (oldLen == 5)
                                 { 
-                                    _ = this._readStream.ReadInt32();
-                                    _ = this._readStream.ReadByte();
+                                    _ = _readStream.ReadInt32();
+                                    _ = _readStream.ReadByte();
                                 }
                                 break;
                         }
@@ -411,7 +411,7 @@ namespace simplesqlclient
 
 
                     case TdsTokens.SQLINFO:
-                        simplesqlclient.SqlError error = this._readStream.ProcessError(token);
+                        simplesqlclient.SqlError error = _readStream.ProcessError(token);
                         if (token.TokenType == TdsTokens.SQLERROR)
                         {
                             throw new Exception("Error received from server " + error.Message);
@@ -427,28 +427,28 @@ namespace simplesqlclient
                         // readily 
                         // Right now simply read it and ignore it.
                         // First byte skip
-                        this._readStream.ReadByte();
+                        _readStream.ReadByte();
                         // TdsEnums.Version_size skip
-                        this._readStream.Read(temp.Slice(0, 4));
+                        _readStream.Read(temp.Slice(0, 4));
                         // One byte length skip
-                        byte lenSkip = (byte)this._readStream.ReadByte();
+                        byte lenSkip = (byte)_readStream.ReadByte();
                         // skip length * 2 bytes
-                        this._readStream.Read(temp.Slice(0, lenSkip * 2));
+                        _readStream.Read(temp.Slice(0, lenSkip * 2));
                         // skip major version byte
-                        this._readStream.ReadByte();
+                        _readStream.ReadByte();
                         // skip minor version byte
-                        this._readStream.ReadByte();
+                        _readStream.ReadByte();
                         // skip build version byte
-                        this._readStream.ReadByte();
+                        _readStream.ReadByte();
                         // skip sub build version byte
-                        this._readStream.ReadByte();
-                        // Fix this.
+                        _readStream.ReadByte();
+                        // Fix 
                         // Do nothing.
                         break;
                     case TdsTokens.SQLDONE:
-                        ushort status = this._readStream.ReadUInt16();
-                        ushort curCmd = this._readStream.ReadUInt16();
-                        long longCount = this._readStream.ReadInt64();
+                        ushort status = _readStream.ReadUInt16();
+                        ushort curCmd = _readStream.ReadUInt16();
+                        long longCount = _readStream.ReadInt64();
                         int count = (int)longCount;
 
                         if (TdsEnums.DONE_MORE != (status & TdsEnums.DONE_MORE))
@@ -459,35 +459,294 @@ namespace simplesqlclient
                         if (token.Length != TdsEnums.VARNULL) // TODO: What does this mean? 
                         {
                             _SqlMetaDataSet metadataSet = ProcessMetadataSet(token.Length);
+                            _protocolMetadata.LastReadMetadata = metadataSet;
                         }
-                        throw new NotImplementedException();
+                        break;
                     case TdsTokens.SQLFEATUREEXTACK:
                         byte featureId;
                         do
                         {
-                            featureId = (byte)this._readStream.ReadByte();
+                            featureId = (byte)_readStream.ReadByte();
                             if (featureId != 0xff)
                             {
-                                uint datalen = this._readStream.ReadUInt32();
+                                uint datalen = _readStream.ReadUInt32();
 
                                 Span<byte> data = new byte[datalen];
-                                this._readStream.Read(data);
-                                this._protocolMetadata.AddFeature(featureId, data);
+                                _readStream.Read(data);
+                                _protocolMetadata.AddFeature(featureId, data);
                             }
                         } while (featureId != 0xff);
                         break;
                     case TdsTokens.SQLROW:
-                        throw new NotImplementedException();
+                        bool bulkCopyHandler = false;
+                        if (bulkCopyHandler)
+                        {
+                            ProcessRow(_protocolMetadata.LastReadMetadata);
+                        }
+                        break;
+                    
+                    // The not implemented ones are here.
+                    case TdsTokens.SQLCOLINFO:
+                        // code omitted for brevity
+                    case TdsTokens.SQLDONEPROC:
+                    case TdsTokens.SQLDONEINPROC:
+                    case TdsTokens.SQLORDER:
+
+                    case TdsTokens.SQLFEDAUTHINFO:
+                    // code omitted for brevity
+
+
+                    case TdsTokens.SQLSESSIONSTATE:
+                    // code omitted for brevity
+
+                    case TdsTokens.SQLNBCROW:
+                    // code omitted for brevity
+
+                    case TdsTokens.SQLRETURNSTATUS:
+                    // code omitted for brevity
+
+                    case TdsTokens.SQLRETURNVALUE:
+                    // code omitted for brevity
+
+                    case TdsTokens.SQLSSPI:
+                    // code omitted for brevity
+
+                    case TdsTokens.SQLTABNAME:
+                    // code omitted for brevity
+
+                    case TdsTokens.SQLRESCOLSRCS:
+                    // code omitted for brevity
+
+                    case TdsTokens.SQLALTMETADATA:
+                    // code omitted for brevity
+
+                    case TdsTokens.SQLALTROW:
+                    // code omitted for brevity
+
                     default:
-                        throw new NotImplementedException("The token type is not implemented. " + token.TokenType);
+                        throw new NotImplementedException("The token type is not implemented. " + (byte)token.TokenType);
                 }
-            } while(this._readStream.PacketDataLeft > 0);
+            } while(_readStream.PacketDataLeft > 0 && parsingBehavior != ParsingBehavior.RunOnce);
+        }
+
+        private SqlBuffer ProcessRow(_SqlMetaDataSet columns)
+        {
+            SqlBuffer data = new SqlBuffer();
+
+            for (int i = 0; i < columns.Length; i++)
+            {
+                _SqlMetaData column = columns[i];
+
+                Tuple<bool, int> tuple = ProcessColumnHeader(column);
+                bool isNull = tuple.Item1;
+                int length = tuple.Item2;
+                if (tuple.Item1)
+                {
+                    throw new NotImplementedException("Null values are not implemented");
+                }
+                else
+                {
+                    ReadSqlValue(data, 
+                        column, 
+                        column.metaType.IsPlp ? (Int32.MaxValue) : (int)length,
+                        SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/,
+                        column.column);
+                }
+                data.Clear();
+            }
+
+            return data;
+
+        }
+
+        internal void ReadSqlValue(
+            SqlBuffer value,
+            SqlMetaDataPriv md,
+            int length, SqlCommandColumnEncryptionSetting columnEncryptionOverride, 
+            string columnName, 
+            SqlCommand command = null)
+        {
+            bool isPlp = md.metaType.IsPlp;
+            byte tdsType = md.tdsType;
+
+            Debug.Assert(isPlp || !Utilities.IsNull(md.metaType, length), "null value should not get here!");
+            if (isPlp)
+            {
+                // We must read the column value completely, no matter what length is passed in
+                length = int.MaxValue;
+            }
+
+            //DEVNOTE: When modifying the following routines (for deserialization) please pay attention to
+            // deserialization code in DecryptWithKey () method and modify it accordingly.
+            switch (tdsType)
+            {
+                case TdsEnums.SQLDECIMALN:
+                case TdsEnums.SQLNUMERICN:
+                    throw new NotImplementedException("SQLDECIMALN and SQLNUMERICN are not implemented");
+                    //if (!TryReadSqlDecimal(value, length, md.precision, md.scale, stateObj))
+                case TdsEnums.SQLUDT:
+                case TdsEnums.SQLBINARY:
+                case TdsEnums.SQLBIGBINARY:
+                case TdsEnums.SQLBIGVARBINARY:
+                case TdsEnums.SQLVARBINARY:
+                case TdsEnums.SQLIMAGE:
+                    throw new NotImplementedException("Binary types are not implemented");
+                    //byte[] b = null;
+
+                    //// If varbinary(max), we only read the first chunk here, expecting the caller to read the rest
+                    //if (isPlp)
+                    //{
+                    //    // If we are given -1 for length, then we read the entire value,
+                    //    // otherwise only the requested amount, usually first chunk.
+                    //    int ignored;
+                    //    if (!stateObj.TryReadPlpBytes(ref b, 0, length, out ignored))
+                    //    {
+                    //        return false;
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    //Debug.Assert(length > 0 && length < (long)(Int32.MaxValue), "Bad length for column");
+                    //    b = new byte[length];
+                    //    if (!stateObj.TryReadByteArray(b, length))
+                    //    {
+                    //        return false;
+                    //    }
+                    //}
+
+                    //if (md.isEncrypted
+                    //    && (columnEncryptionOverride == SqlCommandColumnEncryptionSetting.Enabled
+                    //         || columnEncryptionOverride == SqlCommandColumnEncryptionSetting.ResultSetOnly
+                    //         || (columnEncryptionOverride == SqlCommandColumnEncryptionSetting.UseConnectionSetting
+                    //            && _connHandler != null && _connHandler.ConnectionOptions != null
+                    //            && _connHandler.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled)))
+                    //{
+                    //    try
+                    //    {
+                    //        // CipherInfo is present, decrypt and read
+                    //        byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(b, md.cipherMD, _connHandler.Connection, command);
+
+                    //        if (unencryptedBytes != null)
+                    //        {
+                    //            DeserializeUnencryptedValue(value, unencryptedBytes, md, stateObj, md.NormalizationRuleVersion);
+                    //        }
+                    //    }
+                    //    catch (Exception e)
+                    //    {
+                    //        if (stateObj is not null)
+                    //        {
+                    //            // call to decrypt column keys has failed. The data wont be decrypted.
+                    //            // Not setting the value to false, forces the driver to look for column value.
+                    //            // Packet received from Key Vault will throws invalid token header.
+                    //            stateObj.HasPendingData = false;
+                    //        }
+                    //        throw SQL.ColumnDecryptionFailed(columnName, null, e);
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    value.SqlBinary = SqlBinary.WrapBytes(b);
+                    //}
+                    //break;
+
+                case TdsEnums.SQLCHAR:
+                case TdsEnums.SQLBIGCHAR:
+                case TdsEnums.SQLVARCHAR:
+                case TdsEnums.SQLBIGVARCHAR:
+                case TdsEnums.SQLTEXT:
+                case TdsEnums.SQLNCHAR:
+                case TdsEnums.SQLNVARCHAR:
+                case TdsEnums.SQLNTEXT:
+                    _sqlValuesProcessor.ReadSqlStringValue(value, 
+                        tdsType, 
+                        length, 
+                        md.encoding, 
+                        isPlp, 
+                        _protocolMetadata);
+                    break;
+
+                case TdsEnums.SQLXMLTYPE:
+                    throw new NotImplementedException("XML type is not implemented");
+                    // We store SqlCachedBuffer here, so that we can return either SqlBinary, SqlString or SqlXmlReader.
+                    //SqlCachedBuffer sqlBuf;
+                    //if (!SqlCachedBuffer.TryCreate(md, this, stateObj, out sqlBuf))
+                    //{
+                    //    return false;
+                    //}
+
+                    //value.SqlCachedBuffer = sqlBuf;
+                    //break;
+
+                case TdsEnums.SQLDATE:
+                case TdsEnums.SQLTIME:
+                case TdsEnums.SQLDATETIME2:
+                case TdsEnums.SQLDATETIMEOFFSET:
+                    throw new NotImplementedException("Date and time types are not implemented");
+                    //if (!TryReadSqlDateTime(value, tdsType, length, md.scale, stateObj))
+                    //{
+                    //    return false;
+                    //}
+                    //break;
+
+                default:
+                    Debug.Assert(!isPlp, "ReadSqlValue calling ReadSqlValueInternal with plp data");
+                    throw new NotImplementedException("Unknown type " + tdsType.ToString("X2") + " is not implemented yet");
+                    //if (!TryReadSqlValueInternal(value, tdsType, length, stateObj))
+                    //{
+                    //    return false;
+                    //}
+            }
+
+        }
+
+        internal Tuple<bool, int> ProcessColumnHeader(_SqlMetaData col)
+        {
+            bool isNull = false;
+            int length = 0;
+            if (col.metaType.IsLong && !col.metaType.IsPlp)
+            {
+                //
+                // we don't care about TextPtrs, simply go after the data after it
+                //
+                byte textPtrLen = this._readStream.ReadByteCast();
+
+                if (textPtrLen != 0)
+                {
+                    // Skip past the text pointer.
+                    _ = this._readStream.Read(stackalloc byte[textPtrLen]);
+
+                    // Skip past the Timestamp length
+                    _ = this._readStream.Read(stackalloc byte[TdsEnums.TEXT_TIME_STAMP_LEN]);
+
+                    isNull = false; // Why ? 
+
+                    length = Utilities.GetSpecialTokenLength(col.tdsType, this._readStream);
+
+                    return Tuple.Create(isNull, length);
+                }
+                else
+                {
+                    return Tuple.Create(true, 0);
+                }
+            }
+            else
+            {
+                length = Utilities.GetSpecialTokenLength(col.tdsType, this._readStream);
+                isNull = Utilities.IsNull(col.metaType, length);
+
+                length = isNull ? 0 : length;
+
+                return Tuple.Create(isNull, length);
+            }    
+
         }
 
         private _SqlMetaDataSet ProcessMetadataSet(int columnCount)
         {
             _SqlMetaDataSet newMetaData = new _SqlMetaDataSet(columnCount, null);
-
+            SqlTceCipherInfoTable cipherTable = (_protocolMetadata.IsFeatureSupported(TdsEnums.FEATUREEXT_TCE)) ?
+                ProcessCipherInfoTable() : null;
+                
             for (int i = 0; i < columnCount; i++)
             {
                 CommonProcessMetaData(newMetaData[i]);
@@ -496,16 +755,87 @@ namespace simplesqlclient
             return newMetaData;
         }
 
+        private SqlTceCipherInfoTable ProcessCipherInfoTable()
+        {
+            // Read count
+            short tableSize = _readStream.ReadInt16();
+            SqlTceCipherInfoTable cipherTable = null;
+            
+            if (0 != tableSize)
+            {
+                SqlTceCipherInfoTable tempTable = new SqlTceCipherInfoTable(tableSize);
+
+                // Read individual entries
+                for (int i = 0; i < tableSize; i++)
+                {
+                    SqlTceCipherInfoEntry entry = ReadCipherInfoEntry();
+                    
+                    tempTable[i] = entry;
+                }
+
+                cipherTable = tempTable;
+            }
+
+            return cipherTable;
+        }
+
+        private SqlTceCipherInfoEntry ReadCipherInfoEntry()
+        {
+            byte cekValueCount = 0;
+            SqlTceCipherInfoEntry entry = new SqlTceCipherInfoEntry(ordinal: 0);
+
+            // Read the DB ID
+            int dbId = _readStream.ReadInt32();
+            int keyId = _readStream.ReadInt32();
+
+            // Read the key version
+            int keyVersion = _readStream.ReadInt32();
+            
+            // Read the key MD Version
+            byte[] keyMDVersion = new byte[8];
+            _readStream.Read(keyMDVersion.AsSpan());
+            
+            cekValueCount = _readStream.ReadByteCast();
+            
+            for (int i = 0; i < cekValueCount; i++)
+            {
+                // Read individual CEK values
+                ushort shortValue = _readStream.ReadUInt16();
+                byte[] encryptedCek = new byte[shortValue];
+
+                _readStream.Read(encryptedCek.AsSpan());
+                
+                int length = _readStream.ReadByteCast();
+                string keyStoreName = _readStream.ReadString(length);
+
+                shortValue = _readStream.ReadUInt16();
+                string keyPath = _readStream.ReadString(shortValue);
+
+                byte algorithmLength = _readStream.ReadByteCast();
+                string algorithmName = _readStream.ReadString(algorithmLength);
+
+                entry.Add(encryptedCek,
+                    databaseId: dbId,
+                    cekId: keyId,
+                    cekVersion: keyVersion,
+                    cekMdVersion: keyMDVersion,
+                    keyPath: keyPath,
+                    keyStoreName: keyStoreName,
+                    algorithmName: algorithmName);
+            }
+            return entry;
+        }
+
         private void CommonProcessMetaData(_SqlMetaData col)
         {
-            uint userType = this._readStream.ReadUInt32();
-            byte flags = (byte)this._readStream.ReadByte();
+            uint userType = _readStream.ReadUInt32();
+            byte flags = (byte)_readStream.ReadByte();
 
             col.Updatability = (byte)((flags & TdsEnums.Updatability) >> 2);
             col.IsNullable = (TdsEnums.Nullable == (flags & TdsEnums.Nullable));
             col.IsIdentity = (TdsEnums.Identity == (flags & TdsEnums.Identity));
 
-            flags = (byte)this._readStream.ReadByte();
+            flags = (byte)_readStream.ReadByte();
             col.IsColumnSet = (TdsEnums.IsColumnSet == (flags & TdsEnums.IsColumnSet));
 
             ProcessTypeInfo(col, userType);
@@ -518,8 +848,8 @@ namespace simplesqlclient
                 col.multiPartTableName = ProcessOneTable(ref unusedLen);
             }
 
-            byte byteLen = this._readStream.ReadByteCast();
-            col.column = this._readStream.ReadString(byteLen);
+            byte byteLen = _readStream.ReadByteCast();
+            col.column = _readStream.ReadString(byteLen);
             UpdateFlags(ParserFlags.HasReceivedColumnMetadata, true);
         }
 
@@ -532,41 +862,41 @@ namespace simplesqlclient
             MultiPartTableName multiPartTableName = default(MultiPartTableName);
 
             mpt = new MultiPartTableName();
-            byte nParts = this._readStream.ReadByteCast();
+            byte nParts = _readStream.ReadByteCast();
 
             length--;
             if (nParts == 4)
             {
-                tableLen = this._readStream.ReadUInt16();
+                tableLen = _readStream.ReadUInt16();
                 length -= 2;
-                value = this._readStream.ReadString(tableLen);
+                value = _readStream.ReadString(tableLen);
                 mpt.ServerName = value;
                 nParts--;
                 length -= (tableLen * 2); // wide bytes
             }
             if (nParts == 3)
             {
-                tableLen = this._readStream.ReadUInt16();
+                tableLen = _readStream.ReadUInt16();
                 length -= 2;
-                value = this._readStream.ReadString(tableLen);
+                value = _readStream.ReadString(tableLen);
                 mpt.CatalogName = value;
                 length -= (tableLen * 2); // wide bytes
                 nParts--;
             }
             if (nParts == 2)
             {
-                tableLen = this._readStream.ReadUInt16();
+                tableLen = _readStream.ReadUInt16();
                 length -= 2;
-                value = this._readStream.ReadString(tableLen);
+                value = _readStream.ReadString(tableLen);
                 mpt.SchemaName = value;
                 length -= (tableLen * 2); // wide bytes
                 nParts--;
             }
             if (nParts == 1)
             {
-                tableLen = this._readStream.ReadUInt16();
+                tableLen = _readStream.ReadUInt16();
                 length -= 2;
-                value = this._readStream.ReadString(tableLen);
+                value = _readStream.ReadString(tableLen);
                 mpt.TableName = value;
                 length -= (tableLen * 2); // wide bytes
                 nParts--;
@@ -584,7 +914,7 @@ namespace simplesqlclient
 
         private void ProcessTypeInfo(_SqlMetaData col, uint userType)
         {
-            byte tdsType = (byte)this._readStream.ReadByte();
+            byte tdsType = (byte)_readStream.ReadByte();
             
             if (tdsType == TdsEnums.SQLXMLTYPE)
             {
@@ -594,13 +924,13 @@ namespace simplesqlclient
             {
                 col.length = 0;
             }
-            else if (tdsType == TdsEnums.SQLUDT)
+            else if (tdsType == TdsEnums.SQLDATE)
             {
                 col.length = 3;
             }
             else
             {
-                col.length = Utilities.GetSpecialTokenLength(tdsType, this._readStream);
+                col.length = Utilities.GetSpecialTokenLength(tdsType, _readStream);
             }
 
             col.metaType = MetaType.GetSqlDataType(tdsType, userType, col.length);
@@ -628,33 +958,33 @@ namespace simplesqlclient
                 byte byteLen;
                 if (tdsType == TdsEnums.SQLXMLTYPE)
                 {
-                    byte schemapresent = (byte)this._readStream.ReadByte();
+                    byte schemapresent = (byte)_readStream.ReadByte();
                     
                     if ((schemapresent & 1) != 0)
                     {
-                        byteLen = (byte)this._readStream.ReadByte();
+                        byteLen = (byte)_readStream.ReadByte();
                         col.xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
-                        col.xmlSchemaCollection.Database = this._readStream.ReadString(byteLen);
+                        col.xmlSchemaCollection.Database = _readStream.ReadString(byteLen);
                         
-                        byteLen = (byte)this._readStream.ReadByte();
+                        byteLen = (byte)_readStream.ReadByte();
 
-                        col.xmlSchemaCollection.OwningSchema = this._readStream.ReadString(byteLen);
+                        col.xmlSchemaCollection.OwningSchema = _readStream.ReadString(byteLen);
                         
-                        short shortLen = this._readStream.ReadInt16();
-                        col.xmlSchemaCollection.Name = this._readStream.ReadString(shortLen);
+                        short shortLen = _readStream.ReadInt16();
+                        col.xmlSchemaCollection.Name = _readStream.ReadString(shortLen);
                     }
                 }
             }
 
             if (col.type == System.Data.SqlDbType.Decimal)
             {
-                col.precision = this._readStream.ReadByteCast();
-                col.scale = this._readStream.ReadByteCast();
+                col.precision = _readStream.ReadByteCast();
+                col.scale = _readStream.ReadByteCast();
             }
 
             if (col.metaType.IsVarTime)
             {
-                col.scale = this._readStream.ReadByteCast();
+                col.scale = _readStream.ReadByteCast();
                 Debug.Assert(0 <= col.scale && col.scale <= 7);
 
                 switch (col.metaType.SqlDbType)
@@ -707,18 +1037,18 @@ namespace simplesqlclient
 
         private SqlCollation ProcessCollation()
         {
-            uint info = this._readStream.ReadUInt32();
-            byte sortId = this._readStream.ReadByteCast();
+            uint info = _readStream.ReadUInt32();
+            byte sortId = _readStream.ReadByteCast();
 
             SqlCollation collation = null;
-            if (SqlCollation.Equals(this._protocolMetadata.Collation, info, sortId))
+            if (SqlCollation.Equals(_protocolMetadata.Collation, info, sortId))
             {
-                collation = this._protocolMetadata.Collation;
+                collation = _protocolMetadata.Collation;
             }
             else
             {
                 collation = new SqlCollation(info, sortId);
-                this._protocolMetadata.Collation = collation;
+                _protocolMetadata.Collation = collation;
             }
             return collation;
         }
@@ -818,10 +1148,10 @@ namespace simplesqlclient
         {
             SqlEnvChange env = new SqlEnvChange();
             // Used by ProcessEnvChangeToken
-            byte newLength = (byte)this._readStream.ReadByte();
-            string newValue = this._readStream.ReadString(newLength);
-            byte oldLength = (byte)this._readStream.ReadByte();
-            string oldValue = this._readStream.ReadString(oldLength);
+            byte newLength = (byte)_readStream.ReadByte();
+            string newValue = _readStream.ReadString(newLength);
+            byte oldLength = (byte)_readStream.ReadByte();
+            string oldValue = _readStream.ReadString(oldLength);
 
             env._newLength = newLength;
             env._newValue = newValue;
@@ -836,15 +1166,15 @@ namespace simplesqlclient
         public void SendLogin()
         {
             LoginPacket packet = new LoginPacket();
-            packet.ApplicationName = this.connectionSettings.ApplicationName;
-            packet.ClientHostName = this.connectionSettings.WorkstationId;
-            packet.ServerHostname = this._hostname;
+            packet.ApplicationName = _connectionSettings.ApplicationName;
+            packet.ClientHostName = _connectionSettings.WorkstationId;
+            packet.ServerHostname = _hostname;
             packet.ClientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
-            packet.Database = this.database;
-            packet.PacketSize = this.connectionSettings.PacketSize;
+            packet.Database = _database;
+            packet.PacketSize = _connectionSettings.PacketSize;
             packet.ProcessIdForTdsLogin = Utilities.GetCurrentProcessIdForTdsLoginOnly();
-            packet.UserName = this.authOptions.AuthDetails.UserName;
-            packet.ObfuscatedPassword = this.authOptions.AuthDetails.EncryptedPassword;
+            packet.UserName = _authOptions.AuthDetails.UserName;
+            packet.ObfuscatedPassword = _authOptions.AuthDetails.EncryptedPassword;
             packet.Login7Flags = 0;
             packet.IsIntegratedSecurity = false;
             packet.UserInstance = string.Empty;
@@ -864,19 +1194,19 @@ namespace simplesqlclient
             packet.RequestedFeatures = requestedFeatures;
             packet.FeatureExtensionData.requestedFeatures = requestedFeatures;
 
-            this._writeStream.PacketHeaderType = TdsEnums.MT_LOGIN7;
+            _writeStream.PacketHeaderType = TdsEnums.MT_LOGIN7;
             int length = packet.Length;
-            this._writeStream.WriteInt(length);
+            _writeStream.WriteInt(length);
             // Write TDS Version. We support 7.4
-            this._writeStream.WriteInt(packet.ProtocolVersion);
+            _writeStream.WriteInt(packet.ProtocolVersion);
             // Negotiate the packet size.
-            this._writeStream.WriteInt(packet.PacketSize);
+            _writeStream.WriteInt(packet.PacketSize);
             // Client Prog Version
-            this._writeStream.WriteInt(packet.ClientProgramVersion);
+            _writeStream.WriteInt(packet.ClientProgramVersion);
             // Current Process Id
-            this._writeStream.WriteInt(packet.ProcessIdForTdsLogin);
+            _writeStream.WriteInt(packet.ProcessIdForTdsLogin);
             // Unused Connection Id 
-            this._writeStream.WriteInt(0);
+            _writeStream.WriteInt(0);
 
             int log7Flags = 0;
 
@@ -916,13 +1246,13 @@ namespace simplesqlclient
             log7Flags |= TdsEnums.ODBC_ON << 9;
 
             // No SSPI usage
-            if (this.connectionSettings.UseSSPI)
+            if (_connectionSettings.UseSSPI)
             {
                 log7Flags |= TdsEnums.SSPI_ON << 15;
             }
 
             // third byte
-            if (this.connectionSettings.ReadOnlyIntent)
+            if (_connectionSettings.ReadOnlyIntent)
             {
                 log7Flags |= TdsEnums.READONLY_INTENT_ON << 21; // read-only intent flag is a first bit of fSpare1
             }
@@ -930,75 +1260,75 @@ namespace simplesqlclient
             // Always say that we are using Feature extensions
             log7Flags |= 1 << 28;
 
-            this._writeStream.WriteInt(log7Flags);
+            _writeStream.WriteInt(log7Flags);
             // Time Zone
-            this._writeStream.WriteInt(0);
+            _writeStream.WriteInt(0);
 
             // LCID
-            this._writeStream.WriteInt(0);
+            _writeStream.WriteInt(0);
 
             int offset = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
-            this._writeStream.WriteShort((short)offset);
+            _writeStream.WriteShort((short)offset);
 
-            this._writeStream.WriteShort((short)packet.ClientHostName.Length);
+            _writeStream.WriteShort((short)packet.ClientHostName.Length);
 
             offset += packet.ClientHostName.Length * 2;
 
             // Support User name and password
-            if (authOptions.AuthenticationType == AuthenticationType.SQLAUTH)
+            if (_authOptions.AuthenticationType == AuthenticationType.SQLAUTH)
             {
-                this._writeStream.WriteShort((short)offset);
-                this._writeStream.WriteShort((short)this.authOptions.AuthDetails.UserName.Length);
-                offset += this.authOptions.AuthDetails.UserName.Length * 2;
+                _writeStream.WriteShort((short)offset);
+                _writeStream.WriteShort((short)_authOptions.AuthDetails.UserName.Length);
+                offset += _authOptions.AuthDetails.UserName.Length * 2;
 
-                this._writeStream.WriteShort((short)offset);
-                this._writeStream.WriteShort((short)this.authOptions.AuthDetails.EncryptedPassword.Length / 2);
-                offset += this.authOptions.AuthDetails.EncryptedPassword.Length;
+                _writeStream.WriteShort((short)offset);
+                _writeStream.WriteShort((short)_authOptions.AuthDetails.EncryptedPassword.Length / 2);
+                offset += _authOptions.AuthDetails.EncryptedPassword.Length;
             }
             else
             {
-                this._writeStream.WriteShort(0);  // userName offset
-                this._writeStream.WriteShort(0);
-                this._writeStream.WriteShort(0);  // password offset
-                this._writeStream.WriteShort(0);
+                _writeStream.WriteShort(0);  // userName offset
+                _writeStream.WriteShort(0);
+                _writeStream.WriteShort(0);  // password offset
+                _writeStream.WriteShort(0);
             }
 
-            this._writeStream.WriteShort((short)offset);
-            this._writeStream.WriteShort((short)this.connectionSettings.ApplicationName.Length);
-            offset += this.connectionSettings.ApplicationName.Length * 2;
+            _writeStream.WriteShort((short)offset);
+            _writeStream.WriteShort((short)_connectionSettings.ApplicationName.Length);
+            offset += _connectionSettings.ApplicationName.Length * 2;
 
-            this._writeStream.WriteShort((short)offset);
-            this._writeStream.WriteShort((short)this._hostname.Length);
-            offset += this._hostname.Length * 2;
+            _writeStream.WriteShort((short)offset);
+            _writeStream.WriteShort((short)_hostname.Length);
+            offset += _hostname.Length * 2;
 
-            this._writeStream.WriteShort(offset);
+            _writeStream.WriteShort(offset);
             // Feature extension being used 
-            this._writeStream.WriteShort(4);
+            _writeStream.WriteShort(4);
 
             offset += 4;
 
-            this._writeStream.WriteShort(offset);
-            this._writeStream.WriteShort(packet.ClientInterfaceName.Length);
+            _writeStream.WriteShort(offset);
+            _writeStream.WriteShort(packet.ClientInterfaceName.Length);
             offset += packet.ClientInterfaceName.Length * 2;
 
-            this._writeStream.WriteShort(offset);
-            this._writeStream.WriteShort(packet.Language.Length);
+            _writeStream.WriteShort(offset);
+            _writeStream.WriteShort(packet.Language.Length);
             offset += packet.Language.Length * 2;
 
-            this._writeStream.WriteShort(offset);
-            this._writeStream.WriteShort(packet.Database.Length);
+            _writeStream.WriteShort(offset);
+            _writeStream.WriteShort(packet.Database.Length);
             offset += packet.Database.Length * 2;
 
             byte[] nicAddress = new byte[TdsEnums.MAX_NIC_SIZE];
             Random random = new Random();
             random.NextBytes(nicAddress);
-            this._writeStream.Write(nicAddress);
+            _writeStream.Write(nicAddress);
 
-            this._writeStream.WriteShort(offset);
+            _writeStream.WriteShort(offset);
 
             // No Integrated Auth
-            this._writeStream.WriteShort(0);
+            _writeStream.WriteShort(0);
 
             // Attach DB Filename
             _writeStream.WriteShort(offset);
@@ -1035,7 +1365,7 @@ namespace simplesqlclient
 
             Span<byte> tceData = stackalloc byte[5];
             featureExtensionData.colEncryptionData.FillData(tceData);
-            _writeStream.WriteByte((byte)featureExtensionData.colEncryptionData.FeatureExtensionFlag);
+            _writeStream.WriteByte((byte)ColumnEncryptionData.FeatureExtensionFlag);
             _writeStream.Write(tceData);
 
 
@@ -1067,7 +1397,7 @@ namespace simplesqlclient
 
         public void SendQuery(string query)
         {
-            //this._readStream.ResetPacket();
+            //_readStream.ResetPacket();
             int marsHeaderSize = 18;
             int notificationHeaderSize = 0; // TODO: Needed for sql notifications feature. Not implemetned yet
             int totalHeaderLength = 4 + marsHeaderSize + notificationHeaderSize;
@@ -1088,12 +1418,27 @@ namespace simplesqlclient
             // TODO: Add the enclave support. The server doesnt support Enclaves yet.
 
             _writeStream.WriteString(query);
-            this._writeStream.Flush();
+            _writeStream.Flush();
         }
 
-        internal void ProcessQueryResults()
+        internal _SqlMetaDataSet ProcessMetadata()
         {
-            ProcessTokenStreamPackets();
+            ProcessTokenStreamPackets(ParsingBehavior.RunOnce, TdsTokens.SQLCOLMETADATA, resetPacket : true);
+            return _protocolMetadata.LastReadMetadata;
+        }
+
+        /// <summary>
+        /// Advances the parser to reading past the SQLROW token.
+        /// </summary>
+        internal void AdvancePastRow()
+        {
+            ProcessTokenStreamPackets(ParsingBehavior.RunOnce, TdsTokens.SQLROW, resetPacket: false);
+        }
+
+        internal SqlBuffer ReadSqlValue(_SqlMetaDataSet mdSet)
+        {
+            var data = ProcessRow(mdSet);
+            return data;
         }
     }
 }

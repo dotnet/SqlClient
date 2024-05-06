@@ -23,6 +23,8 @@ namespace simplesqlclient
         public IServerFeature UTF8SupportFeature { get; internal set; }
         public IServerFeature DataClassificationFeature { get; internal set; }
         public HashSet<byte> FeatureIdList { get; internal set; } = new HashSet<byte>();
+        public SQLDNSCachingFeature SQLDNSCachingFeature { get; private set; }
+        public _SqlMetaDataSet LastReadMetadata { get; internal set; }
 
         public bool IsFeatureSupported ( byte featureId ) => FeatureIdList.Contains(featureId);
 
@@ -32,6 +34,8 @@ namespace simplesqlclient
             {
                 throw new InvalidOperationException($"FeatureId {featureId} is already added.");
             }
+            
+            FeatureIdList.Add(featureId);
             switch (featureId)
             {
                 case TdsEnums.FEATUREEXT_TCE:
@@ -49,6 +53,10 @@ namespace simplesqlclient
                 case TdsEnums.FEATUREEXT_FEDAUTH:
                     FedAuthFeature = new FedAuthFeature();
                     FedAuthFeature.SetAcknowledgedData(featureData);
+                    break;
+                case TdsEnums.FEATUREEXT_SQLDNSCACHING:
+                    SQLDNSCachingFeature = new SQLDNSCachingFeature();
+                    SQLDNSCachingFeature.SetAcknowledgedData(featureData);
                     break;
                 default:
                     throw new NotImplementedException($"FeatureId {featureId} is not implemented.");

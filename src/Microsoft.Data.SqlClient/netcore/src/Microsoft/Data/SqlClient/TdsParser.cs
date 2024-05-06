@@ -4504,7 +4504,7 @@ namespace Microsoft.Data.SqlClient
         {
             try
             {
-                SqlDataReader.SharedState sharedState = stateObj._readerState;
+                SqlDataReader.SqlDataReaderState sharedState = stateObj._readerState;
                 if (sharedState != null && sharedState._dataReady)
                 {
                     _SqlMetaDataSet metadata = stateObj._cleanupMetaData;
@@ -6062,7 +6062,13 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        internal bool TryReadSqlValue(SqlBuffer value, SqlMetaDataPriv md, int length, TdsParserStateObject stateObj, SqlCommandColumnEncryptionSetting columnEncryptionOverride, string columnName, SqlCommand command = null)
+        internal bool TryReadSqlValue(SqlBuffer value,
+            SqlMetaDataPriv md,
+            int length, 
+            TdsParserStateObject stateObj,
+            SqlCommandColumnEncryptionSetting columnEncryptionOverride,
+            string columnName,
+            SqlCommand command = null)
         {
             bool isPlp = md.metaType.IsPlp;
             byte tdsType = md.tdsType;

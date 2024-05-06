@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace simplesqlclient
 {
@@ -86,15 +87,15 @@ namespace simplesqlclient
         public int Length;
     }
 
-    internal struct FeatureExtensionsData
+    internal class FeatureExtensionsData
     {
-        public SessionRecoveryData sessionRecoveryData;
-        public ColumnEncryptionData colEncryptionData;
-        public GlobalTransactionsFeature globalTransactionsFeature;
-        public FedAuthFeature fedAuthFeature;
-        public DataClassificationFeature dataClassificationFeature;
-        public UTF8SupportFeature uTF8SupportFeature;
-        public SQLDNSCachingFeature sQLDNSCaching;
+        public SessionRecoveryData sessionRecoveryData = new SessionRecoveryData();
+        public ColumnEncryptionData colEncryptionData = new ColumnEncryptionData();
+        public GlobalTransactionsFeature globalTransactionsFeature = new GlobalTransactionsFeature();
+        public FedAuthFeature fedAuthFeature = new FedAuthFeature();
+        public DataClassificationFeature dataClassificationFeature = new DataClassificationFeature();
+        public UTF8SupportFeature uTF8SupportFeature = new UTF8SupportFeature();
+        public SQLDNSCachingFeature sQLDNSCaching = new SQLDNSCachingFeature();
 
         public TdsEnums.FeatureExtension requestedFeatures;
 
@@ -145,30 +146,37 @@ namespace simplesqlclient
     }
 
     
-    internal struct SQLDNSCachingFeature
+    internal class SQLDNSCachingFeature : IServerFeature
     {
         public uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_SQLDNSCACHING;
 
-        public int Length
-        {
-            get
-            {
-                return 5;
-            }
-        }
+        public int Length => 5;
 
         public int Data => 0;
+
+        public byte[] AckData { get; private set; }
 
         public void FillData(Span<byte> buffer)
         {
             Debug.Assert(buffer.Length == 4, "Expected a 4 byte buffer for int");
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer, 0);
         }
+
+        public ReadOnlySpan<byte> GetAckData()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetAcknowledgedData(Span<byte> buffer)
+        {
+            this.AckData = buffer.ToArray();
+            
+        }
     }
 
-    internal struct ColumnEncryptionData : IServerFeature
+    internal class ColumnEncryptionData : IServerFeature
     {
-        public readonly uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_TCE;
+        public static uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_TCE;
 
         public int Length
         {
@@ -192,19 +200,15 @@ namespace simplesqlclient
             return AckData;
         }
 
-        public void SetAcknowledgedData(Span<byte> data)
-        {
-            this.AckData = data.ToArray();
-        }
-
-        IServerFeature IServerFeature.SetAcknowledgedData(Span<byte> buffer)
+        public void SetAcknowledgedData(Span<byte> buffer)
         {
             this.AckData = buffer.ToArray();
-            return this;
+            
         }
+
     }
 
-    internal struct GlobalTransactionsFeature
+    internal class GlobalTransactionsFeature : IServerFeature
     {
         public uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS;
 
@@ -216,14 +220,26 @@ namespace simplesqlclient
             }
         }
 
+        public byte[] AckData { get; private set; }
+
         public void FillData(Span<byte> buffer)
         {
             Debug.Assert(buffer.Length == 4, "Expected a 4 byte buffer for int");
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer, 0);
         }
+
+        public ReadOnlySpan<byte> GetAckData()
+        {
+            return AckData;
+        }
+
+        public void SetAcknowledgedData(Span<byte> buffer)
+        {
+            this.AckData = buffer.ToArray();
+        }
     }
 
-    internal struct FedAuthFeature : IServerFeature
+    internal class FedAuthFeature : IServerFeature
     {
         public int Length
         {
@@ -263,10 +279,14 @@ namespace simplesqlclient
             throw new NotImplementedException();
         }
 
-        public IServerFeature SetAcknowledgedData(Span<byte> buffer)
+        public void SetAcknowledgedData(Span<byte> buffer)
         {
             this.AckData = buffer.ToArray();
-            return this;
+        }
+
+        public ReadOnlySpan<byte> GetAckData()
+        {
+            return this.AckData;
         }
     }
 
@@ -296,20 +316,21 @@ namespace simplesqlclient
             return AckData;
         }
 
-        IServerFeature IServerFeature.SetAcknowledgedData(Span<byte> buffer)
+        void IServerFeature.SetAcknowledgedData(Span<byte> buffer)
         {
             this.AckData = buffer.ToArray();
-            return this;
         }
     }
 
     internal interface IServerFeature
     {
+        public int Length { get; }
+
         public ReadOnlySpan<byte> GetAckData();
 
         public void FillData(Span<byte> buffer);
 
-        public IServerFeature SetAcknowledgedData(Span<byte> buffer);
+        public void SetAcknowledgedData(Span<byte> buffer);
     }
 
     internal struct UTF8SupportFeature : IServerFeature
@@ -337,9 +358,9 @@ namespace simplesqlclient
             return AckData;
         }
 
-        public IServerFeature SetAcknowledgedData(Span<byte> buffer)
+        public void SetAcknowledgedData(Span<byte> buffer)
         {
-            throw new NotImplementedException();
+            this.AckData = buffer.ToArray();
         }
     }
 

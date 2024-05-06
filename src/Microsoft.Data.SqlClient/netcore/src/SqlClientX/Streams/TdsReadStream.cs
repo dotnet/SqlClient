@@ -137,6 +137,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 if (PacketDataLeft > 0)
                 {
                     ReadBufferDataLength = _UnderlyingStream.Read(Buffer);
+                    ReadBufferOffset = 0;
                 }
                 else if (PacketDataLeft == 0)
                 {
@@ -146,6 +147,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                     if (ReadBufferDataLength == ReadBufferOffset)
                     {
                         ReadBufferDataLength = _UnderlyingStream.Read(Buffer);
+                        ReadBufferOffset = 0;
                     }
                 }
             }

@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.VisualBasic;
+using simplesqlclient;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Microsoft.Data.SqlClient.SqlClientX
 {
@@ -12,13 +16,22 @@ namespace Microsoft.Data.SqlClient.SqlClientX
     /// </summary>
     public class SqlDataReaderX : DbDataReader, IDataReader, IDbColumnSchemaGenerator
     {
-        private SqlCommandX _sqlCommandX;
-
-
-        internal SqlDataReaderX(SqlCommandX sqlCommandX)
+        private class ReaderState
         {
-            _sqlCommandX = sqlCommandX;
+            internal bool _RowDataIsReady = false;
         }
+
+        private ReaderState _readerState = new ReaderState();
+        private SqlCommandX _sqlCommandX;
+        private _SqlMetaDataSet _metadata;
+        private SqlBuffer[] _sqlBuffers;
+        private SqlPhysicalConnection _PhysicalConnection;
+
+        internal SqlDataReaderX(SqlCommandX sqlCommandX) : this((sqlCommandX.Connection as SqlConnectionX)?.PhysicalConnection)
+            => _sqlCommandX = sqlCommandX;
+
+        internal SqlDataReaderX(SqlPhysicalConnection physicalConnection)
+            => _PhysicalConnection = physicalConnection;
 
         /// <summary>
         /// Indexer
@@ -44,7 +57,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         /// <summary>
         /// The field count.
         /// </summary>
-        public override int FieldCount => throw new NotImplementedException();
+        public override int FieldCount=> _metadata?.Length ?? 0;
 
         /// <summary>
         /// Are there more rows?
@@ -296,7 +309,35 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         /// <exception cref="NotImplementedException"></exception>
         public override object GetValue(int ordinal)
         {
-            throw new NotImplementedException();
+            var columns = _metadata;
+            if (!_readerState._RowDataIsReady)
+            { 
+                for (int i = 0; i < columns.Length; i++)
+                {
+                    //SqlBuffer data = new SqlBuffer();
+                    _SqlMetaData column = columns[i];
+
+                    Tuple<bool, int> tuple = _PhysicalConnection.ProcessColumnHeader(column);
+                    bool isNull = tuple.Item1;
+                    int length = tuple.Item2;
+                    if (tuple.Item1)
+                    {
+                        throw new NotImplementedException("Null values are not implemented");
+                    }
+                    else
+                    {
+                        _PhysicalConnection.ReadSqlValue(_sqlBuffers[i],
+                            column,
+                            column.metaType.IsPlp ? (Int32.MaxValue) : (int)length,
+                            simplesqlclient.SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/,
+                            column.column);
+                    }
+                    //data.Clear();
+                }
+                _readerState._RowDataIsReady = true;
+            }
+            return _sqlBuffers[ordinal].Value; //
+            //GetValueInternal(ordinal);
         }
 
         /// <summary>
@@ -338,7 +379,24 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         /// <exception cref="NotImplementedException"></exception>
         public override bool Read()
         {
-            throw new NotImplementedException();
+            _PhysicalConnection.AdvancePastRow();
+            _readerState._RowDataIsReady = false;
+            return true;
+        }
+
+        internal void SetMetadata(_SqlMetaDataSet mdSet, bool hasMoreInformation)
+        {
+            _metadata = mdSet;
+
+            if(_metadata != null)
+            {
+                _sqlBuffers = SqlBuffer.CreateBufferArray(_metadata.Length);
+            }
+            if (hasMoreInformation && _metadata != null)
+            {
+                throw new NotImplementedException("More information is not implemented.");
+                //_sqlCommandX.Connection.PhysicalConnection.ProcessTokenStreamPackets(ParsingBehavior.RunOnce, resetPacket: false);
+            }
         }
     }
 }

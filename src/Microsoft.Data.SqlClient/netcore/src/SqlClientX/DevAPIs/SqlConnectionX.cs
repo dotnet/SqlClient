@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             physicalConnection.EnableSsl();
             // Send login
             physicalConnection.SendLogin();
-            physicalConnection.ProcessTokenStreamPackets();
+            physicalConnection.ProcessTokenStreamPackets(ParsingBehavior.RunTillPacketEnd);
         }
 
         /// <summary>
