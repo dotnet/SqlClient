@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using BenchmarkDotNet.Running;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SqlClientX;
 
@@ -11,10 +12,62 @@ namespace TestApplication
         
         static void Main(string[] args)
         {
+            NormalStuff();
+            //BenchmarkRunner.Run<Benchmarks>();
+        }
+
+        private static async Task AsyncGet()
+        {
             string connectionString = $"Server=tcp:127.0.0.1;" +
-            $"Min Pool Size=120;Max Pool Size = 200;User Id=sa; pwd={Environment.GetEnvironmentVariable("SQL_PWD")}; " +
-            "Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database=master;Pooling=False;" +
-            "Application Name=TestAppX"; // pooled
+                        $"Min Pool Size=120;Max Pool Size = 200;User Id=sa; pwd={Environment.GetEnvironmentVariable("SQL_PWD")}; " +
+                        "Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database=testdatabase;Pooling=False;" +
+                        "Application Name=TestAppX"; // pooled
+            using var conn = new SqlConnection(connectionString);
+            conn.Open();
+
+            using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable' AND xtype='U') CREATE TABLE [TextTable] ([Text] VARCHAR(MAX))", conn))
+                cmd.ExecuteNonQuery();
+
+            using (var cmd = new SqlCommand("INSERT INTO [TextTable] ([Text]) VALUES (@p)", conn))
+            {
+                cmd.Parameters.AddWithValue("p", new string('x', 1024 * 1024 * 5));
+                cmd.ExecuteNonQuery();
+            }
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = "Select * from AllDataTypesTable";
+                    Console.WriteLine("Executing command");
+
+                    using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                    {
+                        do
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                // Process each row
+                                // REad in reverse to cached the data in the reader buffers.
+                                for (int i = reader.FieldCount - 1; i >= 0; i--)
+                                {
+                                    Console.WriteLine(await reader.GetFieldValueAsync<object>(i, CancellationToken.None));
+                                }
+                            }
+                        } while (reader.NextResult()); // Move to the next result set
+                    }
+                }   
+            }
+
+        }
+
+        private static void NormalStuff()
+        {
+            string connectionString = $"Server=tcp:127.0.0.1;" +
+                        $"Min Pool Size=120;Max Pool Size = 200;User Id=sa; pwd={Environment.GetEnvironmentVariable("SQL_PWD")}; " +
+                        "Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database=testdatabase;Pooling=False;" +
+                        "Application Name=TestAppX"; // pooled
             Console.WriteLine("1 for X else default MDS");
             char testX = Console.ReadKey().KeyChar;
             if (testX == '1')
@@ -32,7 +85,7 @@ namespace TestApplication
             
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT @@SPID, 1, @@VERSION";
+                command.CommandText = "SELECT [Text] FROM [TextTable]";
                 Console.WriteLine("Executing command");
 
                 using (SqlDataReader reader = command.ExecuteReader())
@@ -62,7 +115,7 @@ namespace TestApplication
 
             using (SqlCommandX command = connection.CreateCommand())
             {
-                command.CommandText = "Select @@VERSION, cast(2 as varchar), cast(@@SPID as varchar) ";
+                command.CommandText = "SELECT [Text] FROM [TextTable] ";
                 Console.WriteLine("Executing command");
 
                 using (SqlDataReaderX reader = command.ExecuteReader())

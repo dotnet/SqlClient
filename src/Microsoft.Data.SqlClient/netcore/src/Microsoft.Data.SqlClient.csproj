@@ -968,6 +968,7 @@
     <Compile Include="SqlClientX\Streams\TdsReadStream.cs" />
     <Compile Include="SqlClientX\Streams\TdsWriteStream.cs" />
     <Compile Include="SqlClientX\Streams\TdsWriteStreamExtensions.cs" />
+    <Compile Include="SqlClientX\TDS\ProtocolParsingMachine.cs" />
     <Compile Include="SqlClientX\Utilities.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>

@@ -8,6 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.12" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\src\Microsoft.Data.SqlClient\netcore\src\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
 

@@ -129,7 +129,7 @@ namespace simplesqlclient
             // null bin and char types have a length of -1 to represent null
             if (mt.IsPlp)
             {
-                throw new NotImplementedException("PLP not implemented");
+                return (TdsEnums.SQL_PLP_NULL == (ulong)length);
             }
 
             // HOTFIX #50000415: for image/text, 0xFFFF is the length, not representing null
