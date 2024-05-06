@@ -1509,7 +1509,7 @@ namespace Microsoft.Data.SqlClient
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}", details.errorMessage);
                 }
 
-                string sqlContextInfo = StringsHelper.GetResourceString(nameof(stateObj.SniContext));
+                string sqlContextInfo = StringsHelper.GetResourceString(stateObj.SniContext.ToString());
                 string providerRid = string.Format("SNI_PN{0}", details.provider);
                 string providerName = StringsHelper.GetResourceString(providerRid);
                 Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
