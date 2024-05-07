@@ -1,16 +1,19 @@
 ﻿using System;
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using simplesqlclient;
 
 namespace Microsoft.Data.SqlClient.SqlClientX.Streams
 {
-    internal static class TdsReadStreamExtensions
+    internal static async class TdsReadStreamExtensions
     {
-        internal static byte ReadByteCast(this TdsReadStream stream) => (byte)stream.ReadByte();
+        internal static async byte ReadByteCastAsync(this TdsReadStream stream) => (byte)stream.ReadByte();
             
-        internal static string ReadString(this TdsReadStream stream, ushort shortLen)
+        internal static async string ReadStringAsync(this TdsReadStream stream, ushort shortLen)
         {
             int byteCount = shortLen << 1;
             Span<byte> stringBytes = stackalloc byte[byteCount];
@@ -18,39 +21,54 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             return Encoding.Unicode.GetString(stringBytes);
         }
 
-        internal static string ReadString(this TdsReadStream stream, int length)
+        internal static async ValueTask<string> ReadStringAsync(this TdsReadStream stream, int length, bool isAsync, CancellationToken ct = default)
         {
             int byteCount = length << 1;
-            Span<byte> stringBytes = stackalloc byte[byteCount];
-            stream.Read(stringBytes);
-            return Encoding.Unicode.GetString(stringBytes);
+            byte[] rented = ArrayPool<byte>.Shared.Rent(byteCount);
+            if (isAsync)
+            {
+                await stream.ReadAsync(new Memory<byte>(rented), CancellationToken.None).ConfigureAwait(false);
+            }
+            else
+            {
+                stream.Read(rented);
+            }
+            
+            return Encoding.Unicode.GetString(rented);
         }
 
-        internal static ushort ReadUInt16(this TdsReadStream stream)
+        internal static async ValueTask<ushort> ReadUInt16Async(this TdsReadStream stream, bool isAsync, CancellationToken ct = default)
         {
-            Span<byte> buffer = stackalloc byte[2];
-            stream.Read(buffer);
+            var buffer = ArrayPool<byte>.Shared.Rent(2);
+            if (isAsync)
+            {
+                await stream.ReadAsync(new Memory<byte>(buffer), ct);
+            }
+            else
+            { 
+                stream.Read(buffer); 
+            }
             return (ushort)((buffer[1] << 8) + buffer[0]);
         }
 
-        internal static short ReadInt16(this TdsReadStream stream)
+        internal static async short ReadInt16Async(this TdsReadStream stream)
         {
             Span<byte> buffer = stackalloc byte[2];
             stream.Read(buffer);
             return (short)((buffer[1] << 8) + buffer[0]);
         }
 
-        internal static long ReadInt64(this TdsReadStream stream)
+        internal static async long ReadInt64Async(this TdsReadStream stream)
         {
             Span<byte> buffer = stackalloc byte[sizeof(long)];
             stream.Read(buffer);
             return BinaryPrimitives.ReadInt64LittleEndian(buffer);
         }
 
-        internal static simplesqlclient.SqlError ProcessError(this TdsReadStream stream, TdsToken token)
+        internal static async simplesqlclient.SqlError ProcessErrorAsync(this TdsReadStream stream, TdsToken token)
         {
 
-            int number = stream.ReadInt32();
+            int number = await stream.ReadInt32Async();
 
             byte state = (byte)stream.ReadByte();
             byte errorClass = (byte)stream.ReadByte();
@@ -79,21 +97,21 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             return error;
         }
 
-        internal static int ReadInt32(this TdsReadStream stream)
+        internal static async int ReadInt32Async(this TdsReadStream stream, bool isAsync)
         {
             Span<byte> buffer = stackalloc byte[sizeof(int)];
             stream.Read(buffer);
             return (buffer[3] << 24) + (buffer[2] << 16) + (buffer[1] << 8) + buffer[0];
         }
 
-        internal static uint ReadUInt32(this TdsReadStream stream)
+        internal static async uint ReadUInt32Async(this TdsReadStream stream, bool isAsync)
         {
             Span<byte> buffer = stackalloc byte[sizeof(uint)];
             stream.Read(buffer);
             return BinaryPrimitives.ReadUInt32LittleEndian(buffer);
         }
 
-        internal static string ReadStringWithEncoding(this TdsReadStream stream, int length, System.Text.Encoding encoding, bool isPlp)
+        internal static async string ReadStringWithEncodingAsync(this TdsReadStream stream, int length, System.Text.Encoding encoding, bool isPlp, bool isAsync)
         {
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadStringWithEncoding");  // you need to setup for a thread abort somewhere before you call this method
 
@@ -128,7 +146,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             return encoding.GetString(buf, offset, length);
         }
 
-        internal static TdsToken ProcessToken(this TdsReadStream stream)
+        internal static async TdsToken ProcessTokenAsync(this TdsReadStream stream, bool isAsync)
         {
             TdsToken token = new();
             byte tokenByte = (byte)stream.ReadByte();
@@ -155,11 +173,11 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                     specialToken = true;
                     break;
                 case TdsTokens.SQLSESSIONSTATE:
-                    token.Length = stream.ReadInt32();
+                    token.Length = stream.ReadInt32Async(isAsync);
                     specialToken = true;
                     break;
                 case TdsTokens.SQLFEDAUTHINFO:
-                    token.Length = stream.ReadInt32();
+                    token.Length = stream.ReadInt32Async(isAsync);
                     specialToken = true;
                     break;
                 case TdsTokens.SQLUDT:
@@ -168,7 +186,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                     specialToken = true;
                     break;
                 case TdsTokens.SQLXMLTYPE:
-                    token.Length = stream.ReadUInt16();
+                    token.Length = stream.ReadUInt16Async(isAsync);
                     specialToken = true;
                     break;
 
