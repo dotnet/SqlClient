@@ -6146,7 +6146,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                         value.SqlBinary = SqlBinary.WrapBytes(b);
 #else
                         value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);   // doesn't copy the byte array
@@ -6443,7 +6443,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                         value.SqlBinary = SqlBinary.WrapBytes(b);
 #else
                         value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);
@@ -7315,7 +7315,7 @@ namespace Microsoft.Data.SqlClient
 
 
             Span<uint> data = stackalloc uint[4];
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             d.WriteTdsValue(data);
 #else
             SqlTypeWorkarounds.SqlDecimalExtractData(d, out data[0], out data[1], out data[2], out data[3]);
@@ -7344,7 +7344,7 @@ namespace Microsoft.Data.SqlClient
                 stateObj.WriteByte(0);
 
             Span<uint> data = stackalloc uint[4];
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             d.WriteTdsValue(data);
 #else
             SqlTypeWorkarounds.SqlDecimalExtractData(d, out data[0], out data[1], out data[2], out data[3]);

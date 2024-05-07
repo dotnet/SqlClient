@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private static readonly SNIProxy s_singleton = new SNIProxy();
 
         internal static SNIProxy Instance => s_singleton;
-#if !NET7_0_OR_GREATER 
+#if !NET8_0_OR_GREATER 
         /// <summary>
         /// Generate SSPI context
         /// </summary>
