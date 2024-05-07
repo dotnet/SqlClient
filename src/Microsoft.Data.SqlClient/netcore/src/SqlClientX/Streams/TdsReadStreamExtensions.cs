@@ -11,9 +11,16 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
 {
     internal static async class TdsReadStreamExtensions
     {
-        internal static async byte ReadByteCastAsync(this TdsReadStream stream) => (byte)stream.ReadByte();
-            
-        internal static async string ReadStringAsync(this TdsReadStream stream, ushort shortLen)
+        internal static async ValueTask<byte> ReadByteCastAsync(this TdsReadStream stream) => (byte)stream.ReadByte();
+        
+        internal static async ValueTask<byte> ReadByteAsync(this TdsReadStream stream, bool isAsync, CancellationToken ct = default)
+        {
+            var buffer = ArrayPool<byte>.Shared.Rent(1);
+            _ = isAsync? await stream.ReadAsync(buffer.AsMemory(), ct) : stream.Read(buffer);
+            ArrayPool<byte>.Shared.Return(buffer);
+            return buffer[0];
+        }
+        internal static async ValueTask<string> ReadStringAsync(this TdsReadStream stream, ushort shortLen, bool isAsync, CancellationToken ct = default)
         {
             int byteCount = shortLen << 1;
             Span<byte> stringBytes = stackalloc byte[byteCount];
@@ -33,6 +40,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             {
                 stream.Read(rented);
             }
+
+            ArrayPool<byte>.Shared.Return(rented);
             
             return Encoding.Unicode.GetString(rented);
         }
