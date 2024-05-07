@@ -49,7 +49,6 @@ namespace Microsoft.Data.SqlClient
         /// <returns>null if the data is not found in cache otherwise returns true/false indicating signature verification success/failure</returns>
         internal bool? GetSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
-
             ValidateStringArgumentNotNullOrEmpty(masterKeyPath, _masterkeypathArgumentName, _getSignatureVerificationResultMethodName);
             ValidateStringArgumentNotNullOrEmpty(keyStoreName, _keyStoreNameArgumentName, _getSignatureVerificationResultMethodName);
             ValidateSignatureNotNullOrEmpty(signature, _getSignatureVerificationResultMethodName);
@@ -69,7 +68,6 @@ namespace Microsoft.Data.SqlClient
         /// <param name="result">result indicating signature verification success/failure</param>
         internal void AddSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature, bool result)
         {
-
             ValidateStringArgumentNotNullOrEmpty(masterKeyPath, _masterkeypathArgumentName, _addSignatureVerificationResultMethodName);
             ValidateStringArgumentNotNullOrEmpty(keyStoreName, _keyStoreNameArgumentName, _addSignatureVerificationResultMethodName);
             ValidateSignatureNotNullOrEmpty(signature, _addSignatureVerificationResultMethodName);
