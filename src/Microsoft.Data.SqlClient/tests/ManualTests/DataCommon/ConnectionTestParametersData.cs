@@ -17,6 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
     {
         private const int CASES = 30;
         private string _empty = string.Empty;
+        // It was advised to store the client certificate in its own folder.
         private static readonly string s_fullPathToCer = Path.Combine(Directory.GetCurrentDirectory(), "clientcert", "localhostcert.cer");
         private static readonly string s_mismatchedcert = Path.Combine(Directory.GetCurrentDirectory(), "clientcert", "mismatchedcert.cer");
 

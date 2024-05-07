@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
 
-            // The TestTdsServer does not validate the user name and password, so we can use any value.
+            // The TestTdsServer does not validate the user name and password, so we can use any value if they are not defined.
             string userId = string.IsNullOrWhiteSpace(builder.UserID) ? "user" : builder.UserID;
             string password = string.IsNullOrWhiteSpace(builder.Password) ? "password" : builder.Password;
 

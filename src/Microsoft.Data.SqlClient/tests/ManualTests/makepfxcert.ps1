@@ -55,6 +55,7 @@ function Invoke-SqlServerCertificateCommand {
             openssl req -x509 -newkey rsa:4096 -sha256 -days 1095 -nodes -keyout $OutDir/localhostcert.key -out $OutDir/localhostcert.cer -subj "/CN=$fqdn" -addext "subjectAltName=DNS:$fqdn,DNS:localhost,IP:127.0.0.1,IP:::1"
         }
         chmod 777 $OutDir/localhostcert.key $OutDir/localhostcert.cer
+        # Copy the certificate to the clientcert folder
         cp $OutDir/localhostcert.cer $OutDir/clientcert/
         # Export the certificate to pfx
         Write-Output "Exporting certificate to pfx..."
@@ -80,6 +81,7 @@ function Invoke-SqlServerCertificateCommand {
 
         # Add trust to the mismatched certificate as well
         $ openssl x509 -in $OutDir/mismatchedcert.cer -inform der -out $OutDir/mismatchedcert.pem
+        # Copy the mismatched certificate to the clientcert folder
         cp $OutDir/mismatchedcert.cer $OutDir/clientcert/
         openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/mismatchedcert.pem
         cp $OutDir/mismatchedcert.pem /usr/local/share/ca-certificates/mismatchedcert.crt
@@ -114,6 +116,7 @@ function Invoke-SqlServerCertificateCommand {
         Write-Output "Exporting the certificate to a file..."
         Export-Certificate -Cert $certificate -FilePath "$OutDir/$certificateName" -Type CERT
 
+        # Copy the certificate to the clientcert folder
         copy $OutDir/$certificateName $OutDir/clientcert/
         copy $OutDir/mismatchedcert.cer $OutDir/clientcert/
 
