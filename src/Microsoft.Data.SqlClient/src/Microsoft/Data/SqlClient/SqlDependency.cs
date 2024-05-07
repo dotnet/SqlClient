@@ -629,7 +629,7 @@ namespace Microsoft.Data.SqlClient
                             string database = null;
                             string service = null;
                             bool appDomainStart = false;
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
                             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                             try
@@ -775,7 +775,7 @@ namespace Microsoft.Data.SqlClient
                             if (useDefaults)
                             {
                                 bool appDomainStop = false;
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
                                 RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                                 try

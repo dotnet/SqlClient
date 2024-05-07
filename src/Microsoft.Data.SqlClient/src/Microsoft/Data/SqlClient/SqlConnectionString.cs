@@ -836,7 +836,7 @@ namespace Microsoft.Data.SqlClient
             {
 
                 int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
                 count += SqlConnectionStringBuilder.DeprecatedKeywordsCount + DeprecatedSynonymCount;
 #endif
                 synonyms = new Dictionary<string, string>(count, StringComparer.OrdinalIgnoreCase)

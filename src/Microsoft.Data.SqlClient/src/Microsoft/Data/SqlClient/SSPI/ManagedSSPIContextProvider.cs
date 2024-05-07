@@ -1,4 +1,4 @@
-﻿#if !NETFRAMEWORK && !NET7_0_OR_GREATER
+﻿#if NET6_0
 
 using Microsoft.Data.SqlClient.SNI;
 

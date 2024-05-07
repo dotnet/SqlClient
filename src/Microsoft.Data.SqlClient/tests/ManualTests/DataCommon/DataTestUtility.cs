@@ -492,8 +492,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
 
         public static bool IsUsingNativeSNI() =>
-#if !NETFRAMEWORK
-        DataTestUtility.IsNotUsingManagedSNIOnWindows();
+#if NET6_0_OR_GREATER
+            IsNotUsingManagedSNIOnWindows();
 #else 
             true;
 #endif

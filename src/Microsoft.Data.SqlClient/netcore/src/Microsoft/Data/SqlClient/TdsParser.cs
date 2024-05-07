@@ -1776,7 +1776,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void WriteInt(Span<byte> buffer, int value)
         {
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer, value);
 #else
             buffer[0] = (byte)(value & 0xff);
