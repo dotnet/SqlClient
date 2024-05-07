@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sendWriter">Writer for send buffer</param>
         /// <param name="serverName">Service Principal Name buffer</param>
         /// <returns>SNI error code</returns>
-        internal static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, ReadOnlyMemory<byte> receivedBuff, IBufferWriter<byte> sendWriter, byte[][] serverName)
+        internal static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> sendWriter, byte[][] serverName)
         {
             // TODO: this should use ReadOnlyMemory all the way through
             byte[] array = null;
