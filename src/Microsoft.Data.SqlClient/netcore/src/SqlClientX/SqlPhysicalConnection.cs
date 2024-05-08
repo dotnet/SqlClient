@@ -1488,13 +1488,5 @@ namespace simplesqlclient
                 TdsTokens.SQLROW, 
                 resetPacket: false).ConfigureAwait(false);
         }
-
-        internal async ValueTask<SqlBuffer> ReadSqlValueAsync(_SqlMetaDataSet mdSet,
-            bool isAsync,
-            CancellationToken ct)
-        {
-            return await ProcessRowAsync(mdSet, isAsync, ct).ConfigureAwait(false);
-        }
-
     }
 }
