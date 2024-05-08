@@ -235,7 +235,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // By default evict after 10 hours.
-            var options = new MemoryCacheEntryOptions
+            MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(10)
             };

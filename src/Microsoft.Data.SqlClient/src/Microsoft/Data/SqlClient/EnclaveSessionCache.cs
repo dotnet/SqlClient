@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
             lock (enclaveCacheLock)
             {
                 enclaveSession = new SqlEnclaveSession(sharedSecret, sessionId);
-                var options = new MemoryCacheEntryOptions
+                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(enclaveCacheTimeOutInHours)
                 };

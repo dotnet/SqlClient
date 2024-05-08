@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient
             TrimCacheIfNeeded();
 
             // By default evict after 10 days.
-            var options = new MemoryCacheEntryOptions
+            MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(10)
             };

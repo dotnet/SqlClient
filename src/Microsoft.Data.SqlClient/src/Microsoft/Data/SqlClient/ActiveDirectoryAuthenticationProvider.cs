@@ -270,17 +270,11 @@ namespace Microsoft.Data.SqlClient
                     // We cache the password hash to ensure future connection requests include a validated password
                     // when we check for a cached MSAL account. Otherwise, a connection request with the same username
                     // against the same tenant could succeed with an invalid password when we re-use the cached token.
-                    var options = new MemoryCacheEntryOptions
+                    using (ICacheEntry entry = s_accountPwCache.CreateEntry(pwCacheKey))
                     {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(s_accountPwCacheTtlInHours)
+                        entry.Value = GetHash(parameters.Password);
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(s_accountPwCacheTtlInHours);
                     };
-                    // Remove old cached password hash if there is one
-                    if (s_accountPwCache.TryGetValue<string>(pwCacheKey, out string key))
-                    {
-                        s_accountPwCache.Remove(pwCacheKey);
-                    }
-                    // Add current password hash to cache
-                    s_accountPwCache.Set<byte[]>(pwCacheKey, GetHash(parameters.Password), options);
 
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result?.ExpiresOn);
                 }

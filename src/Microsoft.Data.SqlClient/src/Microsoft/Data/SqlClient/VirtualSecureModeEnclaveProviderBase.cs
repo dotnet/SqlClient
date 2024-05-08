@@ -207,7 +207,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
                 }
 
-                var options = new MemoryCacheEntryOptions
+                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1)
                 };

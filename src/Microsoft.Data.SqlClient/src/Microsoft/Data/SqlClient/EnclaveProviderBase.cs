@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient
                         retryThreadID = Thread.CurrentThread.ManagedThreadId.ToString();
                     }
 
-                    var options = new MemoryCacheEntryOptions
+                    MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
                     {
                         AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(ThreadRetryCacheTimeoutInMinutes)
                     };
