@@ -60,7 +60,7 @@ namespace simplesqlclient
                     specialToken = true;
                     break;
                 case TdsTokens.SQLSESSIONSTATE:
-                    length = stream.ReadInt32();
+                    length = stream.ReadInt32Async();
                     specialToken = true;
                     break;
                 case TdsTokens.SQLFEDAUTHINFO:
