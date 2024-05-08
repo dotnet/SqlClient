@@ -370,7 +370,7 @@ namespace simplesqlclient
             do
             {
                 // Read a 1 byte token
-                TdsToken token = await _readStream.ProcessTokenAsync(isAsync, ct);
+                TdsToken token = await _readStream.ProcessTokenAsync(isAsync, ct).ConfigureAwait(false);
 
                 if (expectedTdsToken != null && expectedTdsToken != token.TokenType)
                 {
@@ -413,7 +413,7 @@ namespace simplesqlclient
 
 
                     case TdsTokens.SQLINFO:
-                        simplesqlclient.SqlError error = await _readStream.ProcessErrorAsync(token, isAsync, ct);
+                        simplesqlclient.SqlError error = await _readStream.ProcessErrorAsync(token, isAsync, ct).ConfigureAwait(false);
                         if (token.TokenType == TdsTokens.SQLERROR)
                         {
                             throw new Exception("Error received from server " + error.Message);
@@ -677,7 +677,7 @@ namespace simplesqlclient
                         isPlp, 
                         _protocolMetadata,
                         isAsync,
-                        ct);
+                        ct).ConfigureAwait(false);
                     break;
 
                 case TdsEnums.SQLXMLTYPE:
@@ -796,7 +796,7 @@ namespace simplesqlclient
             CancellationToken ct)
         {
             // Read count
-            short tableSize = await _readStream.ReadInt16Async(isAsync, ct);
+            short tableSize = await _readStream.ReadInt16Async(isAsync, ct).ConfigureAwait(false);
             SqlTceCipherInfoTable cipherTable = null;
             
             if (0 != tableSize)
@@ -806,7 +806,7 @@ namespace simplesqlclient
                 // Read individual entries
                 for (int i = 0; i < tableSize; i++)
                 {
-                    SqlTceCipherInfoEntry entry = await ReadCipherInfoEntryAsync(isAsync, ct);
+                    SqlTceCipherInfoEntry entry = await ReadCipherInfoEntryAsync(isAsync, ct).ConfigureAwait(false);
                     tempTable[i] = entry;
                 }
 
@@ -877,7 +877,7 @@ namespace simplesqlclient
             flags = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
             col.IsColumnSet = (TdsEnums.IsColumnSet == (flags & TdsEnums.IsColumnSet));
 
-            await ProcessTypeInfoAsync(col, userType, isAsync, ct);
+            await ProcessTypeInfoAsync(col, userType, isAsync, ct).ConfigureAwait(false);
 
 
             // Read table name
@@ -1197,7 +1197,7 @@ namespace simplesqlclient
             byte newLength = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
             string newValue = await _readStream.ReadStringAsync(newLength, isAsync, ct).ConfigureAwait(false);
             byte oldLength = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
-            string oldValue = await _readStream.ReadStringAsync(newLength, isAsync, ct).ConfigureAwait(false);
+            string oldValue = await _readStream.ReadStringAsync(oldLength, isAsync, ct).ConfigureAwait(false);
 
             env._newLength = newLength;
             env._newValue = newValue;
@@ -1493,7 +1493,7 @@ namespace simplesqlclient
             bool isAsync,
             CancellationToken ct)
         {
-            return await ProcessRowAsync(mdSet, isAsync, ct);
+            return await ProcessRowAsync(mdSet, isAsync, ct).ConfigureAwait(false);
         }
 
     }

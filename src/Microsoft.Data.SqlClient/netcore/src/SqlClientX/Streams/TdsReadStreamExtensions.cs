@@ -146,10 +146,10 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             int size = sizeof(uint);
             byte[] buffer = ArrayPool<byte>.Shared.Rent(size);
 
-            _ = isAsync ? await stream.ReadAsync(buffer.AsMemory(0, size), ct) :
-                stream.Read(buffer.AsSpan().Slice(0, size));
+            _ = isAsync ? await stream.ReadAsync(buffer.AsMemory(0, size), ct).ConfigureAwait(false) :
+                stream.Read(buffer.AsSpan()[..size]);
 
-            var result = BinaryPrimitives.ReadUInt32LittleEndian(buffer.AsSpan().Slice(0, size));
+            var result = BinaryPrimitives.ReadUInt32LittleEndian(buffer.AsSpan()[..size]);
             ArrayPool<byte>.Shared.Return(buffer);
 
             return result;
@@ -199,7 +199,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
         internal static async ValueTask<TdsToken> ProcessTokenAsync(this TdsReadStream stream, bool isAsync, CancellationToken ct)
         {
             TdsToken token = new();
-            byte tokenByte = await stream.ReadByteAsync(isAsync, ct);
+            byte tokenByte = await stream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
             token.TokenType = tokenByte;
             // TODO: Validate token type
             //if (!Enum.IsDefined(typeof(TdsTokens), tokenByte))
@@ -223,11 +223,11 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                     specialToken = true;
                     break;
                 case TdsTokens.SQLSESSIONSTATE:
-                    token.Length = await stream.ReadInt32Async(isAsync, ct);
+                    token.Length = await stream.ReadInt32Async(isAsync, ct).ConfigureAwait(false);
                     specialToken = true;
                     break;
                 case TdsTokens.SQLFEDAUTHINFO:
-                    token.Length = await stream.ReadInt32Async(isAsync, ct);
+                    token.Length = await stream.ReadInt32Async(isAsync, ct).ConfigureAwait(false);
                     specialToken = true;
                     break;
                 case TdsTokens.SQLUDT:
@@ -236,7 +236,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                     specialToken = true;
                     break;
                 case TdsTokens.SQLXMLTYPE:
-                    token.Length = await stream.ReadUInt16Async(isAsync, ct);
+                    token.Length = await stream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
                     specialToken = true;
                     break;
 
@@ -260,17 +260,17 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                     case TdsEnums.SQLVarCnt:
                         if (0 != (token.TokenType & 0x80))
                         {
-                            tokenLength = await stream.ReadUInt16Async(isAsync);
+                            tokenLength = await stream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
                             break;
                         }
                         else if (0 == (token.TokenType & 0x0c))
                         {
-                            tokenLength = await stream.ReadInt32Async(isAsync, ct);
+                            tokenLength = await stream.ReadInt32Async(isAsync, ct).ConfigureAwait(false);
                             break;
                         }
                         else
                         {
-                            tokenLength = await stream.ReadByteAsync(isAsync, ct);
+                            tokenLength = await stream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                             break;
                         }
                     default:

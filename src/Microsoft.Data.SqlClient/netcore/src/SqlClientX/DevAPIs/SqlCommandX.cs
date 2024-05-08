@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             // TODO: Implemet the execute scalar.
             SqlDataReaderX reader = ExecuteReaderOnPhysicalConnection(this.CommandText,
                 isAsync: false,
-                ct: CancellationToken.None).GetAwaiter().GetResult();
+                ct: CancellationToken.None).AsTask().GetAwaiter().GetResult();
             object result = null;
 
             // Read the first result and return.
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             SqlDataReaderX reader = ExecuteReaderOnPhysicalConnection(
                 CommandText, 
                 isAsync: false, 
-                CancellationToken.None).GetAwaiter().GetResult();
+                CancellationToken.None).AsTask().GetAwaiter().GetResult();
             return reader;
         }
     }

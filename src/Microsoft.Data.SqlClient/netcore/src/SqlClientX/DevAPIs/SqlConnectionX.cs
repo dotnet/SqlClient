@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             physicalConnection.SendLogin();
             _ = physicalConnection.ProcessTokenStreamPacketsAsync(ParsingBehavior.RunTillPacketEnd,
                 isAsync : false,
-                ct: CancellationToken.None);
+                ct: CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>

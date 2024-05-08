@@ -224,6 +224,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
         {
             ReadBufferDataLength = 0;
             ReadBufferOffset = 0;
+            PacketDataLeft = 0;
         }
     }
 }
