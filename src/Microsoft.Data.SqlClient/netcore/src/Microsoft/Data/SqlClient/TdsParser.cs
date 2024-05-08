@@ -1999,6 +1999,51 @@ namespace Microsoft.Data.SqlClient
                 token == TdsEnums.SQLFEDAUTHINFO);
         }
 
+
+        public static string PrintToken(byte token)
+        {
+            Dictionary<byte, string> tokenNames = new Dictionary<byte, string>
+            {
+                { TdsEnums.SQLERROR, "SQLERROR" },
+                { TdsEnums.SQLINFO, "SQLINFO" },
+                { TdsEnums.SQLLOGINACK, "SQLLOGINACK" },
+                { TdsEnums.SQLENVCHANGE, "SQLENVCHANGE" },
+                { TdsEnums.SQLRETURNVALUE, "SQLRETURNVALUE" },
+                { TdsEnums.SQLRETURNSTATUS, "SQLRETURNSTATUS" },
+                { TdsEnums.SQLCOLNAME, "SQLCOLNAME" },
+                { TdsEnums.SQLCOLFMT, "SQLCOLFMT" },
+                { TdsEnums.SQLRESCOLSRCS, "SQLRESCOLSRCS" },
+                { TdsEnums.SQLDATACLASSIFICATION, "SQLDATACLASSIFICATION" },
+                { TdsEnums.SQLCOLMETADATA, "SQLCOLMETADATA" },
+                { TdsEnums.SQLALTMETADATA, "SQLALTMETADATA" },
+                { TdsEnums.SQLTABNAME, "SQLTABNAME" },
+                { TdsEnums.SQLCOLINFO, "SQLCOLINFO" },
+                { TdsEnums.SQLORDER, "SQLORDER" },
+                { TdsEnums.SQLALTROW, "SQLALTROW" },
+                { TdsEnums.SQLROW, "SQLROW" },
+                { TdsEnums.SQLNBCROW, "SQLNBCROW" },
+                { TdsEnums.SQLDONE, "SQLDONE" },
+                { TdsEnums.SQLDONEPROC, "SQLDONEPROC" },
+                { TdsEnums.SQLDONEINPROC, "SQLDONEINPROC" },
+                { TdsEnums.SQLROWCRC, "SQLROWCRC" },
+                { TdsEnums.SQLPROCID, "SQLPROCID" },
+                { TdsEnums.SQLOFFSET, "SQLOFFSET" },
+                { TdsEnums.SQLSSPI, "SQLSSPI" },
+                { TdsEnums.SQLFEATUREEXTACK, "SQLFEATUREEXTACK" },
+                { TdsEnums.SQLSESSIONSTATE, "SQLSESSIONSTATE" },
+                { TdsEnums.SQLFEDAUTHINFO, "SQLFEDAUTHINFO" }
+            };
+            if (tokenNames.TryGetValue(token, out string tokenName))
+            {
+                return tokenName;
+            }
+            else
+            {
+                return "Unknown Token";
+            }
+        }
+
+
         // Main parse loop for the top-level tds tokens, calls back into the I*Handler interfaces
         internal bool TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, out bool dataReady)
         {

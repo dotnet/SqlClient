@@ -66,7 +66,7 @@ namespace TestApplication
         {
             string connectionString = $"Server=tcp:127.0.0.1;" +
                         $"Min Pool Size=120;Max Pool Size = 200;User Id=sa; pwd={Environment.GetEnvironmentVariable("SQL_PWD")}; " +
-                        "Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database=testdatabase;Pooling=False;" +
+                        "Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database=master;Pooling=False;" +
                         "Application Name=TestAppX"; // pooled
             Console.WriteLine("1 for X else default MDS");
             char testX = Console.ReadKey().KeyChar;
@@ -85,7 +85,9 @@ namespace TestApplication
             
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT [Text] FROM [TextTable]";
+                command.CommandText = "SELECT * from sys.databases \n" +
+                    "" +
+                    "SELECT @@VERSION";
                 Console.WriteLine("Executing command");
 
                 using (SqlDataReader reader = command.ExecuteReader())
@@ -115,14 +117,14 @@ namespace TestApplication
 
             using (SqlCommandX command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT @@VERSION ";
+                command.CommandText = "SELECT @@SPID";
                 Console.WriteLine("Executing command");
 
                 using (SqlDataReaderX reader = command.ExecuteReader())
                 {
-                    do
-                    {
-                        while (reader.Read())
+                    //do
+                    //{
+                        reader.Read();
                         {
                             // Process each row
                             // REad in reverse to cached the data in the reader buffers.
@@ -131,7 +133,7 @@ namespace TestApplication
                                 Console.WriteLine(reader.GetValue(i));
                             }
                         }
-                    } while (reader.NextResult()); // Move to the next result set
+                    //} while (reader.NextResult()); // Move to the next result set
                 }
             }
         }

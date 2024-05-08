@@ -354,6 +354,11 @@ namespace simplesqlclient
         #endregion
 
         byte[] temp = new byte[100];
+
+        public async ValueTask ProcessTokenStreamPacketOnce(bool isAsync, CancellationToken ct)
+        {
+            await ProcessTokenStreamPacketsAsync(ParsingBehavior.RunOnce, isAsync, ct).ConfigureAwait(false);
+        }
         /// <summary>
         /// This needs to be a producer of information. The 
         /// information produced will be handed out to the listeners of the information
