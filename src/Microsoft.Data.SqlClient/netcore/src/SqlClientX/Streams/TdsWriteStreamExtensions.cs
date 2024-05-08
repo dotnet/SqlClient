@@ -3,8 +3,10 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
 using simplesqlclient;
@@ -13,44 +15,82 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
 {
     internal static class TdsWriteStreamExtensions
     {
-        internal static void WriteInt(this TdsWriteStream stream, int integerValue)
+        internal static async ValueTask WriteIntAsync(this TdsWriteStream stream, 
+            int integerValue,
+            bool isAsync,
+            CancellationToken ct)
         {
             AssertSpace<int>(stream);
-            Span<byte> buffer = stackalloc byte[sizeof(int)];
-            BinaryPrimitives.TryWriteInt32LittleEndian(buffer, integerValue);
-            stream.Write(buffer);
+            int size = sizeof(int);
+            byte[] tmp = ArrayPool<byte>.Shared.Rent(size);
+            BinaryPrimitives.TryWriteInt32LittleEndian(tmp.AsSpan()[..size], (short)integerValue);
+            if (isAsync)
+            {
+                await stream.WriteAsync(tmp.AsMemory()[..size], ct).ConfigureAwait(false);
+            }
+            else
+            {
+                stream.Write(tmp.AsSpan()[..size]);
+            }
+            ArrayPool<byte>.Shared.Return(tmp);
         }
 
-        internal static void WriteShort(this TdsWriteStream stream, short value)
+        internal static async ValueTask WriteShortAsync(
+            this TdsWriteStream stream, 
+            int value,
+            bool isAsync,
+            CancellationToken ct)
         {
             AssertSpace<short>(stream);
-            Span<byte> buffer = stackalloc byte[sizeof(short)];
-            BinaryPrimitives.TryWriteInt16LittleEndian(buffer, value);
-            stream.Write(buffer);
+            int size = sizeof(short);
+            byte[] tmp = ArrayPool<byte>.Shared.Rent(size);
+            BinaryPrimitives.TryWriteInt16LittleEndian(tmp.AsSpan()[..size], (short)value);
+            if (isAsync)
+            {
+                await stream.WriteAsync(tmp.AsMemory()[..size], ct).ConfigureAwait(false);
+            }
+            else
+            {
+                stream.Write(tmp.AsSpan()[..size]);
+            }
+            ArrayPool<byte>.Shared.Return(tmp);
         }
 
-        internal static void WriteShort(this TdsWriteStream stream, int value)
-        {
-            AssertSpace<short>(stream);
-            Span<byte> buffer = stackalloc byte[sizeof(short)];
-            BinaryPrimitives.TryWriteInt16LittleEndian(buffer, (short)value);
-            stream.Write(buffer);
-        }
-
-        internal static void WriteString(this TdsWriteStream stream, string s)
+        internal static async ValueTask WriteStringAsync(this TdsWriteStream stream, string s,
+            bool isAsync,
+            CancellationToken ct)
         {
             int cBytes = TdsConstants.CharSize * s.Length;
             byte[] tmp = ArrayPool<byte>.Shared.Rent(cBytes);
             CopyStringToBytes(s, 0, tmp, 0, s.Length);
-            stream.Write(tmp.AsSpan(0, cBytes));
+            if (isAsync)
+            { 
+                await stream.WriteAsync(tmp.AsMemory()[..cBytes], ct).ConfigureAwait(false);
+            }
+            else
+            {
+                stream.Write(tmp.AsSpan(0, cBytes));
+            }
             ArrayPool<byte>.Shared.Return(tmp);
         }
 
-        internal static void WriteLong(this TdsWriteStream stream, long v)
+        internal static async ValueTask WriteLongAsync(this TdsWriteStream stream,
+            long v,
+            bool isAsync,
+            CancellationToken ct)
         {
-            Span<byte> bytes = stackalloc byte[sizeof(long)];
-            BinaryPrimitives.TryWriteInt64LittleEndian(bytes, v);
-            stream.Write(bytes);
+            byte[] rented = ArrayPool<byte>.Shared.Rent(sizeof(long));
+            BinaryPrimitives.TryWriteInt64LittleEndian(rented.AsSpan()[..sizeof(long)], v);
+            if (isAsync)
+            {
+                await stream.WriteAsync(rented.AsMemory()[..sizeof(long)],
+                    ct).ConfigureAwait(false);
+            }
+            else
+            {
+                stream.Write(rented.AsSpan()[..sizeof(long)]);
+            }
+            ArrayPool<byte>.Shared.Return(rented);
         }
 
         private static void CopyStringToBytes(string source, int sourceOffset, byte[] dest, int destOffset, int charLength)

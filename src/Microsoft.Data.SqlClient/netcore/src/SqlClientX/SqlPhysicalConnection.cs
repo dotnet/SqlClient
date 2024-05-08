@@ -120,7 +120,7 @@ namespace simplesqlclient
         }
 
         #region Prelogin
-        internal void SendPrelogin()
+        internal async ValueTask SendPreloginAsync(bool isAsync, CancellationToken ct)
         {
             // 5 bytes for each option (1 byte length, 2 byte offset, 2 byte payload length)
             int preloginOptionsCount = 7;
@@ -136,11 +136,11 @@ namespace simplesqlclient
                 int optionDataSize = 0;
 
                 // Fill in the option
-                _writeStream.WriteByte((byte)option);
+                await _writeStream.WriteByteAsync((byte)option, isAsync, ct).ConfigureAwait(false);
 
                 // Fill in the offset of the option data
-                _writeStream.WriteByte((byte)((offset & 0xff00) >> 8)); // send upper order byte
-                _writeStream.WriteByte((byte)(offset & 0x00ff)); // send lower order byte
+                await _writeStream.WriteByteAsync((byte)((offset & 0xff00) >> 8), isAsync, ct).ConfigureAwait(false); // send upper order byte
+                await _writeStream.WriteByteAsync((byte)(offset & 0x00ff), isAsync, ct).ConfigureAwait(false); // send lower order byte
 
                 switch (option)
                 {
@@ -240,12 +240,14 @@ namespace simplesqlclient
                 }
 
                 // Write data length
-                _writeStream.WriteByte((byte)((optionDataSize & 0xff00) >> 8));
-                _writeStream.WriteByte((byte)(optionDataSize & 0x00ff));
+                await _writeStream.WriteByteAsync((byte)((optionDataSize & 0xff00) >> 8), isAsync, ct).ConfigureAwait(false);
+                await _writeStream.WriteByteAsync((byte)(optionDataSize & 0x00ff), isAsync, ct).ConfigureAwait(false);
             }
-            _writeStream.WriteByte((byte)255);
-            _writeStream.Write(payload.AsSpan(0, payLoadIndex));
-            _writeStream.Flush();
+            await _writeStream.WriteByteAsync((byte)255, isAsync, ct).ConfigureAwait(false);
+            _ = isAsync ?
+                await _writeStream.WriteAsync(payload.AsMemory().Slice(0, payLoadIndex), ct).ConfigureAwait(false) :
+                _writeStream.Write(payload.AsSpan(0, payLoadIndex));
+            await _writeStream.FlushAsync(ct).ConfigureAwait(false);
 
         }
 

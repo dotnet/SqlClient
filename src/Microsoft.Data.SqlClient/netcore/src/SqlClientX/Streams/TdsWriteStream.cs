@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             throw new NotImplementedException();
         }
 
-        public override void WriteByte1(byte value)
+        public override void WriteByte(byte value)
         { 
             Span<byte> oneByteArray = stackalloc byte[1] { value };
             Write(oneByteArray);
