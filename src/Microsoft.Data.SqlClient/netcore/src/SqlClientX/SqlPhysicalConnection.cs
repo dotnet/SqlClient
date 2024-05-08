@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
@@ -244,10 +245,8 @@ namespace simplesqlclient
                 await _writeStream.WriteByteAsync((byte)(optionDataSize & 0x00ff), isAsync, ct).ConfigureAwait(false);
             }
             await _writeStream.WriteByteAsync((byte)255, isAsync, ct).ConfigureAwait(false);
-            _ = isAsync ?
-                await _writeStream.WriteAsync(payload.AsMemory().Slice(0, payLoadIndex), ct).ConfigureAwait(false) :
-                _writeStream.Write(payload.AsSpan(0, payLoadIndex));
-            await _writeStream.FlushAsync(ct).ConfigureAwait(false);
+            await _writeStream.WriteArrayAsync(isAsync, payload, ct).ConfigureAwait(false);
+            await _writeStream.FlushAsync(ct, isAsync).ConfigureAwait(false);
 
         }
 
@@ -1211,7 +1210,7 @@ namespace simplesqlclient
             return env;
         }
 
-        public void SendLogin()
+        public async ValueTask SendLoginAsync(bool isAsync, CancellationToken ct)
         {
             LoginPacket packet = new LoginPacket();
             packet.ApplicationName = _connectionSettings.ApplicationName;
@@ -1244,17 +1243,17 @@ namespace simplesqlclient
 
             _writeStream.PacketHeaderType = TdsEnums.MT_LOGIN7;
             int length = packet.Length;
-            _writeStream.WriteInt(length);
+            await _writeStream.WriteIntAsync(length, isAsync, ct).ConfigureAwait(false);
             // Write TDS Version. We support 7.4
-            _writeStream.WriteInt(packet.ProtocolVersion);
+            await _writeStream.WriteIntAsync(packet.ProtocolVersion, isAsync, ct).ConfigureAwait(false);
             // Negotiate the packet size.
-            _writeStream.WriteInt(packet.PacketSize);
+            await _writeStream.WriteIntAsync(packet.PacketSize, isAsync, ct).ConfigureAwait(false);
             // Client Prog Version
-            _writeStream.WriteInt(packet.ClientProgramVersion);
+            await _writeStream.WriteIntAsync(packet.ClientProgramVersion, isAsync, ct).ConfigureAwait(false);
             // Current Process Id
-            _writeStream.WriteInt(packet.ProcessIdForTdsLogin);
+            await _writeStream.WriteIntAsync(packet.ProcessIdForTdsLogin, isAsync, ct).ConfigureAwait(false);
             // Unused Connection Id 
-            _writeStream.WriteInt(0);
+            await _writeStream.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);
 
             int log7Flags = 0;
 
@@ -1308,165 +1307,175 @@ namespace simplesqlclient
             // Always say that we are using Feature extensions
             log7Flags |= 1 << 28;
 
-            _writeStream.WriteInt(log7Flags);
+            await _writeStream.WriteIntAsync(log7Flags, isAsync, ct).ConfigureAwait(false);
             // Time Zone
-            _writeStream.WriteInt(0);
+            await _writeStream.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);
 
             // LCID
-            _writeStream.WriteInt(0);
+            await _writeStream.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);
 
             int offset = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
-            _writeStream.WriteShort((short)offset);
+            await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
 
-            _writeStream.WriteShort((short)packet.ClientHostName.Length);
+            await _writeStream.WriteShortAsync((short)packet.ClientHostName.Length, isAsync, ct).ConfigureAwait(false);
 
             offset += packet.ClientHostName.Length * 2;
 
             // Support User name and password
             if (_authOptions.AuthenticationType == AuthenticationType.SQLAUTH)
             {
-                _writeStream.WriteShort((short)offset);
-                _writeStream.WriteShort((short)_authOptions.AuthDetails.UserName.Length);
+                await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
+                await _writeStream.WriteShortAsync((short)_authOptions.AuthDetails.UserName.Length, isAsync, ct).ConfigureAwait(false);
                 offset += _authOptions.AuthDetails.UserName.Length * 2;
 
-                _writeStream.WriteShort((short)offset);
-                _writeStream.WriteShort((short)_authOptions.AuthDetails.EncryptedPassword.Length / 2);
+                await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
+                await _writeStream.WriteShortAsync((short)_authOptions.AuthDetails.EncryptedPassword.Length / 2, isAsync, ct).ConfigureAwait(false);
                 offset += _authOptions.AuthDetails.EncryptedPassword.Length;
             }
             else
             {
-                _writeStream.WriteShort(0);  // userName offset
-                _writeStream.WriteShort(0);
-                _writeStream.WriteShort(0);  // password offset
-                _writeStream.WriteShort(0);
+                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);  // userName offset
+                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);
+                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);  // password offset
+                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);
             }
 
-            _writeStream.WriteShort((short)offset);
-            _writeStream.WriteShort((short)_connectionSettings.ApplicationName.Length);
+            await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteShortAsync((short)_connectionSettings.ApplicationName.Length, isAsync, ct).ConfigureAwait(false);
             offset += _connectionSettings.ApplicationName.Length * 2;
 
-            _writeStream.WriteShort((short)offset);
-            _writeStream.WriteShort((short)_hostname.Length);
+            await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteShortAsync((short)_hostname.Length, isAsync, ct).ConfigureAwait(false);
             offset += _hostname.Length * 2;
 
-            _writeStream.WriteShort(offset);
+            await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
             // Feature extension being used 
-            _writeStream.WriteShort(4);
+            await _writeStream.WriteShortAsync(4, isAsync, ct).ConfigureAwait(false);
 
             offset += 4;
 
-            _writeStream.WriteShort(offset);
-            _writeStream.WriteShort(packet.ClientInterfaceName.Length);
+            await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteShortAsync(packet.ClientInterfaceName.Length, isAsync, ct).ConfigureAwait(false);
             offset += packet.ClientInterfaceName.Length * 2;
 
-            _writeStream.WriteShort(offset);
-            _writeStream.WriteShort(packet.Language.Length);
+            await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteShortAsync(packet.Language.Length, isAsync, ct).ConfigureAwait(false);
             offset += packet.Language.Length * 2;
 
-            _writeStream.WriteShort(offset);
-            _writeStream.WriteShort(packet.Database.Length);
+            await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteShortAsync(packet.Database.Length, isAsync, ct).ConfigureAwait(false);
             offset += packet.Database.Length * 2;
 
             byte[] nicAddress = new byte[TdsEnums.MAX_NIC_SIZE];
             Random random = new Random();
             random.NextBytes(nicAddress);
-            _writeStream.Write(nicAddress);
+            await _writeStream.WriteArrayAsync(isAsync, nicAddress, ct).ConfigureAwait(false);
 
-            _writeStream.WriteShort(offset);
+            await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
 
             // No Integrated Auth
-            _writeStream.WriteShort(0);
+            await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);
 
             // Attach DB Filename
-            _writeStream.WriteShort(offset);
-            _writeStream.WriteShort(string.Empty.Length);
+            await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteShortAsync(string.Empty.Length, isAsync, ct).ConfigureAwait(false);
             offset += string.Empty.Length * 2;
 
-            _writeStream.WriteShort(offset);
-            _writeStream.WriteShort(packet.NewPassword.Length / 2);
+            await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteShortAsync(packet.NewPassword.Length / 2, isAsync, ct).ConfigureAwait(false);
 
             // reserved for chSSPI
-            _writeStream.WriteInt(0);
+            await _writeStream.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);
 
-            _writeStream.WriteString(packet.ClientHostName);
+            await _writeStream.WriteStringAsync(packet.ClientHostName, isAsync, ct).ConfigureAwait(false);
 
             // Consider User Name auth only
-            _writeStream.WriteString(packet.UserName);
-            _writeStream.Write(packet.ObfuscatedPassword);
+            await _writeStream.WriteStringAsync(packet.UserName, isAsync, ct).ConfigureAwait(false);
+            
+            await _writeStream.WriteArrayAsync(isAsync, packet.ObfuscatedPassword, ct).ConfigureAwait(false);
+            await _writeStream.WriteStringAsync(packet.ApplicationName, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteStringAsync(packet.ServerHostname, isAsync, ct).ConfigureAwait(false);
 
-            _writeStream.WriteString(packet.ApplicationName);
-            _writeStream.WriteString(packet.ServerHostname);
-
-            _writeStream.WriteInt(packet.Length - packet.FeatureExtensionData.Length);
-            _writeStream.WriteString(packet.ClientInterfaceName);
-            _writeStream.WriteString(packet.Language);
-            _writeStream.WriteString(packet.Database);
+            await _writeStream.WriteIntAsync(packet.Length - packet.FeatureExtensionData.Length, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteStringAsync(packet.ClientInterfaceName, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteStringAsync(packet.Language, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteStringAsync(packet.Database, isAsync, ct).ConfigureAwait(false);
             // Attach DB File Name
-            _writeStream.WriteString(string.Empty);
+            await _writeStream.WriteStringAsync(string.Empty, isAsync, ct).ConfigureAwait(false);
 
-            _writeStream.Write(packet.NewPassword);
+            await _writeStream.WriteArrayAsync(isAsync, packet.NewPassword, ct).ConfigureAwait(false);
             // Apply feature extension data
 
 
             FeatureExtensionsData featureExtensionData = packet.FeatureExtensionData;
 
-            Span<byte> tceData = stackalloc byte[5];
-            featureExtensionData.colEncryptionData.FillData(tceData);
-            _writeStream.WriteByte((byte)ColumnEncryptionData.FeatureExtensionFlag);
-            _writeStream.Write(tceData);
 
+            int totalFeatureExtensionDataSize = 5 // TC + 
+                + 4 // Global transaction
+                + 5 // Data Classification
+                + 4 // UTF8
+                + 4 // DNS Caching
+                + 5; // For the feature extension flags 
+            byte[] bytesFeatureExtensionData = ArrayPool<byte>.Shared.Rent(totalFeatureExtensionDataSize);
 
-            Span<byte> globalTransaction = stackalloc byte[4];
-            featureExtensionData.globalTransactionsFeature.FillData(globalTransaction);
-            _writeStream.WriteByte((byte)featureExtensionData.globalTransactionsFeature.FeatureExtensionFlag);
-            _writeStream.Write(globalTransaction);
+            int featureExtnIndex = 0;
 
-            Span<byte> dataClassificationFeatureData = stackalloc byte[5];
-            packet.FeatureExtensionData.dataClassificationFeature.FillData(dataClassificationFeatureData);
-            _writeStream.WriteByte((byte)packet.FeatureExtensionData.dataClassificationFeature.FeatureExtensionFlag);
-            _writeStream.Write(dataClassificationFeatureData);
+            bytesFeatureExtensionData[featureExtnIndex++] = (byte)ColumnEncryptionData.FeatureExtensionFlag;
+            featureExtensionData.colEncryptionData.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, featureExtnIndex + 5));
+            featureExtnIndex += 5;
 
-            Span<byte> utf8SupportData = stackalloc byte[4];
-            packet.FeatureExtensionData.uTF8SupportFeature.FillData(utf8SupportData);
-            _writeStream.WriteByte((byte)packet.FeatureExtensionData.uTF8SupportFeature.FeatureExtensionFlag);
-            _writeStream.Write(utf8SupportData);
+            bytesFeatureExtensionData[featureExtnIndex++] = (byte)featureExtensionData.globalTransactionsFeature.FeatureExtensionFlag;
+            featureExtensionData.colEncryptionData.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, featureExtnIndex + 4));
+            featureExtnIndex += 4;
 
-            Span<byte> dnsCaching = stackalloc byte[4];
-            packet.FeatureExtensionData.sQLDNSCaching.FillData(dnsCaching);
-            _writeStream.WriteByte((byte)packet.FeatureExtensionData.sQLDNSCaching.FeatureExtensionFlag);
-            _writeStream.Write(dnsCaching);
+            bytesFeatureExtensionData[featureExtnIndex++] = (byte)featureExtensionData.dataClassificationFeature.FeatureExtensionFlag;
+            featureExtensionData.colEncryptionData.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, featureExtnIndex + 5));
+            featureExtnIndex += 5;
 
-            _writeStream.WriteByte(0xFF);
-            _writeStream.Flush();
+            bytesFeatureExtensionData[featureExtnIndex++] = (byte)featureExtensionData.uTF8SupportFeature.FeatureExtensionFlag;
+            featureExtensionData.uTF8SupportFeature.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, featureExtnIndex + 4));
+            featureExtnIndex += 4;
+
+            bytesFeatureExtensionData[featureExtnIndex++] = (byte)featureExtensionData.sQLDNSCaching.FeatureExtensionFlag;
+            featureExtensionData.sQLDNSCaching.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, featureExtnIndex + 4));
+            featureExtnIndex += 4;
+
+            Debug.Assert(featureExtnIndex == totalFeatureExtensionDataSize, "The index of the feature extension data and size dont match");
+
+            await _writeStream.WriteArrayAsync(isAsync, bytesFeatureExtensionData, ct).ConfigureAwait(false);
+            
+            ArrayPool<byte>.Shared.Return(bytesFeatureExtensionData);
+            await _writeStream.WriteByteAsync(0xFF, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.FlushAsync(ct, isAsync, false).ConfigureAwait(false);
 
             DisableSsl();
         }
 
-        public void SendQuery(string query)
+        public async ValueTask SendQuery(string query, bool isAsync, CancellationToken ct)
         {
             //_readStream.ResetPacket();
             int marsHeaderSize = 18;
             int notificationHeaderSize = 0; // TODO: Needed for sql notifications feature. Not implemetned yet
             int totalHeaderLength = 4 + marsHeaderSize + notificationHeaderSize;
-            _writeStream.WriteInt(totalHeaderLength);
+            await _writeStream.WriteIntAsync(totalHeaderLength, isAsync, ct).ConfigureAwait(false);
 
-            _writeStream.WriteInt(marsHeaderSize);
+            await _writeStream.WriteIntAsync(marsHeaderSize, isAsync, ct).ConfigureAwait(false);
 
             // Write the MARS header data. 
-            _writeStream.WriteShort(TdsEnums.HEADERTYPE_MARS);
+            await _writeStream.WriteShortAsync(TdsEnums.HEADERTYPE_MARS, isAsync, ct).ConfigureAwait(false);
             int transactionId = 0; // TODO: Needed for txn support
-            _writeStream.WriteLong(transactionId);
+            await _writeStream.WriteLongAsync(transactionId, isAsync, ct).ConfigureAwait(false);
 
             int resultCount = 0;
             // TODO Increment and add the open results count per connection.
-            _writeStream.WriteInt(++resultCount);
+            await _writeStream.WriteIntAsync(++resultCount, isAsync, ct).ConfigureAwait(false);
             _writeStream.PacketHeaderType = TdsEnums.MT_SQL;
 
             // TODO: Add the enclave support. The server doesnt support Enclaves yet.
 
-            _writeStream.WriteString(query);
-            _writeStream.Flush();
+            await _writeStream.WriteStringAsync(query, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.FlushAsync(ct, isAsync).ConfigureAwait(false);
         }
 
         internal async ValueTask<_SqlMetaDataSet> ProcessMetadataAsync(bool isAsync, CancellationToken ct)

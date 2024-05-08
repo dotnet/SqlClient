@@ -60,17 +60,13 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             await FlushAsync(ct, true).ConfigureAwait(false);
         }
 
-        public override void Flush()
-        {
-            Flush(true);
-        }
-
         /// <summary>
         /// Use hard flush when we definitely know that the end of packet is reached.
         /// </summary>
         /// <param name="ct"></param>
+        /// <param name="isAsync"></param>
         /// <param name="hardFlush"></param>
-        private async Task FlushAsync(CancellationToken ct, bool hardFlush = false)
+        public async Task FlushAsync(CancellationToken ct, bool isAsync, bool hardFlush = false)
         {
             Debug.Assert(PacketHeaderType != 0, "PacketHeaderType is not set. Cannot flush the buffer without setting the packet header type.");
             _WriteBuffer[0] = PacketHeaderType;
@@ -94,7 +90,14 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             _WriteBuffer[5] = 0;
             _WriteBuffer[7] = 0;
 
-            await _underlyingStream.WriteAsync(_WriteBuffer.AsMemory(), ct).ConfigureAwait(false);
+            if (isAsync)
+            {
+                await _underlyingStream.WriteAsync(_WriteBuffer.AsMemory(), ct).ConfigureAwait(false);
+            }
+            else
+            {
+                _underlyingStream.Write(_WriteBuffer.AsSpan());
+            }
 
             // Reset the offset since we will start filling up the packet again.
             WriteBufferOffset = TdsEnums.HEADER_LEN;
@@ -102,49 +105,49 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             // If we are doing a hard flush, then make sure that the data definitely goes out.
             if (hardFlush)
             {
-                await _underlyingStream.FlushAsync(ct).ConfigureAwait(false);
+                if (isAsync)
+                    await _underlyingStream.FlushAsync(ct).ConfigureAwait(false);
+                else
+                    _underlyingStream.Flush();
             }
         }
 
-        /// <summary>
-        /// Use hard flush when we definitely know that the end of packet is reached.
-        /// </summary>
-        /// <param name="hardFlush"></param>
-        private void Flush(bool hardFlush = false)
-        {
-            Debug.Assert(PacketHeaderType != 0, "PacketHeaderType is not set. Cannot flush the buffer without setting the packet header type.");
-            _WriteBuffer[0] = PacketHeaderType;
-            byte status;
-            if (hardFlush)
-            {
-                status = TdsEnums.ST_EOM;
-            }
-            else
-            {
-                status = TdsEnums.ST_BATCH;
-                // We have filled up the buffer. We need to send it out, hence next packet gets an increment.
-                PacketNumber++;
-            }
+        
+        //private void Flush(bool hardFlush = false)
+        //{
+        //    Debug.Assert(PacketHeaderType != 0, "PacketHeaderType is not set. Cannot flush the buffer without setting the packet header type.");
+        //    _WriteBuffer[0] = PacketHeaderType;
+        //    byte status;
+        //    if (hardFlush)
+        //    {
+        //        status = TdsEnums.ST_EOM;
+        //    }
+        //    else
+        //    {
+        //        status = TdsEnums.ST_BATCH;
+        //        // We have filled up the buffer. We need to send it out, hence next packet gets an increment.
+        //        PacketNumber++;
+        //    }
 
-            _WriteBuffer[1] = status;
-            _WriteBuffer[2] = (byte)(WriteBufferOffset >> 8);   // Length upper byte
-            _WriteBuffer[3] = (byte)(WriteBufferOffset & 0xff); // Length lower byte
-            _WriteBuffer[6] = PacketNumber;
-            _WriteBuffer[4] = 0;
-            _WriteBuffer[5] = 0;
-            _WriteBuffer[7] = 0;
+        //    _WriteBuffer[1] = status;
+        //    _WriteBuffer[2] = (byte)(WriteBufferOffset >> 8);   // Length upper byte
+        //    _WriteBuffer[3] = (byte)(WriteBufferOffset & 0xff); // Length lower byte
+        //    _WriteBuffer[6] = PacketNumber;
+        //    _WriteBuffer[4] = 0;
+        //    _WriteBuffer[5] = 0;
+        //    _WriteBuffer[7] = 0;
 
-            _underlyingStream.Write(_WriteBuffer, 0, WriteBufferOffset);
-            _underlyingStream.Flush();
-            // Reset the offset since we will start filling up the packet again.
-            WriteBufferOffset = TdsEnums.HEADER_LEN;
+        //    _underlyingStream.Write(_WriteBuffer, 0, WriteBufferOffset);
+        //    _underlyingStream.Flush();
+        //    // Reset the offset since we will start filling up the packet again.
+        //    WriteBufferOffset = TdsEnums.HEADER_LEN;
             
-            // If we are doing a hard flush, then make sure that the data definitely goes out.
-            if (hardFlush)
-            {
-                //_underlyingStream.Flush();
-            }
-        }
+        //    // If we are doing a hard flush, then make sure that the data definitely goes out.
+        //    if (hardFlush)
+        //    {
+        //        //_underlyingStream.Flush();
+        //    }
+        //}
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -178,11 +181,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
 
             if (_WriteBuffer.Length - WriteBufferOffset == 0)
             {
-                if (isAsync)
-                    await FlushAsync(ct, false).ConfigureAwait(false);
-                else
-                    Flush(false);
-
+              
+                await FlushAsync(ct, isAsync, false).ConfigureAwait(false);
                 _WriteBuffer[WriteBufferOffset + 1] = value;
                 WriteBufferOffset += 1;
             }
@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                     buffer.Slice(0, bytesToWrite).CopyTo(_WriteBuffer.AsSpan(WriteBufferOffset));
                     WriteBufferOffset += bytesToWrite;
                     len -= bytesToWrite;
-                    Flush(false); // Send to network.
+                    FlushAsync(CancellationToken.None, isAsync: false, hardFlush: false).ConfigureAwait(false);
                 }
                 else
                 {

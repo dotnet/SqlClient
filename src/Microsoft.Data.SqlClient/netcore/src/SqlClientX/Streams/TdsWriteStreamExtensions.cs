@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Buffers;
 using System.Buffers.Binary;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient.SqlClientX.Streams;
 using simplesqlclient;
 
 namespace Microsoft.Data.SqlClient.SqlClientX.Streams
@@ -91,6 +87,18 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 stream.Write(rented.AsSpan()[..sizeof(long)]);
             }
             ArrayPool<byte>.Shared.Return(rented);
+        }
+
+        internal static async ValueTask WriteArrayAsync(this TdsWriteStream stream, bool isAsync, byte[] bytes, CancellationToken ct)
+        {
+            if (isAsync)
+            {
+                await stream.WriteAsync(bytes, ct).ConfigureAwait(false);
+            }
+            else
+            {
+                stream.Write(bytes);
+            }
         }
 
         private static void CopyStringToBytes(string source, int sourceOffset, byte[] dest, int destOffset, int charLength)
