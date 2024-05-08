@@ -166,10 +166,31 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             throw new NotImplementedException();
         }
 
-        public override void WriteByte(byte value)
+        public override void WriteByte1(byte value)
         { 
             Span<byte> oneByteArray = stackalloc byte[1] { value };
             Write(oneByteArray);
+        }
+
+        public async ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct)
+        {
+            // Shortcut this first 
+
+            if (_WriteBuffer.Length - WriteBufferOffset == 0)
+            {
+                if (isAsync)
+                    await FlushAsync(ct, false).ConfigureAwait(false);
+                else
+                    Flush(false);
+
+                _WriteBuffer[WriteBufferOffset + 1] = value;
+                WriteBufferOffset += 1;
+            }
+            else
+            {
+                _WriteBuffer[WriteBufferOffset+1] = value;
+                WriteBufferOffset += 1;
+            }
         }
 
         public override void Write(ReadOnlySpan<byte> buffer)
@@ -220,7 +241,6 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                     len = 0;
                 }
             }
-
         }
     }
 }
