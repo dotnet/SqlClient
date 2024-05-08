@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>Il socket non ha generato '{0}' previsto con codice errore '{1}'.</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>Non supportato in .NET Standard 2.0.</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>Il server sta tentando di usare una funzionalità non supportata in questa piattaforma.</value>
   </data>

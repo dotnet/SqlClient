@@ -315,7 +315,7 @@ namespace Microsoft.Data.SqlClient
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern unsafe uint SNISecGenClientContextWrapper(
             [In] SNIHandle pConn,
-            [In, Out] byte[] pIn,
+            [In, Out] byte* pIn,
             uint cbIn,
             [In, Out] byte[] pOut,
             [In] ref uint pcbOut,
@@ -471,15 +471,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, byte[] inBuff, uint receivedLength, byte[] OutBuff, ref uint sendLength, byte[] serverUserName)
+        internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, ReadOnlySpan<byte> inBuff, byte[] OutBuff, ref uint sendLength, byte[] serverUserName)
         {
             fixed (byte* pin_serverUserName = &serverUserName[0])
+            fixed (byte* pInBuff = inBuff)
             {
                 bool local_fDone;
                 return SNISecGenClientContextWrapper(
                     pConnectionObject,
-                    inBuff,
-                    receivedLength,
+                    pInBuff,
+                    (uint)inBuff.Length,
                     OutBuff,
                     ref sendLength,
                     out local_fDone,

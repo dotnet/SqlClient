@@ -115,7 +115,7 @@ jobs:
     displayName: 'Check expected folder names'
 
   - powershell: |
-      # Checks the version of DotNetFramework, NetStandard and NetCore
+      # Checks the version of DotNetFramework and DotNet
       $countErr = 0
       $countPass = 0
       $excludNamesFromRuntimeFolder = 'lib','win','unix'
@@ -260,11 +260,11 @@ jobs:
               
               if($pVersion.FileVersion -eq '${{parameters.assembly_file_version_core}}')
               {
-                    Write-Host 'Correct File version Detected for netcore and netstandard,' $pVersion.FileVersion -ForegroundColor Green
+                    Write-Host 'Correct File version Detected for netcore,' $pVersion.FileVersion -ForegroundColor Green
               }
               else
               {
-                  Write-Host 'Wrong File version Detected for netcore and netstandard and ref folder of netfx,' $pVersion.FileVersion -ForegroundColor Red
+                  Write-Host 'Wrong File version Detected for netcore and ref folder,' $pVersion.FileVersion -ForegroundColor Red
                   Exit -1
               }
           }

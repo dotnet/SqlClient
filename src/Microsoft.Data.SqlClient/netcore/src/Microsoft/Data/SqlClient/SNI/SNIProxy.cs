@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -34,7 +35,21 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sendBuff">Send buffer</param>
         /// <param name="serverName">Service Principal Name buffer</param>
         /// <returns>SNI error code</returns>
-        internal static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, ref byte[] sendBuff, byte[][] serverName)
+        internal static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, byte[][] serverName)
+        {
+            // TODO: this should use ReadOnlyMemory all the way through
+            byte[] array = null;
+
+            if (!receivedBuff.IsEmpty)
+            {
+                array = new byte[receivedBuff.Length];
+                receivedBuff.CopyTo(array);
+            }
+
+            GenSspiClientContext(sspiClientContextStatus, array, ref sendBuff, serverName);
+        }
+
+        private static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, ref byte[] sendBuff, byte[][] serverName)
         {
             SafeDeleteContext securityContext = sspiClientContextStatus.SecurityContext;
             ContextFlagsPal contextFlags = sspiClientContextStatus.ContextFlags;
@@ -189,7 +204,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.TCP:
                     sniHandle = CreateTcpHandle(details, timeout, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
                         tlsFirst, hostNameInCertificate, serverCertificateFilename);
-                     break;
+                    break;
                 case DataSource.Protocol.NP:
                     sniHandle = CreateNpHandle(details, timeout, parallel, tlsFirst);
                     break;
@@ -524,10 +539,8 @@ namespace Microsoft.Data.SqlClient.SNI
         internal static string GetLocalDBInstance(string dataSource, out bool error)
         {
             string instanceName = null;
-            // ReadOnlySpan is not supported in netstandard 2.0, but installing System.Memory solves the issue
             ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
             error = false;
-            // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
             int index = input.IndexOf(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase);
             if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
             {

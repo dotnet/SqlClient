@@ -37,7 +37,6 @@
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>
-    <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
     <MicrosoftDataSqlClientSNIRuntimeVersion>5.2.0</MicrosoftDataSqlClientSNIRuntimeVersion>
     <SystemConfigurationConfigurationManagerVersion>6.0.1</SystemConfigurationConfigurationManagerVersion>
     <MicrosoftSqlServerServerVersion>1.0.0</MicrosoftSqlServerServerVersion>
@@ -47,11 +46,6 @@
     <SystemSecurityPermissionsVersion>6.0.0</SystemSecurityPermissionsVersion>
     <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
     <SystemTextEncodingCodePagesVersion>6.0.0</SystemTextEncodingCodePagesVersion>
-  </PropertyGroup>
-  <!-- NetStandard project dependencies -->
-  <PropertyGroup>
-    <SystemRuntimeLoaderVersion>4.3.0</SystemRuntimeLoaderVersion>
-    <SystemDiagnosticsDiagnosticSourceVersion>6.0.1</SystemDiagnosticsDiagnosticSourceVersion>
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
@@ -78,6 +72,7 @@
     <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
     <MicrosoftExtensionsHosting>6.0.1</MicrosoftExtensionsHosting>
+    <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>

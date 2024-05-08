@@ -165,7 +165,6 @@ Manual Tests require the below setup to run:
   |TCPConnectionString | Connection String for a TCP enabled SQL Server instance. | `Server={servername};Database={Database_Name};Trusted_Connection=True;` <br/> OR `Data Source={servername};Initial Catalog={Database_Name};Integrated Security=True;`|
   |NPConnectionString | Connection String for a Named Pipes enabled SQL Server instance.| `Server=\\{servername}\pipe\sql\query;Database={Database_Name};Trusted_Connection=True;` <br/> OR <br/> `Data Source=np:{servername};Initial Catalog={Database_Name};Integrated Security=True;`|
   |TCPConnectionStringHGSVBS | (Optional) Connection String for a TCP enabled SQL Server with Host Guardian Service (HGS) attestation protocol configuration. | `Server=tcp:{servername}; Database={Database_Name}; UID={UID}; PWD={PWD}; Attestation Protocol = HGS; Enclave Attestation Url = {AttestationURL};`|
-  |TCPConnectionStringAASVBS | (Optional) Connection String for a TCP enabled SQL Server with a VBS Enclave and using Microsoft Azure Attestation (AAS) attestation protocol configuration. | `Server=tcp:{servername}; Database={Database_Name}; UID={UID}; PWD={PWD}; Attestation Protocol = AAS; Enclave Attestation Url = {AttestationURL};`|
   |TCPConnectionStringNoneVBS | (Optional) Connection String for a TCP enabled SQL Server with a VBS Enclave and using None Attestation protocol configuration. | `Server=tcp:{servername}; Database={Database_Name}; UID={UID}; PWD={PWD}; Attestation Protocol = NONE;`|
   |TCPConnectionStringAASSGX | (Optional) Connection String for a TCP enabled SQL Server with a SGX Enclave and using Microsoft Azure Attestation (AAS) attestation protocol configuration. | `Server=tcp:{servername}; Database={Database_Name}; UID={UID}; PWD={PWD}; Attestation Protocol = AAS; Enclave Attestation Url = {AttestationURL};`|
   |EnclaveEnabled | Enables tests requiring an enclave-configured server.|
@@ -231,17 +230,15 @@ Tests can be built and run with custom "Reference Type" property that enables di
 
 - "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
 - "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
-- "NetStandard" => Build and run tests with Microsoft.Data.SqlClient as Project Reference via .NET Standard Library
-- "NetStandardPackage" => Build and run tests with Microsoft.Data.SqlClient as Package Reference via .NET Standard Library
 
-> ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" AND "NETSTANDARDPACKAGE" REFERENCE TYPES ***************
+> ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" REFERENCE TYPE ***************
 > CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION
 >
 > ```bash
 >  msbuild -p:configuration=Release
 > ```
 
-A non-AnyCPU platform reference can only be used with package and NetStandardPackage reference types. Otherwise, the specified platform will be replaced with AnyCPU in the build process.
+A non-AnyCPU platform reference can only be used with package reference type. Otherwise, the specified platform will be replaced with AnyCPU in the build process.
 
 ### Building Tests with Reference Type
 
@@ -252,10 +249,6 @@ msbuild -t:BuildTestsNetCore -p:ReferenceType=Project
 # Default setting uses Project Reference.
 
 msbuild -t:BuildTestsNetCore -p:ReferenceType=Package
-
-msbuild -t:BuildTestsNetCore -p:ReferenceType=NetStandard
-
-msbuild -t:BuildTestsNetCore -p:ReferenceType=NetStandardPackage
 ```
 
 For .NET Framework, below reference types are supported:

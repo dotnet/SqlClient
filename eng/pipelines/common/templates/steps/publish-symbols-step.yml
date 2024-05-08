@@ -7,7 +7,7 @@ parameters:
   - name: SymAccount
     type: string
 
-  - name: PublishSymbols
+  - name: publishSymbols
     type: string
     default: '$(PublishSymbols)'
 
@@ -31,6 +31,7 @@ parameters:
 steps:
 - powershell: 'Write-Host "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{parameters.SymAccount}}"'
   displayName: 'Update Symbol.AccountName ${{parameters.SymAccount}}'
+  condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
 
 - ${{ if eq(parameters.product, 'MDS') }}:
   - task: PublishSymbols@2
@@ -45,7 +46,7 @@ steps:
       SymbolsMaximumWaitTime: 60
       SymbolsProduct: Microsoft.Data.SqlClient
       SymbolsVersion: '{{parameters.symbolsVersion }}'
-    condition: and(succeeded(), eq('${{ parameters.PublishSymbols }}', 'true'))
+    condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})
 
 - ${{ if eq(parameters.product, 'AKV') }}:
   - task: PublishSymbols@2
@@ -60,4 +61,4 @@ steps:
       SymbolsMaximumWaitTime: 60
       SymbolsProduct: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
       SymbolsVersion: '{{parameters.symbolsVersion }}'
-    condition: and(succeeded(), eq('${{ parameters.PublishSymbols }}', 'true'))
+    condition: and(succeeded(), ${{ eq(parameters.publishSymbols, 'true') }})

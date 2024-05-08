@@ -40,13 +40,6 @@ steps:
 
 - ${{ if eq(parameters.product, 'AKV') }}:
   - task: MSBuild@1
-    displayName: 'BuildAKVNetStAllOS using build.proj'
-    inputs:
-      solution: '**/build.proj'
-      configuration: '$(Configuration)'
-      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAKVNetStAllOS -p:NugetPackageVersion=${{parameters.nugetPackageRefVersion }} -p:ReferenceType=Package -p:SignAssembly=true -p:AssemblyOriginatorKeyFile=$(Agent.TempDirectory)\netfxKeypair.snk'
-
-  - task: MSBuild@1
     displayName: 'BuildAKVNetFx using build.proj'
     inputs:
       solution: '**/build.proj'
