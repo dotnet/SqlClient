@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             AssertSpace<int>(stream);
             int size = sizeof(int);
             byte[] tmp = ArrayPool<byte>.Shared.Rent(size);
-            BinaryPrimitives.TryWriteInt32LittleEndian(tmp.AsSpan()[..size], (short)integerValue);
+            BinaryPrimitives.TryWriteInt32LittleEndian(tmp.AsSpan()[..size], integerValue);
             if (isAsync)
             {
                 await stream.WriteAsync(tmp.AsMemory()[..size], ct).ConfigureAwait(false);

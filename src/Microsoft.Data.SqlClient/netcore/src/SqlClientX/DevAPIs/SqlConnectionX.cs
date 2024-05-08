@@ -117,7 +117,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         {
             physicalConnection.TcpConnect();
             // Send prelogin
-            physicalConnection.SendPrelogin();
+            physicalConnection.SendPreloginAsync(isAsync: false,
+                CancellationToken.None).AsTask().GetAwaiter().GetResult();
 
             if (!physicalConnection.TryConsumePrelogin())
             {
@@ -126,10 +127,11 @@ namespace Microsoft.Data.SqlClient.SqlClientX
 
             physicalConnection.EnableSsl();
             // Send login
-            physicalConnection.SendLogin();
-            _ = physicalConnection.ProcessTokenStreamPacketsAsync(ParsingBehavior.RunTillPacketEnd,
+            physicalConnection.SendLoginAsync(isAsync: false, CancellationToken.None).AsTask().GetAwaiter().GetResult();
+            physicalConnection.ProcessTokenStreamPacketsAsync(
+                ParsingBehavior.RunTillPacketEnd,
                 isAsync : false,
-                ct: CancellationToken.None).ConfigureAwait(false);
+                ct: CancellationToken.None).AsTask().GetAwaiter().GetResult();
         }
 
         /// <summary>

@@ -129,8 +129,10 @@ namespace simplesqlclient
             // The payload is the bytes for all the options and the maximum length of the payload
             byte[] payload = new byte[preloginOptionsCount * 5 + TdsConstants.MAX_PRELOGIN_PAYLOAD_LENGTH];
             int payLoadIndex = 0;
-            _writeStream = new TdsWriteStream(_tcpStream, TdsConstants.DEFAULT_LOGIN_PACKET_SIZE);
-            _writeStream.PacketHeaderType = TdsEnums.MT_PRELOGIN;
+            _writeStream = new TdsWriteStream(_tcpStream, TdsConstants.DEFAULT_LOGIN_PACKET_SIZE)
+            {
+                PacketHeaderType = TdsEnums.MT_PRELOGIN
+            };
 
             for (int option = 0; option < preloginOptionsCount; option++)
             {
@@ -210,13 +212,13 @@ namespace simplesqlclient
                         break;
 
                     case (int)PreLoginOptions.TRACEID:
-                        Guid connectionId = new Guid();
+                        Guid connectionId = Guid.NewGuid();
                         connectionId.TryWriteBytes(payload.AsSpan(payLoadIndex, TdsConstants.GUID_SIZE)); // 16 is the size of a GUID
                         payLoadIndex += TdsConstants.GUID_SIZE;
                         offset += TdsConstants.GUID_SIZE;
                         optionDataSize = TdsConstants.GUID_SIZE;
 
-                        Guid activityId = new Guid();
+                        Guid activityId = Guid.NewGuid();
                         uint sequence = 123;
                         activityId.TryWriteBytes(payload.AsSpan(payLoadIndex, 16)); // 16 is the size of a GUID
                         payLoadIndex += TdsConstants.GUID_SIZE;
@@ -245,9 +247,8 @@ namespace simplesqlclient
                 await _writeStream.WriteByteAsync((byte)(optionDataSize & 0x00ff), isAsync, ct).ConfigureAwait(false);
             }
             await _writeStream.WriteByteAsync((byte)255, isAsync, ct).ConfigureAwait(false);
-            await _writeStream.WriteArrayAsync(isAsync, payload, ct).ConfigureAwait(false);
-            await _writeStream.FlushAsync(ct, isAsync).ConfigureAwait(false);
-
+            await _writeStream.WriteArrayAsync(isAsync, payload[..payLoadIndex], ct).ConfigureAwait(false);
+            await _writeStream.FlushAsync(ct, isAsync, hardFlush: true).ConfigureAwait(false);
         }
 
 
@@ -1422,32 +1423,32 @@ namespace simplesqlclient
             int featureExtnIndex = 0;
 
             bytesFeatureExtensionData[featureExtnIndex++] = (byte)ColumnEncryptionData.FeatureExtensionFlag;
-            featureExtensionData.colEncryptionData.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, featureExtnIndex + 5));
+            featureExtensionData.colEncryptionData.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, 5));
             featureExtnIndex += 5;
 
             bytesFeatureExtensionData[featureExtnIndex++] = (byte)featureExtensionData.globalTransactionsFeature.FeatureExtensionFlag;
-            featureExtensionData.colEncryptionData.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, featureExtnIndex + 4));
+            featureExtensionData.globalTransactionsFeature.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, 4));
             featureExtnIndex += 4;
 
             bytesFeatureExtensionData[featureExtnIndex++] = (byte)featureExtensionData.dataClassificationFeature.FeatureExtensionFlag;
-            featureExtensionData.colEncryptionData.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, featureExtnIndex + 5));
+            featureExtensionData.dataClassificationFeature.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, 5));
             featureExtnIndex += 5;
 
             bytesFeatureExtensionData[featureExtnIndex++] = (byte)featureExtensionData.uTF8SupportFeature.FeatureExtensionFlag;
-            featureExtensionData.uTF8SupportFeature.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, featureExtnIndex + 4));
+            featureExtensionData.uTF8SupportFeature.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, 4));
             featureExtnIndex += 4;
 
             bytesFeatureExtensionData[featureExtnIndex++] = (byte)featureExtensionData.sQLDNSCaching.FeatureExtensionFlag;
-            featureExtensionData.sQLDNSCaching.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, featureExtnIndex + 4));
+            featureExtensionData.sQLDNSCaching.FillData(bytesFeatureExtensionData.AsSpan().Slice(featureExtnIndex, 4));
             featureExtnIndex += 4;
 
             Debug.Assert(featureExtnIndex == totalFeatureExtensionDataSize, "The index of the feature extension data and size dont match");
 
-            await _writeStream.WriteArrayAsync(isAsync, bytesFeatureExtensionData, ct).ConfigureAwait(false);
+            await _writeStream.WriteArrayAsync(isAsync, bytesFeatureExtensionData[..totalFeatureExtensionDataSize], ct).ConfigureAwait(false);
             
             ArrayPool<byte>.Shared.Return(bytesFeatureExtensionData);
             await _writeStream.WriteByteAsync(0xFF, isAsync, ct).ConfigureAwait(false);
-            await _writeStream.FlushAsync(ct, isAsync, false).ConfigureAwait(false);
+            await _writeStream.FlushAsync(ct, isAsync, true).ConfigureAwait(false);
 
             DisableSsl();
         }
@@ -1475,7 +1476,7 @@ namespace simplesqlclient
             // TODO: Add the enclave support. The server doesnt support Enclaves yet.
 
             await _writeStream.WriteStringAsync(query, isAsync, ct).ConfigureAwait(false);
-            await _writeStream.FlushAsync(ct, isAsync).ConfigureAwait(false);
+            await _writeStream.FlushAsync(ct, isAsync, true).ConfigureAwait(false);
         }
 
         internal async ValueTask<_SqlMetaDataSet> ProcessMetadataAsync(bool isAsync, CancellationToken ct)

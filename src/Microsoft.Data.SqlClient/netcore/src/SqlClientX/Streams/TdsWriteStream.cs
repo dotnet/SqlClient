@@ -88,15 +88,18 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             _WriteBuffer[6] = PacketNumber;
             _WriteBuffer[4] = 0;
             _WriteBuffer[5] = 0;
+            
             _WriteBuffer[7] = 0;
 
             if (isAsync)
             {
-                await _underlyingStream.WriteAsync(_WriteBuffer.AsMemory(), ct).ConfigureAwait(false);
+                await _underlyingStream.WriteAsync(_WriteBuffer, 0, WriteBufferOffset, ct).ConfigureAwait(false);
+                await _underlyingStream.FlushAsync(ct).ConfigureAwait(false);
             }
             else
             {
-                _underlyingStream.Write(_WriteBuffer.AsSpan());
+                _underlyingStream.Write(_WriteBuffer, 0, WriteBufferOffset);
+                _underlyingStream.Flush();
             }
 
             // Reset the offset since we will start filling up the packet again.
@@ -105,10 +108,10 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             // If we are doing a hard flush, then make sure that the data definitely goes out.
             if (hardFlush)
             {
-                if (isAsync)
-                    await _underlyingStream.FlushAsync(ct).ConfigureAwait(false);
-                else
-                    _underlyingStream.Flush();
+                //if (isAsync)
+                //    await _underlyingStream.FlushAsync(ct).ConfigureAwait(false);
+                //else
+                //    _underlyingStream.Flush();
             }
         }
 
@@ -181,15 +184,12 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
 
             if (_WriteBuffer.Length - WriteBufferOffset == 0)
             {
-              
                 await FlushAsync(ct, isAsync, false).ConfigureAwait(false);
-                _WriteBuffer[WriteBufferOffset + 1] = value;
-                WriteBufferOffset += 1;
+                _WriteBuffer[WriteBufferOffset++] = value;
             }
             else
             {
-                _WriteBuffer[WriteBufferOffset+1] = value;
-                WriteBufferOffset += 1;
+                _WriteBuffer[WriteBufferOffset++] = value;
             }
         }
 
@@ -241,6 +241,11 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                     len = 0;
                 }
             }
+        }
+
+        public override void Flush()
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -144,11 +144,13 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             bool isAsync,
             CancellationToken ct)
         {
-            Connection.PhysicalConnection.SendQuery(commandText);
+            await Connection.PhysicalConnection.SendQuery(commandText,
+                isAsync,
+                ct).ConfigureAwait(false);
             
             var mdSet = await Connection.PhysicalConnection.ProcessMetadataAsync(
                 isAsync,
-                ct);
+                ct).ConfigureAwait(false);
             var reader = new SqlDataReaderX(this);
             bool hasMoreInformation = false;
             reader.SetMetadata(mdSet, hasMoreInformation);
