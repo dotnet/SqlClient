@@ -148,35 +148,6 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             return r == 0 ? -1 : oneByteArray[0];
         }
 
-        private void PrepareBuffer1()
-        {
-            // Either we have read all the data from the packet, and we have data left in the buffer
-            if (PacketDataLeft == 0 && ReadBufferDataLength > ReadBufferOffset)
-            {
-                ProcessHeader();
-            }
-
-            if (ReadBufferOffset == ReadBufferDataLength)
-            {
-                // We have read all the data from the buffer, so we need to read more data from the stream
-                if (PacketDataLeft > 0)
-                {
-                    ReadBufferDataLength = _UnderlyingStream.Read(Buffer);
-                    ReadBufferOffset = 0;
-                }
-                else if (PacketDataLeft == 0)
-                {
-                    ReadBufferDataLength = _UnderlyingStream.Read(Buffer);
-                    ProcessHeader();
-
-                    if (ReadBufferDataLength == ReadBufferOffset)
-                    {
-                        ReadBufferDataLength = _UnderlyingStream.Read(Buffer);
-                        ReadBufferOffset = 0;
-                    }
-                }
-            }
-        }
 
         private async ValueTask PrepareBufferAsync(bool isAsync, CancellationToken ct)
         {
@@ -191,46 +162,38 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 // We have read all the data from the buffer, so we need to read more data from the stream
                 if (PacketDataLeft > 0)
                 {
-                    ReadBufferDataLength = await _UnderlyingStream.ReadAsync(Buffer, ct).ConfigureAwait(false);
+                    ReadBufferDataLength = isAsync ?
+                        await _UnderlyingStream.ReadAsync(Buffer, ct).ConfigureAwait(false) :
+                        _UnderlyingStream.Read(Buffer);
                 }
                 else if (PacketDataLeft == 0)
                 {
-                    ReadBufferDataLength = await _UnderlyingStream.ReadAsync(Buffer, ct).ConfigureAwait(false);
-                    
+                    ReadBufferDataLength = isAsync ?
+                        await _UnderlyingStream.ReadAsync(Buffer, ct).ConfigureAwait(false) :
+                        _UnderlyingStream.Read(Buffer);
+
                     await ProcessHeaderAsync(isAsync, ct).ConfigureAwait(false);
 
                     if (ReadBufferDataLength == ReadBufferOffset)
                     {
-                        ReadBufferDataLength = await _UnderlyingStream.ReadAsync(Buffer, ct).ConfigureAwait(false);
+                        ReadBufferDataLength = isAsync ?
+                            await _UnderlyingStream.ReadAsync(Buffer, ct).ConfigureAwait(false) :
+                            _UnderlyingStream.Read(Buffer);
                     }
                 }
             }
-        }
-
-        private void ProcessHeader()
-        {
-            if (ReadBufferDataLength - ReadBufferOffset < 8)
-            {
-                ReadBufferDataLength += _UnderlyingStream.ReadAtLeast(Buffer.AsSpan(ReadBufferOffset), 8 - (ReadBufferDataLength - ReadBufferOffset));
-            }
-
-            PacketType = Buffer[ReadBufferOffset];
-            PacketStatus = Buffer[ReadBufferOffset + 1];
-            PacketDataLeft = (Buffer[ReadBufferOffset + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8
-                | Buffer[ReadBufferOffset + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
-            // Ignore SPID and Window
-
-            ReadBufferOffset += TdsEnums.HEADER_LEN;
         }
 
         private async ValueTask ProcessHeaderAsync(bool isAsync, CancellationToken ct)
         {
             if (ReadBufferDataLength - ReadBufferOffset < 8)
             {
-                ReadBufferDataLength += await _UnderlyingStream.ReadAtLeastAsync(
+                ReadBufferDataLength += isAsync ? await _UnderlyingStream.ReadAtLeastAsync(
                     Buffer.AsMemory(ReadBufferOffset), 
                     8 - (ReadBufferDataLength - ReadBufferOffset), 
-                    cancellationToken: ct).ConfigureAwait(false);
+                    cancellationToken: ct).ConfigureAwait(false)
+                    : _UnderlyingStream.ReadAtLeast(Buffer.AsSpan(ReadBufferOffset),
+                    8 - (ReadBufferDataLength - ReadBufferOffset));
             }
 
             PacketType = Buffer[ReadBufferOffset];

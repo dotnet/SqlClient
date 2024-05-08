@@ -116,7 +116,9 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         public override object ExecuteScalar()
         {
             // TODO: Implemet the execute scalar.
-            SqlDataReaderX reader = ExecuteReaderOnPhysicalConnection(this.CommandText);
+            SqlDataReaderX reader = ExecuteReaderOnPhysicalConnection(this.CommandText,
+                isAsync: false,
+                ct: CancellationToken.None).GetAwaiter().GetResult();
             object result = null;
 
             // Read the first result and return.
@@ -137,13 +139,16 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             return result;
         }
 
-        private SqlDataReaderX ExecuteReaderOnPhysicalConnection(string commandText)
+        private async ValueTask<SqlDataReaderX> ExecuteReaderOnPhysicalConnection(
+            string commandText,
+            bool isAsync,
+            CancellationToken ct)
         {
             Connection.PhysicalConnection.SendQuery(commandText);
             
-            var mdSet = Connection.PhysicalConnection.ProcessMetadataAsync(
-                isAsync: false,
-                ct: CancellationToken.None).Result;
+            var mdSet = await Connection.PhysicalConnection.ProcessMetadataAsync(
+                isAsync,
+                ct);
             var reader = new SqlDataReaderX(this);
             bool hasMoreInformation = false;
             reader.SetMetadata(mdSet, hasMoreInformation);
@@ -186,7 +191,10 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         /// <returns></returns>
         new public SqlDataReaderX ExecuteReader()
         {
-            SqlDataReaderX reader = ExecuteReaderOnPhysicalConnection(this.CommandText);
+            SqlDataReaderX reader = ExecuteReaderOnPhysicalConnection(
+                CommandText, 
+                isAsync: false, 
+                CancellationToken.None).GetAwaiter().GetResult();
             return reader;
         }
     }

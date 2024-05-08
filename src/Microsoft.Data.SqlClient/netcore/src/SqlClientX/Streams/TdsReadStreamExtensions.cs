@@ -199,7 +199,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
         internal static async ValueTask<TdsToken> ProcessTokenAsync(this TdsReadStream stream, bool isAsync, CancellationToken ct)
         {
             TdsToken token = new();
-            byte tokenByte = await stream.ReadByteAsync(isAsync);
+            byte tokenByte = await stream.ReadByteAsync(isAsync, ct);
             token.TokenType = tokenByte;
             // TODO: Validate token type
             //if (!Enum.IsDefined(typeof(TdsTokens), tokenByte))
