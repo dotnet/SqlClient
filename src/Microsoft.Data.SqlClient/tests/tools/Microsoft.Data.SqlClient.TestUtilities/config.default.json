@@ -12,8 +12,6 @@
     "AADServicePrincipalSecret": "",
     "AzureKeyVaultURL": "",
     "AzureKeyVaultTenantId": "",
-    "AzureKeyVaultClientId": "",
-    "AzureKeyVaultClientSecret": "",
     "SupportsIntegratedSecurity": true,
     "LocalDbAppName": "",
     "LocalDbSharedInstanceName": "",
