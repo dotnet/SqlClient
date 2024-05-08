@@ -22,6 +22,8 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Security.Principal;
 using System.Runtime.InteropServices;
+using Azure.Identity;
+using Azure.Core;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -30,7 +32,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string NPConnectionString = null;
         public static readonly string TCPConnectionString = null;
         public static readonly string TCPConnectionStringHGSVBS = null;
-        public static readonly string TCPConnectionStringAASVBS = null;
         public static readonly string TCPConnectionStringNoneVBS = null;
         public static readonly string TCPConnectionStringAASSGX = null;
         public static readonly string AADAuthorityURL = null;
@@ -41,8 +42,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AKVUrl = null;
         public static readonly string AKVOriginalUrl = null;
         public static readonly string AKVTenantId = null;
-        public static readonly string AKVClientId = null;
-        public static readonly string AKVClientSecret = null;
         public static readonly string LocalDbAppName = null;
         public static readonly string LocalDbSharedInstanceName = null;
         public static List<string> AEConnStrings = new List<string>();
@@ -144,7 +143,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             NPConnectionString = c.NPConnectionString;
             TCPConnectionString = c.TCPConnectionString;
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
-            TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
             TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
             AADAuthorityURL = c.AADAuthorityURL;
@@ -194,8 +192,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             AKVTenantId = c.AzureKeyVaultTenantId;
-            AKVClientId = c.AzureKeyVaultClientId;
-            AKVClientSecret = c.AzureKeyVaultClientSecret;
 
             if (EnclaveEnabled)
             {
@@ -203,11 +199,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     AEConnStrings.Add(TCPConnectionStringHGSVBS);
                     AEConnStringsSetup.Add(TCPConnectionStringHGSVBS);
-                }
-
-                if (!string.IsNullOrEmpty(TCPConnectionStringAASVBS))
-                {
-                    AEConnStrings.Add(TCPConnectionStringAASVBS);
                 }
 
                 if (!string.IsNullOrEmpty(TCPConnectionStringNoneVBS))
@@ -458,7 +449,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool IsAKVSetupAvailable()
         {
-            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+        }
+
+        private static readonly DefaultAzureCredential s_defaultCredential = new(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId });
+
+        public static TokenCredential GetTokenCredential()
+        {
+            return s_defaultCredential;
         }
 
         public static bool IsTargetReadyForAeWithKeyStore()
