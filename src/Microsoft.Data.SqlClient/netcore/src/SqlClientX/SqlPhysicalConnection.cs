@@ -1,9 +1,8 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlTypes;
 using System.Diagnostics;
-using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -11,9 +10,9 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Xml.Schema;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlClient.SqlClientX;
 using Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
 
@@ -352,7 +351,7 @@ namespace simplesqlclient
         }
         #endregion
 
-
+        byte[] temp = new byte[100];
         /// <summary>
         /// This needs to be a producer of information. The 
         /// information produced will be handed out to the listeners of the information
@@ -360,15 +359,18 @@ namespace simplesqlclient
         /// </summary>
         /// <exception cref="Exception"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public void ProcessTokenStreamPackets(ParsingBehavior parsingBehavior, byte? expectedTdsToken = null, bool resetPacket = true)
+        public async ValueTask ProcessTokenStreamPacketsAsync(ParsingBehavior parsingBehavior,
+            bool isAsync,
+            CancellationToken ct,
+            byte? expectedTdsToken = null,
+            bool resetPacket = true)
         {
             if (resetPacket )
                 _readStream.ResetPacket();
-            Span<byte> temp = stackalloc byte[100];
             do
             {
                 // Read a 1 byte token
-                TdsToken token = _readStream.ProcessToken();
+                TdsToken token = await _readStream.ProcessTokenAsync(isAsync, ct);
 
                 if (expectedTdsToken != null && expectedTdsToken != token.TokenType)
                 {
@@ -379,29 +381,29 @@ namespace simplesqlclient
                 switch (token.TokenType)
                 {
                     case TdsTokens.SQLENVCHANGE:
-                        byte envType = (byte)_readStream.ReadByte();
+                        byte envType = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                         switch (envType)
                         {
                             case TdsEnums.ENV_DATABASE:
                             case TdsEnums.ENV_LANG:
-                                envChange = ReadTwoStrings();
+                                envChange = await ReadTwoStrings(isAsync, ct).ConfigureAwait(false);
                                 break;
                             case TdsEnums.ENV_PACKETSIZE:
-                                envChange = ReadTwoStrings();
+                                envChange = await ReadTwoStrings(isAsync, ct).ConfigureAwait(false);
                                 // Read 
                                 break;
                             case TdsEnums.ENV_COLLATION:
-                                int newLen = _readStream.ReadByte();
+                                int newLen = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                                 if (newLen == 5)
                                 { 
-                                    _ = _readStream.ReadInt32();
-                                    _ = _readStream.ReadByte();
+                                    _ = await _readStream.ReadInt32Async(isAsync, ct).ConfigureAwait(false);
+                                    _ = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                                 }
-                                int oldLen = _readStream.ReadByte();
+                                int oldLen = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                                 if (oldLen == 5)
                                 { 
-                                    _ = _readStream.ReadInt32();
-                                    _ = _readStream.ReadByte();
+                                    _ = await _readStream.ReadInt32Async(isAsync, ct).ConfigureAwait(false);
+                                    _ = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                                 }
                                 break;
                         }
@@ -411,7 +413,7 @@ namespace simplesqlclient
 
 
                     case TdsTokens.SQLINFO:
-                        simplesqlclient.SqlError error = _readStream.ProcessError(token);
+                        simplesqlclient.SqlError error = await _readStream.ProcessErrorAsync(token, isAsync, ct);
                         if (token.TokenType == TdsTokens.SQLERROR)
                         {
                             throw new Exception("Error received from server " + error.Message);
@@ -427,28 +429,29 @@ namespace simplesqlclient
                         // readily 
                         // Right now simply read it and ignore it.
                         // First byte skip
-                        _readStream.ReadByte();
+                        await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                         // TdsEnums.Version_size skip
-                        _readStream.Read(temp.Slice(0, 4));
+                        await _readStream.SkipBytesAsync(4, isAsync, ct).ConfigureAwait(false);
                         // One byte length skip
-                        byte lenSkip = (byte)_readStream.ReadByte();
+                        byte lenSkip = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                         // skip length * 2 bytes
-                        _readStream.Read(temp.Slice(0, lenSkip * 2));
+                        //_readStream.Read(temp.Slice(0, lenSkip * 2));
+                        await _readStream.SkipBytesAsync(lenSkip * 2, isAsync, ct).ConfigureAwait(false);
                         // skip major version byte
-                        _readStream.ReadByte();
+                        await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                         // skip minor version byte
-                        _readStream.ReadByte();
+                        await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                         // skip build version byte
-                        _readStream.ReadByte();
+                        await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                         // skip sub build version byte
-                        _readStream.ReadByte();
+                        await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                         // Fix 
                         // Do nothing.
                         break;
                     case TdsTokens.SQLDONE:
-                        ushort status = _readStream.ReadUInt16();
-                        ushort curCmd = _readStream.ReadUInt16();
-                        long longCount = _readStream.ReadInt64();
+                        ushort status = await _readStream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
+                        ushort curCmd = await _readStream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
+                        long longCount = await _readStream.ReadInt64Async(isAsync, ct).ConfigureAwait(false);
                         int count = (int)longCount;
 
                         if (TdsEnums.DONE_MORE != (status & TdsEnums.DONE_MORE))
@@ -458,7 +461,8 @@ namespace simplesqlclient
                     case TdsTokens.SQLCOLMETADATA:
                         if (token.Length != TdsEnums.VARNULL) // TODO: What does this mean? 
                         {
-                            _SqlMetaDataSet metadataSet = ProcessMetadataSet(token.Length);
+                            _SqlMetaDataSet metadataSet = 
+                                await ProcessMetadataSetAsync(token.Length, isAsync, ct).ConfigureAwait(false);
                             _protocolMetadata.LastReadMetadata = metadataSet;
                         }
                         break;
@@ -466,14 +470,16 @@ namespace simplesqlclient
                         byte featureId;
                         do
                         {
-                            featureId = (byte)_readStream.ReadByte();
+                            featureId = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                             if (featureId != 0xff)
                             {
-                                uint datalen = _readStream.ReadUInt32();
+                                uint datalen = await _readStream.ReadUInt32Async(isAsync, ct).ConfigureAwait(false);
 
-                                Span<byte> data = new byte[datalen];
-                                _readStream.Read(data);
-                                _protocolMetadata.AddFeature(featureId, data);
+                                byte[] buffer = ArrayPool<byte>.Shared.Rent((int)datalen);
+                                _ = isAsync ? await _readStream.ReadAsync(buffer.AsMemory(0, (int)datalen), ct).ConfigureAwait(false) :
+                                    _readStream.Read(buffer.AsSpan(0, (int)datalen));
+                                _protocolMetadata.AddFeature(featureId, buffer.AsSpan(0, (int)datalen));
+                                ArrayPool<byte>.Shared.Return(buffer);
                             }
                         } while (featureId != 0xff);
                         break;
@@ -481,7 +487,7 @@ namespace simplesqlclient
                         bool bulkCopyHandler = false;
                         if (bulkCopyHandler)
                         {
-                            ProcessRow(_protocolMetadata.LastReadMetadata);
+                            await ProcessRowAsync(_protocolMetadata.LastReadMetadata, isAsync, ct).ConfigureAwait(false);
                         }
                         break;
                     
@@ -529,7 +535,9 @@ namespace simplesqlclient
             } while(_readStream.PacketDataLeft > 0 && parsingBehavior != ParsingBehavior.RunOnce);
         }
 
-        private SqlBuffer ProcessRow(_SqlMetaDataSet columns)
+        private async ValueTask<SqlBuffer> ProcessRowAsync(_SqlMetaDataSet columns,
+            bool isAsync,
+            CancellationToken ct)
         {
             SqlBuffer data = new SqlBuffer();
 
@@ -537,7 +545,7 @@ namespace simplesqlclient
             {
                 _SqlMetaData column = columns[i];
 
-                Tuple<bool, int> tuple = ProcessColumnHeader(column);
+                Tuple<bool, int> tuple = await ProcessColumnHeaderAsync(column, isAsync, ct).ConfigureAwait(false);
                 bool isNull = tuple.Item1;
                 int length = tuple.Item2;
                 if (tuple.Item1)
@@ -546,11 +554,13 @@ namespace simplesqlclient
                 }
                 else
                 {
-                    ReadSqlValue(data, 
+                    await ReadSqlValueAsync(data, 
                         column, 
                         column.metaType.IsPlp ? (Int32.MaxValue) : (int)length,
                         SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/,
-                        column.column);
+                        column.column,
+                        isAsync,
+                        ct).ConfigureAwait(false);
                 }
                 data.Clear();
             }
@@ -559,11 +569,14 @@ namespace simplesqlclient
 
         }
 
-        internal void ReadSqlValue(
+        internal async ValueTask ReadSqlValueAsync(
             SqlBuffer value,
             SqlMetaDataPriv md,
-            int length, SqlCommandColumnEncryptionSetting columnEncryptionOverride, 
+            int length, 
+            SqlCommandColumnEncryptionSetting columnEncryptionOverride, 
             string columnName, 
+            bool isAsync,
+            CancellationToken ct,
             SqlCommand command = null)
         {
             bool isPlp = md.metaType.IsPlp;
@@ -657,12 +670,14 @@ namespace simplesqlclient
                 case TdsEnums.SQLNCHAR:
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
-                    _sqlValuesProcessor.ReadSqlStringValue(value, 
+                    await _sqlValuesProcessor.ReadSqlStringValueAsync(value, 
                         tdsType, 
                         length, 
                         md.encoding, 
                         isPlp, 
-                        _protocolMetadata);
+                        _protocolMetadata,
+                        isAsync,
+                        ct);
                     break;
 
                 case TdsEnums.SQLXMLTYPE:
@@ -699,7 +714,9 @@ namespace simplesqlclient
 
         }
 
-        internal Tuple<bool, int> ProcessColumnHeader(_SqlMetaData col)
+        internal async ValueTask<Tuple<bool, int>> ProcessColumnHeaderAsync(_SqlMetaData col,
+            bool isAsync, 
+            CancellationToken ct)
         {
             bool isNull = false;
             int length = 0;
@@ -708,19 +725,34 @@ namespace simplesqlclient
                 //
                 // we don't care about TextPtrs, simply go after the data after it
                 //
-                byte textPtrLen = this._readStream.ReadByteCast();
+                byte textPtrLen = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
 
                 if (textPtrLen != 0)
                 {
+                    byte[] buffer = ArrayPool<byte>.Shared.Rent(
+                        Math.Max((int)textPtrLen, TdsEnums.TEXT_TIME_STAMP_LEN));
                     // Skip past the text pointer.
-                    _ = this._readStream.Read(stackalloc byte[textPtrLen]);
+
+                    // TODO: Revisit for allocations
+                    _ = isAsync ? await this._readStream.ReadAsync(
+                                buffer.AsMemory().Slice(0, textPtrLen).ToArray(),
+                                ct).ConfigureAwait(false)
+                        : _readStream.Read(buffer.AsMemory(0, textPtrLen).ToArray());
 
                     // Skip past the Timestamp length
-                    _ = this._readStream.Read(stackalloc byte[TdsEnums.TEXT_TIME_STAMP_LEN]);
+                    _ = isAsync ? await this._readStream.ReadAsync(
+                                buffer.AsMemory().Slice(0, TdsEnums.TEXT_TIME_STAMP_LEN).ToArray(),
+                                ct).ConfigureAwait(false)
+                        : _readStream.Read(buffer.AsMemory(0, TdsEnums.TEXT_TIME_STAMP_LEN).ToArray());
 
+                    ArrayPool<byte>.Shared.Return(buffer);
                     isNull = false; // Why ? 
 
-                    length = Utilities.GetSpecialTokenLength(col.tdsType, this._readStream);
+                    length = await Utilities.GetSpecialTokenLengthAsync(
+                                        col.tdsType,
+                                        _readStream,
+                                        isAsync,
+                                        ct).ConfigureAwait(false);
 
                     return Tuple.Create(isNull, length);
                 }
@@ -731,7 +763,8 @@ namespace simplesqlclient
             }
             else
             {
-                length = Utilities.GetSpecialTokenLength(col.tdsType, this._readStream);
+                length = await Utilities.GetSpecialTokenLengthAsync(col.tdsType, this._readStream,
+                    isAsync, ct).ConfigureAwait(false);
                 isNull = Utilities.IsNull(col.metaType, length);
 
                 length = isNull ? 0 : length;
@@ -741,24 +774,29 @@ namespace simplesqlclient
 
         }
 
-        private _SqlMetaDataSet ProcessMetadataSet(int columnCount)
+        private async ValueTask<_SqlMetaDataSet> ProcessMetadataSetAsync(
+            int columnCount, 
+            bool isAsync,
+            CancellationToken ct)
         {
             _SqlMetaDataSet newMetaData = new _SqlMetaDataSet(columnCount, null);
             SqlTceCipherInfoTable cipherTable = (_protocolMetadata.IsFeatureSupported(TdsEnums.FEATUREEXT_TCE)) ?
-                ProcessCipherInfoTable() : null;
+                await ProcessCipherInfoTableAsync(isAsync, ct).ConfigureAwait(false) : null;
                 
             for (int i = 0; i < columnCount; i++)
             {
-                CommonProcessMetaData(newMetaData[i]);
+                await CommonProcessMetaDataAsync(newMetaData[i], isAsync, ct).ConfigureAwait(false);
             }
 
             return newMetaData;
         }
 
-        private SqlTceCipherInfoTable ProcessCipherInfoTable()
+        private async ValueTask<SqlTceCipherInfoTable> ProcessCipherInfoTableAsync(
+            bool isAsync,
+            CancellationToken ct)
         {
             // Read count
-            short tableSize = _readStream.ReadInt16();
+            short tableSize = await _readStream.ReadInt16Async(isAsync, ct);
             SqlTceCipherInfoTable cipherTable = null;
             
             if (0 != tableSize)
@@ -768,8 +806,7 @@ namespace simplesqlclient
                 // Read individual entries
                 for (int i = 0; i < tableSize; i++)
                 {
-                    SqlTceCipherInfoEntry entry = ReadCipherInfoEntry();
-                    
+                    SqlTceCipherInfoEntry entry = await ReadCipherInfoEntryAsync(isAsync, ct);
                     tempTable[i] = entry;
                 }
 
@@ -779,40 +816,42 @@ namespace simplesqlclient
             return cipherTable;
         }
 
-        private SqlTceCipherInfoEntry ReadCipherInfoEntry()
+        private async ValueTask<SqlTceCipherInfoEntry> ReadCipherInfoEntryAsync(
+            bool isAsync, 
+            CancellationToken ct)
         {
             byte cekValueCount = 0;
             SqlTceCipherInfoEntry entry = new SqlTceCipherInfoEntry(ordinal: 0);
 
             // Read the DB ID
-            int dbId = _readStream.ReadInt32();
-            int keyId = _readStream.ReadInt32();
+            int dbId = await _readStream.ReadInt32Async(isAsync, ct).ConfigureAwait(false);
+            int keyId = await _readStream.ReadInt32Async(isAsync, ct).ConfigureAwait(false);
 
             // Read the key version
-            int keyVersion = _readStream.ReadInt32();
+            int keyVersion = await _readStream.ReadInt32Async(isAsync, ct).ConfigureAwait(false);
             
             // Read the key MD Version
             byte[] keyMDVersion = new byte[8];
             _readStream.Read(keyMDVersion.AsSpan());
             
-            cekValueCount = _readStream.ReadByteCast();
+            cekValueCount = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
             
             for (int i = 0; i < cekValueCount; i++)
             {
                 // Read individual CEK values
-                ushort shortValue = _readStream.ReadUInt16();
+                ushort shortValue = await _readStream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
                 byte[] encryptedCek = new byte[shortValue];
 
                 _readStream.Read(encryptedCek.AsSpan());
                 
-                int length = _readStream.ReadByteCast();
-                string keyStoreName = _readStream.ReadString(length);
+                int length = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+                string keyStoreName = await _readStream.ReadStringAsync(length, isAsync, ct).ConfigureAwait(false);
 
-                shortValue = _readStream.ReadUInt16();
-                string keyPath = _readStream.ReadString(shortValue);
+                shortValue = await _readStream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
+                string keyPath = await _readStream.ReadStringAsync(shortValue, isAsync, ct).ConfigureAwait(false);
 
-                byte algorithmLength = _readStream.ReadByteCast();
-                string algorithmName = _readStream.ReadString(algorithmLength);
+                byte algorithmLength = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+                string algorithmName = await _readStream.ReadStringAsync(algorithmLength, isAsync, ct).ConfigureAwait(false);
 
                 entry.Add(encryptedCek,
                     databaseId: dbId,
@@ -826,34 +865,38 @@ namespace simplesqlclient
             return entry;
         }
 
-        private void CommonProcessMetaData(_SqlMetaData col)
+        private async ValueTask CommonProcessMetaDataAsync(_SqlMetaData col, bool isAsync, CancellationToken ct)
         {
-            uint userType = _readStream.ReadUInt32();
-            byte flags = (byte)_readStream.ReadByte();
+            uint userType = await _readStream.ReadUInt32Async(isAsync, ct).ConfigureAwait(false);
+            byte flags = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
 
             col.Updatability = (byte)((flags & TdsEnums.Updatability) >> 2);
             col.IsNullable = (TdsEnums.Nullable == (flags & TdsEnums.Nullable));
             col.IsIdentity = (TdsEnums.Identity == (flags & TdsEnums.Identity));
 
-            flags = (byte)_readStream.ReadByte();
+            flags = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
             col.IsColumnSet = (TdsEnums.IsColumnSet == (flags & TdsEnums.IsColumnSet));
 
-            ProcessTypeInfo(col, userType);
+            await ProcessTypeInfoAsync(col, userType, isAsync, ct);
 
 
             // Read table name
             if (col.metaType.IsLong && !col.metaType.IsPlp)
             {
                 int unusedLen = 0xFFFF;      //We ignore this value
-                col.multiPartTableName = ProcessOneTable(ref unusedLen);
+                var tuple = await ProcessOneTableAsync(unusedLen, isAsync, ct).ConfigureAwait(false);
+                col.multiPartTableName = tuple.Item1;
+                unusedLen = tuple.Item2;
             }
 
-            byte byteLen = _readStream.ReadByteCast();
-            col.column = _readStream.ReadString(byteLen);
+            byte byteLen = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+            col.column = await _readStream.ReadStringAsync(byteLen, isAsync, ct).ConfigureAwait(false) ;
             UpdateFlags(ParserFlags.HasReceivedColumnMetadata, true);
         }
 
-        private MultiPartTableName ProcessOneTable(ref int length)
+        private async ValueTask<Tuple<MultiPartTableName, int>> ProcessOneTableAsync(int length, 
+            bool isAsync, 
+            CancellationToken ct)
         {
             ushort tableLen;
             MultiPartTableName mpt;
@@ -862,41 +905,41 @@ namespace simplesqlclient
             MultiPartTableName multiPartTableName = default(MultiPartTableName);
 
             mpt = new MultiPartTableName();
-            byte nParts = _readStream.ReadByteCast();
+            byte nParts = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
 
             length--;
             if (nParts == 4)
             {
-                tableLen = _readStream.ReadUInt16();
+                tableLen = await _readStream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
                 length -= 2;
-                value = _readStream.ReadString(tableLen);
+                value = await _readStream.ReadStringAsync(tableLen, isAsync, ct).ConfigureAwait(false);
                 mpt.ServerName = value;
                 nParts--;
                 length -= (tableLen * 2); // wide bytes
             }
             if (nParts == 3)
             {
-                tableLen = _readStream.ReadUInt16();
+                tableLen = await _readStream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
                 length -= 2;
-                value = _readStream.ReadString(tableLen);
+                value = await _readStream.ReadStringAsync(tableLen, isAsync, ct).ConfigureAwait(false);
                 mpt.CatalogName = value;
                 length -= (tableLen * 2); // wide bytes
                 nParts--;
             }
             if (nParts == 2)
             {
-                tableLen = _readStream.ReadUInt16();
+                tableLen = await _readStream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
                 length -= 2;
-                value = _readStream.ReadString(tableLen);
+                value = await _readStream.ReadStringAsync(tableLen, isAsync, ct).ConfigureAwait(false);
                 mpt.SchemaName = value;
                 length -= (tableLen * 2); // wide bytes
                 nParts--;
             }
             if (nParts == 1)
             {
-                tableLen = _readStream.ReadUInt16();
+                tableLen = await _readStream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
                 length -= 2;
-                value = _readStream.ReadString(tableLen);
+                value = await _readStream.ReadStringAsync(tableLen, isAsync, ct).ConfigureAwait(false);
                 mpt.TableName = value;
                 length -= (tableLen * 2); // wide bytes
                 nParts--;
@@ -904,7 +947,7 @@ namespace simplesqlclient
             Debug.Assert(nParts == 0, "ProcessTableName:Unidentified parts in the table name token stream!");
 
             multiPartTableName = mpt;
-            return multiPartTableName;
+            return Tuple.Create(multiPartTableName, length);
         }
 
         private void UpdateFlags(ParserFlags flag, bool value)
@@ -912,9 +955,9 @@ namespace simplesqlclient
             _flags = value ? _flags | flag : _flags & ~flag;
         }
 
-        private void ProcessTypeInfo(_SqlMetaData col, uint userType)
+        private async ValueTask ProcessTypeInfoAsync(_SqlMetaData col, uint userType, bool isAsync, CancellationToken ct)
         {
-            byte tdsType = (byte)_readStream.ReadByte();
+            byte tdsType = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
             
             if (tdsType == TdsEnums.SQLXMLTYPE)
             {
@@ -930,7 +973,10 @@ namespace simplesqlclient
             }
             else
             {
-                col.length = Utilities.GetSpecialTokenLength(tdsType, _readStream);
+                col.length = await Utilities.GetSpecialTokenLengthAsync(
+                    tdsType, _readStream,
+                    isAsync,
+                    ct).ConfigureAwait(false);
             }
 
             col.metaType = MetaType.GetSqlDataType(tdsType, userType, col.length);
@@ -964,27 +1010,27 @@ namespace simplesqlclient
                     {
                         byteLen = (byte)_readStream.ReadByte();
                         col.xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
-                        col.xmlSchemaCollection.Database = _readStream.ReadString(byteLen);
+                        col.xmlSchemaCollection.Database = await _readStream.ReadStringAsync(byteLen, isAsync, ct).ConfigureAwait(false);
                         
-                        byteLen = (byte)_readStream.ReadByte();
+                        byteLen = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
 
-                        col.xmlSchemaCollection.OwningSchema = _readStream.ReadString(byteLen);
+                        col.xmlSchemaCollection.OwningSchema = await _readStream.ReadStringAsync(byteLen, isAsync, ct).ConfigureAwait(false);
                         
-                        short shortLen = _readStream.ReadInt16();
-                        col.xmlSchemaCollection.Name = _readStream.ReadString(shortLen);
+                        short shortLen = await _readStream.ReadInt16Async(isAsync, ct).ConfigureAwait(false);
+                        col.xmlSchemaCollection.Name = await _readStream.ReadStringAsync(shortLen, isAsync, ct).ConfigureAwait(false);
                     }
                 }
             }
 
             if (col.type == System.Data.SqlDbType.Decimal)
             {
-                col.precision = _readStream.ReadByteCast();
-                col.scale = _readStream.ReadByteCast();
+                col.precision = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+                col.scale = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
             }
 
             if (col.metaType.IsVarTime)
             {
-                col.scale = _readStream.ReadByteCast();
+                col.scale = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                 Debug.Assert(0 <= col.scale && col.scale <= 7);
 
                 switch (col.metaType.SqlDbType)
@@ -1010,7 +1056,7 @@ namespace simplesqlclient
 
             if (col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE))
             {
-                col.collation = ProcessCollation();
+                col.collation = await ProcessCollationAsync(isAsync, ct).ConfigureAwait(false);
 
                 // UTF8 collation
                 if (col.collation.IsUTF8)
@@ -1035,10 +1081,10 @@ namespace simplesqlclient
             }
         }
 
-        private SqlCollation ProcessCollation()
+        private async ValueTask<SqlCollation> ProcessCollationAsync(bool isAsync, CancellationToken ct)
         {
-            uint info = _readStream.ReadUInt32();
-            byte sortId = _readStream.ReadByteCast();
+            uint info = await _readStream.ReadUInt32Async(isAsync, ct).ConfigureAwait(false);
+            byte sortId = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
 
             SqlCollation collation = null;
             if (SqlCollation.Equals(_protocolMetadata.Collation, info, sortId))
@@ -1144,14 +1190,14 @@ namespace simplesqlclient
             return codePage;
         }
 
-        private SqlEnvChange ReadTwoStrings()
+        private async ValueTask<SqlEnvChange> ReadTwoStrings(bool isAsync, CancellationToken ct)
         {
             SqlEnvChange env = new SqlEnvChange();
             // Used by ProcessEnvChangeToken
-            byte newLength = (byte)_readStream.ReadByte();
-            string newValue = _readStream.ReadString(newLength);
-            byte oldLength = (byte)_readStream.ReadByte();
-            string oldValue = _readStream.ReadString(oldLength);
+            byte newLength = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+            string newValue = await _readStream.ReadStringAsync(newLength, isAsync, ct).ConfigureAwait(false);
+            byte oldLength = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+            string oldValue = await _readStream.ReadStringAsync(newLength, isAsync, ct).ConfigureAwait(false);
 
             env._newLength = newLength;
             env._newValue = newValue;
@@ -1421,24 +1467,34 @@ namespace simplesqlclient
             _writeStream.Flush();
         }
 
-        internal _SqlMetaDataSet ProcessMetadata()
+        internal async ValueTask<_SqlMetaDataSet> ProcessMetadataAsync(bool isAsync, CancellationToken ct)
         {
-            ProcessTokenStreamPackets(ParsingBehavior.RunOnce, TdsTokens.SQLCOLMETADATA, resetPacket : true);
+            await ProcessTokenStreamPacketsAsync(ParsingBehavior.RunOnce, 
+                isAsync,
+                ct,
+                TdsTokens.SQLCOLMETADATA, 
+                resetPacket : true).ConfigureAwait(false);
             return _protocolMetadata.LastReadMetadata;
         }
 
         /// <summary>
         /// Advances the parser to reading past the SQLROW token.
         /// </summary>
-        internal void AdvancePastRow()
+        internal async ValueTask AdvancePastRowAsync(bool isAsync, CancellationToken ct)
         {
-            ProcessTokenStreamPackets(ParsingBehavior.RunOnce, TdsTokens.SQLROW, resetPacket: false);
+            await ProcessTokenStreamPacketsAsync(ParsingBehavior.RunOnce, 
+                isAsync,
+                ct, 
+                TdsTokens.SQLROW, 
+                resetPacket: false).ConfigureAwait(false);
         }
 
-        internal SqlBuffer ReadSqlValue(_SqlMetaDataSet mdSet)
+        internal async ValueTask<SqlBuffer> ReadSqlValueAsync(_SqlMetaDataSet mdSet,
+            bool isAsync,
+            CancellationToken ct)
         {
-            var data = ProcessRow(mdSet);
-            return data;
+            return await ProcessRowAsync(mdSet, isAsync, ct);
         }
+
     }
 }

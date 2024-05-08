@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -140,12 +141,12 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         {
             Connection.PhysicalConnection.SendQuery(commandText);
             
-            var mdSet = Connection.PhysicalConnection.ProcessMetadata();
+            var mdSet = Connection.PhysicalConnection.ProcessMetadataAsync(
+                isAsync: false,
+                ct: CancellationToken.None).Result;
             var reader = new SqlDataReaderX(this);
             bool hasMoreInformation = false;
             reader.SetMetadata(mdSet, hasMoreInformation);
-            //Connection.PhysicalConnection.AdvancePastRow();
-            //var buffer = Connection.PhysicalConnection.ReadSqlValue(mdSet);
             return reader;
         }
 

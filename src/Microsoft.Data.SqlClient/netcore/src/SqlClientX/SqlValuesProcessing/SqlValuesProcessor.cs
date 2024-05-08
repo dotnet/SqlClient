@@ -3,6 +3,8 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
 using simplesqlclient;
 
@@ -17,12 +19,14 @@ namespace Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing
             this._readStream = readStream;
         }
 
-        internal void ReadSqlStringValue(SqlBuffer value,
+        internal async ValueTask ReadSqlStringValueAsync(SqlBuffer value,
             byte type, 
             int length, 
             Encoding encoding, 
             bool isPlp,
-            ProtocolMetadata protocolMetadata)
+            ProtocolMetadata protocolMetadata,
+            bool isAsync,
+            CancellationToken ct)
         {
             switch (type)
             {
@@ -39,7 +43,11 @@ namespace Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing
                         // 7.0 has no support for multiple code pages in data - single code page support only
                         encoding = protocolMetadata.DefaultEncoding;
                     }
-                    string stringValue = _readStream.ReadStringWithEncoding(length, encoding, isPlp);
+                    string stringValue = await _readStream.ReadStringWithEncodingAsync(length, 
+                        encoding, 
+                        isPlp, 
+                        isAsync, 
+                        ct);
 
                     value.SetToString(stringValue);
                     break;
@@ -87,7 +95,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing
                         }
                         else
                         {
-                            s = _readStream.ReadString(length >> 1);
+                            s = await _readStream.ReadStringAsync(length >> 1, isAsync, ct);
                         }
 
                         value.SetToString(s);

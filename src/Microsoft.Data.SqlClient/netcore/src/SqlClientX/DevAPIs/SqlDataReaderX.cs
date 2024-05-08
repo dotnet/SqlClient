@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using simplesqlclient;
 
 namespace Microsoft.Data.SqlClient.SqlClientX
@@ -314,7 +315,9 @@ namespace Microsoft.Data.SqlClient.SqlClientX
                     //SqlBuffer data = new SqlBuffer();
                     _SqlMetaData column = columns[i];
 
-                    Tuple<bool, int> tuple = _PhysicalConnection.ProcessColumnHeader(column);
+                    Tuple<bool, int> tuple = _PhysicalConnection.ProcessColumnHeaderAsync(column, 
+                        isAsync: false, 
+                        ct: CancellationToken.None).Result;
                     bool isNull = tuple.Item1;
                     int length = tuple.Item2;
                     if (tuple.Item1)
@@ -323,11 +326,13 @@ namespace Microsoft.Data.SqlClient.SqlClientX
                     }
                     else
                     {
-                        _PhysicalConnection.ReadSqlValue(_sqlBuffers[i],
+                        _ = _PhysicalConnection.ReadSqlValueAsync(_sqlBuffers[i],
                             column,
                             column.metaType.IsPlp ? (Int32.MaxValue) : (int)length,
                             simplesqlclient.SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/,
-                            column.column);
+                            column.column,
+                            isAsync : false,
+                            ct: CancellationToken.None);
                     }
                     //data.Clear();
                 }
@@ -376,7 +381,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         /// <exception cref="NotImplementedException"></exception>
         public override bool Read()
         {
-            _PhysicalConnection.AdvancePastRow();
+            _ = _PhysicalConnection.AdvancePastRowAsync(false, CancellationToken.None);
             _readerState._RowDataIsReady = false;
             return true;
         }

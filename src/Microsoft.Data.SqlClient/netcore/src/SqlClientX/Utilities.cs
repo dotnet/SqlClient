@@ -1,6 +1,6 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
+﻿using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
 
@@ -48,7 +48,10 @@ namespace simplesqlclient
 
         internal static bool IsVarTimeTds(byte tdsType) => tdsType == TdsEnums.SQLTIME || tdsType == TdsEnums.SQLDATETIME2 || tdsType == TdsEnums.SQLDATETIMEOFFSET;
 
-        internal static int GetSpecialTokenLength(byte tokenType, TdsReadStream stream)
+        internal static async ValueTask<int> GetSpecialTokenLengthAsync(byte tokenType,
+            TdsReadStream stream,
+            bool isAsync,
+            CancellationToken ct)
         {
             bool specialToken = false;
             int length = 0;
@@ -60,11 +63,15 @@ namespace simplesqlclient
                     specialToken = true;
                     break;
                 case TdsTokens.SQLSESSIONSTATE:
-                    length = stream.ReadInt32Async();
+                    length = await stream.ReadInt32Async(
+                        isAsync, 
+                        ct).ConfigureAwait(false);
                     specialToken = true;
                     break;
                 case TdsTokens.SQLFEDAUTHINFO:
-                    length = stream.ReadInt32();
+                    length = await stream.ReadInt32Async(
+                        isAsync, 
+                        ct).ConfigureAwait(false);
                     specialToken = true;
                     break;
                 case TdsTokens.SQLUDT:
@@ -73,7 +80,9 @@ namespace simplesqlclient
                     specialToken = true;
                     break;
                 case TdsTokens.SQLXMLTYPE:
-                    length = stream.ReadUInt16();
+                    length = await stream.ReadUInt16Async(
+                        isAsync, 
+                        ct).ConfigureAwait(false);
                     specialToken = true;
                     break;
 
@@ -97,17 +106,23 @@ namespace simplesqlclient
                     case TdsEnums.SQLVarCnt:
                         if (0 != (tokenType & 0x80))
                         {
-                            tokenLength = stream.ReadUInt16();
+                            tokenLength = await stream.ReadUInt16Async(
+                                isAsync, 
+                                ct).ConfigureAwait(false);
                             break;
                         }
                         else if (0 == (tokenType & 0x0c))
                         {
-                            tokenLength = stream.ReadInt32();
+                            tokenLength = await stream.ReadInt32Async(
+                                isAsync, 
+                                ct).ConfigureAwait(false);
                             break;
                         }
                         else
                         {
-                            byte value = stream.ReadByteCast();
+                            byte value = await stream.ReadByteAsync(
+                                isAsync, 
+                                ct).ConfigureAwait(false);
                             break;
                         }
                     default:
