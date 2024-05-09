@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Buffers;
 
-namespace simplesqlclient
+namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Tokens
 {
     internal sealed class SqlEnvChange
     {
@@ -21,7 +21,7 @@ namespace simplesqlclient
         internal byte[] _oldBinValue;
         internal long _newLongValue;
         internal long _oldLongValue;
-        
+
 
         internal RoutingInfo _newRoutingInfo;
         internal bool _newBinRented;

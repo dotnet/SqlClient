@@ -181,7 +181,10 @@ namespace Microsoft.Data.SqlClient
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)
             {
-                AccessToken accessToken = await new ClientSecretCredential(audience, parameters.UserId, parameters.Password, tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                AccessToken accessToken = await new ClientSecretCredential(audience,
+                    parameters.UserId,
+                    parameters.Password,
+                    tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
@@ -280,10 +283,14 @@ namespace Microsoft.Data.SqlClient
                     // We cache the password hash to ensure future connection requests include a validated password
                     // when we check for a cached MSAL account. Otherwise, a connection request with the same username
                     // against the same tenant could succeed with an invalid password when we re-use the cached token.
-                    if (!s_accountPwCache.Add(pwCacheKey, GetHash(parameters.Password), DateTime.UtcNow.AddHours(s_accountPwCacheTtlInHours)))
+                    if (!s_accountPwCache.Add(pwCacheKey,
+                        GetHash(parameters.Password),
+                        DateTime.UtcNow.AddHours(s_accountPwCacheTtlInHours)))
                     {
                         s_accountPwCache.Remove(pwCacheKey);
-                        s_accountPwCache.Add(pwCacheKey, GetHash(parameters.Password), DateTime.UtcNow.AddHours(s_accountPwCacheTtlInHours));
+                        s_accountPwCache.Add(pwCacheKey,
+                            GetHash(parameters.Password),
+                            DateTime.UtcNow.AddHours(s_accountPwCacheTtlInHours));
                     }
 
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result?.ExpiresOn);
@@ -302,14 +309,28 @@ namespace Microsoft.Data.SqlClient
                     // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
                     // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
                     // or the user needs to perform two factor authentication.
-                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
+                    result = await AcquireTokenInteractiveDeviceFlowAsync(app,
+                        scopes,
+                        parameters.ConnectionId,
+                        parameters.UserId,
+                        parameters.AuthenticationMethod,
+                        cts,
+                        _customWebUI,
+                        _deviceCodeFlowCallback).ConfigureAwait(false);
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                 }
 
                 if (null == result)
                 {
                     // If no existing 'account' is found, we request user to sign in interactively.
-                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
+                    result = await AcquireTokenInteractiveDeviceFlowAsync(app,
+                        scopes,
+                        parameters.ConnectionId,
+                        parameters.UserId,
+                        parameters.AuthenticationMethod,
+                        cts,
+                        _customWebUI,
+                        _deviceCodeFlowCallback).ConfigureAwait(false);
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                 }
             }
@@ -338,7 +359,9 @@ namespace Microsoft.Data.SqlClient
                     do
                     {
                         IAccount currentVal = accounts.Current;
-                        if (string.Compare(parameters.UserId, currentVal.Username, StringComparison.InvariantCultureIgnoreCase) == 0)
+                        if (string.Compare(parameters.UserId,
+                            currentVal.Username,
+                            StringComparison.InvariantCultureIgnoreCase) == 0)
                         {
                             account = currentVal;
                             break;
@@ -363,8 +386,15 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        private static async Task<AuthenticationResult> AcquireTokenInteractiveDeviceFlowAsync(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
-            SqlAuthenticationMethod authenticationMethod, CancellationTokenSource cts, ICustomWebUi customWebUI, Func<DeviceCodeResult, Task> deviceCodeFlowCallback)
+        private static async Task<AuthenticationResult> AcquireTokenInteractiveDeviceFlowAsync(
+            IPublicClientApplication app,
+            string[] scopes,
+            Guid connectionId,
+            string userId,
+            SqlAuthenticationMethod authenticationMethod,
+            CancellationTokenSource cts,
+            ICustomWebUi customWebUI,
+            Func<DeviceCodeResult, Task> deviceCodeFlowCallback)
         {
             try
             {
@@ -460,8 +490,13 @@ namespace Microsoft.Data.SqlClient
 
             internal CustomWebUi(Func<Uri, Uri, CancellationToken, Task<Uri>> acquireAuthorizationCodeAsyncCallback) => _acquireAuthorizationCodeAsyncCallback = acquireAuthorizationCodeAsyncCallback;
 
-            public Task<Uri> AcquireAuthorizationCodeAsync(Uri authorizationUri, Uri redirectUri, CancellationToken cancellationToken)
-                => _acquireAuthorizationCodeAsyncCallback.Invoke(authorizationUri, redirectUri, cancellationToken);
+            public Task<Uri> AcquireAuthorizationCodeAsync(Uri authorizationUri,
+                Uri redirectUri,
+                CancellationToken cancellationToken)
+                => _acquireAuthorizationCodeAsyncCallback.Invoke(
+                    authorizationUri,
+                    redirectUri,
+                    cancellationToken);
         }
 
         private IPublicClientApplication GetPublicClientAppInstance(PublicClientAppKey publicClientAppKey)

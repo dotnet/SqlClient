@@ -117,13 +117,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         {
             physicalConnection.TcpConnect(false, CancellationToken.None).GetAwaiter().GetResult();
             // Send prelogin
-            physicalConnection.SendPreloginAsync(isAsync: false,
+            physicalConnection.SendAndConsumePrelogin(isAsync: false,
                 CancellationToken.None).AsTask().GetAwaiter().GetResult();
-
-            if (!physicalConnection.TryConsumePrelogin())
-            {
-                throw new Exception("Failed to consume prelogin");
-            }
 
             physicalConnection.EnableSsl();
             // Send login

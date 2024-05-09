@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
             await _writeStream.FlushAsync(ct, isAsync, hardFlush: true).ConfigureAwait(false);
         }
 
-        internal async ValueTask<PreLoginResponse> TryConsumePrelogin(bool isAsync, CancellationToken ct)
+        internal async ValueTask<PreLoginResponse> Consume(bool isAsync, CancellationToken ct)
         {
             PreLoginResponse preLoginResponse = new PreLoginResponse();
             byte[] payload = new byte[TdsConstants.DEFAULT_LOGIN_PACKET_SIZE];

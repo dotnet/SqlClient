@@ -92,10 +92,10 @@ namespace simplesqlclient
             return true;
         }
 
-        internal async ValueTask SendPreloginAsync(bool isAsync, CancellationToken ct)
+        internal async ValueTask SendAndConsumePrelogin(bool isAsync, CancellationToken ct)
         {
-            //TdsPreLoginHandler preloginHandler = new TdsPreLoginHandler(_writeStream);
             await _preloginHandler.Send(isAsync, ct).ConfigureAwait(false);
+            await _preloginHandler.Consume(false, CancellationToken.None).ConfigureAwait(false);
         }
 
         internal void EnableSsl()
@@ -119,84 +119,6 @@ namespace simplesqlclient
             _writeStream.UpdateStream(_tcpStream);
             _readStream.UpdateStream(_tcpStream);
         }
-
-        internal bool TryConsumePrelogin()
-        {
-            _preloginHandler.TryConsumePrelogin(false, CancellationToken.None).GetAwaiter().GetResult();
-            return true;
-            //byte[] payload = new byte[TdsConstants.DEFAULT_LOGIN_PACKET_SIZE];
-            
-            
-            ////TdsPacketHeader header = _bufferReader.ProcessPacketHeader();
-            ////Debug.Assert(header.PacketType == (byte)PacketType.SERVERSTREAM);
-
-            //Span<PreLoginOption> options = stackalloc PreLoginOption[7];
-            //for (int i = 0; i < 8; i++)
-            //{
-            //    PreLoginOption option;
-            //    option.Option = (byte)_readStream.ReadByte();
-            //    if (option.Option == (int)PreLoginOptions.LASTOPT)
-            //    {
-            //        break;
-            //    }
-            //    option.Offset = _readStream.ReadByte() << 8 | _readStream.ReadByte() - 36;
-            //    option.Length = _readStream.ReadByte() << 8 | _readStream.ReadByte();
-            //    options[i] = option;
-            //}
-
-            //int optionsDataLength = 0;
-            //foreach (PreLoginOption option in options)
-            //{
-            //    optionsDataLength += option.Length;
-            //}
-
-            //Span<byte> preLoginPacket = stackalloc byte[optionsDataLength];
-            //_readStream.Read(preLoginPacket);
-
-            //for (int i = 0; i < 7; i++)
-            //{
-            //    PreLoginOption currentOption = options[i];
-            //    switch (currentOption.Option)
-            //    {
-            //        case (int)PreLoginOptions.VERSION:
-            //            byte major = preLoginPacket[currentOption.Offset];
-            //            byte minor = preLoginPacket[currentOption.Offset + 1];
-            //            ushort build = (ushort)(preLoginPacket[currentOption.Offset + 2] << 8 | preLoginPacket[currentOption.Offset + 3]);
-            //            ushort revision = (ushort)(preLoginPacket[currentOption.Offset + 4] << 8 | preLoginPacket[currentOption.Offset + 5]);
-            //            break;
-            //        case (int)PreLoginOptions.ENCRYPT:
-            //            byte encrypt = preLoginPacket[currentOption.Offset];
-            //            if ((SqlEncryptionOptions)encrypt == SqlEncryptionOptions.NOT_SUP)
-            //            {
-            //                throw new Exception("SErver does not support encryption, cannot go ahead with connection.");
-            //            }
-            //            break;
-            //        case (int)PreLoginOptions.INSTANCE:
-            //            // Ignore this 
-            //            Span<byte> instance = stackalloc byte[currentOption.Length];
-
-            //            break;
-            //        case (int)PreLoginOptions.THREADID:
-            //            // Ignore 
-            //            break;
-            //        case (int)PreLoginOptions.MARS:
-            //            _isMarsEnabled = preLoginPacket[currentOption.Offset] == 1;
-            //            break;
-            //        case (int)PreLoginOptions.TRACEID:
-            //            // Ignore
-            //            break;
-            //        case (int)PreLoginOptions.FEDAUTHREQUIRED:
-            //            _serverSupportsFedAuth = preLoginPacket[currentOption.Offset] == 1;
-            //            break;
-            //        default:
-            //            Debug.Fail("Unknown option");
-            //            break;
-            //    }
-            //}
-
-            //return true;
-        }
-        
 
         byte[] temp = new byte[100];
 
