@@ -963,6 +963,7 @@
     <Compile Include="SqlClientX\Streams\TdsReadStreamExtensions.cs" />
     <Compile Include="SqlClientX\TDS.Identifiers\PacketHeaderTypes.cs" />
     <Compile Include="SqlClientX\TDS.Objects\Packets\OutgoingPacketHandler.cs" />
+    <Compile Include="SqlClientX\TDS.Objects\Packets\PreLoginResponse.cs" />
     <Compile Include="SqlClientX\TDS.Objects\Packets\TdsPreloginHandler.cs" />
     <Compile Include="SqlClientX\TDS.Objects\Packets\TdsLoginHandler.cs" />
     <Compile Include="SqlClientX\TDS.Objects\Packets\PacketHeader.cs" />
