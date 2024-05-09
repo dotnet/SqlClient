@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         /// <exception cref="NotImplementedException"></exception>
         public override void Open()
         {
-            physicalConnection.TcpConnect();
+            physicalConnection.TcpConnect(false, CancellationToken.None).GetAwaiter().GetResult();
             // Send prelogin
             physicalConnection.SendPreloginAsync(isAsync: false,
                 CancellationToken.None).AsTask().GetAwaiter().GetResult();

@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.SqlClientX;
 using Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
 using Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets;
@@ -67,49 +68,10 @@ namespace simplesqlclient
             
         }
 
-        public void TcpConnect()
+        public async ValueTask TcpConnect(bool isAsync, CancellationToken ct)
         {
-            // Resolve DNS 
-
-            IEnumerable<IPAddress> ipAddresses = Dns.GetHostAddresses(_hostname);
-            // Connect to the first IP address
-            IPAddress ipToConnect = ipAddresses.First((ipaddr) => ipaddr.AddressFamily == AddressFamily.InterNetwork);
-
-            Socket socket = new Socket(ipToConnect.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
-            {
-                Blocking = false // We want to block until the connection is established
-            };
-
-            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
-            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 1);
-            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);
-
-            try
-            {
-                // Now we have a TCP connection to the server.
-                socket.Connect(ipToConnect, _port);
-            }
-            catch (SocketException e)
-            {
-                if (e.SocketErrorCode != SocketError.WouldBlock)
-                    throw;
-            }
-
-            var write = new List<Socket> { socket };
-            var error = new List<Socket> { socket };
-            Socket.Select(null, write, error, 30000000); // Wait for 30 seconds 
-            if (write.Count > 0)
-            {
-                // Connection established
-                socket.Blocking = true;
-            }
-            else
-            {
-                throw new Exception("Connection failed");
-            }
-            //socket.NoDelay = true;
-
-            _tcpStream = new NetworkStream(socket, true);
+            var handler = new TcpHandler(_hostname, _port);
+            _tcpStream = await handler.Connect(isAsync, ct).ConfigureAwait(false);
 
             _sslOverTdsStream = new SslOverTdsStream(_tcpStream);
 
