@@ -94,37 +94,24 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
 
             int offset = LucidTdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
-            await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
-
-            await _writeStream.WriteShortAsync((short)packet.ClientHostName.Length, isAsync, ct).ConfigureAwait(false);
-
-            offset += packet.ClientHostName.Length * 2;
+            offset = await WriteOffSetAndLengthForString(isAsync, offset, packet.ClientHostName, ct).ConfigureAwait(false);
 
             offset = await WriteAuthenticationOffsetLengthDetails(isAsync, offset, ct).ConfigureAwait(false);
 
             offset = await WriteOffSetAndLengthForString(isAsync, offset, packet.ApplicationName, ct).ConfigureAwait(false);
 
-            await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
-            await _writeStream.WriteShortAsync((short)packet.ServerHostname.Length, isAsync, ct).ConfigureAwait(false);
-            offset += packet.ServerHostname.Length * 2;
+            offset = await WriteOffSetAndLengthForString(isAsync, offset, packet.ServerHostname, ct).ConfigureAwait(false);
 
+            int featureExtenionIsBeingUsed = 4;
             await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
             // Feature extension being used 
-            await _writeStream.WriteShortAsync(4, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteShortAsync(featureExtenionIsBeingUsed, isAsync, ct).ConfigureAwait(false);
 
             offset += 4;
 
-            await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
-            await _writeStream.WriteShortAsync(packet.ClientInterfaceName.Length, isAsync, ct).ConfigureAwait(false);
-            offset += packet.ClientInterfaceName.Length * 2;
-
-            await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
-            await _writeStream.WriteShortAsync(packet.Language.Length, isAsync, ct).ConfigureAwait(false);
-            offset += packet.Language.Length * 2;
-
-            await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
-            await _writeStream.WriteShortAsync(packet.Database.Length, isAsync, ct).ConfigureAwait(false);
-            offset += packet.Database.Length * 2;
+            offset = await WriteOffSetAndLengthForString(isAsync, offset, packet.ClientInterfaceName, ct).ConfigureAwait(false);
+            offset = await WriteOffSetAndLengthForString(isAsync, offset, packet.Language, ct).ConfigureAwait(false);
+            offset = await WriteOffSetAndLengthForString(isAsync, offset, packet.Database, ct).ConfigureAwait(false);
 
             byte[] nicAddress = new byte[LucidTdsEnums.MAX_NIC_SIZE];
             Random random = new Random();
@@ -137,35 +124,26 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
             await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);
 
             // Attach DB Filename
-            await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
-            await _writeStream.WriteShortAsync(string.Empty.Length, isAsync, ct).ConfigureAwait(false);
-            offset += string.Empty.Length * 2;
+            offset = await WriteOffSetAndLengthForString(isAsync, offset, string.Empty, ct).ConfigureAwait(false);
 
             await _writeStream.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
             await _writeStream.WriteShortAsync(packet.NewPassword.Length / 2, isAsync, ct).ConfigureAwait(false);
-
             // reserved for chSSPI
             await _writeStream.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);
-
             await _writeStream.WriteStringAsync(packet.ClientHostName, isAsync, ct).ConfigureAwait(false);
-
             // Consider User Name auth only
             await _writeStream.WriteStringAsync(packet.UserName, isAsync, ct).ConfigureAwait(false);
-
             await _writeStream.WriteArrayAsync(isAsync, packet.ObfuscatedPassword, ct).ConfigureAwait(false);
             await _writeStream.WriteStringAsync(packet.ApplicationName, isAsync, ct).ConfigureAwait(false);
             await _writeStream.WriteStringAsync(packet.ServerHostname, isAsync, ct).ConfigureAwait(false);
-
             await _writeStream.WriteIntAsync(packet.Length - packet.FeatureExtensionData.Length, isAsync, ct).ConfigureAwait(false);
             await _writeStream.WriteStringAsync(packet.ClientInterfaceName, isAsync, ct).ConfigureAwait(false);
             await _writeStream.WriteStringAsync(packet.Language, isAsync, ct).ConfigureAwait(false);
             await _writeStream.WriteStringAsync(packet.Database, isAsync, ct).ConfigureAwait(false);
             // Attach DB File Name
             await _writeStream.WriteStringAsync(string.Empty, isAsync, ct).ConfigureAwait(false);
-
             await _writeStream.WriteArrayAsync(isAsync, packet.NewPassword, ct).ConfigureAwait(false);
             // Apply feature extension data
-
 
             FeatureExtensionsData featureExtensionData = packet.FeatureExtensionData;
 
