@@ -3,7 +3,7 @@ using System.Buffers;
 
 namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Tokens
 {
-    internal sealed class SqlEnvChange
+    internal sealed class TdsEnvChange
     {
         internal byte _type;
         internal byte _oldLength;
@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Tokens
         internal bool _newBinRented;
         internal bool _oldBinRented;
 
-        internal SqlEnvChange _next;
+        internal TdsEnvChange _next;
 
         internal void Clear()
         {

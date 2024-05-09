@@ -14,6 +14,7 @@ using Microsoft.Data.SqlClient.SqlClientX;
 using Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
 using Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets;
+using Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Tokens;
 
 namespace simplesqlclient
 {

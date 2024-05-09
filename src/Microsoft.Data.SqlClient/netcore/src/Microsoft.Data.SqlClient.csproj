@@ -955,7 +955,7 @@
     <Compile Include="SqlClientX\Program.cs" />
     <Compile Include="SqlClientX\DevAPIs\SqlConnectionX.cs" />
     <Compile Include="SqlClientX\ProtocolMetadata.cs" />
-    <Compile Include="SqlClientX\SqlEnvChange.cs" />
+    <Compile Include="SqlClientX\TDS.Objects\Tokens\SqlEnvChange.cs" />
     <Compile Include="SqlClientX\SqlError.cs" />
     <Compile Include="SqlClientX\SqlPhysicalConnection.cs" />
     <Compile Include="SqlClientX\SqlValuesProcessing\SqlValuesProcessor.cs" />
@@ -1009,9 +1009,6 @@
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="SqlClientX\TDS.Objects\Tokens\" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
