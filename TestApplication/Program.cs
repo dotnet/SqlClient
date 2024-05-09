@@ -85,7 +85,7 @@ namespace TestApplication
             
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT * from sys.databases \n" +
+                command.CommandText = "SELECT name from sys.databases \n" +
                     "" +
                     "SELECT @@VERSION";
                 Console.WriteLine("Executing command");
