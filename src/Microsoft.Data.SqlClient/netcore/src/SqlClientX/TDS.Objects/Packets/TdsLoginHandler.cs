@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
@@ -57,7 +54,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
             RequestedFeatures = DefaultRequestedFeatures | additionalFeatures;
         }
         
-        public async ValueTask<TdsLoginHandler> SetLoginInformation(
+        public async ValueTask<TdsLoginHandler> Send(
             LoginPacket packet, 
             bool isAsync, 
             CancellationToken ct)
@@ -86,76 +83,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
             // Unused Connection Id 
             await _writeStream.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);
 
-
-
-            //packet.RequestedFeatures = requestedFeatures;
-            //packet.FeatureExtensionData.requestedFeatures = requestedFeatures;
-
-            //_writeStream.PacketHeaderType = LucidTdsEnums.MT_LOGIN7;
-            //int length = packet.Length;
-            //await _writeStream.WriteIntAsync(length, isAsync, ct).ConfigureAwait(false);
-            //// Write TDS Version. We support 7.4
-            //await _writeStream.WriteIntAsync(packet.ProtocolVersion, isAsync, ct).ConfigureAwait(false);
-            //// Negotiate the packet size.
-            //await _writeStream.WriteIntAsync(packet.PacketSize, isAsync, ct).ConfigureAwait(false);
-            //// Client Prog Version
-            //await _writeStream.WriteIntAsync(packet.ClientProgramVersion, isAsync, ct).ConfigureAwait(false);
-            //// Current Process Id
-            //await _writeStream.WriteIntAsync(packet.ProcessIdForTdsLogin, isAsync, ct).ConfigureAwait(false);
-            //// Unused Connection Id 
-            //await _writeStream.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);
-
-            int log7Flags = 0;
-
-            /*
-             Current snapshot from TDS spec with the offsets added:
-                0) fByteOrder:1,                // byte order of numeric data types on client
-                1) fCharSet:1,                  // character set on client
-                2) fFloat:2,                    // Type of floating point on client
-                4) fDumpLoad:1,                 // Dump/Load and BCP enable
-                5) fUseDb:1,                    // USE notification
-                6) fDatabase:1,                 // Initial database fatal flag
-                7) fSetLang:1,                  // SET LANGUAGE notification
-                8) fLanguage:1,                 // Initial language fatal flag
-                9) fODBC:1,                     // Set if client is ODBC driver
-               10) fTranBoundary:1,             // Transaction boundary notification
-               11) fDelegatedSec:1,             // Security with delegation is available
-               12) fUserType:3,                 // Type of user
-               15) fIntegratedSecurity:1,       // Set if client is using integrated security
-               16) fSQLType:4,                  // Type of SQL sent from client
-               20) fOLEDB:1,                    // Set if client is OLEDB driver
-               21) fSpare1:3,                   // first bit used for read-only intent, rest unused
-               24) fResetPassword:1,            // set if client wants to reset password
-               25) fNoNBCAndSparse:1,           // set if client does not support NBC and Sparse column
-               26) fUserInstance:1,             // This connection wants to connect to a SQL "user instance"
-               27) fUnknownCollationHandling:1, // This connection can handle unknown collation correctly.
-               28) fExtension:1                 // Extensions are used
-               32 - total
-            */
-
-            // first byte
-            log7Flags |= LucidTdsEnums.USE_DB_ON << 5;
-            log7Flags |= LucidTdsEnums.INIT_DB_FATAL << 6;
-            log7Flags |= LucidTdsEnums.SET_LANG_ON << 7;
-
-            // second byte
-            log7Flags |= LucidTdsEnums.INIT_LANG_FATAL << 8;
-            log7Flags |= LucidTdsEnums.ODBC_ON << 9;
-
-            // No SSPI usage
-            if (packet.UseSSPI)
-            {
-                log7Flags |= LucidTdsEnums.SSPI_ON << 15;
-            }
-
-            // third byte
-            if (packet.ReadOnlyIntent)
-            {
-                log7Flags |= LucidTdsEnums.READONLY_INTENT_ON << 21; // read-only intent flag is a first bit of fSpare1
-            }
-
-            // Always say that we are using Feature extensions
-            log7Flags |= 1 << 28;
+            int log7Flags = AssembleLogin7Flags(packet);
 
             await _writeStream.WriteIntAsync(log7Flags, isAsync, ct).ConfigureAwait(false);
             // Time Zone
@@ -172,28 +100,9 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
 
             offset += packet.ClientHostName.Length * 2;
 
-            // Support User name and password
-            if (_authOptions.AuthenticationType == AuthenticationType.SQLAUTH)
-            {
-                await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
-                await _writeStream.WriteShortAsync((short)_authOptions.AuthDetails.UserName.Length, isAsync, ct).ConfigureAwait(false);
-                offset += _authOptions.AuthDetails.UserName.Length * 2;
+            offset = await WriteAuthenticationOffsetLengthDetails(isAsync, offset, ct).ConfigureAwait(false);
 
-                await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
-                await _writeStream.WriteShortAsync((short)_authOptions.AuthDetails.EncryptedPassword.Length / 2, isAsync, ct).ConfigureAwait(false);
-                offset += _authOptions.AuthDetails.EncryptedPassword.Length;
-            }
-            else
-            {
-                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);  // userName offset
-                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);
-                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);  // password offset
-                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);
-            }
-
-            await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
-            await _writeStream.WriteShortAsync((short)packet.ApplicationName.Length, isAsync, ct).ConfigureAwait(false);
-            offset += packet.ApplicationName.Length * 2;
+            offset = await WriteOffSetAndLengthForString(isAsync, offset, packet.ApplicationName, ct).ConfigureAwait(false);
 
             await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
             await _writeStream.WriteShortAsync((short)packet.ServerHostname.Length, isAsync, ct).ConfigureAwait(false);
@@ -302,9 +211,109 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
             return this;
         }
 
+        private async Task<int> WriteOffSetAndLengthForString(bool isAsync, int offset, string applicationName, CancellationToken ct)
+        {
+            await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteShortAsync((short)applicationName.Length, isAsync, ct).ConfigureAwait(false);
+            offset += applicationName.Length * 2;
+            return offset;
+        }
+
+        private async ValueTask<int> WriteAuthenticationOffsetLengthDetails(bool isAsync, int offset, CancellationToken ct)
+        {
+            // Support User name and password
+            if (_authOptions.AuthenticationType == AuthenticationType.SQLAUTH)
+            {
+                await _writeStream.WriteShortAsync((short)offset, 
+                    isAsync, 
+                    ct).ConfigureAwait(false);
+
+                await _writeStream.WriteShortAsync((short)_authOptions.AuthDetails.UserName.Length, 
+                    isAsync, 
+                    ct).ConfigureAwait(false);
+
+                offset += _authOptions.AuthDetails.UserName.Length * 2;
+
+                await _writeStream.WriteShortAsync((short)offset, 
+                    isAsync, 
+                    ct).ConfigureAwait(false);
+
+                await _writeStream.WriteShortAsync(
+                    (short)_authOptions.AuthDetails.EncryptedPassword.Length / 2, 
+                    isAsync, 
+                    ct).ConfigureAwait(false);
+                offset += _authOptions.AuthDetails.EncryptedPassword.Length;
+            }
+            else
+            {
+                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);  // userName offset
+                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);
+                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);  // password offset
+                await _writeStream.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);
+            }
+
+            return offset;
+        }
+
+        private static int AssembleLogin7Flags(LoginPacket packet)
+        {
+            int log7Flags = 0;
+
+            /*
+             Current snapshot from TDS spec with the offsets added:
+                0) fByteOrder:1,                // byte order of numeric data types on client
+                1) fCharSet:1,                  // character set on client
+                2) fFloat:2,                    // Type of floating point on client
+                4) fDumpLoad:1,                 // Dump/Load and BCP enable
+                5) fUseDb:1,                    // USE notification
+                6) fDatabase:1,                 // Initial database fatal flag
+                7) fSetLang:1,                  // SET LANGUAGE notification
+                8) fLanguage:1,                 // Initial language fatal flag
+                9) fODBC:1,                     // Set if client is ODBC driver
+               10) fTranBoundary:1,             // Transaction boundary notification
+               11) fDelegatedSec:1,             // Security with delegation is available
+               12) fUserType:3,                 // Type of user
+               15) fIntegratedSecurity:1,       // Set if client is using integrated security
+               16) fSQLType:4,                  // Type of SQL sent from client
+               20) fOLEDB:1,                    // Set if client is OLEDB driver
+               21) fSpare1:3,                   // first bit used for read-only intent, rest unused
+               24) fResetPassword:1,            // set if client wants to reset password
+               25) fNoNBCAndSparse:1,           // set if client does not support NBC and Sparse column
+               26) fUserInstance:1,             // This connection wants to connect to a SQL "user instance"
+               27) fUnknownCollationHandling:1, // This connection can handle unknown collation correctly.
+               28) fExtension:1                 // Extensions are used
+               32 - total
+            */
+
+            // first byte
+            log7Flags |= LucidTdsEnums.USE_DB_ON << 5;
+            log7Flags |= LucidTdsEnums.INIT_DB_FATAL << 6;
+            log7Flags |= LucidTdsEnums.SET_LANG_ON << 7;
+
+            // second byte
+            log7Flags |= LucidTdsEnums.INIT_LANG_FATAL << 8;
+            log7Flags |= LucidTdsEnums.ODBC_ON << 9;
+
+            // No SSPI usage
+            if (packet.UseSSPI)
+            {
+                log7Flags |= LucidTdsEnums.SSPI_ON << 15;
+            }
+
+            // third byte
+            if (packet.ReadOnlyIntent)
+            {
+                log7Flags |= LucidTdsEnums.READONLY_INTENT_ON << 21; // read-only intent flag is a first bit of fSpare1
+            }
+
+            // Always say that we are using Feature extensions
+            log7Flags |= 1 << 28;
+            return log7Flags;
+        }
+
         //public async ValueTask Send(bool isAsync, CancellationToken ct)
         //{
-            
+
         //}
     }
 }

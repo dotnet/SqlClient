@@ -1254,9 +1254,8 @@ namespace simplesqlclient
 
             TdsLoginHandler loginHandler = new TdsLoginHandler(this._writeStream, _authOptions);
 
-            await loginHandler.SetLoginInformation(packet, isAsync, ct).ConfigureAwait(false);
+            await loginHandler.Send(packet, isAsync, ct).ConfigureAwait(false);
 
-            
             DisableSsl();
         }
 
