@@ -576,6 +576,11 @@ namespace simplesqlclient
 
         }
 
+        internal async ValueTask<byte> PeekToken(bool isAsync, CancellationToken ct)
+        {
+            return await _readStream.PeekTokenAsync(isAsync, ct).ConfigureAwait(false);
+        }
+
         internal async ValueTask ReadSqlValueAsync(
             SqlBuffer value,
             SqlMetaDataPriv md,

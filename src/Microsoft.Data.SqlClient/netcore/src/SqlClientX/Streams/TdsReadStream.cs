@@ -226,5 +226,13 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             ReadBufferOffset = 0;
             PacketDataLeft = 0;
         }
+
+        internal async Task<byte> PeekTokenAsync(bool isAsync, CancellationToken ct)
+        {
+            byte nextToken = await this.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+            this.ReadBufferOffset--;
+            this.PacketDataLeft++;
+            return nextToken;
+        }
     }
 }
