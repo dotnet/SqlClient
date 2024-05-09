@@ -430,6 +430,9 @@ namespace simplesqlclient
 
         public int ClientProgramVersion => LucidTdsEnums.CLIENT_PROG_VER;
 
+        public bool UseSSPI { get; internal set; }
+        public bool ReadOnlyIntent { get; internal set; }
+
         public int ProcessIdForTdsLogin;
 
         public int Login7Flags;
