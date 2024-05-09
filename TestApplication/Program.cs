@@ -117,7 +117,7 @@ namespace TestApplication
 
             using (SqlCommandX command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT @@SPID";
+                command.CommandText = "SELECT @@VERSION";
                 Console.WriteLine("Executing command");
 
                 using (SqlDataReaderX reader = command.ExecuteReader())

@@ -379,7 +379,7 @@ namespace simplesqlclient
     /// <summary>
     /// Representation of the TDS outgoing login packet.
     /// </summary>
-    internal struct LoginPacket
+    internal class LoginPacket
     {
         public int Length
         {
@@ -416,9 +416,9 @@ namespace simplesqlclient
             set { }
         }
 
-        public readonly int ProtocolVersion => (0x74 << 24) | (0x00 << 16) | 0x0004;
+        public int ProtocolVersion => (0x74 << 24) | (0x00 << 16) | 0x0004;
 
-        public readonly string Language => string.Empty;
+        public string Language => string.Empty;
         internal string Database { get; set; }
         public byte[] NewPassword { get; set; }
         internal string UserInstance { get; set; }
