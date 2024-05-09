@@ -5,7 +5,7 @@ namespace simplesqlclient
     internal sealed class SqlError
     {
         // bug fix - MDAC 48965 - missing source of exception
-        private readonly string _source = TdsEnums.SQL_PROVIDER_NAME;
+        private readonly string _source = LucidTdsEnums.SQL_PROVIDER_NAME;
         private readonly int _number;
         private readonly byte _state;
         private readonly byte _errorClass;

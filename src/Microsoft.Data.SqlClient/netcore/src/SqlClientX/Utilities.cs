@@ -46,7 +46,7 @@ namespace simplesqlclient
             return bObfuscated;
         }
 
-        internal static bool IsVarTimeTds(byte tdsType) => tdsType == TdsEnums.SQLTIME || tdsType == TdsEnums.SQLDATETIME2 || tdsType == TdsEnums.SQLDATETIMEOFFSET;
+        internal static bool IsVarTimeTds(byte tdsType) => tdsType == LucidTdsEnums.SQLTIME || tdsType == LucidTdsEnums.SQLDATETIME2 || tdsType == LucidTdsEnums.SQLDATETIMEOFFSET;
 
         internal static async ValueTask<int> GetSpecialTokenLengthAsync(byte tokenType,
             TdsReadStream stream,
@@ -94,16 +94,16 @@ namespace simplesqlclient
             int tokenLength = 0;
             if (!specialToken)
             {
-                switch (tokenType & TdsEnums.SQLLenMask)
+                switch (tokenType & LucidTdsEnums.SQLLenMask)
                 {
-                    case TdsEnums.SQLFixedLen:
+                    case LucidTdsEnums.SQLFixedLen:
                         tokenLength = (0x01 << ((tokenType & 0x0c) >> 2)) & 0xff;
                         break;
-                    case TdsEnums.SQLZeroLen:
+                    case LucidTdsEnums.SQLZeroLen:
                         tokenLength = 0;
                         break;
-                    case TdsEnums.SQLVarLen:
-                    case TdsEnums.SQLVarCnt:
+                    case LucidTdsEnums.SQLVarLen:
+                    case LucidTdsEnums.SQLVarCnt:
                         if (0 != (tokenType & 0x80))
                         {
                             tokenLength = await stream.ReadUInt16Async(
@@ -144,11 +144,11 @@ namespace simplesqlclient
             // null bin and char types have a length of -1 to represent null
             if (mt.IsPlp)
             {
-                return (TdsEnums.SQL_PLP_NULL == (ulong)length);
+                return (LucidTdsEnums.SQL_PLP_NULL == (ulong)length);
             }
 
             // HOTFIX #50000415: for image/text, 0xFFFF is the length, not representing null
-            if ((TdsEnums.VARNULL == length) && !mt.IsLong)
+            if ((LucidTdsEnums.VARNULL == length) && !mt.IsLong)
             {
                 return true;
             }
@@ -156,7 +156,7 @@ namespace simplesqlclient
             // other types have a length of 0 to represent null
             // long and non-PLP types will always return false because these types are either char or binary
             // this is expected since for long and non-plp types isnull is checked based on textptr field and not the length
-            return ((TdsEnums.FIXEDNULL == length) && !mt.IsCharType && !mt.IsBinType);
+            return ((LucidTdsEnums.FIXEDNULL == length) && !mt.IsCharType && !mt.IsBinType);
         }
     }
 

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace simplesqlclient
 {
-    internal static class TdsEnums
+    internal static class LucidTdsEnums
     {
         // internal tdsparser constants
 
@@ -242,14 +242,14 @@ namespace simplesqlclient
         public enum FeatureExtension : uint
         {
             None = 0,
-            SessionRecovery = 1 << (TdsEnums.FEATUREEXT_SRECOVERY - 1),
-            FedAuth = 1 << (TdsEnums.FEATUREEXT_FEDAUTH - 1),
-            Tce = 1 << (TdsEnums.FEATUREEXT_TCE - 1),
-            GlobalTransactions = 1 << (TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS - 1),
-            AzureSQLSupport = 1 << (TdsEnums.FEATUREEXT_AZURESQLSUPPORT - 1),
-            DataClassification = 1 << (TdsEnums.FEATUREEXT_DATACLASSIFICATION - 1),
-            UTF8Support = 1 << (TdsEnums.FEATUREEXT_UTF8SUPPORT - 1),
-            SQLDNSCaching = 1 << (TdsEnums.FEATUREEXT_SQLDNSCACHING - 1)
+            SessionRecovery = 1 << (LucidTdsEnums.FEATUREEXT_SRECOVERY - 1),
+            FedAuth = 1 << (LucidTdsEnums.FEATUREEXT_FEDAUTH - 1),
+            Tce = 1 << (LucidTdsEnums.FEATUREEXT_TCE - 1),
+            GlobalTransactions = 1 << (LucidTdsEnums.FEATUREEXT_GLOBALTRANSACTIONS - 1),
+            AzureSQLSupport = 1 << (LucidTdsEnums.FEATUREEXT_AZURESQLSUPPORT - 1),
+            DataClassification = 1 << (LucidTdsEnums.FEATUREEXT_DATACLASSIFICATION - 1),
+            UTF8Support = 1 << (LucidTdsEnums.FEATUREEXT_UTF8SUPPORT - 1),
+            SQLDNSCaching = 1 << (LucidTdsEnums.FEATUREEXT_SQLDNSCACHING - 1)
         }
 
         public const uint UTF8_IN_TDSCOLLATION = 0x4000000;

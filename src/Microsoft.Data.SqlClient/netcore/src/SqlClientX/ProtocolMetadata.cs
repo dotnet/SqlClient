@@ -38,23 +38,23 @@ namespace simplesqlclient
             FeatureIdList.Add(featureId);
             switch (featureId)
             {
-                case TdsEnums.FEATUREEXT_TCE:
+                case LucidTdsEnums.FEATUREEXT_TCE:
                     ColumnEncryptionFeature = new ColumnEncryptionData();
                     ColumnEncryptionFeature.SetAcknowledgedData(featureData);
                     break;
-                case TdsEnums.FEATUREEXT_DATACLASSIFICATION:
+                case LucidTdsEnums.FEATUREEXT_DATACLASSIFICATION:
                     DataClassificationFeature = new DataClassificationFeature();
                     DataClassificationFeature.SetAcknowledgedData(featureData);
                     break;
-                case TdsEnums.FEATUREEXT_UTF8SUPPORT:
+                case LucidTdsEnums.FEATUREEXT_UTF8SUPPORT:
                     UTF8SupportFeature = new UTF8SupportFeature();
                     UTF8SupportFeature.SetAcknowledgedData(featureData);
                     break;
-                case TdsEnums.FEATUREEXT_FEDAUTH:
+                case LucidTdsEnums.FEATUREEXT_FEDAUTH:
                     FedAuthFeature = new FedAuthFeature();
                     FedAuthFeature.SetAcknowledgedData(featureData);
                     break;
-                case TdsEnums.FEATUREEXT_SQLDNSCACHING:
+                case LucidTdsEnums.FEATUREEXT_SQLDNSCACHING:
                     SQLDNSCachingFeature = new SQLDNSCachingFeature();
                     SQLDNSCachingFeature.SetAcknowledgedData(featureData);
                     break;

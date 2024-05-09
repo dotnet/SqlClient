@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
+using Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets;
 
 namespace simplesqlclient
 {
@@ -131,7 +132,7 @@ namespace simplesqlclient
             int payLoadIndex = 0;
             _writeStream = new TdsWriteStream(_tcpStream, TdsConstants.DEFAULT_LOGIN_PACKET_SIZE)
             {
-                PacketHeaderType = TdsEnums.MT_PRELOGIN
+                PacketHeaderType = LucidTdsEnums.MT_PRELOGIN
             };
 
             for (int option = 0; option < preloginOptionsCount; option++)
@@ -391,15 +392,15 @@ namespace simplesqlclient
                         byte envType = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                         switch (envType)
                         {
-                            case TdsEnums.ENV_DATABASE:
-                            case TdsEnums.ENV_LANG:
+                            case LucidTdsEnums.ENV_DATABASE:
+                            case LucidTdsEnums.ENV_LANG:
                                 envChange = await ReadTwoStrings(isAsync, ct).ConfigureAwait(false);
                                 break;
-                            case TdsEnums.ENV_PACKETSIZE:
+                            case LucidTdsEnums.ENV_PACKETSIZE:
                                 envChange = await ReadTwoStrings(isAsync, ct).ConfigureAwait(false);
                                 // Read 
                                 break;
-                            case TdsEnums.ENV_COLLATION:
+                            case LucidTdsEnums.ENV_COLLATION:
                                 int newLen = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
                                 if (newLen == 5)
                                 { 
@@ -461,12 +462,12 @@ namespace simplesqlclient
                         long longCount = await _readStream.ReadInt64Async(isAsync, ct).ConfigureAwait(false);
                         int count = (int)longCount;
 
-                        if (TdsEnums.DONE_MORE != (status & TdsEnums.DONE_MORE))
+                        if (LucidTdsEnums.DONE_MORE != (status & LucidTdsEnums.DONE_MORE))
                         {
                         }
                         break;
                     case TdsTokens.SQLCOLMETADATA:
-                        if (token.Length != TdsEnums.VARNULL) // TODO: What does this mean? 
+                        if (token.Length != LucidTdsEnums.VARNULL) // TODO: What does this mean? 
                         {
                             _SqlMetaDataSet metadataSet = 
                                 await ProcessMetadataSetAsync(token.Length, isAsync, ct).ConfigureAwait(false);
@@ -605,16 +606,16 @@ namespace simplesqlclient
             // deserialization code in DecryptWithKey () method and modify it accordingly.
             switch (tdsType)
             {
-                case TdsEnums.SQLDECIMALN:
-                case TdsEnums.SQLNUMERICN:
+                case LucidTdsEnums.SQLDECIMALN:
+                case LucidTdsEnums.SQLNUMERICN:
                     throw new NotImplementedException("SQLDECIMALN and SQLNUMERICN are not implemented");
                     //if (!TryReadSqlDecimal(value, length, md.precision, md.scale, stateObj))
-                case TdsEnums.SQLUDT:
-                case TdsEnums.SQLBINARY:
-                case TdsEnums.SQLBIGBINARY:
-                case TdsEnums.SQLBIGVARBINARY:
-                case TdsEnums.SQLVARBINARY:
-                case TdsEnums.SQLIMAGE:
+                case LucidTdsEnums.SQLUDT:
+                case LucidTdsEnums.SQLBINARY:
+                case LucidTdsEnums.SQLBIGBINARY:
+                case LucidTdsEnums.SQLBIGVARBINARY:
+                case LucidTdsEnums.SQLVARBINARY:
+                case LucidTdsEnums.SQLIMAGE:
                     throw new NotImplementedException("Binary types are not implemented");
                     //byte[] b = null;
 
@@ -674,14 +675,14 @@ namespace simplesqlclient
                     //}
                     //break;
 
-                case TdsEnums.SQLCHAR:
-                case TdsEnums.SQLBIGCHAR:
-                case TdsEnums.SQLVARCHAR:
-                case TdsEnums.SQLBIGVARCHAR:
-                case TdsEnums.SQLTEXT:
-                case TdsEnums.SQLNCHAR:
-                case TdsEnums.SQLNVARCHAR:
-                case TdsEnums.SQLNTEXT:
+                case LucidTdsEnums.SQLCHAR:
+                case LucidTdsEnums.SQLBIGCHAR:
+                case LucidTdsEnums.SQLVARCHAR:
+                case LucidTdsEnums.SQLBIGVARCHAR:
+                case LucidTdsEnums.SQLTEXT:
+                case LucidTdsEnums.SQLNCHAR:
+                case LucidTdsEnums.SQLNVARCHAR:
+                case LucidTdsEnums.SQLNTEXT:
                     await _sqlValuesProcessor.ReadSqlStringValueAsync(value, 
                         tdsType, 
                         length, 
@@ -692,7 +693,7 @@ namespace simplesqlclient
                         ct).ConfigureAwait(false);
                     break;
 
-                case TdsEnums.SQLXMLTYPE:
+                case LucidTdsEnums.SQLXMLTYPE:
                     throw new NotImplementedException("XML type is not implemented");
                     // We store SqlCachedBuffer here, so that we can return either SqlBinary, SqlString or SqlXmlReader.
                     //SqlCachedBuffer sqlBuf;
@@ -704,10 +705,10 @@ namespace simplesqlclient
                     //value.SqlCachedBuffer = sqlBuf;
                     //break;
 
-                case TdsEnums.SQLDATE:
-                case TdsEnums.SQLTIME:
-                case TdsEnums.SQLDATETIME2:
-                case TdsEnums.SQLDATETIMEOFFSET:
+                case LucidTdsEnums.SQLDATE:
+                case LucidTdsEnums.SQLTIME:
+                case LucidTdsEnums.SQLDATETIME2:
+                case LucidTdsEnums.SQLDATETIMEOFFSET:
                     throw new NotImplementedException("Date and time types are not implemented");
                     //if (!TryReadSqlDateTime(value, tdsType, length, md.scale, stateObj))
                     //{
@@ -742,7 +743,7 @@ namespace simplesqlclient
                 if (textPtrLen != 0)
                 {
                     byte[] buffer = ArrayPool<byte>.Shared.Rent(
-                        Math.Max((int)textPtrLen, TdsEnums.TEXT_TIME_STAMP_LEN));
+                        Math.Max((int)textPtrLen, LucidTdsEnums.TEXT_TIME_STAMP_LEN));
                     // Skip past the text pointer.
 
                     // TODO: Revisit for allocations
@@ -753,9 +754,9 @@ namespace simplesqlclient
 
                     // Skip past the Timestamp length
                     _ = isAsync ? await this._readStream.ReadAsync(
-                                buffer.AsMemory().Slice(0, TdsEnums.TEXT_TIME_STAMP_LEN).ToArray(),
+                                buffer.AsMemory().Slice(0, LucidTdsEnums.TEXT_TIME_STAMP_LEN).ToArray(),
                                 ct).ConfigureAwait(false)
-                        : _readStream.Read(buffer.AsMemory(0, TdsEnums.TEXT_TIME_STAMP_LEN).ToArray());
+                        : _readStream.Read(buffer.AsMemory(0, LucidTdsEnums.TEXT_TIME_STAMP_LEN).ToArray());
 
                     ArrayPool<byte>.Shared.Return(buffer);
                     isNull = false; // Why ? 
@@ -792,7 +793,7 @@ namespace simplesqlclient
             CancellationToken ct)
         {
             _SqlMetaDataSet newMetaData = new _SqlMetaDataSet(columnCount, null);
-            SqlTceCipherInfoTable cipherTable = (_protocolMetadata.IsFeatureSupported(TdsEnums.FEATUREEXT_TCE)) ?
+            SqlTceCipherInfoTable cipherTable = (_protocolMetadata.IsFeatureSupported(LucidTdsEnums.FEATUREEXT_TCE)) ?
                 await ProcessCipherInfoTableAsync(isAsync, ct).ConfigureAwait(false) : null;
                 
             for (int i = 0; i < columnCount; i++)
@@ -882,12 +883,12 @@ namespace simplesqlclient
             uint userType = await _readStream.ReadUInt32Async(isAsync, ct).ConfigureAwait(false);
             byte flags = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
 
-            col.Updatability = (byte)((flags & TdsEnums.Updatability) >> 2);
-            col.IsNullable = (TdsEnums.Nullable == (flags & TdsEnums.Nullable));
-            col.IsIdentity = (TdsEnums.Identity == (flags & TdsEnums.Identity));
+            col.Updatability = (byte)((flags & LucidTdsEnums.Updatability) >> 2);
+            col.IsNullable = (LucidTdsEnums.Nullable == (flags & LucidTdsEnums.Nullable));
+            col.IsIdentity = (LucidTdsEnums.Identity == (flags & LucidTdsEnums.Identity));
 
             flags = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
-            col.IsColumnSet = (TdsEnums.IsColumnSet == (flags & TdsEnums.IsColumnSet));
+            col.IsColumnSet = (LucidTdsEnums.IsColumnSet == (flags & LucidTdsEnums.IsColumnSet));
 
             await ProcessTypeInfoAsync(col, userType, isAsync, ct).ConfigureAwait(false);
 
@@ -971,15 +972,15 @@ namespace simplesqlclient
         {
             byte tdsType = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
             
-            if (tdsType == TdsEnums.SQLXMLTYPE)
+            if (tdsType == LucidTdsEnums.SQLXMLTYPE)
             {
-                col.length = TdsEnums.SQL_USHORTVARMAXLEN;
+                col.length = LucidTdsEnums.SQL_USHORTVARMAXLEN;
             } 
             else if (Utilities.IsVarTimeTds(tdsType))
             {
                 col.length = 0;
             }
-            else if (tdsType == TdsEnums.SQLDATE)
+            else if (tdsType == LucidTdsEnums.SQLDATE)
             {
                 col.length = 3;
             }
@@ -995,18 +996,18 @@ namespace simplesqlclient
             col.type = col.metaType.SqlDbType;
             col.tdsType = (col.IsNullable ? col.metaType.NullableType : col.metaType.TDSType);
 
-            if (TdsEnums.SQLUDT == tdsType)
+            if (LucidTdsEnums.SQLUDT == tdsType)
             {
                 throw new NotImplementedException("Udt type is not implemented");
             }
 
-            if (col.length == TdsEnums.SQL_USHORTVARMAXLEN)
+            if (col.length == LucidTdsEnums.SQL_USHORTVARMAXLEN)
             {
-                Debug.Assert(tdsType == TdsEnums.SQLXMLTYPE ||
-                             tdsType == TdsEnums.SQLBIGVARCHAR ||
-                             tdsType == TdsEnums.SQLBIGVARBINARY ||
-                             tdsType == TdsEnums.SQLNVARCHAR ||
-                             tdsType == TdsEnums.SQLUDT,
+                Debug.Assert(tdsType == LucidTdsEnums.SQLXMLTYPE ||
+                             tdsType == LucidTdsEnums.SQLBIGVARCHAR ||
+                             tdsType == LucidTdsEnums.SQLBIGVARBINARY ||
+                             tdsType == LucidTdsEnums.SQLNVARCHAR ||
+                             tdsType == LucidTdsEnums.SQLUDT,
                              "Invalid streaming datatype");
 
                 col.metaType = MetaType.GetMaxMetaTypeFromMetaType(col.metaType);
@@ -1014,7 +1015,7 @@ namespace simplesqlclient
                 col.length = int.MaxValue;
 
                 byte byteLen;
-                if (tdsType == TdsEnums.SQLXMLTYPE)
+                if (tdsType == LucidTdsEnums.SQLXMLTYPE)
                 {
                     byte schemapresent = (byte)_readStream.ReadByte();
                     
@@ -1066,7 +1067,7 @@ namespace simplesqlclient
 
             }
 
-            if (col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE))
+            if (col.metaType.IsCharType && (tdsType != LucidTdsEnums.SQLXMLTYPE))
             {
                 col.collation = await ProcessCollationAsync(isAsync, ct).ConfigureAwait(false);
 
@@ -1117,7 +1118,7 @@ namespace simplesqlclient
 
             if (0 != collation._sortId)
             {
-                codePage = TdsEnums.CODE_PAGE_FROM_SORT_ID[collation._sortId];
+                codePage = LucidTdsEnums.CODE_PAGE_FROM_SORT_ID[collation._sortId];
                 Debug.Assert(0 != codePage, "GetCodePage accessed codepage array and produced 0!, sortID =" + ((Byte)(collation._sortId)).ToString((IFormatProvider)null));
             }
             else
@@ -1223,11 +1224,20 @@ namespace simplesqlclient
 
         public async ValueTask SendLoginAsync(bool isAsync, CancellationToken ct)
         {
+            //LucidTdsEnums.FeatureExtension requestedFeatures = LucidTdsEnums.FeatureExtension.None;
+            //requestedFeatures |= LucidTdsEnums.FeatureExtension.GlobalTransactions
+            //    | LucidTdsEnums.FeatureExtension.DataClassification
+            //    | LucidTdsEnums.FeatureExtension.Tce
+            //    | LucidTdsEnums.FeatureExtension.UTF8Support
+            //    | LucidTdsEnums.FeatureExtension.SQLDNSCaching;
+
+            TdsLoginHandler loginHandler = new TdsLoginHandler(this._writeStream);
+            
             LoginPacket packet = new LoginPacket();
             packet.ApplicationName = _connectionSettings.ApplicationName;
             packet.ClientHostName = _connectionSettings.WorkstationId;
             packet.ServerHostname = _hostname;
-            packet.ClientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
+            packet.ClientInterfaceName = LucidTdsEnums.SQL_PROVIDER_NAME;
             packet.Database = _database;
             packet.PacketSize = _connectionSettings.PacketSize;
             packet.ProcessIdForTdsLogin = Utilities.GetCurrentProcessIdForTdsLoginOnly();
@@ -1241,30 +1251,26 @@ namespace simplesqlclient
             packet.FeatureExtensionData.fedAuthFeature.AccessToken = null;
             packet.FeatureExtensionData.fedAuthFeature.FedAuthLibrary = default;
 
+            await loginHandler.SetLoginInformation(packet, isAsync, ct).ConfigureAwait(false);
 
-            TdsEnums.FeatureExtension requestedFeatures = TdsEnums.FeatureExtension.None;
-            requestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions
-                | TdsEnums.FeatureExtension.DataClassification
-                | TdsEnums.FeatureExtension.Tce
-                | TdsEnums.FeatureExtension.UTF8Support
-                | TdsEnums.FeatureExtension.SQLDNSCaching;
+            
 
-            packet.RequestedFeatures = requestedFeatures;
-            packet.FeatureExtensionData.requestedFeatures = requestedFeatures;
+            //packet.RequestedFeatures = requestedFeatures;
+            //packet.FeatureExtensionData.requestedFeatures = requestedFeatures;
 
-            _writeStream.PacketHeaderType = TdsEnums.MT_LOGIN7;
-            int length = packet.Length;
-            await _writeStream.WriteIntAsync(length, isAsync, ct).ConfigureAwait(false);
-            // Write TDS Version. We support 7.4
-            await _writeStream.WriteIntAsync(packet.ProtocolVersion, isAsync, ct).ConfigureAwait(false);
-            // Negotiate the packet size.
-            await _writeStream.WriteIntAsync(packet.PacketSize, isAsync, ct).ConfigureAwait(false);
-            // Client Prog Version
-            await _writeStream.WriteIntAsync(packet.ClientProgramVersion, isAsync, ct).ConfigureAwait(false);
-            // Current Process Id
-            await _writeStream.WriteIntAsync(packet.ProcessIdForTdsLogin, isAsync, ct).ConfigureAwait(false);
-            // Unused Connection Id 
-            await _writeStream.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);
+            //_writeStream.PacketHeaderType = LucidTdsEnums.MT_LOGIN7;
+            //int length = packet.Length;
+            //await _writeStream.WriteIntAsync(length, isAsync, ct).ConfigureAwait(false);
+            //// Write TDS Version. We support 7.4
+            //await _writeStream.WriteIntAsync(packet.ProtocolVersion, isAsync, ct).ConfigureAwait(false);
+            //// Negotiate the packet size.
+            //await _writeStream.WriteIntAsync(packet.PacketSize, isAsync, ct).ConfigureAwait(false);
+            //// Client Prog Version
+            //await _writeStream.WriteIntAsync(packet.ClientProgramVersion, isAsync, ct).ConfigureAwait(false);
+            //// Current Process Id
+            //await _writeStream.WriteIntAsync(packet.ProcessIdForTdsLogin, isAsync, ct).ConfigureAwait(false);
+            //// Unused Connection Id 
+            //await _writeStream.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);
 
             int log7Flags = 0;
 
@@ -1295,24 +1301,24 @@ namespace simplesqlclient
             */
 
             // first byte
-            log7Flags |= TdsEnums.USE_DB_ON << 5;
-            log7Flags |= TdsEnums.INIT_DB_FATAL << 6;
-            log7Flags |= TdsEnums.SET_LANG_ON << 7;
+            log7Flags |= LucidTdsEnums.USE_DB_ON << 5;
+            log7Flags |= LucidTdsEnums.INIT_DB_FATAL << 6;
+            log7Flags |= LucidTdsEnums.SET_LANG_ON << 7;
 
             // second byte
-            log7Flags |= TdsEnums.INIT_LANG_FATAL << 8;
-            log7Flags |= TdsEnums.ODBC_ON << 9;
+            log7Flags |= LucidTdsEnums.INIT_LANG_FATAL << 8;
+            log7Flags |= LucidTdsEnums.ODBC_ON << 9;
 
             // No SSPI usage
             if (_connectionSettings.UseSSPI)
             {
-                log7Flags |= TdsEnums.SSPI_ON << 15;
+                log7Flags |= LucidTdsEnums.SSPI_ON << 15;
             }
 
             // third byte
             if (_connectionSettings.ReadOnlyIntent)
             {
-                log7Flags |= TdsEnums.READONLY_INTENT_ON << 21; // read-only intent flag is a first bit of fSpare1
+                log7Flags |= LucidTdsEnums.READONLY_INTENT_ON << 21; // read-only intent flag is a first bit of fSpare1
             }
 
             // Always say that we are using Feature extensions
@@ -1325,7 +1331,7 @@ namespace simplesqlclient
             // LCID
             await _writeStream.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);
 
-            int offset = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
+            int offset = LucidTdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
             await _writeStream.WriteShortAsync((short)offset, isAsync, ct).ConfigureAwait(false);
 
@@ -1378,7 +1384,7 @@ namespace simplesqlclient
             await _writeStream.WriteShortAsync(packet.Database.Length, isAsync, ct).ConfigureAwait(false);
             offset += packet.Database.Length * 2;
 
-            byte[] nicAddress = new byte[TdsEnums.MAX_NIC_SIZE];
+            byte[] nicAddress = new byte[LucidTdsEnums.MAX_NIC_SIZE];
             Random random = new Random();
             random.NextBytes(nicAddress);
             await _writeStream.WriteArrayAsync(isAsync, nicAddress, ct).ConfigureAwait(false);
@@ -1474,14 +1480,14 @@ namespace simplesqlclient
             await _writeStream.WriteIntAsync(marsHeaderSize, isAsync, ct).ConfigureAwait(false);
 
             // Write the MARS header data. 
-            await _writeStream.WriteShortAsync(TdsEnums.HEADERTYPE_MARS, isAsync, ct).ConfigureAwait(false);
+            await _writeStream.WriteShortAsync(LucidTdsEnums.HEADERTYPE_MARS, isAsync, ct).ConfigureAwait(false);
             int transactionId = 0; // TODO: Needed for txn support
             await _writeStream.WriteLongAsync(transactionId, isAsync, ct).ConfigureAwait(false);
 
             int resultCount = 0;
             // TODO Increment and add the open results count per connection.
             await _writeStream.WriteIntAsync(++resultCount, isAsync, ct).ConfigureAwait(false);
-            _writeStream.PacketHeaderType = TdsEnums.MT_SQL;
+            _writeStream.PacketHeaderType = LucidTdsEnums.MT_SQL;
 
             // TODO: Add the enclave support. The server doesnt support Enclaves yet.
 

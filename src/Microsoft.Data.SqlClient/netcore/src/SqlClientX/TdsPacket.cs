@@ -97,39 +97,39 @@ namespace simplesqlclient
         public UTF8SupportFeature uTF8SupportFeature = new UTF8SupportFeature();
         public SQLDNSCachingFeature sQLDNSCaching = new SQLDNSCachingFeature();
 
-        public TdsEnums.FeatureExtension requestedFeatures;
+        public LucidTdsEnums.FeatureExtension requestedFeatures;
 
         public int Length
         {
             get
             {
                 int length = 0;
-                if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
+                if ((requestedFeatures & LucidTdsEnums.FeatureExtension.SessionRecovery) != 0)
                 {
                     length += sessionRecoveryData.Length;
                 }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
+                if ((requestedFeatures & LucidTdsEnums.FeatureExtension.FedAuth) != 0)
                 {
                     length += fedAuthFeature.Length;
                 }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
+                if ((requestedFeatures & LucidTdsEnums.FeatureExtension.Tce) != 0)
                 {
                     length += colEncryptionData.Length;
                 }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
+                if ((requestedFeatures & LucidTdsEnums.FeatureExtension.GlobalTransactions) != 0)
                 {
                     length += globalTransactionsFeature.Length;
                 }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
+                if ((requestedFeatures & LucidTdsEnums.FeatureExtension.DataClassification) != 0)
                 {
                     length += dataClassificationFeature.Length;
                 }
-                if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
+                if ((requestedFeatures & LucidTdsEnums.FeatureExtension.UTF8Support) != 0)
                 {
                     length += uTF8SupportFeature.Length;
                 }
 
-                if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
+                if ((requestedFeatures & LucidTdsEnums.FeatureExtension.SQLDNSCaching) != 0)
                 {
                     length += sQLDNSCaching.Length;
                 }
@@ -148,7 +148,7 @@ namespace simplesqlclient
     
     internal class SQLDNSCachingFeature : IServerFeature
     {
-        public uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_SQLDNSCACHING;
+        public uint FeatureExtensionFlag => LucidTdsEnums.FEATUREEXT_SQLDNSCACHING;
 
         public int Length => 5;
 
@@ -176,7 +176,7 @@ namespace simplesqlclient
 
     internal class ColumnEncryptionData : IServerFeature
     {
-        public static uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_TCE;
+        public static uint FeatureExtensionFlag => LucidTdsEnums.FEATUREEXT_TCE;
 
         public int Length
         {
@@ -192,7 +192,7 @@ namespace simplesqlclient
         {
             Debug.Assert(buffer.Length == 5, "Expected a 5 byte buffer for int");
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer, 1);
-            buffer[4] = TdsEnums.MAX_SUPPORTED_TCE_VERSION;
+            buffer[4] = LucidTdsEnums.MAX_SUPPORTED_TCE_VERSION;
         }
 
         public ReadOnlySpan<byte> GetAckData()
@@ -210,7 +210,7 @@ namespace simplesqlclient
 
     internal class GlobalTransactionsFeature : IServerFeature
     {
-        public uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS;
+        public uint FeatureExtensionFlag => LucidTdsEnums.FEATUREEXT_GLOBALTRANSACTIONS;
 
         public int Length
         {
@@ -249,10 +249,10 @@ namespace simplesqlclient
                 int dataLen = 0;
                 switch (FedAuthLibrary)
                 {
-                    case TdsEnums.FedAuthLibrary.MSAL:
+                    case LucidTdsEnums.FedAuthLibrary.MSAL:
                         dataLen = 2;
                         break;
-                    case TdsEnums.FedAuthLibrary.SecurityToken:
+                    case LucidTdsEnums.FedAuthLibrary.SecurityToken:
                         if (AccessToken == null)
                         {
                             Debug.Fail("Access token is null for fedauth feature extension request");
@@ -270,7 +270,7 @@ namespace simplesqlclient
         }
 
         internal byte[] AccessToken;
-        internal TdsEnums.FedAuthLibrary FedAuthLibrary;
+        internal LucidTdsEnums.FedAuthLibrary FedAuthLibrary;
         
         private byte[] AckData { get; set; }
 
@@ -292,7 +292,7 @@ namespace simplesqlclient
 
     internal struct DataClassificationFeature : IServerFeature
     {
-        public uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_DATACLASSIFICATION;
+        public uint FeatureExtensionFlag => LucidTdsEnums.FEATUREEXT_DATACLASSIFICATION;
 
         public int Length
         {
@@ -308,7 +308,7 @@ namespace simplesqlclient
         {
             Debug.Assert(buffer.Length == 5, "Expected a 5 byte buffer");
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer.Slice(0,4), 1);
-            buffer[4] = TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED;
+            buffer[4] = LucidTdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED;
         }
 
         public ReadOnlySpan<byte> GetAckData()
@@ -335,7 +335,7 @@ namespace simplesqlclient
 
     internal struct UTF8SupportFeature : IServerFeature
     {
-        public uint FeatureExtensionFlag => TdsEnums.FEATUREEXT_UTF8SUPPORT;
+        public uint FeatureExtensionFlag => LucidTdsEnums.FEATUREEXT_UTF8SUPPORT;
 
         public byte[] AckData { get; private set; }
 
@@ -393,7 +393,7 @@ namespace simplesqlclient
                     + ClientInterfaceName.Length
                     + Language.Length
                     + Database.Length) * 2;
-                if (RequestedFeatures != TdsEnums.FeatureExtension.None)
+                if (RequestedFeatures != LucidTdsEnums.FeatureExtension.None)
                 {
                     length += 4;
                 }
@@ -406,7 +406,7 @@ namespace simplesqlclient
                 {
                     length += NewPassword.Length;
                 }
-                if (RequestedFeatures != TdsEnums.FeatureExtension.None)
+                if (RequestedFeatures != LucidTdsEnums.FeatureExtension.None)
                 {
                     length += FeatureExtensionData.Length;
                 }
@@ -423,12 +423,12 @@ namespace simplesqlclient
         public byte[] NewPassword { get; set; }
         internal string UserInstance { get; set; }
         public bool IsIntegratedSecurity { get; set; }
-        public TdsEnums.FeatureExtension RequestedFeatures { get; set; }
+        public LucidTdsEnums.FeatureExtension RequestedFeatures { get; set; }
         public int FeatureExtensionOffset { get; internal set; }
 
         public int PacketSize;
 
-        public int ClientProgramVersion => TdsEnums.CLIENT_PROG_VER;
+        public int ClientProgramVersion => LucidTdsEnums.CLIENT_PROG_VER;
 
         public int ProcessIdForTdsLogin;
 
