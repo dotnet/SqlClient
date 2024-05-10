@@ -1024,7 +1024,7 @@ namespace Microsoft.Data.SqlClient
             // ArgumentException and other types are raised as is (no wrapping)
         }
 
-#if NETCOREAPP || NETSTANDARD
+#if NETCOREAPP
         internal void ThrowUnsupportedIfKeywordSet(string keyword)
         {
             if (ContainsKey(keyword))

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if !NET8_0_OR_GREATER
+
 using System.Collections.Generic;
 
 namespace System.Net
@@ -162,3 +164,5 @@ namespace System.Net
         ThreadPool = CompletionPort | Worker,               // Like Thread.CurrentThread.IsThreadPoolThread
     }
 }
+
+#endif

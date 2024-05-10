@@ -11,17 +11,19 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.Principal;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Microsoft.Identity.Client;
 using Xunit;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Security.Principal;
-using System.Runtime.InteropServices;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -30,7 +32,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string NPConnectionString = null;
         public static readonly string TCPConnectionString = null;
         public static readonly string TCPConnectionStringHGSVBS = null;
-        public static readonly string TCPConnectionStringAASVBS = null;
         public static readonly string TCPConnectionStringNoneVBS = null;
         public static readonly string TCPConnectionStringAASSGX = null;
         public static readonly string AADAuthorityURL = null;
@@ -41,8 +42,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AKVUrl = null;
         public static readonly string AKVOriginalUrl = null;
         public static readonly string AKVTenantId = null;
-        public static readonly string AKVClientId = null;
-        public static readonly string AKVClientSecret = null;
         public static readonly string LocalDbAppName = null;
         public static readonly string LocalDbSharedInstanceName = null;
         public static List<string> AEConnStrings = new List<string>();
@@ -51,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
         public static readonly bool UseManagedSNIOnWindows = false;
-        public static readonly bool IsAzureSynapse = false;
+
         public static Uri AKVBaseUri = null;
         public static readonly string PowerShellPath = null;
         public static string FileStreamDirectory = null;
@@ -78,10 +77,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
-        // uap constant
-        const long APPMODEL_ERROR_NO_PACKAGE = 15700L;
-        public static readonly bool IsRunningAsUWPApp = RunningAsUWPApp();
-
         private static Dictionary<string, bool> AvailableDatabases;
         private static BaseEventListener TraceListener;
 
@@ -95,13 +90,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string s_sQLServerVersion = string.Empty;
         private static bool s_isTDS8Supported;
 
+        //SQL Server EngineEdition
+        private static string s_sqlServerEngineEdition;
+
+        // Azure Synapse EngineEditionId == 6
+        // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
+        public static bool IsAzureSynapse
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
+                }
+                _ = int.TryParse(s_sqlServerEngineEdition, out int engineEditon);
+                return engineEditon == 6;
+            }
+        }
+
         public static string SQLServerVersion
         {
             get
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sQLServerVersion ??= GetSqlServerVersion(TCPConnectionString);
+                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, "ProductMajorVersion");
                 }
                 return s_sQLServerVersion;
             }
@@ -126,7 +139,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             NPConnectionString = c.NPConnectionString;
             TCPConnectionString = c.TCPConnectionString;
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
-            TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
             TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
             AADAuthorityURL = c.AADAuthorityURL;
@@ -143,7 +155,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DNSCachingConnString = c.DNSCachingConnString;
             DNSCachingServerCR = c.DNSCachingServerCR;
             DNSCachingServerTR = c.DNSCachingServerTR;
-            IsAzureSynapse = c.IsAzureSynapse;
             IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
@@ -177,8 +188,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             AKVTenantId = c.AzureKeyVaultTenantId;
-            AKVClientId = c.AzureKeyVaultClientId;
-            AKVClientSecret = c.AzureKeyVaultClientSecret;
 
             if (EnclaveEnabled)
             {
@@ -186,11 +195,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     AEConnStrings.Add(TCPConnectionStringHGSVBS);
                     AEConnStringsSetup.Add(TCPConnectionStringHGSVBS);
-                }
-
-                if (!string.IsNullOrEmpty(TCPConnectionStringAASVBS))
-                {
-                    AEConnStrings.Add(TCPConnectionStringAASVBS);
                 }
 
                 if (!string.IsNullOrEmpty(TCPConnectionStringNoneVBS))
@@ -272,19 +276,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
-        public static string GetSqlServerVersion(string connectionString)
+        public static string GetSqlServerProperty(string connectionString, string propertyName)
         {
-            string version = string.Empty;
+            string propertyValue = string.Empty;
             using SqlConnection conn = new(connectionString);
             conn.Open();
             SqlCommand command = conn.CreateCommand();
-            command.CommandText = "SELECT SERVERProperty('ProductMajorVersion')";
+            command.CommandText = $"SELECT SERVERProperty('{propertyName}')";
             SqlDataReader reader = command.ExecuteReader();
             if (reader.Read())
             {
-                version = reader.GetString(0);
+                switch (propertyName)
+                {
+                    case "EngineEdition":
+                        propertyValue = reader.GetInt32(0).ToString();
+                        break;
+                    case "ProductMajorVersion":
+                        propertyValue = reader.GetString(0);
+                        break;
+                }
             }
-            return version;
+            return propertyValue;
         }
 
         public static bool GetSQLServerStatusOnTDS8(string connectionString)
@@ -433,7 +445,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool IsAKVSetupAvailable()
         {
-            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+        }
+
+        private static readonly DefaultAzureCredential s_defaultCredential = new(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId });
+
+        public static TokenCredential GetTokenCredential()
+        {
+            return s_defaultCredential;
         }
 
         public static bool IsTargetReadyForAeWithKeyStore()
@@ -653,10 +672,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsAccessTokenSetup() => !string.IsNullOrEmpty(GetAccessToken());
 
-        public static bool IsSystemIdentityTokenSetup() => !string.IsNullOrEmpty(GetSystemIdentityAccessToken());
-
-        public static bool IsUserIdentityTokenSetup() => !string.IsNullOrEmpty(GetUserIdentityAccessToken());
-
         public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory) && IsNotAzureServer() && IsNotAzureSynapse();
 
         private static bool CheckException<TException>(Exception ex, string exceptionMessage, bool innerExceptionMustBeNull) where TException : Exception
@@ -755,58 +770,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 throw;
             }
-        }
-
-        public static TException ExpectFailure<TException, TInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, bool innerInnerExceptionMustBeNull = false) where TException : Exception where TInnerException : Exception
-        {
-            try
-            {
-                actionThatFails();
-                Assert.Fail("ERROR: Did not get expected exception");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                if ((CheckException<TException>(ex, exceptionMessage, false)) && (CheckException<TInnerException>(ex.InnerException, innerExceptionMessage, innerInnerExceptionMustBeNull)))
-                {
-                    return (ex as TException);
-                }
-                else
-                {
-                    throw;
-                }
-            }
-        }
-
-        public static TException ExpectFailure<TException, TInnerException, TInnerInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, string innerInnerExceptionMessage = null, bool innerInnerInnerExceptionMustBeNull = false) where TException : Exception where TInnerException : Exception where TInnerInnerException : Exception
-        {
-            try
-            {
-                actionThatFails();
-                Assert.Fail("ERROR: Did not get expected exception");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                if ((CheckException<TException>(ex, exceptionMessage, false)) && (CheckException<TInnerException>(ex.InnerException, innerExceptionMessage, false)) && (CheckException<TInnerInnerException>(ex.InnerException.InnerException, innerInnerExceptionMessage, innerInnerInnerExceptionMustBeNull)))
-                {
-                    return (ex as TException);
-                }
-                else
-                {
-                    throw;
-                }
-            }
-        }
-
-        public static void ExpectAsyncFailure<TException>(Func<Task> actionThatFails, string exceptionMessage = null, bool innerExceptionMustBeNull = false) where TException : Exception
-        {
-            ExpectFailure<AggregateException, TException>(() => actionThatFails().Wait(), null, exceptionMessage, innerExceptionMustBeNull);
-        }
-
-        public static void ExpectAsyncFailure<TException, TInnerException>(Func<Task> actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, bool innerInnerExceptionMustBeNull = false) where TException : Exception where TInnerException : Exception
-        {
-            ExpectFailure<AggregateException, TException, TInnerException>(() => actionThatFails().Wait(), null, exceptionMessage, innerExceptionMessage, innerInnerExceptionMustBeNull);
         }
 
         public static string GenerateObjectName()
@@ -979,9 +942,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             port = -1;
             instanceName = string.Empty;
 
-            if (dataSource.Contains(",") && dataSource.Contains("\\"))
-                return false;
-
             if (dataSource.Contains(":"))
             {
                 dataSource = dataSource.Substring(dataSource.IndexOf(":", StringComparison.Ordinal) + 1);
@@ -993,7 +953,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     return false;
                 }
-                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal) - 1);
+                // IndexOf is zero-based, no need to subtract one
+                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal));
             }
 
             if (dataSource.Contains("\\"))
@@ -1071,45 +1032,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 fqdn.Append(host.HostName);
             }
             return fqdn.ToString();
-        }
-
-        public static bool IsNotLocalhost()
-        {
-            // get the tcp connection string
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
-
-            string hostname = "";
-
-            // parse the datasource
-            ParseDataSource(builder.DataSource, out hostname, out _, out _);
-
-            // hostname must not be localhost, ., 127.0.0.1 nor ::1
-            return !(new string[] { "localhost", ".", "127.0.0.1", "::1" }).Contains(hostname.ToLowerInvariant());
-
-        }
-
-        private static bool RunningAsUWPApp()
-        {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return false;
-            }
-            else
-            {
-                [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-                static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder packageFullName);
-
-                {
-                    int length = 0;
-                    StringBuilder sb = new(0);
-                    _ = GetCurrentPackageFullName(ref length, sb);
-
-                    sb = new StringBuilder(length);
-                    int result = GetCurrentPackageFullName(ref length, sb);
-
-                    return result != APPMODEL_ERROR_NO_PACKAGE;
-                }
-            }
         }
     }
 }

@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient
 
 
 #if NET6_0_OR_GREATER
-        /// <inheritdoc />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/DbBatchCommand/*' />
         protected override DbBatchCommand DbBatchCommand => BatchCommand;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/BatchCommand/*' />

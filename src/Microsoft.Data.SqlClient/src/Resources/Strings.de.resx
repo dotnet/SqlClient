@@ -4465,7 +4465,7 @@
     <value>Das Ausführungstimeout ist abgelaufen. Der Timeoutzeitraum wurde überschritten, bevor der Vorgang beendet wurde, oder der Server antwortet nicht.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
+    <value>Fehler bei der Validierung eines Nachweistokens. Die Tokensignatur stimmt nicht mit der berechneten Signatur überein, indem ein öffentlicher Schlüssel verwendet wird, der vom Endpunkt des öffentlichen Nachweisschlüssels unter „{0}“ abgerufen wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt. Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn richtig, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Interner Fehler beim erneuten Download des HGS-Stammzertifikats, nachdem bei der ersten Anforderung ein Fehler aufgetreten ist. Wenden Sie sich an den Kundensupport.</value>
@@ -4486,10 +4486,10 @@
     <value>Fehler bei der Überprüfung eines Nachweistokens. Das Token weisen ein ungültiges Format auf. Wenden Sie sich an den Kundensupport. Fehlerdetails: {0}.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>The attestation service returned an expired HGS root certificate for attestation URL '{0}'. Check the HGS root certificate configured for your HGS instance - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>Der Nachweisdienst hat ein abgelaufenes HGS-Stammzertifikat für die Nachweis-URL „{0}“ zurückgegeben. Überprüfen Sie das für Ihre HGS-Instanz konfigurierte HGS-Stammzertifikat – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>The obtained HGS root certificate for attestation URL '{0}' has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. For additional support contact Customer Support Services. Error details: '{1}'.</value>
+    <value>Das abgerufene HGS-Stammzertifikat für die Nachweis-URL „{0}“ weist ein ungültiges Format auf. Vergewissern Sie sich, dass die Nachweis-URL korrekt ist und der HGS-Server online und vollständig initialisiert ist. Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Um weitere Unterstützung zu erhalten, wenden Sie sich an den Kundensupport. Fehlerdetails: „{0}“</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Fehler bei der Überprüfung eines Nachweistokens. Ein öffentlicher Schlüssel kann nicht aus dem Endpunkt für öffentliche Nachweisschlüssel abgerufen werden, oder der abgerufene Schlüssel weist ein ungültiges Format auf. Fehlerdetails: {0}.</value>
@@ -4507,16 +4507,16 @@
     <value>Fehler bei der Überprüfung des Nachweistokens während der Signaturüberprüfung. Ausnahme: {0}.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of an attestation token failed. Claim '{0}' in the token has an invalid value of '{1}'. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>Fehler bei der Validierung eines Nachweistokens. Der Anspruch „{0}“ im Token weist den ungültigen Wert „{1}“ auf. Überprüfen Sie die Nachweisrichtlinie – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of the attestation token failed. Claim '{0}' is missing in the token. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>Fehler bei der Validierung des Nachweistokens. Anspruch „{0}“ fehlt im Token. Überprüfen Sie die Nachweisrichtlinie – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Es konnte nicht überprüft werden, ob die Enclave im Produktionsmodus ausgeführt wird. Wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Could not verify enclave policy due to a difference between the expected and actual values of the policy on property '{0}'. Actual: '{1}', Expected: '{2}' - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>Die Enclave-Richtlinie konnte aufgrund einer Abweichung zwischen den erwarteten und den tatsächlichen Werten der Richtlinie für die Eigenschaft „{0}“ nicht überprüft werden. Tatsächlich: „{1}“, erwartet: „{2}“ – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Fehler bei der Signaturüberprüfung des Enclave-Berichts. Die Berichtssignatur stimmt nicht mit der Signatur überein, die mit dem HGS-Stammzertifikat berechnet wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Wenn sie korrekt ist, wenden Sie sich an den Kundensupport.</value>
@@ -4679,9 +4679,6 @@
   </data>
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>Socket hat den erwarteten "{0}" nicht ausgelöst. Fehlercode: "{1}".</value>
-  </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>Wird in .NET Standard 2.0 nicht unterstützt.</value>
   </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>Der Server versucht, ein Feature zu verwenden, das auf dieser Plattform nicht unterstützt wird.</value>

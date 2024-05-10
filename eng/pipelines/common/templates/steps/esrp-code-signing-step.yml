@@ -1,0 +1,106 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: artifactType
+    values:
+    - dll
+    - pkg
+
+  - name: sourceRoot
+    type: string
+    default: $(REPOROOT)
+  
+  - name: artifactDirectory
+    type: string
+    default: $(artifactDirectory)
+
+steps:
+- ${{ if eq(parameters.artifactType, 'dll') }}:
+  - task: SFP.build-tasks.custom-build-task-2.EsrpMalwareScanning@4
+    displayName: 'ESRP MalwareScanning'
+    inputs:
+      ConnectedServiceName: 'SqlClient ESRP Malware Scanning'
+      FolderPath: '${{parameters.sourceRoot }}'
+      Pattern: '*.dll'
+      Region: US
+  - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
+    displayName: 'ESRP CodeSigning'
+    inputs:
+      ConnectedServiceName: 'SqlClient ESRP Code Signing'
+      FolderPath: '${{parameters.sourceRoot }}'
+      Pattern: '*.dll'
+      signConfigType: inlineSignParams
+      inlineOperation: |
+          [ 
+              { 
+                  "keyCode": "CP-230012", 
+                  "operationSetCode": "SigntoolSign", 
+                  "parameters": [ 
+                  { 
+                      "parameterName": "OpusName", 
+                      "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server" 
+                  }, 
+                  { 
+                      "parameterName": "OpusInfo", 
+                      "parameterValue": "http://www.microsoft.com" 
+                  }, 
+                  { 
+                      "parameterName": "FileDigest", 
+                      "parameterValue": "/fd \"SHA256\"" 
+                  }, 
+                  { 
+                      "parameterName": "PageHash", 
+                      "parameterValue": "/NPH" 
+                  }, 
+                  { 
+                      "parameterName": "TimeStamp", 
+                      "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256" 
+                  } 
+                  ], 
+                  "toolName": "sign", 
+                  "toolVersion": "1.0" 
+              }, 
+              { 
+                  "keyCode": "CP-230012", 
+                  "operationSetCode": "SigntoolVerify", 
+                  "parameters": [ ], 
+                  "toolName": "sign", 
+                  "toolVersion": "1.0" 
+              } 
+          ] 
+
+- ${{ if eq(parameters.artifactType, 'pkg') }}:
+  - task: SFP.build-tasks.custom-build-task-2.EsrpMalwareScanning@4
+    displayName: 'ESRP MalwareScanning Nuget Package'
+    inputs:
+      ConnectedServiceName: 'SqlClient ESRP Malware Scanning'
+      FolderPath: '${{parameters.artifactDirectory }}'
+      Pattern: '*.*nupkg'
+      Region: US
+  - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
+    displayName: 'ESRP CodeSigning Nuget Package'
+    inputs:
+      ConnectedServiceName: 'SqlClient ESRP Code Signing'
+      FolderPath: '${{parameters.artifactDirectory }}'
+      Pattern: '*.*nupkg'
+      signConfigType: inlineSignParams
+      inlineOperation: |
+        [ 
+            { 
+                "keyCode": "CP-401405", 
+                "operationSetCode": "NuGetSign", 
+                "parameters": [ ], 
+                "toolName": "sign", 
+                "toolVersion": "1.0" 
+            },
+            { 
+                "keyCode": "CP-401405", 
+                "operationSetCode": "NuGetVerify", 
+                "parameters": [ ], 
+                "toolName": "sign", 
+                "toolVersion": "1.0" 
+            } 
+        ] 
