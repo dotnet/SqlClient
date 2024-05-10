@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -306,21 +308,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private static void ClearCache(MemoryCache cache)
         {
-            // Get all keys in the cache
-            var cacheEntriesCollectionDefinition = typeof(MemoryCache).GetProperty("EntriesCollection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var cacheEntriesCollection = cacheEntriesCollectionDefinition.GetValue(cache) as dynamic;
-            List<ICacheEntry> cacheCollectionValues = new List<ICacheEntry>();
-
-            foreach (var cacheItem in cacheEntriesCollection)
+            // Get the Clear method of the cache and use it if available. This is available in .NET 8.
+            MethodInfo clearMethod = cache.GetType().GetMethod("Clear", BindingFlags.Instance | BindingFlags.Public);
+            if (clearMethod != null)
             {
-                ICacheEntry cacheItemValue = cacheItem.GetType().GetProperty("Value").GetValue(cacheItem, null);
-                cacheCollectionValues.Add(cacheItemValue);
+                clearMethod.Invoke(cache, null);
             }
-
-            // Remove each cache entry
-            foreach (var cacheItem in cacheCollectionValues)
+            else
             {
-                cache.Remove(cacheItem.Key);
+                // Otherwise, use the Remove function to remove all entries using all keys in the cache
+                PropertyInfo cacheEntriesCollectionDefinition = typeof(MemoryCache).GetProperty("EntriesCollection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                ICollection cacheEntriesCollection = (ICollection)cacheEntriesCollectionDefinition.GetValue(cache);
+                List<ICacheEntry> cacheCollectionValues = new List<ICacheEntry>();
+
+                foreach (object cacheItem in cacheEntriesCollection)
+                {
+                    ICacheEntry cacheItemValue = (ICacheEntry)cacheItem.GetType().GetProperty("Value").GetValue(cacheItem, null);
+                    cache.Remove(cacheItemValue.Key);
+                }
             }
         }
     }
