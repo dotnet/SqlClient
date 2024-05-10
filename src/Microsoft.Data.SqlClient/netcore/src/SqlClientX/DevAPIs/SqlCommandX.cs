@@ -153,6 +153,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX
                 ct).ConfigureAwait(false);
             var reader = new SqlDataReaderX(this);
             bool hasMoreInformation = false;
+
+            // Set the metadata information.
             reader.SetMetadata(mdSet, hasMoreInformation);
             return reader;
         }

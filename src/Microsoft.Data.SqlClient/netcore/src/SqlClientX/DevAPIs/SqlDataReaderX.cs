@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         /// <summary>
         /// The field count.
         /// </summary>
-        public override int FieldCount=> _metadata?.Length ?? 0;
+        public override int FieldCount => _metadata?.Length ?? 0;
 
         /// <summary>
         /// Are there more rows?
@@ -309,14 +309,14 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         {
             var columns = _metadata;
             if (!_readerState._RowDataIsReady)
-            { 
+            {
                 for (int i = 0; i < columns.Length; i++)
                 {
                     //SqlBuffer data = new SqlBuffer();
                     _SqlMetaData column = columns[i];
 
-                    Tuple<bool, int> tuple = _PhysicalConnection.ProcessColumnHeaderAsync(column, 
-                        isAsync: false, 
+                    Tuple<bool, int> tuple = _PhysicalConnection.ProcessColumnHeaderAsync(column,
+                        isAsync: false,
                         ct: CancellationToken.None).AsTask().GetAwaiter().GetResult();
                     bool isNull = tuple.Item1;
                     int length = tuple.Item2;
@@ -331,7 +331,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
                             column.metaType.IsPlp ? (Int32.MaxValue) : (int)length,
                             simplesqlclient.SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/,
                             column.column,
-                            isAsync : false,
+                            isAsync: false,
                             ct: CancellationToken.None).AsTask().GetAwaiter().GetResult();
                     }
                     //data.Clear();
@@ -381,12 +381,28 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         /// <exception cref="NotImplementedException"></exception>
         public override bool Read()
         {
-            _PhysicalConnection.AdvancePastRowAsync(false, CancellationToken.None)
+            byte nextUnreadToken = _PhysicalConnection.PeekToken(false, CancellationToken.None).GetAwaiter().GetResult();
+            CleanDataBuffer();
+            while (nextUnreadToken == TdsTokens.SQLROW
+                || nextUnreadToken == TdsTokens.SQLNBCROW)
+            {
+                _PhysicalConnection.AdvancePastRowAsync(false, CancellationToken.None)
                 .AsTask()
                 .GetAwaiter()
                 .GetResult();
-            _readerState._RowDataIsReady = false;
-            return true;
+                _readerState._RowDataIsReady = false;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Clears up the buffers.
+        /// </summary>
+        
+        private void CleanDataBuffer()
+        {
+            SqlBuffer.Clear(_sqlBuffers);
         }
 
         internal void SetMetadata(_SqlMetaDataSet mdSet, bool hasMoreInformation)

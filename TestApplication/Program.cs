@@ -117,14 +117,14 @@ namespace TestApplication
 
             using (SqlCommandX command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT @@VERSION";
+                command.CommandText = "SELECT name from sys.databases";
                 Console.WriteLine("Executing command");
 
                 using (SqlDataReaderX reader = command.ExecuteReader())
                 {
                     //do
                     //{
-                        reader.Read();
+                        while(reader.Read())
                         {
                             // Process each row
                             // REad in reverse to cached the data in the reader buffers.

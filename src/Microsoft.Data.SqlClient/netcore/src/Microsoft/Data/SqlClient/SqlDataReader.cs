@@ -3489,11 +3489,8 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.PendingBeginXXXExists();
             }
 
-            bool more;
-            bool result;
-
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            result = TryReadInternal(true, out more);
+            bool result = TryReadInternal(true, out bool more);
 
             if (!result)
             {

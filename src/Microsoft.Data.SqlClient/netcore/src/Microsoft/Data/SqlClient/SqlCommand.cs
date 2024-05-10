@@ -5482,7 +5482,12 @@ namespace Microsoft.Data.SqlClient
             return ds;
         }
 
-        private void FinishExecuteReader(SqlDataReader ds, RunBehavior runBehavior, string resetOptionsString, bool isInternal, bool forDescribeParameterEncryption, bool shouldCacheForAlwaysEncrypted = true)
+        private void FinishExecuteReader(SqlDataReader ds,
+            RunBehavior runBehavior,
+            string resetOptionsString,
+            bool isInternal,
+            bool forDescribeParameterEncryption,
+            bool shouldCacheForAlwaysEncrypted = true)
         {
             // always wrap with a try { FinishExecuteReader(...) } finally { PutStateObject(); }
 
