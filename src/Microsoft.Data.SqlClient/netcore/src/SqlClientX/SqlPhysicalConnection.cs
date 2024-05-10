@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Buffers;
 using System.Data;
+using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
@@ -485,13 +487,152 @@ namespace simplesqlclient
 
                 default:
                     Debug.Assert(!isPlp, "ReadSqlValue calling ReadSqlValueInternal with plp data");
-                    throw new NotImplementedException("Unknown type " + tdsType.ToString("X2") + " is not implemented yet");
-                    //if (!TryReadSqlValueInternal(value, tdsType, length, stateObj))
-                    //{
-                    //    return false;
-                    //}
+                    await _readStream.ReadSqlValuesInternalAsync(value, tdsType, length, isAsync, ct).ConfigureAwait(false);
+                    break;
             }
 
+        }
+
+        internal async ValueTask<bool> ReadSqlVariant(SqlBuffer value,
+            int lenTotal,
+            bool isAsync,
+            CancellationToken ct)
+        {
+            // get the SQLVariant type
+            byte type = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+
+            ushort lenMax = 0; // maximum lenData of value inside variant
+
+            // read cbPropBytes
+            byte cbPropsActual = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+            
+            MetaType mt = MetaType.GetSqlDataType(type, 0 /*no user datatype*/, 0 /* no lenData, non-nullable type */);
+            byte cbPropsExpected = mt.PropBytes;
+
+            int lenConsumed = TdsEnums.SQLVARIANT_SIZE + cbPropsActual; // type, count of propBytes, and actual propBytes
+            int lenData = lenTotal - lenConsumed; // length of actual data
+
+            // read known properties and skip unknown properties
+            Debug.Assert(cbPropsActual >= cbPropsExpected, "cbPropsActual is less that cbPropsExpected!");
+
+            //
+            // now read the value
+            //
+            switch (type)
+            {
+                case TdsEnums.SQLBIT:
+                case TdsEnums.SQLINT1:
+                case TdsEnums.SQLINT2:
+                case TdsEnums.SQLINT4:
+                case TdsEnums.SQLINT8:
+                case TdsEnums.SQLFLT4:
+                case TdsEnums.SQLFLT8:
+                case TdsEnums.SQLMONEY:
+                case TdsEnums.SQLMONEY4:
+                case TdsEnums.SQLDATETIME:
+                case TdsEnums.SQLDATETIM4:
+                case TdsEnums.SQLUNIQUEID:
+                    await _readStream.ReadSqlValuesInternalAsync(value, type, lenData, isAsync, ct).ConfigureAwait(false);
+                    break;
+
+                case TdsEnums.SQLDECIMALN:
+                case TdsEnums.SQLNUMERICN:
+                    {
+                        Debug.Assert(cbPropsExpected == 2, "SqlVariant: invalid PropBytes for decimal/numeric type!");
+
+                        byte precision = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+                        byte scale = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+                        
+                        
+                        // skip over unknown properties
+                        if (cbPropsActual > cbPropsExpected)
+                        {
+                            await _readStream.SkipBytesAsync(cbPropsActual - cbPropsExpected,
+                                isAsync, 
+                                ct).ConfigureAwait(false);
+                        }
+
+                        
+                        await _readStream.ReadSqlDecimalAsync(value, TdsEnums.MAX_NUMERIC_LEN, precision, scale, isAsync, ct).ConfigureAwait(false);
+                        break;
+                    }
+
+                case TdsEnums.SQLBIGBINARY:
+                case TdsEnums.SQLBIGVARBINARY:
+                    //Debug.Assert(TdsEnums.VARNULL == lenData, "SqlVariant: data length for Binary indicates null?");
+                    Debug.Assert(cbPropsExpected == 2, "SqlVariant: invalid PropBytes for binary type!");
+                    lenMax = await _readStream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
+                    Debug.Assert(lenMax != TdsEnums.SQL_USHORTVARMAXLEN, "bigvarbinary(max) in a sqlvariant");
+
+                    // skip over unknown properties
+                    if (cbPropsActual > cbPropsExpected)
+                    {
+                        await _readStream.SkipBytesAsync(cbPropsActual - cbPropsExpected,
+                                isAsync,
+                                ct).ConfigureAwait(false);
+                    }
+
+                    goto case TdsEnums.SQLBIT;
+
+                case TdsEnums.SQLBIGCHAR:
+                case TdsEnums.SQLBIGVARCHAR:
+                case TdsEnums.SQLNCHAR:
+                case TdsEnums.SQLNVARCHAR:
+                    {
+                        Debug.Assert(cbPropsExpected == 7, "SqlVariant: invalid PropBytes for character type!");
+
+                        SqlCollation collation = await _readStream.ProcessCollationAsync(isAsync, ct).ConfigureAwait(false);
+
+                        lenMax = await _readStream.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
+                        Debug.Assert(lenMax != TdsEnums.SQL_USHORTVARMAXLEN, "bigvarchar(max) or nvarchar(max) in a sqlvariant");
+
+                        // skip over unknown properties
+                        if (cbPropsActual > cbPropsExpected)
+                        {
+                            await _readStream.SkipBytesAsync(cbPropsActual - cbPropsExpected, isAsync, ct).ConfigureAwait(false);
+                        }
+
+                        Encoding encoding = Encoding.GetEncoding(GetCodePage(collation));
+
+                        await _sqlValuesProcessor.ReadSqlStringValueAsync(
+                            value, 
+                            type, 
+                            lenData, 
+                            encoding, 
+                            false,
+                            _protocolMetadata,
+                             isAsync,
+                            ct).ConfigureAwait(false);
+
+                        break;
+                    }
+                case TdsEnums.SQLDATE:
+                    await _readStream.ReadSqlDateTimeAsync(value, type, lenData, 0, isAsync, ct).ConfigureAwait(false);
+                    break;
+
+                case TdsEnums.SQLTIME:
+                case TdsEnums.SQLDATETIME2:
+                case TdsEnums.SQLDATETIMEOFFSET:
+                    {
+                        Debug.Assert(cbPropsExpected == 1, "SqlVariant: invalid PropBytes for time/datetime2/datetimeoffset type!");
+
+                        byte scale = await _readStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+
+                        // skip over unknown properties
+                        if (cbPropsActual > cbPropsExpected)
+                        {
+                            await _readStream.SkipBytesAsync(cbPropsActual - cbPropsExpected, isAsync, ct).ConfigureAwait(false);
+                        }
+                        await _readStream.ReadSqlDateTimeAsync(value, type, lenData, scale, isAsync, ct).ConfigureAwait(false);
+                        break;
+                    }
+
+                default:
+                    Debug.Fail("Unknown tds type in SqlVariant!" + type.ToString(CultureInfo.InvariantCulture));
+                    break;
+            } // switch
+
+            return true;
         }
 
         internal async ValueTask<Tuple<bool, int>> ProcessColumnHeaderAsync(_SqlMetaData col,
@@ -879,7 +1020,7 @@ namespace simplesqlclient
             return collation;
         }
 
-        internal int GetCodePage(SqlCollation collation)
+        internal static int GetCodePage(SqlCollation collation)
         {
             int codePage = 0;
 
@@ -959,7 +1100,9 @@ namespace simplesqlclient
 
                     if (!success)
                     {
-                        throw new Exception("Unsupported collation. Drain data.");
+                        // TODO: The connection is broken.
+                        throw new Exception("Unsupported collation. Drain data has not been implemented. This connection is busted" +
+                            " This is a TODO.");
                     }
 
                     Debug.Assert(codePage >= 0,

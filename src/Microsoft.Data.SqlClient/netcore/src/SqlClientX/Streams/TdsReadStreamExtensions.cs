@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -92,6 +93,35 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
 
             return result;
         }
+
+        internal static async ValueTask<float> ReadSingleAsync(this TdsReadStream stream, bool isAsync, CancellationToken ct)
+        {
+            int size = 4;
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(size);
+
+            _ = isAsync ? await stream.ReadAsync(buffer.AsMemory(0, size), ct) :
+                stream.Read(buffer.AsSpan().Slice(0, size));
+
+            var result = BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(buffer.AsSpan().Slice(0, size)));
+            ArrayPool<byte>.Shared.Return(buffer);
+
+            return result;
+        }
+
+        internal static async ValueTask<double> ReadDoubleAsync(this TdsReadStream stream, bool isAsync, CancellationToken ct)
+        {
+            int size = 4;
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(size);
+
+            _ = isAsync ? await stream.ReadAsync(buffer.AsMemory(0, size), ct) :
+                stream.Read(buffer.AsSpan().Slice(0, size));
+
+            var result = BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(buffer.AsSpan().Slice(0, size)));
+            ArrayPool<byte>.Shared.Return(buffer);
+
+            return result;
+        }
+
 
         internal static async ValueTask<simplesqlclient.SqlError> ProcessErrorAsync(this TdsReadStream stream, TdsToken token, bool isAsync, CancellationToken ct = default)
         {

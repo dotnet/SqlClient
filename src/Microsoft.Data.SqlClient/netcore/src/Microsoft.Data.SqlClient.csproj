@@ -955,6 +955,8 @@
     <Compile Include="SqlClientX\Program.cs" />
     <Compile Include="SqlClientX\DevAPIs\SqlConnectionX.cs" />
     <Compile Include="SqlClientX\ProtocolMetadata.cs" />
+    <Compile Include="SqlClientX\TDS.Objects\Packets\IncomingPacketHandler.cs" />
+    <Compile Include="SqlClientX\TDS.Objects\Packets\SqlValuesHandler.cs" />
     <Compile Include="SqlClientX\TDS.Objects\Tokens\TdsEnvChange.cs" />
     <Compile Include="SqlClientX\SqlError.cs" />
     <Compile Include="SqlClientX\SqlPhysicalConnection.cs" />

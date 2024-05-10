@@ -26,6 +26,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
         internal byte PacketType { get; private set; } = 0;
         public byte PacketStatus { get; private set; }
 
+        public ScratchPad Scratchpad { get; } = new ScratchPad();
+
         internal TdsReadStream(Stream underlyingStream, int bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE)
         {
             Buffer = new byte[bufferSize];
@@ -233,6 +235,16 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             this.ReadBufferOffset--;
             this.PacketDataLeft++;
             return nextToken;
+        }
+    }
+
+    internal class ScratchPad
+    {
+        internal int[] _decimalBits;
+
+        public ScratchPad() 
+        {
+            this._decimalBits = new int[4];
         }
     }
 }

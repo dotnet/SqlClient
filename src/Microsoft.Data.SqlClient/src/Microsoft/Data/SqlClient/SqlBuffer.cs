@@ -1282,6 +1282,14 @@ namespace Microsoft.Data.SqlClient
             _value._int32 = GetDateFromByteArray(bytes);
             _isNull = false;
         }
+        internal void SetToDate(byte[] bytes)
+        {
+            Debug.Assert(IsEmpty, "setting value a second time?");
+
+            _type = StorageType.Date;
+            _value._int32 = GetDateFromByteArray(bytes);
+            _isNull = false;
+        }
 
         internal void SetToTime(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
         {

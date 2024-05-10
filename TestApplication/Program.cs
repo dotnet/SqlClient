@@ -80,14 +80,12 @@ namespace TestApplication
         {
             //AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
 
-            SqlConnection connection = new SqlConnection(connectionString);
+            SqlConnection connection = new(connectionString);
             connection.Open();
             
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT name from sys.databases \n" +
-                    "" +
-                    "SELECT @@VERSION";
+                command.CommandText = "SeLECT * from sys.databases";
                 Console.WriteLine("Executing command");
 
                 using (SqlDataReader reader = command.ExecuteReader())
@@ -117,7 +115,7 @@ namespace TestApplication
 
             using (SqlCommandX command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT name from sys.databases";
+                command.CommandText = "SeLECT name, create_date , collation_name from sys.databases";
                 Console.WriteLine("Executing command");
 
                 using (SqlDataReaderX reader = command.ExecuteReader())
