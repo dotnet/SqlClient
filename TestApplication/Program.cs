@@ -16,6 +16,7 @@ namespace TestApplication
             //BenchmarkRunner.Run<Benchmarks>();
         }
 
+        private static string QUERY = "SELECT CAST(@@VERSION AS VARCHAR(MAX)) AS ServerVersion;";
         private static async Task AsyncGet()
         {
             string connectionString = $"Server=tcp:127.0.0.1;" +
@@ -85,7 +86,7 @@ namespace TestApplication
             
             using (var command = connection.CreateCommand())
             {
-                command.CommandText = "SeLECT * from sys.databases";
+                command.CommandText = QUERY;
                 Console.WriteLine("Executing command");
 
                 using (SqlDataReader reader = command.ExecuteReader())
@@ -115,7 +116,7 @@ namespace TestApplication
 
             using (SqlCommandX command = connection.CreateCommand())
             {
-                command.CommandText = "SeLECT name, create_date , collation_name from sys.databases";
+                command.CommandText = QUERY;
                 Console.WriteLine("Executing command");
 
                 using (SqlDataReaderX reader = command.ExecuteReader())

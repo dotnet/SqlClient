@@ -213,6 +213,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
 
             if (isPlp)
             {
+                //await stream.ReadPlpBytesAsync();
                 throw new NotImplementedException();
             }
             else

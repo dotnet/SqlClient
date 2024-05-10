@@ -955,6 +955,7 @@
     <Compile Include="SqlClientX\Program.cs" />
     <Compile Include="SqlClientX\DevAPIs\SqlConnectionX.cs" />
     <Compile Include="SqlClientX\ProtocolMetadata.cs" />
+    <Compile Include="SqlClientX\TDS.Objects\NullBitMapInfo.cs" />
     <Compile Include="SqlClientX\TDS.Objects\Packets\IncomingPacketHandler.cs" />
     <Compile Include="SqlClientX\TDS.Objects\Packets\SqlValuesHandler.cs" />
     <Compile Include="SqlClientX\TDS.Objects\Tokens\TdsEnvChange.cs" />
@@ -975,6 +976,7 @@
     <Compile Include="SqlClientX\Streams\TdsWriteStream.cs" />
     <Compile Include="SqlClientX\Streams\TdsWriteStreamExtensions.cs" />
     <Compile Include="SqlClientX\TDS\ProtocolParsingMachine.cs" />
+    <Compile Include="SqlClientX\TDS\StreamExecutionState.cs" />
     <Compile Include="SqlClientX\TDS\TdsTokenPipeline.cs" />
     <Compile Include="SqlClientX\TransportHandler.cs" />
     <Compile Include="SqlClientX\Utilities.cs" />

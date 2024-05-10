@@ -1218,7 +1218,7 @@ namespace simplesqlclient
                 ct,
                 TdsTokens.SQLCOLMETADATA, 
                 resetPacket : true).ConfigureAwait(false);
-            return _protocolMetadata.LastReadMetadata;
+            return _streamExecutionState.LastReadMetadata;
         }
 
         /// <summary>
