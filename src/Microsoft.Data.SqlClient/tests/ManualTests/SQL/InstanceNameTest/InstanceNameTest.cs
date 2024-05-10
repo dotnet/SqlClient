@@ -197,10 +197,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             PropertyInfo serverInfo = dataSrcInfo.GetType().GetProperty("ServerName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             string serverName = serverInfo.GetValue(dataSrcInfo, null).ToString();
-
+            // Set the instance name from the data source
             PropertyInfo instanceNameToSetInfo = dataSrcInfo.GetType().GetProperty("InstanceName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             instanceNameToSetInfo.SetValue(dataSrcInfo, inInstanceName, null);
-
+            // Ensure that the instance name is set
             PropertyInfo instanceNameInfo = dataSrcInfo.GetType().GetProperty("InstanceName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             string instanceName = instanceNameInfo.GetValue(dataSrcInfo, null).ToString().ToUpper();
 
