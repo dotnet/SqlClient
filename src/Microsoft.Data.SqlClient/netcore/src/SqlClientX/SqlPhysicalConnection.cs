@@ -15,6 +15,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SqlClientX;
 using Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
+using Microsoft.Data.SqlClient.SqlClientX.TDS;
 using Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets;
 using Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Tokens;
 
@@ -37,6 +38,7 @@ namespace simplesqlclient
         //private readonly string applicationName;
         private ConnectionSettings _connectionSettings;
         private readonly ProtocolMetadata _protocolMetadata;
+        private readonly StreamExecutionState _streamExecutionState;
         private ParserFlags _flags;
         private readonly AuthenticationOptions _authOptions;
         private readonly string _database;
@@ -63,7 +65,7 @@ namespace simplesqlclient
             _database = database;
             _connectionSettings = connectionSettings;
             _protocolMetadata = new ProtocolMetadata();
-            
+            _streamExecutionState = new StreamExecutionState();
         }
 
         public async ValueTask TcpConnect(bool isAsync, CancellationToken ct)
@@ -240,7 +242,7 @@ namespace simplesqlclient
                         {
                             _SqlMetaDataSet metadataSet = 
                                 await ProcessMetadataSetAsync(token.Length, isAsync, ct).ConfigureAwait(false);
-                            _protocolMetadata.LastReadMetadata = metadataSet;
+                            _streamExecutionState.LastReadMetadata = metadataSet;
                         }
                         break;
                     case TdsTokens.SQLFEATUREEXTACK:
@@ -260,11 +262,13 @@ namespace simplesqlclient
                             }
                         } while (featureId != 0xff);
                         break;
+                    case TdsTokens.SQLNBCROW:
                     case TdsTokens.SQLROW:
+                        await MarkRowBeginning(TdsTokens.SQLNBCROW == token.TokenType, isAsync, ct).ConfigureAwait(false);
                         bool bulkCopyHandler = false;
                         if (bulkCopyHandler)
                         {
-                            await ProcessRowAsync(_protocolMetadata.LastReadMetadata, isAsync, ct).ConfigureAwait(false);
+                            await ProcessRowAsync(_streamExecutionState.LastReadMetadata, isAsync, ct).ConfigureAwait(false);
                         }
                         break;
                     
@@ -282,7 +286,7 @@ namespace simplesqlclient
                     case TdsTokens.SQLSESSIONSTATE:
                     // code omitted for brevity
 
-                    case TdsTokens.SQLNBCROW:
+                    
                     // code omitted for brevity
 
                     case TdsTokens.SQLRETURNSTATUS:
@@ -310,6 +314,18 @@ namespace simplesqlclient
                         throw new NotImplementedException("The token type is not implemented. " + (byte)token.TokenType);
                 }
             } while(_readStream.PacketDataLeft > 0 && parsingBehavior != ParsingBehavior.RunOnce);
+        }
+
+        private async Task MarkRowBeginning(bool isNullCompressed, bool isAsync, CancellationToken ct)
+        {
+            if (isNullCompressed)
+            {
+                await _streamExecutionState._nullBitMapInfo.Initialize(_readStream, _streamExecutionState.LastReadMetadata.Length, isAsync, ct).ConfigureAwait(false);
+            }
+            else
+            {
+                _streamExecutionState._nullBitMapInfo.Clean();
+            }
         }
 
         private async ValueTask<SqlBuffer> ProcessRowAsync(_SqlMetaDataSet columns,

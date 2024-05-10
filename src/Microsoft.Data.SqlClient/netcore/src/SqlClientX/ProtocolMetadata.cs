@@ -24,7 +24,7 @@ namespace simplesqlclient
         public IServerFeature DataClassificationFeature { get; internal set; }
         public HashSet<byte> FeatureIdList { get; internal set; } = new HashSet<byte>();
         public SQLDNSCachingFeature SQLDNSCachingFeature { get; private set; }
-        public _SqlMetaDataSet LastReadMetadata { get; internal set; }
+        
 
         public bool IsFeatureSupported ( byte featureId ) => FeatureIdList.Contains(featureId);
 
