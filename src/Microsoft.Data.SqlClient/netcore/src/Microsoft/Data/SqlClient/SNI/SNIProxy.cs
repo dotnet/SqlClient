@@ -719,7 +719,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
 
                     InferLocalServerName();
-
                     return true;
                 }
 
