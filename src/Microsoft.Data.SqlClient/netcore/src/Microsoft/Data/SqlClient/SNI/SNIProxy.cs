@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.TCP:
                     sniHandle = CreateTcpHandle(details, timeout, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
                         tlsFirst, hostNameInCertificate, serverCertificateFilename);
-                    break;
+                     break;
                 case DataSource.Protocol.NP:
                     sniHandle = CreateNpHandle(details, timeout, parallel, tlsFirst);
                     break;
@@ -651,7 +651,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     return false;
                 }
 
-                // If user is connecting to a managed instance with port, e.g. localhost\INSTANCENAME,1434
                 Port = port;
             }
             // Instance Name Handling. Only if we found a '\' and we did not find a port in the Data Source
@@ -695,7 +694,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 if (!_dataSourceAfterTrimmingProtocol.Contains(PipeBeginning))
                 {
                     // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance, 
-                    // separate server name and instance and prepend instance with MSSQL$ and append default pipe path 
+                    // separate servername and instance and prepend instance with MSSQL$ and append default pipe path 
                     // https://learn.microsoft.com/en-us/sql/tools/configuration-manager/named-pipes-properties?view=sql-server-ver16
                     if (_dataSourceAfterTrimmingProtocol.Contains(PathSeparator) && _connectionProtocol == Protocol.NP)
                     {
@@ -704,7 +703,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         {
                             // NamedPipeClientStream object will create the network path using PipeHostName and PipeName
                             // and can be seen in its _normalizedPipePath variable in the format \\servername\pipe\MSSQL$<instancename>\sql\query
-                            PipeHostName = ServerName = tokensByBackSlash[0].Trim();
+                            PipeHostName = ServerName = tokensByBackSlash[0];
                             PipeName = $"{InstancePrefix}{tokensByBackSlash[1]}{PathSeparator}{DefaultPipeName}";
                         }
                         else
@@ -737,7 +736,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         return false;
                     }
 
-                    string host = tokensByBackSlash[2].Trim();
+                    string host = tokensByBackSlash[2];
 
                     if (string.IsNullOrEmpty(host))
                     {
@@ -754,7 +753,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (tokensByBackSlash[4].StartsWith(NamedPipeInstanceNameHeader, StringComparison.Ordinal))
                     {
-                        InstanceName = tokensByBackSlash[4].Substring(NamedPipeInstanceNameHeader.Length).Trim();
+                        InstanceName = tokensByBackSlash[4].Substring(NamedPipeInstanceNameHeader.Length);
                     }
 
                     StringBuilder pipeNameBuilder = new StringBuilder();
