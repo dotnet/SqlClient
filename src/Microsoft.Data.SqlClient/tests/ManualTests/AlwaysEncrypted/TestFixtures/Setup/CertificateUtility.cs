@@ -316,7 +316,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
             else
             {
-                // Otherwise, use the Remove function to remove all entries using all keys in the cache
+                // Otherwise, use the Remove function to remove all entries using all keys in the cache gathered using reflection.
                 PropertyInfo cacheEntriesCollectionDefinition = typeof(MemoryCache).GetProperty("EntriesCollection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 ICollection cacheEntriesCollection = (ICollection)cacheEntriesCollectionDefinition.GetValue(cache);
                 List<ICacheEntry> cacheCollectionValues = new List<ICacheEntry>();
