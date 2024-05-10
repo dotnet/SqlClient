@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>True if certificate is valid</returns>
         internal static bool ValidateSslServerCertificate(string targetServerName, X509Certificate cert, SslPolicyErrors policyErrors)
         {
-            using (TrySNIEventScope.Create("SNICommon.ValidateSslServerCertificate | SNI | SCOPE | INFO | Entering Scope {0} "))
+            using (TrySNIEventScope.Create(nameof(SNICommon)))
             {
                 if (policyErrors == SslPolicyErrors.None)
                 {
@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>True if certificate is valid</returns>
         internal static bool ValidateSslServerCertificate(X509Certificate clientCert, X509Certificate serverCert, SslPolicyErrors policyErrors)
         {
-            using (TrySNIEventScope.Create("SNICommon.ValidateSslServerCertificate | SNI | SCOPE | INFO | Entering Scope {0} "))
+            using (TrySNIEventScope.Create(nameof(SNICommon)))
             {
                 if (policyErrors == SslPolicyErrors.None)
                 {
@@ -334,7 +334,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal static IPAddress[] GetDnsIpAddresses(string serverName, TimeoutTimer timeout)
         {
-            using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
+            using (TrySNIEventScope.Create(nameof(SNICommon)))
             {
                 int remainingTimeout = timeout.MillisecondsRemainingInt;
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO,
@@ -352,7 +352,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal static IPAddress[] GetDnsIpAddresses(string serverName)
         {
-            using (TrySNIEventScope.Create(nameof(GetDnsIpAddresses)))
+            using (TrySNIEventScope.Create(nameof(SNICommon)))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO, "Getting DNS host entries for serverName {0}.", args0: serverName);
                 return Dns.GetHostAddresses(serverName);
