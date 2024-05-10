@@ -6,6 +6,9 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing;
+using Microsoft.Data.SqlClient.SqlClientX.TDS;
+using Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets;
 using simplesqlclient;
 
 namespace Microsoft.Data.SqlClient.SqlClientX.Streams
@@ -80,7 +83,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             return result;
         }
 
-        internal static async ValueTask<long> ReadInt64Async(this TdsReadStream stream, bool isAsync, CancellationToken ct = default)
+        internal static async ValueTask<long> ReadInt64Async(this TdsReadStream stream, 
+            bool isAsync, CancellationToken ct = default)
         {
             int size = sizeof(long);
             byte[] buffer = ArrayPool<byte>.Shared.Rent(sizeof(long));
@@ -185,10 +189,145 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             return result;
         }
 
-        internal static async ValueTask<string> ReadStringWithEncodingAsync(this TdsReadStream stream, 
+        internal static async ValueTask<int> ReadPlpBytesAsync(this TdsReadStream stream,
+            byte[] buff, int offset, int len, StreamExecutionState executionState,
+            bool isAsync,
+            CancellationToken ct)
+        {
+            int totalBytesRead;
+            int bytesRead;
+            int bytesLeft;
+            byte[] newbuf;
+
+            if (executionState.LongLenLeft == 0)
+            {
+                Debug.Assert(executionState.LongLenLeft == 0);
+                if (buff == null)
+                {
+                    buff = Array.Empty<byte>();
+                }
+
+                return 0;
+            }
+
+            Debug.Assert(executionState.LongLenLeft != TdsEnums.SQL_PLP_NULL, "Out of sync plp read request");
+            Debug.Assert((buff == null && offset == 0) || (buff.Length >= offset + len), "Invalid length sent to ReadPlpBytes()!");
+
+            bytesLeft = len;
+
+            // If total length is known up front, allocate the whole buffer in one shot instead of realloc'ing and copying over each time
+            if (buff == null && executionState.LongLen != TdsEnums.SQL_PLP_UNKNOWNLEN)
+            {
+
+                if ((ulong)(buff?.Length ?? 0) != executionState.LongLen)
+                {
+                    // if the buffer is null or the wrong length create one to use
+                    buff = new byte[(Math.Min((int)executionState.LongLen, len))];
+                }
+            }
+
+            if (executionState.LongLenLeft == 0)
+            {
+                _ = stream.ReadPlpLengthAsync(executionState, false, isAsync, ct).ConfigureAwait(false);
+                
+                if (executionState.LongLenLeft == 0)
+                { // Data read complete
+                    return 0;
+                }
+            }
+
+            if (buff == null)
+            {
+                buff = new byte[executionState.LongLenLeft];
+            }
+
+            totalBytesRead = 0;
+
+            while (bytesLeft > 0)
+            {
+                int bytesToRead = (int)Math.Min(executionState.LongLenLeft, (ulong)bytesLeft);
+                if (buff.Length < (offset + bytesToRead))
+                {
+                    // Grow the array
+                    newbuf = new byte[offset + bytesToRead];
+                    Buffer.BlockCopy(buff, 0, newbuf, 0, offset);
+                    buff = newbuf;
+                }
+
+                //bool result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out bytesRead);
+                
+                if (isAsync)
+                {
+                    bytesRead = await stream.ReadAsync(buff.AsMemory(offset), ct).ConfigureAwait(false);
+                }
+                else
+                {
+                    bytesRead =stream.Read(buff.AsSpan(offset));
+                }
+                Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
+                Debug.Assert((ulong)bytesRead <= executionState.LongLenLeft, "Read more bytes than is available");
+
+                bytesLeft -= bytesRead;
+                offset += bytesRead;
+                totalBytesRead += bytesRead;
+                executionState.LongLenLeft -= (ulong)bytesRead;
+
+                if (executionState.LongLenLeft == 0)
+                {
+                    // Read the next chunk or cleanup state if hit the end
+                    _ = await stream.ReadPlpLengthAsync(executionState, false, isAsync, ct).ConfigureAwait(false);
+                }
+
+                //AssertValidState();
+
+                // Catch the point where we read the entire plp data stream and clean up state
+                if (executionState.LongLenLeft == 0)   // Data read complete
+                    break;
+            }
+            return totalBytesRead;
+        }
+
+        internal static async ValueTask<ulong> SkipPlpValueAsync(this TdsReadStream stream,
+            ulong cb,
+            StreamExecutionState executionState,
+            bool isAsync,
+            CancellationToken ct)
+        {
+            int bytesSkipped;
+            ulong totalBytesSkipped = 0;
+
+            if (executionState.LongLenLeft == 0)
+            {
+                _ = await stream.ReadPlpLengthAsync(executionState, false, isAsync, ct).ConfigureAwait(false);
+            }
+
+            while ((totalBytesSkipped < cb) &&
+                    (executionState.LongLenLeft > 0))
+            {
+                if (executionState.LongLenLeft > int.MaxValue)
+                    bytesSkipped = int.MaxValue;
+                else
+                    bytesSkipped = (int)executionState.LongLenLeft;
+                bytesSkipped = ((cb - totalBytesSkipped) < (ulong)bytesSkipped) ? (int)(cb - totalBytesSkipped) : bytesSkipped;
+
+                await stream.SkipBytesAsync(bytesSkipped, isAsync, ct).ConfigureAwait(false);
+                executionState.LongLenLeft -= (ulong)bytesSkipped;
+                totalBytesSkipped += (ulong)bytesSkipped;
+
+                if (executionState.LongLenLeft == 0)
+                {
+                    _ = await stream.ReadPlpLengthAsync(executionState, false, isAsync, ct).ConfigureAwait(false);
+                }
+            }
+            return totalBytesSkipped;
+        }
+
+        internal static async ValueTask<string> ReadStringWithEncodingAsync(
+            this TdsReadStream stream, 
             int length, 
             System.Text.Encoding encoding, 
-            bool isPlp, 
+            bool isPlp,
+            StreamExecutionState executionState,
             bool isAsync, 
             CancellationToken ct = default)
         {
@@ -199,11 +338,11 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 // Need to skip the current column before throwing the error - this ensures that the state shared between this and the data reader is consistent when calling DrainData
                 if (isPlp)
                 {
-                    throw new NotImplementedException();
+                    await stream.SkipPlpValueAsync((ulong)length, executionState, isAsync, ct).ConfigureAwait(false);
                 }
                 else
                 {
-                    stream.Read(stackalloc byte[8]);
+                    await stream.SkipBytesAsync(8, isAsync, ct).ConfigureAwait(false);
                 }
 
                 throw new Exception("Unsupported encoding exception");
@@ -214,7 +353,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             if (isPlp)
             {
                 //await stream.ReadPlpBytesAsync();
-                throw new NotImplementedException();
+                length = await stream.ReadPlpBytesAsync(buf, 0, int.MaxValue, executionState, isAsync, ct).ConfigureAwait(false);
             }
             else
             {

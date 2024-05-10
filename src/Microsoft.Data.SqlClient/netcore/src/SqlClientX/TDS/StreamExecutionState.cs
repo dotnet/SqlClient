@@ -13,5 +13,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS
         internal Encoding _defaultEncoding = null;
         internal NullBitmap _nullBitMapInfo;
         public _SqlMetaDataSet LastReadMetadata { get; internal set; }
+        public ulong LongLen { get; set; }
+        public ulong LongLenLeft { get; internal set; }
     }
 }

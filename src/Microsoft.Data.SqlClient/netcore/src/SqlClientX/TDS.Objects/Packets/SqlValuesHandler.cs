@@ -122,7 +122,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
         internal static async ValueTask ReadSqlVariantAsync(
             this TdsReadStream stream,
             SqlBuffer value, 
-            int lenTotal, 
+            int lenTotal,
+            StreamExecutionState executionState,
             bool isAsync,
             CancellationToken ct)
         {
@@ -159,7 +160,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
                 case TdsEnums.SQLDATETIME:
                 case TdsEnums.SQLDATETIM4:
                 case TdsEnums.SQLUNIQUEID:
-                    await stream.ReadSqlValuesInternalAsync(value, type, lenData, isAsync, ct).ConfigureAwait(false);
+                    await stream.ReadSqlValuesInternalAsync(value, type,  lenData, executionState, isAsync, ct).ConfigureAwait(false);
                     break;
 
                 case TdsEnums.SQLDECIMALN:
@@ -216,7 +217,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
                         }
 
                         Encoding encoding = Encoding.GetEncoding(SqlPhysicalConnection.GetCodePage(collation));
-                        await stream.ReadSqlStringValueAsync(value, type, lenData, encoding, false, isAsync, ct).ConfigureAwait(false);
+                        await stream.ReadSqlStringValueAsync(value, type, lenData, encoding, false, executionState, isAsync, ct).ConfigureAwait(false);
                         break;
                     }
                 case TdsEnums.SQLDATE:
@@ -252,6 +253,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
             SqlBuffer value,
             byte tdsType,
             int length,
+            StreamExecutionState executionState,
             bool isAsync,
             CancellationToken ct)
         {
@@ -411,7 +413,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
                     }
 
                 case TdsEnums.SQLVARIANT:
-                    await stream.ReadSqlVariantAsync(value, length, isAsync, ct).ConfigureAwait(false);
+                    await stream.ReadSqlVariantAsync(value, length, executionState, isAsync, ct).ConfigureAwait(false);
                     break;
 
                 default:
@@ -422,7 +424,12 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
 
         internal static async ValueTask ReadSqlStringValueAsync(
             this TdsReadStream stream,
-            SqlBuffer value, byte type, int length, Encoding encoding, bool isPlp,
+            SqlBuffer value,
+            byte type,
+            int length,
+            Encoding encoding,
+            bool isPlp,
+            StreamExecutionState executionState,
             bool isAsync,
             CancellationToken ct)
         {
@@ -442,7 +449,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
                         Debug.Fail("Encoding support not imlpemetned");
                         //encoding = _defaultEncoding;
                     }
-                    string stringValue = await stream.ReadStringWithEncodingAsync(length, encoding, isPlp, isAsync, ct).ConfigureAwait(false);
+                    string stringValue = await stream.ReadStringWithEncodingAsync(length, encoding, isPlp, executionState, isAsync, ct).ConfigureAwait(false);
 
                     value.SetToString(stringValue);
                     break;
@@ -636,6 +643,174 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
             //        break;
             //}
             //return true;
+        }
+
+        internal static async ValueTask<ulong> ReadPlpLengthAsync(
+            this TdsReadStream stream,
+            StreamExecutionState state,
+            bool returnPlpNullIfNull,
+            bool isAsync,
+            CancellationToken ct)
+        {
+            uint chunklen;
+            // bool firstchunk = false;
+            bool isNull = false;
+
+            Debug.Assert(state.LongLen == 0, "Out of synch length read request");
+            if (state.LongLen == 0)
+            {
+                // First chunk is being read. Find out what type of chunk it is
+                long value = await stream.ReadInt64Async(isAsync, ct).ConfigureAwait(false);
+                state.LongLen = (ulong)value;
+                // firstchunk = true;
+            }
+
+            if (state.LongLen == TdsEnums.SQL_PLP_NULL)
+            {
+                state.LongLen = 0;
+                state.LongLenLeft = 0;
+                isNull = true;
+            }
+            else
+            {
+                // Data is coming in uint chunks, read length of next chunk
+                chunklen = await stream.ReadUInt32Async(isAsync, ct).ConfigureAwait(false);
+
+                if (chunklen == TdsEnums.SQL_PLP_CHUNK_TERMINATOR)
+                {
+                    state.LongLenLeft = 0;
+                    state.LongLen = 0;
+                }
+                else
+                {
+                    state.LongLenLeft = chunklen;    
+                }
+            }
+
+            if (isNull && returnPlpNullIfNull)
+            {
+                return TdsEnums.SQL_PLP_NULL;
+            }
+
+            return state.LongLenLeft;
+        }
+
+        internal async static ValueTask<ulong> TryGetDataLength(this TdsReadStream stream,
+            SqlMetaDataPriv colmeta,
+            StreamExecutionState executionState,
+            bool isAsync,
+            CancellationToken ct)
+        {
+            // Handle 2005 specific tokens
+            if (colmeta.metaType.IsPlp)
+            {
+                Debug.Assert(colmeta.tdsType == TdsEnums.SQLXMLTYPE ||
+                             colmeta.tdsType == TdsEnums.SQLBIGVARCHAR ||
+                             colmeta.tdsType == TdsEnums.SQLBIGVARBINARY ||
+                             colmeta.tdsType == TdsEnums.SQLNVARCHAR ||
+                             // Large UDTs is WinFS-only
+                             colmeta.tdsType == TdsEnums.SQLUDT,
+                             "GetDataLength:Invalid streaming datatype");
+                return await stream.ReadPlpLengthAsync(executionState, true, isAsync, ct).ConfigureAwait(false);
+            }
+            else
+            {
+                int intLength = await stream.GetTokenLengthAsync(colmeta.tdsType, isAsync, ct).ConfigureAwait(false);
+                return (ulong)intLength;
+            }
+        }
+
+
+        internal static async ValueTask<int> GetTokenLengthAsync(
+            this TdsReadStream stream,
+            byte tokenType,
+            bool isAsync,
+            CancellationToken ct)
+        {
+            int length = 0;
+            bool specialToken;
+            switch (tokenType)
+            {
+                // Handle special tokens.
+                case TdsTokens.SQLFEATUREEXTACK:
+                    length = -1;
+                    specialToken = true;
+                    break;
+                case TdsTokens.SQLSESSIONSTATE:
+                    length = await stream.ReadInt32Async(
+                        isAsync,
+                        ct).ConfigureAwait(false);
+                    specialToken = true;
+                    break;
+                case TdsTokens.SQLFEDAUTHINFO:
+                    length = await stream.ReadInt32Async(
+                        isAsync,
+                        ct).ConfigureAwait(false);
+                    specialToken = true;
+                    break;
+                case TdsTokens.SQLUDT:
+                case TdsTokens.SQLRETURNVALUE:
+                    length = -1;
+                    specialToken = true;
+                    break;
+                case TdsTokens.SQLXMLTYPE:
+                    length = await stream.ReadUInt16Async(
+                        isAsync,
+                        ct).ConfigureAwait(false);
+                    specialToken = true;
+                    break;
+
+                default:
+                    specialToken = false;
+                    break;
+            }
+
+            int tokenLength = 0;
+            if (!specialToken)
+            {
+                switch (tokenType & LucidTdsEnums.SQLLenMask)
+                {
+                    case LucidTdsEnums.SQLFixedLen:
+                        tokenLength = (0x01 << ((tokenType & 0x0c) >> 2)) & 0xff;
+                        break;
+                    case LucidTdsEnums.SQLZeroLen:
+                        tokenLength = 0;
+                        break;
+                    case LucidTdsEnums.SQLVarLen:
+                    case LucidTdsEnums.SQLVarCnt:
+                        if (0 != (tokenType & 0x80))
+                        {
+                            tokenLength = await stream.ReadUInt16Async(
+                                isAsync,
+                                ct).ConfigureAwait(false);
+                            break;
+                        }
+                        else if (0 == (tokenType & 0x0c))
+                        {
+                            tokenLength = await stream.ReadInt32Async(
+                                isAsync,
+                                ct).ConfigureAwait(false);
+                            break;
+                        }
+                        else
+                        {
+                            byte value = await stream.ReadByteAsync(
+                                isAsync,
+                                ct).ConfigureAwait(false);
+                            break;
+                        }
+                    default:
+                        Debug.Fail("Unknown token length!");
+                        tokenLength = 0;
+                        break;
+                }
+                length = tokenLength;
+            }
+            // Read the length
+
+            // Read the data
+
+            return length;
         }
     }
 }

@@ -268,7 +268,7 @@ namespace simplesqlclient
                         bool bulkCopyHandler = false;
                         if (bulkCopyHandler)
                         {
-                            await ProcessRowAsync(_streamExecutionState.LastReadMetadata, isAsync, ct).ConfigureAwait(false);
+                            await ProcessRowAsync(_streamExecutionState.LastReadMetadata, _streamExecutionState, isAsync, ct).ConfigureAwait(false);
                         }
                         break;
                     
@@ -329,6 +329,7 @@ namespace simplesqlclient
         }
 
         private async ValueTask<SqlBuffer> ProcessRowAsync(_SqlMetaDataSet columns,
+            StreamExecutionState executionState,
             bool isAsync,
             CancellationToken ct)
         {
@@ -472,7 +473,8 @@ namespace simplesqlclient
                         tdsType, 
                         length, 
                         md.encoding, 
-                        isPlp, 
+                        isPlp,
+                        _streamExecutionState,
                         _protocolMetadata,
                         isAsync,
                         ct).ConfigureAwait(false);
@@ -503,7 +505,7 @@ namespace simplesqlclient
 
                 default:
                     Debug.Assert(!isPlp, "ReadSqlValue calling ReadSqlValueInternal with plp data");
-                    await _readStream.ReadSqlValuesInternalAsync(value, tdsType, length, isAsync, ct).ConfigureAwait(false);
+                    await _readStream.ReadSqlValuesInternalAsync(value, tdsType, length, _streamExecutionState, isAsync, ct).ConfigureAwait(false);
                     break;
             }
 
@@ -511,6 +513,7 @@ namespace simplesqlclient
 
         internal async ValueTask<bool> ReadSqlVariant(SqlBuffer value,
             int lenTotal,
+            StreamExecutionState executionState,
             bool isAsync,
             CancellationToken ct)
         {
@@ -548,7 +551,7 @@ namespace simplesqlclient
                 case TdsEnums.SQLDATETIME:
                 case TdsEnums.SQLDATETIM4:
                 case TdsEnums.SQLUNIQUEID:
-                    await _readStream.ReadSqlValuesInternalAsync(value, type, lenData, isAsync, ct).ConfigureAwait(false);
+                    await _readStream.ReadSqlValuesInternalAsync(value, type, lenData, executionState, isAsync, ct).ConfigureAwait(false);
                     break;
 
                 case TdsEnums.SQLDECIMALN:
@@ -616,6 +619,7 @@ namespace simplesqlclient
                             lenData, 
                             encoding, 
                             false,
+                            _streamExecutionState,
                             _protocolMetadata,
                              isAsync,
                             ct).ConfigureAwait(false);
@@ -685,9 +689,8 @@ namespace simplesqlclient
                     ArrayPool<byte>.Shared.Return(buffer);
                     isNull = false; // Why ? 
 
-                    length = await Utilities.GetSpecialTokenLengthAsync(
+                    length = await _readStream.GetTokenLengthAsync(
                                         col.tdsType,
-                                        _readStream,
                                         isAsync,
                                         ct).ConfigureAwait(false);
 
@@ -700,7 +703,7 @@ namespace simplesqlclient
             }
             else
             {
-                length = await Utilities.GetSpecialTokenLengthAsync(col.tdsType, this._readStream,
+                length = await _readStream.GetTokenLengthAsync(col.tdsType,
                     isAsync, ct).ConfigureAwait(false);
                 isNull = Utilities.IsNull(col.metaType, length);
 
@@ -709,6 +712,18 @@ namespace simplesqlclient
                 return Tuple.Create(isNull, length);
             }    
 
+        }
+
+        private async ValueTask<ulong> GetDataLengthAsync(SqlMetaDataPriv col,
+            bool isAsync,
+            CancellationToken ct)
+        {
+            if (col.metaType.IsPlp)
+            {
+                await _readStream.ReadPlpLengthAsync(_streamExecutionState ,true, isAsync, ct).ConfigureAwait(false);
+            }
+            return (ulong)await _readStream.GetTokenLengthAsync(col.tdsType,
+                    isAsync, ct).ConfigureAwait(false);
         }
 
         private async ValueTask<_SqlMetaDataSet> ProcessMetadataSetAsync(
@@ -910,10 +925,7 @@ namespace simplesqlclient
             }
             else
             {
-                col.length = await Utilities.GetSpecialTokenLengthAsync(
-                    tdsType, _readStream,
-                    isAsync,
-                    ct).ConfigureAwait(false);
+                col.length = await _readStream.GetTokenLengthAsync(tdsType, isAsync, ct).ConfigureAwait(false);
             }
 
             col.metaType = MetaType.GetSqlDataType(tdsType, userType, col.length);

@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.SqlClientX.Streams;
+using Microsoft.Data.SqlClient.SqlClientX.TDS;
+using Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets;
 using simplesqlclient;
 
 namespace Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing
@@ -19,11 +21,14 @@ namespace Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing
             this._readStream = readStream;
         }
 
+        
+
         internal async ValueTask ReadSqlStringValueAsync(SqlBuffer value,
             byte type, 
             int length, 
             Encoding encoding, 
             bool isPlp,
+            StreamExecutionState executionState,
             ProtocolMetadata protocolMetadata,
             bool isAsync,
             CancellationToken ct)
@@ -45,7 +50,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing
                     }
                     string stringValue = await _readStream.ReadStringWithEncodingAsync(length, 
                         encoding, 
-                        isPlp, 
+                        isPlp,
+                        executionState,
                         isAsync, 
                         ct);
 
