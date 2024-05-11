@@ -656,7 +656,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.TDS.Objects.Packets
             // bool firstchunk = false;
             bool isNull = false;
 
-            Debug.Assert(state.LongLen == 0, "Out of synch length read request");
+            Debug.Assert(state.LongLenLeft == 0, "Out of synch length read request");
             if (state.LongLen == 0)
             {
                 // First chunk is being read. Find out what type of chunk it is

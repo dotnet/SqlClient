@@ -189,29 +189,27 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             return result;
         }
 
-        internal static async ValueTask<int> ReadPlpBytesAsync(this TdsReadStream stream,
-            byte[] buff, int offset, int len, StreamExecutionState executionState,
+        internal static async ValueTask<Tuple<int, byte[]>> ReadPlpBytesAsync(this TdsReadStream stream,
+            int offset, int len, StreamExecutionState executionState,
             bool isAsync,
             CancellationToken ct)
         {
             int totalBytesRead;
             int bytesRead;
             int bytesLeft;
+            byte[] buff = null;
             byte[] newbuf;
 
             if (executionState.LongLenLeft == 0)
             {
                 Debug.Assert(executionState.LongLenLeft == 0);
-                if (buff == null)
-                {
-                    buff = Array.Empty<byte>();
-                }
-
-                return 0;
+                
+                buff = Array.Empty<byte>();
+                return Tuple.Create(0, buff);
             }
 
             Debug.Assert(executionState.LongLenLeft != TdsEnums.SQL_PLP_NULL, "Out of sync plp read request");
-            Debug.Assert((buff == null && offset == 0) || (buff.Length >= offset + len), "Invalid length sent to ReadPlpBytes()!");
+            Debug.Assert((buff == null && offset == 0) || (buff?.Length >= offset + len), "Invalid length sent to ReadPlpBytes()!");
 
             bytesLeft = len;
 
@@ -228,11 +226,11 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
 
             if (executionState.LongLenLeft == 0)
             {
-                _ = stream.ReadPlpLengthAsync(executionState, false, isAsync, ct).ConfigureAwait(false);
+                _ = await stream.ReadPlpLengthAsync(executionState, false, isAsync, ct).ConfigureAwait(false);
                 
                 if (executionState.LongLenLeft == 0)
                 { // Data read complete
-                    return 0;
+                    return Tuple.Create(0, buff);
                 }
             }
 
@@ -284,7 +282,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 if (executionState.LongLenLeft == 0)   // Data read complete
                     break;
             }
-            return totalBytesRead;
+            return Tuple.Create(totalBytesRead, buff);
         }
 
         internal static async ValueTask<ulong> SkipPlpValueAsync(this TdsReadStream stream,
@@ -353,7 +351,12 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             if (isPlp)
             {
                 //await stream.ReadPlpBytesAsync();
-                length = await stream.ReadPlpBytesAsync(buf, 0, int.MaxValue, executionState, isAsync, ct).ConfigureAwait(false);
+                (length, buf) = await stream.ReadPlpBytesAsync(
+                    0,
+                    int.MaxValue,
+                    executionState,
+                    isAsync,
+                    ct).ConfigureAwait(false);
             }
             else
             {

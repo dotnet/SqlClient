@@ -339,9 +339,9 @@ namespace simplesqlclient
             {
                 _SqlMetaData column = columns[i];
 
-                Tuple<bool, int> tuple = await ProcessColumnHeaderAsync(column, isAsync, ct).ConfigureAwait(false);
+                Tuple<bool, ulong> tuple = await ProcessColumnHeaderAsync(column, i, isAsync, ct).ConfigureAwait(false);
                 bool isNull = tuple.Item1;
-                int length = tuple.Item2;
+                ulong length = tuple.Item2;
                 if (tuple.Item1)
                 {
                     throw new NotImplementedException("Null values are not implemented");
@@ -381,7 +381,7 @@ namespace simplesqlclient
             bool isPlp = md.metaType.IsPlp;
             byte tdsType = md.tdsType;
 
-            Debug.Assert(isPlp || !Utilities.IsNull(md.metaType, length), "null value should not get here!");
+            Debug.Assert(isPlp || !Utilities.IsNull(md.metaType, (ulong)length), "null value should not get here!");
             if (isPlp)
             {
                 // We must read the column value completely, no matter what length is passed in
@@ -655,12 +655,24 @@ namespace simplesqlclient
             return true;
         }
 
-        internal async ValueTask<Tuple<bool, int>> ProcessColumnHeaderAsync(_SqlMetaData col,
+        bool IsNullCompressionBitSet(int columnOrdinal)
+        {
+            return _streamExecutionState._nullBitMapInfo.IsGuaranteedNull(columnOrdinal);
+        }
+
+        internal async ValueTask<Tuple<bool, ulong>> ProcessColumnHeaderAsync(_SqlMetaData col,
+            int ordinal,
             bool isAsync, 
             CancellationToken ct)
         {
+
+            // TODO: We need the NBC check.
+            if (IsNullCompressionBitSet(ordinal))
+            {
+                return Tuple.Create(true, (ulong)0);
+            }
             bool isNull = false;
-            int length = 0;
+            ulong length = 0;
             if (col.metaType.IsLong && !col.metaType.IsPlp)
             {
                 //
@@ -689,8 +701,9 @@ namespace simplesqlclient
                     ArrayPool<byte>.Shared.Return(buffer);
                     isNull = false; // Why ? 
 
-                    length = await _readStream.GetTokenLengthAsync(
-                                        col.tdsType,
+                    length = await _readStream.TryGetDataLength(
+                                        col,
+                                        _streamExecutionState,
                                         isAsync,
                                         ct).ConfigureAwait(false);
 
@@ -698,12 +711,12 @@ namespace simplesqlclient
                 }
                 else
                 {
-                    return Tuple.Create(true, 0);
+                    return Tuple.Create(true, (ulong)0);
                 }
             }
             else
             {
-                length = await _readStream.GetTokenLengthAsync(col.tdsType,
+                length = await _readStream.TryGetDataLength(col, _streamExecutionState,
                     isAsync, ct).ConfigureAwait(false);
                 isNull = Utilities.IsNull(col.metaType, length);
 
@@ -714,17 +727,17 @@ namespace simplesqlclient
 
         }
 
-        private async ValueTask<ulong> GetDataLengthAsync(SqlMetaDataPriv col,
-            bool isAsync,
-            CancellationToken ct)
-        {
-            if (col.metaType.IsPlp)
-            {
-                await _readStream.ReadPlpLengthAsync(_streamExecutionState ,true, isAsync, ct).ConfigureAwait(false);
-            }
-            return (ulong)await _readStream.GetTokenLengthAsync(col.tdsType,
-                    isAsync, ct).ConfigureAwait(false);
-        }
+        //private async ValueTask<ulong> GetDataLengthAsync(SqlMetaDataPriv col,
+        //    bool isAsync,
+        //    CancellationToken ct)
+        //{
+        //    if (col.metaType.IsPlp)
+        //    {
+        //        await _readStream.ReadPlpLengthAsync(_streamExecutionState ,true, isAsync, ct).ConfigureAwait(false);
+        //    }
+        //    return (ulong)await _readStream.GetTokenLengthAsync(col.tdsType,
+        //            isAsync, ct).ConfigureAwait(false);
+        //}
 
         private async ValueTask<_SqlMetaDataSet> ProcessMetadataSetAsync(
             int columnCount, 

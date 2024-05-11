@@ -49,7 +49,7 @@ namespace simplesqlclient
         internal static bool IsVarTimeTds(byte tdsType) => tdsType == LucidTdsEnums.SQLTIME || tdsType == LucidTdsEnums.SQLDATETIME2 || tdsType == LucidTdsEnums.SQLDATETIMEOFFSET;
 
 
-        internal static bool IsNull(MetaType mt, int length)
+        internal static bool IsNull(MetaType mt, ulong length)
         {
             // null bin and char types have a length of -1 to represent null
             if (mt.IsPlp)

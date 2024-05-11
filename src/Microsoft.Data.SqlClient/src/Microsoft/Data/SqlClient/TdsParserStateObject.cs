@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalTransaction _executedUnderTransaction;
 
         // TDS stream processing variables
-        internal ulong _longlen;                                     // plp data length indicator
+        internal ulong _longlen { get; set; }                                   // plp data length indicator
         internal ulong _longlenleft;                                 // Length of data left to read (64 bit lengths)
         internal int[] _decimalBits;                // scratch buffer for decimal/numeric data
         internal byte[] _bTmp = new byte[TdsEnums.SQL2005_HEADER_LEN];  // Scratch buffer for misc use

@@ -315,11 +315,12 @@ namespace Microsoft.Data.SqlClient.SqlClientX
                     //SqlBuffer data = new SqlBuffer();
                     _SqlMetaData column = columns[i];
 
-                    Tuple<bool, int> tuple = _PhysicalConnection.ProcessColumnHeaderAsync(column,
+                    Tuple<bool, ulong> tuple = _PhysicalConnection.ProcessColumnHeaderAsync(column,
+                        i,
                         isAsync: false,
                         ct: CancellationToken.None).AsTask().GetAwaiter().GetResult();
                     bool isNull = tuple.Item1;
-                    int length = tuple.Item2;
+                    ulong length = tuple.Item2;
                     if (tuple.Item1)
                     {
                         throw new NotImplementedException("Null values are not implemented");
@@ -339,7 +340,6 @@ namespace Microsoft.Data.SqlClient.SqlClientX
                 _readerState._RowDataIsReady = true;
             }
             return _sqlBuffers[ordinal].Value; //
-            //GetValueInternal(ordinal);
         }
 
         /// <summary>
