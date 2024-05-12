@@ -58,8 +58,11 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             Socket.Select(null, write, error, 30000000); // Wait for 30 seconds 
             if (write.Count > 0)
             {
-                Console.WriteLine("WE have a socket");
-                Console.WriteLine(socket.Connected);
+                //Console.WriteLine("WE have a socket");
+                //Console.WriteLine(socket.Connected);
+                bool connected = socket.Connected;
+                if (!connected)
+                    Console.WriteLine("Socket not conencted ");
                 // Connection established
                 socket.Blocking = true;
                 socket.NoDelay = true;
