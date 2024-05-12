@@ -256,11 +256,11 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 
                 if (isAsync)
                 {
-                    bytesRead = await stream.ReadAsync(buff, offset, bytesToRead, ct).ConfigureAwait(false);
+                    bytesRead = await stream.ReadAsync(buff.AsMemory(offset, bytesToRead), ct).ConfigureAwait(false);
                 }
                 else
                 {
-                    bytesRead =stream.Read(buff, offset, bytesToRead);
+                    bytesRead =stream.Read(buff.AsSpan(offset, bytesToRead));
                 }
                 Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
                 //Debug.Assert((ulong)bytesRead <= executionState.LongLenLeft, "Read more bytes than is available");
