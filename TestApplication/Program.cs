@@ -16,7 +16,9 @@ namespace TestApplication
             //BenchmarkRunner.Run<Benchmarks>();
         }
 
-        private static string QUERY = "SELECT CAST(@@VERSION AS VARCHAR(MAX)) AS ServerVersion;";
+        //private static string QUERY = "SELECT CAST(@@VERSION AS VARCHAR(MAX)) AS ServerVersion;";
+        private static string QUERY = "SELECT * from TextTable;";
+        private static string database = "testdatabase";
         private static async Task AsyncGet()
         {
             string connectionString = $"Server=tcp:127.0.0.1;" +
@@ -65,9 +67,10 @@ namespace TestApplication
 
         private static void NormalStuff()
         {
+            
             string connectionString = $"Server=tcp:127.0.0.1;" +
                         $"Min Pool Size=120;Max Pool Size = 200;User Id=sa; pwd={Environment.GetEnvironmentVariable("SQL_PWD")}; " +
-                        "Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database=master;Pooling=False;" +
+                        $"Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database={database};Pooling=False;" +
                         "Application Name=TestAppX"; // pooled
             Console.WriteLine("1 for X else default MDS");
             char testX = Console.ReadKey().KeyChar;

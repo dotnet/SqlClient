@@ -103,7 +103,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 if (PacketDataLeft == 0 || ReadBufferDataLength == ReadBufferOffset)
                     _ = PrepareBufferAsync(isAsync: false, CancellationToken.None);
 
-                // We can only read the minimum of what is left in the packet, what is left in the buffer, and what we need to fill
+                // We can only read the minimum of what is left in the packet,
+                // what is left in the buffer, and what we need to fill
                 // If we have the length available, then we read it, else we will read either the data in packet, or the 
                 // data in buffer, whichever is smaller.
                 // If the data spans multiple packets, then we will go ahead and read those packets.
@@ -174,6 +175,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                         await _UnderlyingStream.ReadAsync(Buffer, ct).ConfigureAwait(false) :
                         _UnderlyingStream.Read(Buffer);
 
+                    // Reset the offset to 0, since we read new data.
+                    ReadBufferOffset = 0;
                     await ProcessHeaderAsync(isAsync, ct).ConfigureAwait(false);
 
                     if (ReadBufferDataLength == ReadBufferOffset)
