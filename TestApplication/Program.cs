@@ -139,5 +139,35 @@ namespace TestApplication
                 }
             }
         }
+
+        private static async ValueTask SimpleConnectionTestAsyncX(string connectionString)
+        {
+            //AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
+
+            SqlConnectionX connection = new SqlConnectionX(connectionString);
+            await connection.OpenAsync();
+
+            using (SqlCommandX command = connection.CreateCommand())
+            {
+                command.CommandText = QUERY;
+                Console.WriteLine("Executing command");
+
+                using (SqlDataReaderX reader = await command.ExecuteReaderAsync())
+                {
+                    //do
+                    //{
+                    while (reader.Read())
+                    {
+                        // Process each row
+                        // REad in reverse to cached the data in the reader buffers.
+                        for (int i = reader.FieldCount - 1; i >= 0; i--)
+                        {
+                            Console.WriteLine(await reader.GetFieldValueAsync<string>(i));
+                        }
+                    }
+                    //} while (reader.NextResult()); // Move to the next result set
+                }
+            }
+        }
     }
 }
