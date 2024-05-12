@@ -125,7 +125,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             int totalRead = 0;
             while (lengthToFill > 0)
             {
-                if (PacketDataLeft == 0 || ReadBufferDataLength == ReadBufferOffset)
+                if (PacketDataLeft == 0 || ReadBufferDataLength <= ReadBufferOffset)
                     await PrepareBufferAsync(isAsync: true, cancellationToken).ConfigureAwait(false);
 
                 // We can only read the minimum of what is left in the packet, what is left in the buffer, and what we need to fill
