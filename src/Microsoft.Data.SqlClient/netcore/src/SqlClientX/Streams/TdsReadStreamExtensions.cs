@@ -260,7 +260,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 }
                 else
                 {
-                    bytesRead =stream.Read(buff.AsSpan(offset, bytesToRead));
+                    bytesRead = stream.Read(buff.AsSpan(offset, bytesToRead));
                 }
                 Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
                 //Debug.Assert((ulong)bytesRead <= executionState.LongLenLeft, "Read more bytes than is available");

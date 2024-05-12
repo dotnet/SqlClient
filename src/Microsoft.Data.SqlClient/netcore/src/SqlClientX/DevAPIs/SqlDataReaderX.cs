@@ -437,7 +437,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
                     Tuple<bool, ulong> tuple = await _PhysicalConnection.ProcessColumnHeaderAsync(column,
                         i,
                         isAsync: true,
-                        ct: CancellationToken.None).ConfigureAwait(false);
+                        ct: cancellationToken).ConfigureAwait(false);
                     bool isNull = tuple.Item1;
                     ulong length = tuple.Item2;
                     if (tuple.Item1)
@@ -452,7 +452,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
                             simplesqlclient.SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/,
                             column.column,
                             isAsync: true,
-                            ct: CancellationToken.None).ConfigureAwait(false);
+                            ct: cancellationToken).ConfigureAwait(false);
                     }
                     //data.Clear();
                 }

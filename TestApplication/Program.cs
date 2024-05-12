@@ -150,7 +150,7 @@ namespace TestApplication
 
             SqlConnectionX connection = new SqlConnectionX(connectionString);
             await connection.OpenAsync();
-
+            Thread.Sleep(1000);
             using (SqlCommandX command = connection.CreateCommand())
             {
                 command.CommandText = QUERY;
@@ -166,7 +166,7 @@ namespace TestApplication
                         // REad in reverse to cached the data in the reader buffers.
                         for (int i = reader.FieldCount - 1; i >= 0; i--)
                         {
-                            var count = await reader.GetFieldValueAsync<string>(i).ConfigureAwait(false);
+                            var count = await reader.GetFieldValueAsync<string>(i, CancellationToken.None).ConfigureAwait(false);
                             Console.WriteLine( count.Length);
                         }
                     }
