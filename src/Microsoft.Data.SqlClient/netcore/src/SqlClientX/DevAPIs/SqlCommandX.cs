@@ -201,5 +201,19 @@ namespace Microsoft.Data.SqlClient.SqlClientX
                 CancellationToken.None).AsTask().GetAwaiter().GetResult();
             return reader;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        new public async Task<SqlDataReaderX> ExecuteReaderAsync(CancellationToken cancellationToken)
+        {
+            SqlDataReaderX reader = await ExecuteReaderOnPhysicalConnection(
+                CommandText,
+                isAsync: true,
+                cancellationToken).ConfigureAwait(false);
+            return reader;
+        }
     }
 }

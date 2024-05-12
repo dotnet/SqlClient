@@ -5,7 +5,9 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+using System.Threading.Tasks;
 using simplesqlclient;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Microsoft.Data.SqlClient.SqlClientX
 {
@@ -397,9 +399,76 @@ namespace Microsoft.Data.SqlClient.SqlClientX
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
+        {
+            byte nextUnreadToken = await _PhysicalConnection.PeekToken(true, CancellationToken.None).ConfigureAwait(false);
+            CleanDataBuffer();
+            while (nextUnreadToken == TdsTokens.SQLROW
+                || nextUnreadToken == TdsTokens.SQLNBCROW)
+            {
+                await _PhysicalConnection.AdvancePastRowAsync(true, CancellationToken.None).ConfigureAwait(false);
+                _readerState._RowDataIsReady = false;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ordinal"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        override async public Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellationToken)
+        {
+            var columns = _metadata;
+            if (!_readerState._RowDataIsReady)
+            {
+                for (int i = 0; i < columns.Length; i++)
+                {
+                    //SqlBuffer data = new SqlBuffer();
+                    _SqlMetaData column = columns[i];
+
+                    Tuple<bool, ulong> tuple = await _PhysicalConnection.ProcessColumnHeaderAsync(column,
+                        i,
+                        isAsync: true,
+                        ct: CancellationToken.None).ConfigureAwait(false);
+                    bool isNull = tuple.Item1;
+                    ulong length = tuple.Item2;
+                    if (tuple.Item1)
+                    {
+                        throw new NotImplementedException("Null values are not implemented");
+                    }
+                    else
+                    {
+                        await _PhysicalConnection.ReadSqlValueAsync(_sqlBuffers[i],
+                            column,
+                            column.metaType.IsPlp ? (Int32.MaxValue) : (int)length,
+                            simplesqlclient.SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/,
+                            column.column,
+                            isAsync: true,
+                            ct: CancellationToken.None).ConfigureAwait(false);
+                    }
+                    //data.Clear();
+                }
+                _readerState._RowDataIsReady = true;
+            }
+            //Type dataType = _sqlBuffers[ordinal].GetTypeFromStorageType(false);
+            var value = _sqlBuffers[ordinal].Value;
+            return (T)value;
+            //return (T)GetValueFromSqlBufferInternal(data, metaData);
+            //return _sqlBuffers[ordinal].Value; //
+        }
+
+        /// <summary>
         /// Clears up the buffers.
         /// </summary>
-        
+
         private void CleanDataBuffer()
         {
             SqlBuffer.Clear(_sqlBuffers);
@@ -416,7 +485,6 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             if (hasMoreInformation && _metadata != null)
             {
                 throw new NotImplementedException("More information is not implemented.");
-                //_sqlCommandX.Connection.PhysicalConnection.ProcessTokenStreamPackets(ParsingBehavior.RunOnce, resetPacket: false);
             }
         }
     }

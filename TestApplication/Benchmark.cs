@@ -72,6 +72,18 @@ namespace TestApplication
             reader.Read();
             return reader.GetFieldValue<string>(0).Length;
         }
+
+        [Benchmark]
+        public async ValueTask<int> ASyncX()
+        {
+            using var conn = new SqlConnectionX(ConnectionString);
+            using var cmd = new SqlCommandX("SELECT [Text] FROM [TextTable]", conn);
+            await conn.OpenAsync();
+
+            await using SqlDataReaderX reader = await cmd.ExecuteReaderAsync(CancellationToken.None);
+            await reader.ReadAsync();
+            return (await reader.GetFieldValueAsync<string>(0)).Length;
+        }
     }
 
 }

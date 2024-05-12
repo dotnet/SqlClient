@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
             _UnderlyingStream = stream;
         }
 
-        public override bool CanRead => throw new NotImplementedException();
+        public override bool CanRead => true; // throw new NotImplementedException();
 
         public override bool CanSeek => throw new NotImplementedException();
 

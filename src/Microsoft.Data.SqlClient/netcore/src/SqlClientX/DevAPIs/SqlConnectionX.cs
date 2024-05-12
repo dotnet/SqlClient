@@ -160,9 +160,20 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             await OpenCore(cancellationToken);
         }
 
-        private ValueTask OpenCore(CancellationToken cancellationToken)
+        private async ValueTask OpenCore(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            await physicalConnection.TcpConnect(true, cancellationToken).ConfigureAwait(false);
+            // Send prelogin
+            await physicalConnection.SendAndConsumePrelogin(isAsync: true,
+                cancellationToken).ConfigureAwait(false) ;
+
+            physicalConnection.EnableSsl();
+            // Send login
+            await physicalConnection.SendLoginAsync(isAsync: true, cancellationToken).ConfigureAwait(false);
+            await physicalConnection.ProcessTokenStreamPacketsAsync(
+                ParsingBehavior.RunTillPacketEnd,
+                isAsync: false,
+                ct: cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
