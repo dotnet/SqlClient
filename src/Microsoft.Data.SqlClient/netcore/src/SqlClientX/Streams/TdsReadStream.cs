@@ -133,12 +133,22 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 // data in buffer, whichever is smaller.
                 // If the data spans multiple packets, then we will go ahead and read those packets.
                 int lengthToCopy = Math.Min(Math.Min(PacketDataLeft, ReadBufferDataLength - ReadBufferOffset), lengthToFill);
-                var copyFrom = new ReadOnlyMemory<byte>(Buffer, ReadBufferOffset, lengthToCopy);
-                copyFrom.CopyTo(buffer.Slice(totalRead, lengthToFill));
-                totalRead += lengthToCopy;
-                lengthToFill -= lengthToCopy;
-                ReadBufferOffset += lengthToCopy;
-                PacketDataLeft -= lengthToCopy;
+                try
+                { 
+                    var copyFrom = new ReadOnlyMemory<byte>(Buffer, ReadBufferOffset, lengthToCopy);
+                    copyFrom.CopyTo(buffer.Slice(totalRead, lengthToFill));
+                    totalRead += lengthToCopy;
+                    lengthToFill -= lengthToCopy;
+                    ReadBufferOffset += lengthToCopy;
+                    PacketDataLeft -= lengthToCopy;
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    Console.WriteLine(ReadBufferOffset);
+                    Console.WriteLine(lengthToCopy);
+                    throw;
+                }
+                
             }
 
             return totalRead;

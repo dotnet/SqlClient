@@ -12,8 +12,8 @@ namespace TestApplication
         
         static async Task Main(string[] args)
         {
-            await NormalStuff();
-            //BenchmarkRunner.Run<Benchmarks>();
+            //await NormalStuff();
+            BenchmarkRunner.Run<Benchmarks>();
         }
 
         //private static string QUERY = "SELECT CAST(@@VERSION AS VARCHAR(MAX)) AS ServerVersion;";

@@ -1841,10 +1841,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (buff == null)
-            {
-                buff = new byte[_longlenleft];
-            }
+            buff ??= new byte[_longlenleft];
 
             totalBytesRead = 0;
 
