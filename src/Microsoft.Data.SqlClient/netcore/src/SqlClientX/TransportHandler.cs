@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX
             if (write.Count > 0)
             {
                 Console.WriteLine("WE have a socket");
-                Console.WriteLine(socket.Poll(30000, SelectMode.SelectRead));
+                Console.WriteLine(socket.Connected);
                 // Connection established
                 socket.Blocking = true;
                 socket.NoDelay = true;

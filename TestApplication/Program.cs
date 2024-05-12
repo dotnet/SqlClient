@@ -68,7 +68,7 @@ namespace TestApplication
         private static async ValueTask NormalStuff()
         {
             
-            string connectionString = $"Server=tcp:127.0.0.1;" +
+            string connectionString = $"Server=tcp:192.168.1.83;" +
                         $"Min Pool Size=120;Max Pool Size = 200;User Id=sa; pwd={Environment.GetEnvironmentVariable("SQL_PWD")}; " +
                         $"Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database={database};Pooling=False;" +
                         "Application Name=TestAppX"; // pooled
