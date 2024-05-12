@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.SqlValuesProcessing
                         isPlp,
                         executionState,
                         isAsync, 
-                        ct);
+                        ct).ConfigureAwait(false);
 
                     value.SetToString(stringValue);
                     break;

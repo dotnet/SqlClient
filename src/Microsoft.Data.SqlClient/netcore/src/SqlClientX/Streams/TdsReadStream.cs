@@ -144,7 +144,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    Console.WriteLine(ReadBufferOffset);
+                    Console.WriteLine(ReadBufferOffset + " " + ReadBufferDataLength + " " + PacketDataLeft
+                        + " " + lengthToFill);
                     Console.WriteLine(lengthToCopy);
                     throw;
                 }
