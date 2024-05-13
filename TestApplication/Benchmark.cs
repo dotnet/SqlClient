@@ -18,7 +18,7 @@ namespace TestApplication
                         $"Min Pool Size=120;Max Pool Size = 200;User Id=sa; pwd={Environment.GetEnvironmentVariable("SQL_PWD")}; " +
                         "Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database=testdatabase;Pooling=False;" +
                         "Application Name=TestAppX"; // pooled
-        [Params(CommandBehavior.Default, CommandBehavior.SequentialAccess)]
+        [Params(CommandBehavior.SequentialAccess)]
         public CommandBehavior Behavior { get; set; }
 
         [GlobalSetup]
