@@ -198,6 +198,8 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                     ReadBufferDataLength = isAsync ?
                         await _UnderlyingStream.ReadAsync(Buffer, ct).ConfigureAwait(false) :
                         _UnderlyingStream.Read(Buffer);
+
+                    ReadBufferOffset = 0;
                 }
                 else if (PacketDataLeft == 0)
                 {
