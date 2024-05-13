@@ -74,12 +74,15 @@ namespace TestApplication
                         "Application Name=TestAppX"; // pooled
             Console.WriteLine("1 for sync version of X\n" +
                 "2 for async version of X \n" +
+                "3 For Benchmark \n" +
                 $" Press any other key to try the query with  {QUERY} MDS");
             char testX = Console.ReadKey().KeyChar;
             if (testX == '1')
                 SimpleConnectionTestX(connectionString);
             if (testX == '2')
                 await SimpleConnectionTestAsyncX(connectionString).ConfigureAwait(false);
+            if (testX == '3')
+                BenchmarkRunner.Run<Benchmarks>();
             else
                 SimpleConnectionTest(connectionString);
         }
