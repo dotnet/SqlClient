@@ -8,6 +8,8 @@ This project should be built with Visual Studio 2019+ for the best compatibility
 
 - **Visual Studio 2019** with imported components: [VS19Components](/tools/vsconfig/VS19Components.vsconfig)
 
+- **Powershell**: To build SqlClient on Linux, powershell is needed as well. Follow the distro specific instructions at [Install Powershell on Linux](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-linux?view=powershell-7.4)
+
 Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
 
 ## Building the driver
