@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient.SqlClientX.Streams
                 }
                 Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
                 //Debug.Assert((ulong)bytesRead <= executionState.LongLenLeft, "Read more bytes than is available");
-
+                
                 bytesLeft -= bytesRead;
                 offset += bytesRead;
                 totalBytesRead += bytesRead;
