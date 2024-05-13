@@ -153,7 +153,7 @@ namespace TestApplication
 
             SqlConnectionX connection = new SqlConnectionX(connectionString);
             await connection.OpenAsync();
-            Thread.Sleep(1000);
+            
             using (SqlCommandX command = connection.CreateCommand())
             {
                 command.CommandText = QUERY;
