@@ -10,17 +10,17 @@ namespace TestApplication
     internal class Program
     {
         
-        static async Task Main(string[] args)
+        static async Task Main1(string[] args)
         {
             await NormalStuff();
             //BenchmarkRunner.Run<Benchmarks>();
         }
 
-        //static void Main(string[] args)
-        //{
-        //    //await NormalStuff();
-        //    BenchmarkRunner.Run<Benchmarks>();
-        //}
+        static void Main(string[] args)
+        {
+            //await NormalStuff();
+            BenchmarkRunner.Run<Benchmarks>();
+        }
 
         //private static string QUERY = "SELECT CAST(@@VERSION AS VARCHAR(MAX)) AS ServerVersion;";
         private static string QUERY = "SELECT * from TextTable;";
