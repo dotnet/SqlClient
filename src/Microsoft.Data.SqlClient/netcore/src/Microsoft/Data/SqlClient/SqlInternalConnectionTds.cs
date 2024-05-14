@@ -2300,7 +2300,7 @@ namespace Microsoft.Data.SqlClient
             bool authenticationContextLocked = false;
 
             // Prepare CER to ensure the lock on authentication context is released.
-#if !NET6_0_OR_GREATER          
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try
