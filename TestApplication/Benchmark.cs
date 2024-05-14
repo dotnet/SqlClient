@@ -29,7 +29,7 @@ namespace TestApplication
             using var conn = new SqlConnection(ConnectionString);
             conn.Open();
 
-            using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable5' AND xtype='U') CREATE TABLE [TextTable] ([Text] VARCHAR(MAX))", conn))
+            using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable5' AND xtype='U') CREATE TABLE [TextTable5] ([Text] VARCHAR(MAX))", conn))
                 cmd.ExecuteNonQuery();
 
             using (var cmd = new SqlCommand("INSERT INTO [TextTable5] ([Text]) VALUES (@p)", conn))
@@ -39,7 +39,7 @@ namespace TestApplication
             }
 
 
-            using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable1' AND xtype='U') CREATE TABLE [TextTable] ([Text] VARCHAR(MAX))", conn))
+            using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable1' AND xtype='U') CREATE TABLE [TextTable1] ([Text] VARCHAR(MAX))", conn))
                 cmd.ExecuteNonQuery();
 
             using (var cmd = new SqlCommand("INSERT INTO [TextTable] ([Text]) VALUES (@p)", conn))
@@ -48,7 +48,7 @@ namespace TestApplication
                 cmd.ExecuteNonQuery();
             }
 
-            using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable10' AND xtype='U') CREATE TABLE [TextTable] ([Text] VARCHAR(MAX))", conn))
+            using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable10' AND xtype='U') CREATE TABLE [TextTable10] ([Text] VARCHAR(MAX))", conn))
                 cmd.ExecuteNonQuery();
 
             using (var cmd = new SqlCommand("INSERT INTO [TextTable10] ([Text]) VALUES (@p)", conn))
