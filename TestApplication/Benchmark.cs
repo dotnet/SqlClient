@@ -21,18 +21,39 @@ namespace TestApplication
         [Params(CommandBehavior.SequentialAccess)]
         public CommandBehavior Behavior { get; set; }
 
+        [Params(1, 5, 10)]
+        public int DataSize { get; set; }
         [GlobalSetup]
         public void Setup()
         {
             using var conn = new SqlConnection(ConnectionString);
             conn.Open();
 
-            using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable' AND xtype='U') CREATE TABLE [TextTable] ([Text] VARCHAR(MAX))", conn))
+            using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable5' AND xtype='U') CREATE TABLE [TextTable] ([Text] VARCHAR(MAX))", conn))
+                cmd.ExecuteNonQuery();
+
+            using (var cmd = new SqlCommand("INSERT INTO [TextTable5] ([Text]) VALUES (@p)", conn))
+            {
+                cmd.Parameters.AddWithValue("p", new string('x', 1024 * 1024 * 5));
+                cmd.ExecuteNonQuery();
+            }
+
+
+            using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable1' AND xtype='U') CREATE TABLE [TextTable] ([Text] VARCHAR(MAX))", conn))
                 cmd.ExecuteNonQuery();
 
             using (var cmd = new SqlCommand("INSERT INTO [TextTable] ([Text]) VALUES (@p)", conn))
             {
-                cmd.Parameters.AddWithValue("p", new string('x', 1024 * 1024 * 5));
+                cmd.Parameters.AddWithValue("p", new string('x', 1024 * 1024 * 1));
+                cmd.ExecuteNonQuery();
+            }
+
+            using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable10' AND xtype='U') CREATE TABLE [TextTable] ([Text] VARCHAR(MAX))", conn))
+                cmd.ExecuteNonQuery();
+
+            using (var cmd = new SqlCommand("INSERT INTO [TextTable10] ([Text]) VALUES (@p)", conn))
+            {
+                cmd.Parameters.AddWithValue("p", new string('x', 1024 * 1024 * 10));
                 cmd.ExecuteNonQuery();
             }
         }
@@ -41,7 +62,23 @@ namespace TestApplication
         public async ValueTask<int> Async()
         {
             using var conn = new SqlConnection(ConnectionString);
-            using var cmd = new SqlCommand("SELECT [Text] FROM [TextTable]", conn);
+            string tableName = "non-existent";
+            switch (DataSize)
+            {
+                case 1:
+                    tableName = "TextTable1";
+                    break;
+                case 5:
+                    tableName = "TextTable5";
+                    break;
+                case 10:
+                    tableName = "TextTable10";
+                    break;
+                default:
+                    throw new Exception($"{DataSize} not supported");
+
+            }
+            using var cmd = new SqlCommand($"SELECT [Text] FROM [{tableName}]", conn);
             await conn.OpenAsync();
 
             await using var reader = await cmd.ExecuteReaderAsync(Behavior);
@@ -52,8 +89,24 @@ namespace TestApplication
         [Benchmark]
         public async ValueTask<int> Sync()
         {
+            string tableName = "non-existent";
+            switch (DataSize)
+            {
+                case 1:
+                    tableName = "TextTable1";
+                    break;
+                case 5:
+                    tableName = "TextTable5";
+                    break;
+                case 10:
+                    tableName = "TextTable10";
+                    break;
+                default:
+                    throw new Exception($"{DataSize} not supported");
+
+            }
             using var conn = new SqlConnection(ConnectionString);
-            using var cmd = new SqlCommand("SELECT [Text] FROM [TextTable]", conn);
+            using var cmd = new SqlCommand($"SELECT [Text] FROM [{tableName}]", conn);
             conn.Open();
 
             using var reader = cmd.ExecuteReader(Behavior);
@@ -64,8 +117,24 @@ namespace TestApplication
         [Benchmark]
         public async ValueTask<int> SyncX()
         {
+            string tableName = "non-existent";
+            switch (DataSize)
+            {
+                case 1:
+                    tableName = "TextTable1";
+                    break;
+                case 5:
+                    tableName = "TextTable5";
+                    break;
+                case 10:
+                    tableName = "TextTable10";
+                    break;
+                default:
+                    throw new Exception($"{DataSize} not supported");
+
+            }
             using var conn = new SqlConnectionX(ConnectionString);
-            using var cmd = new SqlCommandX("SELECT [Text] FROM [TextTable]", conn);
+            using var cmd = new SqlCommandX($"SELECT [Text] FROM [{tableName}]", conn);
             conn.Open();
 
             using var reader = cmd.ExecuteReader();
@@ -76,8 +145,24 @@ namespace TestApplication
         [Benchmark]
         public async ValueTask<int> ASyncX()
         {
+            string tableName = "non-existent";
+            switch (DataSize)
+            {
+                case 1:
+                    tableName = "TextTable1";
+                    break;
+                case 5:
+                    tableName = "TextTable5";
+                    break;
+                case 10:
+                    tableName = "TextTable10";
+                    break;
+                default:
+                    throw new Exception($"{DataSize} not supported");
+
+            }
             using var conn = new SqlConnectionX(ConnectionString);
-            using var cmd = new SqlCommandX("SELECT [Text] FROM [TextTable]", conn);
+            using var cmd = new SqlCommandX($"SELECT [Text] FROM [{tableName}]", conn);
             await conn.OpenAsync();
 
             await using SqlDataReaderX reader = await cmd.ExecuteReaderAsync(CancellationToken.None);
