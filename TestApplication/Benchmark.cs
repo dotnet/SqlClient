@@ -34,7 +34,7 @@ namespace TestApplication
 
             using (var cmd = new SqlCommand("INSERT INTO [TextTable5] ([Text]) VALUES (@p)", conn))
             {
-                cmd.Parameters.AddWithValue("p", new string('x', 1024 * 1024 * 5));
+                cmd.Parameters.AddWithValue("p", new string('5', 1024 * 1024 * 5));
                 cmd.ExecuteNonQuery();
             }
 
@@ -42,9 +42,9 @@ namespace TestApplication
             using (var cmd = new SqlCommand("IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TextTable1' AND xtype='U') CREATE TABLE [TextTable1] ([Text] VARCHAR(MAX))", conn))
                 cmd.ExecuteNonQuery();
 
-            using (var cmd = new SqlCommand("INSERT INTO [TextTable] ([Text]) VALUES (@p)", conn))
+            using (var cmd = new SqlCommand("INSERT INTO [TextTable1] ([Text]) VALUES (@p)", conn))
             {
-                cmd.Parameters.AddWithValue("p", new string('x', 1024 * 1024 * 1));
+                cmd.Parameters.AddWithValue("p", new string('1', 1024 * 1024 * 1));
                 cmd.ExecuteNonQuery();
             }
 
@@ -53,7 +53,7 @@ namespace TestApplication
 
             using (var cmd = new SqlCommand("INSERT INTO [TextTable10] ([Text]) VALUES (@p)", conn))
             {
-                cmd.Parameters.AddWithValue("p", new string('x', 1024 * 1024 * 10));
+                cmd.Parameters.AddWithValue("p", new string('T', 1024 * 1024 * 10));
                 cmd.ExecuteNonQuery();
             }
         }
