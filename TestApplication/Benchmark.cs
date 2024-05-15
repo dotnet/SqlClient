@@ -14,7 +14,7 @@ namespace TestApplication
     public class Benchmarks
     {
         //const string ConnectionString = "...";
-        static string ConnectionString = $"Server=tcp:192.168.1.83;" +
+        static string ConnectionString = $"Server=tcp:192.168.1.83,1444;" +
                         $"Min Pool Size=120;Max Pool Size = 200;User Id=sa; pwd={Environment.GetEnvironmentVariable("SQL_PWD")}; " +
                         "Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database=testdatabase;Pooling=False;" +
                         "Application Name=TestAppX"; // pooled
