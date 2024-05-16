@@ -474,5 +474,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using SqlConnection sqlConnection = new(b.ConnectionString);
             sqlConnection.Open();
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void ConnectionFireInfoMessageEventOnUserErrorsShouldSucceed()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                string command = "print";
+                string commandParam = "OK";
+
+                connection.FireInfoMessageEventOnUserErrors = true;
+
+                connection.InfoMessage += (sender, args) =>
+                {
+                    Assert.Equal(commandParam, args.Message);
+                };
+
+                connection.Open();
+
+                using SqlCommand cmd = connection.CreateCommand();
+                cmd.CommandType = System.Data.CommandType.Text;
+                cmd.CommandText = $"{command} '{commandParam}'";
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
 }

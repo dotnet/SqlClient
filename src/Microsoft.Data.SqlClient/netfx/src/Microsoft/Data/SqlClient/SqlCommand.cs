@@ -7487,7 +7487,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                return _rpcArrayOf1[0].batchCommand;
+                return _rpcArrayOf1?[0].batchCommand;
             }
         }
 
