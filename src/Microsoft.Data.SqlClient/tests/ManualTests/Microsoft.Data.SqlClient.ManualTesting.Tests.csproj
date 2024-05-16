@@ -202,6 +202,7 @@
     <Compile Include="SQL\TransactionTest\TransactionEnlistmentTest.cs" />
     <Compile Include="SQL\UdtTest\SqlServerTypesTest.cs" />
     <Compile Include="SQL\UdtTest\UdtBulkCopyTest.cs" />
+    <Compile Include="SQL\UdtTest\UdtDateTimeOffsetTest.cs" />
     <Compile Include="SQL\UdtTest\UdtTest.cs" />
     <Compile Include="SQL\UdtTest\UdtTest2.cs" />
     <Compile Include="SQL\UdtTest\UdtTestHelpers.cs" />
