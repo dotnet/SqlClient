@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Reflection;
 using System.Security;
+using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
