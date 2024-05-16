@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {

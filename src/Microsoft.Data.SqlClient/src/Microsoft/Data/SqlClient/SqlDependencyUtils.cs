@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
         partial void SubscribeToAppDomainUnload();
 
         partial void SubscribeToAssemblyLoadContextUnload();

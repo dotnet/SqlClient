@@ -63,7 +63,7 @@ namespace Microsoft.Data
             }
         }
 
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
         // This method is used to decide if we need to append the exception message parameters to the message when calling Strings.Format. 
         // by default it returns false.
         // Native code generators can replace the value this returns based on user input at the time of native code generation.
