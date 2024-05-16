@@ -95,6 +95,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\NameValuePair.cs">
       <Link>Microsoft\Data\Common\NameValuePair.cs</Link>
     </Compile>
+	  <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\SqlUtil.cs">
+      <Link>Microsoft\Data\Common\SqlUtil.cs.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\DataException.cs">
       <Link>Microsoft\Data\DataException.cs</Link>
     </Compile>
@@ -550,7 +553,7 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlUtil.cs">
       <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
-    </Compile>
+    </Compile>	
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlTransaction.Common.cs">
       <Link>Microsoft\Data\SqlClient\SqlTransaction.Common.cs</Link>
     </Compile>
@@ -662,7 +665,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
