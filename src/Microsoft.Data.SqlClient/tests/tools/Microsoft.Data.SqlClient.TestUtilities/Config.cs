@@ -13,7 +13,6 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string TCPConnectionString = null;
         public string NPConnectionString = null;
         public string TCPConnectionStringHGSVBS = null;
-        public string TCPConnectionStringAASVBS = null;
         public string TCPConnectionStringAASSGX = null;
         public string AADAuthorityURL = null;
         public string AADPasswordConnectionString = null;
