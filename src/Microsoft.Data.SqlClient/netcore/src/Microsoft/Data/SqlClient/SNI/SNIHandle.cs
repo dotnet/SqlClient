@@ -17,9 +17,9 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         protected readonly SslProtocols SupportedProtocols = LocalAppContextSwitches.UseSystemDefaultSecureProtocols ? SslProtocols.None : SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
         //protected readonly SslProtocols SupportedProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
-#pragma warning disable CS0618 // Type or member is obsolete
+#pragma warning disable CS0618, CA5397 // Type or member is obsolete
             | SslProtocols.Ssl2 | SslProtocols.Ssl3
-#pragma warning restore CS0618 // Type or member is obsolete
+#pragma warning restore CS0618, CA5397 // Type or member is obsolete
             ;
 
         /// <summary>
