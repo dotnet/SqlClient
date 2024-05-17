@@ -413,13 +413,14 @@ namespace Microsoft.Data.SqlClient
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
             {
-#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
+// SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
+#pragma warning disable CS0618, CA5397
                 protocolVersion = (int)SslProtocols.Ssl3;
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
             {
                 protocolVersion = (int)SslProtocols.Ssl2;
-#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+#pragma warning restore CS0618, CA5397
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
             {
