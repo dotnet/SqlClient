@@ -1001,14 +1001,13 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "TLS 1.0";
             }
-// SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
-#pragma warning disable CS0618, CA5397
+#pragma warning disable CS0618 // Type or member is obsolete: SSL is depricated
             else if ((protocol & SslProtocols.Ssl3) == SslProtocols.Ssl3)
             {
                 name = "SSL 3.0";
             }
             else if ((protocol & SslProtocols.Ssl2) == SslProtocols.Ssl2)
-#pragma warning restore CS0618, CA5397
+#pragma warning restore CS0618 // Type or member is obsolete: SSL is depricated
             {
                 name = "SSL 2.0";
             }
@@ -1028,10 +1027,9 @@ namespace Microsoft.Data.SqlClient
         public static string GetProtocolWarning(this SslProtocols protocol)
         {
             string message = string.Empty;
-// SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
-#pragma warning disable CS0618, CA5397
+#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
             if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
-#pragma warning restore CS0618, CA5397
+#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
             {
                 message = StringsHelper.Format(Strings.SEC_ProtocolWarning, protocol.ToFriendlyName());
             }
