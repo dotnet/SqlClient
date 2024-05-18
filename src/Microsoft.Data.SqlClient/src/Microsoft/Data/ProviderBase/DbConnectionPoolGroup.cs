@@ -49,7 +49,9 @@ namespace Microsoft.Data.ProviderBase
         private const int PoolGroupStateIdle = 2; // all pools are pruned via Clear
         private const int PoolGroupStateDisabled = 4; // factory pool entry pruning method
 
-        internal DbConnectionPoolGroup(DbConnectionOptions connectionOptions, DbConnectionPoolKey key, DbConnectionPoolGroupOptions poolGroupOptions)
+        internal DbConnectionPoolGroup(DbConnectionOptions connectionOptions, 
+            DbConnectionPoolKey key, 
+            DbConnectionPoolGroupOptions poolGroupOptions)
         {
             Debug.Assert(null != connectionOptions, "null connection options");
 #if NETFRAMEWORK

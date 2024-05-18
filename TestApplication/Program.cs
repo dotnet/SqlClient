@@ -10,20 +10,20 @@ namespace TestApplication
     internal class Program
     {
         
-        static async Task Main1(string[] args)
+        static async Task Main(string[] args)
         {
             await NormalStuff();
             //BenchmarkRunner.Run<Benchmarks>();
         }
 
-        static void Main(string[] args)
+        static void Main1(string[] args)
         {
             //await NormalStuff();
             BenchmarkRunner.Run<Benchmarks>();
         }
 
         //private static string QUERY = "SELECT CAST(@@VERSION AS VARCHAR(MAX)) AS ServerVersion;";
-        private static string QUERY = "SELECT * from TextTable;";
+        private static string QUERY = "SELECT * from TextTable1;";
         private static string database = "testdatabase";
         private static async Task AsyncGet()
         {
@@ -76,7 +76,7 @@ namespace TestApplication
             
             string connectionString = $"Server=tcp:192.168.1.83;" +
                         $"Min Pool Size=120;Max Pool Size = 200;User Id=sa; pwd={Environment.GetEnvironmentVariable("SQL_PWD")}; " +
-                        $"Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database={database};Pooling=False;" +
+                        $"Connection Timeout=30;TrustServerCertificate=True;Timeout=0;Encrypt=False;Database={database};Pooling=True;" +
                         "Application Name=TestAppX"; // pooled
             Console.WriteLine("1 for sync version of X\n" +
                 "2 for async version of X \n" +

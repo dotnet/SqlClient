@@ -198,7 +198,9 @@ namespace Microsoft.Data.ProviderBase
             return connectionPool;
         }
 
-        internal DbConnectionPoolGroup GetConnectionPoolGroup(DbConnectionPoolKey key, DbConnectionPoolGroupOptions poolOptions, ref DbConnectionOptions userConnectionOptions)
+        internal DbConnectionPoolGroup GetConnectionPoolGroup(DbConnectionPoolKey key, 
+            DbConnectionPoolGroupOptions poolOptions, 
+            ref DbConnectionOptions userConnectionOptions)
         {
             if (string.IsNullOrEmpty(key.ConnectionString))
             {
@@ -207,7 +209,9 @@ namespace Microsoft.Data.ProviderBase
 
             DbConnectionPoolGroup connectionPoolGroup;
             Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
-            if (!connectionPoolGroups.TryGetValue(key, out connectionPoolGroup) || (connectionPoolGroup.IsDisabled && (null != connectionPoolGroup.PoolGroupOptions)))
+            if (!connectionPoolGroups.TryGetValue(key, out connectionPoolGroup) 
+                || (connectionPoolGroup.IsDisabled 
+                && (null != connectionPoolGroup.PoolGroupOptions)))
             {
                 // If we can't find an entry for the connection string in
                 // our collection of pool entries, then we need to create a
@@ -447,9 +451,14 @@ namespace Microsoft.Data.ProviderBase
             throw ADP.NotSupported();
         }
 
-        abstract protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection);
+        abstract protected DbConnectionInternal CreateConnection(DbConnectionOptions options, 
+            DbConnectionPoolKey poolKey, 
+            object poolGroupProviderInfo, 
+            DbConnectionPool pool, 
+            DbConnection owningConnection);
 
-        abstract protected DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous);
+        abstract protected DbConnectionOptions CreateConnectionOptions(string connectionString, 
+            DbConnectionOptions previous);
 
         abstract protected DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions options);
 
@@ -461,13 +470,18 @@ namespace Microsoft.Data.ProviderBase
 
         abstract internal void PermissionDemand(DbConnection outerConnection);
 
-        abstract internal void SetConnectionPoolGroup(DbConnection outerConnection, DbConnectionPoolGroup poolGroup);
+        abstract internal void SetConnectionPoolGroup(DbConnection outerConnection, 
+            DbConnectionPoolGroup poolGroup);
 
-        abstract internal void SetInnerConnectionEvent(DbConnection owningObject, DbConnectionInternal to);
+        abstract internal void SetInnerConnectionEvent(DbConnection owningObject, 
+            DbConnectionInternal to);
 
-        abstract internal bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from);
+        abstract internal bool SetInnerConnectionFrom(DbConnection owningObject, 
+            DbConnectionInternal to, 
+            DbConnectionInternal from);
 
-        abstract internal void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to);
+        abstract internal void SetInnerConnectionTo(DbConnection owningObject, 
+            DbConnectionInternal to);
 
         virtual internal void Unload()
         {

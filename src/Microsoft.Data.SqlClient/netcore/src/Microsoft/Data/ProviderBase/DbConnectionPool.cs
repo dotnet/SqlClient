@@ -1159,7 +1159,12 @@ namespace Microsoft.Data.ProviderBase
             return false;
         }
 
-        private bool TryGetConnection(DbConnection owningObject, uint waitForMultipleObjectsTimeout, bool allowCreate, bool onlyOneCheckConnection, DbConnectionOptions userOptions, out DbConnectionInternal connection)
+        private bool TryGetConnection(DbConnection owningObject, 
+            uint waitForMultipleObjectsTimeout, 
+            bool allowCreate, 
+            bool onlyOneCheckConnection, 
+            DbConnectionOptions userOptions, 
+            out DbConnectionInternal connection)
         {
             DbConnectionInternal obj = null;
             Transaction transaction = null;
@@ -1186,7 +1191,9 @@ namespace Microsoft.Data.ProviderBase
                         }
                         finally
                         {
-                            waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(allowCreate), unchecked((int)waitForMultipleObjectsTimeout));
+                            waitResult = WaitHandle.WaitAny(
+                                _waitHandles.GetHandles(allowCreate),
+                                unchecked((int)waitForMultipleObjectsTimeout));
                         }
 
                         // From the WaitAny docs: "If more than one object became signaled during

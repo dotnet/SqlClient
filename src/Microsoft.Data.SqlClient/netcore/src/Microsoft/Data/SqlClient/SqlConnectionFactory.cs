@@ -268,7 +268,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal void SetInnerConnectionEvent(DbConnection owningObject, DbConnectionInternal to)
+        override internal void SetInnerConnectionEvent(DbConnection owningObject, 
+            DbConnectionInternal to)
         {
             SqlConnection c = (owningObject as SqlConnection);
             if (null != c)
@@ -277,7 +278,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from)
+        override internal bool SetInnerConnectionFrom(DbConnection owningObject, 
+            DbConnectionInternal to, 
+            DbConnectionInternal from)
         {
             SqlConnection c = (owningObject as SqlConnection);
             if (null != c)
@@ -287,7 +290,8 @@ namespace Microsoft.Data.SqlClient
             return false;
         }
 
-        override internal void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to)
+        override internal void SetInnerConnectionTo(DbConnection owningObject, 
+            DbConnectionInternal to)
         {
             SqlConnection c = (owningObject as SqlConnection);
             if (null != c)
@@ -296,7 +300,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected override DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, out bool cacheMetaDataFactory)
+        protected override DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, 
+            out bool cacheMetaDataFactory)
         {
             Debug.Assert(internalConnection != null, "internalConnection may not be null.");
 
