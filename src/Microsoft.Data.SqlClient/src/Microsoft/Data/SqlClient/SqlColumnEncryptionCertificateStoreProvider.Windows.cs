@@ -29,27 +29,22 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// LocalMachine certificate store location. Valid certificate locations are LocalMachine and CurrentUser.
         /// </summary>
-        private const string _certLocationLocalMachine = @"LocalMachine";
+        private const string CertLocationLocalMachine = @"LocalMachine";
 
         /// <summary>
         /// CurrentUser certificate store location. Valid certificate locations are LocalMachine and CurrentUser.
         /// </summary>
-        private const string _certLocationCurrentUser = @"CurrentUser";
+        private const string CertLocationCurrentUser = @"CurrentUser";
 
         /// <summary>
         /// Valid certificate store
         /// </summary>
-        private const string _myCertificateStore = @"My";
-
-        /// <summary>
-        /// Certificate path format. This is a custom format.
-        /// </summary>
-        private const string _certificatePathFormat = @"[LocalMachine|CurrentUser]/My/[Thumbprint]";
+        private const string MyCertificateStore = @"My";
 
         /// <summary>
         /// Hashing algorithm used for signing
         /// </summary>
-        private const string _hashingAlgorithm = @"SHA256";
+        private const string HashingAlgorithm = @"SHA256";
 
         /// <summary>
         /// Algorithm version
@@ -98,12 +93,12 @@ namespace Microsoft.Data.SqlClient
 
             // Get key path length
             int currentIndex = _version.Length;
-            Int16 keyPathLength = BitConverter.ToInt16(encryptedColumnEncryptionKey, currentIndex);
-            currentIndex += sizeof(Int16);
+            short keyPathLength = BitConverter.ToInt16(encryptedColumnEncryptionKey, currentIndex);
+            currentIndex += sizeof(short);
 
             // Get ciphertext length
             int cipherTextLength = BitConverter.ToInt16(encryptedColumnEncryptionKey, currentIndex);
-            currentIndex += sizeof(Int16);
+            currentIndex += sizeof(short);
 
             // Skip KeyPath
             // KeyPath exists only for troubleshooting purposes and doesnt need validation.
@@ -176,7 +171,7 @@ namespace Microsoft.Data.SqlClient
             X509Certificate2 certificate = GetCertificateByPath(masterKeyPath, isSystemOp: false);
             
             RSA RSAPublicKey = certificate.GetRSAPublicKey();
-            int keySizeInBytes= RSAPublicKey.KeySize / 8;
+            int keySizeInBytes = RSAPublicKey.KeySize / 8;
 
             // Construct the encryptedColumnEncryptionKey
             // Format is 
@@ -185,13 +180,13 @@ namespace Microsoft.Data.SqlClient
             // We currently only support one version
             byte[] version = new byte[] { _version[0] };
 
-            // Get the Unicode encoded bytes of cultureinvariant lower case masterKeyPath
+            // Get the Unicode encoded bytes of culture invariant lower case masterKeyPath
             byte[] masterKeyPathBytes = Encoding.Unicode.GetBytes(masterKeyPath.ToLowerInvariant());
-            byte[] keyPathLength = BitConverter.GetBytes((Int16)masterKeyPathBytes.Length);
+            byte[] keyPathLength = BitConverter.GetBytes((short)masterKeyPathBytes.Length);
 
             // Encrypt the plain text
             byte[] cipherText = RSAEncrypt(columnEncryptionKey, certificate);
-            byte[] cipherTextLength = BitConverter.GetBytes((Int16)cipherText.Length);
+            byte[] cipherTextLength = BitConverter.GetBytes((short)cipherText.Length);
             Debug.Assert(cipherText.Length == keySizeInBytes, @"cipherText length does not match the RSA key size");
 
             // Compute hash
@@ -247,7 +242,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/SignColumnMasterKeyMetadata/*' />
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
         {
-            var hash = ComputeMasterKeyMetadataHash(masterKeyPath, allowEnclaveComputations, isSystemOp: false);
+            byte[] hash = ComputeMasterKeyMetadataHash(masterKeyPath, allowEnclaveComputations, isSystemOp: false);
 
             // Parse the certificate path and get the X509 cert
             X509Certificate2 certificate = GetCertificateByPath(masterKeyPath, isSystemOp: false);
@@ -260,7 +255,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/VerifyColumnMasterKeyMetadata/*' />
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
-            var hash = ComputeMasterKeyMetadataHash(masterKeyPath, allowEnclaveComputations, isSystemOp: true);
+            byte[] hash = ComputeMasterKeyMetadataHash(masterKeyPath, allowEnclaveComputations, isSystemOp: true);
 
             // Parse the certificate path and get the X509 cert
             X509Certificate2 certificate = GetCertificateByPath(masterKeyPath, isSystemOp: true);
@@ -318,9 +313,9 @@ namespace Microsoft.Data.SqlClient
         /// <param name="isSystemOp"></param>
         private void ValidateCertificatePathLength(string masterKeyPath, bool isSystemOp)
         {
-            if (masterKeyPath.Length >= Int16.MaxValue)
+            if (masterKeyPath.Length >= short.MaxValue)
             {
-                throw SQL.LargeCertificatePathLength(masterKeyPath.Length, Int16.MaxValue, isSystemOp);
+                throw SQL.LargeCertificatePathLength(masterKeyPath.Length, short.MaxValue, isSystemOp);
             }
         }
 
@@ -329,7 +324,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private string[] GetValidCertificateLocations()
         {
-            return new string[2] { _certLocationLocalMachine, _certLocationCurrentUser };
+            return new string[2] { CertLocationLocalMachine, CertLocationCurrentUser };
         }
 
         /// <summary>
@@ -377,11 +372,11 @@ namespace Microsoft.Data.SqlClient
             // Extract the store location where the cert is stored
             if (certParts.Length > 2)
             {
-                if (string.Equals(certParts[0], _certLocationLocalMachine, StringComparison.OrdinalIgnoreCase) == true)
+                if (string.Equals(certParts[0], CertLocationLocalMachine, StringComparison.OrdinalIgnoreCase) == true)
                 {
                     storeLocation = StoreLocation.LocalMachine;
                 }
-                else if (string.Equals(certParts[0], _certLocationCurrentUser, StringComparison.OrdinalIgnoreCase) == true)
+                else if (string.Equals(certParts[0], CertLocationCurrentUser, StringComparison.OrdinalIgnoreCase) == true)
                 {
                     storeLocation = StoreLocation.CurrentUser;
                 }
@@ -395,14 +390,14 @@ namespace Microsoft.Data.SqlClient
             // Parse the certificate store name
             if (certParts.Length > 1)
             {
-                if (string.Equals(certParts[certParts.Length - 2], _myCertificateStore, StringComparison.OrdinalIgnoreCase) == true)
+                if (string.Equals(certParts[certParts.Length - 2], MyCertificateStore, StringComparison.OrdinalIgnoreCase) == true)
                 {
                     storeName = StoreName.My;
                 }
                 else
                 {
                     // We only support storing them in My certificate store
-                    throw SQL.InvalidCertificateStore(certParts[certParts.Length - 2], keyPath, _myCertificateStore, isSystemOp);
+                    throw SQL.InvalidCertificateStore(certParts[certParts.Length - 2], keyPath, MyCertificateStore, isSystemOp);
                 }
             }
 
@@ -462,10 +457,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 // Close the certificate store
-                if (certificateStore != null)
-                {
-                    certificateStore.Close();
-                }
+                certificateStore?.Close();
             }
         }
 
@@ -518,7 +510,7 @@ namespace Microsoft.Data.SqlClient
             // Prepare RSAPKCS1SignatureFormatter for signing the passed in hash
             RSAPKCS1SignatureFormatter rsaFormatter = new RSAPKCS1SignatureFormatter(rsa);
             //Set the hash algorithm to SHA256.
-            rsaFormatter.SetHashAlgorithm(_hashingAlgorithm);
+            rsaFormatter.SetHashAlgorithm(HashingAlgorithm);
 
             //Create a signature for HashValue and return it. 
             return rsaFormatter.CreateSignature(dataToSign);
@@ -544,7 +536,7 @@ namespace Microsoft.Data.SqlClient
             RSAPKCS1SignatureDeformatter rsaDeFormatter = new RSAPKCS1SignatureDeformatter(rsa);
 
             //Set the hash algorithm to SHA256.
-            rsaDeFormatter.SetHashAlgorithm(_hashingAlgorithm);
+            rsaDeFormatter.SetHashAlgorithm(HashingAlgorithm);
 
             //Create a signature for HashValue and return it. 
             return rsaDeFormatter.VerifySignature(dataToVerify, signature);
