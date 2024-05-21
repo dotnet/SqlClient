@@ -26,6 +26,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static readonly ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
         private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
+        private static SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
+        private static SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
         private static readonly MemoryCache s_accountPwCache = new(nameof(ActiveDirectoryAuthenticationProvider));
         private static readonly int s_accountPwCacheTtlInHours = 2;
         private static readonly string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
@@ -148,7 +150,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Cache DefaultAzureCredenial based on scope, authority, audience, and clientId
                 TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authority, scope, audience, clientId);
-                AccessToken accessToken = await GetTokenCredentialInstance(tokenCredentialKey, string.Empty).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
@@ -159,7 +161,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Cache ManagedIdentityCredential based on scope, authority, and clientId
                 TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authority, scope, string.Empty, clientId);
-                AccessToken accessToken = await GetTokenCredentialInstance(tokenCredentialKey, string.Empty).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
@@ -168,7 +170,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Cache ClientSecretCredential based on scope, authority, audience, and clientId
                 TokenCredentialKey tokenCredentialKey = new(typeof(ClientSecretCredential), authority, scope, audience, clientId);
-                AccessToken accessToken = await GetTokenCredentialInstance(tokenCredentialKey, parameters.Password).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, parameters.Password, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
@@ -179,7 +181,7 @@ namespace Microsoft.Data.SqlClient
                 TokenCredentialKey tokenCredentialKey = new(typeof(WorkloadIdentityCredential), authority, string.Empty, string.Empty, clientId);
                 // If either tenant id, client id, or the token file path are not specified when fetching the token,
                 // a CredentialUnavailableException will be thrown instead
-                AccessToken accessToken = await GetTokenCredentialInstance(tokenCredentialKey, string.Empty).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Workload Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
@@ -206,7 +208,7 @@ namespace Microsoft.Data.SqlClient
                 );
 
             AuthenticationResult result = null;
-            IPublicClientApplication app = GetPublicClientAppInstance(pcaKey);
+            IPublicClientApplication app = await GetPublicClientAppInstanceAsync(pcaKey).ConfigureAwait(false);
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
@@ -440,34 +442,76 @@ namespace Microsoft.Data.SqlClient
                 => _acquireAuthorizationCodeAsyncCallback.Invoke(authorizationUri, redirectUri, cancellationToken);
         }
 
-        private IPublicClientApplication GetPublicClientAppInstance(PublicClientAppKey publicClientAppKey)
+        private async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(PublicClientAppKey publicClientAppKey)
         {
             if (!s_pcaMap.TryGetValue(publicClientAppKey, out IPublicClientApplication clientApplicationInstance))
             {
-                clientApplicationInstance = CreateClientAppInstance(publicClientAppKey);
-                s_pcaMap.TryAdd(publicClientAppKey, clientApplicationInstance);
+                try
+                {
+                    await s_pcaMapModifierSemaphore.WaitAsync();
+                    // Double-check in case another thread added it while we waited for the semaphore
+                    if (!s_pcaMap.TryGetValue(publicClientAppKey, out clientApplicationInstance))
+                    {
+                        clientApplicationInstance = CreateClientAppInstance(publicClientAppKey);
+                        s_pcaMap.TryAdd(publicClientAppKey, clientApplicationInstance);
+                    }
+                }
+                finally
+                {
+                    s_pcaMapModifierSemaphore.Release();
+                }
             }
+
             return clientApplicationInstance;
         }
 
-        private static TokenCredential GetTokenCredentialInstance(TokenCredentialKey tokenCredentialKey, string secret)
+        private static async Task<AccessToken> GetTokenAsync(TokenCredentialKey tokenCredentialKey, string secret,
+            TokenRequestContext tokenRequestContext, CancellationToken cancellationToken)
         {
             if (!s_tokenCredentialMap.TryGetValue(tokenCredentialKey, out TokenCredentialData tokenCredentialInstance))
             {
-                tokenCredentialInstance = CreateTokenCredentialInstance(tokenCredentialKey, secret);
-                s_tokenCredentialMap.TryAdd(tokenCredentialKey, tokenCredentialInstance);
-                return tokenCredentialInstance._tokenCredential;
+                try
+                {
+                    await s_tokenCredentialMapModifierSemaphore.WaitAsync();
+                    // Double-check in case another thread added it while we waited for the semaphore
+                    if (!s_tokenCredentialMap.TryGetValue(tokenCredentialKey, out tokenCredentialInstance))
+                    {
+                        tokenCredentialInstance = CreateTokenCredentialInstance(tokenCredentialKey, secret);
+                        s_tokenCredentialMap.TryAdd(tokenCredentialKey, tokenCredentialInstance);
+                    }
+                }
+                finally
+                {
+                    s_tokenCredentialMapModifierSemaphore.Release();
+                }
             }
 
             if (!AreEqual(tokenCredentialInstance._secretHash, GetHash(secret)))
             {
                 // If the secret hash has changed, we need to remove the old token credential instance and create a new one.
-                s_tokenCredentialMap.TryRemove(tokenCredentialKey, out _);
-                tokenCredentialInstance = CreateTokenCredentialInstance(tokenCredentialKey, secret);
-                s_tokenCredentialMap.TryAdd(tokenCredentialKey, tokenCredentialInstance);
+                try
+                {
+                    await s_tokenCredentialMapModifierSemaphore.WaitAsync();
+                    s_tokenCredentialMap.TryRemove(tokenCredentialKey, out _);
+                    tokenCredentialInstance = CreateTokenCredentialInstance(tokenCredentialKey, secret);
+                    s_tokenCredentialMap.TryAdd(tokenCredentialKey, tokenCredentialInstance);
+                }
+                finally
+                {
+                    s_tokenCredentialMapModifierSemaphore.Release();
+                }
             }
 
-            return tokenCredentialInstance._tokenCredential;
+            try
+            {
+                // Serialize GetTokenAsync calls to the token credential instance to take advantage of underlying token caches
+                await tokenCredentialInstance._semaphore.WaitAsync();
+                return await tokenCredentialInstance._tokenCredential.GetTokenAsync(tokenRequestContext, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                tokenCredentialInstance._semaphore.Release();
+            }
         }
 
         private static string GetAccountPwCacheKey(SqlAuthenticationParameters parameters)
@@ -640,6 +684,7 @@ namespace Microsoft.Data.SqlClient
         {
             public TokenCredential _tokenCredential;
             public byte[] _secretHash;
+            public SemaphoreSlim _semaphore = new(1, 1);
 
             public TokenCredentialData(TokenCredential tokenCredential, byte[] secretHash)
             {
