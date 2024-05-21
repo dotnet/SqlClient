@@ -27,16 +27,16 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        internal abstract void GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer);
+        internal abstract void GenerateSspiClientContext(ReadOnlyMemory<byte> input, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer);
 
-        internal void SSPIData(byte[] receivedBuff, UInt32 receivedLength, ref byte[] sendBuff, ref UInt32 sendLength, byte[] sniSpnBuffer)
-            => SSPIData(receivedBuff, receivedLength, ref sendBuff, ref sendLength, new[] { sniSpnBuffer });
+        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref UInt32 sendLength, byte[] sniSpnBuffer)
+            => SSPIData(receivedBuff, ref sendBuff, ref sendLength, new[] { sniSpnBuffer });
 
-        internal void SSPIData(byte[] receivedBuff, UInt32 receivedLength, ref byte[] sendBuff, ref UInt32 sendLength, byte[][] sniSpnBuffer)
+        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref UInt32 sendLength, byte[][] sniSpnBuffer)
         {
             try
             {
-                GenerateSspiClientContext(receivedBuff, receivedLength, ref sendBuff, ref sendLength, sniSpnBuffer);
+                GenerateSspiClientContext(receivedBuff, ref sendBuff, ref sendLength, sniSpnBuffer);
             }
             catch (Exception e)
             {
