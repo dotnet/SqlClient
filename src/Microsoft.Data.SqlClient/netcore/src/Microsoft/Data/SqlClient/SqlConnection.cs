@@ -227,6 +227,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _accessToken = connection._accessToken;
+            _accessTokenCallback = connection._accessTokenCallback;
             CacheConnectionStringProperties();
         }
 
