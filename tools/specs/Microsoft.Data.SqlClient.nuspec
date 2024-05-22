@@ -30,7 +30,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       <group targetFramework="net462">
         <dependency id="Microsoft.Data.SqlClient.SNI" version="5.1.1" />
         <dependency id="Azure.Identity" version="1.11.3" />
-        <dependency id="Microsoft.Identity.Client" version="4.60.0" />
+        <dependency id="Microsoft.Identity.Client" version="4.60.3" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.35.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.35.0" />
         <dependency id="System.Buffers" version="4.5.1" />
