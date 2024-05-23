@@ -238,7 +238,7 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_DATACLASSIFICATION = 0x09;
         public const byte FEATUREEXT_UTF8SUPPORT = 0x0A;
         public const byte FEATUREEXT_SQLDNSCACHING = 0x0B;
-        public const byte FEATUREEXT_JSONSUPPORT = 0x10;
+        public const byte FEATUREEXT_JSONSUPPORT = 0x0D;
 
         [Flags]
         public enum FeatureExtension : uint
