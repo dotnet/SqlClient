@@ -8108,13 +8108,14 @@ namespace Microsoft.Data.SqlClient
 
         internal int WriteJsonSupportFeatureRequest(bool write /* if false just calculates the length */)
         {
-            int len = 6; 
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
 
             if (write)
             {
                 // Write Feature ID
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_JSONSUPPORT);
                 WriteInt(1, _physicalStateObj);
+                _physicalStateObj.WriteByte(1);
             }
 
             return len;
