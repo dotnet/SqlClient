@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override void GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer)
+        internal override void GenerateSspiClientContext(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer)
         {
 #if NETFRAMEWORK
             SNIHandle handle = _physicalStateObj.Handle;
@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_physicalStateObj.SessionHandle.Type == SessionHandle.NativeHandleType);
             SNIHandle handle = _physicalStateObj.SessionHandle.NativeHandle;
 #endif
-            if (0 != SNINativeMethodWrapper.SNISecGenClientContext(handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer[0]))
+            if (0 != SNINativeMethodWrapper.SNISecGenClientContext(handle, receivedBuff.Span, sendBuff, ref sendLength, _sniSpnBuffer[0]))
             {
                 throw new InvalidOperationException(SQLMessage.SSPIGenerateError());
             }

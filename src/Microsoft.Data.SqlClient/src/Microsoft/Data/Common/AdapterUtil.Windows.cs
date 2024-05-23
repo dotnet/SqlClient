@@ -26,7 +26,7 @@ namespace Microsoft.Data.Common
         [ResourceConsumption(ResourceScope.Machine)]
         internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
         { // MDAC 77697
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
             (new RegistryPermission(RegistryPermissionAccess.Read, "HKEY_LOCAL_MACHINE\\" + subkey)).Assert(); // MDAC 62028
 #endif
             try
@@ -43,7 +43,7 @@ namespace Microsoft.Data.Common
                 ADP.TraceExceptionWithoutRethrow(e);
                 return null;
             }
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
             finally
             {
                 RegistryPermission.RevertAssert();

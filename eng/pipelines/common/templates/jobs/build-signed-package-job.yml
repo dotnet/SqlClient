@@ -7,9 +7,13 @@ parameters:
   - name: symbolsFolder
     type: string
     default: symbols
+  
   - name: softwareFolder
     type: string
     default: software
+
+  - name: publishSymbols
+    type: boolean
 
 jobs:
 - job: build_signed_package
@@ -49,7 +53,10 @@ jobs:
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
       SymAccount: $(PrivateSymAccount)
+      publishSymbols: ${{ parameters['PublishSymbols'] }}
+
   # Publish symbols to public server
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
       SymAccount: $(PublicSymAccount)
+      publishSymbols: ${{ parameters['PublishSymbols'] }}

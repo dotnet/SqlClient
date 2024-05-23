@@ -1509,9 +1509,7 @@ namespace Microsoft.Data.SqlClient
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}", details.errorMessage);
                 }
 
-                string sniContextEnumName = TdsEnums.GetSniContextEnumName(stateObj.SniContext);
-
-                string sqlContextInfo = StringsHelper.GetResourceString(sniContextEnumName);
+                string sqlContextInfo = StringsHelper.GetResourceString(stateObj.SniContext.ToString());
                 string providerRid = string.Format("SNI_PN{0}", details.provider);
                 string providerName = StringsHelper.GetResourceString(providerRid);
                 Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
@@ -1776,7 +1774,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void WriteInt(Span<byte> buffer, int value)
         {
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer, value);
 #else
             buffer[0] = (byte)(value & 0xff);
@@ -6146,7 +6144,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                         value.SqlBinary = SqlBinary.WrapBytes(b);
 #else
                         value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);   // doesn't copy the byte array
@@ -6443,7 +6441,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                         value.SqlBinary = SqlBinary.WrapBytes(b);
 #else
                         value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);
@@ -7315,7 +7313,7 @@ namespace Microsoft.Data.SqlClient
 
 
             Span<uint> data = stackalloc uint[4];
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             d.WriteTdsValue(data);
 #else
             SqlTypeWorkarounds.SqlDecimalExtractData(d, out data[0], out data[1], out data[2], out data[3]);
@@ -7344,7 +7342,7 @@ namespace Microsoft.Data.SqlClient
                 stateObj.WriteByte(0);
 
             Span<uint> data = stackalloc uint[4];
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             d.WriteTdsValue(data);
 #else
             SqlTypeWorkarounds.SqlDecimalExtractData(d, out data[0], out data[1], out data[2], out data[3]);
@@ -7568,7 +7566,7 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeEncodingChar(string s, int numChars, int offset, Encoding encoding)
         {
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK
             char[] charData;
             byte[] byteData = null;
 
@@ -7605,7 +7603,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK
                 char[] charData = s.ToCharArray(offset, numChars);
                 byte[] byteData = encoding.GetBytes(charData, 0, numChars);
                 Debug.Assert(byteData != null, "no data from encoding");
@@ -8988,7 +8986,7 @@ namespace Microsoft.Data.SqlClient
                         int parametersLength = rpcext.userParamCount + rpcext.systemParamCount;
 
                         bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
-                        bool enableOptimizedParameterBinding = cmd.EnableOptimizedParameterBinding;
+                        bool enableOptimizedParameterBinding = cmd.EnableOptimizedParameterBinding && cmd.CommandType == CommandType.Text;
 
                         for (int i = (ii == startRpc) ? startParam : 0; i < parametersLength; i++)
                         {
