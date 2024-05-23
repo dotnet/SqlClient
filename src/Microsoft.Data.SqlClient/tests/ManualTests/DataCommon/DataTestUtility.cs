@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         internal static readonly string KerberosDomainPassword = null;
 
         // SQL server Version
-        private static string s_sQLServerVersion = string.Empty;
+        private static string s_sQLServerVersion = null;
         private static bool s_isTDS8Supported;
 
         //SQL Server EngineEdition

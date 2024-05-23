@@ -13,11 +13,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
 {
     public class ConnectionTestParameters
     {
-        public SqlConnectionEncryptOption Encrypt { get; set; }
-        public bool TrustServerCertificate { get; set; }
-        public string Certificate { get; set; }
-        public string HostNameInCertificate { get; set; }
-        public bool TestResult { get; set; }
-        public TDSPreLoginTokenEncryptionType TdsEncryptionType { get; set; }
+        private SqlConnectionEncryptOption _encryptionOption;
+        private TDSPreLoginTokenEncryptionType _encryptionType;
+        private string _hnic;
+        private string _cert;
+        private bool _result;
+        private bool _trustServerCert;
+
+        public SqlConnectionEncryptOption Encrypt => _encryptionOption;
+        public bool TrustServerCertificate => _trustServerCert;
+        public string Certificate => _cert;
+        public string HostNameInCertificate => _hnic;
+        public bool TestResult => _result;
+        public TDSPreLoginTokenEncryptionType TdsEncryptionType => _encryptionType;
+
+        public ConnectionTestParameters(TDSPreLoginTokenEncryptionType tdsEncryptionType, SqlConnectionEncryptOption encryptOption, bool trustServerCert, string cert, string hnic, bool result)
+        {
+            _encryptionOption = encryptOption;
+            _trustServerCert = trustServerCert;
+            _cert = cert;
+            _hnic = hnic;
+            _result = result;
+            _encryptionType = tdsEncryptionType;
+        }
     }
 }

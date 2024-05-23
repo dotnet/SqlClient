@@ -134,6 +134,9 @@ function Invoke-SqlServerCertificateCommand {
         $pwd = ConvertTo-SecureString -String 'nopassword' -Force -AsPlainText
         # Export the certificate to a pfx format
         Export-PfxCertificate -Password $pwd -FilePath "$OutDir\localhostcert.pfx" -Cert "Cert:\LocalMachine\my\$($certificate.Thumbprint)"
+
+        # Write the certificate thumbprint to a file
+        echo $certificate.Thumbprint | Out-File -FilePath "$OutDir\thumbprint.txt" -Encoding ascii
     } 
 
     Write-Output "Done creating pfx certificate..."

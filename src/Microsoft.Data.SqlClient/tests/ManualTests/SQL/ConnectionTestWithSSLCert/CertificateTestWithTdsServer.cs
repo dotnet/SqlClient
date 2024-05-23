@@ -8,25 +8,65 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
+using System.ServiceProcess;
 using System.Text;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon;
+using Microsoft.Win32;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class CertificateTestWithTdsServer
+    public class CertificateTestWithTdsServer : IDisposable
     {
         private static readonly string s_fullPathToPowershellScript = Path.Combine(Directory.GetCurrentDirectory(), "makepfxcert.ps1");
+        private static readonly string s_fullPathToCleanupPowershellScript = Path.Combine(Directory.GetCurrentDirectory(), "removecert.ps1");
         private static readonly string s_fullPathToPfx = Path.Combine(Directory.GetCurrentDirectory(), "localhostcert.pfx");
+        private static readonly string s_fullPathTothumbprint = Path.Combine(Directory.GetCurrentDirectory(), "thumbprint.txt");
         private static readonly string s_fullPathToClientCert = Path.Combine(Directory.GetCurrentDirectory(), "clientcert");
+        private static bool s_windowsAdmin = true;
+        private static readonly string s_instanceName = "MSSQLSERVER";
+
 
         public CertificateTestWithTdsServer()
         {
+            // Confirm that user has elevated access on Windows
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+                WindowsPrincipal principal = new(identity);
+                if (principal.IsInRole(WindowsBuiltInRole.Administrator))
+                    s_windowsAdmin = true;
+                else
+                    s_windowsAdmin = false;
+            }
+
             if (!Directory.Exists(s_fullPathToClientCert))
             {
                 Directory.CreateDirectory(s_fullPathToClientCert);
             }
-            CreatePfxCertificate(s_fullPathToPowershellScript);
+
+            RunPowershellScript(s_fullPathToPowershellScript);
+        }
+
+        private static string ForceEncryptionRegistryPath
+        {
+            get
+            {
+                if (DataTestUtility.IsSQL2022())
+                {
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL16.{s_instanceName}\MSSQLSERVER\SuperSocketNetLib";
+                }
+                if (DataTestUtility.IsSQL2019())
+                {
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.{s_instanceName}\MSSQLSERVER\SuperSocketNetLib";
+                }
+                if (DataTestUtility.IsSQL2016())
+                {
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.{s_instanceName}\MSSQLSERVER\SuperSocketNetLib";
+                }
+                return string.Empty;
+            }
         }
 
         [Theory]
@@ -34,6 +74,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void BeginWindowsConnectionTest(ConnectionTestParameters connectionTestParameters)
         {
+            if (!s_windowsAdmin)
+            {
+                Assert.Fail("User needs to have elevated access for these set of tests");
+            }
+
             ConnectionTest(connectionTestParameters);
         }
 
@@ -65,12 +110,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Encrypt = connectionTestParameters.Encrypt,
             };
 
-            if (connectionTestParameters.Certificate != string.Empty)
+            if (!string.IsNullOrEmpty(connectionTestParameters.Certificate))
             {
                 builder.ServerCertificate = connectionTestParameters.Certificate;
             }
 
-            if (connectionTestParameters.HostNameInCertificate != string.Empty)
+            if (!string.IsNullOrEmpty(connectionTestParameters.HostNameInCertificate))
             {
                 builder.HostNameInCertificate = connectionTestParameters.HostNameInCertificate;
             }
@@ -87,7 +132,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void CreatePfxCertificate(string script)
+        private static void RunPowershellScript(string script)
         {
             string currentDirectory = Directory.GetCurrentDirectory();
             string powerShellCommand = "powershell.exe";
@@ -117,12 +162,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 proc.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
                 {
-                    output.AppendLine(e.Data);
+                    if (e.Data != null)
+                    {
+                        output.AppendLine(e.Data);
+                    }
                 });
 
                 proc.ErrorDataReceived += new DataReceivedEventHandler((sender, e) =>
                 {
-                    output.AppendLine(e.Data);
+                    if (e.Data != null)
+                    {
+                        output.AppendLine(e.Data);
+                    }
                 });
 
                 proc.Start();
@@ -134,12 +185,62 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     proc.Kill();
                     proc.WaitForExit(2000);
-                    throw new Exception($"Could not generate certificate.Error out put: {output}");
+                    throw new Exception($"Could not generate certificate. Error output: {output}");
                 }
             }
             else
             {
-                throw new Exception($"Could not find GenerateSelfSignedCertificate.ps1");
+                throw new Exception($"Could not find makepfxcert.ps1");
+            }
+        }
+
+        private void RemoveCertificate()
+        {
+            string thumbprint = File.ReadAllText(s_fullPathTothumbprint);
+            using X509Store certStore = new(StoreName.Root, StoreLocation.LocalMachine);
+            certStore.Open(OpenFlags.ReadWrite);
+            X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+            if (certCollection.Count > 0)
+            {
+                certStore.Remove(certCollection[0]);
+            }
+            certStore.Close();
+
+            File.Delete(s_fullPathTothumbprint);
+            Directory.Delete(s_fullPathToClientCert, true);
+        }
+
+        private static void RemoveForceEncryptionFromRegistryPath(string registryPath)
+        {
+            RegistryKey key = Registry.LocalMachine.OpenSubKey(registryPath, true);
+            key?.SetValue("ForceEncryption", 0, RegistryValueKind.DWord);
+            key?.SetValue("Certificate", "", RegistryValueKind.String);
+            ServiceController sc = new($"{s_instanceName}");
+            sc.Stop();
+            sc.WaitForStatus(ServiceControllerStatus.Stopped);
+            sc.Start();
+            sc.WaitForStatus(ServiceControllerStatus.Running);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                if (disposing && !string.IsNullOrEmpty(s_fullPathTothumbprint))
+                {
+                    RemoveCertificate();
+                    RemoveForceEncryptionFromRegistryPath(ForceEncryptionRegistryPath);
+                }
+            }
+            else
+            {
+                RunPowershellScript(s_fullPathToCleanupPowershellScript);
             }
         }
     }

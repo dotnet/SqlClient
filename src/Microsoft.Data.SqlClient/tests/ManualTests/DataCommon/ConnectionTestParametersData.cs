@@ -2,13 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS.PreLogin;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
@@ -21,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
         private static readonly string s_fullPathToCer = Path.Combine(Directory.GetCurrentDirectory(), "clientcert", "localhostcert.cer");
         private static readonly string s_mismatchedcert = Path.Combine(Directory.GetCurrentDirectory(), "clientcert", "mismatchedcert.cer");
 
-        private static string s_hostName = System.Net.Dns.GetHostName();
+        private static readonly string s_hostName = System.Net.Dns.GetHostName();
         public static ConnectionTestParametersData Data { get; } = new ConnectionTestParametersData();
         public List<ConnectionTestParameters> ConnectionTestParametersList { get; set; }
 
@@ -36,285 +31,54 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
         public ConnectionTestParametersData()
         {
             // Test cases possible field values for connection parameters:
-            //     Possible values for TdsEncryptionType are Off, On, Required
-            //     Possible values for Encrypt are Optional, Mandatory
-            //     Possible values for TrustServerCertificate are true, false
-            //     Possible values for Certificate are valid path to certificate, mismatched certificate, or empty
-            //     Possible values for HostNameInCertificate are valid hostname, or empty
-            //     TestResult is the expected result of the connection test
             // These combinations are based on the possible values of Encrypt, TrustServerCertificate, Certificate, HostNameInCertificate
+            /*
+             * TDSEncryption | Encrypt    | TrustServerCertificate | Certificate  | HNIC         | TestResults
+             * ----------------------------------------------------------------------------------------------
+             *   Off         | Optional   |  true                  | valid        | valid name   | true
+             *   On          | Mandatory  |  false                 | mismatched   | empty        | false
+             *   Required    |            |    x                   | ChainError?  | wrong name?  | 
+             */
             ConnectionTestParametersList = new List<ConnectionTestParameters>
             {
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
-                    Encrypt = SqlConnectionEncryptOption.Optional,
-                    TrustServerCertificate = false,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = false
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
-                    Encrypt = SqlConnectionEncryptOption.Optional,
-                    TrustServerCertificate = true,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = s_fullPathToCer,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = s_fullPathToCer,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = _empty,
-                    HostNameInCertificate = s_hostName,
-                    TestResult = false
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = _empty,
-                    HostNameInCertificate = s_hostName,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
-                    Encrypt = SqlConnectionEncryptOption.Optional,
-                    TrustServerCertificate = false,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = false
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = false
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
-                    Encrypt = SqlConnectionEncryptOption.Optional,
-                    TrustServerCertificate = true,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = s_fullPathToCer,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = s_fullPathToCer,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = _empty,
-                    HostNameInCertificate = s_hostName,
-                    TestResult = false
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = _empty,
-                    HostNameInCertificate = s_hostName,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
-                    Encrypt = SqlConnectionEncryptOption.Optional,
-                    TrustServerCertificate = false,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = false
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = false
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
-                    Encrypt = SqlConnectionEncryptOption.Optional,
-                    TrustServerCertificate = true,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = _empty,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = s_fullPathToCer,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = s_fullPathToCer,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = _empty,
-                    HostNameInCertificate = s_hostName,
-                    TestResult = false
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = _empty,
-                    HostNameInCertificate = s_hostName,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = s_mismatchedcert,
-                    HostNameInCertificate = _empty,
-                    TestResult = false,
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Off,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = s_mismatchedcert,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = s_mismatchedcert,
-                    HostNameInCertificate = _empty,
-                    TestResult = false,
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.On,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = s_mismatchedcert,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = false,
-                    Certificate = s_mismatchedcert,
-                    HostNameInCertificate = _empty,
-                    TestResult = false,
-                },
-                new ConnectionTestParameters
-                {
-                    TdsEncryptionType = TDSPreLoginTokenEncryptionType.Required,
-                    Encrypt = SqlConnectionEncryptOption.Mandatory,
-                    TrustServerCertificate = true,
-                    Certificate = s_mismatchedcert,
-                    HostNameInCertificate = _empty,
-                    TestResult = true
-                },
+                // TDSPreLoginTokenEncryptionType.Off
+                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Optional, false, _empty, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, false, _empty, _empty, false),
+                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Optional, true, _empty, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, true, _empty, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, false, s_fullPathToCer, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, true, s_fullPathToCer, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, false, _empty, s_hostName, false),
+                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, true, _empty, s_hostName, true),
+
+                // TDSPreLoginTokenEncryptionType.On
+                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Optional, false, _empty, _empty, false),
+                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, false, _empty, _empty, false),
+                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Optional, true, _empty, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, true, _empty, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, false, s_fullPathToCer, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, true, s_fullPathToCer, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, false, _empty, s_hostName, false),
+                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, true, _empty, s_hostName, true),
+
+                // TDSPreLoginTokenEncryptionType.Required
+                new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Optional, false, _empty, _empty, false),
+                new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, false, _empty, _empty, false),
+                new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Optional, true, _empty, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, true, _empty, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, false, s_fullPathToCer, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, true, s_fullPathToCer, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, false, _empty, s_hostName, false),
+                new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, true, _empty, s_hostName, true),
+
+                // Mismatched certificate test
+                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, false, s_mismatchedcert, _empty, false),
+                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, true, s_mismatchedcert, _empty, false),
+                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, true, s_mismatchedcert, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, false, s_mismatchedcert, _empty, false),
+                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, true, s_mismatchedcert, _empty, true),
+                new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, false, s_mismatchedcert, _empty, false),
+                new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, true, s_mismatchedcert, _empty, true),
             };
         }
     }
