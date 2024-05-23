@@ -31,7 +31,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string NPConnectionString = null;
         public static readonly string TCPConnectionString = null;
         public static readonly string TCPConnectionStringHGSVBS = null;
-        public static readonly string TCPConnectionStringAASVBS = null;
         public static readonly string TCPConnectionStringNoneVBS = null;
         public static readonly string TCPConnectionStringAASSGX = null;
         public static readonly string AADAuthorityURL = null;
@@ -90,7 +89,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             NPConnectionString = c.NPConnectionString;
             TCPConnectionString = c.TCPConnectionString;
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
-            TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
             TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
             AADAuthorityURL = c.AADAuthorityURL;
@@ -147,11 +145,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     AEConnStrings.Add(TCPConnectionStringHGSVBS);
                     AEConnStringsSetup.Add(TCPConnectionStringHGSVBS);
-                }
-
-                if (!string.IsNullOrEmpty(TCPConnectionStringAASVBS))
-                {
-                    AEConnStrings.Add(TCPConnectionStringAASVBS);
                 }
 
                 if (!string.IsNullOrEmpty(TCPConnectionStringNoneVBS))
