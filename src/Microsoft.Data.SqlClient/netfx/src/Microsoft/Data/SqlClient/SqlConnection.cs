@@ -429,6 +429,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = new SqlCredential(connection._credential.UserId, password);
             }
             _accessToken = connection._accessToken;
+            _accessTokenCallback = connection._accessTokenCallback;
             _serverCertificateValidationCallback = connection._serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = connection._clientCertificateRetrievalCallback;
             _originalNetworkAddressInfo = connection._originalNetworkAddressInfo;
@@ -2144,7 +2145,7 @@ namespace Microsoft.Data.SqlClient
 
             bool result = false;
 
-            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
+            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
 
             if (connectionOptions != null &&
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
@@ -2187,7 +2188,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Set future transient fault handling based on connection options
-            _applyTransientFaultHandling = connectionOptions != null && connectionOptions.ConnectRetryCount > 0;
+            _applyTransientFaultHandling = (retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
 
             return result;
         }

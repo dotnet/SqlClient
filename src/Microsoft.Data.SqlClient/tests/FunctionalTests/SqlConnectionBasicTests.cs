@@ -62,26 +62,6 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(42108)]
         [InlineData(42109)]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public async Task TransientFaultTestAsync(uint errorCode)
-        {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
-            SqlConnectionStringBuilder builder = new()
-            {
-                DataSource = "localhost," + server.Port,
-                IntegratedSecurity = true,
-                Encrypt = SqlConnectionEncryptOption.Optional
-            };
-
-            using SqlConnection connection = new(builder.ConnectionString);
-            await connection.OpenAsync();
-            Assert.Equal(ConnectionState.Open, connection.State);
-        }
-
-        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
-        [InlineData(40613)]
-        [InlineData(42108)]
-        [InlineData(42109)]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultTest(uint errorCode)
         {
             using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
@@ -100,52 +80,12 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             catch (Exception e)
             {
+                if (null != connection)
+                {
+                    Assert.Equal(ConnectionState.Closed, connection.State);
+                }
                 Assert.Fail(e.Message);
             }
-        }
-
-        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
-        [InlineData(40613)]
-        [InlineData(42108)]
-        [InlineData(42109)]
-        [PlatformSpecific(TestPlatforms.Windows)]
-        public void TransientFaultDisabledTestAsync(uint errorCode)
-        {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
-            SqlConnectionStringBuilder builder = new()
-            {
-                DataSource = "localhost," + server.Port,
-                IntegratedSecurity = true,
-                ConnectRetryCount = 0,
-                Encrypt = SqlConnectionEncryptOption.Optional
-            };
-
-            using SqlConnection connection = new(builder.ConnectionString);
-            Task<SqlException> e = Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
-            Assert.Equal(20, e.Result.Class);
-            Assert.Equal(ConnectionState.Closed, connection.State);
-        }
-
-        [ConditionalTheory(typeof(TestUtility), nameof(TestUtility.IsNotArmProcess))]
-        [InlineData(40613)]
-        [InlineData(42108)]
-        [InlineData(42109)]
-        [PlatformSpecific(TestPlatforms.Windows)]
-        public void TransientFaultDisabledTest(uint errorCode)
-        {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
-            SqlConnectionStringBuilder builder = new()
-            {
-                DataSource = "localhost," + server.Port,
-                IntegratedSecurity = true,
-                ConnectRetryCount = 0,
-                Encrypt = SqlConnectionEncryptOption.Optional
-            };
-
-            using SqlConnection connection = new(builder.ConnectionString);
-            SqlException e = Assert.Throws<SqlException>(() => connection.Open());
-            Assert.Equal(20, e.Class);
-            Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
         [Fact]

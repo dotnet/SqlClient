@@ -227,6 +227,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _accessToken = connection._accessToken;
+            _accessTokenCallback = connection._accessTokenCallback;
             CacheConnectionStringProperties();
         }
 
@@ -1940,7 +1941,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
+            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
 
             if (connectionOptions != null &&
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
@@ -1969,7 +1970,7 @@ namespace Microsoft.Data.SqlClient
             // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
 
             // Set future transient fault handling based on connection options
-            _applyTransientFaultHandling = connectionOptions != null && connectionOptions.ConnectRetryCount > 0;
+            _applyTransientFaultHandling = (retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
 
             var tdsInnerConnection = (SqlInternalConnectionTds)InnerConnection;
 
