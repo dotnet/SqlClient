@@ -8115,6 +8115,20 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        internal int WriteJsonSupportFeatureRequest(bool write /* if false just calculates the length */)
+        {
+            int len = 6; 
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_JSONSUPPORT);
+                WriteInt(1, _physicalStateObj);
+            }
+
+            return len;
+        }
+
         private void WriteLoginData(SqlLogin rec,
                                      TdsEnums.FeatureExtension requestedFeatures,
                                      SessionData recoverySessionData,
@@ -8423,6 +8437,11 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
                 {
                     length += WriteSQLDNSCachingFeatureRequest(write);
+                }
+
+                if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
+                {
+                    length += WriteJsonSupportFeatureRequest(write);
                 }
 
                 length++; // for terminator
