@@ -429,6 +429,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = new SqlCredential(connection._credential.UserId, password);
             }
             _accessToken = connection._accessToken;
+            _accessTokenCallback = connection._accessTokenCallback;
             _serverCertificateValidationCallback = connection._serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = connection._clientCertificateRetrievalCallback;
             _originalNetworkAddressInfo = connection._originalNetworkAddressInfo;

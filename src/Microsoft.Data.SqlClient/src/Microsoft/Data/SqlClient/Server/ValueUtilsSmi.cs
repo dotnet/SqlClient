@@ -15,7 +15,7 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlTypes;
 
-#if !NETFRAMEWORK 
+#if NET6_0_OR_GREATER
 using SmiContext = System.Object;
 #endif
 
@@ -3174,7 +3174,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             long temp = getters.GetInt64(sink, ordinal);
             sink.ProcessMessagesAndThrow();
-#if NETCOREAPP && NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             return SqlMoney.FromTdsValue(temp);
 #else
             return SqlTypeWorkarounds.SqlMoneyCtor(temp, 1 /* ignored */ );
@@ -3658,7 +3658,7 @@ namespace Microsoft.Data.SqlClient.Server
                     sink.ProcessMessagesAndThrow();
                 }
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                 setters.SetInt64(sink, ordinal, value.GetTdsValue());
 #else
                 setters.SetInt64(sink, ordinal, SqlTypeWorkarounds.SqlMoneyToSqlInternalRepresentation(value));

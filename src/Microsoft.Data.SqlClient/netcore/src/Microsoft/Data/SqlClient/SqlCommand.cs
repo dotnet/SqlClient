@@ -3994,7 +3994,7 @@ namespace Microsoft.Data.SqlClient
                     SqlCommand command = (SqlCommand)state;
                     bool processFinallyBlockAsync = true;
                     bool decrementAsyncCountInFinallyBlockAsync = true;
-#if !NET6_0_OR_GREATER 
+#if NETFRAMEWORK 
                     RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                     try
@@ -4068,7 +4068,7 @@ namespace Microsoft.Data.SqlClient
                 bool processFinallyBlockAsync = true;
                 bool decrementAsyncCountInFinallyBlockAsync = true;
 
-#if !NET6_0_OR_GREATER 
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                 try

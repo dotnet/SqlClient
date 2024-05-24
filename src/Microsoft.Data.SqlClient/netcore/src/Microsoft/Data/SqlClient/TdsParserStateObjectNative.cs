@@ -409,7 +409,7 @@ namespace Microsoft.Data.SqlClient
             {
                 protocolVersion = (int)SslProtocols.Tls12;
             }
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
             {
                 /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later */

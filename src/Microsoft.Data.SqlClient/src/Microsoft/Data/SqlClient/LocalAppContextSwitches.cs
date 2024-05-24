@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_makeReadAsyncBlocking;
         private static Tristate s_useMinimumLoginTimeout;
 
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
         static LocalAppContextSwitches()
         {
             IAppContextSwitchOverridesSection appContextSwitch = AppConfigManager.FetchConfigurationSection<AppContextSwitchOverridesSection>(AppContextSwitchOverridesSection.Name);

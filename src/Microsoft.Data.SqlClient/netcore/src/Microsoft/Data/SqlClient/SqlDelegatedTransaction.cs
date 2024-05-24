@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnection connection = _connection;
             SqlConnection usersConnection = connection.Connection;
             SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Initialize | RES | CPOOL | Object Id {0}, Client Connection Id {1}, delegating transaction.", ObjectID, usersConnection?.ClientConnectionId);
-#if !NET6_0_OR_GREATER           
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try
@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Promote | RES | CPOOL | Object Id {0}, Client Connection Id {1}, promoting transaction.", ObjectID, usersConnection?.ClientConnectionId);
-#if !NET6_0_OR_GREATER                 
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                 try
@@ -256,7 +256,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Rollback | RES | CPOOL | Object Id {0}, Client Connection Id {1}, rolling back transaction.", ObjectID, usersConnection?.ClientConnectionId);
-#if !NET6_0_OR_GREATER                
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                 try
@@ -343,7 +343,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.SinglePhaseCommit | RES | CPOOL | Object Id {0}, Client Connection Id {1}, committing transaction.", ObjectID, usersConnection?.ClientConnectionId);
-#if !NET6_0_OR_GREATER               
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                 try
