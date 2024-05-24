@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         internal static readonly string KerberosDomainPassword = null;
 
         // SQL server Version
-        private static string s_sQLServerVersion = string.Empty;
+        private static string s_sQLServerVersion = null;
         private static bool s_isTDS8Supported;
 
         //SQL Server EngineEdition
@@ -279,22 +279,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static string GetSqlServerProperty(string connectionString, string propertyName)
         {
             string propertyValue = string.Empty;
-            using SqlConnection conn = new(connectionString);
-            conn.Open();
-            SqlCommand command = conn.CreateCommand();
-            command.CommandText = $"SELECT SERVERProperty('{propertyName}')";
-            SqlDataReader reader = command.ExecuteReader();
-            if (reader.Read())
+            try
             {
-                switch (propertyName)
+                using SqlConnection conn = new(connectionString);
+                conn.Open();
+                SqlCommand command = conn.CreateCommand();
+                command.CommandText = $"SELECT SERVERProperty('{propertyName}')";
+                SqlDataReader reader = command.ExecuteReader();
+                if (reader.Read())
                 {
-                    case "EngineEdition":
-                        propertyValue = reader.GetInt32(0).ToString();
-                        break;
-                    case "ProductMajorVersion":
-                        propertyValue = reader.GetString(0);
-                        break;
+                    switch (propertyName)
+                    {
+                        case "EngineEdition":
+                            propertyValue = reader.GetInt32(0).ToString();
+                            break;
+                        case "ProductMajorVersion":
+                            propertyValue = reader.GetString(0);
+                            break;
+                    }
                 }
+            }
+            finally
+            {
             }
             return propertyValue;
         }
