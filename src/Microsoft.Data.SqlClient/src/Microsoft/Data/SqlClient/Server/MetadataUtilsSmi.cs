@@ -75,6 +75,10 @@ namespace Microsoft.Data.SqlClient.Server
             SqlDbType.Structured,           // System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.Server.SqlDataRecord>
             SqlDbType.Time,                 // System.TimeSpan
             SqlDbType.DateTimeOffset,       // System.DateTimeOffset
+#if NET6_0_OR_GREATER
+            SqlDbType.Date,                 // System.DateOnly
+            SqlDbType.Time,                 // System.TimeOnly  
+#endif
         };
 
 
@@ -86,7 +90,11 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static Dictionary<Type, ExtendedClrTypeCode> CreateTypeToExtendedTypeCodeMap()
         {
+#if NET6_0_OR_GREATER
+            int Count = 44;
+#else
             int Count = 42;
+#endif
             // Keep this initialization list in the same order as ExtendedClrTypeCode for ease in validating!
             var dictionary = new Dictionary<Type, ExtendedClrTypeCode>(Count)
             {
@@ -132,6 +140,10 @@ namespace Microsoft.Data.SqlClient.Server
                 { typeof(IEnumerable<SqlDataRecord>), ExtendedClrTypeCode.IEnumerableOfSqlDataRecord },
                 { typeof(TimeSpan), ExtendedClrTypeCode.TimeSpan },
                 { typeof(DateTimeOffset), ExtendedClrTypeCode.DateTimeOffset },
+#if NET6_0_OR_GREATER
+                { typeof(DateOnly), ExtendedClrTypeCode.DateOnly },
+                { typeof(TimeOnly), ExtendedClrTypeCode.TimeOnly },
+#endif
             };
             return dictionary;
         }
@@ -244,6 +256,16 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Char;
                         break;
                     case SqlDbType.Date:
+#if NET6_0_OR_GREATER
+                        if (value.GetType() == typeof(DateOnly))
+                            extendedCode = ExtendedClrTypeCode.DateOnly;
+                        else if (value.GetType() == typeof(DateTime))
+                            extendedCode = ExtendedClrTypeCode.DateTime;
+                        else if (value.GetType() == typeof(SqlDateTime))
+                            extendedCode = ExtendedClrTypeCode.SqlDateTime;
+
+                        break;
+#endif
                     case SqlDbType.DateTime2:
 #if NETFRAMEWORK
                         if (smiVersion >= SmiContextFactory.Sql2008Version)
@@ -330,6 +352,14 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Invalid;
                         }
                         break;
+#if NET6_0_OR_GREATER
+                    case SqlDbType.Time:
+                        if (value.GetType() == typeof(TimeOnly))
+                            extendedCode = ExtendedClrTypeCode.TimeOnly;
+                        else if (value.GetType() == typeof(TimeSpan))
+                            extendedCode = ExtendedClrTypeCode.TimeSpan;
+                        break;
+#else
                     case SqlDbType.Time:
                         if (value.GetType() == typeof(TimeSpan)
 #if NETFRAMEWORK
@@ -338,6 +368,7 @@ namespace Microsoft.Data.SqlClient.Server
                             )
                             extendedCode = ExtendedClrTypeCode.TimeSpan;
                         break;
+#endif
                     case SqlDbType.DateTimeOffset:
                         if (value.GetType() == typeof(DateTimeOffset)
 #if NETFRAMEWORK
@@ -500,11 +531,7 @@ namespace Microsoft.Data.SqlClient.Server
                                             source.Scale,
                                             source.LocaleId,
                                             source.CompareOptions,
-#if NETFRAMEWORK
                                             source.Type,
-#else
-                                            null,
-#endif
                                             source.Name,
                                             typeSpecificNamePart1,
                                             typeSpecificNamePart2,

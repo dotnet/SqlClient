@@ -190,7 +190,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch))
                 {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                     X509Certificate2 cert2 = cert as X509Certificate2;
                     if (!cert2.MatchesHostname(targetServerName))
                     {
@@ -297,7 +297,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch))
                 {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                     X509Certificate2 s_cert = serverCert as X509Certificate2;
                     X509Certificate2 c_cert = clientCert as X509Certificate2;
 
@@ -342,11 +342,11 @@ namespace Microsoft.Data.SqlClient.SNI
                                                           args0: serverName,
                                                           args1: remainingTimeout);
                 using CancellationTokenSource cts = new CancellationTokenSource(remainingTimeout);
-                // using this overload to support netstandard
-                Task<IPAddress[]> task = Dns.GetHostAddressesAsync(serverName);
-                task.ConfigureAwait(false);
-                task.Wait(cts.Token);
-                return task.Result;
+
+                return Dns.GetHostAddressesAsync(serverName, cts.Token)
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
             }
         }
 

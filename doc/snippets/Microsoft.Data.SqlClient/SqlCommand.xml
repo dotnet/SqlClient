@@ -1385,7 +1385,8 @@ The <xref:Microsoft.Data.SqlClient.SqlCommand.CreateParameter%2A> method is a st
 		</Dispose>
     <EnableOptimizedParameterBinding>
       <summary>
-        Gets or sets a value indicating whether the command object should optimize parameter performance by disabling Output and InputOutput directions when submitting the command to the SQL Server.
+        Gets or sets a value indicating whether the command object should optimize parameter performance by disabling Output and InputOutput directions when submitting the command to the SQL Server. <br />
+        This option is only used when the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandType" /> is <see cref="System.Data.CommandType.Text" >Text</see> otherwise it is ignored.
       </summary>
       <value>
         A value indicating whether the command object should optimize parameter performance by disabling Output and InputOuput parameter directions when submitting the command to the SQL Server. 

@@ -844,7 +844,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />   
         [ResCategory("DataCategory_Update")]
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
         [ResDescription(StringsHelper.ResourceNames.SqlParameter_SourceColumnNullMapping)]
 #endif
         public override bool SourceColumnNullMapping

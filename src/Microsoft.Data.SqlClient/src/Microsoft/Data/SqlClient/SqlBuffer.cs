@@ -811,7 +811,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (StorageType.Guid == _type)
                 {
-                    return new SqlGuid(_value._guid);
+                    return IsNull ? SqlGuid.Null : new SqlGuid(_value._guid);
                 }
                 else if (StorageType.SqlGuid == _type)
                 {
@@ -886,7 +886,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlMoney.Null;
                     }
-#if NETCOREAPP && NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                     return SqlMoney.FromTdsValue(_value._int64);
 #else
                     return SqlTypeWorkarounds.SqlMoneyCtor(_value._int64, 1/*ignored*/);
