@@ -10,16 +10,16 @@ This update brings the below changes over the previous release:
 
 ### Changed
 
-- Upgraded `Azure.Identity` version from 1.10.3 to 1.11.3 https://github.com/dotnet/SqlClient/pull/2528
-- Code Health improvements: https://github.com/dotnet/SqlClient/pull/2467
+- Upgraded `Azure.Identity` version from 1.10.3 to 1.11.3 [#2528](https://github.com/dotnet/SqlClient/pull/2528)
+- Code Health improvements: [#2467](https://github.com/dotnet/SqlClient/pull/2467)
 
 ### Fixed
 
-- Fixed connection errors on Linux when Data Source property contains both named instance and port https://github.com/dotnet/SqlClient/pull/2436
-- Fixed `SqlConnection.FireInfoMessageEventOnUserErrors` when set to true throws an exception https://github.com/dotnet/SqlClient/pull/2505
-- Fixed exception when using DATETIMEOFFSET(n) in a TVP if n is 1, 2, 3, or 4 https://github.com/dotnet/SqlClient/pull/2506
-- Reverted PR #1983 which caused connection failure delays when using `OpenAsync` https://github.com/dotnet/SqlClient/pull/2507
-- Fixed `SqlConnection.Clone()` to include `AccessTokenCallback` https://github.com/dotnet/SqlClient/pull/2527
+- Fixed connection errors on Linux when Data Source property contains both named instance and port [#2436](https://github.com/dotnet/SqlClient/pull/2436)
+- Fixed `SqlConnection.FireInfoMessageEventOnUserErrors` when set to true throws an exception [#2505](https://github.com/dotnet/SqlClient/pull/2505)
+- Fixed exception when using DATETIMEOFFSET(n) in a TVP if n is 1, 2, 3, or 4 [#2506](https://github.com/dotnet/SqlClient/pull/2506)
+- Reverted PR #1983 which caused connection failure delays when using `OpenAsync` [#2507](https://github.com/dotnet/SqlClient/pull/2507)
+- Fixed `SqlConnection.Clone()` to include `AccessTokenCallback` [#2527](https://github.com/dotnet/SqlClient/pull/2527)
 
 ## [Stable release 5.2.0] - 2024-02-28
 
