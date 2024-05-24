@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable release 5.2.1] - 2024-05-28
+
+This update brings the below changes over the previous release:
+
+### Changed
+
+- Upgraded `Azure.Identity` version from 1.10.3 to 1.11.3 https://github.com/dotnet/SqlClient/pull/2528
+- Code Health improvements: https://github.com/dotnet/SqlClient/pull/2467
+
+### Fixed
+
+- Fixed connection error from regression in SNIProxy code changes https://github.com/dotnet/SqlClient/pull/2436
+- Fixed `SqlConnection.FireInfoMessageEventOnUserErrors` when set to true throws an exception https://github.com/dotnet/SqlClient/pull/2505
+- Fixed DateTimeOffset size in TdsValueSetter.cs class file https://github.com/dotnet/SqlClient/pull/2506
+- Reverted the fix transient fault handling issue with OpenAsync https://github.com/dotnet/SqlClient/pull/2507
+- Fixed Clone of SqlConnection to include AccessTokenCallback https://github.com/dotnet/SqlClient/pull/2527
+
 ## [Stable release 5.2.0] - 2024-02-28
 
 ### Added
