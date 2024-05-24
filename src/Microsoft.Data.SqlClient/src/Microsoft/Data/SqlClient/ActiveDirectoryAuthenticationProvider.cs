@@ -520,7 +520,7 @@ namespace Microsoft.Data.SqlClient
 
         private static bool AreEqual(byte[] a1, byte[] a2)
         {
-            if (a1 is null && a2 is null)
+            if (ReferenceEquals(a1, a2))
             {
                 return true;
             }
@@ -533,13 +533,7 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
-            for (int i = 0; i < a1.Length; i++)
-            {
-                if (a1[i] != a2[i])
-                    return false;
-            }
-
-            return true;
+            return a1.AsSpan().SequenceEqual(a2.AsSpan());
         }
 
         private IPublicClientApplication CreateClientAppInstance(PublicClientAppKey publicClientAppKey)
