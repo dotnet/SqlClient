@@ -25,11 +25,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_fullPathTothumbprint = Path.Combine(Directory.GetCurrentDirectory(), "thumbprint.txt");
         private static readonly string s_fullPathToClientCert = Path.Combine(Directory.GetCurrentDirectory(), "clientcert");
         private static bool s_windowsAdmin = true;
-        private static readonly string s_instanceName = "MSSQLSERVER";
-
 
         public CertificateTestWithTdsServer()
         {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+
             // Confirm that user has elevated access on Windows
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -47,26 +47,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             RunPowershellScript(s_fullPathToPowershellScript);
-        }
-
-        private static string ForceEncryptionRegistryPath
-        {
-            get
-            {
-                if (DataTestUtility.IsSQL2022())
-                {
-                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL16.{s_instanceName}\MSSQLSERVER\SuperSocketNetLib";
-                }
-                if (DataTestUtility.IsSQL2019())
-                {
-                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.{s_instanceName}\MSSQLSERVER\SuperSocketNetLib";
-                }
-                if (DataTestUtility.IsSQL2016())
-                {
-                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.{s_instanceName}\MSSQLSERVER\SuperSocketNetLib";
-                }
-                return string.Empty;
-            }
         }
 
         [Theory]
@@ -210,18 +190,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Directory.Delete(s_fullPathToClientCert, true);
         }
 
-        private static void RemoveForceEncryptionFromRegistryPath(string registryPath)
-        {
-            RegistryKey key = Registry.LocalMachine.OpenSubKey(registryPath, true);
-            key?.SetValue("ForceEncryption", 0, RegistryValueKind.DWord);
-            key?.SetValue("Certificate", "", RegistryValueKind.String);
-            ServiceController sc = new($"{s_instanceName}");
-            sc.Stop();
-            sc.WaitForStatus(ServiceControllerStatus.Stopped);
-            sc.Start();
-            sc.WaitForStatus(ServiceControllerStatus.Running);
-        }
-
         public void Dispose()
         {
             Dispose(true);
@@ -235,7 +203,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (disposing && !string.IsNullOrEmpty(s_fullPathTothumbprint))
                 {
                     RemoveCertificate();
-                    RemoveForceEncryptionFromRegistryPath(ForceEncryptionRegistryPath);
                 }
             }
             else
