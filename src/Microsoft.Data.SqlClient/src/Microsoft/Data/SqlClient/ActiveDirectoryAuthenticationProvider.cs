@@ -557,8 +557,6 @@ namespace Microsoft.Data.SqlClient
                 .WithParentActivityOrWindow(_iWin32WindowFunc)
                 .Build();
             }
-#endif
-#if !NET6_0_OR_GREATER
             else
 #endif
             {
