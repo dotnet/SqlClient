@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient
                 );
 
             AuthenticationResult result = null;
-            IPublicClientApplication app = await GetPublicClientAppInstanceAsync(pcaKey).ConfigureAwait(false);
+            IPublicClientApplication app = await GetPublicClientAppInstanceAsync(pcaKey, cts.Token).ConfigureAwait(false);
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
@@ -442,13 +442,13 @@ namespace Microsoft.Data.SqlClient
                 => _acquireAuthorizationCodeAsyncCallback.Invoke(authorizationUri, redirectUri, cancellationToken);
         }
 
-        private async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(PublicClientAppKey publicClientAppKey)
+        private async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(PublicClientAppKey publicClientAppKey, CancellationToken cancellationToken)
         {
             if (!s_pcaMap.TryGetValue(publicClientAppKey, out IPublicClientApplication clientApplicationInstance))
             {
+                await s_pcaMapModifierSemaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    await s_pcaMapModifierSemaphore.WaitAsync();
                     // Double-check in case another thread added it while we waited for the semaphore
                     if (!s_pcaMap.TryGetValue(publicClientAppKey, out clientApplicationInstance))
                     {
@@ -470,9 +470,9 @@ namespace Microsoft.Data.SqlClient
         {
             if (!s_tokenCredentialMap.TryGetValue(tokenCredentialKey, out TokenCredentialData tokenCredentialInstance))
             {
+                await s_tokenCredentialMapModifierSemaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    await s_tokenCredentialMapModifierSemaphore.WaitAsync();
                     // Double-check in case another thread added it while we waited for the semaphore
                     if (!s_tokenCredentialMap.TryGetValue(tokenCredentialKey, out tokenCredentialInstance))
                     {
@@ -489,9 +489,9 @@ namespace Microsoft.Data.SqlClient
             if (!AreEqual(tokenCredentialInstance._secretHash, GetHash(secret)))
             {
                 // If the secret hash has changed, we need to remove the old token credential instance and create a new one.
+                await s_tokenCredentialMapModifierSemaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    await s_tokenCredentialMapModifierSemaphore.WaitAsync();
                     s_tokenCredentialMap.TryRemove(tokenCredentialKey, out _);
                     tokenCredentialInstance = CreateTokenCredentialInstance(tokenCredentialKey, secret);
                     s_tokenCredentialMap.TryAdd(tokenCredentialKey, tokenCredentialInstance);
@@ -502,16 +502,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            try
-            {
-                // Serialize GetTokenAsync calls to the token credential instance to take advantage of underlying token caches
-                await tokenCredentialInstance._semaphore.WaitAsync();
-                return await tokenCredentialInstance._tokenCredential.GetTokenAsync(tokenRequestContext, cancellationToken).ConfigureAwait(false);
-            }
-            finally
-            {
-                tokenCredentialInstance._semaphore.Release();
-            }
+            return await tokenCredentialInstance._tokenCredential.GetTokenAsync(tokenRequestContext, cancellationToken).ConfigureAwait(false);
         }
 
         private static string GetAccountPwCacheKey(SqlAuthenticationParameters parameters)
@@ -684,7 +675,6 @@ namespace Microsoft.Data.SqlClient
         {
             public TokenCredential _tokenCredential;
             public byte[] _secretHash;
-            public SemaphoreSlim _semaphore = new(1, 1);
 
             public TokenCredentialData(TokenCredential tokenCredential, byte[] secretHash)
             {
