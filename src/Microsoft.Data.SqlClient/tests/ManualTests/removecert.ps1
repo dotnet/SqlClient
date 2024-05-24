@@ -3,8 +3,8 @@
 # See the LICENSE file in the project root for more information.
 # Script: removecert.ps1 
 # Author: SqlClient Team
-# Date: May 23, 2024
-# Comments: This scripts deleted SSL Self-Signed Certificate from Linux certificate store.
+# Date: May 24, 2024
+# Comments: This script deletes the SSL Self-Signed Certificate from Linux certificate store.
 # This script is not intended to be used in any production environments.
 
 param ($OutDir)
