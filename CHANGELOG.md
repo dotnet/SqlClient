@@ -15,11 +15,11 @@ This update brings the below changes over the previous release:
 
 ### Fixed
 
-- Fixed connection error from regression in SNIProxy code changes https://github.com/dotnet/SqlClient/pull/2436
+- Fixed connection errors on Linux when Data Source property contains both named instance and port https://github.com/dotnet/SqlClient/pull/2436
 - Fixed `SqlConnection.FireInfoMessageEventOnUserErrors` when set to true throws an exception https://github.com/dotnet/SqlClient/pull/2505
-- Fixed DateTimeOffset size in TdsValueSetter.cs class file https://github.com/dotnet/SqlClient/pull/2506
-- Reverted the fix transient fault handling issue with OpenAsync https://github.com/dotnet/SqlClient/pull/2507
-- Fixed Clone of SqlConnection to include AccessTokenCallback https://github.com/dotnet/SqlClient/pull/2527
+- Fixed exception when using DATETIMEOFFSET(n) in a TVP if n is 1, 2, 3, or 4 https://github.com/dotnet/SqlClient/pull/2506
+- Reverted PR #1983 which caused connection failure delays when using `OpenAsync` https://github.com/dotnet/SqlClient/pull/2507
+- Fixed `SqlConnection.Clone()` to include `AccessTokenCallback` https://github.com/dotnet/SqlClient/pull/2527
 
 ## [Stable release 5.2.0] - 2024-02-28
 
