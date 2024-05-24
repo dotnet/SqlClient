@@ -110,7 +110,7 @@ extends:
         policheck:
           enabled: true
           break: true # always break the build on policheck issues. You can disable it by setting to 'false'
-          exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
+          optionsUEPATH: $(REPOROOT)\.config\PolicheckExclusions.xml
         armory:
           enabled: true
           break: true
