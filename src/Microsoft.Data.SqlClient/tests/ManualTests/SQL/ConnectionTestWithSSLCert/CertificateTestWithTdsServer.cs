@@ -25,10 +25,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_fullPathTothumbprint = Path.Combine(Directory.GetCurrentDirectory(), "thumbprint.txt");
         private static readonly string s_fullPathToClientCert = Path.Combine(Directory.GetCurrentDirectory(), "clientcert");
         private static bool s_windowsAdmin = true;
+        private static string s_instanceName = "MSSQLSERVER";
+        private const string LocalHost = "localhost";
 
         public CertificateTestWithTdsServer()
         {
+
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
+
+            if (!string.IsNullOrEmpty(instanceName))
+            {
+                s_instanceName = instanceName;
+            }
 
             // Confirm that user has elevated access on Windows
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -49,7 +58,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RunPowershellScript(s_fullPathToPowershellScript);
         }
 
-        [Theory]
+        private static bool IsLocalHost()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out _));
+            return LocalHost.Equals(hostname, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool AreConnStringsSetup() => DataTestUtility.AreConnStringsSetup();
+        private static bool IsNotAzureServer() => DataTestUtility.IsNotAzureServer();
+        private static bool UseManagedSNIOnWindows() => DataTestUtility.UseManagedSNIOnWindows;
+
+        private static string ForceEncryptionRegistryPath
+        {
+            get
+            {
+                if (DataTestUtility.IsSQL2022())
+                {
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL16.{s_instanceName}\MSSQLSERVER\SuperSocketNetLib";
+                }
+                if (DataTestUtility.IsSQL2019())
+                {
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.{s_instanceName}\MSSQLSERVER\SuperSocketNetLib";
+                }
+                if (DataTestUtility.IsSQL2016())
+                {
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.{s_instanceName}\MSSQLSERVER\SuperSocketNetLib";
+                }
+                return string.Empty;
+            }
+        }
+
+        [ConditionalTheory(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [MemberData(nameof(ConnectionTestParametersData.GetConnectionTestParameters), MemberType = typeof(ConnectionTestParametersData))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void BeginWindowsConnectionTest(ConnectionTestParameters connectionTestParameters)
@@ -62,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectionTest(connectionTestParameters);
         }
 
-        [Theory]
+        [ConditionalTheory(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [MemberData(nameof(ConnectionTestParametersData.GetConnectionTestParameters), MemberType = typeof(ConnectionTestParametersData))]
         [PlatformSpecific(TestPlatforms.Linux)]
         public void BeginLinuxConnectionTest(ConnectionTestParameters connectionTestParameters)
@@ -190,6 +230,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Directory.Delete(s_fullPathToClientCert, true);
         }
 
+        private static void RemoveForceEncryptionFromRegistryPath(string registryPath)
+        {
+            RegistryKey key = Registry.LocalMachine.OpenSubKey(registryPath, true);
+            key?.SetValue("ForceEncryption", 0, RegistryValueKind.DWord);
+            key?.SetValue("Certificate", "", RegistryValueKind.String);
+            ServiceController sc = new($"{s_instanceName}");
+            sc.Stop();
+            sc.WaitForStatus(ServiceControllerStatus.Stopped);
+            sc.Start();
+            sc.WaitForStatus(ServiceControllerStatus.Running);
+        }
+
         public void Dispose()
         {
             Dispose(true);
@@ -203,6 +255,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (disposing && !string.IsNullOrEmpty(s_fullPathTothumbprint))
                 {
                     RemoveCertificate();
+                    RemoveForceEncryptionFromRegistryPath(ForceEncryptionRegistryPath);
                 }
             }
             else
