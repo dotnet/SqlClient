@@ -26,17 +26,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_fullPathToClientCert = Path.Combine(Directory.GetCurrentDirectory(), "clientcert");
         private static bool s_windowsAdmin = true;
         private static string s_instanceName = "MSSQLSERVER";
+        // s_instanceNamePrefix will get replaced with MSSQL$ is there is an instance name in the connection string
+        private static string s_instanceNamePrefix = "";
         private const string LocalHost = "localhost";
 
         public CertificateTestWithTdsServer()
         {
-
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
 
             if (!string.IsNullOrEmpty(instanceName))
             {
                 s_instanceName = instanceName;
+                s_instanceNamePrefix = "MSSQL$";
             }
 
             // Confirm that user has elevated access on Windows
@@ -235,7 +237,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RegistryKey key = Registry.LocalMachine.OpenSubKey(registryPath, true);
             key?.SetValue("ForceEncryption", 0, RegistryValueKind.DWord);
             key?.SetValue("Certificate", "", RegistryValueKind.String);
-            ServiceController sc = new($"{s_instanceName}");
+            ServiceController sc = new($"{s_instanceNamePrefix}{s_instanceName}");
             sc.Stop();
             sc.WaitForStatus(ServiceControllerStatus.Stopped);
             sc.Start();
