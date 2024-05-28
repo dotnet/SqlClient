@@ -308,7 +308,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private static void ClearCache(MemoryCache cache)
         {
-            // Get the Clear method of the cache and use it if available. This is available in .NET 8.
+            // Get the Clear method of the cache and use it if available. This is available in Microsoft.Extensions.Caching 8.0
             MethodInfo clearMethod = cache.GetType().GetMethod("Clear", BindingFlags.Instance | BindingFlags.Public);
             if (clearMethod != null)
             {

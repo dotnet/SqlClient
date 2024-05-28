@@ -46,7 +46,6 @@ namespace Microsoft.Data.SqlClient
         /// <param name="masterKeyPath">Key Path for CMK</param>
         /// <param name="allowEnclaveComputations">boolean indicating whether the key can be sent to enclave</param>
         /// <param name="signature">Signature for the CMK metadata</param>
-        /// <returns>null if the data is not found in cache otherwise returns true/false indicating signature verification success/failure</returns>
         internal bool GetSignatureVerificationResult(string keyStoreName, string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
             ValidateStringArgumentNotNullOrEmpty(masterKeyPath, _masterkeypathArgumentName, _getSignatureVerificationResultMethodName);
@@ -123,7 +122,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     // Example: 2301 - 2000 = 301; 301 / 2301 = 0.1308 * 100 = 13% compacting
-                    _cache.Compact((int)(((double)(currentCacheSize - _cacheSize) / (double)currentCacheSize) * 100));
+                    _cache.Compact((((double)(currentCacheSize - _cacheSize) / (double)currentCacheSize) * 100));
                 }
                 finally
                 {
