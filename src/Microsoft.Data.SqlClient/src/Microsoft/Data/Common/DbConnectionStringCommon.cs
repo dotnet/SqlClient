@@ -1037,7 +1037,6 @@ namespace Microsoft.Data.Common
         internal const string OmitOracleConnectionName = "Omit Oracle Connection Name";
 
         // SqlClient
-        internal const string TransparentNetworkIPResolution = "Transparent Network IP Resolution";
         internal const string Certificate = "Certificate";
 #endif
         // SqlClient
@@ -1073,6 +1072,7 @@ namespace Microsoft.Data.Common
         internal const string IPAddressPreference = "IP Address Preference";
         internal const string ServerSPN = "Server SPN";
         internal const string FailoverPartnerSPN = "Failover Partner SPN";
+        internal const string TransparentNetworkIPResolution = "Transparent Network IP Resolution";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";
@@ -1092,10 +1092,9 @@ namespace Microsoft.Data.Common
 
     internal static class DbConnectionStringSynonyms
     {
-#if NETFRAMEWORK
         //internal const string TransparentNetworkIPResolution = TRANSPARENTNETWORKIPRESOLUTION;
         internal const string TRANSPARENTNETWORKIPRESOLUTION = "transparentnetworkipresolution";
-#endif
+
         //internal const string ApplicationName        = APP;
         internal const string APP = "app";
 
