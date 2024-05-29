@@ -252,7 +252,7 @@ namespace Microsoft.Data.SqlClient
             DataClassification = 1 << (TdsEnums.FEATUREEXT_DATACLASSIFICATION - 1),
             UTF8Support = 1 << (TdsEnums.FEATUREEXT_UTF8SUPPORT - 1),
             SQLDNSCaching = 1 << (TdsEnums.FEATUREEXT_SQLDNSCACHING - 1),
-            JsonSupport = 1 << (TdsEnums.FEATUREEXT_JSONSUPPORT - 1)
+            JSONSupport = 1 << (TdsEnums.FEATUREEXT_JSONSUPPORT - 1)
         }
 
         public const uint UTF8_IN_TDSCOLLATION = 0x4000000;

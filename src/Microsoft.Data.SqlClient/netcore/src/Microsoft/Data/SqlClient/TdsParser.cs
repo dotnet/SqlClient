@@ -8440,7 +8440,7 @@ namespace Microsoft.Data.SqlClient
                     length += WriteSQLDNSCachingFeatureRequest(write);
                 }
 
-                if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
+                if ((requestedFeatures & TdsEnums.FeatureExtension.JSONSupport) != 0)
                 {
                     length += WriteJsonSupportFeatureRequest(write);
                 }
