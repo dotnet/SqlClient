@@ -1,0 +1,35 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: componentsToAdd # components to install in image
+    type: object
+    default:
+      - Microsoft.Net.Component.4.6.1.SDK
+      - Microsoft.Net.Component.4.6.1.TargetingPack
+
+steps:
+- task: PowerShell@2 
+  displayName: Install .NET Framework on Windows
+  inputs:
+    targetType: 'inline'
+    script: |
+      Set-Location "C:\Program Files (x86)\Microsoft Visual Studio\Installer\"
+      $InstallPath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise"
+      $componentsToAdd = '${{ convertToJson(parameters.componentsToAdd) }}' | ConvertFrom-Json
+
+      [string]$workloadArgs = $componentsToAdd | ForEach-Object {" --add " +  $_}
+      $Arguments = ('/c', "vs_installer.exe", 'modify', '--installPath', "`"$InstallPath`"",$workloadArgs, '--quiet', '--norestart', '--nocache')
+      $process = Start-Process -FilePath cmd.exe -ArgumentList $Arguments -Wait -PassThru
+      if ($process.ExitCode -eq 0)
+      {
+          Write-Host "components have been successfully added"
+      }
+      else
+      {
+          Write-Host "components were not installed"
+          Write-Host "Exit code: $($process.ExitCode)"
+          exit 1
+      }
