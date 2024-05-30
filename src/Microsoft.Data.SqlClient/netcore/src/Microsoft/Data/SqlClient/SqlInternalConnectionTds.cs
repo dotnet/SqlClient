@@ -2814,6 +2814,23 @@ namespace Microsoft.Data.SqlClient
                         break;
                     }
 
+                case TdsEnums.FEATUREEXT_JSONSUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for JSONSUPPORT", ObjectID);
+                        if (data.Length < 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown version number for JSONSUPPORT", ObjectID);
+                            throw SQL.ParsingError();
+                        }
+                        byte JSONSupportVersion = data[0];
+                        if (JSONSupportVersion == 0 || JSONSupportVersion > 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for JSONSUPPORT", ObjectID);
+                        }
+                        _parser.IsJSONSupportExist = true;
+                        break;
+                    }
+
                 default:
                     {
                         // Unknown feature ack
