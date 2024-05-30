@@ -1365,7 +1365,7 @@ namespace Microsoft.Data.SqlClient
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
-            requestedFeatures |= TdsEnums.FeatureExtension.JSONSupport;
+            requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
@@ -2822,12 +2822,12 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown version number for JSONSUPPORT", ObjectID);
                             throw SQL.ParsingError();
                         }
-                        byte JSONSupportVersion = data[0];
-                        if (JSONSupportVersion == 0 || JSONSupportVersion > 1)
+                        byte JsonSupportVersion = data[0];
+                        if (JsonSupportVersion == 0 || JsonSupportVersion > 1)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for JSONSUPPORT", ObjectID);
                         }
-                        _parser.IsJSONSupportExist = true;
+                        _parser.IsJsonSupportExist = true;
                         break;
                     }
 

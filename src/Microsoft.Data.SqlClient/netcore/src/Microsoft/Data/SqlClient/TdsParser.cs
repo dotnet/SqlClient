@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal int DataClassificationVersion { get; set; }
 
-        internal bool IsJSONSupportExist = false;
+        internal bool IsJsonSupportExist = false;
 
         private SqlCollation _cachedCollation;
 
@@ -8442,7 +8442,7 @@ namespace Microsoft.Data.SqlClient
                     length += WriteSQLDNSCachingFeatureRequest(write);
                 }
 
-                if ((requestedFeatures & TdsEnums.FeatureExtension.JSONSupport) != 0)
+                if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
                 {
                     length += WriteJsonSupportFeatureRequest(write);
                 }
