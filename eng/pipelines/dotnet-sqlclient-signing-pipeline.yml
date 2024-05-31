@@ -92,6 +92,10 @@ extends:
         enabled: true
         packageName: Microsoft.Data.SqlClient
         packageVersion: $(NugetPackageVersion)
+      policheck:
+        enabled: true
+        break: true # always break the build on policheck issues. You can disable it by setting to 'false'
+        exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
         enabled: false
         credscan:
@@ -99,10 +103,6 @@ extends:
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
         binskim:
           enabled: true
-        policheck:
-          enabled: true
-          break: true # always break the build on policheck issues. You can disable it by setting to 'false'
-          exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
         armory:
           enabled: true
           break: true
