@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Stable release 5.2.1] - 2024-05-28
+## [Stable release 5.2.1] - 2024-05-31
 
 This update brings the below changes over the previous release:
 
