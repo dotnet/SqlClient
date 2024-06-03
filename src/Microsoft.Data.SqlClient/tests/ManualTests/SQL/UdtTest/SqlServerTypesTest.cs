@@ -64,6 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
         [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
+        [ActiveIssue("30613")] // Requires SQL Feature pack 2008 SP3
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void GetValueTest()
         {

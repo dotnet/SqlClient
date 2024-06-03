@@ -20,6 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 #if NET50_OR_LATER
     [SupportedOSPlatform("windows")]
 #endif
+    [ActiveIssue("30613")] // Requires SQL Feature pack 2008 SP3
     [PlatformSpecific(TestPlatforms.Windows)]
     public class CspProviderExt
     {
