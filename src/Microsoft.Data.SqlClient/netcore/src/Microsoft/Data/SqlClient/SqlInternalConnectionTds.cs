@@ -2817,17 +2817,22 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.FEATUREEXT_JSONSUPPORT:
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for JSONSUPPORT", ObjectID);
-                        if (data.Length < 1)
+                        if (data.Length != 2)
                         {
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown version number for JSONSUPPORT", ObjectID);
-                            throw SQL.ParsingError();
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for JSONSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
-                        byte JsonSupportVersion = data[0];
+                        byte JsonSupportVersion = data[0];            
                         if (JsonSupportVersion == 0 || JsonSupportVersion > 1)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for JSONSUPPORT", ObjectID);
+                            throw SQL.ParsingError();
                         }
-                        _parser.IsJsonSupportExist = true;
+                        byte enabled = data[1];
+                        if (enabled == 1)
+                        {
+                            _parser.IsJsonSupportEnabled = true;
+                        }
                         break;
                     }
 
