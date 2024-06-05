@@ -713,6 +713,9 @@ End Module
             <value>To be added.</value>
             <remarks>To be added.</remarks>
         </Credentials>
+        <SSPIContextProviderFactory>
+            <summary>Gets or sets the factory used to create a <see cref="SSPIContextProvider"/> instance for customizing the SSPI context. If not set, the default for the platform will be used</summary>
+        </SSPIContextProviderFactory>
         <Database>
             <summary>Gets the name of the current database or the database to be used after a connection is opened.</summary>
             <value>The name of the current database or the name of the database to be used after a connection is opened. The default value is an empty string.</value>

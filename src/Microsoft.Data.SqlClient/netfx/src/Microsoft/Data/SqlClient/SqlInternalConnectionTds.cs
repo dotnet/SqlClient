@@ -137,6 +137,7 @@ namespace Microsoft.Data.SqlClient
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
         internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
+        internal readonly Func<SSPIContextProvider> _sspiContextProviderFactory;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
         private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
@@ -435,7 +436,8 @@ namespace Microsoft.Data.SqlClient
                 SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo = null,
                 bool applyTransientFaultHandling = false,
                 Func<SqlAuthenticationParameters, CancellationToken,
-                Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
+                Task<SqlAuthenticationToken>> accessTokenCallback = null,
+                Func<SSPIContextProvider> sspiContextProviderFactory = null) : base(connectionOptions)
         {
 
 #if DEBUG
@@ -491,6 +493,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _accessTokenCallback = accessTokenCallback;
+            _sspiContextProviderFactory = sspiContextProviderFactory;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
             _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
@@ -589,6 +592,7 @@ namespace Microsoft.Data.SqlClient
                 _parserLock.Release();
             }
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.ctor|ADV> {0}, constructed new TDS internal connection", ObjectID);
+            _sspiContextProviderFactory = sspiContextProviderFactory;
         }
 
         // The errors in the transient error set are contained in

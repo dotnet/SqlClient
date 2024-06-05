@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -890,7 +891,7 @@ namespace Microsoft.Data.SqlClient
         private static unsafe uint SNISecGenClientContextWrapper(
             [In] SNIHandle pConn,
             [In, Out] ReadOnlySpan<byte> pIn,
-            [In, Out] byte[] pOut,
+            [In, Out] Span<byte> pOut,
             [In] ref uint pcbOut,
             [MarshalAsAttribute(UnmanagedType.Bool)] out bool pfDone,
             byte* szServerInfo,
@@ -899,15 +900,16 @@ namespace Microsoft.Data.SqlClient
             [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszPassword)
         {
             fixed (byte* pInPtr = pIn)
+            fixed (byte* pOutPtr = pOut)
             {
                 switch (s_architecture)
                 {
                     case System.Runtime.InteropServices.Architecture.Arm64:
-                        return SNINativeManagedWrapperARM64.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                        return SNINativeManagedWrapperARM64.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOutPtr, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
                     case System.Runtime.InteropServices.Architecture.X64:
-                        return SNINativeManagedWrapperX64.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                        return SNINativeManagedWrapperX64.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOutPtr, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
                     case System.Runtime.InteropServices.Architecture.X86:
-                        return SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                        return SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOutPtr, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
                     default:
                         throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
                 }
@@ -1108,7 +1110,7 @@ namespace Microsoft.Data.SqlClient
             ConsumerInfo consumerInfo,
             string constring,
             ref IntPtr pConn,
-            byte[] spnBuffer,
+            ref string spn,
             byte[] instanceName,
             bool fOverrideCache,
             bool fSync,
@@ -1160,13 +1162,59 @@ namespace Microsoft.Data.SqlClient
                 clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
                 clientConsumerInfo.DNSCacheInfo.wszCachedTcpPort = cachedDNSInfo?.Port;
 
-                if (spnBuffer != null)
+                if (spn != null)
                 {
-                    fixed (byte* pin_spnBuffer = &spnBuffer[0])
+                    // An empty string implies we need to find the SPN so we supply a buffer for the max size
+                    if (spn.Length == 0)
                     {
-                        clientConsumerInfo.szSPN = pin_spnBuffer;
-                        clientConsumerInfo.cchSPN = (uint)spnBuffer.Length;
-                        return SNIOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
+                        var array = ArrayPool<byte>.Shared.Rent(SniMaxComposedSpnLength);
+                        array.AsSpan().Clear();
+
+                        try
+                        {
+                            fixed (byte* pin_spnBuffer = array)
+                            {
+                                clientConsumerInfo.szSPN = pin_spnBuffer;
+                                clientConsumerInfo.cchSPN = (uint)SniMaxComposedSpnLength;
+
+                                var result = SNIOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
+
+                                if (result == 0)
+                                {
+                                    spn = Encoding.Unicode.GetString(array).TrimEnd('\0');
+                                }
+
+                                return result;
+                            }
+                        }
+                        finally
+                        {
+                            ArrayPool<byte>.Shared.Return(array);
+                        }
+                    }
+
+                    // We have a value of the SPN, so we marshal that and send it to the native layer
+                    else
+                    {
+                        var writer = SqlObjectPools.BufferWriter.Rent();
+
+                        // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
+                        Encoding.Unicode.GetBytes(spn, writer);
+                        Trace.Assert(writer.WrittenCount <= SniMaxComposedSpnLength, "Length of the provided SPN exceeded the buffer size.");
+
+                        try
+                        {
+                            fixed (byte* pin_spnBuffer = writer.WrittenSpan)
+                            {
+                                clientConsumerInfo.szSPN = pin_spnBuffer;
+                                clientConsumerInfo.cchSPN = (uint)writer.WrittenCount;
+                                return SNIOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
+                            }
+                        }
+                        finally
+                        {
+                            SqlObjectPools.BufferWriter.Return(writer);
+                        }
                     }
                 }
                 else
@@ -1380,21 +1428,34 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, ReadOnlySpan<byte> inBuff, byte[] OutBuff, ref uint sendLength, byte[] serverUserName)
+        internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, ReadOnlySpan<byte> inBuff, Span<byte> outBuff, out uint sendLength, string serverUserName)
         {
-            fixed (byte* pin_serverUserName = &serverUserName[0])
+            sendLength = (uint)outBuff.Length;
+
+            var serverNameWriter = SqlObjectPools.BufferWriter.Rent();
+
+            try
             {
-                bool local_fDone;
-                return SNISecGenClientContextWrapper(
-                    pConnectionObject,
-                    inBuff,
-                    OutBuff,
-                    ref sendLength,
-                    out local_fDone,
-                    pin_serverUserName,
-                    (uint)serverUserName.Length,
-                    null,
-                    null);
+                Encoding.Unicode.GetBytes(serverUserName, serverNameWriter);
+
+                fixed (byte* pin_serverUserName = serverNameWriter.WrittenSpan)
+                {
+                    bool local_fDone;
+                    return SNISecGenClientContextWrapper(
+                        pConnectionObject,
+                        inBuff,
+                        outBuff,
+                        ref sendLength,
+                        out local_fDone,
+                        pin_serverUserName,
+                        (uint)serverNameWriter.WrittenCount,
+                        null,
+                        null);
+                }
+            }
+            finally
+            {
+                SqlObjectPools.BufferWriter.Return(serverNameWriter);
             }
         }
 

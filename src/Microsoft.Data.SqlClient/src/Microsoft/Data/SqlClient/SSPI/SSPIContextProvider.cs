@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Diagnostics;
 using Microsoft.Data.Common;
 
@@ -6,37 +7,71 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal abstract class SSPIContextProvider
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SSPIContextProvider.xml' path='docs/members[@name="SSPIContextProvider"]/SSPIContextProvider/*'/>
+    public abstract class SSPIContextProvider
     {
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
         private protected TdsParserStateObject _physicalStateObj = null!;
+        private SqlAuthenticationParameters? _parameters;
+        private protected string[] _serverNames = Array.Empty<string>();
 
-        internal virtual uint MaxSSPILength => 4096; // TODO: what is a good default here?
-
-        internal void Initialize(ServerInfo serverInfo, TdsParserStateObject physicalStateObj, TdsParser parser)
+        internal void Initialize(ServerInfo serverInfo, TdsParserStateObject physicalStateObj, TdsParser parser, params string[] serverNames)
         {
+            if (serverNames is null)
+            {
+                throw new ArgumentNullException(nameof(serverNames));
+            }
+
+            Debug.Assert(serverNames.Length > 0);
+
             _parser = parser;
             _physicalStateObj = physicalStateObj;
             _serverInfo = serverInfo;
+            _serverNames = serverNames;
+
+            _parameters = InitializeAuthenticationParameters(parser.Connection, serverNames[0]);
 
             Initialize();
+        }
+
+        private static SqlAuthenticationParameters InitializeAuthenticationParameters(SqlInternalConnectionTds connection, string serverName)
+        {
+            var auth = new SqlAuthenticationParameters.Builder(
+                authenticationMethod: connection.ConnectionOptions.Authentication,
+                resource: null,
+                authority: null,
+                serverName: serverName,
+                connection.ConnectionOptions.InitialCatalog);
+
+            if (connection.ConnectionOptions.UserID is { } userId)
+            {
+                auth.WithUserId(userId);
+            }
+
+            if (connection.ConnectionOptions.Password is { } password)
+            {
+                auth.WithPassword(password);
+            }
+
+            return auth;
         }
 
         private protected virtual void Initialize()
         {
         }
 
-        internal abstract void GenerateSspiClientContext(ReadOnlyMemory<byte> input, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer);
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SSPIContextProvider.xml' path='docs/members[@name="SSPIContextProvider"]/AuthenticationParameters/*'/>
+        protected SqlAuthenticationParameters AuthenticationParameters => _parameters ?? throw new InvalidOperationException("SSPI context provider has not been initialized");
 
-        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref UInt32 sendLength, byte[] sniSpnBuffer)
-            => SSPIData(receivedBuff, ref sendBuff, ref sendLength, new[] { sniSpnBuffer });
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SSPIContextProvider.xml' path='docs/members[@name="SSPIContextProvider"]/GenerateSspiClientContext/*'/>
+        protected abstract void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter);
 
-        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref UInt32 sendLength, byte[][] sniSpnBuffer)
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
         {
             try
             {
-                GenerateSspiClientContext(receivedBuff, ref sendBuff, ref sendLength, sniSpnBuffer);
+                GenerateSspiClientContext(receivedBuff, outgoingBlobWriter);
             }
             catch (Exception e)
             {
@@ -44,7 +79,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected void SSPIError(string error, string procedure)
+        private protected void SSPIError(string error, string procedure)
         {
             Debug.Assert(!ADP.IsEmpty(procedure), "TdsParser.SSPIError called with an empty or null procedure string");
             Debug.Assert(!ADP.IsEmpty(error), "TdsParser.SSPIError called with an empty or null error string");

@@ -149,7 +149,7 @@ namespace Microsoft.Data.SqlClient
         internal SNIHandle(
             SNINativeMethodWrapper.ConsumerInfo myInfo,
             string serverName,
-            byte[] spnBuffer,
+            ref string spn,
             int timeout,
             out byte[] instanceName,
             bool flushCache,
@@ -185,11 +185,11 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                 int transparentNetworkResolutionStateNo = (int)transparentNetworkResolutionState;
                 _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
-                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, transparentNetworkResolutionStateNo, totalTimeout,
+                            ref spn, instanceName, flushCache, fSync, timeout, fParallel, transparentNetworkResolutionStateNo, totalTimeout,
                             ADP.IsAzureSqlServerEndpoint(serverName), ipPreference, cachedDNSInfo, hostNameInCertificate);
 #else
                 _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
-                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
+                            ref spn, instanceName, flushCache, fSync, timeout, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
 #endif // NETFRAMEWORK
             }
         }

@@ -18,10 +18,12 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlCredential _credential;
         private readonly string _accessToken;
         private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+        private Func<SSPIContextProvider> _sspiContextProviderFactory;
 
         internal SqlCredential Credential => _credential;
         internal string AccessToken => _accessToken;
         internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback => _accessTokenCallback;
+        internal Func<SSPIContextProvider> SSPIContextProviderFactory => _sspiContextProviderFactory;
 
         internal override string ConnectionString
         {
@@ -54,7 +56,8 @@ namespace Microsoft.Data.SqlClient
                             ServerCertificateValidationCallback serverCertificateValidationCallback,
                             ClientCertificateRetrievalCallback clientCertificateRetrievalCallback,
                             SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo,
-                            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionString)
+                            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback,
+                            Func<SSPIContextProvider> sspiContextProviderFactory) : base(connectionString)
         {
             Debug.Assert(_credential == null || _accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have a value at the same time.");
             _credential = credential;
@@ -63,17 +66,24 @@ namespace Microsoft.Data.SqlClient
             _serverCertificateValidationCallback = serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = clientCertificateRetrievalCallback;
             _originalNetworkAddressInfo = originalNetworkAddressInfo;
+            _sspiContextProviderFactory = sspiContextProviderFactory;
             CalculateHashCode();
         }
         #endregion
 #else
         #region NET Core
-        internal SqlConnectionPoolKey(string connectionString, SqlCredential credential, string accessToken, Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback) : base(connectionString)
+        internal SqlConnectionPoolKey(
+            string connectionString,
+            SqlCredential credential,
+            string accessToken,
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback,
+            Func<SSPIContextProvider> sspiContextProviderFactory) : base(connectionString)
         {
             Debug.Assert(credential == null || accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have a value at the same time.");
             _credential = credential;
             _accessToken = accessToken;
             _accessTokenCallback = accessTokenCallback;
+            _sspiContextProviderFactory = sspiContextProviderFactory;
             CalculateHashCode();
         }
         #endregion
@@ -84,6 +94,7 @@ namespace Microsoft.Data.SqlClient
             _credential = key.Credential;
             _accessToken = key.AccessToken;
             _accessTokenCallback = key._accessTokenCallback;
+            _sspiContextProviderFactory = key._sspiContextProviderFactory;
 #if NETFRAMEWORK
             _serverCertificateValidationCallback = key._serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = key._clientCertificateRetrievalCallback;
@@ -103,6 +114,7 @@ namespace Microsoft.Data.SqlClient
                 && ConnectionString == key.ConnectionString
                 && _accessTokenCallback == key._accessTokenCallback
                 && string.CompareOrdinal(_accessToken, key._accessToken) == 0
+                && _sspiContextProviderFactory == key._sspiContextProviderFactory
 #if NETFRAMEWORK
                 && _serverCertificateValidationCallback == key._serverCertificateValidationCallback
                 && _clientCertificateRetrievalCallback == key._clientCertificateRetrievalCallback
@@ -140,6 +152,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     _hashValue = _hashValue * 17 + _accessTokenCallback.GetHashCode();
                 }
+            }
+
+            if (_sspiContextProviderFactory != null)
+            {
+                _hashValue = _hashValue * 17 + _sspiContextProviderFactory.GetHashCode();
             }
 
 #if NETFRAMEWORK

@@ -800,6 +800,8 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public Microsoft.Data.SqlClient.SqlCredential Credential { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SSPIContextProviderFactory/*' />
+        public System.Func<SSPIContextProvider> SSPIContextProviderFactory { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*'/>
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public override string Database { get { throw null; } }
@@ -1951,6 +1953,15 @@ namespace Microsoft.Data.SqlClient
         public static SqlRetryLogicBaseProvider CreateFixedRetryProvider(SqlRetryLogicOption retryLogicOption) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateNoneRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateNoneRetryProvider() { throw null; }
+    }
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SSPIContextProvider.xml' path='docs/members[@name="SSPIContextProvider"]/SSPIContextProvider/*'/>
+    public abstract class SSPIContextProvider
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SSPIContextProvider.xml' path='docs/members[@name="SSPIContextProvider"]/AuthenticationParameters/*'/>
+        protected SqlAuthenticationParameters AuthenticationParameters { get { throw null; } }
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SSPIContextProvider.xml' path='docs/members[@name="SSPIContextProvider"]/GenerateSspiClientContext/*'/>
+        protected abstract void GenerateSspiClientContext(System.ReadOnlySpan<byte> incomingBlob, System.Buffers.IBufferWriter<byte> outgoingBlobWriter);
     }
 }
 namespace Microsoft.Data.SqlClient.Server

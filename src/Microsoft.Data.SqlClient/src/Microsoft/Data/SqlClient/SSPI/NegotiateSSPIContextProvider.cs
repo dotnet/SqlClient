@@ -1,8 +1,9 @@
 ﻿#if NET8_0_OR_GREATER
 
 using System;
-using System.Text;
 using System.Net.Security;
+using System.Buffers;
+using System.Text;
 
 #nullable enable
 
@@ -12,16 +13,20 @@ namespace Microsoft.Data.SqlClient
     {
         private NegotiateAuthentication? _negotiateAuth = null;
 
-        internal override void GenerateSspiClientContext(ReadOnlyMemory<byte> received, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer)
+        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter)
         {
-            _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = Encoding.Unicode.GetString(_sniSpnBuffer[0]) });
-            sendBuff = _negotiateAuth.GetOutgoingBlob(received.Span, out NegotiateAuthenticationStatusCode statusCode)!;
+            _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = AuthenticationParameters.ServerName });
+            var result = _negotiateAuth.GetOutgoingBlob(incomingBlob, out NegotiateAuthenticationStatusCode statusCode)!;
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}, StatusCode={1}", _physicalStateObj.SessionId, statusCode);
             if (statusCode is not NegotiateAuthenticationStatusCode.Completed and not NegotiateAuthenticationStatusCode.ContinueNeeded)
             {
                 throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + Environment.NewLine + statusCode);
             }
-            sendLength = (uint)(sendBuff != null ? sendBuff.Length : 0);
+
+            if (result is { })
+            {
+                outgoingBlobWriter.Write(result);
+            }
         }
     }
 }
