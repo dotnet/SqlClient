@@ -25,6 +25,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
         }
 
+        #region AsyncDebugScopeTests
+#if DEBUG
+        // All AsyncDebugScope Tests are only supported in Debug mode!
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData(100000, -1)]
         [InlineData(10000, 9000)]
@@ -40,8 +43,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-#if DEBUG
             bool addWithValue = false;
+            
             do
             {
                 bool oldTypes = false;
@@ -65,7 +68,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 } while (oldTypes);
                 s_useSP = !s_useSP;
             } while (s_useSP);
-#endif
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
@@ -79,8 +81,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-#if DEBUG
             bool addWithValue = false;
+
             do
             {
                 bool oldTypes = false;
@@ -103,7 +105,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 } while (oldTypes);
                 s_useSP = !s_useSP;
             } while (s_useSP);
-#endif
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
@@ -121,8 +122,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-#if DEBUG
             bool addWithValue = false;
+
             do
             {
                 bool oldTypes = false;
@@ -151,7 +152,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 } while (oldTypes);
                 s_useSP = !s_useSP;
             } while (s_useSP);
-#endif
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-#if DEBUG
+
             do
             {
                 bool oldTypes = false;
@@ -193,7 +193,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 } while (oldTypes);
                 s_useSP = !s_useSP;
             } while (s_useSP);
-#endif
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
@@ -207,8 +206,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-#if DEBUG
             bool addWithValue = false;
+
             do
             {
                 bool oldTypes = false;
@@ -236,7 +235,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 } while (oldTypes);
                 s_useSP = !s_useSP;
             } while (s_useSP);
-#endif
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
@@ -248,7 +246,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-#if DEBUG
+
             do
             {
                 using (AsyncDebugScope debugScope = new())
@@ -266,7 +264,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 s_useSP = !s_useSP;
             } while (s_useSP);
-#endif
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
@@ -277,9 +274,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-#if DEBUG
             bool oldTypes = false;
             bool addWithValue = true;
+
             do
             {
                 using (AsyncDebugScope debugScope = new())
@@ -297,7 +294,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 s_useSP = !s_useSP;
             } while (s_useSP);
-#endif
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
@@ -308,9 +304,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-#if DEBUG
             bool oldTypes = false;
             bool addWithValue = true;
+
             do
             {
                 using (AsyncDebugScope debugScope = new())
@@ -328,7 +324,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 s_useSP = !s_useSP;
             } while (s_useSP);
-#endif
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
@@ -339,10 +334,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-#if DEBUG
             bool oldTypes = false;
             bool addWithValue = true;
             bool nvarchar = true;
+
             do
             {
                 using (AsyncDebugScope debugScope = new())
@@ -360,7 +355,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 s_useSP = !s_useSP;
             } while (s_useSP);
-#endif
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
@@ -371,10 +365,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-#if DEBUG
             bool oldTypes = false;
             bool addWithValue = true;
             bool nvarchar = true;
+
             do
             {
                 using (AsyncDebugScope debugScope = new())
@@ -392,8 +386,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 s_useSP = !s_useSP;
             } while (s_useSP);
-#endif
         }
+#endif
+        #endregion
 
         internal class CustomStream : Stream
         {
