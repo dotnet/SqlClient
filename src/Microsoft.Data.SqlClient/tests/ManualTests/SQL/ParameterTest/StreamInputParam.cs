@@ -5,11 +5,13 @@
 using System;
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -21,6 +23,376 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         internal class CustomStreamException : Exception
         {
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(100000, -1)]
+        [InlineData(10000, 9000)]
+        [InlineData(10000, 1000)]
+        [InlineData(500, 9000)]
+        [InlineData(500, 1000)]
+        [InlineData(0, -1)]
+        [InlineData(0, 9000)]
+        [InlineData(0, 1000)]
+        [InlineData(10000, 0)]
+        public static void AsyncDebugScopeTestStreamShouldSucceed(int dataLen, int paramLen)
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            s_useSP = false;
+            bool addWithValue = false;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+#if DEBUG
+            do
+            {
+                bool oldTypes = false;
+                do
+                {
+                    using (AsyncDebugScope debugScope = new())
+                    {
+                        for (int run = 0; run < 2; run++)
+                        {
+                            bool sync = (run == 0);
+                            if (run == 1)
+                            {
+                                debugScope.ForceAsyncWriteDelay = 1;
+                            }
+                            Assert.Equal($"TestStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                           TestStream(dataLen, sync, oldTypes, paramLen, addWithValue));
+                        }
+                    }
+
+                    oldTypes = !oldTypes;
+                } while (oldTypes);
+                s_useSP = !s_useSP;
+            } while (s_useSP);
+#endif
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(10000, -1, false)]
+        [InlineData(10000, 9000, false)]
+        [InlineData(10000, 1000, false)]
+        [InlineData(10000, 0, false)]
+        [InlineData(10000, -1, true)]
+        public static void AsyncDebugScopeTestCustomStreamShouldSucceed(int dataLen, int paramLen, bool error)
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            s_useSP = false;
+            bool addWithValue = false;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+#if DEBUG
+            do
+            {
+                bool oldTypes = false;
+                do
+                {
+                    using (AsyncDebugScope debugScope = new())
+                    {
+                        for (int run = 0; run < 2; run++)
+                        {
+                            bool sync = (run == 0);
+                            if (run == 1)
+                            {
+                                debugScope.ForceAsyncWriteDelay = 1;
+                            }
+                            Assert.Equal($"TestCustomStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} Error {error} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                           TestCustomStream(dataLen, sync, oldTypes, paramLen, error, addWithValue));
+                        }
+                    }
+                    oldTypes = !oldTypes;
+                } while (oldTypes);
+                s_useSP = !s_useSP;
+            } while (s_useSP);
+#endif
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(100000, -1)]
+        [InlineData(10000, 9000)]
+        [InlineData(10000, 1000)]
+        [InlineData(500, 9000)]
+        [InlineData(500, 1000)]
+        [InlineData(0, -1)]
+        [InlineData(0, 9000)]
+        [InlineData(0, 1000)]
+        [InlineData(10000, 0)]
+        public static void AsyncDebugScopeTestTextReaderShouldSucceed(int dataLen, int paramLen)
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            s_useSP = false;
+            bool addWithValue = false;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+#if DEBUG
+            do
+            {
+                bool oldTypes = false;
+                do
+                {
+                    using (AsyncDebugScope debugScope = new())
+                    {
+                        for (int run = 0; run < 2; run++)
+                        {
+                            bool sync = (run == 0);
+                            if (run == 1)
+                            {
+                                debugScope.ForceAsyncWriteDelay = 1;
+                            }
+
+                            bool nvarchar = false;
+                            do
+                            {
+                                Assert.Equal($"TestTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                               TestTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, addWithValue));
+                                nvarchar = !nvarchar;
+                            } while (nvarchar);
+                        }
+                    }
+                    oldTypes = !oldTypes;
+                } while (oldTypes);
+                s_useSP = !s_useSP;
+            } while (s_useSP);
+#endif
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(-1)]
+        [InlineData(1000000)]
+        [InlineData(9000)]
+        [InlineData(1000)]
+        [InlineData(0)]
+        public static void AsyncDebugScopeTestXml2TextShouldSucceed(int paramLen)
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            s_useSP = false;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+#if DEBUG
+            do
+            {
+                bool oldTypes = false;
+                do
+                {
+                    using (AsyncDebugScope debugScope = new())
+                    {
+                        for (int run = 0; run < 2; run++)
+                        {
+                            bool sync = (run == 0);
+                            if (run == 1)
+                            {
+                                debugScope.ForceAsyncWriteDelay = 1;
+                            }
+                            bool nvarchar = false;
+                            do
+                            {
+                                Assert.Equal($"TestXml2Text (Sync {sync} ParamLen {paramLen} NVARCHAR {nvarchar} OLD {oldTypes}) is OK",
+                                               TestXml2Text(sync, oldTypes, paramLen, nvarchar));
+                                nvarchar = !nvarchar;
+                            } while (nvarchar);
+                        }
+                    }
+                    oldTypes = !oldTypes;
+                } while (oldTypes);
+                s_useSP = !s_useSP;
+            } while (s_useSP);
+#endif
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(10000, -1, false)]
+        [InlineData(10000, 9000, false)]
+        [InlineData(10000, 1000, false)]
+        [InlineData(10000, 0, false)]
+        [InlineData(10000, -1, true)]
+        public static void AsyncDebugScopeTestCustomTextReaderShouldSucceed(int dataLen, int paramLen, bool error)
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            s_useSP = false;
+            bool addWithValue = false;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+#if DEBUG
+            do
+            {
+                bool oldTypes = false;
+                do
+                {
+                    using (AsyncDebugScope debugScope = new())
+                    {
+                        for (int run = 0; run < 2; run++)
+                        {
+                            bool sync = (run == 0);
+                            if (run == 1)
+                            {
+                                debugScope.ForceAsyncWriteDelay = 1;
+                            }
+                            bool nvarchar = false;
+                            do
+                            {
+                                Assert.Equal($"TestCustomTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} Error {error} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                               TestCustomTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, error, addWithValue));
+                                nvarchar = !nvarchar;
+                            } while (nvarchar);
+                        }
+                    }
+                    oldTypes = !oldTypes;
+                } while (oldTypes);
+                s_useSP = !s_useSP;
+            } while (s_useSP);
+#endif
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(true, false)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public static void AsyncDebugScopeTestXmlShouldSucceed(bool lengthLimited, bool addWithValue)
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            s_useSP = false;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+#if DEBUG
+            do
+            {
+                using (AsyncDebugScope debugScope = new())
+                {
+                    for (int run = 0; run < 2; run++)
+                    {
+                        bool sync = (run == 0);
+                        if (run == 1)
+                        {
+                            debugScope.ForceAsyncWriteDelay = 1;
+                        }
+                        Assert.Equal($"TestXML (Sync {sync} LimitLength {lengthLimited} AVW {addWithValue}) is OK",
+                                       TestXML(sync, lengthLimited, addWithValue));
+                    }
+                }
+                s_useSP = !s_useSP;
+            } while (s_useSP);
+#endif
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(100000, -1)]
+        [InlineData(0, -1)]
+        public static void AsyncDebugScopeTestStreamWithNegativeParamLengthShouldSucceed(int dataLen, int paramLen)
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            s_useSP = false;
+            bool oldTypes = false;
+            bool addWithValue = true;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+#if DEBUG
+            do
+            {
+                using (AsyncDebugScope debugScope = new())
+                {
+                    for (int run = 0; run < 2; run++)
+                    {
+                        bool sync = (run == 0);
+                        if (run == 1)
+                        {
+                            debugScope.ForceAsyncWriteDelay = 1;
+                        }
+                        Assert.Equal($"TestStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                       TestStream(dataLen, sync, oldTypes, -1, addWithValue));
+                    }
+                }
+                s_useSP = !s_useSP;
+            } while (s_useSP);
+#endif
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(10000, -1, false)]
+        [InlineData(10000, -1, true)]
+        public static void AsyncDebugScopeTestCustomStreamWithNegativeParamLengthShouldSucceed(int dataLen, int paramLen, bool error)
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            s_useSP = false;
+            bool oldTypes = false;
+            bool addWithValue = true;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+#if DEBUG
+            do
+            {
+                using (AsyncDebugScope debugScope = new())
+                {
+                    for (int run = 0; run < 2; run++)
+                    {
+                        bool sync = (run == 0);
+                        if (run == 1)
+                        {
+                            debugScope.ForceAsyncWriteDelay = 1;
+                        }
+                        Assert.Equal($"TestCustomStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} Error {error} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                       TestCustomStream(dataLen, sync, oldTypes, paramLen, error, addWithValue));
+                    }
+                }
+                s_useSP = !s_useSP;
+            } while (s_useSP);
+#endif
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(100000, -1)]
+        [InlineData(0, -1)]
+        public static void AsyncDebugScopeTestTextReaderWithNegativeParamLengthShouldSucceed(int dataLen, int paramLen)
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            s_useSP = false;
+            bool oldTypes = false;
+            bool nvarchar = true;
+            bool addWithValue = true;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+#if DEBUG
+            do
+            {
+                using (AsyncDebugScope debugScope = new())
+                {
+                    for (int run = 0; run < 2; run++)
+                    {
+                        bool sync = (run == 0);
+                        if (run == 1)
+                        {
+                            debugScope.ForceAsyncWriteDelay = 1;
+                        }
+                        Assert.Equal($"TestTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                       TestTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, addWithValue));
+                    }
+                }
+                s_useSP = !s_useSP;
+            } while (s_useSP);
+#endif
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(10000, -1, false)]
+        [InlineData(10000, -1, true)]
+        public static void AsyncDebugScopeTestCustomTextReaderWithNegativeParamLengthShouldSucceed(int dataLen, int paramLen, bool error)
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            s_useSP = false;
+            bool oldTypes = false;
+            bool nvarchar = true;
+            bool addWithValue = true;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+#if DEBUG
+            do
+            {
+                using (AsyncDebugScope debugScope = new())
+                {
+                    for (int run = 0; run < 2; run++)
+                    {
+                        bool sync = (run == 0);
+                        if (run == 1)
+                        {
+                            debugScope.ForceAsyncWriteDelay = 1;
+                        }
+                        Assert.Equal($"TestCustomTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} Error {error} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                       TestCustomTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, error, addWithValue));
+                    }
+                }
+                s_useSP = !s_useSP;
+            } while (s_useSP);
+#endif
         }
 
         internal class CustomStream : Stream
@@ -139,20 +511,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Debug.Assert(val[i] == ret[i], "Data not equal");
         }
 
-        private static void TestStream(int dataLen, bool sync, bool oldTypes, int paramLen, bool addWithValue = false)
+        private static string TestStream(int dataLen, bool sync, bool oldTypes, int paramLen, bool addWithValue = false)
         {
             byte[] val = new byte[dataLen];
             s_rand.NextBytes(val);
             TestStreamHelper(val, new MemoryStream(val, false), sync, oldTypes, paramLen, false, addWithValue);
-            Console.WriteLine("TestStream (Sync {0} DataLen {1} ParamLen {2} OLD {3} AVW {4}) is OK", sync, dataLen, paramLen, oldTypes, addWithValue);
+
+            string returnValue = $"TestStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} OLD {oldTypes} AVW {addWithValue}) is OK";
+            Console.WriteLine(returnValue);
+            return returnValue;
         }
 
-        private static void TestCustomStream(int dataLen, bool sync, bool oldTypes, int paramLen, bool error, bool addWithValue = false)
+        private static string TestCustomStream(int dataLen, bool sync, bool oldTypes, int paramLen, bool error, bool addWithValue = false)
         {
             byte[] val = new byte[dataLen];
             s_rand.NextBytes(val);
             TestStreamHelper(val, new CustomStream(val, sync || oldTypes, error ? dataLen / 2 : -1), sync, oldTypes, paramLen, error, addWithValue);
-            Console.WriteLine("TestCustomStream (Sync {0} DataLen {1} ParamLen {2} Error {3} OLD {4} AVW {5}) is OK", sync, dataLen, paramLen, error, oldTypes, addWithValue);
+
+            string result = $"TestCustomStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} Error {error} OLD {oldTypes} AVW {addWithValue}) is OK";
+            Console.WriteLine(result);
+            return result;
         }
 
         private static void TestStreamHelper(byte[] val, object stream, bool sync, bool oldTypes, int paramLen, bool expectException, bool addWithValue)
@@ -257,23 +635,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void TestXml2Text(bool sync, bool oldTypes, int paramLen, bool nvarchar)
+        private static string TestXml2Text(bool sync, bool oldTypes, int paramLen, bool nvarchar)
         {
             TestTextWrite(XmlStr, XmlReader.Create(new StringReader(XmlStr)), sync, oldTypes, paramLen, nvarchar, false, false);
-            Console.WriteLine("TestXml2Text (Sync {0} ParamLen {1} NVARCHAR {2} OLD {3}) is OK", sync, paramLen, nvarchar, oldTypes);
+            string result = $"TestXml2Text (Sync {sync} ParamLen {paramLen} NVARCHAR {nvarchar} OLD {oldTypes}) is OK";
+            Console.WriteLine(result);
+            return result;
         }
 
-        private static void TestTextReader(int dataLen, bool sync, bool oldTypes, int paramLen, bool nvarchar, bool addWithValue = false)
+        private static string TestTextReader(int dataLen, bool sync, bool oldTypes, int paramLen, bool nvarchar, bool addWithValue = false)
         {
             StringBuilder sb = new();
             for (int i = 0; i < dataLen; i++)
                 sb.Append((char)('A' + s_rand.Next(20)));
             string s = sb.ToString();
             TestTextWrite(s, new StringReader(s), sync, oldTypes, paramLen, nvarchar, false, addWithValue);
-            Console.WriteLine("TestTextReader (Sync {0} DataLen {1} ParamLen {2} NVARCHAR {3} OLD {4} AVW {5}) is OK", sync, dataLen, paramLen, nvarchar, oldTypes, addWithValue);
+
+            string result = $"TestTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} OLD {oldTypes} AVW {addWithValue}) is OK";
+            Console.WriteLine(result);
+            return result;
         }
 
-        private static void TestCustomTextReader(int dataLen, bool sync, bool oldTypes, int paramLen, bool nvarchar, bool error, bool addWithValue = false)
+        private static string TestCustomTextReader(int dataLen, bool sync, bool oldTypes, int paramLen, bool nvarchar, bool error, bool addWithValue = false)
         {
             StringBuilder sb = new();
             for (int i = 0; i < dataLen; i++)
@@ -283,7 +666,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                     new CustomStream(Encoding.Unicode.GetBytes(s), sync || oldTypes, error ? dataLen : -1),
                                     Encoding.Unicode),
                                     sync, oldTypes, paramLen, nvarchar, error, addWithValue);
-            Console.WriteLine("TestCustomTextReader (Sync {0} DataLen {1} ParamLen {2} NVARCHAR {3} Error {4} OLD {5} AVW {6}) is OK", sync, dataLen, paramLen, nvarchar, error, oldTypes, addWithValue);
+            string result = $"TestCustomTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} Error {error} OLD {oldTypes} AVW {addWithValue}) is OK";
+            Console.WriteLine(result);
+            return result;
         }
 
         private static void TestTextWrite(string s, object reader, bool sync, bool oldTypes, int paramLen, bool nvarchar, bool expectException, bool addWithValue)
@@ -378,9 +763,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void TestXML(bool sync, bool lengthLimited, bool addWithValue = false)
+        private static string TestXML(bool sync, bool lengthLimited, bool addWithValue = false)
         {
-
             using SqlConnection conn = new(s_connStr);
             conn.Open();
             SqlCommand command = new()
@@ -461,7 +845,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     dropCommand.ExecuteNonQuery();
                 }
             }
-            Console.WriteLine("TestXml (Sync {0} LimitLength {1} ) is OK", sync, lengthLimited);
+            string result = $"TestXML (Sync {sync} LimitLength {lengthLimited} AVW {addWithValue}) is OK";
+            Console.WriteLine(result);
+            return result;
         }
 
         private static void ImmediateCancelBin()
@@ -681,7 +1067,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             }
 
                             TestStream(100000, sync, oldTypes, -1);
-
                             TestStream(10000, sync, oldTypes, 9000);
                             TestStream(10000, sync, oldTypes, 1000);
                             TestStream(500, sync, oldTypes, 9000);
