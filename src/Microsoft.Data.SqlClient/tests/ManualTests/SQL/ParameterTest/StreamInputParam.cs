@@ -20,7 +20,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly Random s_rand = new(9999);
         private static string s_connStr = null;
         private static bool s_useSP = false;
-        private static bool s_addWithValue = false;
 
         internal class CustomStreamException : Exception
         {
@@ -40,9 +39,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
-            s_addWithValue = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 #if DEBUG
+            bool addWithValue = false;
             do
             {
                 bool oldTypes = false;
@@ -57,8 +56,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             {
                                 debugScope.ForceAsyncWriteDelay = 1;
                             }
-                            Assert.Equal($"TestStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} OLD {oldTypes} AVW {s_addWithValue}) is OK",
-                                           TestStream(dataLen, sync, oldTypes, paramLen, s_addWithValue));
+                            Assert.Equal($"TestStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                           TestStream(dataLen, sync, oldTypes, paramLen, addWithValue));
                         }
                     }
 
@@ -79,9 +78,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
-            s_addWithValue = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 #if DEBUG
+            bool addWithValue = false;
             do
             {
                 bool oldTypes = false;
@@ -96,8 +95,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             {
                                 debugScope.ForceAsyncWriteDelay = 1;
                             }
-                            Assert.Equal($"TestCustomStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} Error {error} OLD {oldTypes} AVW {s_addWithValue}) is OK",
-                                           TestCustomStream(dataLen, sync, oldTypes, paramLen, error, s_addWithValue));
+                            Assert.Equal($"TestCustomStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} Error {error} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                           TestCustomStream(dataLen, sync, oldTypes, paramLen, error, addWithValue));
                         }
                     }
                     oldTypes = !oldTypes;
@@ -121,9 +120,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
-            s_addWithValue = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 #if DEBUG
+            bool addWithValue = false;
             do
             {
                 bool oldTypes = false;
@@ -142,8 +141,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             bool nvarchar = false;
                             do
                             {
-                                Assert.Equal($"TestTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} OLD {oldTypes} AVW {s_addWithValue}) is OK",
-                                               TestTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, s_addWithValue));
+                                Assert.Equal($"TestTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                               TestTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, addWithValue));
                                 nvarchar = !nvarchar;
                             } while (nvarchar);
                         }
@@ -207,9 +206,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
-            s_addWithValue = false;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 #if DEBUG
+            bool addWithValue = false;
             do
             {
                 bool oldTypes = false;
@@ -227,8 +226,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             bool nvarchar = false;
                             do
                             {
-                                Assert.Equal($"TestCustomTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} Error {error} OLD {oldTypes} AVW {s_addWithValue}) is OK",
-                                               TestCustomTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, error, s_addWithValue));
+                                Assert.Equal($"TestCustomTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} Error {error} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                               TestCustomTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, error, addWithValue));
                                 nvarchar = !nvarchar;
                             } while (nvarchar);
                         }
@@ -277,10 +276,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
-            bool oldTypes = false;
-            s_addWithValue = true;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 #if DEBUG
+            bool oldTypes = false;
+            bool addWithValue = true;
             do
             {
                 using (AsyncDebugScope debugScope = new())
@@ -292,8 +291,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {
                             debugScope.ForceAsyncWriteDelay = 1;
                         }
-                        Assert.Equal($"TestStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} OLD {oldTypes} AVW {s_addWithValue}) is OK",
-                                       TestStream(dataLen, sync, oldTypes, -1, s_addWithValue));
+                        Assert.Equal($"TestStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                       TestStream(dataLen, sync, oldTypes, -1, addWithValue));
                     }
                 }
                 s_useSP = !s_useSP;
@@ -308,10 +307,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
-            bool oldTypes = false;
-            s_addWithValue = true;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 #if DEBUG
+            bool oldTypes = false;
+            bool addWithValue = true;
             do
             {
                 using (AsyncDebugScope debugScope = new())
@@ -323,8 +322,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {
                             debugScope.ForceAsyncWriteDelay = 1;
                         }
-                        Assert.Equal($"TestCustomStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} Error {error} OLD {oldTypes} AVW {s_addWithValue}) is OK",
-                                       TestCustomStream(dataLen, sync, oldTypes, paramLen, error, s_addWithValue));
+                        Assert.Equal($"TestCustomStream (Sync {sync} DataLen {dataLen} ParamLen {paramLen} Error {error} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                       TestCustomStream(dataLen, sync, oldTypes, paramLen, error, addWithValue));
                     }
                 }
                 s_useSP = !s_useSP;
@@ -339,11 +338,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
-            bool oldTypes = false;
-            bool nvarchar = true;
-            s_addWithValue = true;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 #if DEBUG
+            bool oldTypes = false;
+            bool addWithValue = true;
+            bool nvarchar = true;
             do
             {
                 using (AsyncDebugScope debugScope = new())
@@ -355,8 +354,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {
                             debugScope.ForceAsyncWriteDelay = 1;
                         }
-                        Assert.Equal($"TestTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} OLD {oldTypes} AVW {s_addWithValue}) is OK",
-                                       TestTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, s_addWithValue));
+                        Assert.Equal($"TestTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                       TestTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, addWithValue));
                     }
                 }
                 s_useSP = !s_useSP;
@@ -371,11 +370,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             s_useSP = false;
-            bool oldTypes = false;
-            bool nvarchar = true;
-            s_addWithValue = true;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 #if DEBUG
+            bool oldTypes = false;
+            bool addWithValue = true;
+            bool nvarchar = true;
             do
             {
                 using (AsyncDebugScope debugScope = new())
@@ -387,8 +386,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {
                             debugScope.ForceAsyncWriteDelay = 1;
                         }
-                        Assert.Equal($"TestCustomTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} Error {error} OLD {oldTypes} AVW {s_addWithValue}) is OK",
-                                       TestCustomTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, error, s_addWithValue));
+                        Assert.Equal($"TestCustomTextReader (Sync {sync} DataLen {dataLen} ParamLen {paramLen} NVARCHAR {nvarchar} Error {error} OLD {oldTypes} AVW {addWithValue}) is OK",
+                                       TestCustomTextReader(dataLen, sync, oldTypes, paramLen, nvarchar, error, addWithValue));
                     }
                 }
                 s_useSP = !s_useSP;
