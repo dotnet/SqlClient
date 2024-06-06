@@ -5,11 +5,13 @@
 using System;
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -21,6 +23,51 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         internal class CustomStreamException : Exception
         {
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        private static void ImmediateCancelBinTestShouldSucceed()
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+
+            Assert.Equal("PASS", ImmediateCancelBin());
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        private static void ImmediateCancelTextTestShouldSucceed()
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+
+            Assert.Equal("PASS", ImmediateCancelText());
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        private static void ImmediateCancelXmlTestShouldSucceed()
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+
+            Assert.Equal("PASS", ImmediateCancelXml());
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        private static void PrepareCommandTestShouldSucceed()
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+
+            Assert.Equal("PASS", PrepareCommand());
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        private static void CommandReuseTestShouldSucceed()
+        {
+            s_connStr = DataTestUtility.TCPConnectionString;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+
+            Assert.Equal("PASS", CommandReuse());
         }
 
         internal class CustomStream : Stream
@@ -464,8 +511,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.WriteLine("TestXml (Sync {0} LimitLength {1} ) is OK", sync, lengthLimited);
         }
 
-        private static void ImmediateCancelBin()
+        private static string ImmediateCancelBin()
         {
+            string result = string.Empty;
             Console.WriteLine("Test immediate cancel for binary stream");
             CancellationTokenSource cts = new();
             using SqlConnection conn = new(s_connStr);
@@ -488,6 +536,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
                 Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
+                result = "FAIL";
             }
             catch (AggregateException ae)
             {
@@ -496,6 +545,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                      ae.InnerException.Message.Contains("Operation cancelled by user.")))
                 {
                     Console.WriteLine("PASS: Task is cancelled");
+                    result = "PASS";
                 }
                 else
                 {
@@ -506,10 +556,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 ms.Close();
             }
+
+            return result;
         }
 
-        private static void ImmediateCancelText()
+        private static string ImmediateCancelText()
         {
+            string result = string.Empty;
             Console.WriteLine("Test immediate cancel for text stream");
             CancellationTokenSource cts = new();
             using SqlConnection conn = new(s_connStr);
@@ -530,6 +583,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
                 Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
+                result = "FAIL";
             }
             catch (AggregateException ae)
             {
@@ -538,16 +592,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                      ae.InnerException.Message.Contains("Operation cancelled by user.")))
                 {
                     Console.WriteLine("PASS: Task is cancelled");
+                    result = "PASS";
                 }
                 else
                 {
                     throw ae.InnerException;
                 }
             }
+
+            return result;
         }
 
-        private static void ImmediateCancelXml()
+        private static string ImmediateCancelXml()
         {
+            string result = string.Empty;
             Console.WriteLine("Test immediate cancel for xml stream");
             CancellationTokenSource cts = new();
             using SqlConnection conn = new(s_connStr);
@@ -565,6 +623,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
                 Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
+                result = "FAIL";
             }
             catch (AggregateException ae)
             {
@@ -573,44 +632,58 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                      ae.InnerException.Message.Contains("Operation cancelled by user.")))
                 {
                     Console.WriteLine("PASS: Task is cancelled");
+                    result = "PASS";
                 }
                 else
                 {
                     throw ae.InnerException;
                 }
             }
+            return result;
         }
 
-        private static void PrepareCommand()
+        private static string PrepareCommand()
         {
-            Console.Write("Test command preparation ");
-            using (SqlConnection conn = new(s_connStr))
+            string result = string.Empty;
+            try
             {
-                conn.Open();
-                using SqlCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "create table #blobs (Id int, blob varbinary(max))";
-                cmd.ExecuteNonQuery();
-                Random rand = new(10000);
-                int dataSize = 100000;
-                byte[] data = new byte[dataSize];
-                rand.NextBytes(data);
-                MemoryStream ms = new(data, false);
+                Console.Write("Test command preparation ");
+                using (SqlConnection conn = new(s_connStr))
+                {
+                    conn.Open();
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = "create table #blobs (Id int, blob varbinary(max))";
+                    cmd.ExecuteNonQuery();
+                    Random rand = new(10000);
+                    int dataSize = 100000;
+                    byte[] data = new byte[dataSize];
+                    rand.NextBytes(data);
+                    MemoryStream ms = new(data, false);
 
-                cmd.CommandText = "insert into #blobs (Id, blob) values (1, @blob)";
+                    cmd.CommandText = "insert into #blobs (Id, blob) values (1, @blob)";
 
-                cmd.Parameters.Add("@blob", SqlDbType.VarBinary, dataSize);
-                cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
-                cmd.Parameters["@blob"].Value = ms;
-                cmd.Prepare();
-                cmd.ExecuteNonQuery();
-                conn.Close();
-                ms.Close();
+                    cmd.Parameters.Add("@blob", SqlDbType.VarBinary, dataSize);
+                    cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
+                    cmd.Parameters["@blob"].Value = ms;
+                    cmd.Prepare();
+                    cmd.ExecuteNonQuery();
+                    conn.Close();
+                    ms.Close();
+                }
+                Console.WriteLine("PASS");
+                result = "PASS";
             }
-            Console.WriteLine("PASS");
+            catch
+            {
+                result = "FAIL";
+            }
+
+            return result;
         }
 
-        private static void CommandReuse()
+        private static string CommandReuse()
         {
+            int errors = 0;
             foreach (Func<SqlCommand, CancellationToken, Task> func in new Func<SqlCommand, CancellationToken, Task>[] {
                     (cmd,token) => cmd.ExecuteNonQueryAsync(token),
                     (cmd,token) => cmd.ExecuteReaderAsync(token),
@@ -640,12 +713,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Task.WaitAll(func(cmd, cts.Token), Task.Run(() => cts.Cancel()));
                     Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
+                    errors++;
                 }
                 catch (AggregateException ae)
                 {
                     if (!ae.InnerException.Message.Contains("Operation cancelled by user."))
                     {
                         Console.WriteLine("FAIL: Unexpected exception message: " + ae.InnerException.Message);
+                        errors++;
                     }
                 }
                 finally
@@ -656,6 +731,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd.CommandText = "select 'PASS'";
                 Console.WriteLine(cmd.ExecuteScalar());
             }
+
+            return errors == 0 ? "PASS" : "FAIL";
         }
 
         internal static void Run(string connection)
