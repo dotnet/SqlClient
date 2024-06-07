@@ -502,7 +502,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            return await tokenCredentialInstance._tokenCredential.GetTokenAsync(tokenRequestContext, cancellationToken).ConfigureAwait(false);
+            return await tokenCredentialInstance._tokenCredential.GetTokenAsync(tokenRequestContext, cancellationToken);
         }
 
         private static string GetAccountPwCacheKey(SqlAuthenticationParameters parameters)
