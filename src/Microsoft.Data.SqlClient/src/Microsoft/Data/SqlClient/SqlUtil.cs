@@ -17,17 +17,11 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-#if NET6_0_OR_GREATER
 using System.Transactions;
-#endif
-#if NETFRAMEWORK
-using SysTx = System.Transactions;
-#endif
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-
     /// <summary>
     /// Defines exceptions that are specific to Configurable Retry Logic.
     /// </summary>
@@ -52,12 +46,11 @@ namespace Microsoft.Data.SqlClient
 
     internal static class AsyncHelper
     {
-#if NET6_0_OR_GREATER
-        internal static Task CreateContinuationTask(Task task, Action onSuccess, Action<Exception> onFailure = null)
-#endif
+        internal static Task CreateContinuationTask(Task task, Action onSuccess,
 #if NETFRAMEWORK
-        internal static Task CreateContinuationTask(Task task, Action onSuccess, SqlInternalConnectionTds connectionToDoom = null, Action<Exception> onFailure = null)
+            SqlInternalConnectionTds connectionToDoom = null,
 #endif
+             Action<Exception> onFailure = null)
         {
             if (task == null)
             {
@@ -84,8 +77,7 @@ namespace Microsoft.Data.SqlClient
                         Action<Exception> failure = parameters.Item2;
                         failure?.Invoke(exception);
                     }
-#endif
-#if NETFRAMEWORK
+#else
                 ContinueTask(task, completion,
                     onSuccess: () =>
                     {
@@ -124,12 +116,11 @@ namespace Microsoft.Data.SqlClient
 
         internal static Task CreateContinuationTask<T1, T2>(Task task, Action<T1, T2> onSuccess, T1 arg1, T2 arg2, SqlInternalConnectionTds connectionToDoom = null, Action<Exception> onFailure = null)
         {
-#if NET6_0_OR_GREATER
-            return CreateContinuationTask(task, () => onSuccess(arg1, arg2), onFailure);
-#endif
+            return CreateContinuationTask(task, () => onSuccess(arg1, arg2),
 #if NETFRAMEWORK
-            return CreateContinuationTask(task, () => onSuccess(arg1, arg2), connectionToDoom, onFailure);
+                connectionToDoom,
 #endif
+                onFailure);
         }
 
         internal static void ContinueTask(Task task,
@@ -139,8 +130,7 @@ namespace Microsoft.Data.SqlClient
             Action onCancellation = null,
 #if NET6_0_OR_GREATER
             Func<Exception, Exception> exceptionConverter = null
-#endif
-#if NETFRAMEWORK
+#else
             Func<Exception, Exception> exceptionConverter = null,
             SqlInternalConnectionTds connectionToDoom = null,
             SqlConnection connectionToAbort = null
@@ -260,8 +250,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                     }
-#endif
-#if NET6_0_OR_GREATER
+#else
                         try
                         {
                             onSuccess();
@@ -286,8 +275,7 @@ namespace Microsoft.Data.SqlClient
             Action<object> onCancellation = null,
 #if NET6_0_OR_GREATER
             Func<Exception, Exception> exceptionConverter = null
-#endif
-#if NETFRAMEWORK
+#else
             Func<Exception, object, Exception> exceptionConverter = null,
             SqlInternalConnectionTds connectionToDoom = null,
             SqlConnection connectionToAbort = null
@@ -298,33 +286,22 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((connectionToAbort == null) || (connectionToDoom == null), "Should not specify both connectionToDoom and connectionToAbort");
 #endif
             task.ContinueWith(
-#if NET6_0_OR_GREATER
                 (Task tsk, object state2) =>
-#endif
-#if NETFRAMEWORK
-                (Task tsk, object state) =>
-#endif
                 {
                     if (tsk.Exception != null)
                     {
                         Exception exc = tsk.Exception.InnerException;
                         if (exceptionConverter != null)
                         {
-#if NET6_0_OR_GREATER
-                            exc = exceptionConverter(exc);
-#endif
+                            exc = exceptionConverter(exc
 #if NETFRAMEWORK
-                            exc = exceptionConverter(exc, state);
+                                , state2
 #endif
+                                );
                         }
                         try
                         {
-#if NET6_0_OR_GREATER
                             onFailure?.Invoke(exc, state2);
-#endif
-#if NETFRAMEWORK
-                            onFailure?.Invoke(exc, state);
-#endif
                         }
                         finally
                         {
@@ -335,99 +312,82 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-#if NET6_0_OR_GREATER
                             onCancellation?.Invoke(state2);
-#endif
-#if NETFRAMEWORK
-                            onCancellation?.Invoke(state);
-#endif
                         }
                         finally
                         {
                             completion.TrySetCanceled();
                         }
                     }
-                    else
-                    {
 #if NETFRAMEWORK
-                        if (connectionToDoom != null || connectionToAbort != null)
+                    else if (connectionToDoom != null || connectionToAbort != null)
+                    {
+                        RuntimeHelpers.PrepareConstrainedRegions();
+                        try
                         {
+#if DEBUG
+                            TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
                             RuntimeHelpers.PrepareConstrainedRegions();
                             try
                             {
-#if DEBUG
-                                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                                RuntimeHelpers.PrepareConstrainedRegions();
-                                try
-                                {
-                                    tdsReliabilitySection.Start();
+                                tdsReliabilitySection.Start();
 #endif //DEBUG
-                                    onSuccess(state);
+                                onSuccess(state2);
 #if DEBUG
-                                }
-                                finally
-                                {
-                                    tdsReliabilitySection.Stop();
-                                }
+                            }
+                            finally
+                            {
+                                tdsReliabilitySection.Stop();
+                            }
 #endif //DEBUG
-                            }
-                            catch (System.OutOfMemoryException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
-                            }
-                            catch (System.StackOverflowException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
-                            }
-                            catch (System.Threading.ThreadAbortException e)
-                            {
-                                if (connectionToDoom != null)
-                                {
-                                    connectionToDoom.DoomThisConnection();
-                                }
-                                else
-                                {
-                                    connectionToAbort.Abort(e);
-                                }
-                                completion.SetException(e);
-                                throw;
-                            }
-                            catch (Exception e)
-                            {
-                                completion.SetException(e);
-                            }
                         }
-                        else
-                        { // no connection to doom - reliability section not required
-                            try
+                        catch (System.OutOfMemoryException e)
+                        {
+                            if (connectionToDoom != null)
                             {
-                                onSuccess(state);
+                                connectionToDoom.DoomThisConnection();
                             }
-                            catch (Exception e)
+                            else
                             {
-                                completion.SetException(e);
+                                connectionToAbort.Abort(e);
                             }
+                            completion.SetException(e);
+                            throw;
                         }
+                        catch (System.StackOverflowException e)
+                        {
+                            if (connectionToDoom != null)
+                            {
+                                connectionToDoom.DoomThisConnection();
+                            }
+                            else
+                            {
+                                connectionToAbort.Abort(e);
+                            }
+                            completion.SetException(e);
+                            throw;
+                        }
+                        catch (System.Threading.ThreadAbortException e)
+                        {
+                            if (connectionToDoom != null)
+                            {
+                                connectionToDoom.DoomThisConnection();
+                            }
+                            else
+                            {
+                                connectionToAbort.Abort(e);
+                            }
+                            completion.SetException(e);
+                            throw;
+                        }
+                        catch (Exception e)
+                        {
+                            completion.SetException(e);
+                        }
+                    }
 #endif
-#if NET6_0_OR_GREATER
+                    else
+                    {
                         try
                         {
                             onSuccess(state2);
@@ -436,7 +396,6 @@ namespace Microsoft.Data.SqlClient
                         {
                             completion.SetException(e);
                         }
-#endif
                     }
                 },
                 state: state,
@@ -549,12 +508,7 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_NullEmptyTransactionName));
         }
-#if NETFRAMEWORK
-        static internal Exception SnapshotNotSupported(System.Data.IsolationLevel level)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SnapshotNotSupported, typeof(IsolationLevel), level.ToString()));
-        }
-#endif
+
         static internal Exception UserInstanceFailoverNotCompatible()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_UserInstanceFailoverNotCompatible));
@@ -648,12 +602,7 @@ namespace Microsoft.Data.SqlClient
         {
             return new Exception(StringsHelper.GetString(Strings.Sql_InternalError));
         }
-#if NET6_0_OR_GREATER
-        internal static Exception SocketDidNotThrow()
-        {
-            return new InternalException(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
-        }
-#endif
+
         internal static Exception ConnectionLockedForBcpEvent()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ConnectionLockedForBcpEvent));
@@ -678,12 +627,7 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordRequiresYukon));
         }
-#if NETFRAMEWORK
-        internal static Exception UnknownSysTxIsolationLevel(SysTx.IsolationLevel isolationLevel)
-#endif
-#if NET6_0_OR_GREATER
         internal static Exception UnknownSysTxIsolationLevel(System.Transactions.IsolationLevel isolationLevel)
-#endif
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnknownSysTxIsolationLevel, isolationLevel.ToString()));
         }
@@ -1126,23 +1070,12 @@ namespace Microsoft.Data.SqlClient
             return SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
         }
 
-#if NET6_0_OR_GREATER
-            internal static TransactionPromotionException PromotionFailed(Exception inner)
-            {
-                TransactionPromotionException e = new TransactionPromotionException(StringsHelper.GetString(Strings.SqlDelegatedTransaction_PromotionFailed), inner);
-                ADP.TraceExceptionAsReturnValue(e);
-                return e;
-            }
-#endif
-#if NETFRAMEWORK
-        static internal SysTx.TransactionPromotionException PromotionFailed(Exception inner)
+        internal static TransactionPromotionException PromotionFailed(Exception inner)
         {
-            SysTx.TransactionPromotionException e = new SysTx.TransactionPromotionException(StringsHelper.GetString(Strings.SqlDelegatedTransaction_PromotionFailed), inner);
+            TransactionPromotionException e = new TransactionPromotionException(StringsHelper.GetString(Strings.SqlDelegatedTransaction_PromotionFailed), inner);
             ADP.TraceExceptionAsReturnValue(e);
             return e;
         }
-#endif
-        //Failure while attempting to promote transaction.
 
         internal static Exception SqlDepCannotBeCreatedInProc()
         {
@@ -1235,8 +1168,6 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.IEnumerableOfSqlDataRecordHasNoRows));
         }
-
-
 
         //
         //  SqlPipe
@@ -1432,11 +1363,11 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception UnsupportedSysTxForGlobalTransactions()
         {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.
 #if NET6_0_OR_GREATER
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnsupportedSysTxVersion));
-#endif
-#if NETFRAMEWORK
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.GT_UnsupportedSysTxVersion));
+                SQL_UnsupportedSysTxVersion));
+#else
+                GT_UnsupportedSysTxVersion));
 #endif
         }
 
@@ -1499,7 +1430,6 @@ namespace Microsoft.Data.SqlClient
         //
         // Read-only routing
         //
-
         internal static Exception ROR_FailoverNotSupportedConnString()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQLROR_FailoverNotSupported));
@@ -1573,12 +1503,11 @@ namespace Microsoft.Data.SqlClient
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_NextAttemptWillExceedQueryTimeout), "", 0));
-#if NET6_0_OR_GREATER
-            SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException);
-#endif
+            SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException
 #if NETFRAMEWORK
-            SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException, batchCommand: null);
+                , batchCommand: null
 #endif
+                );
             return exc;
         }
 
@@ -1698,11 +1627,6 @@ namespace Microsoft.Data.SqlClient
         #region Always Encrypted - Certificate Store Provider Errors
         internal static Exception InvalidKeyEncryptionAlgorithm(string encryptionAlgorithm, string validEncryptionAlgorithm, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_InvalidKeyEncryptionAlgorithmSysErr : Strings.TCE_InvalidKeyEncryptionAlgorithm;
-            return ADP.Argument(StringsHelper.GetString(message, encryptionAlgorithm, validEncryptionAlgorithm), TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidKeyEncryptionAlgorithmSysErr, encryptionAlgorithm, validEncryptionAlgorithm), TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM);
@@ -1711,17 +1635,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidKeyEncryptionAlgorithm, encryptionAlgorithm, validEncryptionAlgorithm), TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM);
             }
-#endif
         }
 
         internal static Exception NullKeyEncryptionAlgorithm(bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_NullKeyEncryptionAlgorithmSysErr : Strings.TCE_NullKeyEncryptionAlgorithm;
-
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, StringsHelper.GetString(message));
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, StringsHelper.GetString(Strings.TCE_NullKeyEncryptionAlgorithmSysErr));
@@ -1730,7 +1647,6 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, StringsHelper.GetString(Strings.TCE_NullKeyEncryptionAlgorithm));
             }
-#endif
         }
 
         internal static Exception EmptyColumnEncryptionKey()
@@ -1755,11 +1671,6 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception LargeCertificatePathLength(int actualLength, int maxLength, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_LargeCertificatePathLengthSysErr : Strings.TCE_LargeCertificatePathLength;
-            return ADP.Argument(StringsHelper.GetString(message, actualLength, maxLength), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_LargeCertificatePathLengthSysErr, actualLength, maxLength), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -1768,17 +1679,11 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_LargeCertificatePathLength, actualLength, maxLength), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception NullCertificatePath(string[] validLocations, bool isSystemOp)
         {
             Debug.Assert(2 == validLocations.Length);
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_NullCertificatePathSysErr : Strings.TCE_NullCertificatePath;
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(message, validLocations[0], validLocations[1], @"/"));
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePathSysErr, validLocations[0], validLocations[1], @"/"));
@@ -1787,17 +1692,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePath, validLocations[0], validLocations[1], @"/"));
             }
-#endif
-
         }
 
         internal static Exception NullCspKeyPath(bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_NullCspPathSysErr : Strings.TCE_NullCspPath;
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(message, @"/"));
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCspPathSysErr, @"/"));
@@ -1806,16 +1704,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCspPath, @"/"));
             }
-#endif
         }
 
         internal static Exception NullCngKeyPath(bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_NullCngPathSysErr : Strings.TCE_NullCngPath;
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(message, @"/"));
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCngPathSysErr, @"/"));
@@ -1824,17 +1716,11 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCngPath, @"/"));
             }
-#endif
         }
 
         internal static Exception InvalidCertificatePath(string actualCertificatePath, string[] validLocations, bool isSystemOp)
         {
             Debug.Assert(2 == validLocations.Length);
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_InvalidCertificatePathSysErr : Strings.TCE_InvalidCertificatePath;
-            return ADP.Argument(StringsHelper.GetString(message, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePathSysErr, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -1843,16 +1729,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePath, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception InvalidCspPath(string masterKeyPath, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_InvalidCspPathSysErr : Strings.TCE_InvalidCspPath;
-            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCspPathSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -1861,16 +1741,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCspPath, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception InvalidCngPath(string masterKeyPath, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_InvalidCngPathSysErr : Strings.TCE_InvalidCngPath;
-            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCngPathSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -1879,16 +1753,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCngPath, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception EmptyCspName(string masterKeyPath, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_EmptyCspNameSysErr : Strings.TCE_EmptyCspName;
-            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyCspNameSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -1897,16 +1765,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyCspName, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception EmptyCngName(string masterKeyPath, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_EmptyCngNameSysErr : Strings.TCE_EmptyCngName;
-            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyCngNameSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -1915,16 +1777,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyCngName, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception EmptyCspKeyId(string masterKeyPath, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_EmptyCspKeyIdSysErr : Strings.TCE_EmptyCspKeyId;
-            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyCspKeyIdSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -1933,16 +1789,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyCspKeyId, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception EmptyCngKeyId(string masterKeyPath, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_EmptyCngKeyIdSysErr : Strings.TCE_EmptyCngKeyId;
-            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyCngKeyIdSysErr, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -1951,16 +1801,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyCngKeyId, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception InvalidCspName(string cspName, string masterKeyPath, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_InvalidCspNameSysErr : Strings.TCE_InvalidCspName;
-            return ADP.Argument(StringsHelper.GetString(message, cspName, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCspNameSysErr, cspName, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -1969,16 +1813,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCspName, cspName, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception InvalidCspKeyIdentifier(string keyIdentifier, string masterKeyPath, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_InvalidCspKeyIdSysErr : Strings.TCE_InvalidCspKeyId;
-            return ADP.Argument(StringsHelper.GetString(message, keyIdentifier, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCspKeyIdSysErr, keyIdentifier, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -1987,16 +1825,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCspKeyId, keyIdentifier, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception InvalidCngKey(string masterKeyPath, string cngProviderName, string keyIdentifier, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_InvalidCngKeySysErr : Strings.TCE_InvalidCngKey;
-            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, cngProviderName, keyIdentifier), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCngKeySysErr, masterKeyPath, cngProviderName, keyIdentifier), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -2005,17 +1837,14 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCngKey, masterKeyPath, cngProviderName, keyIdentifier), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception InvalidCertificateLocation(string certificateLocation, string certificatePath, string[] validLocations, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_InvalidCertificateLocationSysErr : Strings.TCE_InvalidCertificateLocation;
-            return ADP.Argument(StringsHelper.GetString(message, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
+
 #if NETFRAMEWORK
             Debug.Assert(2 == validLocations.Length);
+#endif
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocationSysErr, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -2024,16 +1853,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocation, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception InvalidCertificateStore(string certificateStore, string certificatePath, string validCertificateStore, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_InvalidCertificateStoreSysErr : Strings.TCE_InvalidCertificateStore;
-            return ADP.Argument(StringsHelper.GetString(message, certificateStore, certificatePath, validCertificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateStoreSysErr, certificateStore, certificatePath, validCertificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -2042,16 +1865,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateStore, certificateStore, certificatePath, validCertificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception EmptyCertificateThumbprint(string certificatePath, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_EmptyCertificateThumbprintSysErr : Strings.TCE_EmptyCertificateThumbprint;
-            return ADP.Argument(StringsHelper.GetString(message, certificatePath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyCertificateThumbprintSysErr, certificatePath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -2060,16 +1877,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyCertificateThumbprint, certificatePath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception CertificateNotFound(string thumbprint, string certificateLocation, string certificateStore, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_CertificateNotFoundSysErr : Strings.TCE_CertificateNotFound;
-            return ADP.Argument(StringsHelper.GetString(message, thumbprint, certificateLocation, certificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_CertificateNotFoundSysErr, thumbprint, certificateLocation, certificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -2078,7 +1889,6 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_CertificateNotFound, thumbprint, certificateLocation, certificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
 
         internal static Exception InvalidAlgorithmVersionInEncryptedCEK(byte actual, byte expected)
@@ -2128,11 +1938,6 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception CertificateWithNoPrivateKey(string keyPath, bool isSystemOp)
         {
-#if NET6_0_OR_GREATER
-            string message = isSystemOp ? Strings.TCE_CertificateWithNoPrivateKeySysErr : Strings.TCE_CertificateWithNoPrivateKey;
-            return ADP.Argument(StringsHelper.GetString(message, keyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
-#endif
-#if NETFRAMEWORK
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_CertificateWithNoPrivateKeySysErr, keyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -2141,7 +1946,6 @@ namespace Microsoft.Data.SqlClient
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_CertificateWithNoPrivateKey, keyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
             }
-#endif
         }
         #endregion Always Encrypted - Certificate Store Provider Errors
 
@@ -2173,16 +1977,11 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception InvalidKeySize(string algorithmName, int actualKeylength, int expectedLength)
         {
-#if NET6_0_OR_GREATER
-            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidKeySize, algorithmName, actualKeylength, expectedLength), TdsEnums.TCE_PARAM_ENCRYPTIONKEY);
-#endif
-#if NETFRAMEWORK
             return ADP.Argument(StringsHelper.GetString(
                                 Strings.TCE_InvalidKeySize,
                                 algorithmName,
                                 actualKeylength,
                                 expectedLength), TdsEnums.TCE_PARAM_ENCRYPTIONKEY);
-#endif
         }
 
         internal static Exception InvalidEncryptionType(string algorithmName, SqlClientEncryptionType encryptionType, params SqlClientEncryptionType[] validEncryptionTypes)
@@ -2412,7 +2211,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception EnclaveProviderNotFound(string enclaveType, string attestationProtocol = null)
         {
-            return attestationProtocol != null ? ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType, attestationProtocol)) 
+            return attestationProtocol != null ? ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType, attestationProtocol))
                                                : ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType));
         }
 
@@ -2644,13 +2443,7 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NotificationsNotAvailableOnContextConnection));
         }
-#if NETFRAMEWORK
-        static internal Exception UnexpectedSmiEvent(Microsoft.Data.SqlClient.Server.SmiEventSink_Default.UnexpectedEventType eventType)
-        {
-            Debug.Assert(false, "UnexpectedSmiEvent: " + eventType.ToString());    // Assert here, because these exceptions will most likely be eaten by the server.
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnexpectedSmiEvent, (int)eventType));
-        }
-#endif
+
         static internal Exception UserInstanceNotAvailableInProc()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UserInstanceNotAvailableInProc));
@@ -2713,6 +2506,24 @@ namespace Microsoft.Data.SqlClient
                 yield return selector(element);
             }
         }
+
+#if NET6_0_OR_GREATER
+        internal static Exception SocketDidNotThrow()
+        {
+            return new InternalException(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
+        }
+#else
+        static internal Exception SnapshotNotSupported(System.Data.IsolationLevel level)
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SnapshotNotSupported, typeof(System.Data.IsolationLevel), level.ToString()));
+        }
+        static internal Exception UnexpectedSmiEvent(Microsoft.Data.SqlClient.Server.SmiEventSink_Default.UnexpectedEventType eventType)
+        {
+            Debug.Assert(false, "UnexpectedSmiEvent: " + eventType.ToString());    // Assert here, because these exceptions will most likely be eaten by the server.
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnexpectedSmiEvent, (int)eventType));
+        }
+#endif
+
     }
 
     sealed internal class SQLMessage
@@ -2862,12 +2673,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>escapes the name with [], also escapes the last close bracket with double-bracket</returns>
         internal static string EscapeIdentifier(string name)
         {
-#if NET6_0_OR_GREATER
-            Debug.Assert(!string.IsNullOrEmpty(name), "null or empty identifiers are not allowed");
-#endif
-#if NETFRAMEWORK
             Debug.Assert(!ADP.IsEmpty(name), "null or empty identifiers are not allowed");
-#endif
             return "[" + name.Replace("]", "]]") + "]";
         }
 
@@ -2877,12 +2683,7 @@ namespace Microsoft.Data.SqlClient
         internal static void EscapeIdentifier(StringBuilder builder, string name)
         {
             Debug.Assert(builder != null, "builder cannot be null");
-#if NET6_0_OR_GREATER
-            Debug.Assert(!string.IsNullOrEmpty(name), "null or empty identifiers are not allowed");
-#endif
-#if NETFRAMEWORK
             Debug.Assert(!ADP.IsEmpty(name), "null or empty identifiers are not allowed");
-#endif
 
             builder.Append("[");
             builder.Append(name.Replace("]", "]]"));
@@ -2907,12 +2708,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>escaped and quoted literal string</returns>
         internal static string MakeStringLiteral(string input)
         {
-#if NET6_0_OR_GREATER
-            if (string.IsNullOrEmpty(input))
-#endif
-#if NETFRAMEWORK
             if (ADP.IsEmpty(input))
-#endif
             {
                 return "''";
             }
@@ -2928,8 +2724,7 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal static class SysTxForGlobalTransactions
     {
-#if NET6_0_OR_GREATER
-            private static readonly Lazy<MethodInfo> _enlistPromotableSinglePhase = new Lazy<MethodInfo>(() =>
+        private static readonly Lazy<MethodInfo> _enlistPromotableSinglePhase = new Lazy<MethodInfo>(() =>
             typeof(Transaction).GetMethod("EnlistPromotableSinglePhase", new Type[] { typeof(IPromotableSinglePhaseNotification), typeof(Guid) }));
 
         private static readonly Lazy<MethodInfo> _setDistributedTransactionIdentifier = new Lazy<MethodInfo>(() =>
@@ -2937,17 +2732,7 @@ namespace Microsoft.Data.SqlClient
 
         private static readonly Lazy<MethodInfo> _getPromotedToken = new Lazy<MethodInfo>(() =>
             typeof(Transaction).GetMethod("GetPromotedToken"));
-#endif
-#if NETFRAMEWORK
-        private static readonly Lazy<MethodInfo> _enlistPromotableSinglePhase = new Lazy<MethodInfo>(() =>
-            typeof(SysTx.Transaction).GetMethod("EnlistPromotableSinglePhase", new Type[] { typeof(SysTx.IPromotableSinglePhaseNotification), typeof(Guid) }));
 
-        private static readonly Lazy<MethodInfo> _setDistributedTransactionIdentifier = new Lazy<MethodInfo>(() =>
-            typeof(SysTx.Transaction).GetMethod("SetDistributedTransactionIdentifier", new Type[] { typeof(SysTx.IPromotableSinglePhaseNotification), typeof(Guid) }));
-
-        private static readonly Lazy<MethodInfo> _getPromotedToken = new Lazy<MethodInfo>(() =>
-            typeof(SysTx.Transaction).GetMethod("GetPromotedToken"));
-#endif
         /// <summary>
         /// Enlists the given IPromotableSinglePhaseNotification and Non-MSDTC Promoter type into a transaction
         /// </summary>
@@ -3009,17 +2794,17 @@ namespace Microsoft.Data.SqlClient
             }
             // Don't need to close this handle...
             // SxS: we use this method to check if we are running inside the SQL Server process. This call should be safe in SxS environment.
-            IntPtr handle = SafeNativeMethods.GetModuleHandle(null);
+            IntPtr handle = Common.SafeNativeMethods.GetModuleHandle(null);
             if (IntPtr.Zero != handle)
             {
                 // SQLBU 359301: Currently, the server exports different names for x86 vs. AMD64 and IA64.  Supporting both names
                 //  for now gives the server time to unify names across platforms without breaking currently-working ones.
                 //  We can remove the obsolete name once the server is changed.
-                if (IntPtr.Zero != SafeNativeMethods.GetProcAddress(handle, "_______SQL______Process______Available@0"))
+                if (IntPtr.Zero != Common.SafeNativeMethods.GetProcAddress(handle, "_______SQL______Process______Available@0"))
                 {
                     _inProc = true;
                 }
-                else if (IntPtr.Zero != SafeNativeMethods.GetProcAddress(handle, "______SQL______Process______Available"))
+                else if (IntPtr.Zero != Common.SafeNativeMethods.GetProcAddress(handle, "______SQL______Process______Available"))
                 {
                     _inProc = true;
                 }
