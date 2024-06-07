@@ -91,7 +91,8 @@ namespace Microsoft.Data.SqlClient
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
@@ -183,6 +184,49 @@ namespace Microsoft.Data.SqlClient
                 // a CredentialUnavailableException will be thrown instead
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Workload Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
+            }
+
+            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials)
+            {
+                // We'll keep using common environment variables defined in Azure.Identity library
+                // AZURE_TENANT_ID: The tenant ID where target resource hosts
+                // AZURE_CLIENT_ID: The client id of multi-tenant entra id app. May be overridden by the User Id.
+                // AZURE_MSI_CLIENT_ID (new): The client id of managed identity
+                string tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
+                tenantId = string.IsNullOrWhiteSpace(tenantId) ? null : tenantId;
+
+                if (clientId is null)
+                {
+                    clientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
+                    clientId = string.IsNullOrWhiteSpace(clientId) ? null : clientId;
+                }
+
+                string managedIdentityClientId = Environment.GetEnvironmentVariable("AZURE_MSI_CLIENT_ID");
+                managedIdentityClientId = string.IsNullOrWhiteSpace(managedIdentityClientId) ? null : managedIdentityClientId;
+
+                ClientAssertionCredential clientAssertionCredential = null;
+                // If either tenant id, client id, or the managed client id are not specified when fetching the token,
+                // a CredentialUnavailableException will be thrown instead
+                if (!string.IsNullOrEmpty(tenantId) && !string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(managedIdentityClientId))
+                {
+                    clientAssertionCredential = new ClientAssertionCredential(
+                        tenantId,
+                        clientId,
+                        async (cancellationToken) =>
+                        {
+                            ManagedIdentityCredential miCredential = new ManagedIdentityCredential(managedIdentityClientId);
+                            var token = await miCredential.GetTokenAsync(new TokenRequestContext(new string[] { $"api://AzureADTokenExchange/.default" })).ConfigureAwait(false);
+                            return token.Token;
+                        });
+                }
+
+                if (clientAssertionCredential == null)
+                {
+                    throw new CredentialUnavailableException("FederatedIdentityCredentials authentication unavailable. The required environment variables are not fully configured.");
+                }
+                AccessToken accessToken = await clientAssertionCredential.GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Federated Identity Credentials auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
