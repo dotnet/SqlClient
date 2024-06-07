@@ -54,8 +54,7 @@ namespace Microsoft.Data.SqlClient
             Buffer.BlockCopy(ecPoint.X, 0, keyBlob, ECCPublicKeyBlob.HeaderSize, ECCPublicKeyBlob.KeySize);
             Buffer.BlockCopy(ecPoint.Y, 0, keyBlob, ECCPublicKeyBlob.HeaderSize + ECCPublicKeyBlob.KeySize, ECCPublicKeyBlob.KeySize);
             return keyBlob;
-#endif
-#if NETFRAMEWORK
+#else
             if (ecDiffieHellman is ECDiffieHellmanCng cng)
             {
                 return cng.Key.Export(CngKeyBlobFormat.EccPublicBlob);
@@ -100,8 +99,7 @@ namespace Microsoft.Data.SqlClient
                 Modulus = modulus
             };
             return RSA.Create(rsaParameters);
-#endif
-#if NETFRAMEWORK
+#else
             CngKey key = CngKey.Import(keyBlob, CngKeyBlobFormat.GenericPublicBlob);
             return new RSACng(key);
 #endif	    
@@ -128,8 +126,7 @@ namespace Microsoft.Data.SqlClient
             };
 
             return ECDiffieHellman.Create(parameters);
-#endif
-#if NETFRAMEWORK
+#else
             CngKey key = CngKey.Import(keyBlob, CngKeyBlobFormat.GenericPublicBlob);
             return new ECDiffieHellmanCng(key);
 #endif	    
@@ -143,8 +140,7 @@ namespace Microsoft.Data.SqlClient
             // DeriveKeyFromHash later in DeriveKey
             ECDiffieHellman clientDHKey = ECDiffieHellman.Create();
             clientDHKey.KeySize = keySize;
-#endif
-#if NETFRAMEWORK
+#else
             // Cng sets the key size and hash algorithm at creation time and these
             // parameters are then used later when DeriveKeyMaterial is called
             ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(keySize);
@@ -159,8 +155,7 @@ namespace Microsoft.Data.SqlClient
 #if NET6_0_OR_GREATER	
             // see notes in CreateECDDiffieHellman
             return ecDiffieHellman.DeriveKeyFromHash(publicKey, HashAlgorithmName.SHA256);
-#endif
-#if NETFRAMEWORK
+#else
             if (ecDiffieHellman is ECDiffieHellmanCng cng)
             {
                 return cng.DeriveKeyMaterial(publicKey);
@@ -176,8 +171,7 @@ namespace Microsoft.Data.SqlClient
         {
 #if NET6_0_OR_GREATER
             return certificate.GetRSAPublicKey();
-#endif
-#if NETFRAMEWORK
+#else
             RSAParameters parameters;
             using (RSA rsaCsp = certificate.GetRSAPublicKey())
             {
