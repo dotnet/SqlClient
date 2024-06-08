@@ -223,7 +223,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (clientAssertionCredential == null)
                 {
-                    throw new CredentialUnavailableException("FederatedIdentityCredentials authentication unavailable. The required environment variables are not fully configured.");
+                    throw new CredentialUnavailableException(Strings.AAD_FIC_Invalid_Setup);
                 }
                 AccessToken accessToken = await clientAssertionCredential.GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Federated Identity Credentials auth mode. Expiry Time: {0}", accessToken.ExpiresOn);

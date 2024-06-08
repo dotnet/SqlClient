@@ -4737,4 +4737,7 @@
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>验证证书时证书不可用。</value>
   </data>
+  <data name="AAD_FIC_Invalid_Setup" xml:space="preserve">
+    <value>联合身份凭证验证不可用。所需环境变量配置不全。</value>
+  </data>
 </root>
