@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Data.SqlClient.SqlClientX.IO
+namespace Microsoft.Data.SqlClientX.IO
 {
     /// <summary>
     /// A Stream abstraction over the TDS protocol.

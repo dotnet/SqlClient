@@ -1,4 +1,4 @@
-﻿namespace Microsoft.Data.SqlClient.SqlClientX.IO
+﻿namespace Microsoft.Data.SqlClientX.IO
 {
     internal enum TdsStreamPacketType
     {
