@@ -16,14 +16,16 @@ namespace Microsoft.Data.SqlClient
         {
             NegotiateAuthenticationStatusCode statusCode = NegotiateAuthenticationStatusCode.UnknownCredentials;
 
-            foreach (byte[] spn in _sniSpnBuffer)
+            for (int i = 0; i < _sniSpnBuffer.Length; i++)
             {
-                _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = Encoding.Unicode.GetString(spn) });
+                string spnName = Encoding.Unicode.GetString(_sniSpnBuffer[i]);
+                _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = spnName });
                 sendBuff = _negotiateAuth.GetOutgoingBlob(received.Span, out statusCode)!;
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}, StatusCode={1}", _physicalStateObj.SessionId, statusCode);
+                // Log session id, status code and the actual SPN used in the negotiation
+                SqlClientEventSource.Log.TryTraceEvent($"TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {_physicalStateObj.SessionId}, StatusCode={statusCode}, SPN={_negotiateAuth.TargetName}");
 
                 if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
-                    break;
+                    break; // Successful case, exit the loop with current SPN.
                 else
                     _negotiateAuth = null; // Reset _negotiateAuth to be generated again for next SPN.
             }
