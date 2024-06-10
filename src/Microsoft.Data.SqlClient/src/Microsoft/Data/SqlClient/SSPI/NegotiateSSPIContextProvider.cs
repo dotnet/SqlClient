@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient
                 if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
                     break;
                 else
-                    _negotiateAuth = null;
+                    _negotiateAuth = null; // Reset _negotiateAuth to be generated again for next SPN.
             }
 
             if (statusCode is not NegotiateAuthenticationStatusCode.Completed and not NegotiateAuthenticationStatusCode.ContinueNeeded)
