@@ -6,6 +6,9 @@
     /// </summary>
     internal enum HandlerRequestType
     {
+        /// <summary>
+        /// Request type for connection request.
+        /// </summary>
         ConnectionRequest
     }
 }
