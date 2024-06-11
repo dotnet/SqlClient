@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
                 _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = spnName });
                 sendBuff = _negotiateAuth.GetOutgoingBlob(received.Span, out statusCode)!;
                 // Log session id, status code and the actual SPN used in the negotiation
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}, StatusCode={1}, SPN={2}", _physicalStateObj.SessionId, statusCode, _negotiateAuth.TargetName);
+                SqlClientEventSource.Log.TryTraceEvent($"TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {_physicalStateObj.SessionId}, StatusCode={statusCode}, SPN={_negotiateAuth.TargetName}");
 
                 if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
                     break; // Successful case, exit the loop with current SPN.
