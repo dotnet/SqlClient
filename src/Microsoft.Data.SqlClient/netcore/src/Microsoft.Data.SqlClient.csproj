@@ -919,6 +919,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Handler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsStreamPacketType.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsStream.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
@@ -950,9 +951,6 @@
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Microsoft\Data\SqlClientX\Handlers\" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
