@@ -919,9 +919,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Handler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\IO\TdsStreamPacketType.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\IO\TdsStream.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
