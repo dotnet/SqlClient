@@ -233,7 +233,6 @@ namespace Microsoft.Data.SqlClient
         internal const int SynonymCount = 33;
 #else
         internal const int SynonymCount = 30;
-        internal const int DeprecatedSynonymCount = 2;
 #endif // NETFRAMEWORK
 
         private static Dictionary<string, string> s_sqlClientSynonyms;
@@ -837,7 +836,7 @@ namespace Microsoft.Data.SqlClient
 
                 int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
 #if NET6_0_OR_GREATER
-                count += SqlConnectionStringBuilder.DeprecatedKeywordsCount + DeprecatedSynonymCount;
+                count += SqlConnectionStringBuilder.DeprecatedKeywordsCount;
 #endif
                 synonyms = new Dictionary<string, string>(count, StringComparer.OrdinalIgnoreCase)
                 {
