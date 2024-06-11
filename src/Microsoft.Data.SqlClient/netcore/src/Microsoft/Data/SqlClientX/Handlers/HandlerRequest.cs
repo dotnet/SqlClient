@@ -2,6 +2,9 @@
 
 namespace Microsoft.Data.SqlClientX.Handlers
 {
+    /// <summary>
+    /// The request type for the handler.
+    /// </summary>
     internal abstract class HandlerRequest
     {
         public HandlerRequestType RequestType { get; internal set; }

@@ -611,8 +611,6 @@
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
       <Link>Common\System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
-
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Handler.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionClosed.cs" />

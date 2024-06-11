@@ -16,6 +16,11 @@ namespace Microsoft.Data.SqlClientX.Handlers
     internal interface IHandler<TRequest> where TRequest : HandlerRequest
     {
         /// <summary>
+        /// Allows getting and setting the next handler.
+        /// </summary>
+        public IHandler<TRequest> NextHandler { get; set; }
+
+        /// <summary>
         /// The call to handler to execute the request.
         /// </summary>
         /// <param name="request"></param>
@@ -23,11 +28,5 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// <param name="ct"></param>
         /// <returns></returns>
         public abstract ValueTask Handle(TRequest request, bool isAsync, CancellationToken ct);
-
-        /// <summary>
-        /// If a next handler is to be executed in the chain, then SetNext is used for those purposes.
-        /// </summary>
-        /// <param name="handler"></param>
-        public void SetNext(IHandler<TRequest> handler);
     }
 }
