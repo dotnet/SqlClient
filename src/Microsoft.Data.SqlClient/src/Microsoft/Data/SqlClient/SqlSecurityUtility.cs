@@ -374,8 +374,8 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    bool? signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
-                    if (signatureVerificationResult is null)
+                    bool signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
+                    if (signatureVerificationResult == false)
                     {
                         // We will simply bubble up the exception from VerifyColumnMasterKeyMetadata function.
                         isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled,
@@ -385,7 +385,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        isValidSignature = signatureVerificationResult.Value;
+                        isValidSignature = signatureVerificationResult;
                     }
                 }
             }

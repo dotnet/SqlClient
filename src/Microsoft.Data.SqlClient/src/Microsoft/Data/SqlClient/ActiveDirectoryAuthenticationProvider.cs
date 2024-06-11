@@ -5,13 +5,13 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Runtime.Caching;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensibility;
 
@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap
             = new ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication>();
-        private static readonly MemoryCache s_accountPwCache = new(nameof(ActiveDirectoryAuthenticationProvider));
+        private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions()); 
         private static readonly int s_accountPwCacheTtlInHours = 2;
         private static readonly string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
         private static readonly string s_defaultScopeSuffix = "/.default";
@@ -270,11 +270,11 @@ namespace Microsoft.Data.SqlClient
                     // We cache the password hash to ensure future connection requests include a validated password
                     // when we check for a cached MSAL account. Otherwise, a connection request with the same username
                     // against the same tenant could succeed with an invalid password when we re-use the cached token.
-                    if (!s_accountPwCache.Add(pwCacheKey, GetHash(parameters.Password), DateTime.UtcNow.AddHours(s_accountPwCacheTtlInHours)))
+                    using (ICacheEntry entry = s_accountPwCache.CreateEntry(pwCacheKey))
                     {
-                        s_accountPwCache.Remove(pwCacheKey);
-                        s_accountPwCache.Add(pwCacheKey, GetHash(parameters.Password), DateTime.UtcNow.AddHours(s_accountPwCacheTtlInHours));
-                    }
+                        entry.Value = GetHash(parameters.Password);
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(s_accountPwCacheTtlInHours);
+                    };
 
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result?.ExpiresOn);
                 }
