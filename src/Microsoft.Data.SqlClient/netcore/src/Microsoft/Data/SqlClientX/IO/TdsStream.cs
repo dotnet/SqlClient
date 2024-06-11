@@ -30,6 +30,19 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
+        /// Replaces the underlying stream. This is useful while changing between SSL stream and non-SSL stream. 
+        /// e.g. Prelogin ends with TLS handshake, which is done on a different stream. Once the handshake is done,
+        /// login is sent in the TLS stream. However at the end of the login exchange, the stream may be switched 
+        /// back to the non-SSL stream, which is either the pipe stream or the TCP stream.
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        public void ReplaceUnderlyingStream(Stream stream)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// When writing the packet, the caller needs to 
         /// specify the packet type. 
         /// TODO: Consider accepting an enum of packet types
