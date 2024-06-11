@@ -18,8 +18,7 @@ namespace Microsoft.Data.SqlClient
 
             for (int i = 0; i < _sniSpnBuffer.Length; i++)
             {
-                string spnName = Encoding.Unicode.GetString(_sniSpnBuffer[i]);
-                _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = spnName });
+                _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = Encoding.Unicode.GetString(_sniSpnBuffer[i]) });
                 sendBuff = _negotiateAuth.GetOutgoingBlob(received.Span, out statusCode)!;
                 // Log session id, status code and the actual SPN used in the negotiation
                 SqlClientEventSource.Log.TryTraceEvent($"TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {_physicalStateObj.SessionId}, StatusCode={statusCode}, SPN={_negotiateAuth.TargetName}");
