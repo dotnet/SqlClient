@@ -12,18 +12,34 @@ namespace Microsoft.Data.SqlClientX.IO
     /// A Stream abstraction over the TDS protocol.
     /// The stream can be used to read and write TDS messages on a 
     /// SQL Server physical connection.
+    /// The stream is responsible for abstracting away the calls to IO and handling the packet 
+    /// header from the consumers of TDS protocol.
+    /// The stream responds to the request of the callers, but it doesn't guarantee the correctness of the underlying TDS protocol correctness.
+    /// e.g. If the protocol states that there are N bytes that should be read, and the stream is asked to return
+    /// N + 1 bytes, then the stream will timeout trying to get N+1 bytes, or it will return N+1 bytes, if the 
+    /// N+1 byte is available.
     /// </summary>
     internal class TdsStream : Stream
     {
+        /// <inheritdoc />
         public override bool CanRead => throw new NotImplementedException();
-
+        
+        /// <inheritdoc />
         public override bool CanSeek => throw new NotImplementedException();
 
+        /// <inheritdoc />
         public override bool CanWrite => throw new NotImplementedException();
 
+        /// <inheritdoc />
         public override long Length => throw new NotImplementedException();
 
+        /// <inheritdoc />
         public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        /// <summary>
+        /// Indicates if the cancellation is sent to the server.
+        /// </summary>
+        public virtual bool IsCancellationSent { get; internal set; }
 
         public TdsStream(Stream underLyingStream) : base()
         {
@@ -37,7 +53,18 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         /// <param name="stream"></param>
         /// <exception cref="NotImplementedException"></exception>
-        public void ReplaceUnderlyingStream(Stream stream)
+        public virtual void ReplaceUnderlyingStream(Stream stream)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Allows manipulation of the packet size. This should only be used after login ack,
+        /// when the client and server exchange the negotiated packet size.
+        /// </summary>
+        /// <param name="packetSize">The negotiated packet size</param>
+        /// <exception cref="NotImplementedException"></exception>
+        public virtual void SetPacketSize(int packetSize)
         {
             throw new NotImplementedException();
         }
@@ -48,22 +75,25 @@ namespace Microsoft.Data.SqlClientX.IO
         /// TODO: Consider accepting an enum of packet types
         /// instead of the byte.
         /// </summary>
-        /// <param name="packetType"></param>
-        public void SetWritePacketType(TdsStreamPacketType packetType)
+        /// <param name="packetType">The type of packet to be sent out</param>
+        public virtual void SetWritePacketType(TdsStreamPacketType packetType)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public override void Flush()
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public override int Read(Span<byte> buffer)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public override int Read(
             byte[] buffer, 
             int offset, 
@@ -72,21 +102,31 @@ namespace Microsoft.Data.SqlClientX.IO
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public override long Seek(long offset, SeekOrigin origin)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public override void SetLength(long value)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
+        public override void Write(ReadOnlySpan<byte> buffer)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
         public override void Write(byte[] buffer, int offset, int count)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public override ValueTask WriteAsync(
             ReadOnlyMemory<byte> buffer,
             CancellationToken cancellationToken)
@@ -94,17 +134,7 @@ namespace Microsoft.Data.SqlClientX.IO
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// We only support ValueTask based overloads for async IO.
-        /// This overload makes sure that the method throws, instead 
-        /// of using the unoptimized path.
-        /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        /// <param name="count"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        /// <exception cref="NotSupportedException"></exception>
+        /// <inheritdoc />
         public override Task WriteAsync(
             byte[] buffer,
             int offset,
@@ -127,6 +157,7 @@ namespace Microsoft.Data.SqlClientX.IO
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public override ValueTask<int> ReadAsync(
             Memory<byte> buffer,
             CancellationToken cancellationToken)
@@ -143,7 +174,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public ValueTask<byte> PeekByteAsync(bool isAsync,
+        public virtual ValueTask<byte> PeekByteAsync(bool isAsync,
             CancellationToken ct)
         {
             throw new NotImplementedException();
@@ -152,14 +183,14 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <summary>
         /// A convenience method to skip the bytes in the stream,
         /// by allowing buffer manipulation, instead of making the consumer
-        /// allocate buffers to read and discard the packets.
+        /// allocate buffers to read and discard the bytes.
         /// </summary>
-        /// <param name="skipCount"></param>
-        /// <param name="isAsync"></param>
-        /// <param name="ct"></param>
+        /// <param name="skipCount">Number of bytes to skip</param>
+        /// <param name="isAsync">If the method should be called Asynchronously.</param>
+        /// <param name="ct">The cancellation token.</param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public ValueTask SkipReadBytesAsync(int skipCount,
+        public virtual ValueTask SkipReadBytesAsync(int skipCount,
             bool isAsync, 
             CancellationToken ct)
         {
@@ -173,7 +204,28 @@ namespace Microsoft.Data.SqlClientX.IO
         /// want to make it available for the next set of operations.
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
-        public void Reset()
+        public virtual void Reset()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Queues the TDS cancellation token for the stream.
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        public virtual void QueueCancellation()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public override ValueTask DisposeAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing)
         {
             throw new NotImplementedException();
         }
