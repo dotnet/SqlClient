@@ -2817,7 +2817,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.FEATUREEXT_JSONSUPPORT:
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for JSONSUPPORT", ObjectID);
-                        if (data.Length != 2)
+                        if (data.Length != 1)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for JSONSUPPORT", ObjectID);
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
@@ -2828,11 +2828,7 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for JSONSUPPORT", ObjectID);
                             throw SQL.ParsingError();
                         }
-                        byte enabled = data[1];
-                        if (enabled == 1)
-                        {
-                            _parser.IsJsonSupportEnabled = true;
-                        }
+                        _parser.IsJsonSupportEnabled = true;
                         break;
                     }
 

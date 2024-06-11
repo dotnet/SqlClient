@@ -553,13 +553,12 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Check if Json is supported
             if (session.IsJsonSupportEnabled)
             {
-                // Create ack data (2 bytes: Version number, Enabled)
-                byte[] data = new byte[2];
+                // Create ack data (1 byte: Version number)
+                byte[] data = new byte[1];
                 data[0] = (byte)1;
-                data[1] = (byte)1;
 
                 // Create Json support as a generic feature extension option
-                TDSFeatureExtAckGenericOption jsonSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.JsonSupport, 2, data);
+                TDSFeatureExtAckGenericOption jsonSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.JsonSupport, (uint)data.Length, data);
 
                 // Look for feature extension token
                 TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
