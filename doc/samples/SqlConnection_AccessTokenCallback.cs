@@ -14,14 +14,21 @@ class Program
 
     private static void OpenSqlConnection()
     {
+        const string defaultScopeSuffix = "/.default";
         string connectionString = GetConnectionString();
-        using (SqlConnection connection = new SqlConnection("Data Source=contoso.database.windows.net;Initial Catalog=AdventureWorks;")
+        DefaultAzureCredential credential = new();
+
+        using (SqlConnection connection = new(connectionString)
         {
             AccessTokenCallback = async (authParams, cancellationToken) =>
             {
-                var cred = new DefaultAzureCredential();
-                string scope = authParams.Resource.EndsWith(s_defaultScopeSuffix) ? authParams.Resource : authParams.Resource + s_defaultScopeSuffix;
-                var token = await cred.GetTokenAsync(new TokenRequestContext(new[] { scope }), cancellationToken);
+                string scope = authParams.Resource.EndsWith(defaultScopeSuffix)
+                    ? authParams.Resource
+                    : $"{authParams.Resource}{defaultScopeSuffix}";
+                AccessToken token = await credential.GetTokenAsync(
+                    new TokenRequestContext([scope]),
+                    cancellationToken);
+
                 return new SqlAuthenticationToken(token.Token, token.ExpiresOn);
             }
         })
