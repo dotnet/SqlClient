@@ -611,7 +611,6 @@
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
       <Link>Common\System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
-
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionClosed.cs" />
@@ -919,6 +918,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequest.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequestType.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\IHandler.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
