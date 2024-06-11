@@ -38,10 +38,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/Command/*'/>
         public SqlCommand Command { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 3;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -56,10 +56,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -102,9 +102,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/Statistics/*'/>
         public IDictionary Statistics { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 4;
-        /// <inheritdoc/>>
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -120,10 +121,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -166,9 +167,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/Exception/*'/>
         public Exception Exception { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 4;
-        /// <inheritdoc/>>
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -184,10 +186,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -224,10 +226,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenBefore"]/ClientVersion/*'/>
         public string ClientVersion { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 2;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -241,10 +243,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -287,10 +289,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/Statistics/*'/>
         public IDictionary Statistics { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 4;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -306,10 +308,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -354,10 +356,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/Exception/*'/>
         public Exception Exception { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 4;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -373,10 +375,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -416,10 +418,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]/Statistics/*'/>
         public IDictionary Statistics { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 3;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -434,10 +436,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -477,10 +479,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/Statistics/*'/>
         public IDictionary Statistics { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 3;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -495,10 +497,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -543,10 +545,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/Exception/*'/>
         public Exception Exception { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 4;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -562,10 +564,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -605,10 +607,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitBefore"]/TransactionId/*'/>
         public long? TransactionId { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 3;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -623,10 +625,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -666,10 +668,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         public SqlConnection Connection { get; }
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/TransactionId/*'/>
         public long? TransactionId { get; }
-        /// <inheritdoc/>>
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 3;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -684,10 +687,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -731,10 +734,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/Exception/*'/>
         public Exception Exception { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 4;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -750,10 +753,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -797,10 +800,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackBefore"]/TransactionName/*'/>
         public string TransactionName { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 4;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -816,10 +819,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -862,10 +865,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/TransactionName/*'/>
         public string TransactionName { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 4;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -881,10 +884,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
@@ -931,10 +934,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackError"]/Exception/*'/>
         public Exception Exception { get; }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => 3 + 5;
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
         public KeyValuePair<string, object> this[int index]
         {
             get => index switch
@@ -951,10 +954,10 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             };
         }
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        /// <inheritdoc/>>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             int count = Count;
