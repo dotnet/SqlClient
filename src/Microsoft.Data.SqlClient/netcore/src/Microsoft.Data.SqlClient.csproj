@@ -923,6 +923,7 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequest.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequestType.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\IHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\SqlConnectionX.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
@@ -952,6 +953,9 @@
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="microsoft.data.sqlclient\netcore\src\microsoft\data\sqlclientx\" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
