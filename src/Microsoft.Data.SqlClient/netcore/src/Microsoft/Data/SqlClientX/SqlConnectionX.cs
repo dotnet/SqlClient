@@ -89,7 +89,6 @@ namespace Microsoft.Data.SqlClientX
         public override Task CloseAsync()
             => throw new NotImplementedException();
 
-
         /// <inheritdoc/>
         public override ValueTask DisposeAsync()
             => throw new NotImplementedException();
