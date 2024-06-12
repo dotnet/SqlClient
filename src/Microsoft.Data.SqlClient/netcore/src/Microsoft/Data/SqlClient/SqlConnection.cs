@@ -153,8 +153,12 @@ namespace Microsoft.Data.SqlClient
         [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_TrustedColumnMasterKeyPaths)]
         public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
 
-        internal SqlConnection(string connectionString, bool useExperimental) : this(useExperimental)
+        internal SqlConnection(string connectionString, bool useExperimental) : this()
         {
+            if (_isExperimental)
+            {
+                _sqlConnectionX = new SqlClientX.SqlConnectionX(connectionString);
+            }
             ConnectionString = connectionString; // setting connection string first so that ConnectionOption is available
         }
 
@@ -163,8 +167,14 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        internal SqlConnection(string connectionString, SqlCredential credential, bool useExperimental) : this(connectionString, useExperimental)
+        internal SqlConnection(string connectionString, SqlCredential credential, bool useExperimental) : this()
         {
+            if (_isExperimental)
+            {
+                _sqlConnectionX = new SqlClientX.SqlConnectionX(connectionString, credential);
+            }
+
+            ConnectionString = connectionString;
             if (credential != null)
             {
                 // The following checks are necessary as setting Credential property will call CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential
@@ -2436,6 +2446,7 @@ namespace Microsoft.Data.SqlClient
             _userConnectionOptions = connection.UserConnectionOptions;
             _poolGroup = connection.PoolGroup;
             _sqlConnectionX = connection._sqlConnectionX;
+            _isExperimental = connection._isExperimental;
 
             if (DbConnectionClosedNeverOpened.SingletonInstance == connection._innerConnection)
             {

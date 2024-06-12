@@ -36,19 +36,6 @@ namespace Microsoft.Data.SqlClient
             _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
         }
 
-        internal SqlConnection(bool useExperimental): this()
-        {
-            _isExperimental = useExperimental;
-            if (_isExperimental)
-            {
-                _sqlConnectionX = new SqlConnectionX();
-            }
-            else
-            {
-                _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
-            }
-        }
-
         internal int CloseCount
         {
             get

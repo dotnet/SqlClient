@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClientX
 {
@@ -25,6 +26,14 @@ namespace Microsoft.Data.SqlClientX
         /// Initializes a new instance of the System.Data.Common.SqlConnectionX class.
         /// </summary>
         internal SqlConnectionX() : base()
+        {
+        }
+
+        internal SqlConnectionX(string connectionString) : this()
+        {
+        }
+
+        internal SqlConnectionX(string connectionString, SqlCredential credential): this()
         {
         }
 
