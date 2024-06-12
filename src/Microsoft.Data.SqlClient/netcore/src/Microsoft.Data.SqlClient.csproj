@@ -918,6 +918,8 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
+    <Compile Include="Microsoft\Data\SqlClientX\IO\TdsStreamPacketType.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\IO\TdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequest.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequestType.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\IHandler.cs" />
