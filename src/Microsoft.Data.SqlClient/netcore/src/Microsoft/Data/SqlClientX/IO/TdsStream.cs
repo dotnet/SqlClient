@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.IO
 {
@@ -19,8 +20,10 @@ namespace Microsoft.Data.SqlClientX.IO
     /// N + 1 bytes, then the stream will timeout trying to get N+1 bytes, or it will return N+1 bytes, if the 
     /// N+1 byte is available.
     /// </summary>
-    internal class TdsStream : Stream
+    internal class TdsStream : Stream, ITdsWriteStream
     {
+        private TdsWriteStream _writeStream;
+
         /// <inheritdoc />
         public override bool CanRead => throw new NotImplementedException();
         
@@ -43,6 +46,7 @@ namespace Microsoft.Data.SqlClientX.IO
 
         public TdsStream(Stream underLyingStream) : base()
         {
+            _writeStream = new TdsWriteStream(underLyingStream);
         }
 
         /// <summary>
@@ -55,7 +59,8 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <exception cref="NotImplementedException"></exception>
         public virtual void ReplaceUnderlyingStream(Stream stream)
         {
-            throw new NotImplementedException();
+            _writeStream.ReplaceUnderlyingStream(stream);
+            // TODO: do this for the read stream as well.
         }
 
         /// <summary>
@@ -66,7 +71,8 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <exception cref="NotImplementedException"></exception>
         public virtual void SetPacketSize(int packetSize)
         {
-            throw new NotImplementedException();
+            _writeStream.SetPacketSize(packetSize);
+            // TODO: Do this for the read stream as well.
         }
 
         /// <summary>
@@ -78,14 +84,14 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="packetType">The type of packet to be sent out</param>
         public virtual void SetWritePacketType(TdsStreamPacketType packetType)
         {
-            throw new NotImplementedException();
+            _writeStream.PacketHeaderType = (byte)packetType;
         }
 
         /// <inheritdoc />
-        public override void Flush()
-        {
-            throw new NotImplementedException();
-        }
+        public override void Flush() => _writeStream.Flush();
+
+        /// <inheritdoc />
+        public override Task FlushAsync(CancellationToken ct) => _writeStream.FlushAsync(ct);
 
         /// <inheritdoc />
         public override int Read(Span<byte> buffer)
@@ -117,32 +123,29 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public override void Write(ReadOnlySpan<byte> buffer)
         {
-            throw new NotImplementedException();
+            _writeStream.Write(buffer);
         }
 
         /// <inheritdoc />
         public override void Write(byte[] buffer, int offset, int count)
         {
-            throw new NotImplementedException();
+            _writeStream.Write(buffer, offset, count);
         }
 
         /// <inheritdoc />
-        public override ValueTask WriteAsync(
+        public override async ValueTask WriteAsync(
             ReadOnlyMemory<byte> buffer,
-            CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
+            CancellationToken cancellationToken) 
+            => await _writeStream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+
 
         /// <inheritdoc />
-        public override Task WriteAsync(
+        public override async Task WriteAsync(
             byte[] buffer,
             int offset,
             int count,
             CancellationToken cancellationToken)
-        {
-            throw new NotSupportedException();
-        }
+         => await _writeStream.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
 
         /// <summary>
         /// Called explicitly by the consumers to flush the stream,
@@ -152,10 +155,8 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override Task FlushAsync(CancellationToken ct)
-        {
-            throw new NotImplementedException();
-        }
+        public override async Task FlushAsync(CancellationToken ct)
+            => await _writeStream.FlushAsync(ct);
 
         /// <inheritdoc />
         public override ValueTask<int> ReadAsync(
@@ -215,19 +216,25 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <exception cref="NotImplementedException"></exception>
         public virtual void QueueCancellation()
         {
-            throw new NotImplementedException();
+            _writeStream.QueueCancellation();
         }
 
         /// <inheritdoc />
-        public override ValueTask DisposeAsync()
+        public override async ValueTask DisposeAsync()
         {
-            throw new NotImplementedException();
+            await _writeStream.DisposeAsync();
+            // TODO: For Read Stream as well.
         }
 
         /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
             throw new NotImplementedException();
+        }
+
+        public async ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct)
+        {
+            await _writeStream.WriteByteAsync(value, isAsync, ct).ConfigureAwait(false);
         }
     }
 }
