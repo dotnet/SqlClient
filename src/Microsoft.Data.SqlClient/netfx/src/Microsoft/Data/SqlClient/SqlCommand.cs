@@ -22,7 +22,7 @@ using System.Buffers;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Server;
-using SysTx = System.Transactions;
+using System.Transactions;
 using System.Collections.Concurrent;
 
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
@@ -4046,7 +4046,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     long transactionId;
-                    SysTx.Transaction transaction;
+                    Transaction transaction;
                     innerConnection.GetCurrentTransactionPair(out transactionId, out transaction);
 
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.RunExecuteNonQuerySmi|ADV> {0}, innerConnection={1}, transactionId=0x{2}, cmdBehavior={3}.", ObjectID, innerConnection.ObjectID, transactionId, (int)CommandBehavior.Default);
@@ -5696,7 +5696,7 @@ namespace Microsoft.Data.SqlClient
                 requestExecutor = SetUpSmiRequest(innerConnection);
 
                 long transactionId;
-                SysTx.Transaction transaction;
+                Transaction transaction;
                 innerConnection.GetCurrentTransactionPair(out transactionId, out transaction);
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.RunExecuteReaderSmi|ADV> {0}, innerConnection={1}, transactionId=0x{2}, commandBehavior={(int)cmdBehavior}.", ObjectID, innerConnection.ObjectID, transactionId);
 

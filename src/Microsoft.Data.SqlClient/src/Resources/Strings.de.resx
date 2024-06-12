@@ -4680,6 +4680,9 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>Socket hat den erwarteten "{0}" nicht ausgelöst. Fehlercode: "{1}".</value>
   </data>
+  <data name="SQL_UnsupportedFeature" xml:space="preserve">
+    <value>Der Server versucht, ein Feature zu verwenden, das auf dieser Plattform nicht unterstützt wird.</value>
+  </data>
   <data name="SQL_UnsupportedKeyword" xml:space="preserve">
     <value>Das Schlüsselwort "{0}" wird auf dieser Plattform nicht unterstützt.</value>
   </data>

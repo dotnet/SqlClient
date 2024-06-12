@@ -6,6 +6,9 @@
   <Import Project="$(ToolsDir)targets\add-ons\GenerateAKVProviderNugetPackage.targets" />
 
   <PropertyGroup>
+    <!-- SourceLink variable-->
+    <DisableSourceLink>false</DisableSourceLink>
+
     <RestoreConfigFile>src\NuGet.config</RestoreConfigFile>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>

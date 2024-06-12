@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient
             string hostNameInCertificate)
             : base(IntPtr.Zero, true)
         {
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try

@@ -429,6 +429,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = new SqlCredential(connection._credential.UserId, password);
             }
             _accessToken = connection._accessToken;
+            _accessTokenCallback = connection._accessTokenCallback;
             _serverCertificateValidationCallback = connection._serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = connection._clientCertificateRetrievalCallback;
             _originalNetworkAddressInfo = connection._originalNetworkAddressInfo;
@@ -2758,7 +2759,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
         public static void ChangePassword(string connectionString, string newPassword)
         {
-            using (TryEventScope.Create("<sc.SqlConnection.ChangePassword|API>"))
+            using (TryEventScope.Create(nameof(SqlConnection)))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
 
@@ -2801,7 +2802,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='/docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
-            using (TryEventScope.Create("<sc.SqlConnection.ChangePassword|API>"))
+            using (TryEventScope.Create(nameof(SqlConnection)))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
 

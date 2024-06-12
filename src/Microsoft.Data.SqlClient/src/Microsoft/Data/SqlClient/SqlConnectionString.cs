@@ -233,7 +233,6 @@ namespace Microsoft.Data.SqlClient
         internal const int SynonymCount = 33;
 #else
         internal const int SynonymCount = 30;
-        internal const int DeprecatedSynonymCount = 2;
 #endif // NETFRAMEWORK
 
         private static Dictionary<string, string> s_sqlClientSynonyms;
@@ -836,8 +835,8 @@ namespace Microsoft.Data.SqlClient
             {
 
                 int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
-#if !NETFRAMEWORK
-                count += SqlConnectionStringBuilder.DeprecatedKeywordsCount + DeprecatedSynonymCount;
+#if NET6_0_OR_GREATER
+                count += SqlConnectionStringBuilder.DeprecatedKeywordsCount;
 #endif
                 synonyms = new Dictionary<string, string>(count, StringComparer.OrdinalIgnoreCase)
                 {
@@ -1024,7 +1023,7 @@ namespace Microsoft.Data.SqlClient
             // ArgumentException and other types are raised as is (no wrapping)
         }
 
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
         internal void ThrowUnsupportedIfKeywordSet(string keyword)
         {
             if (ContainsKey(keyword))
