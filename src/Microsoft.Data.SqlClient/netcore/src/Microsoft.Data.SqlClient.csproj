@@ -924,9 +924,10 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequest.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequestType.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\IHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\IpAddressVersionComparer.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\NamedPipeTransportCreationParams.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\SharedMemoryTransportCreationParams.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\TcpTransportCreationRequest.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\TcpTransportCreationParams.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\TransportCreationHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\TransportCreationParams.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\NamedPipeTransportCreationParams.cs" />
