@@ -10,6 +10,7 @@ using System.Threading;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClientX;
 
 
 namespace Microsoft.Data.SqlClient
@@ -21,6 +22,8 @@ namespace Microsoft.Data.SqlClient
         private DbConnectionOptions _userConnectionOptions;
         private DbConnectionPoolGroup _poolGroup;
         private DbConnectionInternal _innerConnection;
+        private bool _isExperimental;
+        private SqlConnectionX _sqlConnectionX;
         private int _closeCount;
 
         private static int _objectTypeCount; // EventSource Counter
@@ -31,6 +34,19 @@ namespace Microsoft.Data.SqlClient
         {
             GC.SuppressFinalize(this);
             _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
+        }
+
+        internal SqlConnection(bool useExperimental): this()
+        {
+            _isExperimental = useExperimental;
+            if (_isExperimental)
+            {
+                _sqlConnectionX = new SqlConnectionX();
+            }
+            else
+            {
+                _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
+            }
         }
 
         internal int CloseCount

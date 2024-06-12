@@ -153,16 +153,18 @@ namespace Microsoft.Data.SqlClient
         [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_TrustedColumnMasterKeyPaths)]
         public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
-        public SqlConnection(string connectionString) : this()
+        internal SqlConnection(string connectionString, bool useExperimental) : this(useExperimental)
         {
-            ConnectionString = connectionString;    // setting connection string first so that ConnectionOption is available
+            ConnectionString = connectionString; // setting connection string first so that ConnectionOption is available
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />
-        public SqlConnection(string connectionString, SqlCredential credential) : this()
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
+        public SqlConnection(string connectionString) : this(connectionString, false)
         {
-            ConnectionString = connectionString;
+        }
+
+        internal SqlConnection(string connectionString, SqlCredential credential, bool useExperimental) : this(connectionString, useExperimental)
+        {
             if (credential != null)
             {
                 // The following checks are necessary as setting Credential property will call CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential
@@ -212,6 +214,11 @@ namespace Microsoft.Data.SqlClient
             // else
             //      credential == null:  we should not set "Credential" as this will do additional validation check and
             //      checking pool groups which is not necessary. All necessary operation is already done by calling "ConnectionString = connectionString"
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />
+        public SqlConnection(string connectionString, SqlCredential credential) : this(connectionString, credential, false)
+        {
         }
 
         private SqlConnection(SqlConnection connection)
@@ -1077,7 +1084,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();
             }
 
-            if(_accessTokenCallback != null)
+            if (_accessTokenCallback != null)
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
             }
@@ -1099,7 +1106,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndAuthentication();
             }
 
-            if(_accessToken != null)
+            if (_accessToken != null)
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
             }
@@ -1395,6 +1402,12 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
         {
+            if (_isExperimental)
+            {
+                _sqlConnectionX.Open();
+                return;
+            }
+
             using (TryEventScope.Create("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
@@ -1665,10 +1678,16 @@ namespace Microsoft.Data.SqlClient
             => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(cancellationToken), cancellationToken);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
-        public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsProviderRetriable ?
+        public override Task OpenAsync(CancellationToken cancellationToken) {
+            if (_isExperimental)
+            {
+                return _sqlConnectionX.OpenAsync(cancellationToken);
+            }
+
+            return IsProviderRetriable?
                 InternalOpenWithRetryAsync(cancellationToken) :
                 InternalOpenAsync(cancellationToken);
+        }
 
         private Task InternalOpenAsync(CancellationToken cancellationToken)
         {
@@ -2416,6 +2435,7 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(connection, nameof(connection));
             _userConnectionOptions = connection.UserConnectionOptions;
             _poolGroup = connection.PoolGroup;
+            _sqlConnectionX = connection._sqlConnectionX;
 
             if (DbConnectionClosedNeverOpened.SingletonInstance == connection._innerConnection)
             {
