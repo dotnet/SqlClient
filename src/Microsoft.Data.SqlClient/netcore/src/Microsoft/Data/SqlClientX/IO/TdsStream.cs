@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClientX.IO
     /// </summary>
     internal class TdsStream : Stream, ITdsWriteStream
     {
-        private TdsWriteStream _writeStream;
+        private readonly TdsWriteStream _writeStream;
 
         /// <inheritdoc />
         public override bool CanRead => throw new NotImplementedException();
