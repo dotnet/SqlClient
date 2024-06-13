@@ -44,9 +44,9 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         public virtual bool IsCancellationSent { get; internal set; }
 
-        public TdsStream(Stream underLyingStream) : base()
+        public TdsStream(Stream underLyingStream, TdsWriteStream writeStream) : base()
         {
-            _writeStream = new TdsWriteStream(underLyingStream);
+            _writeStream = writeStream;
         }
 
         /// <summary>
@@ -90,8 +90,6 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public override void Flush() => _writeStream.Flush();
 
-        /// <inheritdoc />
-        public override Task FlushAsync(CancellationToken ct) => _writeStream.FlushAsync(ct);
 
         /// <inheritdoc />
         public override int Read(Span<byte> buffer)
