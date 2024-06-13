@@ -16,22 +16,24 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
     /// </summary>
     internal sealed class IpAddressVersionSorter : IComparer<IPAddress>
     {
-        private readonly bool _preferV6;
+        private readonly AddressFamily _preferredAddressFamily;
 
-        private IpAddressVersionSorter(bool preferV6)
+        private IpAddressVersionSorter(AddressFamily preferredAddressFamily)
         {
-            _preferV6 = preferV6;
+            _preferredAddressFamily = preferredAddressFamily;
         }
 
         /// <summary>
         /// Gets a singleton instance that ranks IPv4 addresses higher than IPv6 addresses.
         /// </summary>
-        public static IpAddressVersionSorter InstanceV4 { get; } = new IpAddressVersionSorter(false);
+        public static IpAddressVersionSorter InstanceV4 { get; } =
+            new IpAddressVersionSorter(AddressFamily.InterNetwork);
 
         /// <summary>
         /// Gets a singleton instance that ranks IPv6 addresses higher than IPv4 addresses.
         /// </summary>
-        public static IpAddressVersionSorter InstanceV6 { get; } = new IpAddressVersionSorter(true);
+        public static IpAddressVersionSorter InstanceV6 { get; } =
+            new IpAddressVersionSorter(AddressFamily.InterNetworkV6);
 
         /// <inheritdoc />
         public int Compare(IPAddress x, IPAddress y)
@@ -45,9 +47,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
                 return 0;
             }
 
-            return _preferV6
-                ? x.AddressFamily is AddressFamily.InterNetworkV6 ? 1 : -1
-                : x.AddressFamily is AddressFamily.InterNetwork ? 1 : -1;
+            return x.AddressFamily == _preferredAddressFamily ? 1 : -1;
         }
     }
 }

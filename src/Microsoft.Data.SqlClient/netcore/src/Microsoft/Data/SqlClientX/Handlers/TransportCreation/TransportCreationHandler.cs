@@ -17,6 +17,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 {
     internal class TransportCreationHandler : IHandler<ConnectionRequest>
     {
+        #if NET8_0_OR_GREATER
+        private static readonly TimeSpan DefaultPollTimeout = TimeSpan.FromSeconds(30);
+        #else
+        private const int DefaultPollTimeout = 30 * 100000; // 30 seconds as microseconds
+        #endif
+
         /// <inheritdoc />
         public IHandler<ConnectionRequest> NextHandler { get; set; }
 
@@ -87,12 +93,17 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             // @TODO: Handle opening in parallel
             Socket socket = null;
             var socketExceptions = new List<Exception>();
+
+            var ipEndpoint = new IPEndPoint(IPAddress.None, request.Port); // Allocate once
             foreach (var ipAddress in ipAddresses)
             {
-                var ipEndpoint = new IPEndPoint(ipAddress, request.Port);
+                ct.ThrowIfCancellationRequested();
+
+                ipEndpoint.Address = ipAddress;
                 try
                 {
                     socket = await OpenSocketAsync(ipEndpoint, ct).ConfigureAwait(false);
+                    break;
                 }
                 catch(Exception e)
                 {
@@ -110,9 +121,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             return new NetworkStream(socket);
         }
 
-        private async Task<Socket> OpenSocketAsync(IPEndPoint ipEndpoint, CancellationToken ct)
+        private async ValueTask<Socket> OpenSocketAsync(IPEndPoint ipEndpoint, CancellationToken ct)
         {
-            var socket = new Socket(ipEndpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { Blocking = false, };
+            var socket = new Socket(ipEndpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { Blocking = false };
 
             // Enable keep-alive
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
@@ -122,7 +133,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             // Open the socket
             try
             {
+                #if NET6_0_OR_GREATER
                 await socket.ConnectAsync(ipEndpoint, ct).ConfigureAwait(false);
+                #else
+                await new TaskFactory(ct).FromAsync(socket.BeginConnect, socket.EndConnect, ipEndpoint, null)
+                    .ConfigureAwait(false);
+                #endif
             }
             catch (SocketException e)
             {
@@ -133,19 +149,14 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             }
 
             // Verify the socket is open
-            // @TODO: Configure timeout?
-            #if NET8_0_OR_GREATER
-            var pollTime = TimeSpan.FromSeconds(30);
-            #else
-            const int pollTime = 30000000; // 30s in us
-            #endif
-            if (!socket.Poll(pollTime, SelectMode.SelectWrite))
+            if (!socket.Poll(DefaultPollTimeout, SelectMode.SelectWrite))
             {
                 throw new Exception("Connection not ready for writing");
             }
 
             // Connection is established
             socket.Blocking = true;
+            socket.NoDelay = true;
 
             return socket;
         }
