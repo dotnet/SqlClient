@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -35,15 +39,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// Should only be called after the login negotiation is done.
         /// </summary>
         /// <param name="bufferSize">new buffer size</param>
-        public virtual void SetPacketSize(int bufferSize)
-        {
-            _WriteBuffer = new byte[bufferSize];
-        }
-
-        public virtual void ReplaceUnderlyingStream(Stream stream)
-        {
-            _underlyingStream = stream;
-        }
+        public void SetPacketSize(int bufferSize) => _WriteBuffer = new byte[bufferSize];
+        
+        public void ReplaceUnderlyingStream(Stream stream)
+            => _underlyingStream = stream;
 
         /// <inheritdoc />
         public override bool CanRead => false;
@@ -142,7 +141,8 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="offset"></param>
         /// <param name="count"></param>
         /// <exception cref="NotSupportedException"></exception>
-        public override void Write(byte[] buffer, int offset, int count) => throw new NotImplementedException();
+        public override void Write(byte[] buffer, int offset, int count) 
+            => Write(buffer.AsSpan(offset, count));
 
         /// <summary>
         /// An overload for writing a byte to the stream.
@@ -195,6 +195,7 @@ namespace Microsoft.Data.SqlClientX.IO
             }
         }
 
+        /// <inheritdoc/>
         public async override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
         {
             int len = buffer.Length;
@@ -221,10 +222,21 @@ namespace Microsoft.Data.SqlClientX.IO
             }
         }
 
-        public override void Flush()
-        {
-            FlushAsync().Wait();
-        }
+        /// <summary>
+        /// Write operation with Task should only be used when there is no other option.
+        /// This overload creates a Task which may be unnecessary when we are only filling up 
+        /// the buffer.
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+            => WriteAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
+
+
+        public override void Flush() => FlushAsync(CancellationToken.None, isAsync: false, FlushMode.HardFlush).Wait();
 
         /// <summary>
         /// Queues the TDS cancellation token for the stream.

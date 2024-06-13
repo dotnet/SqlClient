@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.IO
 {
@@ -59,7 +55,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         /// <param name="stream"></param>
         /// <exception cref="NotImplementedException"></exception>
-        public virtual void ReplaceUnderlyingStream(Stream stream)
+        public void ReplaceUnderlyingStream(Stream stream)
         {
             _writeStream.ReplaceUnderlyingStream(stream);
             // TODO: do this for the read stream as well.
@@ -71,22 +67,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         /// <param name="packetSize">The negotiated packet size</param>
         /// <exception cref="NotImplementedException"></exception>
-        public virtual void SetPacketSize(int packetSize)
+        public void SetPacketSize(int packetSize)
         {
             _writeStream.SetPacketSize(packetSize);
             // TODO: Do this for the read stream as well.
-        }
-
-        /// <summary>
-        /// When writing the packet, the caller needs to 
-        /// specify the packet type. 
-        /// TODO: Consider accepting an enum of packet types
-        /// instead of the byte.
-        /// </summary>
-        /// <param name="packetType">The type of packet to be sent out</param>
-        public virtual void SetWritePacketType(TdsStreamPacketType packetType)
-        {
-            _writeStream.PacketHeaderType = (byte)packetType;
         }
 
         /// <inheritdoc />
