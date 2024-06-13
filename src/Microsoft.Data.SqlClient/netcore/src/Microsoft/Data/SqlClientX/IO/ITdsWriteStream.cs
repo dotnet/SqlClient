@@ -6,13 +6,15 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.IO
+namespace Microsoft.Data.SqlClientX.IO
 {
     /// <summary>
     /// An internal interface to represent the TDS specific write stream operations.
     /// </summary>
     internal interface ITdsWriteStream : ITdsStream
     {
+        TdsStreamPacketType PacketHeaderType { get; set; }
+
         public ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct);
 
         public void QueueCancellation();

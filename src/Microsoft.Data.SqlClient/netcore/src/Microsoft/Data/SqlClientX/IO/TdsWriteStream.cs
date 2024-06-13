@@ -4,7 +4,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.IO
 {
@@ -21,7 +20,8 @@ namespace Microsoft.Data.SqlClientX.IO
         // Start at the end of the Tds header
         internal int WriteBufferOffset { get; private set; } = TdsEnums.HEADER_LEN;
 
-        internal byte PacketHeaderType { get; set; } = 0; // This should be set before flushing the buffer.
+        // This should be set before flushing the buffer.
+        public TdsStreamPacketType PacketHeaderType { get; set; }
 
         internal byte PacketNumber { get; private set; } = 1; // Packets always start with 1.
 
@@ -76,8 +76,8 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="flushMode">Whether this is a hard flush or a softflush</param>
         private async Task FlushAsync(CancellationToken ct, bool isAsync, FlushMode flushMode = FlushMode.SoftFlush)
         {
-            Debug.Assert(PacketHeaderType != 0, "PacketHeaderType is not set. Cannot flush the buffer without setting the packet header type.");
-            _WriteBuffer[0] = PacketHeaderType;
+            Debug.Assert(PacketHeaderType != TdsStreamPacketType.None, "PacketHeaderType is not set. Cannot flush the buffer without setting the packet header type.");
+            _WriteBuffer[0] = (byte)PacketHeaderType;
             byte status;
 
             // TODO: Handle cancellation queueing. If there is a cancellation queued up, then send the status with IGNORE bit set.
@@ -111,6 +111,15 @@ namespace Microsoft.Data.SqlClientX.IO
             {
                 _underlyingStream.Write(_WriteBuffer, 0, WriteBufferOffset);
                 _underlyingStream.Flush();
+            }
+
+            // A hard flush means that the TDS message is terminated.
+            // Reset the packet header type so that the next message sender on the stream
+            // will have to set the packet header type.
+            if (flushMode == FlushMode.HardFlush)
+            {
+                // Reset the packet header type
+                PacketHeaderType = TdsStreamPacketType.None;
             }
 
             // Reset the offset since we will start filling up the packet again.
