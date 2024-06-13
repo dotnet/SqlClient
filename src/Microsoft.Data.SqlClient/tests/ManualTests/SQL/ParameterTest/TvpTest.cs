@@ -21,6 +21,25 @@ using System.Linq;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    public class TvpTestResult
+    {
+        public int SqlDateRecordMatches { get; set; }
+        public int DbDataReaderMatches { get; set; }
+        public List<int> DataTableMatches { get; set; }
+
+        public TvpTestResult(int sqlDataRecordMatches, int dbDataReaderMatches, List<int> dataTableMatches)
+        {
+            SqlDateRecordMatches = sqlDataRecordMatches;
+            DbDataReaderMatches = dbDataReaderMatches;
+            DataTableMatches = dataTableMatches;
+        }
+
+        public override string ToString()
+        {
+            return $"SqlDataRecordMatches={SqlDateRecordMatches}, DbDataReaderMatches={DbDataReaderMatches}, DataTableMatches={string.Join(", ", DataTableMatches)}";
+        }
+    }
+
     public class TvpTest
     {
         private const string TvpName = "@tvp";
@@ -141,6 +160,230 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 Assert.Fail($"Unexpected error occurred: {e.Message}");
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void ColumnBoundariesTestShouldSucceed()
+        {
+            /*  The "Matches" expectations gathered from the baseline file SqlParameterTest_X.bsl 
+                Note: Non-Azure and Azure expected results only differs in Error Codes. So, the tables below applies to both.
+            _____________________________________________________________________________________________________
+            | Iteration | SqlDataRecord Matches | DbDataReader Matches |             DataTable Matches           |
+            |     0     |          168          |         168          | 14,  0,  0,  0,  0,  0,  0,  0,  0, 14  |
+            |     1     |          168          |         168          | 14,  0,  0,  0,  0,  0,  0,  0,  0, 14  |
+            |     2     |          168          |         168          | 14,  0,  0, 28,  0,  0, 14,  0,  0, 14  |
+            |     3     |          168          |         168          | 14,  0,  0,  0,  0,  0, 14,  0,  0, 14  |
+            |     4     |          168          |         168          | 14,  0,  0,  0,  0,  0, 14 , 0,  0, 14  |
+            |     5     |          168          |         168          | 14,  0,  0, 28,  0,  0, 14,  0,  0, 14  |
+            |     6     |            0          |           0          |  0,  0,  0,  0,  0,  0,  0,  0,  0,  0  |
+            |     7     |          168          |         168          | 14,  0,  0, 28,  0,  0, 14,  0,  0, 14  |
+            |     8     |          168          |         168          | 14,  0,  0, 28,  0,  0, 14,  0,  0, 14  |
+            |     9     |          168          |         168          | 14,  0,  0,  0,  0,  0,  0,  0,  0, 14  |
+            |    10     |          168          |         168          | 14,  0,  0,  0,  0,  0,  0,  0,  0, 14  |
+            |    11     |          168          |         168          | 14,  0,  0, 28,  0,  0, 14,  0,  0, 14  |
+            |    12     |          168          |         168          | 14,  0,  0,  0,  0,  0, 14,  0,  0, 14  |
+            |    13     |          168          |         168          | 14,  0,  0,  0,  0,  0, 14,  0,  0, 14  |
+            |    14     |            0          |           0          |  0,  0,  0,  0,  0,  0,  0,  0,  0,  0  |
+            |    15     |            0          |           0          |  0,  0,  0,  0,  0,  0,  0,  0,  0,  0  |
+            |    16     |          168          |         168          | 14,  0,  0, 28,  0,  0, 14,  0,  0, 14  |
+            |    17     |          168          |         168          | 14,  0,  0, 28,  0,  0, 14,  0,  0, 14  |
+            |    18     |          168          |         168          | 14,  0,  0,  0,  0,  0,  0,  0,  0, 14  |
+            |    19     |          168          |         168          | 14,  0,  0,  0,  0,  0,  0,  0,  0, 14  |
+            |    20     |          168          |         168          | 14, 14,  0, 28, 14,  0, 14, 14,  0, 14  |
+            |    21     |          168          |         168          | 14, 14,  0,  0, 14,  0, 14,  0,  0, 14  |
+            |    22     |            0          |           0          |  0,  0,  0,  0,  0,  0,  0,  0,  0,  0  |
+            |    23     |            0          |           0          |  0,  0,  0,  0,  0,  0,  0,  0,  0,  0  |
+            |    24     |            0          |           0          |  0,  0,  0,  0,  0,  0,  0,  0,  0,  0  |
+            |    25     |          162          |         162          | 14,  0,  0, 28,  0,  0, 14,  0,  0, 14  |
+            |    26     |          168          |         168          | 14,  0,  0, 28,  0,  0, 14,  0,  0, 14  |
+            |    27     |          158          |         158          |  0,  0,  0,  0,  0,  0,  0,  0,  0, 0   |
+            ------------------------------------------------------------------------------------------------------                 
+            */
+            // Convert matches grid into a dictionary of TvpTestResult
+            Dictionary<int, TvpTestResult> tvpExpectedResults = new()
+            {
+                [0] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 0, 0, 0, 0, 0, 0, 14 }),
+                [1] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 0, 0, 0, 0, 0, 0, 14 }),
+                [2] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 28, 0, 0, 14, 0, 0, 14 }),
+                [3] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 0, 0, 0, 14, 0, 0, 14 }),
+                [4] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 0, 0, 0, 14, 0, 0, 14 }),
+                [5] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 28, 0, 0, 14, 0, 0, 14 }),
+                [6] = new TvpTestResult(0, 0, new List<int> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+                [7] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 28, 0, 0, 14, 0, 0, 14 }),
+                [8] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 28, 0, 0, 14, 0, 0, 14 }),
+                [9] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 0, 0, 0, 0, 0, 0, 14 }),
+                [10] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 0, 0, 0, 0, 0, 0, 14 }),
+                [11] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 28, 0, 0, 14, 0, 0, 14 }),
+                [12] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 0, 0, 0, 14, 0, 0, 14 }),
+                [13] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 0, 0, 0, 14, 0, 0, 14 }),
+                [14] = new TvpTestResult(0, 0, new List<int> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+                [15] = new TvpTestResult(0, 0, new List<int> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+                [16] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 28, 0, 0, 14, 0, 0, 14 }),
+                [17] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 28, 0, 0, 14, 0, 0, 14 }),
+                [18] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 0, 0, 0, 0, 0, 0, 14 }),
+                [19] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 0, 0, 0, 0, 0, 0, 14 }),
+                [20] = new TvpTestResult(168, 168, new List<int> { 14, 14, 0, 28, 14, 0, 14, 14, 0, 14 }),
+                [21] = new TvpTestResult(168, 168, new List<int> { 14, 14, 0, 0, 14, 0, 14, 0, 0, 14 }),
+                [22] = new TvpTestResult(0, 0, new List<int> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+                [23] = new TvpTestResult(0, 0, new List<int> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+                [24] = new TvpTestResult(0, 0, new List<int> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+                [25] = new TvpTestResult(162, 162, new List<int> { 0, 0, 0, 28, 0, 0, 14, 0, 0, 14 }),
+                [26] = new TvpTestResult(168, 168, new List<int> { 14, 0, 0, 28, 0, 0, 14, 0, 0, 14 }),
+                [27] = new TvpTestResult(158, 158, new List<int> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            };
+            /* DataTable tests matrix gathered from the baseline file SqlParameterTest_X.bsl 
+            _______________________________________________________________________________________________________
+            | Iteration | List 0 | List 1 | List 2 | List 3 | List 4 | List 5 | List 6 | List 7 | List 8 | List 9 |
+            |     0     |  PASS  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  PASS  |
+            |     1     |  PASS  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  PASS  |
+            |     2     |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |     3     |  PASS  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |     4     |  PASS  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |     5     |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |     6     |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |
+            |     7     |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |     8     |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |     9     |  PASS  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  PASS  |
+            |    10     |  PASS  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  PASS  |
+            |    11     |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |    12     |  PASS  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |    13     |  PASS  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |    14     |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |
+            |    15     |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |
+            |    16     |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |    17     |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |    18     |  PASS  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  PASS  |
+            |    19     |  PASS  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  PASS  |
+            |    20     |  PASS  |  PASS  |  FAIL  |  PASS  |  PASS  |  FAIL  |  PASS  |  PASS  |  FAIL  |  PASS  |
+            |    21     |  PASS  |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |    22     |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |
+            |    23     |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |
+            |    24     |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |   --   |
+            |    25     |  FAIL  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |    26     |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |  FAIL  |  FAIL  |  PASS  |
+            |    27     |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |  FAIL  |
+            ------------------------------------------------------------------------------------------------------- 
+            */
+            // Using the matrix above, create a dictionary using a concatenated row and column index as the key and the expected result as value
+            Dictionary<string, bool> expectations = new Dictionary<string, bool>
+            {
+                ["00"] = true, ["01"] = false, ["02"] = false, ["03"] = false, ["04"] = false, ["05"] = false, ["06"] = false, ["07"] = false, ["08"] = false, ["09"] = true,
+                ["10"] = true, ["11"] = false, ["12"] = false, ["13"] = false, ["14"] = false, ["15"] = false, ["16"] = false, ["17"] = false, ["18"] = false, ["19"] = true,
+                ["20"] = true, ["21"] = false, ["22"] = false, ["23"] = true, ["24"] = false, ["25"] = false, ["26"] = true, ["27"] = false, ["28"] = false, ["29"] = true,
+                ["30"] = true, ["31"] = false, ["32"] = false, ["33"] = false, ["34"] = false, ["35"] = false, ["36"] = true, ["37"] = false, ["38"] = false, ["39"] = true,
+                ["40"] = true, ["41"] = false, ["42"] = false, ["43"] = false, ["44"] = false, ["45"] = false, ["46"] = true, ["47"] = false, ["48"] = false, ["49"] = true,
+                ["50"] = true, ["51"] = false, ["52"] = false, ["53"] = true, ["54"] = false, ["55"] = false, ["56"] = true, ["57"] = false, ["58"] = false, ["59"] = true,
+                ["70"] = true, ["71"] = false, ["72"] = false, ["73"] = true, ["74"] = false, ["75"] = false, ["76"] = true, ["77"] = false, ["78"] = false, ["79"] = true,
+                ["80"] = true, ["81"] = false, ["82"] = false, ["83"] = true, ["84"] = false, ["85"] = false, ["86"] = true, ["87"] = false, ["88"] = false, ["89"] = true,
+                ["90"] = true, ["91"] = false, ["92"] = false, ["93"] = false, ["94"] = false, ["95"] = false, ["96"] = false, ["97"] = false, ["98"] = false, ["99"] = true,
+                ["100"] = true, ["101"] = false, ["102"] = false, ["103"] = false, ["104"] = false, ["105"] = false, ["106"] = false, ["107"] = false, ["108"] = false, ["109"] = true,
+                ["110"] = true, ["111"] = false, ["112"] = false, ["113"] = true, ["114"] = false, ["115"] = false, ["116"] = true, ["117"] = false, ["118"] = false, ["119"] = true,
+                ["120"] = true, ["121"] = false, ["122"] = false, ["123"] = false, ["124"] = false, ["125"] = false, ["126"] = true, ["127"] = false, ["128"] = false, ["129"] = true,
+                ["130"] = true, ["131"] = false, ["132"] = false, ["133"] = false, ["134"] = false, ["135"] = false, ["136"] = true, ["137"] = false, ["138"] = false, ["139"] = true,
+                ["160"] = true, ["161"] = false, ["162"] = false, ["163"] = true, ["164"] = false, ["165"] = false, ["166"] = true, ["167"] = false, ["168"] = false, ["169"] = true,
+                ["170"] = true, ["171"] = false, ["172"] = false, ["173"] = true, ["174"] = false, ["175"] = false, ["176"] = true, ["177"] = false, ["178"] = false, ["179"] = true,
+                ["180"] = true, ["181"] = false, ["182"] = false, ["183"] = false, ["184"] = false, ["185"] = false, ["186"] = false, ["187"] = false, ["188"] = false, ["189"] = true,
+                ["190"] = true, ["191"] = false, ["192"] = false, ["193"] = false, ["194"] = false, ["195"] = false, ["196"] = false, ["197"] = false, ["198"] = false, ["199"] = true,
+                ["200"] = true, ["201"] = true, ["202"] = false, ["203"] = true, ["204"] = true, ["205"] = false, ["206"] = true, ["207"] = true, ["208"] = false, ["209"] = true,
+                ["210"] = true, ["211"] = true, ["212"] = false, ["213"] = false, ["214"] = true, ["215"] = false, ["216"] = true, ["217"] = false, ["218"] = false, ["219"] = true,
+                ["250"] = false, ["251"] = false, ["252"] = false, ["253"] = true, ["254"] = false, ["255"] = false, ["256"] = true, ["257"] = false, ["258"] = false, ["259"] = true,
+                ["260"] = true, ["261"] = false, ["262"] = false, ["263"] = true, ["264"] = false, ["265"] = false, ["266"] = true, ["267"] = false, ["268"] = false, ["269"] = true,
+                ["270"] = false, ["271"] = false, ["272"] = false, ["273"] = false, ["274"] = false, ["275"] = false, ["276"] = false, ["277"] = false, ["278"] = false, ["279"] = false,
+            };
+
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+
+            bool runOnlyDataRecordTest = false;
+
+            SteStructuredTypeBoundaries bounds = SteStructuredTypeBoundaries.AllColumnTypesExceptUdts;
+            IEnumerator<StePermutation> boundsMD = bounds.GetEnumerator(s_boundariesTestKeys);
+
+            object[][] baseValues = SteStructuredTypeBoundaries.GetSeparateValues(boundsMD);
+            IList<DataTable> dtList = GenerateDataTables(baseValues);
+
+            TransactionOptions opts = new();
+            opts.IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted;
+
+            // for each unique pattern of metadata
+            int iter = 0;
+            while (boundsMD.MoveNext())
+            {
+                TvpTestResult tvpTestActualResult = new TvpTestResult(0, 0, new() { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+
+                StePermutation tvpPerm = boundsMD.Current;
+
+                // Set up base command
+                SqlCommand cmd;
+                SqlParameter param;
+                cmd = new SqlCommand(GetProcName(tvpPerm))
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                param = cmd.Parameters.Add(TvpName, SqlDbType.Structured);
+                param.TypeName = GetTypeName(tvpPerm);
+
+                // set up the server
+                try
+                {
+                    CreateServerObjects(tvpPerm);
+                }
+                catch (SqlException se)
+                {
+                    Console.WriteLine("SqlException creating objects: {0}", se.Number);
+                    DropServerObjects(tvpPerm);
+                    iter++;
+                    continue;
+                }
+
+                // Send list of SqlDataRecords as value
+                Console.WriteLine("------IEnumerable<SqlDataRecord>---------");
+
+                try
+                {
+                    param.Value = CreateListOfRecords(tvpPerm, baseValues);
+                    Assert.True(ExecuteAndVerify(cmd, tvpPerm, baseValues, null, matchName: "SqlDataRecord", tvpTestResult: tvpTestActualResult, index: null));
+                }
+                catch (ArgumentException ae)
+                {
+                    // some argument exceptions expected and should be swallowed
+                    Console.WriteLine("Argument exception in value setup: {0}", ae.Message);
+                }
+
+                if (!runOnlyDataRecordTest)
+                {
+                    // send DbDataReader
+                    Console.WriteLine("------DbDataReader---------");
+                    try
+                    {
+                        param.Value = new TvpRestartableReader(CreateListOfRecords(tvpPerm, baseValues));
+                        Assert.True(ExecuteAndVerify(cmd, tvpPerm, baseValues, null, matchName: "DbDataReader", tvpTestResult: tvpTestActualResult, index: null));
+                    }
+                    catch (ArgumentException ae)
+                    {
+                        // some argument exceptions expected and should be swallowed
+                        Console.WriteLine("Argument exception in value setup: {0}", ae.Message);
+                    }
+
+                    // send datasets
+                    Console.WriteLine("------DataTables---------");
+
+                    for (int i = 0; i < dtList.Count; i++)
+                    {
+                        param.Value = dtList[i];
+
+                        string key = $"{iter}{i}";
+                        if (expectations.ContainsKey(key))
+                            Assert.Equal(expectations[key], ExecuteAndVerify(cmd, tvpPerm, null, dtList[i], matchName: "DataTable", tvpTestResult: tvpTestActualResult, index: i ));
+                    }
+
+                    Assert.Equal(tvpExpectedResults[iter].ToString(), tvpTestActualResult.ToString());
+                }
+
+                // And clean up
+                DropServerObjects(tvpPerm);
+
+                iter++;
             }
         }
 
@@ -1252,8 +1495,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private void ExecuteAndVerify(SqlCommand cmd, StePermutation tvpPerm, object[][] objValues, DataTable dtValues)
+        private bool ExecuteAndVerify(SqlCommand cmd, StePermutation tvpPerm, object[][] objValues, DataTable dtValues, string matchName = null, TvpTestResult tvpTestResult = null, int? index = null)
         {
+            bool passed = false;
             using SqlConnection conn = new(_connStr);
             conn.Open();
             cmd.Connection = conn;
@@ -1267,20 +1511,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 using SqlDataReader rdr = cmd.ExecuteReader();
-                VerifyColumnBoundaries(rdr, GetFields(tvpPerm), objValues, dtValues);
+                VerifyColumnBoundaries(rdr, GetFields(tvpPerm), objValues, dtValues, matchName, tvpTestResult, index);
+                passed = true;
             }
             catch (SqlException se)
             {
                 Console.WriteLine("SqlException. Error Code: {0}", se.Number);
+                passed = false;
             }
             catch (InvalidOperationException ioe)
             {
                 Console.WriteLine("InvalidOp: {0}", ioe.Message);
+                passed = false;
             }
             catch (ArgumentException ae)
             {
                 Console.WriteLine("ArgumentException: {0}", ae.Message);
+                passed = false;
             }
+
+            return passed;
         }
 
         private IList<DataTable> GenerateDataTables(object[][] values)
@@ -1428,7 +1678,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.WriteLine("Mismatch: Source = {0}, result = {1}, metadata={2}", DataTestUtility.GetValueString(source), DataTestUtility.GetValueString(result), perm.ToString());
         }
 
-        private void VerifyColumnBoundaries(SqlDataReader rdr, IList<StePermutation> fieldMetaData, object[][] values, DataTable dt)
+        private void VerifyColumnBoundaries(SqlDataReader rdr, IList<StePermutation> fieldMetaData, object[][] values, DataTable dt, string matchName = null, TvpTestResult tvpTestResult = null, int? idx = null)
         {
             int rowOrd = 0;
             int matches = 0;
@@ -1473,6 +1723,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             Console.WriteLine("Matches = {0}", matches);
+
+            if (matchName != null)
+            {
+                switch (matchName)
+                {
+                    case "SqlDataRecord":
+                        tvpTestResult.SqlDateRecordMatches = matches;
+                        break;
+                    case "DbDataReader":
+                        tvpTestResult.DbDataReaderMatches = matches;
+                        break;
+                    case "DataTable":
+                        tvpTestResult.DataTableMatches[(int)idx] = matches;
+                        break;
+                }
+            }
         }
 
         private void WriteReader(SqlDataReader rdr)
