@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
 
-            // Bad Scenario - exception expectedResult.
+            // Bad Scenario - exception expected.
             try
             {
                 List<Item> list = new()
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(e.Message.Contains("Object reference not set to an instance of an object"), "Expected exception did not occur");
             }
 
-            // Good Scenario - No failure expectedResult.
+            // Good Scenario - No failure expected.
             try
             {
                 const string SQL = @"SELECT * FROM information_schema.tables WHERE TABLE_NAME = @TableName";
@@ -440,7 +440,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 catch (ArgumentException ae)
                 {
-                    // some argument exceptions expectedResult and should be swallowed
+                    // some argument exceptions expected and should be swallowed
                     Console.WriteLine("Argument exception in value setup: {0}", ae.Message);
                 }
 
@@ -455,7 +455,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     catch (ArgumentException ae)
                     {
-                        // some argument exceptions expectedResult and should be swallowed
+                        // some argument exceptions expected and should be swallowed
                         Console.WriteLine("Argument exception in value setup: {0}", ae.Message);
                     }
 
@@ -1820,7 +1820,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 0,
                 14);
 
-            // change any of the 56 31 0 0 bytes and this program completes as expectedResult in a couple seconds
+            // change any of the 56 31 0 0 bytes and this program completes as expected in a couple seconds
         }
 
         public bool MoveNext()
