@@ -131,10 +131,16 @@ namespace Microsoft.Data.SqlClientX
 
         /// <inheritdoc/>
         public override void Open()
+            => Open(SqlConnectionOverrides.None);
+
+        public void Open(SqlConnectionOverrides overrides)
             => throw new NotImplementedException();
 
         /// <inheritdoc/>
         public override Task OpenAsync(CancellationToken cancellationToken)
+            => OpenAsync(cancellationToken, SqlConnectionOverrides.None);
+
+        public Task OpenAsync(CancellationToken cancellationToken, SqlConnectionOverrides overrides)
             => throw new NotImplementedException();
 
         /// <inheritdoc/>
