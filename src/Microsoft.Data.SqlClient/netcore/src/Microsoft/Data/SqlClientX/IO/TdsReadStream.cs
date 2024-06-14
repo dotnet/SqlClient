@@ -127,7 +127,8 @@ namespace Microsoft.Data.SqlClientX.IO
             int totalRead = 0;
             while (lengthToFill > 0)
             {
-                if (_packetDataLeft == 0 || _readBufferDataEnd <= _readIndex)
+                // If we have read all the data from the packet or reached the end of the buffer, then we need to read more data.
+                if (_packetDataLeft == 0 || _readBufferDataEnd == _readIndex)
                     await PrepareBufferAsync(isAsync: true, cancellationToken).ConfigureAwait(false);
 
                 // We can only read the minimum of what is left in the packet, what is left in the buffer, and what we need to fill
@@ -216,28 +217,22 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <returns></returns>
         private async ValueTask PrepareBufferAsync(bool isAsync, CancellationToken ct)
         {
-            // Either we have read all the data from the packet as stated in the header
-            // and we have data left in the buffer.
-            // In this case we need to process header. Note that we may have a partially read header here
-            // but ProcessHeaderAsync will take care of that.
+            // We have read all the data from the packet as stated in the header, this means that we have to 
+            // process the next packet header.
             if (_packetDataLeft == 0 && _readBufferDataEnd > _readIndex)
             {
                 await ProcessHeaderAsync(isAsync, ct).ConfigureAwait(false);
             }
 
             // There is no data left in the buffer.
-            // 1. We need to read more data from the transport because nothing is left in the buffer.
-            // Then get the header, and then read the packet data from the network.
-            
             if (_readIndex == _readBufferDataEnd)
             {
-                // 1.1. If we have left over data indicated in the packet header, then we simply need to get data from the network.
+                // If we have left over data indicated in the packet header, then we simply need to get data from the network.
                 if (_packetDataLeft > 0)
                 {
                     _readBufferDataEnd = isAsync ?
                         await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false) :
                         _underlyingStream.Read(_readBuffer);
-
                     _readIndex = 0;
                 }
                 // 1.2. There is no data left as indicated by packet header and the buffer is empty.
@@ -246,14 +241,14 @@ namespace Microsoft.Data.SqlClientX.IO
                     _readBufferDataEnd = isAsync ?
                         await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false) :
                         _underlyingStream.Read(_readBuffer);
-
-                    // Reset the offset to 0, since we read new packet.
+                    
                     _readIndex = 0;
+
                     await ProcessHeaderAsync(isAsync, ct).ConfigureAwait(false);
 
                     // 1.3. After processing the packet header, there is a possibility that the transport read didn't
-                    // // return any more data for the packet. In that case, post another read to have packet data ready..
-                    if (_readBufferDataEnd == _readIndex && _packetDataLeft > 0)
+                    // return any more data for the packet. In that case, post another read to have packet data ready..
+                    if (_readBufferDataEnd == _readIndex)
                     {
                         _readBufferDataEnd = isAsync ?
                             await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false) :
@@ -265,9 +260,10 @@ namespace Microsoft.Data.SqlClientX.IO
 
         /// <summary>
         /// Processes the header of the packet, and extracts the data from the header.
+        /// If needed, this function will read more data from the network to complete the header.
         /// </summary>
-        /// <param name="isAsync"></param>
-        /// <param name="ct"></param>
+        /// <param name="isAsync">Whether this method is invoked asynchronously.</param>
+        /// <param name="ct">The cancellation token.</param>
         /// <returns></returns>
         private async ValueTask ProcessHeaderAsync(bool isAsync, CancellationToken ct)
         {
@@ -275,19 +271,13 @@ namespace Microsoft.Data.SqlClientX.IO
             int bytesNeededToCompleteHeader = TdsEnums.HEADER_LEN - headerDataAvailable;
 
             // We have less than the header length available in the buffer, so we need to read more data, to atleast complete 
-            // the header. After this the header data length can be used to determine, the amount of data in the packet.
+            // the header.
             if (headerDataAvailable < TdsEnums.HEADER_LEN)
             {
-                // It is possible there may not be space available at the end of the buffer to fill in the header.
-                // This is rare but definitely possible.
-                if (_readBufferDataEnd + bytesNeededToCompleteHeader > _readBuffer.Length)
-                {
-                    // We need to reset the buffer, but copying the partial header to the beginning of the buffer, and repositioning
-                    // the read buffer pointers.
-                    Buffer.BlockCopy(_readBuffer, _readIndex, _readBuffer, 0, headerDataAvailable);
-                    _readBufferDataEnd = headerDataAvailable;
-                    _readIndex = 0;
-                }
+                // We move the header information to the beginning of the buffer.
+                Buffer.BlockCopy(_readBuffer, _readIndex, _readBuffer, 0, headerDataAvailable);
+                _readBufferDataEnd = headerDataAvailable;
+                _readIndex = 0;
 
                 while (bytesNeededToCompleteHeader > 0)
                 {
@@ -307,6 +297,7 @@ namespace Microsoft.Data.SqlClientX.IO
                 | _readBuffer[_readIndex + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
             // Ignore SPID and Window
 
+            // Position the read index to the start of the packet data.
             _readIndex += TdsEnums.HEADER_LEN;
         }
 
