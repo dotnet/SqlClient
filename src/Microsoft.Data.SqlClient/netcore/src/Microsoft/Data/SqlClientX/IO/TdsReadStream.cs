@@ -3,8 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Buffers;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,19 +20,35 @@ namespace Microsoft.Data.SqlClientX.IO
         #region Private Fields
         
         private Stream _underlyingStream;
+
+        // The buffer to hold the TDS read data.
         private byte[] _readBuffer;
 
+        // The read pointer inside the buffer.
         private int _readIndex { get; set; } = 0;
 
+        // The end of the data index in the buffer.
         private int _readBufferDataEnd { get; set; } = 0;
 
+        /// <summary>
+        /// The number of bytes left in the packet to be consumed.
+        /// This is not necessarily the number of bytes available in the buffer.
+        /// </summary>
         private int _packetDataLeft { get; set; } = 0;
 
+        /// <summary>
+        /// The number of bytes in the header, according to the header.
+        /// </summary>
         private int _packetHeaderDataLength { get; set; } = 0;
 
         private byte _packetHeaderType { get; set; } = 0;
 
         private byte _packetStatus { get; set; }
+
+        /// <summary>
+        /// Stored internally. It will be used for tracing.
+        /// </summary>
+        private int _spid;
 
         #endregion
 
@@ -295,7 +309,11 @@ namespace Microsoft.Data.SqlClientX.IO
             // TODO: Use Binary primitives to read the data.
             _packetDataLeft = (_readBuffer[_readIndex + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8
                 | _readBuffer[_readIndex + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
-            // Ignore SPID and Window
+
+            _packetHeaderDataLength = _packetDataLeft;
+
+            _spid = _readBuffer[_readIndex + TdsEnums.SPID_OFFSET] << 8 |
+                                  _readBuffer[_readIndex + TdsEnums.SPID_OFFSET + 1];
 
             // Position the read index to the start of the packet data.
             _readIndex += TdsEnums.HEADER_LEN;
