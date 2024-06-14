@@ -271,14 +271,33 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <returns></returns>
         private async ValueTask ProcessHeaderAsync(bool isAsync, CancellationToken ct)
         {
+            int headerDataAvailable = _readBufferDataEnd - _readIndex;
+            int bytesNeededToCompleteHeader = TdsEnums.HEADER_LEN - headerDataAvailable;
+
             // We have less than the header length available in the buffer, so we need to read more data, to atleast complete 
             // the header. After this the header data length can be used to determine, the amount of data in the packet.
-            if (_readBufferDataEnd - _readIndex < TdsEnums.HEADER_LEN)
+            if (headerDataAvailable < TdsEnums.HEADER_LEN)
             {
-                int minimumBytesToRead = TdsEnums.HEADER_LEN - (_readBufferDataEnd - _readIndex);
-                _readBufferDataEnd += isAsync ? 
-                    await _underlyingStream.ReadAtLeastAsync(_readBuffer.AsMemory(_readIndex), minimumBytesToRead, cancellationToken: ct).ConfigureAwait(false)
-                        : _underlyingStream.ReadAtLeast(_readBuffer.AsSpan(_readIndex), minimumBytesToRead);
+                // It is possible there may not be space available at the end of the buffer to fill in the header.
+                // This is rare but definitely possible.
+                if (_readBufferDataEnd + bytesNeededToCompleteHeader > _readBuffer.Length)
+                {
+                    // We need to reset the buffer, but copying the partial header to the beginning of the buffer, and repositioning
+                    // the read buffer pointers.
+                    Buffer.BlockCopy(_readBuffer, _readIndex, _readBuffer, 0, headerDataAvailable);
+                    _readBufferDataEnd = headerDataAvailable;
+                    _readIndex = 0;
+                }
+
+                while (bytesNeededToCompleteHeader > 0)
+                {
+                    int bytesRead = isAsync ? 
+                        await _underlyingStream.ReadAsync(_readBuffer.AsMemory(_readBufferDataEnd), ct).ConfigureAwait(false) 
+                            : _underlyingStream.Read(_readBuffer, _readBufferDataEnd, bytesNeededToCompleteHeader);
+                    // Reduce the number of bytes needed
+                    bytesNeededToCompleteHeader -= bytesRead;
+                    _readBufferDataEnd += bytesRead;
+                }
             }
 
             _packetHeaderType = _readBuffer[_readIndex];
@@ -290,6 +309,7 @@ namespace Microsoft.Data.SqlClientX.IO
 
             _readIndex += TdsEnums.HEADER_LEN;
         }
+
         #endregion
     }
 }
