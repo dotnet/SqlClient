@@ -19,28 +19,31 @@ namespace Microsoft.Data.SqlClientX.IO
     {
         private Stream _underlyingStream;
 
-        private byte[] _WriteBuffer;
+        private byte[] _writeBuffer;
 
         // Start at the end of the Tds header
-        internal int WriteBufferOffset { get; private set; } = TdsEnums.HEADER_LEN;
+        private int _writeBufferOffset { get; set; } = TdsEnums.HEADER_LEN;
 
-        // This should be set before flushing the buffer.
-        public TdsStreamPacketType PacketHeaderType { get; set; }
+        /// <inheritdoc />
+        public TdsStreamPacketType? PacketHeaderType { get; set; }
 
         internal byte PacketNumber { get; private set; } = 1; // Packets always start with 1.
 
+        /// <summary>
+        /// Constructor for the TDS write stream.
+        /// </summary>
+        /// <param name="underLyingStream"></param>
         public TdsWriteStream(Stream underLyingStream) : base()
         {
             _underlyingStream = underLyingStream;
-            _WriteBuffer = new byte[TdsEnums.DEFAULT_LOGIN_PACKET_SIZE];
+            _writeBuffer = new byte[TdsEnums.DEFAULT_LOGIN_PACKET_SIZE];
         }
 
-        /// <summary>
-        /// Should only be called after the login negotiation is done.
-        /// </summary>
-        /// <param name="bufferSize">new buffer size</param>
-        public void SetPacketSize(int bufferSize) => _WriteBuffer = new byte[bufferSize];
-        
+        /// <inheritdoc />
+        public void SetPacketSize(int bufferSize) 
+            => _writeBuffer = new byte[bufferSize];
+
+        /// <inheritdoc />
         public void ReplaceUnderlyingStream(Stream stream)
             => _underlyingStream = stream;
 
@@ -51,15 +54,20 @@ namespace Microsoft.Data.SqlClientX.IO
         public override bool CanSeek => false;
 
         /// <summary>
-        /// Always returns true since we can always write to the stream.
+        /// Returns true since we can always write to the stream.
         /// </summary>
-        public override bool CanWrite => true;
+        public override bool CanWrite => _underlyingStream != null;
 
         /// <inheritdoc />
-        public override long Length => throw new NotSupportedException();
+        public override long Length 
+            => throw new NotSupportedException();
 
         /// <inheritdoc />
-        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override long Position 
+        { 
+            get => throw new NotSupportedException(); 
+            set => throw new NotSupportedException(); 
+        }
 
         /// <inheritdoc />
         public override async Task FlushAsync(CancellationToken ct)
@@ -75,8 +83,8 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="flushMode">Whether this is a hard flush or a softflush</param>
         private async Task FlushAsync(CancellationToken ct, bool isAsync, FlushMode flushMode = FlushMode.SoftFlush)
         {
-            Debug.Assert(PacketHeaderType != TdsStreamPacketType.None, "PacketHeaderType is not set. Cannot flush the buffer without setting the packet header type.");
-            _WriteBuffer[0] = (byte)PacketHeaderType;
+            Debug.Assert(PacketHeaderType != null, "PacketHeaderType is not set. Cannot flush the buffer without setting the packet header type.");
+            _writeBuffer[0] = (byte)PacketHeaderType;
             byte status;
 
             // TODO: Handle cancellation queueing. If there is a cancellation queued up, then send the status with IGNORE bit set.
@@ -92,23 +100,22 @@ namespace Microsoft.Data.SqlClientX.IO
                 PacketNumber++;
             }
 
-            _WriteBuffer[1] = status;
-            _WriteBuffer[2] = (byte)(WriteBufferOffset >> 8);   // Length upper byte
-            _WriteBuffer[3] = (byte)(WriteBufferOffset & 0xff); // Length lower byte
-            _WriteBuffer[6] = PacketNumber;
-            _WriteBuffer[4] = 0;
-            _WriteBuffer[5] = 0;
-
-            _WriteBuffer[7] = 0;
+            _writeBuffer[1] = status;
+            _writeBuffer[2] = (byte)(_writeBufferOffset >> 8);   // Length upper byte
+            _writeBuffer[3] = (byte)(_writeBufferOffset & 0xff); // Length lower byte
+            _writeBuffer[6] = PacketNumber;
+            _writeBuffer[4] = 0;
+            _writeBuffer[5] = 0;
+            _writeBuffer[7] = 0;
 
             if (isAsync)
             {
-                await _underlyingStream.WriteAsync(_WriteBuffer, 0, WriteBufferOffset, ct).ConfigureAwait(false);
+                await _underlyingStream.WriteAsync(_writeBuffer.AsMemory(0, _writeBufferOffset), ct).ConfigureAwait(false);
                 await _underlyingStream.FlushAsync(ct).ConfigureAwait(false);
             }
             else
             {
-                _underlyingStream.Write(_WriteBuffer, 0, WriteBufferOffset);
+                _underlyingStream.Write(_writeBuffer, 0, _writeBufferOffset);
                 _underlyingStream.Flush();
             }
 
@@ -117,12 +124,12 @@ namespace Microsoft.Data.SqlClientX.IO
             // will have to set the packet header type.
             if (flushMode == FlushMode.HardFlush)
             {
-                // Reset the packet header type
-                PacketHeaderType = TdsStreamPacketType.None;
+                // Reset the packet header type to null.
+                PacketHeaderType = null;
             }
 
             // Reset the offset since we will start filling up the packet again.
-            WriteBufferOffset = TdsEnums.HEADER_LEN;
+            _writeBufferOffset = TdsEnums.HEADER_LEN;
         }
 
         /// <inheritdoc />
@@ -150,7 +157,15 @@ namespace Microsoft.Data.SqlClientX.IO
         /// Otherwise use the WriteByteAsync because it takes the isAsync flag.
         /// </summary>
         /// <param name="value">The byte value to be written to the stream.</param>
-        public override void WriteByte(byte value) => WriteByteAsync(value, isAsync: false, ct: CancellationToken.None).AsTask().Wait();
+        public override void WriteByte(byte value)
+        {
+            // If we are already at the end of the buffer, flush the buffer, with a softflush.
+            if (_writeBuffer.Length - _writeBufferOffset == 0)
+            {
+                FlushAsync(CancellationToken.None, isAsync: false, FlushMode.SoftFlush).Wait();
+            }
+            _writeBuffer[_writeBufferOffset++] = value;
+        }
 
         /// <summary>
         /// An async mechanism to write a byte to the stream.
@@ -162,11 +177,11 @@ namespace Microsoft.Data.SqlClientX.IO
         public virtual async ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct)
         {
             // If we are already at the end of the buffer, flush the buffer, with a softflush.
-            if (_WriteBuffer.Length - WriteBufferOffset == 0)
+            if (_writeBuffer.Length - _writeBufferOffset == 0)
             {
                 await FlushAsync(ct, isAsync, FlushMode.SoftFlush).ConfigureAwait(false);
             }
-            _WriteBuffer[WriteBufferOffset++] = value;
+            _writeBuffer[_writeBufferOffset++] = value;
         }
 
         /// <inheritdoc/>
@@ -176,66 +191,60 @@ namespace Microsoft.Data.SqlClientX.IO
             // The buffer may not have enough space. Write what we can and then flush the buffer with a soft flush.
             while (len > 0)
             {
-                if (len > _WriteBuffer.Length - WriteBufferOffset)
+                if (len > _writeBuffer.Length - _writeBufferOffset)
                 {
                     // Only a part of the length fits in the buffer.
-                    int bytesToWrite = _WriteBuffer.Length - WriteBufferOffset;
-                    buffer.Slice(0, bytesToWrite).CopyTo(_WriteBuffer.AsSpan(WriteBufferOffset));
-                    WriteBufferOffset += bytesToWrite;
+                    int bytesToWrite = _writeBuffer.Length - _writeBufferOffset;
+                    buffer[..bytesToWrite].CopyTo(_writeBuffer.AsSpan(_writeBufferOffset));
+                    _writeBufferOffset += bytesToWrite;
                     len -= bytesToWrite;
                     FlushAsync(CancellationToken.None, isAsync: false, FlushMode.SoftFlush).ConfigureAwait(false);
                 }
                 else
                 {
                     // The whole length can be added to the buffer.
-                    buffer.CopyTo(_WriteBuffer.AsSpan(WriteBufferOffset));
-                    WriteBufferOffset += len;
+                    buffer.CopyTo(_writeBuffer.AsSpan(_writeBufferOffset));
+                    _writeBufferOffset += len;
                     len = 0;
                 }
             }
         }
 
         /// <inheritdoc/>
-        public async override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
         {
             int len = buffer.Length;
             // The buffer may not have enough space. Write what we can and then flush the buffer with a soft flush, then 
             // save the rest of the data.
             while (len > 0)
             {
-                if (len > _WriteBuffer.Length - WriteBufferOffset)
+                if (len > _writeBuffer.Length - _writeBufferOffset)
                 {
                     // Only a part of the length fits in the buffer.
-                    int bytesToWrite = _WriteBuffer.Length - WriteBufferOffset;
-                    buffer[..bytesToWrite].CopyTo(_WriteBuffer.AsMemory(WriteBufferOffset));
-                    WriteBufferOffset += bytesToWrite;
+                    // TODO: It might be possible to optimize this by writing directly to the underlying stream.
+                    // In that case, we need to first write the header and then write the data packet to the underlying stream,
+                    // directly. This needs to be tested.
+                    int bytesToWrite = _writeBuffer.Length - _writeBufferOffset;
+                    buffer[..bytesToWrite].CopyTo(_writeBuffer.AsMemory(_writeBufferOffset));
+                    _writeBufferOffset += bytesToWrite;
                     len -= bytesToWrite;
                     await FlushAsync(cancellationToken, false).ConfigureAwait(false); // Send to network.
                 }
                 else
                 {
                     // The whole length can be added to the buffer.
-                    buffer.CopyTo(_WriteBuffer.AsMemory(WriteBufferOffset));
-                    WriteBufferOffset += len;
+                    buffer.CopyTo(_writeBuffer.AsMemory(_writeBufferOffset));
+                    _writeBufferOffset += len;
                     len = 0;
                 }
             }
         }
 
-        /// <summary>
-        /// Write operation with Task should only be used when there is no other option.
-        /// This overload creates a Task which may be unnecessary when we are only filling up 
-        /// the buffer.
-        /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        /// <param name="count"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
+        /// <inheritdoc />
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
             => WriteAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
 
-
+        /// <inheritdoc />
         public override void Flush() => FlushAsync(CancellationToken.None, isAsync: false, FlushMode.HardFlush).Wait();
 
         /// <summary>
@@ -251,7 +260,7 @@ namespace Microsoft.Data.SqlClientX.IO
         {
             await _underlyingStream.DisposeAsync();
             _underlyingStream = null;
-            _WriteBuffer = null;
+            _writeBuffer = null;
         }
 
         /// <inheritdoc />
@@ -259,7 +268,7 @@ namespace Microsoft.Data.SqlClientX.IO
         {
             _underlyingStream?.Dispose();
             _underlyingStream = null;
-            _WriteBuffer = null;
+            _writeBuffer = null;
         }
 
         /// <summary>

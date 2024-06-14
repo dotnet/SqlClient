@@ -6,7 +6,6 @@ namespace Microsoft.Data.SqlClientX.IO
 {
     internal enum TdsStreamPacketType
     {
-        None = 0,
         PreLogin = 0x12,
         Login7 = 0x10,
         SqlBatch = 0x01,

@@ -44,7 +44,11 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         public virtual bool IsCancellationSent { get; internal set; }
 
-        public TdsStreamPacketType PacketHeaderType { get => _writeStream.PacketHeaderType; set => _writeStream.PacketHeaderType = value; }
+        public TdsStreamPacketType? PacketHeaderType 
+        {
+            get => _writeStream.PacketHeaderType;
+            set => _writeStream.PacketHeaderType = value; 
+        }
 
         public TdsStream(Stream underLyingStream, TdsWriteStream writeStream) : base()
         {

@@ -12,10 +12,23 @@ namespace Microsoft.Data.SqlClientX.IO
     /// </summary>
     internal interface ITdsWriteStream : ITdsStream
     {
-        TdsStreamPacketType PacketHeaderType { get; set; }
+        /// <summary>
+        /// Represents the type of the packet header that the stream is currently writing.
+        /// </summary>
+        TdsStreamPacketType? PacketHeaderType { get; set; }
 
+        /// <summary>
+        /// Writes a byte to the stream.
+        /// </summary>
+        /// <param name="value">The value to be written.</param>
+        /// <param name="isAsync">Whether the operation should be performed asynchronosly.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns></returns>
         public ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct);
 
+        /// <summary>
+        /// Queues a cancellation request to the stream, which will be sent to the server.
+        /// </summary>
         public void QueueCancellation();
     }
 }
