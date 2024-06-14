@@ -22,6 +22,10 @@ namespace Microsoft.Data.SqlClient
         private DbConnectionOptions _userConnectionOptions;
         private DbConnectionPoolGroup _poolGroup;
         private DbConnectionInternal _innerConnection;
+        /// <summary>
+        /// Indicates that this connection uses the experimental SqlClientX code path.
+        /// When true, operations pass through _sqlConnectionX.
+        /// </summary>
         private bool _isExperimental;
         private SqlConnectionX _sqlConnectionX;
         private int _closeCount;

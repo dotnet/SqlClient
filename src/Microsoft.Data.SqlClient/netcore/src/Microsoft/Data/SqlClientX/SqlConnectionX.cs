@@ -77,7 +77,6 @@ namespace Microsoft.Data.SqlClientX
         protected override DbProviderFactory? DbProviderFactory
             => throw new NotImplementedException();
 
-
         /// <inheritdoc/>
         public override void ChangeDatabase(string databaseName)
             => throw new NotImplementedException();
@@ -97,7 +96,6 @@ namespace Microsoft.Data.SqlClientX
         /// <inheritdoc/>
         public override Task CloseAsync()
             => throw new NotImplementedException();
-
 
         /// <inheritdoc/>
         public override ValueTask DisposeAsync()

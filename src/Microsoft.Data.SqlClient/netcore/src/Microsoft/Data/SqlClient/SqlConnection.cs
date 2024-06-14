@@ -155,6 +155,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlConnection(string connectionString, bool useExperimental) : this()
         {
+            _isExperimental = useExperimental;
             if (_isExperimental)
             {
                 _sqlConnectionX = new SqlClientX.SqlConnectionX(connectionString);
@@ -169,6 +170,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlConnection(string connectionString, SqlCredential credential, bool useExperimental) : this()
         {
+            _isExperimental = useExperimental;
             if (_isExperimental)
             {
                 _sqlConnectionX = new SqlClientX.SqlConnectionX(connectionString, credential);
