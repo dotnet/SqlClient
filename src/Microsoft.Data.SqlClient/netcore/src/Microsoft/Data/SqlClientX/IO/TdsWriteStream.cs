@@ -44,8 +44,7 @@ namespace Microsoft.Data.SqlClientX.IO
             => _writeBuffer = new byte[bufferSize];
 
         /// <inheritdoc />
-        public void ReplaceUnderlyingStream(Stream stream)
-            => _underlyingStream = stream;
+        public void ReplaceUnderlyingStream(Stream stream) => _underlyingStream = stream;
 
         /// <inheritdoc />
         public override bool CanRead => false;
