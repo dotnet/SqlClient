@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.IO
 {
@@ -20,9 +21,10 @@ namespace Microsoft.Data.SqlClientX.IO
     /// N + 1 bytes, then the stream will timeout trying to get N+1 bytes, or it will return N+1 bytes, if the 
     /// N+1 byte is available.
     /// </summary>
-    internal class TdsStream : Stream, ITdsWriteStream
+    internal class TdsStream : Stream, ITdsWriteStream, ITdsReadStream
     {
         private readonly TdsWriteStream _writeStream;
+        private readonly TdsReadStream _readStream;
 
         /// <inheritdoc />
         public override bool CanRead => throw new NotImplementedException();
@@ -50,9 +52,10 @@ namespace Microsoft.Data.SqlClientX.IO
             set => _writeStream.PacketHeaderType = value; 
         }
 
-        public TdsStream(Stream underLyingStream, TdsWriteStream writeStream) : base()
+        public TdsStream(Stream underLyingStream, TdsWriteStream writeStream, TdsReadStream readStream) : base()
         {
             _writeStream = writeStream;
+            _readStream = readStream;
         }
 
         /// <summary>
@@ -66,7 +69,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public void ReplaceUnderlyingStream(Stream stream)
         {
             _writeStream.ReplaceUnderlyingStream(stream);
-            // TODO: do this for the read stream as well.
+            _readStream.ReplaceUnderlyingStream(stream);
         }
 
         /// <summary>
@@ -78,7 +81,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public void SetPacketSize(int packetSize)
         {
             _writeStream.SetPacketSize(packetSize);
-            // TODO: Do this for the read stream as well.
+            _readStream.SetPacketSize(packetSize);
         }
 
         /// <inheritdoc />
@@ -86,30 +89,21 @@ namespace Microsoft.Data.SqlClientX.IO
 
 
         /// <inheritdoc />
-        public override int Read(Span<byte> buffer)
-        {
-            throw new NotImplementedException();
-        }
+        public override int Read(Span<byte> buffer) => _readStream.Read(buffer);
 
         /// <inheritdoc />
         public override int Read(
             byte[] buffer, 
             int offset, 
-            int count)
-        {
-            throw new NotImplementedException();
-        }
+            int count) => _readStream.Read(buffer, offset, count);
 
         /// <inheritdoc />
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotImplementedException();
-        }
+        public override long Seek(long offset, SeekOrigin origin) => _readStream.Seek(offset, origin);
 
         /// <inheritdoc />
         public override void SetLength(long value)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         /// <inheritdoc />
@@ -153,25 +147,11 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public override ValueTask<int> ReadAsync(
             Memory<byte> buffer,
-            CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
+            CancellationToken cancellationToken) => _readStream.ReadAsync(buffer, cancellationToken);
 
-        /// <summary>
-        /// Peeks the next byte in the stream, without consuming it.
-        /// The next call to read will return the same byte but it 
-        /// will consume it.
-        /// </summary>
-        /// <param name="isAsync"></param>
-        /// <param name="ct"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
+        /// <inheritdoc />
         public virtual ValueTask<byte> PeekByteAsync(bool isAsync,
-            CancellationToken ct)
-        {
-            throw new NotImplementedException();
-        }
+            CancellationToken ct) => _readStream.PeekByteAsync(isAsync, ct);
 
         /// <summary>
         /// A convenience method to skip the bytes in the stream,
@@ -185,10 +165,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <exception cref="NotImplementedException"></exception>
         public virtual ValueTask SkipReadBytesAsync(int skipCount,
             bool isAsync, 
-            CancellationToken ct)
-        {
-            throw new NotImplementedException();
-        }
+            CancellationToken ct) => _readStream.SkipReadBytesAsync(skipCount, isAsync, ct);
 
         /// <summary>
         /// Needed to reset the stream.
@@ -205,7 +182,6 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <summary>
         /// Queues the TDS cancellation token for the stream.
         /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
         public virtual void QueueCancellation()
         {
             _writeStream.QueueCancellation();
@@ -215,13 +191,14 @@ namespace Microsoft.Data.SqlClientX.IO
         public override async ValueTask DisposeAsync()
         {
             await _writeStream.DisposeAsync();
-            // TODO: For Read Stream as well.
+            await _readStream.DisposeAsync();
         }
 
         /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
-            throw new NotImplementedException();
+            _writeStream.Dispose();
+            _readStream.Dispose();
         }
 
         public async ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct)
