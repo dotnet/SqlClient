@@ -87,11 +87,11 @@ namespace Microsoft.Data.SqlClientX.IO
 
         /// <inheritdoc />
         public override void Flush()
-            => FlushAsync(CancellationToken.None, isAsync: false, FlushMode.HardFlush).Wait();
+            => FlushPacketAsync(true, isAsync: false, CancellationToken.None).Wait();
 
         /// <inheritdoc />
         public override async Task FlushAsync(CancellationToken ct)
-            => await FlushAsync(ct, true).ConfigureAwait(false);
+            => await FlushPacketAsync(true, true, ct).ConfigureAwait(false);
 
         /// <inheritdoc />
         public void SetPacketSize(int bufferSize)
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClientX.IO
                     buffer[..bytesToWrite].CopyTo(_writeBuffer.AsSpan(_writeBufferEnd));
                     _writeBufferEnd += bytesToWrite;
                     len -= bytesToWrite;
-                    FlushAsync(CancellationToken.None, isAsync: false, FlushMode.SoftFlush).ConfigureAwait(false);
+                    FlushPacketAsync(false, isAsync: false, CancellationToken.None).ConfigureAwait(false);
                 }
                 else
                 {
@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClientX.IO
             // If we are already at the end of the buffer, flush the buffer, with a softflush.
             if (_writeBuffer.Length - _writeBufferEnd == 0)
             {
-                FlushAsync(CancellationToken.None, isAsync: false, FlushMode.SoftFlush).Wait();
+                FlushPacketAsync(false, isAsync: false, CancellationToken.None).Wait();
             }
             _writeBuffer[_writeBufferEnd++] = value;
         }
@@ -171,13 +171,13 @@ namespace Microsoft.Data.SqlClientX.IO
             // If we are already at the end of the buffer, flush the buffer, with a softflush.
             if (_writeBuffer.Length - _writeBufferEnd == 0)
             {
-                await FlushAsync(ct, isAsync, FlushMode.SoftFlush).ConfigureAwait(false);
+                await FlushPacketAsync(false, isAsync, ct).ConfigureAwait(false);
             }
             _writeBuffer[_writeBufferEnd++] = value;
         }
 
         /// <inheritdoc/>
-        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
         {
             int len = buffer.Length;
             // The buffer may not have enough space. Write what we can and then flush the buffer with a soft flush, then 
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClientX.IO
                     buffer[..bytesToWrite].CopyTo(_writeBuffer.AsMemory(_writeBufferEnd));
                     _writeBufferEnd += bytesToWrite;
                     len -= bytesToWrite;
-                    await FlushAsync(cancellationToken, false).ConfigureAwait(false); // Send to network.
+                    await FlushPacketAsync(false, false, cancellationToken).ConfigureAwait(false); // Send to network.
                 }
                 else
                 {
@@ -241,8 +241,8 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         /// <param name="ct">Cancellation token for async operation.</param>
         /// <param name="isAsync">Bool to indicate async operation</param>
-        /// <param name="flushMode">Whether this is a hard flush or a softflush</param>
-        private async Task FlushAsync(CancellationToken ct, bool isAsync, FlushMode flushMode = FlushMode.SoftFlush)
+        /// <param name="isEndOfMessage">Whether this is the end of message</param>
+        private async Task FlushPacketAsync(bool isEndOfMessage, bool isAsync, CancellationToken ct)
         {
             Debug.Assert(PacketHeaderType != null, "PacketHeaderType is not set. Cannot flush the buffer without setting the packet header type.");
             _writeBuffer[0] = (byte)PacketHeaderType;
@@ -250,7 +250,7 @@ namespace Microsoft.Data.SqlClientX.IO
 
             // TODO: Handle cancellation queueing. If there is a cancellation queued up, then send the status with IGNORE bit set.
 
-            if (flushMode == FlushMode.HardFlush)
+            if (isEndOfMessage)
             {
                 status = TdsEnums.ST_EOM;
             }
@@ -282,7 +282,7 @@ namespace Microsoft.Data.SqlClientX.IO
             // A hard flush means that the TDS message is terminated.
             // Reset the packet header type so that the next message sender on the stream
             // will have to set the packet header type.
-            if (flushMode == FlushMode.HardFlush)
+            if (isEndOfMessage)
             {
                 // Reset the packet header type to null.
                 PacketHeaderType = null;
@@ -301,19 +301,6 @@ namespace Microsoft.Data.SqlClientX.IO
             _writeBuffer[6] = 0;
             _writeBuffer[4] = 0;
             _writeBuffer[5] = 0;
-        }
-
-        #endregion
-
-        #region Private types
-
-        /// <summary>
-        /// Flush modes for the stream.
-        /// </summary>
-        private enum FlushMode
-        {
-            HardFlush,
-            SoftFlush
         }
 
         #endregion
