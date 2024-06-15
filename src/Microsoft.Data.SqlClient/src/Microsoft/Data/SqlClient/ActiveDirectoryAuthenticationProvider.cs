@@ -189,43 +189,9 @@ namespace Microsoft.Data.SqlClient
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials)
             {
-                // We'll keep using common environment variables defined in Azure.Identity library
-                // AZURE_TENANT_ID: The tenant ID where target resource hosts
-                // AZURE_CLIENT_ID: The client id of multi-tenant entra id app. May be overridden by the User Id.
-                // AZURE_MSI_CLIENT_ID (new): The client id of managed identity
-                string tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
-                tenantId = string.IsNullOrWhiteSpace(tenantId) ? null : tenantId;
-
-                if (clientId is null)
-                {
-                    clientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
-                    clientId = string.IsNullOrWhiteSpace(clientId) ? null : clientId;
-                }
-
-                string managedIdentityClientId = Environment.GetEnvironmentVariable("AZURE_MSI_CLIENT_ID");
-                managedIdentityClientId = string.IsNullOrWhiteSpace(managedIdentityClientId) ? null : managedIdentityClientId;
-
-                ClientAssertionCredential clientAssertionCredential = null;
-                // If either tenant id, client id, or the managed client id are not specified when fetching the token,
-                // a CredentialUnavailableException will be thrown instead
-                if (!string.IsNullOrEmpty(tenantId) && !string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(managedIdentityClientId))
-                {
-                    clientAssertionCredential = new ClientAssertionCredential(
-                        tenantId,
-                        clientId,
-                        async (cancellationToken) =>
-                        {
-                            ManagedIdentityCredential miCredential = new ManagedIdentityCredential(managedIdentityClientId);
-                            var token = await miCredential.GetTokenAsync(new TokenRequestContext(new string[] { $"api://AzureADTokenExchange/.default" })).ConfigureAwait(false);
-                            return token.Token;
-                        });
-                }
-
-                if (clientAssertionCredential == null)
-                {
-                    throw new CredentialUnavailableException(Strings.AAD_FIC_Invalid_Setup);
-                }
-                AccessToken accessToken = await clientAssertionCredential.GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+                // Cache FederatedIdentityCredentials based on authority and clientId
+                TokenCredentialKey tokenCredentialKey = new(typeof(ClientAssertionCredential), authority, string.Empty, string.Empty, clientId);
+                AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Federated Identity Credentials auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
@@ -654,6 +620,50 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 return new TokenCredentialData(new WorkloadIdentityCredential(options), GetHash(secret));
+            }
+            else if (tokenCredentialKey._tokenCredentialType == typeof(ClientAssertionCredential))
+            {
+                // We'll keep using common environment variables defined in Azure.Identity library
+                // AZURE_TENANT_ID: The tenant ID where target resource hosts
+                // AZURE_CLIENT_ID: The client id of multi-tenant entra id app. May be overridden by the User Id.
+                // AZURE_MSI_CLIENT_ID (new): The client id of managed identity
+                string tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
+                tenantId = string.IsNullOrWhiteSpace(tenantId) ? null : tenantId;
+
+                string clientId = tokenCredentialKey._clientId;
+                if (clientId is null)
+                {
+                    clientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
+                    clientId = string.IsNullOrWhiteSpace(clientId) ? null : clientId;
+                }
+
+                string managedIdentityClientId = Environment.GetEnvironmentVariable("AZURE_MSI_CLIENT_ID");
+                managedIdentityClientId = string.IsNullOrWhiteSpace(managedIdentityClientId) ? null : managedIdentityClientId;
+
+                ClientAssertionCredential clientAssertionCredential = null;
+                // If either tenant id, client id, or the managed identity client id are not specified when fetching the token,
+                // a CredentialUnavailableException will be thrown instead
+                if (!string.IsNullOrEmpty(tenantId) && !string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(managedIdentityClientId))
+                {
+                    clientAssertionCredential = new ClientAssertionCredential(
+                        tenantId,
+                        clientId,
+                        async (cancellationToken) =>
+                        {
+                            ManagedIdentityCredential miCredential = new ManagedIdentityCredential(managedIdentityClientId);
+                            AccessToken token = await miCredential.GetTokenAsync(
+                                new TokenRequestContext(new string[] { $"api://AzureADTokenExchange/.default" }),
+                                cancellationToken).ConfigureAwait(false);
+                            return token.Token;
+                        });
+                }
+
+                if (clientAssertionCredential == null)
+                {
+                    throw new CredentialUnavailableException(Strings.AAD_FIC_Invalid_Setup);
+                }
+
+                return new TokenCredentialData(clientAssertionCredential, GetHash(secret));
             }
 
             // This should never be reached, but if it is, throw an exception that will be noticed during development
