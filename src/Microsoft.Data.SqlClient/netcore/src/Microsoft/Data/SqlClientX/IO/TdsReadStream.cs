@@ -119,8 +119,8 @@ namespace Microsoft.Data.SqlClientX.IO
                 // If we have the length available, then we read it, else we will read either the data in packet, or the 
                 // data in buffer, whichever is smaller.
                 // If the data spans multiple packets, then we will go ahead and read those packets.
-                int lengthToCopy = Math.Min(Math.Min(_packetDataLeft, _readBufferDataEnd - _readIndex), lengthToFill);
-                var copyFrom = new ReadOnlySpan<byte>(_readBuffer, _readIndex, lengthToCopy);
+                int lengthToCopy = MinDataAvailableBeforeRead(lengthToFill);
+                ReadOnlySpan<byte> copyFrom = new ReadOnlySpan<byte>(_readBuffer, _readIndex, lengthToCopy);
                 copyFrom.CopyTo(buffer.Slice(totalRead, lengthToFill));
                 totalRead += lengthToCopy;
                 lengthToFill -= lengthToCopy;
@@ -144,13 +144,8 @@ namespace Microsoft.Data.SqlClientX.IO
             while (lengthToFill > 0)
             {
                 await PrepareBufferIfNeeded(isAsync: true, cancellationToken).ConfigureAwait(false);
-
-                // We can only read the minimum of what is left in the packet, what is left in the buffer, and what we need to fill
-                // If we have the length available, then we read it, else we will read either the data in packet, or the 
-                // data in buffer, whichever is smaller.
-                // If the data spans multiple packets, then we will go ahead and read those packets from the network.
-                int lengthToCopy = Math.Min(Math.Min(_packetDataLeft, _readBufferDataEnd - _readIndex), lengthToFill);
-                var copyFrom = new ReadOnlyMemory<byte>(_readBuffer, _readIndex, lengthToCopy);
+                int lengthToCopy = MinDataAvailableBeforeRead(lengthToFill);
+                ReadOnlyMemory<byte> copyFrom = new ReadOnlyMemory<byte>(_readBuffer, _readIndex, lengthToCopy);
                 copyFrom.CopyTo(buffer.Slice(totalRead, lengthToFill));
                 totalRead += lengthToCopy;
                 lengthToFill -= lengthToCopy;
@@ -159,7 +154,7 @@ namespace Microsoft.Data.SqlClientX.IO
             }
             return totalRead;
         }
-    
+
         /// <inheritdoc />
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
@@ -198,9 +193,7 @@ namespace Microsoft.Data.SqlClientX.IO
                 // else we will read either the data in packet, or the 
                 // data in buffer, whichever is smaller.
                 // If the data spans multiple packets, then we will go ahead and read those packets and skip.
-                int skippableMinLength = Math.Min(
-                    Math.Min(_packetDataLeft, _readBufferDataEnd - _readIndex),
-                    lengthLeftToSkip);
+                int skippableMinLength = MinDataAvailableBeforeRead(lengthLeftToSkip);
 
                 totalRead += skippableMinLength;
                 lengthLeftToSkip -= skippableMinLength;
@@ -216,12 +209,28 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public override void Write(byte[] buffer, int offset, int count)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         #endregion
 
         #region Private methods
+
+        /// <summary>
+        /// Computes the minimum byte count available for copying into the buffer.
+        /// </summary>
+        /// <param name="maxByteCountExpected">The maximum bytes count expected by the caller.</param>
+        /// <returns></returns>
+        private int MinDataAvailableBeforeRead(int maxByteCountExpected)
+        {
+            // We can only read the minimum of what is left in the packet,
+            // what is left in the buffer, and what we need to fill
+            // If we have the max Byte Count available, then we read it
+            // else we will read either the data in packet, or the 
+            // data in buffer, whichever is smaller.
+            // If the data spans multiple packets, then the caller will go ahead and post a network read.
+            return Math.Min(Math.Min(_packetDataLeft, _readBufferDataEnd - _readIndex), maxByteCountExpected);
+        }
 
         /// <summary>
         /// Prepares the Read buffer with more data. 
