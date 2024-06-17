@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         public override async Task FlushAsync(CancellationToken ct)
-            => await _writeStream.FlushAsync(ct);
+            => await _writeStream.FlushAsync(ct).ConfigureAwait(false);
 
         /// <inheritdoc />
         public override ValueTask<int> ReadAsync(
@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public override async ValueTask DisposeAsync()
         {
-            await _writeStream.DisposeAsync();
+            await _writeStream.DisposeAsync().ConfigureAwait(false);
             // TODO: For Read Stream as well.
         }
 
