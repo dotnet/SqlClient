@@ -133,8 +133,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         internal static void SendAllSqlTypesInsideVariant(string connStr, StringBuilder actualResults = null)
         {
             s_connStr = connStr;
-            Console.WriteLine("");
-            Console.WriteLine("Starting test 'SqlVariantParam'");
+            if (actualResults == null)
+            {
+                Console.WriteLine("");
+                Console.WriteLine("Starting test 'SqlVariantParam'");
+            }
             SendVariant(new SqlSingle((float)123.45), "System.Data.SqlTypes.SqlSingle", "real", actualResults);
             SendVariant(new SqlSingle((double)123.45), "System.Data.SqlTypes.SqlSingle", "real", actualResults);
             SendVariant(new SqlString("hello"), "System.Data.SqlTypes.SqlString", "nvarchar", actualResults);
@@ -150,7 +153,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SendVariant(new SqlDecimal(1234.123M), "System.Data.SqlTypes.SqlDecimal", "numeric", actualResults);
             SendVariant(new SqlDateTime(DateTime.Now), "System.Data.SqlTypes.SqlDateTime", "datetime", actualResults);
             SendVariant(new SqlMoney(123.123M), "System.Data.SqlTypes.SqlMoney", "money", actualResults);
-            Console.WriteLine("End test 'SqlVariantParam'");
+            if (actualResults == null)
+                Console.WriteLine("End test 'SqlVariantParam'");
         }
         /// <summary>
         /// Returns a SqlDataReader with embedded sql_variant column with paramValue inside.
@@ -184,12 +188,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             dr.Read();
             string actualTypeName = dr.GetSqlValue(0).GetType().ToString();
             string actualBaseTypeName = dr.GetString(1);
-            Console.WriteLine("{0,-40} -> {1}:{2}", tag, actualTypeName, actualBaseTypeName);
+            if (actualResults == null)
+                Console.WriteLine("{0,-40} -> {1}:{2}", tag, actualTypeName, actualBaseTypeName);
             if (actualResults != null) 
                 actualResults.AppendLine(string.Format("{0,-40} -> {1}:{2}", tag, actualTypeName, actualBaseTypeName));
             if (!actualTypeName.Equals(expectedTypeName))
             {
-                Console.WriteLine("   --> ERROR: Expected type {0} does not match actual type {1}",
+                if (actualResults == null)
+                    Console.WriteLine("   --> ERROR: Expected type {0} does not match actual type {1}",
                     expectedTypeName, actualTypeName);
                 if (actualResults != null)
                     actualResults.AppendLine(string.Format("   --> ERROR: Expected type {0} does not match actual type {1}", 
@@ -197,7 +203,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             if (!actualBaseTypeName.Equals(expectedBaseTypeName))
             {
-                Console.WriteLine("   --> ERROR: Expected base type {0} does not match actual base type {1}",
+                if (actualResults == null)
+                    Console.WriteLine("   --> ERROR: Expected base type {0} does not match actual base type {1}",
                     expectedBaseTypeName, actualBaseTypeName);
                 if (actualResults != null)
                     actualResults.AppendLine(string.Format("   --> ERROR: Expected base type {0} does not match actual base type {1}",
