@@ -2,20 +2,21 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.Handlers.Connection;
 
 namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 {
-    internal class TransportCreationHandler : IHandler<ConnectionRequest>
+    internal class TransportCreationHandler : IHandler<ConnectionHandlerContext>
     {
         #if NET8_0_OR_GREATER
         private static readonly TimeSpan DefaultPollTimeout = TimeSpan.FromSeconds(30);
@@ -24,30 +25,43 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
         #endif
 
         /// <inheritdoc />
-        public IHandler<ConnectionRequest> NextHandler { get; set; }
+        public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
 
         /// <inheritdoc />
-        public async ValueTask Handle(ConnectionRequest request, bool isAsync, CancellationToken ct)
+        public async ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            switch (request.TransportCreationParams)
+            if (context.DataSource is null)
             {
-                case SharedMemoryTransportCreationParams:
-                    throw new NotImplementedException();
-
-                case NamedPipeTransportCreationParams:
-                    throw new NotImplementedException();
-
-                case TcpTransportCreationParams tcpParams:
-                    request.ConnectionStream = await HandleTcpRequest(tcpParams, ct).ConfigureAwait(false);
-                    break;
-
-                default:
-                    throw new InvalidOperationException("");
+                context.Error = new ArgumentNullException(nameof(context));
+                return;
             }
+
+            try
+            {
+                // @TODO: Build CoR for handling the different protocols in order
+                if (context.DataSource.ResolvedProtocol is DataSource.Protocol.TCP)
+                {
+                    context.ConnectionStream = isAsync
+                        ? await HandleTcpRequest(context, isAsync, ct).ConfigureAwait(false)
+                        : HandleTcpRequest(context, isAsync, ct).Result;
+                }
+            }
+            catch (Exception e)
+            {
+                context.Error = e;
+            }
+
 
             if (NextHandler is not null)
             {
-                await NextHandler.Handle(request, isAsync, ct).ConfigureAwait(false);
+                if (isAsync)
+                {
+                    await NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
+                }
+                else
+                {
+                    NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false).GetAwaiter().GetResult();
+                }
             }
         }
 
@@ -61,19 +75,21 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             throw new NotImplementedException();
         }
 
-        private async Task<Stream> HandleTcpRequest(TcpTransportCreationParams request, CancellationToken ct)
+        private async ValueTask<Stream> HandleTcpRequest(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
             // DNS lookup
-            var ipAddresses = await Dns.GetHostAddressesAsync(request.Hostname, ct).ConfigureAwait(false);
+            var ipAddresses = isAsync
+                ? await Dns.GetHostAddressesAsync(context.DataSource.ServerName, ct).ConfigureAwait(false)
+                : Dns.GetHostAddresses(context.DataSource.ServerName);
             if (ipAddresses.Length == 0)
             {
                 throw new Exception("Hostname did not resolve");
             }
 
             // If there is an IP version preference, apply it
-            switch (request.IpAddressPreference)
+            switch (context.IpAddressPreference)
             {
                 case SqlConnectionIPAddressPreference.IPv4First:
                     Array.Sort(ipAddresses, IpAddressVersionSorter.InstanceV4);
@@ -92,13 +108,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             // Attempt to connect to one of the matching IP addresses
             // @TODO: Handle opening in parallel
             Socket socket = null;
-            var socketExceptions = new List<Exception>();
+            var socketOpenExceptions = new List<Exception>();
 
-            var ipEndpoint = new IPEndPoint(IPAddress.None, request.Port); // Allocate once
+            var ipEndpoint = new IPEndPoint(IPAddress.None, context.DataSource.Port); // Allocate once
             foreach (var ipAddress in ipAddresses)
             {
-                ct.ThrowIfCancellationRequested();
-
                 ipEndpoint.Address = ipAddress;
                 try
                 {
@@ -107,14 +121,15 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
                 }
                 catch(Exception e)
                 {
-                    socketExceptions.Add(e);
+                    socketOpenExceptions.Add(e);
                 }
             }
 
             // If no socket succeeded, throw
             if (socket is null)
             {
-                throw new AggregateException(socketExceptions);
+                throw socketOpenExceptions.OfType<SocketException>().FirstOrDefault()
+                      ?? (Exception)new AggregateException(socketOpenExceptions);
             }
 
             // Create the stream for the socket
@@ -123,7 +138,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 
         private async ValueTask<Socket> OpenSocketAsync(IPEndPoint ipEndpoint, CancellationToken ct)
         {
-            var socket = new Socket(ipEndpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { Blocking = false };
+            ct.ThrowIfCancellationRequested();
+
+            var socket = new Socket(ipEndpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
+            {
+                Blocking = false,
+                NoDelay = true,
+            };
 
             // Enable keep-alive
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
