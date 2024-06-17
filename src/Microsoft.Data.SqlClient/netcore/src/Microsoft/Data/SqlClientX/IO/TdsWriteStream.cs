@@ -80,14 +80,14 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public override async ValueTask DisposeAsync()
         {
-            await _underlyingStream.DisposeAsync();
+            await _underlyingStream.DisposeAsync().ConfigureAwait(false);
             _underlyingStream = null;
             _writeBuffer = null;
         }
 
         /// <inheritdoc />
         public override void Flush()
-            => FlushPacketAsync(true, isAsync: false, CancellationToken.None).Wait();
+            => FlushPacketAsync(true, isAsync: false, CancellationToken.None).ConfigureAwait(false);
 
         /// <inheritdoc />
         public override async Task FlushAsync(CancellationToken ct)
@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClientX.IO
             // If we are already at the end of the buffer, flush the buffer, with a softflush.
             if (_writeBuffer.Length - _writeBufferEnd == 0)
             {
-                FlushPacketAsync(false, isAsync: false, CancellationToken.None).Wait();
+                FlushPacketAsync(false, isAsync: false, CancellationToken.None).ConfigureAwait(false);
             }
             _writeBuffer[_writeBufferEnd++] = value;
         }
