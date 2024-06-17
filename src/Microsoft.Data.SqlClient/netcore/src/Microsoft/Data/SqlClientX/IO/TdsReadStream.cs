@@ -85,6 +85,7 @@ namespace Microsoft.Data.SqlClientX.IO
 
         #region Public Methods
 
+        /// <inheritdoc />
         public override async ValueTask DisposeAsync()
         {
             await _underlyingStream.DisposeAsync();
@@ -114,18 +115,12 @@ namespace Microsoft.Data.SqlClientX.IO
             {
                 PrepareBufferIfNeeded(isAsync: false, CancellationToken.None).ConfigureAwait(false);
 
-                // We can only read the minimum of what is left in the packet,
-                // what is left in the buffer, and what we need to fill
-                // If we have the length available, then we read it, else we will read either the data in packet, or the 
-                // data in buffer, whichever is smaller.
-                // If the data spans multiple packets, then we will go ahead and read those packets.
                 int lengthToCopy = MinDataAvailableBeforeRead(lengthToFill);
-                ReadOnlySpan<byte> copyFrom = new ReadOnlySpan<byte>(_readBuffer, _readIndex, lengthToCopy);
+                ReadOnlySpan<byte> copyFrom = _readBuffer.AsSpan(_readIndex, lengthToCopy);
                 copyFrom.CopyTo(buffer.Slice(totalRead, lengthToFill));
                 totalRead += lengthToCopy;
                 lengthToFill -= lengthToCopy;
-                _readIndex += lengthToCopy;
-                _packetDataLeft -= lengthToCopy;
+                AdvanceBufferOnRead(lengthToCopy);
             }
             return totalRead;
         }
@@ -149,8 +144,7 @@ namespace Microsoft.Data.SqlClientX.IO
                 copyFrom.CopyTo(buffer.Slice(totalRead, lengthToFill));
                 totalRead += lengthToCopy;
                 lengthToFill -= lengthToCopy;
-                _readIndex += lengthToCopy;
-                _packetDataLeft -= lengthToCopy;
+                AdvanceBufferOnRead(lengthToCopy);
             }
             return totalRead;
         }
@@ -184,25 +178,11 @@ namespace Microsoft.Data.SqlClientX.IO
             while (lengthLeftToSkip > 0)
             {
                 await PrepareBufferIfNeeded(isAsync, ct).ConfigureAwait(false);
-
-                // We can only read the minimum of
-                // 1. what is left in the packet and
-                // 2. What is left in the buffer and
-                // 3.what we need to fill
-                // If we have the skip length available in the buffer, then we read it,
-                // else we will read either the data in packet, or the 
-                // data in buffer, whichever is smaller.
-                // If the data spans multiple packets, then we will go ahead and read those packets and skip.
                 int skippableMinLength = MinDataAvailableBeforeRead(lengthLeftToSkip);
-
                 totalRead += skippableMinLength;
                 lengthLeftToSkip -= skippableMinLength;
 
-                // Advance buffer pointer by skippableMinLength
-                _readIndex += skippableMinLength;
-
-                // Indicate that we have read the data from the packet.
-                _packetDataLeft -= skippableMinLength;
+                AdvanceBufferOnRead(skippableMinLength);
             }
         }
 
@@ -215,6 +195,16 @@ namespace Microsoft.Data.SqlClientX.IO
         #endregion
 
         #region Private methods
+
+        /// <summary>
+        /// Advances the buffer read index, and the packet data left count, by the specified length.
+        /// </summary>
+        /// <param name="length">The length to advance the packet by.</param>
+        private void AdvanceBufferOnRead(int length)
+        {
+            _readIndex += length;
+            _packetDataLeft -= length;
+        }
 
         /// <summary>
         /// Computes the minimum byte count available for copying into the buffer.
@@ -345,6 +335,7 @@ namespace Microsoft.Data.SqlClientX.IO
             // Position the read index to the start of the packet data.
             _readIndex += TdsEnums.HEADER_LEN;
         }
+        
         #endregion
     }
 }
