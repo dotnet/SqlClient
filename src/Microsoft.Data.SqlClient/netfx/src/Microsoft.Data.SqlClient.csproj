@@ -733,9 +733,6 @@
     <PackageReference Include="Azure.Identity">
       <Version>$(AzureIdentityVersion)</Version>
     </PackageReference>
-    <PackageReference Include="Microsoft.Identity.Client">
-      <Version>$(MicrosoftIdentityClientVersion)</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect">
       <version>$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)</version>
     </PackageReference>
