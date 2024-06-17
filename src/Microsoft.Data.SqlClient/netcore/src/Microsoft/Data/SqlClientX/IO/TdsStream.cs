@@ -203,8 +203,8 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public override async ValueTask DisposeAsync()
         {
-            await _writeStream.DisposeAsync();
-            await _readStream.DisposeAsync();
+            await _writeStream.DisposeAsync().ConfigureAwait(false);
+            await _readStream.DisposeAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc />
