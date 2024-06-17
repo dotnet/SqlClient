@@ -7,7 +7,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.IO
 {
@@ -97,9 +96,13 @@ namespace Microsoft.Data.SqlClientX.IO
         public override void Flush() => throw new NotSupportedException();
 
         /// <inheritdoc />
-        public ValueTask<byte> PeekByteAsync(bool isAsync, CancellationToken ct)
+        public async ValueTask<byte> PeekByteAsync(bool isAsync, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            // If we have logically finished reading the packet, or if we have 
+            // reached the end of the buffer, then we need to position the buffer at the beginning of next
+            // packet start.
+            await PrepareBufferIfNeeded(isAsync, ct).ConfigureAwait(false);
+            return _readBuffer[_readIndex];
         }
 
         /// <inheritdoc />
@@ -109,8 +112,7 @@ namespace Microsoft.Data.SqlClientX.IO
             int totalRead = 0;
             while (lengthToFill > 0)
             {
-                if (_packetDataLeft == 0 || _readBufferDataEnd == _readIndex)
-                    _ = PrepareBufferAsync(isAsync: false, CancellationToken.None);
+                PrepareBufferIfNeeded(isAsync: false, CancellationToken.None).ConfigureAwait(false);
 
                 // We can only read the minimum of what is left in the packet,
                 // what is left in the buffer, and what we need to fill
@@ -141,9 +143,7 @@ namespace Microsoft.Data.SqlClientX.IO
             int totalRead = 0;
             while (lengthToFill > 0)
             {
-                // If we have read all the data from the packet or reached the end of the buffer, then we need to read more data.
-                if (_packetDataLeft == 0 || _readBufferDataEnd == _readIndex)
-                    await PrepareBufferAsync(isAsync: true, cancellationToken).ConfigureAwait(false);
+                await PrepareBufferIfNeeded(isAsync: true, cancellationToken).ConfigureAwait(false);
 
                 // We can only read the minimum of what is left in the packet, what is left in the buffer, and what we need to fill
                 // If we have the length available, then we read it, else we will read either the data in packet, or the 
@@ -163,7 +163,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            return await ReadAsync(buffer.AsMemory(offset, count), cancellationToken);
+            return await ReadAsync(buffer.AsMemory(offset, count), cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -188,8 +188,7 @@ namespace Microsoft.Data.SqlClientX.IO
             int totalRead = 0;
             while (lengthLeftToSkip > 0)
             {
-                if (_packetDataLeft == 0 || _readBufferDataEnd == _readIndex)
-                    await PrepareBufferAsync(isAsync, ct).ConfigureAwait(false);
+                await PrepareBufferIfNeeded(isAsync, ct).ConfigureAwait(false);
 
                 // We can only read the minimum of
                 // 1. what is left in the packet and
@@ -199,7 +198,10 @@ namespace Microsoft.Data.SqlClientX.IO
                 // else we will read either the data in packet, or the 
                 // data in buffer, whichever is smaller.
                 // If the data spans multiple packets, then we will go ahead and read those packets and skip.
-                int skippableMinLength = Math.Min(Math.Min(_packetDataLeft, _readBufferDataEnd - _readIndex), lengthLeftToSkip);
+                int skippableMinLength = Math.Min(
+                    Math.Min(_packetDataLeft, _readBufferDataEnd - _readIndex),
+                    lengthLeftToSkip);
+
                 totalRead += skippableMinLength;
                 lengthLeftToSkip -= skippableMinLength;
 
@@ -273,6 +275,22 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
+        /// If the buffer is empty, or the packet data is completely read, 
+        /// then we need to prepare the buffer for the next packet.
+        /// </summary>
+        /// <param name="isAsync"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        private async ValueTask PrepareBufferIfNeeded(bool isAsync, CancellationToken ct)
+        {
+            // If there we have read through the packet, 
+            // or if we have reached the end of the buffer,
+            // then we need to position the buffer at the beginning of packet or buffer
+            if (_packetDataLeft == 0 || _readBufferDataEnd == _readIndex)
+                await PrepareBufferAsync(isAsync, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Processes the header of the packet, and extracts the data from the header.
         /// If needed, this function will read more data from the network to complete the header.
         /// </summary>
@@ -318,7 +336,6 @@ namespace Microsoft.Data.SqlClientX.IO
             // Position the read index to the start of the packet data.
             _readIndex += TdsEnums.HEADER_LEN;
         }
-
         #endregion
     }
 }

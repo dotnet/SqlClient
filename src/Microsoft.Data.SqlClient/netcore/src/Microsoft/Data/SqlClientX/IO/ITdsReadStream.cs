@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClientX.IO;
 
-namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.IO
+namespace Microsoft.Data.SqlClientX.IO
 {
     /// <summary>
     /// An interface to model read stream operations for Tds specific capabilities.
