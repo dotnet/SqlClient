@@ -23,6 +23,6 @@
     <Compile Include="Microsoft.Data.SqlClient.NetStandard.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
   </ItemGroup>
 </Project>
