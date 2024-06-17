@@ -2,6 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 using System;
 using System.IO;
 using System.Threading;
@@ -80,8 +84,19 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <exception cref="NotImplementedException"></exception>
         public void SetPacketSize(int packetSize)
         {
-            _writeStream.SetPacketSize(packetSize);
-            _readStream.SetPacketSize(packetSize);
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// When writing the packet, the caller needs to 
+        /// specify the packet type. 
+        /// TODO: Consider accepting an enum of packet types
+        /// instead of the byte.
+        /// </summary>
+        /// <param name="packetType">The type of packet to be sent out</param>
+        public virtual void SetWritePacketType(TdsStreamPacketType packetType)
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
@@ -141,8 +156,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public override async Task FlushAsync(CancellationToken ct)
-            => await _writeStream.FlushAsync(ct);
+        public override Task FlushAsync(CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
 
         /// <inheritdoc />
         public override ValueTask<int> ReadAsync(

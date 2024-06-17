@@ -928,6 +928,7 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequestType.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\IHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriteStream.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriteStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlConnectionX.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
