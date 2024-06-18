@@ -173,6 +173,56 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
         }
 
         [Fact]
+        public async void WriteStream_WriteByteAsync()
+        {
+            await using MemoryStream ms = new();
+            await using TdsWriteStream tdsWriteStream = new(ms);
+
+            tdsWriteStream.PacketHeaderType = TdsStreamPacketType.Login7;
+            
+            await tdsWriteStream.WriteByteAsync(0x12, isAsync: true, CancellationToken.None).ConfigureAwait(false);
+
+            await tdsWriteStream.FlushAsync();
+
+            ms.Position = 0;
+
+            byte[] memoryStreamReadBuffer = new byte[20];
+            int lengthRead = ms.Read(memoryStreamReadBuffer, 0, memoryStreamReadBuffer.Length);
+            Assert.Equal(1 + TdsEnums.HEADER_LEN, lengthRead);
+
+            TdsPacketHeader header = new(memoryStreamReadBuffer);
+
+            Assert.Equal((byte)TdsStreamPacketType.Login7, header.PacketType);
+            Assert.Equal(1 + TdsEnums.HEADER_LEN, header.Length);
+            Assert.Equal(TdsEnums.ST_EOM, header.Status);
+        }
+
+        [Fact]
+        public void WriteStream_WriteByte()
+        {
+            using MemoryStream ms = new();
+            using TdsWriteStream tdsWriteStream = new(ms);
+
+            tdsWriteStream.PacketHeaderType = TdsStreamPacketType.Login7;
+
+            tdsWriteStream.WriteByte(0x12);
+
+            tdsWriteStream.Flush();
+
+            ms.Position = 0;
+
+            byte[] memoryStreamReadBuffer = new byte[20];
+            int lengthRead = ms.Read(memoryStreamReadBuffer, 0, memoryStreamReadBuffer.Length);
+            Assert.Equal(1 + TdsEnums.HEADER_LEN, lengthRead);
+
+            TdsPacketHeader header = new(memoryStreamReadBuffer);
+
+            Assert.Equal((byte)TdsStreamPacketType.Login7, header.PacketType);
+            Assert.Equal(1 + TdsEnums.HEADER_LEN, header.Length);
+            Assert.Equal(TdsEnums.ST_EOM, header.Status);
+        }
+
+        [Fact]
         public void WriteStream_ReplaceStreamTest()
         {
             using MemoryStream msOriginal = new();
@@ -199,6 +249,26 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
 
             Assert.Equal(0, orignalStreamBytesRead);
             Assert.True(replacedStreamBytesRead > 0, "The replaced stream had no bytes read.");
+        }
+
+        [Fact]
+        public void WriteStream_CapabilityTests()
+        {
+            using MemoryStream msOriginal = new();
+            TdsWriteStream tdsWriteStream = new(msOriginal);
+
+            Assert.Throws<NotSupportedException>(() => tdsWriteStream.Length);
+            Assert.Throws<NotSupportedException>(() => tdsWriteStream.Position);
+            Assert.Throws<NotSupportedException>(() => tdsWriteStream.Position = 1);
+            Assert.Throws<NotSupportedException>(() => tdsWriteStream.Seek(0, SeekOrigin.Begin));
+            Assert.Throws<NotSupportedException>(() => tdsWriteStream.SetLength(88));
+            Assert.Throws<NotSupportedException>(() => tdsWriteStream.Read(new byte[1], 0 , 1));
+
+            Assert.False(tdsWriteStream.CanSeek);
+            Assert.False(tdsWriteStream.CanRead);
+            Assert.True(tdsWriteStream.CanWrite);
+            tdsWriteStream.Dispose();
+            Assert.False(tdsWriteStream.CanWrite);
         }
 
 
