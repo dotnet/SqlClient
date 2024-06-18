@@ -16,38 +16,39 @@ namespace Microsoft.Data.SqlClientX.IO
     /// </summary>
     internal class TdsReadStream : Stream, ITdsReadStream
     {
+        // TODO: Handle Cancellation tokens in all async paths.
         #region Private Fields
-        
+
         private Stream _underlyingStream;
 
         // The buffer to hold the TDS read data.
         private byte[] _readBuffer;
 
         // The read pointer inside the buffer.
-        private int _readIndex { get; set; } = 0;
+        private int _readIndex = 0;
 
         // The end of the data index in the buffer.
-        private int _readBufferDataEnd { get; set; } = 0;
+        private int _readBufferDataEnd = 0;
 
         /// <summary>
         /// The number of bytes left in the packet to be consumed.
         /// This is not necessarily the number of bytes available in the buffer.
         /// </summary>
-        private int _packetDataLeft { get; set; } = 0;
+        private int _packetDataLeft = 0;
 
         /// <summary>
         /// The number of bytes in the header, according to the header.
         /// </summary>
-        private int _packetHeaderDataLength { get; set; } = 0;
+        private int _packetHeaderDataLength = 0;
 
-        private byte _packetHeaderType { get; set; } = 0;
+        private byte _packetHeaderType = 0;
 
-        private byte _packetStatus { get; set; }
+        private byte _packetStatus;
 
         /// <summary>
         /// Stored internally. It will be used for tracing.
         /// </summary>
-        private int _spid;
+        private int _spid = 0;
 
         #endregion
 
@@ -80,6 +81,9 @@ namespace Microsoft.Data.SqlClientX.IO
             get => throw new NotImplementedException(); 
             set => throw new NotImplementedException(); 
         }
+
+        /// <inheritdoc />
+        public virtual int Spid => _spid;
 
         #endregion
 

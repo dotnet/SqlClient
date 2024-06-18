@@ -6,7 +6,6 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.IO
 {
@@ -23,20 +22,21 @@ namespace Microsoft.Data.SqlClientX.IO
     /// </summary>
     internal class TdsStream : Stream, ITdsWriteStream, ITdsReadStream
     {
+        // TODO: Handle Cancellation tokens in all async paths.
         private readonly TdsWriteStream _writeStream;
         private readonly TdsReadStream _readStream;
 
         /// <inheritdoc />
-        public override bool CanRead => throw new NotImplementedException();
+        public override bool CanRead => _readStream != null;
         
         /// <inheritdoc />
-        public override bool CanSeek => throw new NotImplementedException();
+        public override bool CanSeek => throw new NotSupportedException();
 
         /// <inheritdoc />
-        public override bool CanWrite => throw new NotImplementedException();
+        public override bool CanWrite => _writeStream != null;
 
         /// <inheritdoc />
-        public override long Length => throw new NotImplementedException();
+        public override long Length => throw new NotSupportedException();
 
         /// <inheritdoc />
         public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -52,7 +52,9 @@ namespace Microsoft.Data.SqlClientX.IO
             set => _writeStream.PacketHeaderType = value; 
         }
 
-        public TdsStream(Stream underLyingStream, TdsWriteStream writeStream, TdsReadStream readStream) : base()
+        public int Spid => _readStream.Spid;
+
+        public TdsStream(TdsWriteStream writeStream, TdsReadStream readStream) : base()
         {
             _writeStream = writeStream;
             _readStream = readStream;
@@ -77,22 +79,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// when the client and server exchange the negotiated packet size.
         /// </summary>
         /// <param name="packetSize">The negotiated packet size</param>
-        /// <exception cref="NotImplementedException"></exception>
         public void SetPacketSize(int packetSize)
         {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// When writing the packet, the caller needs to 
-        /// specify the packet type. 
-        /// TODO: Consider accepting an enum of packet types
-        /// instead of the byte.
-        /// </summary>
-        /// <param name="packetType">The type of packet to be sent out</param>
-        public virtual void SetWritePacketType(TdsStreamPacketType packetType)
-        {
-            throw new NotImplementedException();
+            _readStream.SetPacketSize(packetSize);
+            _writeStream.SetPacketSize(packetSize);
         }
 
         /// <inheritdoc />
@@ -151,11 +141,8 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         /// <param name="ct"></param>
         /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public override Task FlushAsync(CancellationToken ct)
-        {
-            throw new NotImplementedException();
-        }
+        public override async Task FlushAsync(CancellationToken ct)
+            => await _writeStream.FlushAsync(ct).ConfigureAwait(false);
 
         /// <inheritdoc />
         public override ValueTask<int> ReadAsync(
@@ -166,16 +153,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public virtual ValueTask<byte> PeekByteAsync(bool isAsync,
             CancellationToken ct) => _readStream.PeekByteAsync(isAsync, ct);
 
-        /// <summary>
-        /// A convenience method to skip the bytes in the stream,
-        /// by allowing buffer manipulation, instead of making the consumer
-        /// allocate buffers to read and discard the bytes.
-        /// </summary>
-        /// <param name="skipCount">Number of bytes to skip</param>
-        /// <param name="isAsync">If the method should be called Asynchronously.</param>
-        /// <param name="ct">The cancellation token.</param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
+        /// <inheritdoc />
         public virtual ValueTask SkipReadBytesAsync(int skipCount,
             bool isAsync, 
             CancellationToken ct) => _readStream.SkipReadBytesAsync(skipCount, isAsync, ct);

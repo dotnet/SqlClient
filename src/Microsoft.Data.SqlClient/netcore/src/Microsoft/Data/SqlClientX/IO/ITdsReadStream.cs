@@ -18,6 +18,11 @@ namespace Microsoft.Data.SqlClientX.IO
     internal interface ITdsReadStream : ITdsStream
     {
         /// <summary>
+        /// Exposes the SPID of the connection on which this stream is operating.
+        /// </summary>
+        int Spid { get; }
+
+        /// <summary>
         /// Peeks the next byte in the stream, without consuming it.
         /// The next call to read will return the same byte but it 
         /// will consume it.
