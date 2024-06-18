@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -318,7 +319,7 @@ namespace Microsoft.Data.SqlClientX.IO
                 {
                     int bytesRead = isAsync ? 
                         await _underlyingStream.ReadAsync(_readBuffer.AsMemory(_readBufferDataEnd), ct).ConfigureAwait(false) 
-                            : _underlyingStream.Read(_readBuffer, _readBufferDataEnd, bytesNeededToCompleteHeader);
+                            : _underlyingStream.Read(_readBuffer.AsSpan(_readBufferDataEnd));
                     // Reduce the number of bytes needed
                     bytesNeededToCompleteHeader -= bytesRead;
                     _readBufferDataEnd += bytesRead;
@@ -327,15 +328,9 @@ namespace Microsoft.Data.SqlClientX.IO
 
             _packetHeaderType = _readBuffer[_readIndex];
             _packetStatus = _readBuffer[_readIndex + 1];
-            // TODO: Use Binary primitives to read the data.
-            _packetDataLeft = (_readBuffer[_readIndex + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8
-                | _readBuffer[_readIndex + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
-
+            _packetDataLeft = BinaryPrimitives.ReadUInt16BigEndian(_readBuffer.AsSpan(_readIndex + TdsEnums.HEADER_LEN_FIELD_OFFSET, 2)) - TdsEnums.HEADER_LEN;
             _packetHeaderDataLength = _packetDataLeft;
-
-            _spid = _readBuffer[_readIndex + TdsEnums.SPID_OFFSET] << 8 |
-                                  _readBuffer[_readIndex + TdsEnums.SPID_OFFSET + 1];
-
+            _spid = BinaryPrimitives.ReadUInt16BigEndian(_readBuffer.AsSpan(_readIndex + TdsEnums.SPID_OFFSET, 2));
             // Position the read index to the start of the packet data.
             _readIndex += TdsEnums.HEADER_LEN;
         }

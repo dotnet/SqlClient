@@ -52,6 +52,7 @@ namespace Microsoft.Data.SqlClientX.IO
             set => _writeStream.PacketHeaderType = value; 
         }
 
+        /// <inheritdoc />
         public int Spid => _readStream.Spid;
 
         public TdsStream(TdsWriteStream writeStream, TdsReadStream readStream) : base()
