@@ -6,8 +6,7 @@ using Microsoft.Data.SqlClient;
 using Xunit;
 
 namespace UnitTests
-{ 
-
+{
     public class DummyTest
     {
         [Fact]
