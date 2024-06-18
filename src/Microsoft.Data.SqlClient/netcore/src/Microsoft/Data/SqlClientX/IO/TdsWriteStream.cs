@@ -121,6 +121,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public override void Write(ReadOnlySpan<byte> buffer)
         {
             int len = buffer.Length;
+            int start = 0;
             // The buffer may not have enough space. Write what we can and then flush the buffer with a soft flush.
             while (len > 0)
             {
@@ -128,15 +129,16 @@ namespace Microsoft.Data.SqlClientX.IO
                 {
                     // Only a part of the length fits in the buffer.
                     int bytesToWrite = _writeBuffer.Length - _writeBufferOffset;
-                    buffer[..bytesToWrite].CopyTo(_writeBuffer.AsSpan(_writeBufferOffset));
+                    buffer.Slice(start, bytesToWrite).CopyTo(_writeBuffer.AsSpan(_writeBufferOffset));
                     _writeBufferOffset += bytesToWrite;
                     len -= bytesToWrite;
+                    start += bytesToWrite;
                     FlushPacketAsync(false, isAsync: false, CancellationToken.None).ConfigureAwait(false);
                 }
                 else
                 {
                     // The whole length can be added to the buffer.
-                    buffer.CopyTo(_writeBuffer.AsSpan(_writeBufferOffset));
+                    buffer.Slice(start).CopyTo(_writeBuffer.AsSpan(_writeBufferOffset));
                     _writeBufferOffset += len;
                     len = 0;
                 }
@@ -180,6 +182,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
         {
             int len = buffer.Length;
+            int start = 0;
             // The buffer may not have enough space. Write what we can and then flush the buffer with a soft flush, then 
             // save the rest of the data.
             while (len > 0)
@@ -191,15 +194,16 @@ namespace Microsoft.Data.SqlClientX.IO
                     // In that case, we need to first write the header and then write the data packet to the underlying stream,
                     // directly. This needs to be tested.
                     int bytesToWrite = _writeBuffer.Length - _writeBufferOffset;
-                    buffer[..bytesToWrite].CopyTo(_writeBuffer.AsMemory(_writeBufferOffset));
+                    buffer.Slice(start, bytesToWrite).CopyTo(_writeBuffer.AsMemory(_writeBufferOffset));
                     _writeBufferOffset += bytesToWrite;
                     len -= bytesToWrite;
+                    start += bytesToWrite;
                     await FlushPacketAsync(false, false, cancellationToken).ConfigureAwait(false); // Send to network.
                 }
                 else
                 {
                     // The whole length can be added to the buffer.
-                    buffer.CopyTo(_writeBuffer.AsMemory(_writeBufferOffset));
+                    buffer.Slice(start).CopyTo(_writeBuffer.AsMemory(_writeBufferOffset));
                     _writeBufferOffset += len;
                     len = 0;
                 }
