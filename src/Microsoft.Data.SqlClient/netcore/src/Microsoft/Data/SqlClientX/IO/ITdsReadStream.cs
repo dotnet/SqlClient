@@ -18,6 +18,16 @@ namespace Microsoft.Data.SqlClientX.IO
     internal interface ITdsReadStream : ITdsStream
     {
         /// <summary>
+        /// The packet header type of the current read operation.
+        /// </summary>
+        byte ReadPacketHeaderType { get; }
+
+        /// <summary>
+        /// The Packet status of current read operation.
+        /// </summary>
+        byte ReadPacketStatus { get; }
+
+        /// <summary>
         /// Exposes the SPID of the connection on which this stream is operating.
         /// </summary>
         int Spid { get; }

@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public override long Length => throw new NotSupportedException();
 
         /// <inheritdoc />
-        public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
         /// <summary>
         /// Indicates if the cancellation is sent to the server.
@@ -55,6 +55,17 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public int Spid => _readStream.Spid;
 
+        /// <inheritdoc />
+        public byte ReadPacketStatus => _readStream.ReadPacketStatus;
+
+        /// <inheritdoc />
+        public byte ReadPacketHeaderType => _readStream.ReadPacketHeaderType;
+
+        /// <summary>
+        /// Constructor for instantiating the TdsStream
+        /// </summary>
+        /// <param name="writeStream">The stream for outgoing TDS packets</param>
+        /// <param name="readStream">The stream for reading incoming TDS packets.</param>
         public TdsStream(TdsWriteStream writeStream, TdsReadStream readStream) : base()
         {
             _writeStream = writeStream;

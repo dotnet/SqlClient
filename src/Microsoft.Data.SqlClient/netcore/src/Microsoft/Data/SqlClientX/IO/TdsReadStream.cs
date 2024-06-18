@@ -37,20 +37,6 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         private int _packetDataLeft = 0;
 
-        /// <summary>
-        /// The number of bytes in the header, according to the header.
-        /// </summary>
-        private int _packetHeaderDataLength = 0;
-
-        private byte _packetHeaderType = 0;
-
-        private byte _packetStatus;
-
-        /// <summary>
-        /// Stored internally. It will be used for tracing.
-        /// </summary>
-        private int _spid = 0;
-
         #endregion
 
         #region Constructors
@@ -76,15 +62,22 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public override long Length => throw new NotSupportedException();
 
+
+        /// <inheritdoc />
+        public virtual byte ReadPacketHeaderType { get; private set; }
+
+        /// <inheritdoc />
+        public virtual byte ReadPacketStatus { get; private set; }
+
         /// <inheritdoc />
         public override long Position 
         {
-            get => throw new NotImplementedException(); 
-            set => throw new NotImplementedException(); 
+            get => throw new NotSupportedException(); 
+            set => throw new NotSupportedException(); 
         }
 
         /// <inheritdoc />
-        public virtual int Spid => _spid;
+        public virtual int Spid { get; private set; }
 
         #endregion
 
@@ -179,14 +172,11 @@ namespace Microsoft.Data.SqlClientX.IO
         public async ValueTask SkipReadBytesAsync(int skipCount, bool isAsync, CancellationToken ct)
         {
             int lengthLeftToSkip = skipCount;
-            int totalRead = 0;
             while (lengthLeftToSkip > 0)
             {
                 await PrepareBufferIfNeeded(isAsync, ct).ConfigureAwait(false);
                 int skippableMinLength = MinDataAvailableBeforeRead(lengthLeftToSkip);
-                totalRead += skippableMinLength;
                 lengthLeftToSkip -= skippableMinLength;
-
                 AdvanceBufferOnRead(skippableMinLength);
             }
         }
@@ -291,7 +281,9 @@ namespace Microsoft.Data.SqlClientX.IO
             // or if we have reached the end of the buffer,
             // then we need to position the buffer at the beginning of packet or buffer
             if (_packetDataLeft == 0 || _readBufferDataEnd == _readIndex)
+            { 
                 await PrepareBufferAsync(isAsync, ct).ConfigureAwait(false);
+            }
         }
 
         /// <summary>
@@ -326,11 +318,10 @@ namespace Microsoft.Data.SqlClientX.IO
                 }
             }
 
-            _packetHeaderType = _readBuffer[_readIndex];
-            _packetStatus = _readBuffer[_readIndex + 1];
+            ReadPacketHeaderType = _readBuffer[_readIndex];
+            ReadPacketStatus = _readBuffer[_readIndex + 1];
             _packetDataLeft = BinaryPrimitives.ReadUInt16BigEndian(_readBuffer.AsSpan(_readIndex + TdsEnums.HEADER_LEN_FIELD_OFFSET, 2)) - TdsEnums.HEADER_LEN;
-            _packetHeaderDataLength = _packetDataLeft;
-            _spid = BinaryPrimitives.ReadUInt16BigEndian(_readBuffer.AsSpan(_readIndex + TdsEnums.SPID_OFFSET, 2));
+            Spid = BinaryPrimitives.ReadUInt16BigEndian(_readBuffer.AsSpan(_readIndex + TdsEnums.SPID_OFFSET, 2));
             // Position the read index to the start of the packet data.
             _readIndex += TdsEnums.HEADER_LEN;
         }
