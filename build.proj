@@ -61,6 +61,9 @@
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" />
     <FunctionalTestsProj Include="**/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" />
 
+    <UnitTests Include="**/UnitTests/Microsoft.Data.SqlClient.NetCore.UnitTests.csproj" />
+    <UnitTestsProj Include="**/UnitTests/Microsoft.Data.SqlClient.NetCore.UnitTests.csproj" />
+
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
@@ -77,7 +80,7 @@
   <Target Name="BuildAll" DependsOnTargets="BuildSqlServerLib;BuildNetFx;BuildNetCore" />
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
-  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
+  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore;BuildUnitTestsNetCore"/>
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
   <Target Name="BuildTests" DependsOnTargets="BuildTestsNetCore;BuildTestsNetFx"/>
 
@@ -92,6 +95,7 @@
   <Target Name="RestoreTestsNetCore">
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
+    <MSBuild Projects="@(UnitTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
   </Target>
 
   <Target Name="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
@@ -146,6 +150,11 @@
     <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
   </Target>
 
+  <Target Name="BuildUnitTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
+    <Message Text=">>> Building UnitTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
+    <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
+  </Target>
+
   <Target Name="BuildManualTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
     <Message Text=">>> Building ManualTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
@@ -174,7 +183,7 @@
   </Target>
 
   <!-- Tests -->
-  <Target Name="RunTests" DependsOnTargets="RunFunctionalTests;RunManualTests"/>
+  <Target Name="RunTests" DependsOnTargets="RunFunctionalTests;RunManualTests;RunUnitTests"/>
   <Target Name="RunFunctionalTests">
     <!-- Windows -->
     <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(FunctionalTestsProj)&quot; -p:Configuration=$(Configuration) -p:Target$(TFGroup)Version=$(TF) --no-build -v n --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Windows$(TargetGroup) --filter &quot;category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests&quot; &quot;--logger:trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' == 'true'"/>
@@ -187,6 +196,11 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(ManualTestsProj)&quot; -p:Configuration=$(Configuration) -p:Target$(TFGroup)Version=$(TF) --no-build -l &quot;console;verbosity=normal&quot; --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Windows$(TargetGroup) --filter &quot;category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests&quot; &quot;--logger:trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' == 'true'"/>
     <!-- Unix -->
     <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(ManualTestsProj)&quot; -p:Configuration=$(Configuration) -p:TargetNetCoreVersion=$(TF) --no-build -l &quot;console;verbosity=normal&quot; --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Unixnetcoreapp --filter &quot;category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests&quot; &quot;--logger:trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' != 'true'"/>
+  </Target>
+
+  
+  <Target Name="RunUnitTests">
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(UnitTestsProj)&quot; -p:Configuration=$(Configuration) -p:Target$(TFGroup)Version=$(TF) --no-build -l &quot;console;verbosity=normal&quot; --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Windows$(TargetGroup) --filter &quot;category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests&quot; &quot;--logger:trx;LogFilePrefix=UnitTests-Windows$(TargetGroup)-$(TestSet)&quot;" Condition="'$(TF)' != 'net462'" />
   </Target>
 
   <Target Name="Clean">
