@@ -30,7 +30,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-
             Assert.Equal("PASS", ImmediateCancelBin());
         }
 
@@ -39,7 +38,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-
             Assert.Equal("PASS", ImmediateCancelText());
         }
 
@@ -48,7 +46,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-
             Assert.Equal("PASS", ImmediateCancelXml());
         }
 
@@ -57,7 +54,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-
             Assert.Equal("PASS", PrepareCommand());
         }
 
@@ -66,7 +62,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = DataTestUtility.TCPConnectionString;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-
             Assert.Equal("PASS", CommandReuse());
         }
 
