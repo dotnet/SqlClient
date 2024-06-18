@@ -331,7 +331,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 catch (SqlException se)
                 {
                     Console.WriteLine("SqlException creating objects: {0}", se.Number);
-                    DropServerObjects(tvpPerm);
+                    DropServerObjects(tvpPerm, tvpTestActualResult);
                     iter++;
                     continue;
                 }
@@ -381,7 +381,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
 
                 // And clean up
-                DropServerObjects(tvpPerm);
+                DropServerObjects(tvpPerm, tvpTestActualResult);
 
                 iter++;
             }
@@ -1478,7 +1478,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return result;
         }
 
-        private void DropServerObjects(StePermutation tvpPerm)
+        private void DropServerObjects(StePermutation tvpPerm, TvpTestResult tvpTestResult = null)
         {
             string dropText = "DROP PROC " + GetProcName(tvpPerm) + "; DROP TYPE " + GetTypeName(tvpPerm);
             using SqlConnection conn = new(_connStr);
@@ -1491,7 +1491,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (SqlException e)
             {
-                Console.WriteLine("SqlException dropping objects: {0}", e.Number);
+                if (tvpTestResult == null)
+                    Console.WriteLine("SqlException dropping objects: {0}", e.Number);
             }
         }
 
@@ -1516,17 +1517,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (SqlException se)
             {
-                Console.WriteLine("SqlException. Error Code: {0}", se.Number);
+                if (tvpTestResult == null)
+                    Console.WriteLine("SqlException. Error Code: {0}", se.Number);
                 passed = false;
             }
             catch (InvalidOperationException ioe)
             {
-                Console.WriteLine("InvalidOp: {0}", ioe.Message);
+                if (tvpTestResult == null)
+                    Console.WriteLine("InvalidOp: {0}", ioe.Message);
                 passed = false;
             }
             catch (ArgumentException ae)
             {
-                Console.WriteLine("ArgumentException: {0}", ae.Message);
+                if (tvpTestResult == null)
+                    Console.WriteLine("ArgumentException: {0}", ae.Message);
                 passed = false;
             }
 
@@ -1704,7 +1708,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                         else
                         {
-                            Console.WriteLine("   Row={0}, Column={1}", rowOrd, columnOrd);
+                            if (tvpTestResult == null)
+                                Console.WriteLine("   Row={0}, Column={1}", rowOrd, columnOrd);
                         }
                     }
                     else
@@ -1715,14 +1720,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                         else
                         {
-                            Console.WriteLine("   Row={0}, Column={1}", rowOrd, columnOrd);
+                            if (tvpTestResult == null)
+                                Console.WriteLine("   Row={0}, Column={1}", rowOrd, columnOrd);
                         }
                     }
                 }
                 rowOrd++;
             }
 
-            Console.WriteLine("Matches = {0}", matches);
+            if (tvpTestResult == null)
+                Console.WriteLine("Matches = {0}", matches);
 
             if (matchName != null)
             {
