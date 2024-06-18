@@ -6,9 +6,12 @@ using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+
+#nullable enable
 
 namespace Microsoft.Data.SqlClientX
 {
@@ -51,6 +54,7 @@ namespace Microsoft.Data.SqlClientX
             => throw new NotImplementedException();
 
         /// <inheritdoc/>
+        [AllowNull]
         [DefaultValue("")]
         [RefreshProperties(RefreshProperties.All)]
         [SettingsBindable(true)]
