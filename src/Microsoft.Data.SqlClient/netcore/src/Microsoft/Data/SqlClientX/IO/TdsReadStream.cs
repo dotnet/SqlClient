@@ -31,10 +31,8 @@ namespace Microsoft.Data.SqlClientX.IO
         // The end of the data index in the buffer.
         private int _readBufferDataEnd = 0;
 
-        /// <summary>
-        /// The number of bytes left in the packet to be consumed.
-        /// This is not necessarily the number of bytes available in the buffer.
-        /// </summary>
+        // The number of bytes left in the packet to be consumed.
+        // This is not necessarily the number of bytes available in the buffer.
         private int _packetDataLeft = 0;
 
         #endregion
