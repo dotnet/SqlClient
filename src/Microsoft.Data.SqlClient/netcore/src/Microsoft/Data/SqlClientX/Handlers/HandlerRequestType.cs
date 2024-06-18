@@ -13,6 +13,6 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// <summary>
         /// Request type for connection request.
         /// </summary>
-        ConnectionRequest,
+        ConnectionHandlerContext,
     }
 }
