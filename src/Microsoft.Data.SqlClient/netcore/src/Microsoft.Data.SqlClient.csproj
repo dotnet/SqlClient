@@ -965,7 +965,6 @@
     <PackageReference Include="Microsoft.SqlServer.Server" Version="$(MicrosoftSqlServerServerVersion)" />
     <PackageReference Condition="$(TargetGroup) == 'netcoreapp' " Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
     <PackageReference Condition="'$(TargetFramework)' == 'netstandard2.0'" Include="System.Buffers" Version="$(SystemBuffersVersion)" />
