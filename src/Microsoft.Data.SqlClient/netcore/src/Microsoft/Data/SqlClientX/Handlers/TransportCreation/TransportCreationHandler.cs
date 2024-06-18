@@ -16,7 +16,7 @@ using Microsoft.Data.SqlClientX.Handlers.Connection;
 
 namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 {
-    internal class TransportCreationHandler : IHandler<ConnectionHandlerContext>
+    internal sealed class TransportCreationHandler : IHandler<ConnectionHandlerContext>
     {
         private const int KeepAliveIntervalSeconds = 1;
         private const int KeepAliveTimeSeconds = 30;
@@ -50,6 +50,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             catch (Exception e)
             {
                 context.Error = e;
+                return;
             }
 
             if (NextHandler is not null)
@@ -78,7 +79,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
                 : Dns.GetHostAddresses(context.DataSource.ServerName);
             if (ipAddresses.Length == 0)
             {
-                throw new Exception("Hostname did not resolve");
+                throw new SocketException((int)SocketError.HostNotFound);
             }
 
             // If there is an IP version preference, apply it
@@ -103,7 +104,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             Socket socket = null;
             var socketOpenExceptions = new List<Exception>();
 
-            var ipEndpoint = new IPEndPoint(IPAddress.None, context.DataSource.Port); // Allocate once
+            var portToUse = context.DataSource.ResolvedPort < 0
+                ? context.DataSource.Port
+                : context.DataSource.ResolvedPort;
+            var ipEndpoint = new IPEndPoint(IPAddress.None, portToUse); // Allocate once
             foreach (var ipAddress in ipAddresses)
             {
                 ipEndpoint.Address = ipAddress;
@@ -140,18 +144,27 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, KeepAliveIntervalSeconds);
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, KeepAliveTimeSeconds);
 
-            if (isAsync)
+            try
             {
-                #if NET6_0_OR_GREATER
-                await socket.ConnectAsync(ipEndPoint, ct).ConfigureAwait(false);
-                #else
-                await new TaskFactory(ct).FromAsync(socket.BeginConnect, socket.EndConnect, ipEndpoint, null)
-                    .ConfigureAwait(false);
-                #endif
+                if (isAsync)
+                {
+                    #if NET6_0_OR_GREATER
+                    await socket.ConnectAsync(ipEndPoint, ct).ConfigureAwait(false);
+                    #else
+                    // @TODO: Only real way to cancel this is to register a cancellation token event and dispose of the socket.
+                    await new TaskFactory(ct).FromAsync(socket.BeginConnect, socket.EndConnect, ipEndPoint, null)
+                        .ConfigureAwait(false);
+                    #endif
+                }
+                else
+                {
+                    OpenSocketSync(socket, ipEndPoint, ct);
+                }
             }
-            else
+            catch (Exception)
             {
-                OpenSocketSync(socket, ipEndPoint, ct);
+                socket.Dispose();
+                throw;
             }
 
             // Connection is established
@@ -183,6 +196,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             }
 
             // Poll the socket until it is open
+            // @TODO: This method can't be cancelled, so we should consider pooling smaller timeouts and looping while
+            //    there is still time left on the timer, checking cancellation token each time.
             if (!socket.Poll(DefaultPollTimeout, SelectMode.SelectWrite))
             {
                 throw new TimeoutException("Socket failed to open within timeout period.");
