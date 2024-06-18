@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net8.0;net6.0</TargetFrameworks>
-    <AssemblyName>Microsoft.Data.SqlClient.UnitTests</AssemblyName>
+    <AssemblyName>Microsoft.Data.SqlClient.NetCore.UnitTests</AssemblyName>
     <Nullable>enable</Nullable>
     <IsTestProject>true</IsTestProject>
     <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
