@@ -217,7 +217,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.SqlServer.Server"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestClr", "TestClr", "{CDE508A5-F5D0-4A59-A4EF-978833830727}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "Microsoft.Data.SqlClient\tests\UnitTests\UnitTests.csproj", "{53957644-ECF9-42EA-8E49-26AB6C3B6FA6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.UnitTests", "Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj", "{53957644-ECF9-42EA-8E49-26AB6C3B6FA6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
