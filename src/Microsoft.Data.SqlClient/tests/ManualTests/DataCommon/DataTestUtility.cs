@@ -944,8 +944,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Remove leading and trailing spaces
             dataSource = dataSource.Trim();
-            // Remove all spaces
-            dataSource = dataSource.Replace(" ", string.Empty);
 
             if (dataSource.Contains(":"))
             {
