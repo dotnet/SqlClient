@@ -161,7 +161,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
                     Assert.Equal(lengthRead, packetSize);
                 }
                 // Match content 
-                int contentLength = lengthRead - 8;
+                int contentLength = lengthRead - TdsEnums.HEADER_LEN;
+
+                Assert.True(contentLength > 0, "The packet content length cannot be less than the header length.");
                 byte[] expectedData = inputBuffer.AsSpan().Slice(matchOffset, contentLength).ToArray();
                 Assert.Equal(expectedData, header.Content);
                 // Move the match offset to the next packet.
