@@ -9,6 +9,9 @@ using Microsoft.Data.SqlClientX.Handlers;
 
 namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers
 {
+    /// <summary>
+    /// Handler to populate data source information required for transport handler
+    /// </summary>
     internal class DataSourceParser : IHandler<ConnectionHandlerContext>
     {
         public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
