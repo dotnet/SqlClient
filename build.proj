@@ -61,8 +61,8 @@
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" />
     <FunctionalTestsProj Include="**/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" />
 
-    <UnitTests Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
-    <UnitTestsProj Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
+    <UnitTests Include="**/UnitTests/Microsoft.Data.SqlClient.NetCore.UnitTests.csproj" />
+    <UnitTestsProj Include="**/UnitTests/Microsoft.Data.SqlClient.NetCore.UnitTests.csproj" />
 
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
@@ -153,10 +153,6 @@
   <Target Name="BuildUnitTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
     <Message Text=">>> Building UnitTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building FunctionalTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))"/>
-    <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
   </Target>
 
   <Target Name="BuildManualTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
