@@ -18,6 +18,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 {
     internal class TransportCreationHandler : IHandler<ConnectionHandlerContext>
     {
+        private const int KeepAliveIntervalSeconds = 1;
+        private const int KeepAliveTimeSeconds = 30;
+
         #if NET8_0_OR_GREATER
         private static readonly TimeSpan DefaultPollTimeout = TimeSpan.FromSeconds(30);
         #else
@@ -41,9 +44,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
                 // @TODO: Build CoR for handling the different protocols in order
                 if (context.DataSource.ResolvedProtocol is DataSource.Protocol.TCP)
                 {
-                    context.ConnectionStream = isAsync
-                        ? await HandleTcpRequest(context, isAsync, ct).ConfigureAwait(false)
-                        : HandleTcpRequest(context, isAsync, ct).Result;
+                    context.ConnectionStream = await HandleTcpRequest(context, isAsync, ct).ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -51,17 +52,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
                 context.Error = e;
             }
 
-
             if (NextHandler is not null)
             {
-                if (isAsync)
-                {
-                    await NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
-                }
-                else
-                {
-                    NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false).GetAwaiter().GetResult();
-                }
+                await NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
             }
         }
 
@@ -116,7 +109,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
                 ipEndpoint.Address = ipAddress;
                 try
                 {
-                    socket = await OpenSocketAsync(ipEndpoint, ct).ConfigureAwait(false);
+                    socket = await OpenSocket(ipEndpoint, isAsync, ct).ConfigureAwait(false);
                     break;
                 }
                 catch(Exception e)
@@ -136,43 +129,29 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             return new NetworkStream(socket);
         }
 
-        private async ValueTask<Socket> OpenSocketAsync(IPEndPoint ipEndpoint, CancellationToken ct)
+        private async ValueTask<Socket> OpenSocket(IPEndPoint ipEndPoint, bool isAsync, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
-            var socket = new Socket(ipEndpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
-            {
-                Blocking = false,
-                NoDelay = true,
-            };
+            var socket = new Socket(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { Blocking = false };
 
             // Enable keep-alive
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
-            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 1);
-            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);
+            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, KeepAliveIntervalSeconds);
+            socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, KeepAliveTimeSeconds);
 
-            // Open the socket
-            try
+            if (isAsync)
             {
                 #if NET6_0_OR_GREATER
-                await socket.ConnectAsync(ipEndpoint, ct).ConfigureAwait(false);
+                await socket.ConnectAsync(ipEndPoint, ct).ConfigureAwait(false);
                 #else
                 await new TaskFactory(ct).FromAsync(socket.BeginConnect, socket.EndConnect, ipEndpoint, null)
                     .ConfigureAwait(false);
                 #endif
             }
-            catch (SocketException e)
+            else
             {
-                if (e.SocketErrorCode is not SocketError.WouldBlock)
-                {
-                    throw;
-                }
-            }
-
-            // Verify the socket is open
-            if (!socket.Poll(DefaultPollTimeout, SelectMode.SelectWrite))
-            {
-                throw new Exception("Connection not ready for writing");
+                OpenSocketSync(socket, ipEndPoint, ct);
             }
 
             // Connection is established
@@ -180,6 +159,34 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             socket.NoDelay = true;
 
             return socket;
+        }
+
+        private void OpenSocketSync(Socket socket, IPEndPoint ipEndPoint, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            try
+            {
+                socket.Connect(ipEndPoint);
+            }
+            catch (SocketException e)
+            {
+                // Because the socket is configured to be non-blocking, any operation that would
+                // block will throw an exception indicating it would block. Since opening a TCP
+                // connection will always block, we expect to get an exception for it, and will
+                // ignore it. This allows us to immediately return from connect and poll it,
+                // allowing us to observe timeouts and cancellation.
+                if (e.SocketErrorCode is not SocketError.WouldBlock)
+                {
+                    throw;
+                }
+            }
+
+            // Poll the socket until it is open
+            if (!socket.Poll(DefaultPollTimeout, SelectMode.SelectWrite))
+            {
+                throw new TimeoutException("Socket failed to open within timeout period.");
+            }
         }
     }
 }
