@@ -70,8 +70,44 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
             int readCount = isAsync ? await stream.ReadAsync(readBuffer, 0, 2) :
                                 stream.Read(readBuffer, 0, 2);
 
-
             Assert.Equal(2, readCount);
+
+            Assert.Equal(payload.AsSpan(0, readCount).ToArray(), readBuffer.AsSpan(0, readCount).ToArray());
+        }
+
+        /// <summary>
+        /// This test splits the packet sending so that the partial header is 
+        /// received in one underlying stream read by the TdsReadStream.
+        /// </summary>
+        /// <param name="isAsync"></param>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async void ReadStream_ReadPacketSplitWithPartialHeader(bool isAsync)
+        {
+            // Arrange
+            int negotiatedPacketSize = 200;
+            byte[] payload = new byte[500];
+            for (int i = 0; i < payload.Length; i++)
+            {
+                payload[i] = (byte)i;
+            }
+            byte messageType = TdsEnums.MT_PRELOGIN;
+            int spid = new Random().Next();
+            TdsMessage message = new TdsMessage(negotiatedPacketSize, payload, messageType, spid);
+
+            byte[] underlyingStream = message.GetBytes();
+            SplittableStream splitStream = new SplittableStream(underlyingStream, negotiatedPacketSize + 3);
+
+            // Act            
+            using TdsReadStream stream = new TdsReadStream(splitStream);
+            byte[] readBuffer = new byte[payload.Length];
+
+            int readCount = isAsync ? await stream.ReadAsync(readBuffer, 0, payload.Length) :
+                                stream.Read(readBuffer, 0, payload.Length);
+
+
+            Assert.Equal(readBuffer.Length, readCount);
 
             Assert.Equal(payload.AsSpan(0, readCount).ToArray(), readBuffer.AsSpan(0, readCount).ToArray());
         }
@@ -144,7 +180,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
             {
                 PacketHeaderType = packetHeaderType;
                 PacketStatus = packetStatus;
-                PacketDataLength = packetDataLength;
+                PacketDataLength = packetDataLength + TdsEnums.HEADER_LEN;
                 Spid = spid;
                 Content = content;
             }
