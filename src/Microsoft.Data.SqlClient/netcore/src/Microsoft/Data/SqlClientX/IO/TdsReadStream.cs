@@ -39,6 +39,10 @@ namespace Microsoft.Data.SqlClientX.IO
 
         #region Constructors
 
+        /// <summary>
+        /// The constructor for the TdsReadStream.
+        /// </summary>
+        /// <param name="underlyingStream">The underlying stream to read from</param>
         public TdsReadStream(Stream underlyingStream)
         {
             _readBuffer = new byte[TdsEnums.DEFAULT_LOGIN_PACKET_SIZE];
@@ -183,6 +187,15 @@ namespace Microsoft.Data.SqlClientX.IO
         public override void Write(byte[] buffer, int offset, int count)
         {
             throw new NotSupportedException();
+        }
+
+        /// <inheritdoc />
+        public async ValueTask<byte> ReadByteAsync(bool isAsync, CancellationToken ct)
+        {
+            await PrepareBufferIfNeeded(isAsync, ct).ConfigureAwait(false);
+            byte result = _readBuffer[_readIndex];
+            AdvanceBufferOnRead(1);
+            return result;
         }
 
         #endregion

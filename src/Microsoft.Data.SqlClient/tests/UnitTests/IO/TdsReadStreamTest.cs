@@ -15,55 +15,81 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public async void ReadStream_ReadWholeSinglePacket(bool isAsync)
+        public async void ReadStream_ReadSinglePacketWithoutSplit(bool isAsync)
         {
-            // Arrange
+
             int negotiatedPacketSize = 200;
-            byte[] payload = new byte[100];
-            for (int i = 0; i < payload.Length; i++)
-            {
-                payload[i] = (byte)i;
-            }
-            byte messageType = TdsEnums.MT_PRELOGIN;
-            int spid = new Random().Next();
-            TdsMessage message = new(negotiatedPacketSize, payload, messageType, spid);
+            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 100);
+            SplittableStream splitStream = SplittableStream.FromMessage(message);
 
-            byte[] underlyingStream = message.GetBytes();
-            SplittableStream splitStream = new(underlyingStream, 200);
-
-            // Act            
             using TdsReadStream stream = new TdsReadStream(splitStream);
             byte[] readBuffer = new byte[100];
 
-            int readCount = isAsync ? await stream.ReadAsync(readBuffer, 0, 2) :
-                                stream.Read(readBuffer, 0, 2);
+            int readCount = isAsync ? await stream.ReadAsync(readBuffer, 0, message.Payload.Length) : stream.Read(readBuffer, 0, message.Payload.Length);
 
-
-            Assert.Equal(2, readCount);
-
-            Assert.Equal(payload.AsSpan(0, readCount).ToArray(), readBuffer.AsSpan(0, readCount).ToArray());
+            Assert.Equal(message.Payload.Length, readCount);
+            Assert.Equal(message.Payload.AsSpan(0, readCount).ToArray(), readBuffer.AsSpan(0, readCount).ToArray());
         }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async void ReadStream_ReadSingleByte(bool isAsync)
+        {
+            int negotiatedPacketSize = 200;
+            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 100);
+            SplittableStream splitStream = SplittableStream.FromMessage(message);
+
+            using TdsReadStream stream = new(splitStream);
+            byte[] readBuffer = new byte[100];
+
+            for (int i = 0; i < message.Payload.Length; i++)
+            {
+                byte readByte = await stream.ReadByteAsync(isAsync, default);
+                Assert.Equal(message.Payload[i], readByte);
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async void ReadStream_ReadSkipBytes(bool isAsync)
+        {
+            int negotiatedPacketSize = 200;
+
+            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 100);
+            SplittableStream splitStream = SplittableStream.FromMessage(message);
+
+            using TdsReadStream stream = new(splitStream);
+            stream.SetPacketSize(negotiatedPacketSize);
+
+            byte[] readBuffer = new byte[100];
+
+            int skipCount = new Random().Next() % 50;
+            await stream.SkipReadBytesAsync(skipCount, isAsync, default);
+            for (int i = skipCount; i < message.Payload.Length; i++)
+            {
+                byte readByte = await stream.ReadByteAsync(isAsync, default);
+                Assert.Equal(message.Payload[i], readByte);
+            }
+            Assert.Equal(message.Spid, stream.Spid);
+        }
+
 
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public async void ReadStream_ReadPacketSplit(bool isAsync)
         {
-            // Arrange
+
             int negotiatedPacketSize = 200;
-            byte[] payload = new byte[100];
-            for (int i = 0; i < payload.Length; i++)
-            {
-                payload[i] = (byte)i;
-            }
-            byte messageType = TdsEnums.MT_PRELOGIN;
-            int spid = new Random().Next();
-            TdsMessage message = new TdsMessage(negotiatedPacketSize, payload, messageType, spid);
+            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 100);
 
-            byte[] underlyingStream = message.GetBytes();
-            SplittableStream splitStream = new SplittableStream(underlyingStream, 4);
+            int splitSize = 4;
+            byte[] messageBytes = message.GetBytes();
+            SplittableStream splitStream = new(messageBytes, splitSize);
 
-            // Act            
+
             using TdsReadStream stream = new TdsReadStream(splitStream);
             byte[] readBuffer = new byte[100];
 
@@ -71,9 +97,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
                                 stream.Read(readBuffer, 0, 2);
 
             Assert.Equal(2, readCount);
-
-            Assert.Equal(payload.AsSpan(0, readCount).ToArray(), readBuffer.AsSpan(0, readCount).ToArray());
+            Assert.Equal(message.Payload.AsSpan(0, readCount).ToArray(), readBuffer.AsSpan(0, readCount).ToArray());
         }
+
+
 
         /// <summary>
         /// This test splits the packet sending so that the partial header is 
@@ -85,48 +112,87 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
         [InlineData(true)]
         public async void ReadStream_ReadPacketSplitWithPartialHeader(bool isAsync)
         {
-            // Arrange
+
             int negotiatedPacketSize = 200;
-            byte[] payload = new byte[500];
+            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 500);
+
+            SplittableStream splitStream = SplittableStream.FromMessage(message, negotiatedPacketSize + 3);
+
+
+            using TdsReadStream stream = new(splitStream);
+            byte[] readBuffer = new byte[message.Payload.Length];
+
+            int readCount = isAsync ? await stream.ReadAsync(readBuffer, 0, message.Payload.Length) :
+                                stream.Read(readBuffer, 0, message.Payload.Length);
+
+
+            Assert.Equal(readBuffer.Length, readCount);
+
+            Assert.Equal(message.Payload.AsSpan(0, readCount).ToArray(), readBuffer.AsSpan(0, readCount).ToArray());
+        }
+
+        /// <summary>
+        /// This test splits the packet sending so that the header is 
+        /// received in one underlying stream read by the TdsReadStream.
+        /// </summary>
+        /// <param name="isAsync"></param>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async void ReadStream_ReadPacketSplitWithFullHeaderAndPartialPayload(bool isAsync)
+        {
+
+            int negotiatedPacketSize = 200;
+            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 500);
+
+            SplittableStream splitStream = SplittableStream.FromMessage(message, negotiatedPacketSize + TdsEnums.HEADER_LEN + 10);
+
+            using TdsReadStream stream = new TdsReadStream(splitStream);
+            byte[] readBuffer = new byte[message.Payload.Length];
+
+            int readCount = isAsync ? await stream.ReadAsync(readBuffer, 0, message.Payload.Length) :
+                                stream.Read(readBuffer, 0, message.Payload.Length);
+
+            Assert.Equal(readBuffer.Length, readCount);
+            Assert.Equal(message.Payload.AsSpan(0, readCount).ToArray(), readBuffer.AsSpan(0, readCount).ToArray());
+        }
+
+        private ushort GenerateSpid() => (ushort)new Random().Next();
+
+        private TdsMessage PrepareTdsMessage(int negotiatedPacketSize, int payloadSize)
+        {
+            byte[] payload = new byte[payloadSize];
             for (int i = 0; i < payload.Length; i++)
             {
                 payload[i] = (byte)i;
             }
             byte messageType = TdsEnums.MT_PRELOGIN;
-            int spid = new Random().Next();
-            TdsMessage message = new TdsMessage(negotiatedPacketSize, payload, messageType, spid);
-
-            byte[] underlyingStream = message.GetBytes();
-            SplittableStream splitStream = new SplittableStream(underlyingStream, negotiatedPacketSize + 3);
-
-            // Act            
-            using TdsReadStream stream = new TdsReadStream(splitStream);
-            byte[] readBuffer = new byte[payload.Length];
-
-            int readCount = isAsync ? await stream.ReadAsync(readBuffer, 0, payload.Length) :
-                                stream.Read(readBuffer, 0, payload.Length);
-
-
-            Assert.Equal(readBuffer.Length, readCount);
-
-            Assert.Equal(payload.AsSpan(0, readCount).ToArray(), readBuffer.AsSpan(0, readCount).ToArray());
+            int spid = GenerateSpid();
+            return new TdsMessage(negotiatedPacketSize, payload, messageType, spid);
         }
 
-        private class TdsMessage
+        /// <summary>
+        /// Represents a message in the TDS protocol.
+        /// A message consists of a of packets.
+        /// </summary>
+        internal class TdsMessage
         {
             private int _negotiatedPacketSize;
 
-            private int _spid;
+            public int Spid { get; private set; }
+
             private byte _messageType;
-            private byte[] _data;
+
+            public byte[] Payload { get; }
+
             private ArrayList _packets = new ArrayList();
 
             public TdsMessage(int negotiatedPacketSize, byte[] payload, byte messageType, int spid)
             {
-                _data = payload;
+                Payload = payload;
                 Assert.True(negotiatedPacketSize > TdsEnums.HEADER_LEN, "Negotiated packet size must be greater than header length.");
                 _negotiatedPacketSize = negotiatedPacketSize;
-                _spid = spid;
+                Spid = spid;
                 _messageType = messageType;
 
                 CreatePackets();
@@ -154,15 +220,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
                 // From the _data take _negotiatedPacketSize bytes - Header_len and create a packet
                 // Do this till all the data is consumed and added to packets.
 
-                while (offset < _data.Length)
+                while (offset < Payload.Length)
                 {
+                    int bytesLeftToPacketize = Payload.Length - offset;
                     // The amount of data to be copied into the packet.
                     int maxDataInPacket = _negotiatedPacketSize - TdsEnums.HEADER_LEN;
-                    int copyLength = Math.Min(maxDataInPacket, _data.Length - offset);
-                    byte[] packetPayload = _data.AsSpan(offset, copyLength).ToArray();
+                    int copyLength = Math.Min(maxDataInPacket, bytesLeftToPacketize);
+                    byte[] packetPayload = Payload.AsSpan(offset, copyLength).ToArray();
                     offset += copyLength;
-                    byte status = offset < _data.Length ? TdsEnums.ST_BATCH : TdsEnums.ST_EOM;
-                    TdsServerPacket packet = new TdsServerPacket(_messageType, status, copyLength, _spid, packetPayload);
+                    byte status = offset < Payload.Length ? TdsEnums.ST_BATCH : TdsEnums.ST_EOM;
+                    TdsServerPacket packet = new(_messageType, status, copyLength, Spid, packetPayload);
                     _packets.Add(packet);
                 }
             }

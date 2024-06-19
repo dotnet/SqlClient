@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using static Microsoft.Data.SqlClient.UnitTests.IO.TdsReadStreamTest;
 
 namespace Microsoft.Data.SqlClient.UnitTests.IO
 {
@@ -18,10 +19,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
 
         private int _splitSize;
 
+        /// <summary>
+        /// Instantiates a stream which will not be split.
+        /// </summary>
+        /// <param name="payload"></param>
+        public SplittableStream(byte[] payload) : this(payload, payload.Length)
+        {
+        }
+
+        /// <summary>
+        /// The stream will split the payload into chunks of splitSize.
+        /// </summary>
+        /// <param name="payload"></param>
+        /// <param name="splitSize"></param>
         public SplittableStream(byte[] payload, int splitSize) : base()
         {
             _payload = payload;
             _splitSize = splitSize;
+        }
+
+        internal static SplittableStream FromMessage(TdsMessage message)
+        {
+            byte[] bytes = message.GetBytes();
+            return new SplittableStream(bytes);
+        }
+
+        internal static SplittableStream FromMessage(TdsMessage message, int splitSize)
+        {
+            byte[] underlyingStream = message.GetBytes();
+            return new SplittableStream(underlyingStream, splitSize);
         }
 
         public override int Read(byte[] buffer, int offset, int count)

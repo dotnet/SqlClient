@@ -43,6 +43,14 @@ namespace Microsoft.Data.SqlClientX.IO
         ValueTask<byte> PeekByteAsync(bool isAsync, CancellationToken ct);
 
         /// <summary>
+        /// Reads a byte from the stream.
+        /// </summary>
+        /// <param name="isAsync">Indicates if the operation should be async.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        ValueTask<byte> ReadByteAsync(bool isAsync, CancellationToken cancellationToken);
+
+        /// <summary>
         /// A convenience method to skip the bytes in the stream,
         /// by allowing buffer manipulation, instead of making the consumer
         /// allocate buffers to read and discard the bytes.

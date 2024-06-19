@@ -27,13 +27,13 @@ namespace Microsoft.Data.SqlClientX.IO
         private readonly TdsReadStream _readStream;
 
         /// <inheritdoc />
-        public override bool CanRead => _readStream != null;
+        public override bool CanRead => _readStream != null && _readStream.CanRead;
         
         /// <inheritdoc />
         public override bool CanSeek => throw new NotSupportedException();
 
         /// <inheritdoc />
-        public override bool CanWrite => _writeStream != null;
+        public override bool CanWrite => _writeStream != null && _writeStream.CanWrite;
 
         /// <inheritdoc />
         public override long Length => throw new NotSupportedException();
@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClientX.IO
             int offset,
             int count,
             CancellationToken cancellationToken)
-         => await _writeStream.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+         => await _writeStream.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).ConfigureAwait(false);
 
         /// <summary>
         /// Called explicitly by the consumers to flush the stream,
@@ -160,6 +160,10 @@ namespace Microsoft.Data.SqlClientX.IO
         public override ValueTask<int> ReadAsync(
             Memory<byte> buffer,
             CancellationToken cancellationToken) => _readStream.ReadAsync(buffer, cancellationToken);
+
+        /// <inheritdoc />
+        public virtual ValueTask<byte> ReadByteAsync(bool isAsync, CancellationToken cancellationToken)
+            => _readStream.ReadByteAsync(isAsync, cancellationToken);
 
         /// <inheritdoc />
         public virtual ValueTask<byte> PeekByteAsync(bool isAsync,
