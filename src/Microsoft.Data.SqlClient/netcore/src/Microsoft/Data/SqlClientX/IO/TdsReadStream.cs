@@ -18,6 +18,11 @@ namespace Microsoft.Data.SqlClientX.IO
     internal class TdsReadStream : Stream, ITdsReadStream
     {
         // TODO: Handle Cancellation tokens in all async paths.
+        // TODO: For large data reads, is it possible to write to the incoming buffer? This needs to be benchmarked because 
+        // we will need the packet header to be read in the buffer. In this case we could either ask underlying stream to provide
+        // only the header data, and then post another data read into the incoming byte array from Read* APIs. Will this be faster 
+        // than copying the data from the buffer to the incoming byte array? Need to benchmark.
+
         #region Private Fields
 
         private Stream _underlyingStream;
