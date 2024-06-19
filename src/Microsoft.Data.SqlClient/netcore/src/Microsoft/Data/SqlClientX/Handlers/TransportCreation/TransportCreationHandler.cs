@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -32,11 +33,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
         /// <inheritdoc />
         public async ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            if (context.DataSource is null)
-            {
-                context.Error = new ArgumentNullException(nameof(context));
-                return;
-            }
+            Debug.Assert(context.DataSource is not null, "context.DataSource is null");
 
             try
             {
@@ -44,6 +41,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
                 if (context.DataSource.ResolvedProtocol is DataSource.Protocol.TCP)
                 {
                     context.ConnectionStream = await HandleTcpRequest(context, isAsync, ct).ConfigureAwait(false);
+                }
+                else
+                {
+                    throw new NotImplementedException();
                 }
             }
             catch (Exception e)
@@ -73,10 +74,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             ct.ThrowIfCancellationRequested();
 
             // DNS lookup
-            var ipAddresses = isAsync
+            IPAddress[] ipAddresses = isAsync
                 ? await Dns.GetHostAddressesAsync(context.DataSource.ServerName, ct).ConfigureAwait(false)
                 : Dns.GetHostAddresses(context.DataSource.ServerName);
-            if (ipAddresses.Length == 0)
+            if (ipAddresses is null || ipAddresses.Length == 0)
             {
                 throw new SocketException((int)SocketError.HostNotFound);
             }
@@ -103,11 +104,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             Socket socket = null;
             var socketOpenExceptions = new List<Exception>();
 
-            var portToUse = context.DataSource.ResolvedPort < 0
+            int portToUse = context.DataSource.ResolvedPort < 0
                 ? context.DataSource.Port
                 : context.DataSource.ResolvedPort;
             var ipEndpoint = new IPEndPoint(IPAddress.None, portToUse); // Allocate once
-            foreach (var ipAddress in ipAddresses)
+            foreach (IPAddress ipAddress in ipAddresses)
             {
                 ipEndpoint.Address = ipAddress;
                 try
@@ -126,7 +127,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             {
                 // If there are any socket exceptions in the collected exceptions, throw the first
                 // one. If there are not, collect all exceptions and throw them as an aggregate.
-                foreach (var exception in socketOpenExceptions)
+                foreach (Exception exception in socketOpenExceptions)
                 {
                     if (exception is SocketException)
                     {
