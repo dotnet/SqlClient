@@ -83,7 +83,24 @@ namespace Microsoft.Data.SqlClientX.IO
 
         #endregion
 
+        #region Protected Methods
+
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _underlyingStream.Dispose();
+                _underlyingStream = null;
+                _readBuffer = null;
+            }
+            base.Dispose(disposing);
+        }
+
+        #endregion
+
         #region Public Methods
+
 
         /// <inheritdoc />
         public override async ValueTask DisposeAsync()
@@ -102,7 +119,7 @@ namespace Microsoft.Data.SqlClientX.IO
             // If we have logically finished reading the packet, or if we have 
             // reached the end of the buffer, then we need to position the buffer at the beginning of next
             // packet start.
-            await PrepareBufferIfNeeded(isAsync, ct).ConfigureAwait(false);
+            await PrepareBufferAsync(isAsync, ct).ConfigureAwait(false);
             return _readBuffer[_readIndex];
         }
 
@@ -113,7 +130,7 @@ namespace Microsoft.Data.SqlClientX.IO
             int totalRead = 0;
             while (lengthToFill > 0)
             {
-                PrepareBufferIfNeeded(isAsync: false, CancellationToken.None).ConfigureAwait(false);
+                PrepareBufferAsync(isAsync: false, CancellationToken.None).ConfigureAwait(false);
 
                 int lengthToCopy = MinDataAvailableBeforeRead(lengthToFill);
                 ReadOnlySpan<byte> copyFrom = _readBuffer.AsSpan(_readIndex, lengthToCopy);
@@ -138,7 +155,7 @@ namespace Microsoft.Data.SqlClientX.IO
             int totalRead = 0;
             while (lengthToFill > 0)
             {
-                await PrepareBufferIfNeeded(isAsync: true, cancellationToken).ConfigureAwait(false);
+                await PrepareBufferAsync(isAsync: true, cancellationToken).ConfigureAwait(false);
                 int lengthToCopy = MinDataAvailableBeforeRead(lengthToFill);
                 ReadOnlyMemory<byte> copyFrom = new ReadOnlyMemory<byte>(_readBuffer, _readIndex, lengthToCopy);
                 copyFrom.CopyTo(buffer.Slice(totalRead, lengthToFill));
@@ -176,7 +193,7 @@ namespace Microsoft.Data.SqlClientX.IO
             int lengthLeftToSkip = skipCount;
             while (lengthLeftToSkip > 0)
             {
-                await PrepareBufferIfNeeded(isAsync, ct).ConfigureAwait(false);
+                await PrepareBufferAsync(isAsync, ct).ConfigureAwait(false);
                 int skippableMinLength = MinDataAvailableBeforeRead(lengthLeftToSkip);
                 lengthLeftToSkip -= skippableMinLength;
                 AdvanceBufferOnRead(skippableMinLength);
@@ -192,7 +209,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public async ValueTask<byte> ReadByteAsync(bool isAsync, CancellationToken ct)
         {
-            await PrepareBufferIfNeeded(isAsync, ct).ConfigureAwait(false);
+            await PrepareBufferAsync(isAsync, ct).ConfigureAwait(false);
             byte result = _readBuffer[_readIndex];
             AdvanceBufferOnRead(1);
             return result;
@@ -238,6 +255,13 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <returns></returns>
         private async ValueTask PrepareBufferAsync(bool isAsync, CancellationToken ct)
         {
+            bool shouldReadMoreData = _packetDataLeft == 0 || _readBufferDataEnd == _readIndex;
+
+            // Fail fast in case we don't need to prepare the buffer.
+            if (!shouldReadMoreData)
+            {
+                return;
+            }
             // We have read all the data from the packet as stated in the header, this means that we have to 
             // process the next packet header.
             if (_packetDataLeft == 0 && _readBufferDataEnd > _readIndex)
@@ -278,24 +302,6 @@ namespace Microsoft.Data.SqlClientX.IO
                         _readIndex = 0;
                     }
                 }
-            }
-        }
-
-        /// <summary>
-        /// If the buffer is empty, or the packet data is completely read, 
-        /// then we need to prepare the buffer for the next packet.
-        /// </summary>
-        /// <param name="isAsync"></param>
-        /// <param name="ct"></param>
-        /// <returns></returns>
-        private async ValueTask PrepareBufferIfNeeded(bool isAsync, CancellationToken ct)
-        {
-            // If there we have read through the packet, 
-            // or if we have reached the end of the buffer,
-            // then we need to position the buffer at the beginning of packet or buffer
-            if (_packetDataLeft == 0 || _readBufferDataEnd == _readIndex)
-            { 
-                await PrepareBufferAsync(isAsync, ct).ConfigureAwait(false);
             }
         }
 

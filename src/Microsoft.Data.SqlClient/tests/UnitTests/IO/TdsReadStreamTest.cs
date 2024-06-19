@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
             TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 100);
             SplittableStream splitStream = SplittableStream.FromMessage(message);
 
-            using TdsReadStream stream = new TdsReadStream(splitStream);
+            using TdsReadStream stream = new(splitStream);
             byte[] readBuffer = new byte[100];
 
             int readCount = isAsync ? await stream.ReadAsync(readBuffer, 0, message.Payload.Length) : stream.Read(readBuffer, 0, message.Payload.Length);
@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
             Assert.Equal(message.Payload.AsSpan(0, readCount).ToArray(), readBuffer.AsSpan(0, readCount).ToArray());
         }
 
-        private ushort GenerateSpid() => (ushort)new Random().Next();
+        private static ushort GenerateSpid() => (ushort)new Random().Next();
 
         private TdsMessage PrepareTdsMessage(int negotiatedPacketSize, int payloadSize)
         {
@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
                 payload[i] = (byte)i;
             }
             byte messageType = TdsEnums.MT_PRELOGIN;
-            int spid = GenerateSpid();
+            int spid = TdsReadStreamTest.GenerateSpid();
             return new TdsMessage(negotiatedPacketSize, payload, messageType, spid);
         }
 

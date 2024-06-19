@@ -23,8 +23,8 @@ namespace Microsoft.Data.SqlClientX.IO
     internal class TdsStream : Stream, ITdsWriteStream, ITdsReadStream
     {
         // TODO: Handle Cancellation tokens in all async paths.
-        private readonly TdsWriteStream _writeStream;
-        private readonly TdsReadStream _readStream;
+        private TdsWriteStream _writeStream;
+        private TdsReadStream _readStream;
 
         /// <inheritdoc />
         public override bool CanRead => _readStream != null && _readStream.CanRead;
@@ -204,8 +204,14 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
-            _writeStream.Dispose();
-            _readStream.Dispose();
+            if (disposing)
+            { 
+                _writeStream?.Dispose();
+                _readStream?.Dispose();
+                _writeStream = null;
+                _readStream = null;
+            }
+            base.Dispose(disposing);
         }
 
         public async ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct)
