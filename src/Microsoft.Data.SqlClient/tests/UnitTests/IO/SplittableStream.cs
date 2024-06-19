@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
     /// <summary>
     /// A stream which can split the payload across multiple reads.
     /// </summary>
-    internal class SplittableStream : Stream
+    internal class SplittableStream : MemoryStream
     {
         private byte[] _payload;
 
@@ -18,26 +18,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
 
         private int _splitSize;
 
-        public SplittableStream(byte[] payload, int splitSize)
+        public SplittableStream(byte[] payload, int splitSize) : base()
         {
             _payload = payload;
             _splitSize = splitSize;
         }
 
-        public override bool CanRead => true;
-
-        public override bool CanSeek => throw new System.NotImplementedException();
-
-        public override bool CanWrite => throw new System.NotImplementedException();
-
-        public override long Length => throw new System.NotImplementedException();
-
-        public override long Position { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
-
-        public override void Flush()
-        {
-            throw new System.NotImplementedException();
-        }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -54,21 +40,5 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
             _payloadOffset += len;
             return len;
         }
-
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override void SetLength(long value)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            throw new System.NotImplementedException();
-        }
     }
-
 }
