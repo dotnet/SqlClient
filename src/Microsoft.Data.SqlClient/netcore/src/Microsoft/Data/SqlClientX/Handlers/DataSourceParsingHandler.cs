@@ -6,26 +6,31 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.Handlers;
+using static Microsoft.Data.SqlClient.SNINativeMethodWrapper;
 
-namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers
+namespace Microsoft.Data.SqlClientX.Handlers
 {
     /// <summary>
     /// Handler to populate data source information required for transport handler
     /// </summary>
-    internal class DataSourceParser : IHandler<ConnectionHandlerContext>
+    internal class DataSourceParsingHandler : IHandler<ConnectionHandlerContext>
     {
+        /// <inheritdoc />
         public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
 
+        /// <inheritdoc />
         public async ValueTask Handle(ConnectionHandlerContext request, bool isAsync, CancellationToken ct)
         {
-            SqlConnectionString result = new SqlConnectionString(request.connectionString);
-            ServerInfo serverInfo = new ServerInfo(result);
+            ServerInfo serverInfo = new ServerInfo(request.ConnectionString);
             string fullServerName = serverInfo.ExtendedServerName;
             string localDBDataSource = GetLocalDBDataSource(fullServerName, out bool errorWithLocalDBProcessing);
 
             if (errorWithLocalDBProcessing)
             {
-                request.error = new Exception(localDBDataSource);
+                //TODO: populate other details for the SQLException
+                SqlErrorCollection collection = new SqlErrorCollection();
+                collection.Add(new SqlError(0,0,TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString("LocalDB_UnobtainableMessage"), null, 0));
+                request.Error = SqlException.CreateException(collection, null);
                 return;
             }
             
@@ -34,18 +39,21 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers
             DataSource details = DataSource.ParseServerName(fullServerName);
             if (details == null)
             {
-                request.error = new Exception(localDBDataSource);
+                //TODO: populate other details for the SQLException
+                SqlErrorCollection collection = new SqlErrorCollection();
+                collection.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString("LocalDB_UnobtainableMessage"), null, 0));
+                request.Error = SqlException.CreateException(collection, null);
                 return;
             }
             
-            request.dataSource = details;
+            request.DataSource = details;
             
             if (NextHandler is not null)
             {
                 await NextHandler.Handle(request, isAsync, ct).ConfigureAwait(false);
             }
         }
-
+        //TODO: Refactor function for better handling of error flag and return params
         private static string GetLocalDBDataSource(string fullServerName, out bool error)
         {
             string localDBConnectionString = null;

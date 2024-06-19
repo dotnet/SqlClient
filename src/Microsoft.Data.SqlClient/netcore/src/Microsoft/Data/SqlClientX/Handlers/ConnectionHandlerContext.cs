@@ -6,7 +6,7 @@ using System.IO;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.Handlers;
 
-namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers
+namespace Microsoft.Data.SqlClientX.Handlers
 {    /// <summary>
      /// Class that contains all context data needed for various handlers.
      /// </summary>
@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers
         /// <summary>
         /// Class that contains data required to handle a connection request.
         /// </summary>
-        public String connectionString { get; set; }
+        public SqlConnectionString ConnectionString { get; set; }
 
         /// <summary>
         /// Stream used by readers.
@@ -25,11 +25,11 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers
         /// <summary>
         /// Class required by DataSourceParser and Transport layer.
         /// </summary>
-        public DataSource dataSource { get; set; }
+        public DataSource DataSource { get; set; }
 
         /// <summary>
         /// Class used by orchestrator while chaining handlers.
         /// </summary>
-        public Exception error { get; set; }
+        public Exception Error { get; set; }
     }
 }
