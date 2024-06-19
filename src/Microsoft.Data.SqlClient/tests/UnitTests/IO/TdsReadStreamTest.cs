@@ -26,10 +26,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
             }
             byte messageType = TdsEnums.MT_PRELOGIN;
             int spid = new Random().Next();
-            TdsMessage message = new TdsMessage(negotiatedPacketSize, payload, messageType, spid);
+            TdsMessage message = new(negotiatedPacketSize, payload, messageType, spid);
 
             byte[] underlyingStream = message.GetBytes();
-            SplittableStream splitStream = new SplittableStream(underlyingStream, 200);
+            SplittableStream splitStream = new(underlyingStream, 200);
 
             // Act            
             using TdsReadStream stream = new TdsReadStream(splitStream);

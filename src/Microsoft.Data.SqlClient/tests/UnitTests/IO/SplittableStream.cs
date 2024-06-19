@@ -42,36 +42,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
         public override int Read(byte[] buffer, int offset, int count)
         {
             int dataLeft = _payload.Length - _payloadOffset;
-            if (count > _splitSize)
+
+            // Nothing to read.
+            if (dataLeft == 0)
             {
-                if (dataLeft > _splitSize)
-                {
-                    Buffer.BlockCopy(_payload, _payloadOffset, buffer, offset, _splitSize);
-                    _payloadOffset += _splitSize;
-                    return _splitSize;
-                }
-                else
-                {
-                    Buffer.BlockCopy(_payload, _payloadOffset, buffer, offset, dataLeft);
-                    _payloadOffset += dataLeft;
-                    return dataLeft;
-                }
+                return 0;
             }
-            else
-            {
-                if (dataLeft > count)
-                {
-                    Buffer.BlockCopy(_payload, _payloadOffset, buffer, offset, count);
-                    _payloadOffset += count;
-                    return count;
-                }
-                else
-                {
-                    Buffer.BlockCopy(_payload, _payloadOffset, buffer, offset, dataLeft);
-                    _payloadOffset += dataLeft;
-                    return dataLeft;
-                }
-            }
+
+            int len = Math.Min(Math.Min(_splitSize, dataLeft), count);
+            Buffer.BlockCopy(_payload, _payloadOffset, buffer, offset, len);
+            _payloadOffset += len;
+            return len;
         }
 
         public override long Seek(long offset, SeekOrigin origin)
