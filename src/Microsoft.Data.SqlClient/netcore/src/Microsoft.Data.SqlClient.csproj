@@ -919,8 +919,10 @@
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsReadStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsWriteStream.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\IO\TdsReadStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsStreamPacketType.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequest.cs" />
