@@ -51,11 +51,13 @@ namespace Microsoft.Data.SqlClient
 
             SqlCommand engineEditionCommand = connection.CreateCommand();
             engineEditionCommand.CommandText = "SELECT SERVERPROPERTY('EngineEdition');";
-            var engineEdition = (int)engineEditionCommand.ExecuteScalar()!;
+            var engineEdition = (int)engineEditionCommand.ExecuteScalar();
 
-            if (engineEdition == 9)
+            if (engineEdition is 6 or 9 or 11)
             {
-                // Azure SQL Edge throws an exception when querying sys.assemblies
+                // Azure SQL Edge (9) throws an exception when querying sys.assemblies
+                // Azure Synapse Analytics (6) and Azure Synapse serverless SQL pool (11)
+                // do not support ASSEMBLYPROPERTY
                 return;
             }
 
