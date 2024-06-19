@@ -235,7 +235,7 @@ namespace Microsoft.Data.SqlClientX.IO
             // There is no data left in the buffer.
             if (_readIndex == _readBufferDataEnd)
             {
-                // If we have left over data indicated in the packet header, then we simply need to get data from the network.
+                // 1.1 If we have left over data indicated in the packet header, then we simply need to get data from the network.
                 if (_packetDataLeft > 0)
                 {
                     _readBufferDataEnd = isAsync ?
@@ -261,6 +261,8 @@ namespace Microsoft.Data.SqlClientX.IO
                         _readBufferDataEnd = isAsync ?
                             await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false) :
                             _underlyingStream.Read(_readBuffer);
+
+                        _readIndex = 0;
                     }
                 }
             }
