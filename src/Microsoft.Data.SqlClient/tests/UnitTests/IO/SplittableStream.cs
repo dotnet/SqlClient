@@ -24,7 +24,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
             _splitSize = splitSize;
         }
 
-
         public override int Read(byte[] buffer, int offset, int count)
         {
             int dataLeft = _payload.Length - _payloadOffset;
