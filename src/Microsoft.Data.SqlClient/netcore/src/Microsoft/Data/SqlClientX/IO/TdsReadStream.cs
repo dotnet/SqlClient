@@ -4,6 +4,7 @@
 
 using System;
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -135,7 +136,9 @@ namespace Microsoft.Data.SqlClientX.IO
             int totalRead = 0;
             while (lengthToFill > 0)
             {
-                PrepareBufferAsync(isAsync: false, CancellationToken.None).ConfigureAwait(false);
+                ValueTask vt = PrepareBufferAsync(isAsync: false, CancellationToken.None);
+                Debug.Assert(vt.IsCompletedSuccessfully, 
+                    "The Value task should have completed successfully, since the call was synchronous");
 
                 int lengthToCopy = MinDataAvailableBeforeRead(lengthToFill);
                 ReadOnlySpan<byte> copyFrom = _readBuffer.AsSpan(_readIndex, lengthToCopy);
@@ -251,7 +254,7 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
-        /// Prepares the Read buffer with more data. 
+        /// Prepares the Read buffer with more data if the buffer or the packet is empty. 
         /// This method is called, when the data from existing buffer is completely read, or there 
         /// is less data available in the buffer, than what is needed to complete the read call.
         /// </summary>
