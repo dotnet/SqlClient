@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -125,8 +124,17 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             // If no socket succeeded, throw
             if (socket is null)
             {
-                throw socketOpenExceptions.OfType<SocketException>().FirstOrDefault()
-                      ?? (Exception)new AggregateException(socketOpenExceptions);
+                // If there are any socket exceptions in the collected exceptions, throw the first
+                // one. If there are not, collect all exceptions and throw them as an aggregate.
+                foreach (var exception in socketOpenExceptions)
+                {
+                    if (exception is SocketException)
+                    {
+                        throw exception;
+                    }
+                }
+
+                throw new AggregateException(socketOpenExceptions);
             }
 
             // Create the stream for the socket
