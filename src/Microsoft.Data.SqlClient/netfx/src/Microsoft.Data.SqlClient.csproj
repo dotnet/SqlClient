@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.Net.Sdk">
   <PropertyGroup>
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
-    <RootNamespace>Microsoft.Data.SqlClient</RootNamespace>
+    <RootNamespace></RootNamespace>
     <TargetFramework>net462</TargetFramework>
     <EnableLocalAppContext>true</EnableLocalAppContext>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
