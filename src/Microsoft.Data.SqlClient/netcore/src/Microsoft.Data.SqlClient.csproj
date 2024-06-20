@@ -930,6 +930,8 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequest.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequestType.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\IHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\IpAddressVersionComparer.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\TransportCreationHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriteStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlConnectionX.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
