@@ -1,8 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,30 +20,56 @@ namespace Microsoft.Data.SqlClientX.IO
     /// N + 1 bytes, then the stream will timeout trying to get N+1 bytes, or it will return N+1 bytes, if the 
     /// N+1 byte is available.
     /// </summary>
-    internal class TdsStream : Stream
+    internal class TdsStream : Stream, ITdsWriteStream, ITdsReadStream
     {
+        // TODO: Handle Cancellation tokens in all async paths.
+        private TdsWriteStream _writeStream;
+        private TdsReadStream _readStream;
+
         /// <inheritdoc />
-        public override bool CanRead => throw new NotImplementedException();
+        public override bool CanRead => _readStream != null && _readStream.CanRead;
         
         /// <inheritdoc />
-        public override bool CanSeek => throw new NotImplementedException();
+        public override bool CanSeek => throw new NotSupportedException();
 
         /// <inheritdoc />
-        public override bool CanWrite => throw new NotImplementedException();
+        public override bool CanWrite => _writeStream != null && _writeStream.CanWrite;
 
         /// <inheritdoc />
-        public override long Length => throw new NotImplementedException();
+        public override long Length => throw new NotSupportedException();
 
         /// <inheritdoc />
-        public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 
         /// <summary>
         /// Indicates if the cancellation is sent to the server.
         /// </summary>
         public virtual bool IsCancellationSent { get; internal set; }
 
-        public TdsStream(Stream underLyingStream) : base()
+        public TdsStreamPacketType? PacketHeaderType 
         {
+            get => _writeStream.PacketHeaderType;
+            set => _writeStream.PacketHeaderType = value; 
+        }
+
+        /// <inheritdoc />
+        public int Spid => _readStream.Spid;
+
+        /// <inheritdoc />
+        public byte ReadPacketStatus => _readStream.ReadPacketStatus;
+
+        /// <inheritdoc />
+        public byte ReadPacketHeaderType => _readStream.ReadPacketHeaderType;
+
+        /// <summary>
+        /// Constructor for instantiating the TdsStream
+        /// </summary>
+        /// <param name="writeStream">The stream for outgoing TDS packets</param>
+        /// <param name="readStream">The stream for reading incoming TDS packets.</param>
+        public TdsStream(TdsWriteStream writeStream, TdsReadStream readStream) : base()
+        {
+            _writeStream = writeStream;
+            _readStream = readStream;
         }
 
         /// <summary>
@@ -53,9 +80,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         /// <param name="stream"></param>
         /// <exception cref="NotImplementedException"></exception>
-        public virtual void ReplaceUnderlyingStream(Stream stream)
+        public void ReplaceUnderlyingStream(Stream stream)
         {
-            throw new NotImplementedException();
+            _writeStream.ReplaceUnderlyingStream(stream);
+            _readStream.ReplaceUnderlyingStream(stream);
         }
 
         /// <summary>
@@ -63,86 +91,60 @@ namespace Microsoft.Data.SqlClientX.IO
         /// when the client and server exchange the negotiated packet size.
         /// </summary>
         /// <param name="packetSize">The negotiated packet size</param>
-        /// <exception cref="NotImplementedException"></exception>
-        public virtual void SetPacketSize(int packetSize)
+        public void SetPacketSize(int packetSize)
         {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// When writing the packet, the caller needs to 
-        /// specify the packet type. 
-        /// TODO: Consider accepting an enum of packet types
-        /// instead of the byte.
-        /// </summary>
-        /// <param name="packetType">The type of packet to be sent out</param>
-        public virtual void SetWritePacketType(TdsStreamPacketType packetType)
-        {
-            throw new NotImplementedException();
+            _readStream.SetPacketSize(packetSize);
+            _writeStream.SetPacketSize(packetSize);
         }
 
         /// <inheritdoc />
-        public override void Flush()
-        {
-            throw new NotImplementedException();
-        }
+        public override void Flush() => _writeStream.Flush();
+
 
         /// <inheritdoc />
-        public override int Read(Span<byte> buffer)
-        {
-            throw new NotImplementedException();
-        }
+        public override int Read(Span<byte> buffer) => _readStream.Read(buffer);
 
         /// <inheritdoc />
         public override int Read(
             byte[] buffer, 
             int offset, 
-            int count)
-        {
-            throw new NotImplementedException();
-        }
+            int count) => _readStream.Read(buffer, offset, count);
 
         /// <inheritdoc />
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotImplementedException();
-        }
+        public override long Seek(long offset, SeekOrigin origin) => _readStream.Seek(offset, origin);
 
         /// <inheritdoc />
         public override void SetLength(long value)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         /// <inheritdoc />
         public override void Write(ReadOnlySpan<byte> buffer)
         {
-            throw new NotImplementedException();
+            _writeStream.Write(buffer);
         }
 
         /// <inheritdoc />
         public override void Write(byte[] buffer, int offset, int count)
         {
-            throw new NotImplementedException();
+            _writeStream.Write(buffer, offset, count);
         }
 
         /// <inheritdoc />
-        public override ValueTask WriteAsync(
+        public override async ValueTask WriteAsync(
             ReadOnlyMemory<byte> buffer,
-            CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
+            CancellationToken cancellationToken) 
+            => await _writeStream.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+
 
         /// <inheritdoc />
-        public override Task WriteAsync(
+        public override async Task WriteAsync(
             byte[] buffer,
             int offset,
             int count,
             CancellationToken cancellationToken)
-        {
-            throw new NotSupportedException();
-        }
+         => await _writeStream.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).ConfigureAwait(false);
 
         /// <summary>
         /// Called explicitly by the consumers to flush the stream,
@@ -151,51 +153,26 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         /// <param name="ct"></param>
         /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public override Task FlushAsync(CancellationToken ct)
-        {
-            throw new NotImplementedException();
-        }
+        public override async Task FlushAsync(CancellationToken ct)
+            => await _writeStream.FlushAsync(ct).ConfigureAwait(false);
 
         /// <inheritdoc />
         public override ValueTask<int> ReadAsync(
             Memory<byte> buffer,
-            CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
+            CancellationToken cancellationToken) => _readStream.ReadAsync(buffer, cancellationToken);
 
-        /// <summary>
-        /// Peeks the next byte in the stream, without consuming it.
-        /// The next call to read will return the same byte but it 
-        /// will consume it.
-        /// </summary>
-        /// <param name="isAsync"></param>
-        /// <param name="ct"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
+        /// <inheritdoc />
+        public virtual ValueTask<byte> ReadByteAsync(bool isAsync, CancellationToken cancellationToken)
+            => _readStream.ReadByteAsync(isAsync, cancellationToken);
+
+        /// <inheritdoc />
         public virtual ValueTask<byte> PeekByteAsync(bool isAsync,
-            CancellationToken ct)
-        {
-            throw new NotImplementedException();
-        }
+            CancellationToken ct) => _readStream.PeekByteAsync(isAsync, ct);
 
-        /// <summary>
-        /// A convenience method to skip the bytes in the stream,
-        /// by allowing buffer manipulation, instead of making the consumer
-        /// allocate buffers to read and discard the bytes.
-        /// </summary>
-        /// <param name="skipCount">Number of bytes to skip</param>
-        /// <param name="isAsync">If the method should be called Asynchronously.</param>
-        /// <param name="ct">The cancellation token.</param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
+        /// <inheritdoc />
         public virtual ValueTask SkipReadBytesAsync(int skipCount,
             bool isAsync, 
-            CancellationToken ct)
-        {
-            throw new NotImplementedException();
-        }
+            CancellationToken ct) => _readStream.SkipReadBytesAsync(skipCount, isAsync, ct);
 
         /// <summary>
         /// Needed to reset the stream.
@@ -212,22 +189,34 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <summary>
         /// Queues the TDS cancellation token for the stream.
         /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
         public virtual void QueueCancellation()
         {
-            throw new NotImplementedException();
+            _writeStream.QueueCancellation();
         }
 
         /// <inheritdoc />
-        public override ValueTask DisposeAsync()
+        public override async ValueTask DisposeAsync()
         {
-            throw new NotImplementedException();
+            await _writeStream.DisposeAsync().ConfigureAwait(false);
+            await _readStream.DisposeAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
-            throw new NotImplementedException();
+            if (disposing)
+            { 
+                _writeStream?.Dispose();
+                _readStream?.Dispose();
+                _writeStream = null;
+                _readStream = null;
+            }
+            base.Dispose(disposing);
+        }
+
+        public async ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct)
+        {
+            await _writeStream.WriteByteAsync(value, isAsync, ct).ConfigureAwait(false);
         }
     }
 }
