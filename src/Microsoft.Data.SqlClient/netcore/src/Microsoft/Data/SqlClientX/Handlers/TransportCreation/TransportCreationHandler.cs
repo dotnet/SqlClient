@@ -12,7 +12,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
-using Microsoft.Data.SqlClientX.Handlers.Connection;
 
 namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 {
@@ -83,7 +82,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             }
 
             // If there is an IP version preference, apply it
-            switch (context.IpAddressPreference)
+            switch (context.ConnectionString.IPAddressPreference)
             {
                 case SqlConnectionIPAddressPreference.IPv4First:
                     Array.Sort(ipAddresses, IpAddressVersionSorter.InstanceV4);

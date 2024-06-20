@@ -13,14 +13,14 @@ namespace Microsoft.Data.SqlClientX.Handlers
     internal class ConnectionHandlerContext : HandlerRequest
     {
         /// <summary>
-        /// Class that contains data required to handle a connection request.
-        /// </summary>
-        public SqlConnectionString ConnectionString { get; set; }
-
-        /// <summary>
         /// Stream used by readers.
         /// </summary>
         public Stream ConnectionStream { get; set; }
+
+        /// <summary>
+        /// Class that contains data required to handle a connection request.
+        /// </summary>
+        public SqlConnectionString ConnectionString { get; set; }
 
         /// <summary>
         /// Class required by DataSourceParser and Transport layer.
