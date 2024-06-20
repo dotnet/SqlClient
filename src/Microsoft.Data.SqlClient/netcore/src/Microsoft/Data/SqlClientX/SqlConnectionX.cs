@@ -28,31 +28,55 @@ namespace Microsoft.Data.SqlClientX
         private SqlCredential? _credential;
         private SqlDataSource? _dataSource;
         private SqlInternalConnectionX? _connection;
+        private string _connectionString = string.Empty;
+        private ConnectionState _connectionState = ConnectionState.Closed;
+
+        #region constructors
 
         /// <summary>
-        /// Initializes a new instance of the System.Data.Common.SqlConnectionX class.
+        /// Initializes a new instance of the <see cref="SqlConnectionX"/> class.
         /// </summary>
-        internal SqlConnectionX(string connectionString, SqlDataSource? dataSource = null, SqlCredential? credential = null) : base()
+        public SqlConnectionX()
+            => GC.SuppressFinalize(this);
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SqlConnectionX"/> class.
+        /// </summary>
+        internal SqlConnectionX(string connectionString) : this()
         {
-            ConnectionString = connectionString;
-            _dataSource = dataSource;
+            _connectionString = connectionString;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SqlConnectionX"/> class.
+        /// </summary>
+        /// <param name="connectionString">The connection string used to connect to the database.</param>
+        /// <param name="credential">The credentials used to connect to the database.</param>
+        internal SqlConnectionX(string connectionString, SqlCredential credential) : this(connectionString)
+        {
             _credential = credential;
         }
 
         /// <summary>
         /// Initializes a connection using the provided data source.
         /// </summary>
-        /// <param name="dataSource"></param>
+        /// <param name="dataSource">A data source that provides internal connection objects.</param>
         /// <returns></returns>
         internal static SqlConnectionX FromDataSource(SqlDataSource dataSource)
-        {
-           return new SqlConnectionX(dataSource.ConnectionString, dataSource, dataSource.Credential);
-        }
+            => new()
+            {
+                _connectionString = dataSource.ConnectionString,
+                _dataSource = dataSource,
+                _credential = dataSource.Credential
+            };
+
+        #endregion
+
+        #region public properties
 
         /// <inheritdoc/>
         [Browsable(false)]
-        public override ConnectionState State
-            => throw new NotImplementedException();
+        public override ConnectionState State => _connectionState;
 
         /// <inheritdoc/>
         [Browsable(false)]
@@ -71,25 +95,48 @@ namespace Microsoft.Data.SqlClientX
         public override int ConnectionTimeout
             => throw new NotImplementedException();
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Gets or sets the connection string used to connect to the database.
+        /// </summary>
         [AllowNull]
         [DefaultValue("")]
         [RefreshProperties(RefreshProperties.All)]
         [SettingsBindable(true)]
         public override string ConnectionString
         {
-            get => throw new NotImplementedException();
-            set => throw new NotImplementedException();
+            get => _connectionString;
+            set
+            {
+                switch (State)
+                {
+                    case ConnectionState.Open:
+                    case ConnectionState.Connecting:
+                    case ConnectionState.Fetching:
+                    case ConnectionState.Executing:
+                        throw new InvalidOperationException("Can't change connection string on an active connection");
+                    default:
+                        break;
+                }
+
+                _connectionString = _connectionString = value ?? string.Empty;
+
+                //TODO: build new data source or find existing data source based on connection string
+            }
         }
 
         /// <inheritdoc/>
         public override bool CanCreateBatch
             => throw new NotImplementedException();
 
+        #endregion
+
+        #region protected properties
+
         /// <inheritdoc/>
         protected override DbProviderFactory? DbProviderFactory
             => throw new NotImplementedException();
 
+        #endregion
 
         /// <inheritdoc/>
         public override void ChangeDatabase(string databaseName)
@@ -103,13 +150,46 @@ namespace Microsoft.Data.SqlClientX
         public object Clone()
             => throw new NotImplementedException();
 
+        #region close
+
         /// <inheritdoc/>
         public override void Close()
-            => throw new NotImplementedException();
+            => Close(async: false).GetAwaiter().GetResult();
 
         /// <inheritdoc/>
         public override Task CloseAsync()
-            => throw new NotImplementedException();
+            => Close(async: true);
+
+        internal Task Close(bool async)
+        {
+            //TODO: make thread safe?
+
+            switch (State)
+            {
+                case ConnectionState.Open:
+                case ConnectionState.Executing:
+                case ConnectionState.Fetching:
+                    break;
+                case ConnectionState.Connecting:
+                    //TODO: change this to match current behavior. cancels any pending async open task
+                    throw new InvalidOperationException("Can't close connection while in Connecting state");
+                default:
+                    return Task.CompletedTask;
+            }
+
+            var internalConnection = _connection;
+
+            //TODO: cancel outstanding operations on connection
+
+            //TODO: support async close operation
+            internalConnection?.Close();
+
+            internalConnection = null;
+            _connectionState = ConnectionState.Closed;
+            return Task.CompletedTask;
+        }
+
+        #endregion
 
         /// <inheritdoc/>
         public override ValueTask DisposeAsync()
@@ -143,6 +223,8 @@ namespace Microsoft.Data.SqlClientX
         public override Task<DataTable> GetSchemaAsync(string collectionName, string?[] restrictionValues, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
 
+        #region open
+
         /// <inheritdoc/>
         public override void Open() => _Open(false, CancellationToken.None).GetAwaiter().GetResult();
 
@@ -158,6 +240,8 @@ namespace Microsoft.Data.SqlClientX
 
             _connection = await _dataSource.GetInternalConnection(async, cancellationToken);
         }
+
+        #endregion
 
         /// <inheritdoc/>
         protected override DbTransaction BeginDbTransaction(System.Data.IsolationLevel isolationLevel)
