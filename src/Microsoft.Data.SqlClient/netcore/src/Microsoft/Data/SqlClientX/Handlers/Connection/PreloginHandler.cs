@@ -514,107 +514,114 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
         private async ValueTask EnableSsl(PreLoginHandlerContext request, bool isAsync, CancellationToken ct)
         {
-            await EnableSsl2(request, isAsync, ct).ConfigureAwait(false);
+            await AuthenticateClient(request, isAsync, ct).ConfigureAwait(false);
 
-            if (request.HandlerError != null)
+            if (request.SniError != null)
             {
-                SqlError error = request.HandlerError.ToSqlError(SniContext.Snix_PreLogin, new ServerInfo(request.ConnectionContext.ConnectionString));
+                SqlError error = request.SniError.ToSqlError(SniContext.Snix_PreLogin, 
+                    new ServerInfo(request.ConnectionContext.ConnectionString));
                 // TODO; enhance
                 throw request.Exception;
             }
 
-            string warningMessage = request.ConnectionContext.SslStream.SslProtocol.GetProtocolWarning();
-            if (!string.IsNullOrEmpty(warningMessage))
-            {
-                if (ShouldNotLogWarning(request))
-                {
-                    // Skip console warning
-                    SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}", nameof(TdsParser), nameof(EnableSsl), SqlClientLogger.LogLevel.Warning, warningMessage);
-                }
-                else
-                {
-                    // This logs console warning of insecure protocol in use.
-                    request.ConnectionContext.Logger.LogWarning(nameof(TdsParser), nameof(EnableSsl), warningMessage);
-                }
-            }
+            LogWarningIfNeeded(request);
 
             static bool ShouldNotLogWarning(PreLoginHandlerContext request)
             {
                 return !request.ConnectionEncryptionOption && LocalAppContextSwitches.SuppressInsecureTLSWarning;
             }
-        }
 
-        private async ValueTask EnableSsl2(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
-        {
-            try
+            static void LogWarningIfNeeded(PreLoginHandlerContext request)
             {
-                SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.EnableSsl3 | Info | Session Id {0}", context.ConnectionContext.ConnectionId);
-                await AuthenticateClient(context, isAsync, ct);
-            }
-            catch (Exception e)
-            {
-                SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.EnableSsl3 | Err | Session Id {0}, SNI Handshake failed with exception: {1}", context.ConnectionContext.ConnectionId, e.Message);
-                context.Exception = e;
+                string warningMessage = request.ConnectionContext.SslStream.SslProtocol.GetProtocolWarning();
+                if (!string.IsNullOrEmpty(warningMessage))
+                {
+                    if (ShouldNotLogWarning(request))
+                    {
+                        // Skip console warning
+                        SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}", 
+                            nameof(PreloginHandler), 
+                            nameof(EnableSsl), 
+                            SqlClientLogger.LogLevel.Warning, 
+                            warningMessage);
+                    }
+                    else
+                    {
+                        // This logs console warning of insecure protocol in use.
+                        request.ConnectionContext.Logger.LogWarning(nameof(PreloginHandler), nameof(EnableSsl), warningMessage);
+                    }
+                }
             }
         }
 
         private async ValueTask AuthenticateClient(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            using (TrySNIEventScope.Create(nameof(PreloginHandler)))
+            try
             {
-                Guid _connectionId = context.ConnectionContext.ConnectionId;
-                _validateCert = context.ValidateCertificate;
-                string serverName = context.ConnectionContext.DataSource.ServerName;
-                SslOverTdsStream sslOverTdsStream = context.ConnectionContext.SslOverTdsStream;
-                SslStream sslStream = context.ConnectionContext.SslStream;
-                try
+                SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.AuthenticateClient | Info | Session Id {0}", context.ConnectionContext.ConnectionId);
+                using (TrySNIEventScope.Create(nameof(PreloginHandler)))
                 {
-                    SslClientAuthenticationOptions options =
-                        context.IsTlsFirst ?
-                            new()
-                            {
-                                TargetHost = serverName,
-                                ClientCertificates = null,
-                                EnabledSslProtocols = s_supportedProtocols,
-                                CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
-                            } :
-                            new()
-                            {
-                            TargetHost = serverName,
-                                ApplicationProtocols = s_tdsProtocols,
-                                ClientCertificates = null
-                            };
-
-
-                    if (isAsync)
+                    Guid _connectionId = context.ConnectionContext.ConnectionId;
+                    _validateCert = context.ValidateCertificate;
+                    string serverName = context.ConnectionContext.DataSource.ServerName;
+                    SslOverTdsStream sslOverTdsStream = context.ConnectionContext.SslOverTdsStream;
+                    SslStream sslStream = context.ConnectionContext.SslStream;
+                    try
                     {
-                        await sslStream.AuthenticateAsClientAsync(options).ConfigureAwait(false);
+                        SslClientAuthenticationOptions options =
+                            context.IsTlsFirst ?
+                                new()
+                                {
+                                    TargetHost = serverName,
+                                    ClientCertificates = null,
+                                    EnabledSslProtocols = s_supportedProtocols,
+                                    CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                                } :
+                                new()
+                                {
+                                    TargetHost = serverName,
+                                    ApplicationProtocols = s_tdsProtocols,
+                                    ClientCertificates = null
+                                };
+
+
+                        if (isAsync)
+                        {
+                            await sslStream.AuthenticateAsClientAsync(options).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            sslStream.AuthenticateAsClient(options);
+                        }
+
+                        // If we are using SslOverTdsStream, we need to finish the handshake so that the Ssl stream,
+                        // is no longer encapsulated in TDS.
+                        sslOverTdsStream?.FinishHandshake();
                     }
-                    else
+
+                    catch (AuthenticationException aue)
                     {
-                        sslStream.AuthenticateAsClient(options);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
+                        context.SniError = new SNIError(SNIProviders.SSL_PROV, SNICommon.InternalExceptionError, aue, SNIError.CertificateValidationErrorCode);
+                        return;
+                    }
+                    catch (InvalidOperationException ioe)
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
+                        context.SniError = new SNIError(SNIProviders.SSL_PROV, SNICommon.InternalExceptionError, ioe);
+                        return;
                     }
 
-                    // If we are using SslOverTdsStream, we need to finish the handshake so that the Ssl stream,
-                    // is no longer encapsulated in TDS.
-                    sslOverTdsStream?.FinishHandshake();
+                    context.ConnectionContext.TdsStream = new TdsStream(new TdsWriteStream(sslStream), new TdsReadStream(sslStream));
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
                 }
-
-                catch (AuthenticationException aue)
-                {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
-                    context.HandlerError = new SNIError(SNIProviders.SSL_PROV, SNICommon.InternalExceptionError, aue, SNIError.CertificateValidationErrorCode);
-                    return;
-                }
-                catch (InvalidOperationException ioe)
-                {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
-                    context.HandlerError = new SNIError(SNIProviders.SSL_PROV, SNICommon.InternalExceptionError, ioe);
-                    return;
-                }
-
-                context.ConnectionContext.TdsStream = new TdsStream(new TdsWriteStream(sslStream), new TdsReadStream(sslStream));
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
+            }
+            catch (Exception e)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.EnableSsl3 | Err | Session Id {0}, SNI Handshake failed with exception: {1}",
+                    context.ConnectionContext.ConnectionId,
+                    e.Message);
+                context.Exception = e;
             }
         }
 
@@ -635,7 +642,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
             public ConnectionHandlerContext ConnectionContext { get; private set; }
             public bool ValidateCertificate { get; internal set; }
-            public SNIError HandlerError { get; internal set; }
+            public SNIError SniError { get; internal set; }
 
             public PreLoginHandlerContext(ConnectionHandlerContext connectionContext)
             {
