@@ -61,6 +61,9 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public byte ReadPacketHeaderType => _readStream.ReadPacketHeaderType;
 
+        /// <inheritdoc />
+        public int PacketDataLeft => _readStream.PacketDataLeft;
+
         /// <summary>
         /// Constructor for instantiating the TdsStream
         /// </summary>

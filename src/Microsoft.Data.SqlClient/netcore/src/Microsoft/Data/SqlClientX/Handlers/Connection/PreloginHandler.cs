@@ -4,18 +4,17 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure.Core;
+using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
-using Microsoft.Extensions.Options;
+using Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {
@@ -29,7 +28,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         private static readonly SslProtocols s_supportedProtocols = SslProtocols.None;
 
         private static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
-
+        
+        private readonly int GUID_SIZE = 16;
+        
         private bool _validateCert = true;
 
         /// <inheritdoc />
@@ -42,8 +43,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
             await TlsBegin(context, isAsync, ct).ConfigureAwait(false);
 
-            ReorderStream(context);
-
             await CreatePreLoginAndSend(context, isAsync, ct).ConfigureAwait(false);
 
             await ReadPreLoginresponse(context, isAsync, ct).ConfigureAwait(false);
@@ -54,23 +53,395 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
             if (NextHandler is not null)
             {
-                await NextHandler.Handle(connectionRequest, isAsync, ct).ConfigureAwait(false);
+                await NextHandler.Handle(connectionContext, isAsync, ct).ConfigureAwait(false);
             }
         }
 
-        private async Task TlsEnd(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        private Task TlsEnd(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            return Task.FromException(new NotImplementedException());
         }
 
-        private async Task ReadPreLoginresponse(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        private async Task<PreLoginHandshakeStatus> ReadPreLoginresponse(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            context.ConnectionContext.MarsCapable  = context.ConnectionContext.ConnectionString.MARS; // Assign default value
+            context.ConnectionContext.FedAuthRequired = false;
+            bool is2005OrLater = false;
+
+
+            TdsStream tdsStream = context.ConnectionContext.TdsStream;
+            int option = await tdsStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+
+            if (option == 0xaa)
+            {
+                // If the first byte is 0xAA, we are connecting to a 6.5 or earlier server, which
+                // is not supported.
+                throw SQL.InvalidSQLServerVersionUnknown();
+            }
+
+
+            byte[] payload = new byte[tdsStream.PacketDataLeft];
+
+            int payloadOffset = 0;
+            int payloadLength = 0;
+            int offset = 0;
+            bool serverSupportsEncryption = false;
+
+            
+            while (option != (byte)PreLoginOptions.LASTOPT)
+            {
+                switch (option)
+                {
+                    case (int)PreLoginOptions.VERSION:
+
+                        payloadOffset = payload[offset++] << 8 | payload[offset++];
+                        payloadLength = payload[offset++] << 8 | payload[offset++];
+
+                        byte majorVersion = payload[payloadOffset];
+                        byte minorVersion = payload[payloadOffset + 1];
+                        int level = (payload[payloadOffset + 2] << 8) |
+                                             payload[payloadOffset + 3];
+
+                        is2005OrLater = majorVersion >= 9;
+                        if (!is2005OrLater)
+                        {
+                            context.ConnectionContext.MarsCapable = false;            // If pre-2005, MARS not supported.
+                        }
+
+                        break;
+
+                    case (int)PreLoginOptions.ENCRYPT:
+                        if (context.IsTlsFirst)
+                        {
+                            // Can skip/ignore this option if we are doing TDS 8.
+                            offset += 4;
+                            break;
+                        }
+
+                        payloadOffset = payload[offset++] << 8 | payload[offset++];
+                        payloadLength = payload[offset++] << 8 | payload[offset++];
+
+                        EncryptionOptions serverOption = (EncryptionOptions)payload[payloadOffset];
+
+                        /* internal enum EncryptionOptions {
+                            OFF,
+                            ON,
+                            NOT_SUP,
+                            REQ,
+                            LOGIN
+                        } */
+
+                        // Any response other than NOT_SUP means the server supports encryption.
+                        serverSupportsEncryption = serverOption != EncryptionOptions.NOT_SUP;
+
+                        switch (context.InternalEncryptionOption)
+                        {
+                            case (EncryptionOptions.OFF):
+                                if (serverOption == EncryptionOptions.OFF)
+                                {
+                                    // Only encrypt login.
+                                    context.InternalEncryptionOption = EncryptionOptions.LOGIN;
+                                }
+                                else if (serverOption == EncryptionOptions.REQ)
+                                {
+                                    // Encrypt all.
+                                    context.InternalEncryptionOption = EncryptionOptions.ON;
+                                }
+                                // NOT_SUP: No encryption.
+                                break;
+
+                            case (EncryptionOptions.NOT_SUP):
+                                if (serverOption == EncryptionOptions.REQ)
+                                {
+                                    // Server requires encryption, but client does not support it.
+                                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
+                                    _physicalStateObj.Dispose();
+                                    ThrowExceptionAndWarning(_physicalStateObj);
+                                }
+
+                                break;
+                            default:
+                                // Any other client option needs encryption
+                                if (serverOption == EncryptionOptions.NOT_SUP)
+                                {
+                                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                                    _physicalStateObj.Dispose();
+                                    ThrowExceptionAndWarning(_physicalStateObj);
+                                }
+                                break;
+                        }
+
+                        break;
+
+                    case (int)PreLoginOptions.INSTANCE:
+                        payloadOffset = payload[offset++] << 8 | payload[offset++];
+                        payloadLength = payload[offset++] << 8 | payload[offset++];
+
+                        byte ERROR_INST = 0x1;
+                        byte instanceResult = payload[payloadOffset];
+
+                        if (instanceResult == ERROR_INST)
+                        {
+                            // Check if server says ERROR_INST. That either means the cached info
+                            // we used to connect is not valid or we connected to a named instance
+                            // listening on default params.
+                            return PreLoginHandshakeStatus.InstanceFailure;
+                        }
+
+                        break;
+
+                    case (int)PreLoginOptions.THREADID:
+                        // DO NOTHING FOR THREADID
+                        offset += 4;
+                        break;
+
+                    case (int)PreLoginOptions.MARS:
+                        payloadOffset = payload[offset++] << 8 | payload[offset++];
+                        payloadLength = payload[offset++] << 8 | payload[offset++];
+
+                        context.ConnectionContext.MarsCapable = (payload[payloadOffset] == 0 ? false : true);
+
+                        Debug.Assert(payload[payloadOffset] == 0 || payload[payloadOffset] == 1, "Value for Mars PreLoginHandshake option not equal to 1 or 0!");
+                        break;
+
+                    case (int)PreLoginOptions.TRACEID:
+                        // DO NOTHING FOR TRACEID
+                        offset += 4;
+                        break;
+
+                    case (int)PreLoginOptions.FEDAUTHREQUIRED:
+                        payloadOffset = payload[offset++] << 8 | payload[offset++];
+                        payloadLength = payload[offset++] << 8 | payload[offset++];
+
+                        // Only 0x00 and 0x01 are accepted values from the server.
+                        if (payload[payloadOffset] != 0x00 && payload[payloadOffset] != 0x01)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}|ERR> {1}, " +
+                                "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {2}.", "ReadPreLoginresponse", ObjectID, (int)payload[payloadOffset]);
+                            throw SQL.ParsingErrorValue(ParsingErrorState.FedAuthRequiredPreLoginResponseInvalidValue, (int)payload[payloadOffset]);
+                        }
+
+                        // We must NOT use the response for the FEDAUTHREQUIRED PreLogin option, if the connection string option
+                        // was not using the new Authentication keyword or in other words, if Authentication=NotSpecified
+                        // Or AccessToken is not null, mean token based authentication is used.
+                        if ((context.ConnectionContext.ConnectionString != null
+                            && context.ConnectionContext.ConnectionString.Authentication != SqlAuthenticationMethod.NotSpecified)
+                            || context.ConnectionContext.AccessTokenInBytes != null || context.ConnectionContext.AccessTokenCallback != null)
+                        {
+                            context.ConnectionContext.FedAuthRequired = payload[payloadOffset] == 0x01 ? true : false;
+                        }
+                        break;
+
+                    default:
+                        Debug.Fail("UNKNOWN option in ConsumePreLoginHandshake, option:" + option);
+
+                        // DO NOTHING FOR THESE UNKNOWN OPTIONS
+                        offset += 4;
+
+                        break;
+                }
+
+                if (offset < payload.Length)
+                {
+                    option = payload[offset++];
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (context.InternalEncryptionOption == EncryptionOptions.ON ||
+                context.InternalEncryptionOption == EncryptionOptions.LOGIN)
+            {
+                if (!serverSupportsEncryption)
+                {
+                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                    _physicalStateObj.Dispose();
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+
+                context.ValidateCertificate = ShouldValidateSertificate(context);
+
+                await EnableSsl(context, isAsync, ct).ConfigureAwait(false);
+            }
+
+            return PreLoginHandshakeStatus.Successful;
+
+            static bool ShouldValidateSertificate(PreLoginHandlerContext context)
+            {
+                // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
+                return (context.InternalEncryptionOption == EncryptionOptions.ON && !context.TrustServerCert) ||
+                                    (context.ConnectionContext.AccessTokenInBytes != null && !context.TrustServerCert);
+            }
         }
 
         private async Task CreatePreLoginAndSend(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            Debug.Assert(context.ConnectionContext.TdsStream != null, "A Tds Stream is expected");
+
+            TdsStream tdsStream = context.ConnectionContext.TdsStream;
+            tdsStream.PacketHeaderType = TdsStreamPacketType.PreLogin;
+
+            // Initialize option offset into payload buffer
+            // 5 bytes for each option (1 byte length, 2 byte offset, 2 byte payload length)
+            int offset = (int)PreLoginOptions.NUMOPT * 5 + 1;
+
+            byte[] payload = new byte[(int)PreLoginOptions.NUMOPT * 5 + TdsEnums.MAX_PRELOGIN_PAYLOAD_LENGTH];
+            int payloadLength = 0;
+
+            byte[] instanceName = new byte[1];
+
+            for (int option = (int)PreLoginOptions.VERSION; option < (int)PreLoginOptions.NUMOPT; option++)
+            {
+                int optionDataSize = 0;
+
+                // Fill in the option
+                await tdsStream.WriteByteAsync((byte)option, isAsync, ct);
+
+                // Fill in the offset of the option data
+                await tdsStream.WriteByteAsync((byte)((offset & 0xff00) >> 8), isAsync, ct); // send upper order byte
+                await tdsStream.WriteByteAsync((byte)(offset & 0x00ff), isAsync, ct); // send lower order byte
+
+                switch (option)
+                {
+                    case (int)PreLoginOptions.VERSION:
+                        Version systemDataVersion = ADP.GetAssemblyVersion();
+
+                        // Major and minor
+                        payload[payloadLength++] = (byte)(systemDataVersion.Major & 0xff);
+                        payload[payloadLength++] = (byte)(systemDataVersion.Minor & 0xff);
+
+                        // Build (Big Endian)
+                        payload[payloadLength++] = (byte)((systemDataVersion.Build & 0xff00) >> 8);
+                        payload[payloadLength++] = (byte)(systemDataVersion.Build & 0xff);
+
+                        // Sub-build (Little Endian)
+                        payload[payloadLength++] = (byte)(systemDataVersion.Revision & 0xff);
+                        payload[payloadLength++] = (byte)((systemDataVersion.Revision & 0xff00) >> 8);
+                        offset += 6;
+                        optionDataSize = 6;
+                        break;
+
+                    case (int)PreLoginOptions.ENCRYPT:
+                        if (context.InternalEncryptionOption == EncryptionOptions.NOT_SUP)
+                        {
+                            //If OS doesn't support encryption and encryption is not required, inform server "not supported" by client.
+                            payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
+                        }
+                        else
+                        {
+                            // Else, inform server of user request.
+                            if (context.ConnectionEncryptionOption == SqlConnectionEncryptOption.Mandatory)
+                            {
+                                payload[payloadLength] = (byte)EncryptionOptions.ON;
+                                context.InternalEncryptionOption = EncryptionOptions.ON;
+                            }
+                            else
+                            {
+                                payload[payloadLength] = (byte)EncryptionOptions.OFF;
+                                context.InternalEncryptionOption = EncryptionOptions.OFF;
+                            }
+                        }
+
+                        payloadLength += 1;
+                        offset += 1;
+                        optionDataSize = 1;
+                        break;
+
+                    case (int)PreLoginOptions.INSTANCE:
+                        int i = 0;
+
+                        while (instanceName[i] != 0)
+                        {
+                            payload[payloadLength] = instanceName[i];
+                            payloadLength++;
+                            i++;
+                        }
+
+                        payload[payloadLength] = 0; // null terminate
+                        payloadLength++;
+                        i++;
+
+                        offset += i;
+                        optionDataSize = i;
+                        break;
+
+                    case (int)PreLoginOptions.THREADID:
+                        int threadID = TdsParserStaticMethods.GetCurrentThreadIdForTdsLoginOnly();
+
+                        payload[payloadLength++] = (byte)((0xff000000 & threadID) >> 24);
+                        payload[payloadLength++] = (byte)((0x00ff0000 & threadID) >> 16);
+                        payload[payloadLength++] = (byte)((0x0000ff00 & threadID) >> 8);
+                        payload[payloadLength++] = (byte)(0x000000ff & threadID);
+                        offset += 4;
+                        optionDataSize = 4;
+                        break;
+
+                    case (int)PreLoginOptions.MARS:
+                        payload[payloadLength++] = (byte)(context.ConnectionContext.ConnectionString.MARS ? 1 : 0);
+                        offset += 1;
+                        optionDataSize += 1;
+                        break;
+
+                    case (int)PreLoginOptions.TRACEID:
+                        context.ConnectionContext.ConnectionId.TryWriteBytes(payload.AsSpan(payloadLength, GUID_SIZE));
+                        payloadLength += GUID_SIZE;
+                        offset += GUID_SIZE;
+                        optionDataSize = GUID_SIZE;
+
+                        ActivityCorrelator.ActivityId actId = ActivityCorrelator.Next();
+                        actId.Id.TryWriteBytes(payload.AsSpan(payloadLength, GUID_SIZE));
+                        payloadLength += GUID_SIZE;
+                        payload[payloadLength++] = (byte)(0x000000ff & actId.Sequence);
+                        payload[payloadLength++] = (byte)((0x0000ff00 & actId.Sequence) >> 8);
+                        payload[payloadLength++] = (byte)((0x00ff0000 & actId.Sequence) >> 16);
+                        payload[payloadLength++] = (byte)((0xff000000 & actId.Sequence) >> 24);
+                        int actIdSize = GUID_SIZE + sizeof(uint);
+                        offset += actIdSize;
+                        optionDataSize += actIdSize;
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", 
+                            context.ConnectionContext.ConnectionId, actId);
+                        break;
+
+                    case (int)PreLoginOptions.FEDAUTHREQUIRED:
+                        payload[payloadLength++] = 0x01;
+                        offset += 1;
+                        optionDataSize += 1;
+                        break;
+
+                    default:
+                        Debug.Fail("UNKNOWN option in SendPreLoginHandshake");
+                        break;
+                }
+
+                await tdsStream.WriteByteAsync((byte)((optionDataSize & 0xff00) >> 8), isAsync, ct).ConfigureAwait(false);
+                await tdsStream.WriteByteAsync((byte)(optionDataSize & 0x00ff), isAsync, ct).ConfigureAwait(false);
+
+            }
+
+            // Write out last option - to let server know the second part of packet completed
+            await tdsStream.WriteByteAsync((byte)PreLoginOptions.LASTOPT, isAsync, ct).ConfigureAwait(false);
+
+            if (isAsync)
+            { 
+                // Write out payload
+                await tdsStream.WriteAsync(payload.AsMemory(0, payloadLength), ct).ConfigureAwait(false);
+            }
+            else
+            {
+                tdsStream.Write(payload.AsSpan(0, payloadLength));
+            }
+            // Flush packet
+            
+            if (isAsync)
+            {
+                await tdsStream.FlushAsync(ct).ConfigureAwait(false);
+            }
+            else
+            {
+                tdsStream.Flush();
+            }
         }
 
         private void ReorderStream(PreLoginHandlerContext context)
@@ -82,74 +453,80 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// <summary>
         /// Takes care of beginning TLS handshake.
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="preloginContext"></param>
         /// <param name="isAsync"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        private async ValueTask TlsBegin(PreLoginHandlerContext request, bool isAsync, CancellationToken ct)
+        private async ValueTask TlsBegin(PreLoginHandlerContext preloginContext, bool isAsync, CancellationToken ct)
         {
-            // Create the streams
-            // If tls first then create a sslStream with the underlying stream as the transport stream.
-            // if this is not tlsfirst then ssl over tds stream with transport stream as the underlying stream.
+            InitializeSslStream(preloginContext);
 
-            Stream transportStream = request.ConnectionContext.ConnectionStream;
-            Stream baseStream = transportStream;
-            if (!request.IsTlsFirst)
-            {
-                SslOverTdsStream sslOVerTdsStream = new SslOverTdsStream(transportStream, request.ConnectionContext.ConnectionId);
-
-                // This will be used later to finish the handshake.
-                request.ConnectionContext.SslOverTdsStream = sslOVerTdsStream;
-            }
-
-            SslStream sslStream = new SslStream(baseStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
-            request.ConnectionContext.SslStream = sslStream;
-
-            if (request.ConnectionEncryptionOption == SqlConnectionEncryptOption.Strict)
+            if (preloginContext.ConnectionEncryptionOption == SqlConnectionEncryptOption.Strict)
             {
                 //Always validate the certificate when in strict encryption mode
-                uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
+                preloginContext.ValidateCertificate = true;
 
-                EnableSsl(request, info);
+                await EnableSsl(preloginContext, isAsync, ct).ConfigureAwait(false);
 
                 // Since encryption has already been negotiated, we need to set encryption not supported in
                 // prelogin so that we don't try to negotiate encryption again during ConsumePreLoginHandshake.
-                request.InternalEncryptionOption = EncryptionOptions.NOT_SUP;
+                preloginContext.InternalEncryptionOption = EncryptionOptions.NOT_SUP;
             }
 
+            void InitializeSslStream(PreLoginHandlerContext preloginContext)
+            {
+                // Create the streams
+                // If tls first then create a sslStream with the underlying stream as the transport stream.
+                // if this is not tlsfirst then ssl over tds stream with transport stream as the underlying stream.
+
+                Stream transportStream = preloginContext.ConnectionContext.ConnectionStream;
+                Stream baseStream = transportStream;
+                if (!preloginContext.IsTlsFirst)
+                {
+                    SslOverTdsStream sslOVerTdsStream = new SslOverTdsStream(transportStream, preloginContext.ConnectionContext.ConnectionId);
+
+                    // This will be used later to finish the handshake.
+                    preloginContext.ConnectionContext.SslOverTdsStream = sslOVerTdsStream;
+                }
+                SslStream sslStream = new SslStream(baseStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
+                preloginContext.ConnectionContext.SslStream = sslStream;
+
+
+                bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+                {
+                    Guid connectionId = preloginContext.ConnectionContext.ConnectionId;
+                    if (!_validateCert)
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: connectionId);
+                        return true;
+                    }
+
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: connectionId);
+                    return SNICommon.ValidateSslServerCertificate(connectionId,
+                        preloginContext.ConnectionContext.DataSource.ServerName, 
+                        preloginContext.HostNameInCertificate,
+                        certificate, preloginContext.ServerCertificateFilename, 
+                        sslPolicyErrors);
+                }
+            }
         }
 
-        private bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        private async ValueTask EnableSsl(PreLoginHandlerContext request, bool isAsync, CancellationToken ct)
         {
-            if (!_validateCert)
+            await EnableSsl2(request, isAsync, ct).ConfigureAwait(false);
+
+            if (request.HandlerError != null)
             {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: _connectionId);
-                return true;
+                SqlError error = request.HandlerError.ToSqlError(SniContext.Snix_PreLogin, new ServerInfo(request.ConnectionContext.ConnectionString));
+                // TODO; enhance
+                throw request.Exception;
             }
 
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: _connectionId);
-            return SNICommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
-        }
-
-        private async ValueTask EnableSsl(PreLoginHandlerContext request, uint info, bool isAsync, CancellationToken ct)
-        {
-            uint error = await EnableSsl2(request, info, isAsync, ct).ConfigureAwait(false);
-
-            if (error != TdsEnums.SNI_SUCCESS)
-            {
-                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                ThrowExceptionAndWarning(_physicalStateObj);
-            }
-
-            int protocolVersion = 0;
-            WaitForSSLHandShakeToComplete(ref error, ref protocolVersion);
-
-            SslProtocols protocol = (SslProtocols)protocolVersion;
-            string warningMessage = protocol.GetProtocolWarning();
+            string warningMessage = request.ConnectionContext.SslStream.SslProtocol.GetProtocolWarning();
             if (!string.IsNullOrEmpty(warningMessage))
             {
-                if (!request.ConnectionEncryptionOption && LocalAppContextSwitches.SuppressInsecureTLSWarning)
+                if (ShouldNotLogWarning(request))
                 {
                     // Skip console warning
                     SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}", nameof(TdsParser), nameof(EnableSsl), SqlClientLogger.LogLevel.Warning, warningMessage);
@@ -157,45 +534,65 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 else
                 {
                     // This logs console warning of insecure protocol in use.
-                    _logger.LogWarning(nameof(TdsParser), nameof(EnableSsl), warningMessage);
+                    request.ConnectionContext.Logger.LogWarning(nameof(TdsParser), nameof(EnableSsl), warningMessage);
                 }
             }
 
-            // create a new packet encryption changes the internal packet size
-            _physicalStateObj.ClearAllWritePackets();
-            ;
+            static bool ShouldNotLogWarning(PreLoginHandlerContext request)
+            {
+                return !request.ConnectionEncryptionOption && LocalAppContextSwitches.SuppressInsecureTLSWarning;
+            }
         }
 
-        private async ValueTask<uint> EnableSsl2(PreLoginHandlerContext context, uint info, bool isAsync, CancellationToken ct)
+        private async ValueTask EnableSsl2(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             try
             {
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableSsl | Info | Session Id {0}", context.ConnectionContext.ConnectionId);
-                return await EnableSsl3(context, info, isAsync, ct);
+                SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.EnableSsl3 | Info | Session Id {0}", context.ConnectionContext.ConnectionId);
+                await AuthenticateClient(context, isAsync, ct);
             }
             catch (Exception e)
             {
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableSsl | Err | Session Id {0}, SNI Handshake failed with exception: {1}", context.ConnectionContext.ConnectionId, e.Message);
-                return SNICommon.ReportSNIError(SNIProviders.SSL_PROV, SNICommon.HandshakeFailureError, e);
+                SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.EnableSsl3 | Err | Session Id {0}, SNI Handshake failed with exception: {1}", context.ConnectionContext.ConnectionId, e.Message);
+                context.Exception = e;
             }
         }
 
-        private async ValueTask<uint> EnableSsl3(PreLoginHandlerContext context, uint options, bool isAsync, CancellationToken ct)
+        private async ValueTask AuthenticateClient(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             using (TrySNIEventScope.Create(nameof(PreloginHandler)))
             {
-                _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
+                Guid _connectionId = context.ConnectionContext.ConnectionId;
+                _validateCert = context.ValidateCertificate;
                 string serverName = context.ConnectionContext.DataSource.ServerName;
                 SslOverTdsStream sslOverTdsStream = context.ConnectionContext.SslOverTdsStream;
+                SslStream sslStream = context.ConnectionContext.SslStream;
                 try
                 {
-                    if (context.IsTlsFirst)
+                    SslClientAuthenticationOptions options =
+                        context.IsTlsFirst ?
+                            new()
+                            {
+                                TargetHost = serverName,
+                                ClientCertificates = null,
+                                EnabledSslProtocols = s_supportedProtocols,
+                                CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                            } :
+                            new()
+                            {
+                            TargetHost = serverName,
+                                ApplicationProtocols = s_tdsProtocols,
+                                ClientCertificates = null
+                            };
+
+
+                    if (isAsync)
                     {
-                        await AuthenticateAsClientAsync(context.ConnectionContext.SslStream, serverName, null, isAsync, ct).ConfigureAwait(false);
+                        await sslStream.AuthenticateAsClientAsync(options).ConfigureAwait(false);
                     }
                     else
                     {
-                        context.ConnectionContext.SslStream.AuthenticateAsClient(serverName, null, s_supportedProtocols, false);
+                        sslStream.AuthenticateAsClient(options);
                     }
 
                     // If we are using SslOverTdsStream, we need to finish the handshake so that the Ssl stream,
@@ -206,38 +603,20 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 catch (AuthenticationException aue)
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
-                    return ReportTcpSNIError(aue, SNIError.CertificateValidationErrorCode);
+                    context.HandlerError = new SNIError(SNIProviders.SSL_PROV, SNICommon.InternalExceptionError, aue, SNIError.CertificateValidationErrorCode);
+                    return;
                 }
                 catch (InvalidOperationException ioe)
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
-                    return ReportTcpSNIError(ioe);
+                    context.HandlerError = new SNIError(SNIProviders.SSL_PROV, SNICommon.InternalExceptionError, ioe);
+                    return;
                 }
 
-                _stream = _sslStream;
+                context.ConnectionContext.TdsStream = new TdsStream(new TdsWriteStream(sslStream), new TdsReadStream(sslStream));
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
-                return TdsEnums.SNI_SUCCESS;
             }
         }
-
-        private async ValueTask AuthenticateAsClientAsync(SslStream sslStream, string serverName, X509CertificateCollection certificate, bool isAsync, CancellationToken ct)
-        {
-            SslClientAuthenticationOptions sslClientOptions = new()
-            {
-                TargetHost = serverName,
-                ApplicationProtocols = s_tdsProtocols,
-                ClientCertificates = certificate
-            };
-            if (isAsync)
-            {
-                await sslStream.AuthenticateAsClientAsync(sslClientOptions, ct);
-            }
-            else
-            {
-                sslStream.AuthenticateAsClient(sslClientOptions);
-            }
-        }
-
 
         /// <summary>
         /// Handler context for Prelogin.
@@ -255,12 +634,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             public EncryptionOptions InternalEncryptionOption { get; set; } = EncryptionOptions.OFF;
 
             public ConnectionHandlerContext ConnectionContext { get; private set; }
+            public bool ValidateCertificate { get; internal set; }
+            public SNIError HandlerError { get; internal set; }
 
             public PreLoginHandlerContext(ConnectionHandlerContext connectionContext)
             {
-                this.ConnectionContext = connectionContext;
-
-                var connectionOptions = connectionContext.ConnectionString;
+                ConnectionContext = connectionContext;
+                SqlConnectionString connectionOptions = connectionContext.ConnectionString;
                 ConnectionEncryptionOption = connectionOptions.Encrypt;
                 IsTlsFirst = (ConnectionEncryptionOption == SqlConnectionEncryptOption.Strict);
                 TrustServerCert = connectionOptions.TrustServerCertificate;
