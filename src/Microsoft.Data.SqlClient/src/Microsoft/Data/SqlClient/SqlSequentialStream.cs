@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient
     {
         private SqlDataReader _reader;  // The SqlDataReader that we are reading data from
         private readonly int _columnIndex;       // The index of out column in the table
+        private long _position;         // Current position in the stream
         private Task _currentTask;      // Holds the current task being processed
         private int _readTimeout;       // Read timeout for this stream in ms (for Stream.ReadTimeout)
         private readonly CancellationTokenSource _disposalTokenSource;    // Used to indicate that a cancellation is requested due to disposal
@@ -54,8 +55,16 @@ namespace Microsoft.Data.SqlClient
 
         public override long Position
         {
-            get => throw ADP.NotSupported();
-            set => throw ADP.NotSupported();
+            get => _position;
+            set
+            {
+                if (_position == value)
+                {
+                    return;
+                }
+
+                throw ADP.NotSupported();
+            }
         }
 
         public override int ReadTimeout
@@ -90,7 +99,9 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return _reader.GetBytesInternalSequential(_columnIndex, buffer, offset, count, _readTimeout);
+                int bytesRead = _reader.GetBytesInternalSequential(_columnIndex, buffer, offset, count, _readTimeout);
+                _position += bytesRead;
+                return bytesRead;
             }
             catch (SqlException ex)
             {
@@ -154,6 +165,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
+                                _position += bytesRead;
                                 completion.SetResult(bytesRead);
                             }
 
@@ -170,7 +182,9 @@ namespace Microsoft.Data.SqlClient
                                 // If we completed, but _reader is null (i.e. the stream is closed), then report cancellation
                                 if ((t.Status == TaskStatus.RanToCompletion) && (CanRead))
                                 {
-                                    completion.SetResult((int)t.Result);
+                                    int result = t.Result;
+                                    _position += result;
+                                    completion.SetResult(result);
                                 }
                                 else if (t.Status == TaskStatus.Faulted)
                                 {
@@ -325,14 +339,20 @@ namespace Microsoft.Data.SqlClient
                 throw ex.InnerException;
             }
 
-            return readTask.Result;
+            int bytesRead = readTask.Result;
+            _position += bytesRead;
+            return bytesRead;
         }
 #else
         public override IAsyncResult BeginRead(byte[] array, int offset, int count, AsyncCallback asyncCallback, object asyncState) =>
             TaskToApm.Begin(ReadAsync(array, offset, count, CancellationToken.None), asyncCallback, asyncState);
 
-        public override int EndRead(IAsyncResult asyncResult) =>
-            TaskToApm.End<int>(asyncResult);
+        public override int EndRead(IAsyncResult asyncResult)
+        {
+            int bytesRead = TaskToApm.End<int>(asyncResult);
+            _position += bytesRead;
+            return bytesRead;
+        }
 #endif
     }
 }
