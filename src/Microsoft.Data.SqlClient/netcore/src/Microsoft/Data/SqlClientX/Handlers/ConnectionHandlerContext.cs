@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.IO;
+using System.Net.Security;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 
@@ -31,5 +32,20 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// Class used by orchestrator while chaining handlers.
         /// </summary>
         public Exception Error { get; set; }
+
+        /// <summary>
+        /// The Guid of the Connection.
+        /// </summary>
+        public Guid ConnectionId { get; internal set; }
+
+        /// <summary>
+        /// The SslStream used by the connection.
+        /// </summary>
+        public SslStream SslStream { get; internal set; }
+
+        /// <summary>
+        /// The SslOverTdsStream used by the connection in case of Tds < 7.4.
+        /// </summary>
+        public SslOverTdsStream SslOverTdsStream { get; internal set; }
     }
 }
