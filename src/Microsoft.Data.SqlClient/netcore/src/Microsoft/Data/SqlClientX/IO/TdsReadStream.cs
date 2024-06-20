@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public override async ValueTask DisposeAsync()
         {
-            await _underlyingStream.DisposeAsync();
+            await _underlyingStream.DisposeAsync().ConfigureAwait(false);
             _underlyingStream = null;
             _readBuffer = null;
         }
@@ -294,7 +294,7 @@ namespace Microsoft.Data.SqlClientX.IO
                     _readBufferDataEnd = isAsync ?
                         await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false) :
                         _underlyingStream.Read(_readBuffer);
-                    
+
                     _readIndex = 0;
 
                     await ProcessHeaderAsync(isAsync, ct).ConfigureAwait(false);
@@ -336,7 +336,7 @@ namespace Microsoft.Data.SqlClientX.IO
 
                 while (bytesNeededToCompleteHeader > 0)
                 {
-                    int bytesRead = isAsync ? 
+                    int bytesRead = isAsync ?
                         await _underlyingStream.ReadAsync(_readBuffer.AsMemory(_readBufferDataEnd), ct).ConfigureAwait(false) 
                             : _underlyingStream.Read(_readBuffer.AsSpan(_readBufferDataEnd));
                     // Reduce the number of bytes needed

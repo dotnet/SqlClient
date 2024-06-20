@@ -969,4 +969,9 @@
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="Microsoft\Data\SqlClientX\.editorconfig" />
+  </ItemGroup>
 </Project>

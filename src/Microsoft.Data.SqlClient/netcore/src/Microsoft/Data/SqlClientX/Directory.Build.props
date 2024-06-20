@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>stylecop.ruleset</CodeAnalysisRuleSet>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnableStyleCopAnalyzers>true</EnableStyleCopAnalyzers>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StyleCop.Analyzers" Version="$(StyleCopVersion)" PrivateAssets="all" />
+  </ItemGroup>
+</Project>
