@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET7_0_OR_GREATER
+
 using System;
 using System.ComponentModel;
 using System.Data;
@@ -10,6 +12,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.SqlClient;
 
 #nullable enable
 
@@ -22,13 +25,28 @@ namespace Microsoft.Data.SqlClientX
     [DesignerCategory("")]
     internal sealed class SqlConnectionX : DbConnection, ICloneable
     {
-        //TODO: reference to internal connection
+        private SqlCredential? _credential;
+        private SqlDataSource? _dataSource;
+        private SqlInternalConnectionX? _connection;
 
         /// <summary>
         /// Initializes a new instance of the System.Data.Common.SqlConnectionX class.
         /// </summary>
-        internal SqlConnectionX() : base()
+        internal SqlConnectionX(string connectionString, SqlDataSource? dataSource = null, SqlCredential? credential = null) : base()
         {
+            ConnectionString = connectionString;
+            _dataSource = dataSource;
+            _credential = credential;
+        }
+
+        /// <summary>
+        /// Initializes a connection using the provided data source.
+        /// </summary>
+        /// <param name="dataSource"></param>
+        /// <returns></returns>
+        internal static SqlConnectionX FromDataSource(SqlDataSource dataSource)
+        {
+           return new SqlConnectionX(dataSource.ConnectionString, dataSource, dataSource.Credential);
         }
 
         /// <inheritdoc/>
@@ -126,12 +144,24 @@ namespace Microsoft.Data.SqlClientX
             => throw new NotImplementedException();
 
         /// <inheritdoc/>
-        public override void Open()
-            => throw new NotImplementedException();
+        public override void Open() => Open(false, CancellationToken.None).GetAwaiter().GetResult();
 
         /// <inheritdoc/>
-        public override Task OpenAsync(CancellationToken cancellationToken)
-            => throw new NotImplementedException();
+        public override Task OpenAsync(CancellationToken cancellationToken) => Open(true, cancellationToken);
+
+        private Task Open(bool async, CancellationToken cancellationToken)
+        {
+            if (_dataSource == null)
+            {
+                throw new InvalidOperationException("No data source or connection string set");
+            }
+
+            return OpenAsync(async, cancellationToken);
+
+            async Task OpenAsync(bool async, CancellationToken cancellationToken) {
+                _connection = await _dataSource.GetInternalConnection();
+            }
+        }
 
         /// <inheritdoc/>
         protected override DbTransaction BeginDbTransaction(System.Data.IsolationLevel isolationLevel)
@@ -150,3 +180,5 @@ namespace Microsoft.Data.SqlClientX
             => throw new NotImplementedException();
     }
 }
+
+#endif
