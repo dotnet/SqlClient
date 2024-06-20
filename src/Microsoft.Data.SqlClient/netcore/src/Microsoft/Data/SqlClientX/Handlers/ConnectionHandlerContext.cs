@@ -3,8 +3,8 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.IO;
+using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
-using Microsoft.Data.SqlClientX.Handlers;
 
 namespace Microsoft.Data.SqlClientX.Handlers
 {    /// <summary>
