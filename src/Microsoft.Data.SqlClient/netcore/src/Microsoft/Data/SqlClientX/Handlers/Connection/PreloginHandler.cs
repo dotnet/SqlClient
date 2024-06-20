@@ -11,12 +11,18 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {
+    /// <summary>
+    /// Handler to send and receive the prelogin request.
+    /// This handler will send the prelogin based on the features requested in the connection string.
+    /// It will consume the prelogin handshake and pass the control to the next handler.
+    /// </summary>
     internal class PreloginHandler : IHandler<ConnectionHandlerContext>
     {
         /// <inheritdoc />
         public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
 
-        public ValueTask Handle(ConnectionHandlerContext request, bool isAsync, CancellationToken ct)
+        /// <inheritdoc />
+        public async ValueTask Handle(ConnectionHandlerContext request, bool isAsync, CancellationToken ct)
         {
             throw new NotImplementedException();
         }
