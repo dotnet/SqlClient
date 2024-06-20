@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClientX.IO
         #region Public APIs
 
         /// <summary>
-        /// Writes short value to out buffer
+        /// Writes short value to out buffer, as little-endian.
         /// </summary>
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
-        /// Writes int value to out buffer
+        /// Writes int value to out buffer, as little-endian.
         /// </summary>
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
-        /// Writes unsigned short value to out buffer
+        /// Writes unsigned short value to out buffer, as little-endian.
         /// </summary>
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public ValueTask WriteUnsignedShortAsync(ushort v, bool isAsync, CancellationToken ct) => WriteShortAsync((short)v, isAsync, ct);
 
         /// <summary>
-        /// Writes unsigned int value to out buffer
+        /// Writes unsigned int value to out buffer, as little-endian.
         /// </summary>
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public ValueTask WriteUnsignedIntAsync(uint v, bool isAsync, CancellationToken ct) => WriteIntAsync((int)v, isAsync, ct);
 
         /// <summary>
-        /// Writes long value to out buffer
+        /// Writes long value to out buffer, as little-endian.
         /// </summary>
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
-        /// Writes unsigned long value to out buffer
+        /// Writes unsigned long value to out buffer, as little-endian.
         /// </summary>
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public ValueTask WriteUnsignedLongAsync(ulong v, bool isAsync, CancellationToken ct) => WriteLongAsync((long)v, isAsync, ct);
 
         /// <summary>
-        /// Writes float value to out buffer
+        /// Writes float value to out buffer, as little-endian.
         /// </summary>
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
-        /// Writes double value to out buffer
+        /// Writes double value to out buffer, as little-endian.
         /// </summary>
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
@@ -124,7 +124,8 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
-        /// Writes partial long value to out buffer
+        /// Writes partial long value to out buffer, as little-endian. This should be ideally used for writing date, 
+        /// time and related data types. The length specified should be between 0 to 8 bytes supported by long.
         /// </summary>
         /// <param name="v">Value to write</param>
         /// <param name="length">Length to fill</param>
