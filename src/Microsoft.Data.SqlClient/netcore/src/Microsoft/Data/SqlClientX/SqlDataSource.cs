@@ -6,6 +6,7 @@
 
 using Microsoft.Data.SqlClient;
 using System.Data.Common;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClientX
@@ -28,7 +29,7 @@ namespace Microsoft.Data.SqlClientX
             return SqlConnectionX.FromDataSource(this);
         }
 
-        internal abstract protected ValueTask<SqlInternalConnectionX> GetInternalConnection();
+        internal abstract ValueTask<SqlInternalConnectionX> GetInternalConnection(bool async, CancellationToken cancellationToken);
     }
 }
 

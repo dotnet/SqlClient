@@ -144,23 +144,19 @@ namespace Microsoft.Data.SqlClientX
             => throw new NotImplementedException();
 
         /// <inheritdoc/>
-        public override void Open() => Open(false, CancellationToken.None).GetAwaiter().GetResult();
+        public override void Open() => _Open(false, CancellationToken.None).GetAwaiter().GetResult();
 
         /// <inheritdoc/>
-        public override Task OpenAsync(CancellationToken cancellationToken) => Open(true, cancellationToken);
+        public override Task OpenAsync(CancellationToken cancellationToken) => _Open(true, cancellationToken);
 
-        private Task Open(bool async, CancellationToken cancellationToken)
+        private async Task _Open(bool async, CancellationToken cancellationToken)
         {
             if (_dataSource == null)
             {
                 throw new InvalidOperationException("No data source or connection string set");
             }
 
-            return OpenAsync(async, cancellationToken);
-
-            async Task OpenAsync(bool async, CancellationToken cancellationToken) {
-                _connection = await _dataSource.GetInternalConnection();
-            }
+            _connection = await _dataSource.GetInternalConnection(async, cancellationToken);
         }
 
         /// <inheritdoc/>
