@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// Writes short value to out buffer
         /// </summary>
         /// <param name="v">Value to write</param>
-        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token</param>
         public async ValueTask WriteShortAsync(short v, bool isAsync, CancellationToken ct)
         {
@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// Writes int value to out buffer
         /// </summary>
         /// <param name="v">Value to write</param>
-        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token</param>
         public async ValueTask WriteIntAsync(int v, bool isAsync, CancellationToken ct)
         {
@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// Writes unsigned short value to out buffer
         /// </summary>
         /// <param name="v">Value to write</param>
-        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token</param>
         public ValueTask WriteUnsignedShortAsync(ushort v, bool isAsync, CancellationToken ct) => WriteShortAsync((short)v, isAsync, ct);
 
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// Writes unsigned int value to out buffer
         /// </summary>
         /// <param name="v">Value to write</param>
-        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token</param>
         public ValueTask WriteUnsignedIntAsync(uint v, bool isAsync, CancellationToken ct) => WriteIntAsync((int)v, isAsync, ct);
 
@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// Writes long value to out buffer
         /// </summary>
         /// <param name="v">Value to write</param>
-        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token</param>
         public async ValueTask WriteLongAsync(long v, bool isAsync, CancellationToken ct)
         {
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// Writes unsigned long value to out buffer
         /// </summary>
         /// <param name="v">Value to write</param>
-        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token</param>
         public ValueTask WriteUnsignedLongAsync(ulong v, bool isAsync, CancellationToken ct) => WriteLongAsync((long)v, isAsync, ct);
 
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// Writes float value to out buffer
         /// </summary>
         /// <param name="v">Value to write</param>
-        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token</param>
         public async ValueTask WriteFloatAsync(float v, bool isAsync, CancellationToken ct)
         {
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// Writes double value to out buffer
         /// </summary>
         /// <param name="v">Value to write</param>
-        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token</param>
         public async ValueTask WriteDoubleAsync(double v, bool isAsync, CancellationToken ct)
         {
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         /// <param name="v">Value to write</param>
         /// <param name="length">Length to fill</param>
-        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token</param>
         public async ValueTask WritePartialLongAsync(long v, int length, bool isAsync, CancellationToken ct)
         {
@@ -150,7 +150,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="data">Bytes of data</param>
         /// <param name="start">Offset of starting position</param>
         /// <param name="length">Length of data</param>
-        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns></returns>
         public async ValueTask WriteBytesAsync(byte[] data, int start, int length, bool isAsync, CancellationToken ct)
