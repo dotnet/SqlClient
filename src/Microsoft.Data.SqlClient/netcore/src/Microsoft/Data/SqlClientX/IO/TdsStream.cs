@@ -26,6 +26,8 @@ namespace Microsoft.Data.SqlClientX.IO
         private TdsWriteStream _writeStream;
         private TdsReadStream _readStream;
 
+        private TdsWriter _writer;
+
         /// <inheritdoc />
         public override bool CanRead => _readStream != null && _readStream.CanRead;
         
@@ -61,6 +63,8 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public byte ReadPacketHeaderType => _readStream.ReadPacketHeaderType;
 
+        public TdsWriter GetTdsWriter() => _writer;
+
         /// <summary>
         /// Constructor for instantiating the TdsStream
         /// </summary>
@@ -70,6 +74,7 @@ namespace Microsoft.Data.SqlClientX.IO
         {
             _writeStream = writeStream;
             _readStream = readStream;
+            _writer = new TdsWriter(this);
         }
 
         /// <summary>

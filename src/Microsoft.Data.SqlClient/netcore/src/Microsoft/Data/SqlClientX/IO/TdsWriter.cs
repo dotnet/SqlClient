@@ -4,32 +4,28 @@
 
 using System;
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClientX.IO
 {
-    internal class TdsWriter
+    /// <summary>
+    /// This class provides helper methods for writing bytes using <see cref="TdsStream"/>
+    /// It extends <see cref="TdsBufferAlloc"/> that manages allocations of bytes buffer for better memory management.
+    /// </summary>
+    internal class TdsWriter : TdsBufferAlloc
     {
-        private readonly TdsWriteStream _writeStream;
-
-        // Header length constants
-        private const int OutputHeaderLen = TdsEnums.HEADER_LEN;
-
-        // Out buffer variables
-        private readonly byte[] _outBuff; // internal write buffer - initialize on login
-        private int _outBytesUsed = OutputHeaderLen; // number of bytes used in internal write buffer - initialize past header
+        private readonly TdsStream _stream;
 
         /// <summary>
         /// Instantiate TdsWriter with a TdsWriteStream
         /// </summary>
         /// <param name="stream">A Tds Writer stream to work with</param>
         /// <exception cref="ArgumentNullException"></exception>
-        public TdsWriter(TdsWriteStream stream)
+        public TdsWriter(TdsStream stream)
         {
-            _writeStream = stream ?? throw new ArgumentNullException(nameof(stream));
-            _outBuff = new byte[OutputHeaderLen]; // Adjust the buffer size as needed
+            _stream = stream ?? throw new ArgumentNullException(nameof(stream));
         }
 
         #region Public APIs
@@ -40,11 +36,11 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Is Async caller method</param>
         /// <param name="ct">Cancellation token</param>
-        public async Task WriteShortAsync(short v, bool isAsync, CancellationToken ct)
+        public async ValueTask WriteShortAsync(short v, bool isAsync, CancellationToken ct)
         {
-            await EnsureBufferSpaceAsync(2, isAsync, ct).ConfigureAwait(false);
-            BinaryPrimitives.WriteInt16LittleEndian(GetWritableSpan(2), v);
-            _outBytesUsed += 2;
+            var len = sizeof(short);
+            BinaryPrimitives.WriteInt16LittleEndian(GetBuffer(len), v);
+            await WriteBytesAsync(GetBuffer(len), 0, len, isAsync, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -53,11 +49,11 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Is Async caller method</param>
         /// <param name="ct">Cancellation token</param>
-        public async Task WriteIntAsync(int v, bool isAsync, CancellationToken ct)
+        public async ValueTask WriteIntAsync(int v, bool isAsync, CancellationToken ct)
         {
-            await EnsureBufferSpaceAsync(4, isAsync, ct).ConfigureAwait(false);
-            BinaryPrimitives.WriteInt32LittleEndian(GetWritableSpan(4), v);
-            _outBytesUsed += 4;
+            var len = sizeof(int);
+            BinaryPrimitives.WriteInt32LittleEndian(GetBuffer(len), v);
+            await WriteBytesAsync(GetBuffer(len), 0, len, isAsync, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -66,7 +62,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Is Async caller method</param>
         /// <param name="ct">Cancellation token</param>
-        public Task WriteUnsignedShortAsync(ushort v, bool isAsync, CancellationToken ct) => WriteShortAsync((short)v, isAsync, ct);
+        public ValueTask WriteUnsignedShortAsync(ushort v, bool isAsync, CancellationToken ct) => WriteShortAsync((short)v, isAsync, ct);
 
         /// <summary>
         /// Writes unsigned int value to out buffer
@@ -74,24 +70,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Is Async caller method</param>
         /// <param name="ct">Cancellation token</param>
-        public Task WriteUnsignedIntAsync(uint v, bool isAsync, CancellationToken ct) => WriteIntAsync((int)v, isAsync, ct);
-
-        /// <summary>
-        /// Writes float value to out buffer
-        /// </summary>
-        /// <param name="v">Value to write</param>
-        /// <param name="isAsync">Is Async caller method</param>
-        /// <param name="ct">Cancellation token</param>
-        public async Task WriteFloatAsync(float v, bool isAsync, CancellationToken ct)
-        {
-            if (float.IsInfinity(v) || float.IsNaN(v))
-            {
-                throw new ArgumentOutOfRangeException(nameof(v), "Float value is out of range.");
-            }
-            await EnsureBufferSpaceAsync(4, isAsync, ct).ConfigureAwait(false);
-            BinaryPrimitives.WriteInt32LittleEndian(GetWritableSpan(4), BitConverter.SingleToInt32Bits(v));
-            _outBytesUsed += 4;
-        }
+        public ValueTask WriteUnsignedIntAsync(uint v, bool isAsync, CancellationToken ct) => WriteIntAsync((int)v, isAsync, ct);
 
         /// <summary>
         /// Writes long value to out buffer
@@ -99,11 +78,11 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Is Async caller method</param>
         /// <param name="ct">Cancellation token</param>
-        public async Task WriteLongAsync(long v, bool isAsync, CancellationToken ct)
+        public async ValueTask WriteLongAsync(long v, bool isAsync, CancellationToken ct)
         {
-            await EnsureBufferSpaceAsync(8, isAsync, ct).ConfigureAwait(false);
-            BinaryPrimitives.WriteInt64LittleEndian(GetWritableSpan(8), v);
-            _outBytesUsed += 8;
+            var len = sizeof(long);
+            BinaryPrimitives.WriteInt64LittleEndian(GetBuffer(len), v);
+            await WriteBytesAsync(GetBuffer(len), 0, len, isAsync, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -112,7 +91,22 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Is Async caller method</param>
         /// <param name="ct">Cancellation token</param>
-        public Task WriteUnsignedLongAsync(ulong v, bool isAsync, CancellationToken ct) => WriteLongAsync((long)v, isAsync, ct);
+        public ValueTask WriteUnsignedLongAsync(ulong v, bool isAsync, CancellationToken ct) => WriteLongAsync((long)v, isAsync, ct);
+
+        /// <summary>
+        /// Writes float value to out buffer
+        /// </summary>
+        /// <param name="v">Value to write</param>
+        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="ct">Cancellation token</param>
+        public async ValueTask WriteFloatAsync(float v, bool isAsync, CancellationToken ct)
+        {
+            Debug.Assert(!float.IsInfinity(v) && !float.IsNaN(v), "Float value is out of range.");
+
+            var len = sizeof(float);
+            BinaryPrimitives.WriteInt32LittleEndian(GetBuffer(len), BitConverter.SingleToInt32Bits(v));
+            await WriteBytesAsync(GetBuffer(len), 0, len, isAsync, ct).ConfigureAwait(false);
+        }
 
         /// <summary>
         /// Writes double value to out buffer
@@ -120,15 +114,13 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="v">Value to write</param>
         /// <param name="isAsync">Is Async caller method</param>
         /// <param name="ct">Cancellation token</param>
-        public async Task WriteDoubleAsync(double v, bool isAsync, CancellationToken ct)
+        public async ValueTask WriteDoubleAsync(double v, bool isAsync, CancellationToken ct)
         {
-            if (double.IsInfinity(v) || double.IsNaN(v))
-            {
-                throw new ArgumentOutOfRangeException(nameof(v), "Double value is out of range.");
-            }
-            await EnsureBufferSpaceAsync(8, isAsync, ct).ConfigureAwait(false);
-            BinaryPrimitives.WriteInt64LittleEndian(GetWritableSpan(8), BitConverter.DoubleToInt64Bits(v));
-            _outBytesUsed += 8;
+            Debug.Assert(!double.IsInfinity(v) && !double.IsNaN(v), "Double value is out of range.");
+
+            var len = sizeof(double);
+            BinaryPrimitives.WriteInt64LittleEndian(GetBuffer(len), BitConverter.DoubleToInt64Bits(v));
+            await WriteBytesAsync(GetBuffer(len), 0, len, isAsync, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -138,50 +130,44 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="length">Length to fill</param>
         /// <param name="isAsync">Is Async caller method</param>
         /// <param name="ct">Cancellation token</param>
-        public async Task WritePartialLongAsync(long v, int length, bool isAsync, CancellationToken ct)
+        public async ValueTask WritePartialLongAsync(long v, int length, bool isAsync, CancellationToken ct)
         {
-            if (length > 8)
-            {
-                throw new ArgumentOutOfRangeException(nameof(length), "Length specified is longer than the size of a long");
-            }
-            else if (length < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(length), "Length should not be negative");
-            }
+            Debug.Assert(length >= 0, "Length should not be negative");
+            Debug.Assert(length <= 8, "Length specified is longer than the size of a long");
 
-            await EnsureBufferSpaceAsync(length, isAsync, ct).ConfigureAwait(false);
-            Memory<byte> memory = GetWritableMemory(length);
+            var len = sizeof(long);
+            var buffer = GetBuffer(len);
             for (int i = 0; i < length; i++)
             {
-                memory.Span[i] = (byte)((v >> (i * 8)) & 0xFF);
+                buffer[i] = (byte)((v >> (i * 8)) & 0xFF);
             }
-            _outBytesUsed += length;
+            await WriteBytesAsync(GetBuffer(len), 0, length, isAsync, ct).ConfigureAwait(false);
         }
-        #endregion
 
-        #region Private helpers
-        private async Task EnsureBufferSpaceAsync(int requiredBytes, bool isAsync, CancellationToken ct)
+        /// <summary>
+        /// Writes bytes directly to _stream
+        /// </summary>
+        /// <param name="data">Bytes of data</param>
+        /// <param name="start">Offset of starting position</param>
+        /// <param name="length">Length of data</param>
+        /// <param name="isAsync">Is Async caller method</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns></returns>
+        public async ValueTask WriteBytesAsync(byte[] data, int start, int length, bool isAsync, CancellationToken ct)
         {
-            if ((_outBytesUsed + requiredBytes) > _outBuff.Length)
+            if (isAsync)
             {
-                if (isAsync)
-                {
-                    await _writeStream.WriteAsync(_outBuff.AsMemory(0, _outBytesUsed), ct).ConfigureAwait(false);
-                }
-                else
-                {
-                    // Throw operation canceled exception before write.
-                    ct.ThrowIfCancellationRequested();
+                await _stream.WriteAsync(data.AsMemory(start, length), ct).ConfigureAwait(false);
+            }
+            else
+            {
+                // Throw operation canceled exception before write.
+                ct.ThrowIfCancellationRequested();
 
-                    _writeStream.Write(_outBuff, 0, _outBytesUsed);
-                }
-                _outBytesUsed = OutputHeaderLen; // Reset past header
+                _stream.Write(data.AsSpan(start, length));
             }
         }
 
-        private Span<byte> GetWritableSpan(int length) => _outBuff.AsSpan(_outBytesUsed, length);
-
-        private Memory<byte> GetWritableMemory(int length) => _outBuff.AsMemory(_outBytesUsed, length);
         #endregion
     }
 }
