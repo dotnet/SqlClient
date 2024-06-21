@@ -12,8 +12,6 @@ namespace Microsoft.Data.SqlClientX
 {
     internal class SqlInternalConnectionX : DbConnection
     {
-        public SqlInternalConnectionX() { }
-
         public override string ConnectionString 
         { 
             get => throw new NotImplementedException(); 

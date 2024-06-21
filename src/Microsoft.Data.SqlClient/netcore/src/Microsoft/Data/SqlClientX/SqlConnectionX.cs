@@ -114,11 +114,9 @@ namespace Microsoft.Data.SqlClientX
                     case ConnectionState.Fetching:
                     case ConnectionState.Executing:
                         throw new InvalidOperationException("Can't change connection string on an active connection");
-                    default:
-                        break;
                 }
 
-                _connectionString = _connectionString = value ?? string.Empty;
+                _connectionString = value ?? string.Empty;
 
                 //TODO: build new data source or find existing data source based on connection string
             }
@@ -184,7 +182,8 @@ namespace Microsoft.Data.SqlClientX
             //TODO: support async close operation
             internalConnection?.Close();
 
-            internalConnection = null;
+            //TODO: remove the internal connection's reference to this wrapper connection
+
             _connectionState = ConnectionState.Closed;
             return Task.CompletedTask;
         }
