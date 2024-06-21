@@ -4,13 +4,14 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClientX.IO
 {
     /// <summary>
     /// Provides buffer management for reader/writer implementations
     /// </summary>
-    internal abstract class TdsBufferAlloc
+    internal class TdsBufferAlloc : IDisposable, IAsyncDisposable
     {
         /// <summary>
         /// Scratch buffer to serialize Short values (2 bytes).
@@ -52,14 +53,24 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
-        /// Destructor to clean up the allocated memory
+        /// Reset storage buffers to be picked up by GC
         /// </summary>
-        ~TdsBufferAlloc()
+        public void Dispose()
         {
             _2Buffer = null;
             _4Buffer = null;
             _8Buffer = null;
             _16Buffer = null;
+        }
+
+        /// <summary>
+        /// Disposes storage buffers and returns a completed <see cref="ValueTask"/>
+        /// </summary>
+        /// <returns>Completed ValueTask</returns>
+        public ValueTask DisposeAsync()
+        {
+            Dispose();
+            return ValueTask.CompletedTask;
         }
     }
 }
