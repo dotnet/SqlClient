@@ -85,5 +85,15 @@ namespace Microsoft.Data.SqlClientX.IO
             Dispose();
             return ValueTask.CompletedTask;
         }
+
+        /// <summary>
+        /// Disposes storage buffers and returns a completed <see cref="ValueTask"/>
+        /// </summary>
+        /// <returns>Completed ValueTask</returns>
+        public ValueTask DisposeAsync()
+        {
+            Dispose();
+            return ValueTask.CompletedTask;
+        }
     }
 }

@@ -181,6 +181,11 @@ namespace Microsoft.Data.SqlClientX.IO
             }
         }
 
+        /// <summary>
+        /// Serializes .NET Decimal to SqlDecimal represented by byte arrays for TDS writing.
+        /// </summary>
+        /// <param name="value">decimal value</param>
+        /// <returns>Byte array for TDS decimal type</returns>
         public byte[] SerializeDecimal(decimal value)
         {
             int[] decimalBits = decimal.GetBits(value);

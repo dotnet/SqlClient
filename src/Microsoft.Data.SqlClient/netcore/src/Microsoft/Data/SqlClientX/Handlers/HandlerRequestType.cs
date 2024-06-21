@@ -11,8 +11,8 @@ namespace Microsoft.Data.SqlClientX.Handlers
     internal enum HandlerRequestType
     {
         /// <summary>
-        /// Request type for connection request.
+        /// Request type with Context for Connection Request.
         /// </summary>
-        ConnectionRequest,
+        ConnectionHandlerContext,
     }
 }
