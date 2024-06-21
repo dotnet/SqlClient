@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             return Task.FromException(new NotImplementedException());
         }
 
-        private async Task<PreLoginHandshakeStatus> ReadPreLoginresponse(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        private async Task<PreLoginStatus> ReadPreLoginresponse(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             context.ConnectionContext.MarsCapable  = context.ConnectionContext.ConnectionString.MARS; // Assign default value
             context.ConnectionContext.FedAuthRequired = false;
@@ -123,14 +123,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                         EncryptionOptions serverOption = (EncryptionOptions)payload[payloadOffset];
 
-                        /* internal enum EncryptionOptions {
-                            OFF,
-                            ON,
-                            NOT_SUP,
-                            REQ,
-                            LOGIN
-                        } */
-
                         // Any response other than NOT_SUP means the server supports encryption.
                         serverSupportsEncryption = serverOption != EncryptionOptions.NOT_SUP;
 
@@ -154,19 +146,25 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                                 if (serverOption == EncryptionOptions.REQ)
                                 {
                                     // Server requires encryption, but client does not support it.
-                                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
-                                    _physicalStateObj.Dispose();
-                                    ThrowExceptionAndWarning(_physicalStateObj);
+                                    //_physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
+                                    //_physicalStateObj.Dispose();
+                                    //ThrowExceptionAndWarning(_physicalStateObj);
+                                    // TODO : Error handling needs to happen here. Till then 
+                                    // adding an exception and returning 
+                                    context.ConnectionContext.Error = new Exception("Encryption not supported by server");
+                                    return PreLoginStatus.Failed;
                                 }
 
                                 break;
                             default:
                                 // Any other client option needs encryption
                                 if (serverOption == EncryptionOptions.NOT_SUP)
-                                {
-                                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                                    _physicalStateObj.Dispose();
-                                    ThrowExceptionAndWarning(_physicalStateObj);
+                                { 
+                                    //    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                                    //    _physicalStateObj.Dispose();
+                                    //    ThrowExceptionAndWarning(_physicalStateObj);
+                                    context.ConnectionContext.Error  = new Exception("Encryption not supported by server");
+                                    return PreLoginStatus.Failed;
                                 }
                                 break;
                         }
@@ -185,7 +183,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                             // Check if server says ERROR_INST. That either means the cached info
                             // we used to connect is not valid or we connected to a named instance
                             // listening on default params.
-                            return PreLoginHandshakeStatus.InstanceFailure;
+                            return PreLoginStatus.InstanceFailure;
                         }
 
                         break;
@@ -256,9 +254,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             {
                 if (!serverSupportsEncryption)
                 {
-                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                    _physicalStateObj.Dispose();
-                    ThrowExceptionAndWarning(_physicalStateObj);
+                    //_physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                    //_physicalStateObj.Dispose();
+                    //ThrowExceptionAndWarning(_physicalStateObj);
+                    context.ConnectionContext.Error = new Exception("Encryption not supported by server");
+                    return PreLoginStatus.Failed;
                 }
 
                 context.ValidateCertificate = ShouldValidateSertificate(context);
@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 await EnableSsl(context, isAsync, ct).ConfigureAwait(false);
             }
 
-            return PreLoginHandshakeStatus.Successful;
+            return PreLoginStatus.Successful;
 
             static bool ShouldValidateSertificate(PreLoginHandlerContext context)
             {
@@ -656,6 +656,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 HostNameInCertificate = connectionOptions.HostNameInCertificate;
                 ServerCertificateFilename = connectionOptions.ServerCertificate;
             }
+        }
+
+        private enum PreLoginStatus
+        {
+            Successful,
+            InstanceFailure,
+            Failed
         }
     }
 }
