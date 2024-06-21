@@ -26,8 +26,6 @@ namespace Microsoft.Data.SqlClientX.IO
         private TdsWriteStream _writeStream;
         private TdsReadStream _readStream;
 
-        private TdsWriter _writer;
-
         /// <inheritdoc />
         public override bool CanRead => _readStream != null && _readStream.CanRead;
         
@@ -63,7 +61,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public byte ReadPacketHeaderType => _readStream.ReadPacketHeaderType;
 
-        public TdsWriter GetTdsWriter() => _writer;
+        public TdsWriter TdsWriter { get; private set; }
 
         /// <summary>
         /// Constructor for instantiating the TdsStream
@@ -74,7 +72,7 @@ namespace Microsoft.Data.SqlClientX.IO
         {
             _writeStream = writeStream;
             _readStream = readStream;
-            _writer = new TdsWriter(this);
+            TdsWriter = new TdsWriter(this);
         }
 
         /// <summary>
@@ -204,6 +202,7 @@ namespace Microsoft.Data.SqlClientX.IO
         {
             await _writeStream.DisposeAsync().ConfigureAwait(false);
             await _readStream.DisposeAsync().ConfigureAwait(false);
+            await TdsWriter.DisposeAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -213,8 +212,10 @@ namespace Microsoft.Data.SqlClientX.IO
             { 
                 _writeStream?.Dispose();
                 _readStream?.Dispose();
+                TdsWriter?.Dispose();
                 _writeStream = null;
                 _readStream = null;
+                TdsWriter = null;
             }
             base.Dispose(disposing);
         }
