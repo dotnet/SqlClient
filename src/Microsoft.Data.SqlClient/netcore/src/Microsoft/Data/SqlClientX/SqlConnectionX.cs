@@ -28,6 +28,8 @@ namespace Microsoft.Data.SqlClientX
         private SqlCredential? _credential;
         private SqlDataSource? _dataSource;
         private SqlInternalConnectionX? _connection;
+
+        //TODO: Investigate if we can just use dataSource.ConnectionString. Do this when this class can resolve its own data source.
         private string _connectionString = string.Empty;
         private ConnectionState _connectionState = ConnectionState.Closed;
 
