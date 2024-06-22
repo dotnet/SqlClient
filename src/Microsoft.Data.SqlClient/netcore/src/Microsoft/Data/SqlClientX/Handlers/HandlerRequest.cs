@@ -23,8 +23,10 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// </summary>
         public Exception Exception { get; set; }
 
+        /// <summary>
+        /// A SqlClient logger for the handler.
+        /// </summary>
         public SqlClientLogger Logger { get; } = new SqlClientLogger();
-
 
         /// <summary>
         /// Checks if the request has an error.
