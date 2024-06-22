@@ -16,7 +16,9 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
         public async ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
         {
             ValidateIncomingContext(context);
-            
+
+            LoginHandlerContext loginHandlerContext = new LoginHandlerContext(context);
+            PrepareLoginDetails(loginHandlerContext);
 
             void ValidateIncomingContext(ConnectionHandlerContext context)
             {
@@ -42,15 +44,15 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
             }
         }
 
-        private void PrepareLoginDetails()
+        private void PrepareLoginDetails(LoginHandlerContext context)
         {
             SqlLogin login = new SqlLogin();
 
             // gather all the settings the user set in the connection string or
             // properties and do the login
-            CurrentDatabase = server.ResolvedDatabaseName;
-            _currentPacketSize = ConnectionOptions.PacketSize;
-            _currentLanguage = ConnectionOptions.CurrentLanguage;
+            CurrentDatabase = context.ServerInfo.ResolvedDatabaseName;
+            _currentPacketSize = context.ConnectionOptions.PacketSize;
+            _currentLanguage = context.ConnectionOptions.CurrentLanguage;
 
             int timeoutInSeconds = 0;
 
@@ -72,13 +74,13 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
                 }
             }
 
-            login.authentication = ConnectionOptions.Authentication;
+            login.authentication = context.ConnectionOptions.Authentication;
             login.timeout = timeoutInSeconds;
-            login.userInstance = ConnectionOptions.UserInstance;
-            login.hostName = ConnectionOptions.ObtainWorkstationId();
-            login.userName = ConnectionOptions.UserID;
-            login.password = ConnectionOptions.Password;
-            login.applicationName = ConnectionOptions.ApplicationName;
+            login.userInstance = context.ConnectionOptions.UserInstance;
+            login.hostName = context.ConnectionOptions.ObtainWorkstationId();
+            login.userName = context.ConnectionOptions.UserID;
+            login.password = context.ConnectionOptions.Password;
+            login.applicationName = context.ConnectionOptions.ApplicationName;
 
             login.language = _currentLanguage;
             if (!login.userInstance)
@@ -91,14 +93,14 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
             // VSTS#795621 - Ensure ServerName is Sent During TdsLogin To Enable Sql Azure Connectivity.
             // Using server.UserServerName (versus ConnectionOptions.DataSource) since TdsLogin requires
             // serverName to always be non-null.
-            login.serverName = server.UserServerName;
+            login.serverName = context.ServerInfo.UserServerName;
 
-            login.useReplication = ConnectionOptions.Replication;
-            login.useSSPI = ConnectionOptions.IntegratedSecurity  // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
-                                     || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !_fedAuthRequired);
-            login.packetSize = _currentPacketSize;
+            login.useReplication = context.ConnectionOptions.Replication;
+            login.useSSPI = context.ConnectionOptions.IntegratedSecurity  // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
+                                     || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !context.ConnectionContext.FedAuthRequired);
+            login.packetSize = context.ConnectionOptions.PacketSize;
             login.newPassword = newPassword;
-            login.readOnlyIntent = ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
+            login.readOnlyIntent = context.ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
             login.credential = _credential;
             if (newSecurePassword != null)
             {
@@ -106,7 +108,7 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
             }
 
             TdsEnums.FeatureExtension requestedFeatures = TdsEnums.FeatureExtension.None;
-            if (ConnectionOptions.ConnectRetryCount > 0)
+            if (context.ConnectionOptions.ConnectRetryCount > 0)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.SessionRecovery;
                 _sessionRecoveryRequested = true;
@@ -115,17 +117,17 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
             // If the workflow being used is Active Directory Authentication and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
             // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
-            if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
+            if (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
+                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
+                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
+                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
-                || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired)
-                || _accessTokenCallback != null)
+                || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && context.ConnectionContext.FedAuthRequired)
+                || context.ConnectionContext.AccessTokenCallback != null)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 _federatedAuthenticationInfoRequested = true;
@@ -138,7 +140,7 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
                     };
             }
 
-            if (_accessTokenInBytes != null)
+            if (context.ConnectionContext.AccessTokenInBytes != null)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 _fedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
@@ -166,7 +168,13 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
 
         public LoginHandlerContext(ConnectionHandlerContext context)
         {
-
+            this.ConnectionContext = context;
+            this.ServerInfo = context.SeverInfo;
+            this.ConnectionOptions = context.ConnectionString;
         }
+
+        public ConnectionHandlerContext ConnectionContext { get; }
+        public ServerInfo ServerInfo { get; }
+        public SqlConnectionString ConnectionOptions { get; }
     }
 }
