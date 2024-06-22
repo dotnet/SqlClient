@@ -21,24 +21,34 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <summary>
         /// Takes care of beginning TLS handshake.
         /// </summary>
-        /// <param name="preloginContext"></param>
-        /// <param name="isAsync"></param>
-        /// <param name="ct"></param>
+        /// <param name="context">The prelogin context object.</param>
+        /// <param name="isAsync">Whether this operations should be done asynchronosly or not.</param>
+        /// <param name="ct">Cancellation token for the operation.</param>
         /// <returns></returns>
-        public override async ValueTask Handle(PreLoginHandlerContext preloginContext, bool isAsync, CancellationToken ct)
+        public override async ValueTask Handle(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            InitializeSslStream(preloginContext);
+            InitializeSslStream(context);
 
-            if (preloginContext.ConnectionEncryptionOption == SqlConnectionEncryptOption.Strict)
+            if (context.IsTlsFirst)
             {
-                //Always validate the certificate when in strict encryption mode
-                preloginContext.ValidateCertificate = true;
+                //Always validate the certificate in Tls First mode.
+                context.ValidateCertificate = true;
 
-                await EnableSsl(preloginContext, isAsync, ct).ConfigureAwait(false);
+                await AuthenticateClientInternal(context, isAsync, ct).ConfigureAwait(false);
 
                 // Since encryption has already been negotiated, we need to set encryption not supported in
-                // prelogin so that we don't try to negotiate encryption again during ConsumePreLoginHandshake.
-                preloginContext.InternalEncryptionOption = EncryptionOptions.NOT_SUP;
+                // prelogin so that we don't try to negotiate encryption again during Pre login response read.
+                context.InternalEncryptionOption = EncryptionOptions.NOT_SUP;
+            }
+
+            if (context.HasError)
+            {
+                return;
+            }
+
+            if (NextHandler is not null)
+            {
+                await NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
             }
 
             void InitializeSslStream(PreLoginHandlerContext preloginContext)
@@ -64,11 +74,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     Guid connectionId = preloginContext.ConnectionContext.ConnectionId;
                     if (!ValidateCert)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: connectionId);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsBeginHandler), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: connectionId);
                         return true;
                     }
 
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: connectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsBeginHandler), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: connectionId);
 
                     return SNICommon.ValidateSslServerCertificate(connectionId,
                         preloginContext.ConnectionContext.DataSource.ServerName,

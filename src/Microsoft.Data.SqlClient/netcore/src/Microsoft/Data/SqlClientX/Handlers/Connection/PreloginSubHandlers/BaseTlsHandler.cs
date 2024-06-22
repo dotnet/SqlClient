@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
         public abstract ValueTask Handle(PreLoginHandlerContext request, bool isAsync, CancellationToken ct);
 
-        protected async ValueTask EnableSsl(PreLoginHandlerContext request, bool isAsync, CancellationToken ct)
+        protected async ValueTask AuthenticateClientInternal(PreLoginHandlerContext request, bool isAsync, CancellationToken ct)
         {
             await AuthenticateClient(request, isAsync, ct).ConfigureAwait(false);
 
@@ -47,14 +47,14 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         // Skip console warning
                         SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}",
                             nameof(PreloginHandler),
-                            nameof(EnableSsl),
+                            nameof(AuthenticateClientInternal),
                             SqlClientLogger.LogLevel.Warning,
                             warningMessage);
                     }
                     else
                     {
                         // This logs console warning of insecure protocol in use.
-                        request.ConnectionContext.Logger.LogWarning(nameof(PreloginHandler), nameof(EnableSsl), warningMessage);
+                        request.ConnectionContext.Logger.LogWarning(nameof(PreloginHandler), nameof(AuthenticateClientInternal), warningMessage);
                     }
                 }
             }

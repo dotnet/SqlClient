@@ -16,12 +16,33 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
     {
         const int GUID_SIZE = 16;
 
+        // EventSource counter
+        private static int s_objectTypeCount;
+
+        internal readonly int _objectID = Interlocked.Increment(ref s_objectTypeCount);
+
+        internal int ObjectID => _objectID;
+
         public IHandler<PreLoginHandlerContext> NextHandler { get; set; }
 
-        public async ValueTask Handle(PreLoginHandlerContext request, bool isAsync, CancellationToken ct)
+        public async ValueTask Handle(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            await CreatePreLoginAndSend(request, isAsync, ct).ConfigureAwait(false);
-            await CreatePreLoginAndSend(request, isAsync, ct).ConfigureAwait(false);
+            await PreloginPacketHandler.CreatePreLoginAndSend(context, isAsync, ct).ConfigureAwait(false);
+            if (context.HasError)
+            {
+                return;
+            }
+            await ReadPreLoginresponse(context, isAsync, ct).ConfigureAwait(false);
+
+            if (context.HasError)
+            {
+                return;
+            }
+
+            if (NextHandler is not null)
+            {
+                await NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
+            }
         }
 
         /// <summary>
@@ -52,7 +73,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
             int payloadOffset = 0;
             int offset = 0;
-            bool serverSupportsEncryption = false;
 
             while (option != (byte)PreLoginOptions.LASTOPT)
             {
@@ -68,7 +88,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         bool is2005OrLater = majorVersion >= 9;
                         if (!is2005OrLater)
                         {
-                            context.ConnectionContext.MarsCapable = false;            // If pre-2005, MARS not supported.
+                            context.ConnectionContext.MarsCapable = false;  // If pre-2005, MARS not supported.
                         }
 
                         break;
@@ -77,6 +97,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         if (context.IsTlsFirst)
                         {
                             // Can skip/ignore this option if we are doing TDS 8.
+                            // The internal encryption option is set to NOT_SUP in this case.
+                            // And it shouldn't be changed.
                             offset += 4;
                             break;
                         }
@@ -87,19 +109,30 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         EncryptionOptions serverOption = (EncryptionOptions)payload[payloadOffset];
 
                         // Any response other than NOT_SUP means the server supports encryption.
-                        serverSupportsEncryption = serverOption != EncryptionOptions.NOT_SUP;
+                        context.ServerSupportsEncryption = serverOption != EncryptionOptions.NOT_SUP;
+
+                        // If server doesn't support encyrption, then we can't proceed, since encryption is always needed
+                        // for login.
+                        if (!context.ServerSupportsEncryption)
+                        {
+                            //    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                            //    _physicalStateObj.Dispose();
+                            //    ThrowExceptionAndWarning(_physicalStateObj);
+                            context.ConnectionContext.Error = new Exception("Encryption not supported by server");
+                            return;
+                        }
 
                         switch (context.InternalEncryptionOption)
                         {
                             case (EncryptionOptions.OFF):
                                 if (serverOption == EncryptionOptions.OFF)
                                 {
-                                    // Only encrypt login.
+                                    // Encrypt login even if the server doesn't enforce encryption.
                                     context.InternalEncryptionOption = EncryptionOptions.LOGIN;
                                 }
                                 else if (serverOption == EncryptionOptions.REQ)
                                 {
-                                    // Encrypt all.
+                                    // Server has enforced encryption, hence we encrypt everything.
                                     context.InternalEncryptionOption = EncryptionOptions.ON;
                                 }
                                 // NOT_SUP: No encryption.
@@ -108,7 +141,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                             case (EncryptionOptions.NOT_SUP):
                                 if (serverOption == EncryptionOptions.REQ)
                                 {
-                                    // Server requires encryption, but client does not support it.
+                                    // Server has enforced encryption, but client does not support it.
                                     //_physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                                     //_physicalStateObj.Dispose();
                                     //ThrowExceptionAndWarning(_physicalStateObj);
@@ -117,18 +150,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                                     context.ConnectionContext.Error = new Exception("Encryption not supported by server");
                                     return;
                                 }
-
                                 break;
                             default:
-                                // Any other client option needs encryption
-                                if (serverOption == EncryptionOptions.NOT_SUP)
-                                {
-                                    //    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                                    //    _physicalStateObj.Dispose();
-                                    //    ThrowExceptionAndWarning(_physicalStateObj);
-                                    context.ConnectionContext.Error = new Exception("Encryption not supported by server");
-                                    return;
-                                }
                                 break;
                         }
 
@@ -207,7 +230,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     break;
                 }
             }
-            context.ServerSupportsEncryption = serverSupportsEncryption;
         }
 
         /// <summary>
@@ -217,7 +239,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <param name="isAsync"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        private async Task CreatePreLoginAndSend(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        private static async Task CreatePreLoginAndSend(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             Debug.Assert(context.ConnectionContext.TdsStream != null, "A Tds Stream is expected");
 
