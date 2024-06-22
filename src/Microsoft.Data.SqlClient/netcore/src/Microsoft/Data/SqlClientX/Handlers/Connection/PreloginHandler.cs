@@ -226,9 +226,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     case (int)PreLoginOptions.MARS:
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
                         offset += 2; // Skip the payload length
-
-                        context.ConnectionContext.MarsCapable = (payload[payloadOffset] == 0 ? false : true);
-
+                        context.ConnectionContext.MarsCapable = (payload[payloadOffset] != 0);
                         Debug.Assert(payload[payloadOffset] == 0 || payload[payloadOffset] == 1, "Value for Mars PreLoginHandshake option not equal to 1 or 0!");
                         break;
 
@@ -245,7 +243,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                         if (payload[payloadOffset] != 0x00 && payload[payloadOffset] != 0x01)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}|ERR> {1}, " +
-                                "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {2}.", "ReadPreLoginresponse", ObjectID, (int)payload[payloadOffset]);
+                                "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {2}.", nameof(ReadPreLoginresponse), ObjectID, (int)payload[payloadOffset]);
                             throw SQL.ParsingErrorValue(ParsingErrorState.FedAuthRequiredPreLoginResponseInvalidValue, (int)payload[payloadOffset]);
                         }
 
@@ -256,7 +254,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                             && context.ConnectionContext.ConnectionString.Authentication != SqlAuthenticationMethod.NotSpecified)
                             || context.ConnectionContext.AccessTokenInBytes != null || context.ConnectionContext.AccessTokenCallback != null)
                         {
-                            context.ConnectionContext.FedAuthRequired = payload[payloadOffset] == 0x01 ? true : false;
+                            context.ConnectionContext.FedAuthRequired = payload[payloadOffset] == 0x01;
                         }
                         break;
 
@@ -279,6 +277,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             context.ServerSupportsEncryption = serverSupportsEncryption;
         }
 
+        /// <summary>
+        /// Constructs the Prelogin packet and sends it to the server.
+        /// </summary>
+        /// <param name="context">The Prelogin handler context</param>
+        /// <param name="isAsync"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
         private async Task CreatePreLoginAndSend(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             Debug.Assert(context.ConnectionContext.TdsStream != null, "A Tds Stream is expected");
@@ -583,7 +588,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                         if (isAsync)
                         {
-                            await sslStream.AuthenticateAsClientAsync(options).ConfigureAwait(false);
+                            await sslStream.AuthenticateAsClientAsync(options, ct).ConfigureAwait(false);
                         }
                         else
                         {
