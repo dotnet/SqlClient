@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// <summary>
         /// The Guid of the Connection.
         /// </summary>
-        public Guid ConnectionId { get; internal set; }
+        public Guid ConnectionId { get; internal set; } = Guid.Empty;
 
         /// <summary>
         /// The SslStream used by the connection.

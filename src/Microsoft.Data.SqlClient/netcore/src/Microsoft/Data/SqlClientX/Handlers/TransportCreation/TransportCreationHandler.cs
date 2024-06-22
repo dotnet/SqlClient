@@ -52,6 +52,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
                 return;
             }
 
+            // Every physical connection has a Unique ID which is used by the rest 
+            // of the connection for tracing on the server side, to correlate with 
+            // the connectivity telemetry and diagnosis.
+            context.ConnectionId = Guid.NewGuid();
+
             if (NextHandler is not null)
             {
                 await NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
