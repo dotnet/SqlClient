@@ -73,6 +73,11 @@ namespace Microsoft.Data.SqlClientX.Handlers
         public byte[] AccessTokenInBytes { get; internal set; }
 
         /// <summary>
+        /// The server information created for the connection.
+        /// </summary>
+        public ServerInfo SeverInfo { get; internal set; }
+
+        /// <summary>
         /// The callback for Access Token Retrieval.
         /// </summary>
         internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback { get; set; }

@@ -37,6 +37,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             {
                 await NextHandler.Handle(connectionContext, isAsync, ct).ConfigureAwait(false);
             }
-        } 
+        }
     }
 }
