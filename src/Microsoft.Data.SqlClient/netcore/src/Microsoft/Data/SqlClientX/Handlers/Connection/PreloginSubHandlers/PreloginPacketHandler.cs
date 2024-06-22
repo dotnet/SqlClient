@@ -16,6 +16,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
     {
         const int GUID_SIZE = 16;
 
+        const int PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES = 4;
+
+        const int PAYLOAD_LENGTH_SIZE_IN_BYTES = 2;
+
         // EventSource counter
         private static int s_objectTypeCount;
 
@@ -81,7 +85,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     case (int)PreLoginOptions.VERSION:
 
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        offset += 2; // Skip the payload length
+                        offset += PAYLOAD_LENGTH_SIZE_IN_BYTES; // Skip the payload length
 
                         byte majorVersion = payload[payloadOffset];
 
@@ -159,7 +163,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
                     case (int)PreLoginOptions.INSTANCE:
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        offset += 2; // Skip the payload length
+                        offset += PAYLOAD_LENGTH_SIZE_IN_BYTES; // Skip the payload length
 
                         byte ERROR_INST = 0x1;
                         byte instanceResult = payload[payloadOffset];
@@ -176,7 +180,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
                     case (int)PreLoginOptions.THREADID:
                         // DO NOTHING FOR THREADID
-                        offset += 4;
+                        offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES;
                         break;
 
                     case (int)PreLoginOptions.MARS:
@@ -188,7 +192,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
                     case (int)PreLoginOptions.TRACEID:
                         // DO NOTHING FOR TRACEID
-                        offset += 4;
+                        offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES;
                         break;
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
@@ -217,7 +221,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     default:
                         Debug.Fail("UNKNOWN option in ConsumePreLoginHandshake, option:" + option);
                         // DO NOTHING FOR THESE UNKNOWN OPTIONS
-                        offset += 4;
+                        offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES;
                         break;
                 }
 
@@ -332,7 +336,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
                     case (int)PreLoginOptions.THREADID:
                         int threadID = TdsParserStaticMethods.GetCurrentThreadIdForTdsLoginOnly();
-
                         payload[payloadLength++] = (byte)((0xff000000 & threadID) >> 24);
                         payload[payloadLength++] = (byte)((0x00ff0000 & threadID) >> 16);
                         payload[payloadLength++] = (byte)((0x0000ff00 & threadID) >> 8);
