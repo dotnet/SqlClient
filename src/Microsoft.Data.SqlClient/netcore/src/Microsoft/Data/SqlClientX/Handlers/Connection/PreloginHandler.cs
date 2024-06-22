@@ -29,9 +29,15 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
         private static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
         
-        private readonly int GUID_SIZE = 16;
+        private const int GUID_SIZE = 16;
         
         private bool _validateCert = true;
+
+        private static int _objectTypeCount; // EventSource counter
+
+        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+
+        internal int ObjectID => _objectID;
 
         /// <inheritdoc />
         public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
@@ -70,6 +76,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
 
             TdsStream tdsStream = context.ConnectionContext.TdsStream;
+
+            // Look into the first byte to see if we are connecting to a 6.5 or earlier server.
             int option = await tdsStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
 
             if (option == 0xaa)
@@ -79,21 +87,26 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 throw SQL.InvalidSQLServerVersionUnknown();
             }
 
-
             byte[] payload = new byte[tdsStream.PacketDataLeft];
 
             int payloadOffset = 0;
             int payloadLength = 0;
             int offset = 0;
             bool serverSupportsEncryption = false;
-
             
+            // Allocate an array of the size PreLoginOptions.NUMOPTS to hold options offsets
+
+            // Allocate an array to hold thh options length
+
+
+
+
             while (option != (byte)PreLoginOptions.LASTOPT)
             {
                 switch (option)
                 {
                     case (int)PreLoginOptions.VERSION:
-
+                        
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
                         payloadLength = payload[offset++] << 8 | payload[offset++];
 
@@ -417,7 +430,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                 await tdsStream.WriteByteAsync((byte)((optionDataSize & 0xff00) >> 8), isAsync, ct).ConfigureAwait(false);
                 await tdsStream.WriteByteAsync((byte)(optionDataSize & 0x00ff), isAsync, ct).ConfigureAwait(false);
-
             }
 
             // Write out last option - to let server know the second part of packet completed
@@ -492,7 +504,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 SslStream sslStream = new SslStream(baseStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
                 preloginContext.ConnectionContext.SslStream = sslStream;
 
-
                 bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
                 {
                     Guid connectionId = preloginContext.ConnectionContext.ConnectionId;
@@ -503,6 +514,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     }
 
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: connectionId);
+                    
                     return SNICommon.ValidateSslServerCertificate(connectionId,
                         preloginContext.ConnectionContext.DataSource.ServerName, 
                         preloginContext.HostNameInCertificate,
@@ -526,11 +538,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
             LogWarningIfNeeded(request);
 
-            static bool ShouldNotLogWarning(PreLoginHandlerContext request)
-            {
-                return !request.ConnectionEncryptionOption && LocalAppContextSwitches.SuppressInsecureTLSWarning;
-            }
-
             static void LogWarningIfNeeded(PreLoginHandlerContext request)
             {
                 string warningMessage = request.ConnectionContext.SslStream.SslProtocol.GetProtocolWarning();
@@ -551,6 +558,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                         request.ConnectionContext.Logger.LogWarning(nameof(PreloginHandler), nameof(EnableSsl), warningMessage);
                     }
                 }
+            }
+
+            static bool ShouldNotLogWarning(PreLoginHandlerContext request)
+            {
+                return !request.ConnectionEncryptionOption && LocalAppContextSwitches.SuppressInsecureTLSWarning;
             }
         }
 
@@ -618,7 +630,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             }
             catch (Exception e)
             {
-                SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.EnableSsl3 | Err | Session Id {0}, SNI Handshake failed with exception: {1}",
+                SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.AuthenticateClient | Err | Session Id {0}, SNI Handshake failed with exception: {1}",
                     context.ConnectionContext.ConnectionId,
                     e.Message);
                 context.Exception = e;

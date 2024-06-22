@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public override long Length => throw new NotSupportedException();
 
         /// <inheritdoc />
-        public virtual int PacketDataLeft => 0;
+        public virtual int PacketDataLeft { get; set; }
 
         /// <inheritdoc />
         public virtual byte ReadPacketHeaderType { get; private set; }
