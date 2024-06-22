@@ -16,6 +16,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
     /// </summary>
     internal class TlsEndHandler : BaseTlsHandler
     {
+        /// <inheritdoc />
         public override async ValueTask Handle(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             if (!context.IsTlsFirst && DoesClientNeedEncryption(context))

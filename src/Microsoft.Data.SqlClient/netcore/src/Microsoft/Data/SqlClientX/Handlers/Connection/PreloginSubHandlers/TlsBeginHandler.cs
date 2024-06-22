@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
     internal class TlsBeginHandler : BaseTlsHandler
     {
         /// <summary>
-        /// Takes care of beginning TLS handshake.
+        /// Takes care of beginning TLS handshake in Tls First aka TDS8.0.
         /// </summary>
         /// <param name="context">The prelogin context object.</param>
         /// <param name="isAsync">Whether this operations should be done asynchronosly or not.</param>
