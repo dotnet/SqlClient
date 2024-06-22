@@ -33,9 +33,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         
         private bool _validateCert = true;
 
-        private static int _objectTypeCount; // EventSource counter
+        // EventSource counter
+        private static int s_objectTypeCount;
 
-        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        internal readonly int _objectID = Interlocked.Increment(ref s_objectTypeCount);
 
         internal int ObjectID => _objectID;
 
@@ -55,25 +56,52 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
             await TlsEnd(context, isAsync, ct).ConfigureAwait(false);
 
-            ReorderStream(context);
-
             if (NextHandler is not null)
             {
                 await NextHandler.Handle(connectionContext, isAsync, ct).ConfigureAwait(false);
             }
         }
 
-        private Task TlsEnd(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        private async Task TlsEnd(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            return Task.FromException(new NotImplementedException());
+            if (DoesClientNeedEncryption(context))
+            {
+                if (!context.ServerSupportsEncryption)
+                {
+                    //_physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                    //_physicalStateObj.Dispose();
+                    //ThrowExceptionAndWarning(_physicalStateObj);
+                    context.ConnectionContext.Error = new Exception("Encryption not supported by server");
+                    return;
+                }
+
+                context.ValidateCertificate = ShouldValidateSertificate(context);
+
+                await EnableSsl(context, isAsync, ct).ConfigureAwait(false);
+            }
+
+            // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
+            static bool ShouldValidateSertificate(PreLoginHandlerContext context) => 
+                (context.InternalEncryptionOption == EncryptionOptions.ON && !context.TrustServerCert) ||
+                (context.ConnectionContext.AccessTokenInBytes != null && !context.TrustServerCert);
+            
+
+            // Do client settings require encryption?
+            static bool DoesClientNeedEncryption(PreLoginHandlerContext context) =>
+                context.InternalEncryptionOption == EncryptionOptions.ON || context.InternalEncryptionOption == EncryptionOptions.LOGIN;
         }
 
-        private async Task<PreLoginStatus> ReadPreLoginresponse(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        /// <summary>
+        /// Consume the Prelogin response from the server.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="isAsync"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        private async Task ReadPreLoginresponse(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             context.ConnectionContext.MarsCapable  = context.ConnectionContext.ConnectionString.MARS; // Assign default value
             context.ConnectionContext.FedAuthRequired = false;
-            bool is2005OrLater = false;
-
 
             TdsStream tdsStream = context.ConnectionContext.TdsStream;
 
@@ -90,17 +118,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             byte[] payload = new byte[tdsStream.PacketDataLeft];
 
             int payloadOffset = 0;
-            int payloadLength = 0;
             int offset = 0;
             bool serverSupportsEncryption = false;
             
-            // Allocate an array of the size PreLoginOptions.NUMOPTS to hold options offsets
-
-            // Allocate an array to hold thh options length
-
-
-
-
             while (option != (byte)PreLoginOptions.LASTOPT)
             {
                 switch (option)
@@ -108,14 +128,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     case (int)PreLoginOptions.VERSION:
                         
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
+                        offset += 2; // Skip the payload length
 
                         byte majorVersion = payload[payloadOffset];
-                        byte minorVersion = payload[payloadOffset + 1];
-                        int level = (payload[payloadOffset + 2] << 8) |
-                                             payload[payloadOffset + 3];
-
-                        is2005OrLater = majorVersion >= 9;
+                        
+                        bool is2005OrLater = majorVersion >= 9;
                         if (!is2005OrLater)
                         {
                             context.ConnectionContext.MarsCapable = false;            // If pre-2005, MARS not supported.
@@ -132,7 +149,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                         }
 
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
+                        offset += 2; // Skip the payload length
 
                         EncryptionOptions serverOption = (EncryptionOptions)payload[payloadOffset];
 
@@ -165,7 +182,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                                     // TODO : Error handling needs to happen here. Till then 
                                     // adding an exception and returning 
                                     context.ConnectionContext.Error = new Exception("Encryption not supported by server");
-                                    return PreLoginStatus.Failed;
+                                    return;
                                 }
 
                                 break;
@@ -177,7 +194,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                                     //    _physicalStateObj.Dispose();
                                     //    ThrowExceptionAndWarning(_physicalStateObj);
                                     context.ConnectionContext.Error  = new Exception("Encryption not supported by server");
-                                    return PreLoginStatus.Failed;
+                                    return;
                                 }
                                 break;
                         }
@@ -186,7 +203,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                     case (int)PreLoginOptions.INSTANCE:
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
+                        offset += 2; // Skip the payload length
 
                         byte ERROR_INST = 0x1;
                         byte instanceResult = payload[payloadOffset];
@@ -196,7 +213,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                             // Check if server says ERROR_INST. That either means the cached info
                             // we used to connect is not valid or we connected to a named instance
                             // listening on default params.
-                            return PreLoginStatus.InstanceFailure;
+                            context.HandshakeStatus = PreLoginHandshakeStatus.InstanceFailure;
                         }
 
                         break;
@@ -208,7 +225,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                     case (int)PreLoginOptions.MARS:
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
+                        offset += 2; // Skip the payload length
 
                         context.ConnectionContext.MarsCapable = (payload[payloadOffset] == 0 ? false : true);
 
@@ -222,7 +239,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
                         payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
+                        offset += 2; // Skip the payload length
 
                         // Only 0x00 and 0x01 are accepted values from the server.
                         if (payload[payloadOffset] != 0x00 && payload[payloadOffset] != 0x01)
@@ -245,10 +262,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                     default:
                         Debug.Fail("UNKNOWN option in ConsumePreLoginHandshake, option:" + option);
-
                         // DO NOTHING FOR THESE UNKNOWN OPTIONS
                         offset += 4;
-
                         break;
                 }
 
@@ -261,32 +276,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     break;
                 }
             }
-
-            if (context.InternalEncryptionOption == EncryptionOptions.ON ||
-                context.InternalEncryptionOption == EncryptionOptions.LOGIN)
-            {
-                if (!serverSupportsEncryption)
-                {
-                    //_physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                    //_physicalStateObj.Dispose();
-                    //ThrowExceptionAndWarning(_physicalStateObj);
-                    context.ConnectionContext.Error = new Exception("Encryption not supported by server");
-                    return PreLoginStatus.Failed;
-                }
-
-                context.ValidateCertificate = ShouldValidateSertificate(context);
-
-                await EnableSsl(context, isAsync, ct).ConfigureAwait(false);
-            }
-
-            return PreLoginStatus.Successful;
-
-            static bool ShouldValidateSertificate(PreLoginHandlerContext context)
-            {
-                // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
-                return (context.InternalEncryptionOption == EncryptionOptions.ON && !context.TrustServerCert) ||
-                                    (context.ConnectionContext.AccessTokenInBytes != null && !context.TrustServerCert);
-            }
+            context.ServerSupportsEncryption = serverSupportsEncryption;
         }
 
         private async Task CreatePreLoginAndSend(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
@@ -455,12 +445,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 tdsStream.Flush();
             }
         }
-
-        private void ReorderStream(PreLoginHandlerContext context)
-        {
-            throw new NotImplementedException();
-        }
-
 
         /// <summary>
         /// Takes care of beginning TLS handshake.
@@ -655,6 +639,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             public ConnectionHandlerContext ConnectionContext { get; private set; }
             public bool ValidateCertificate { get; internal set; }
             public SNIError SniError { get; internal set; }
+            public bool ServerSupportsEncryption { get; internal set; }
+            public PreLoginHandshakeStatus HandshakeStatus { get; internal set; }
 
             public PreLoginHandlerContext(ConnectionHandlerContext connectionContext)
             {
