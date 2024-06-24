@@ -1970,9 +1970,11 @@ namespace Microsoft.Data.SqlClient
                             {
                                 bool dataReady;
                                 Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                                bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
-                                if (!result)
-                                { throw SQL.SynchronousCallMayNotPend(); }
+                                TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
+                                if (result != TdsOperationStatus.Done)
+                                {
+                                    throw SQL.SynchronousCallMayNotPend();
+                                }
                             }
                             finally
                             {
@@ -4000,9 +4002,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
-                    if (!result)
-                    { throw SQL.SynchronousCallMayNotPend(); }
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        throw SQL.SynchronousCallMayNotPend();
+                    }
                 }
             }
             catch (Exception e)
@@ -5613,9 +5617,11 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
                         bool dataReady;
                         Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                        bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
-                        if (!result)
-                        { throw SQL.SynchronousCallMayNotPend(); }
+                        TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            throw SQL.SynchronousCallMayNotPend();
+                        }
                         // and turn OFF when the ds exhausts the stream on Close()
                         optionSettings = GetResetOptionsString(cmdBehavior);
                     }
@@ -5818,9 +5824,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out dataReady);
-                    if (!result)
-                    { throw SQL.SynchronousCallMayNotPend(); }
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out dataReady);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        throw SQL.SynchronousCallMayNotPend();
+                    }
                 }
                 catch (Exception e)
                 {
