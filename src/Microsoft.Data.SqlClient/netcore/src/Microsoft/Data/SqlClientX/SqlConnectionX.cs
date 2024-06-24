@@ -8,6 +8,7 @@ using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,7 +22,7 @@ using Microsoft.Data.SqlClient;
 namespace Microsoft.Data.SqlClientX
 {
     /// <summary>
-    /// 
+    /// A connection object that utilizes the SqlClientX networking and pooling implementations.
     /// </summary>
     [DefaultEvent("InfoMessage")]
     [DesignerCategory("")]
@@ -29,7 +30,7 @@ namespace Microsoft.Data.SqlClientX
     {
         private SqlCredential? _credential;
         private SqlDataSource? _dataSource;
-        private SqlInternalConnectionX? _connection;
+        private SqlConnector? _connection;
 
         //TODO: Investigate if we can just use dataSource.ConnectionString. Do this when this class can resolve its own data source.
         private string _connectionString = string.Empty;
@@ -117,7 +118,7 @@ namespace Microsoft.Data.SqlClientX
                     case ConnectionState.Connecting:
                     case ConnectionState.Fetching:
                     case ConnectionState.Executing:
-                        throw throw ADP.OpenConnectionPropertySet(nameof(ConnectionString), connectionInternal.State);
+                        throw ADP.OpenConnectionPropertySet(nameof(ConnectionString), State);
                 }
 
                 _connectionString = value ?? string.Empty;
@@ -162,7 +163,7 @@ namespace Microsoft.Data.SqlClientX
         public override Task CloseAsync()
             => Close(async: true);
 
-        internal async Task Close(bool async)
+        internal Task Close(bool async)
         {
             //TODO: make thread safe?
 
@@ -179,16 +180,20 @@ namespace Microsoft.Data.SqlClientX
                     return Task.CompletedTask;
             }
 
-            var internalConnection = _connection;
+            return CloseAsync(async);
 
-            //TODO: cancel outstanding operations on connection
+            async Task CloseAsync(bool async)
+            {
+                Debug.Assert(_connection != null);
+                var internalConnection = _connection;
 
-            await internalConnection?.Close(async).ConfigureAwait(false);
+                //TODO: cancel outstanding operations on connection before close
+                await internalConnection.Close(async).ConfigureAwait(false);
 
-            //TODO: remove the internal connection's reference to this wrapper connection
+                //TODO: remove the internal connection's reference to this wrapper connection
 
-            _connectionState = ConnectionState.Closed;
-            return Task.CompletedTask;
+                _connectionState = ConnectionState.Closed;
+            }
         }
 
         #endregion
