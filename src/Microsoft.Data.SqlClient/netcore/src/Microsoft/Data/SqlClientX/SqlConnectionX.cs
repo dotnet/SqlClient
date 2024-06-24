@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClientX
         public override Task CloseAsync()
             => Close(async: true);
 
-        internal Task Close(bool async)
+        internal async Task Close(bool async)
         {
             //TODO: make thread safe?
 
@@ -183,8 +183,7 @@ namespace Microsoft.Data.SqlClientX
 
             //TODO: cancel outstanding operations on connection
 
-            //TODO: support async close operation
-            internalConnection?.Close();
+            await internalConnection?.Close(async).ConfigureAwait(false);
 
             //TODO: remove the internal connection's reference to this wrapper connection
 
@@ -229,12 +228,12 @@ namespace Microsoft.Data.SqlClientX
         #region open
 
         /// <inheritdoc/>
-        public override void Open() => _Open(false, CancellationToken.None).GetAwaiter().GetResult();
+        public override void Open() => Open(false, CancellationToken.None).GetAwaiter().GetResult();
 
         /// <inheritdoc/>
-        public override Task OpenAsync(CancellationToken cancellationToken) => _Open(true, cancellationToken);
+        public override Task OpenAsync(CancellationToken cancellationToken) => Open(true, cancellationToken);
 
-        private async Task _Open(bool async, CancellationToken cancellationToken)
+        internal async Task Open(bool async, CancellationToken cancellationToken)
         {
             if (_dataSource == null)
             {
