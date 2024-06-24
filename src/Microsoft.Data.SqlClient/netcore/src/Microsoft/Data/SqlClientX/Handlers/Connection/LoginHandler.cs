@@ -5,7 +5,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClientX.Handlers;
+using Microsoft.Data.SqlClientX.Handlers.Connection;
 
 namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
 {
@@ -48,19 +50,29 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
         {
             SqlLogin login = new SqlLogin();
 
+            PasswordChangeRequest passwordChangeRequest = context.ConnectionContext.PasswordChangeRequest;
+
             // gather all the settings the user set in the connection string or
             // properties and do the login
-            CurrentDatabase = context.ServerInfo.ResolvedDatabaseName;
-            _currentPacketSize = context.ConnectionOptions.PacketSize;
-            _currentLanguage = context.ConnectionOptions.CurrentLanguage;
+            string currentDatabase = context.ServerInfo.ResolvedDatabaseName;
 
-            int timeoutInSeconds = 0;
+            string currentLanguage = context.ConnectionOptions.CurrentLanguage;
+
+            TimeoutTimer timeout = context.ConnectionContext.TimeoutTimer;
 
             // If a timeout tick value is specified, compute the timeout based
             // upon the amount of time left in seconds.
+
+            // TODO: Rethink timeout handling.
+
+            int timeoutInSeconds = 0;
+
             if (!timeout.IsInfinite)
             {
                 long t = timeout.MillisecondsRemaining / 1000;
+
+                // This change was done because the timeout 0 being sent to SNI led to infinite timeout.
+                // TODO: is this really needed for Managed code? 
                 if (t == 0 && LocalAppContextSwitches.UseMinimumLoginTimeout)
                 {
                     // Take 1 as the minimum value, since 0 is treated as an infinite timeout
@@ -82,12 +94,12 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
             login.password = context.ConnectionOptions.Password;
             login.applicationName = context.ConnectionOptions.ApplicationName;
 
-            login.language = _currentLanguage;
+            login.language = currentLanguage;
             if (!login.userInstance)
             {
                 // Do not send attachdbfilename or database to SSE primary instance
-                login.database = CurrentDatabase;
-                login.attachDBFilename = ConnectionOptions.AttachDBFilename;
+                login.database = currentDatabase;
+                login.attachDBFilename = context.ConnectionOptions.AttachDBFilename;
             }
 
             // VSTS#795621 - Ensure ServerName is Sent During TdsLogin To Enable Sql Azure Connectivity.
@@ -97,14 +109,15 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
 
             login.useReplication = context.ConnectionOptions.Replication;
             login.useSSPI = context.ConnectionOptions.IntegratedSecurity  // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
-                                     || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && !context.ConnectionContext.FedAuthRequired);
+                                     || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated 
+                                     && !context.ConnectionContext.FedAuthRequired);
             login.packetSize = context.ConnectionOptions.PacketSize;
-            login.newPassword = newPassword;
+            login.newPassword = passwordChangeRequest?.NewPassword;
             login.readOnlyIntent = context.ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
-            login.credential = _credential;
-            if (newSecurePassword != null)
+            login.credential = passwordChangeRequest?.Credential;
+            if (passwordChangeRequest?.NewSecurePassword != null)
             {
-                login.newSecurePassword = newSecurePassword;
+                login.newSecurePassword = passwordChangeRequest?.NewSecurePassword;
             }
 
             TdsEnums.FeatureExtension requestedFeatures = TdsEnums.FeatureExtension.None;
@@ -114,20 +127,8 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
                 _sessionRecoveryRequested = true;
             }
 
-            // If the workflow being used is Active Directory Authentication and server's prelogin response
-            // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
-            // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
-            if (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
-                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
-                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
-                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
-                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
-                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
-                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
-                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
-                // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
-                || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && context.ConnectionContext.FedAuthRequired)
-                || context.ConnectionContext.AccessTokenCallback != null)
+            
+            if (ShouldRequestFedAuth(context))
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 _federatedAuthenticationInfoRequested = true;
@@ -135,8 +136,8 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
                     new FederatedAuthenticationFeatureExtensionData
                     {
                         libraryType = TdsEnums.FedAuthLibrary.MSAL,
-                        authentication = ConnectionOptions.Authentication,
-                        fedAuthRequiredPreLoginResponse = _fedAuthRequired
+                        authentication = context.ConnectionOptions.Authentication,
+                        fedAuthRequiredPreLoginResponse = context.ConnectionContext.FedAuthRequired
                     };
             }
 
@@ -146,8 +147,8 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
                 _fedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
                 {
                     libraryType = TdsEnums.FedAuthLibrary.SecurityToken,
-                    fedAuthRequiredPreLoginResponse = _fedAuthRequired,
-                    accessToken = _accessTokenInBytes
+                    fedAuthRequiredPreLoginResponse = context.ConnectionContext.FedAuthRequired,
+                    accessToken = context.ConnectionContext.AccessTokenInBytes
                 };
                 // No need any further info from the server for token based authentication. So set _federatedAuthenticationRequested to true
                 _federatedAuthenticationRequested = true;
@@ -160,6 +161,24 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
+
+            // If the workflow being used is Active Directory Authentication and server's prelogin response
+            // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
+            // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
+            static bool ShouldRequestFedAuth(LoginHandlerContext context)
+            {
+                return context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
+                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
+                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
+                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
+                                // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
+                                || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && context.ConnectionContext.FedAuthRequired)
+                                || context.ConnectionContext.AccessTokenCallback != null;
+            }
         }
     }
 

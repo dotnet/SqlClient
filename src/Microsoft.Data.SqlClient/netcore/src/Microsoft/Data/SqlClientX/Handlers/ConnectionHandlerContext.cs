@@ -9,6 +9,9 @@ using System.Threading;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.IO;
+using System.Security;
+using Microsoft.Data.SqlClientX.Handlers.Connection;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClientX.Handlers
 {    /// <summary>
@@ -16,6 +19,11 @@ namespace Microsoft.Data.SqlClientX.Handlers
      /// </summary>
     internal class ConnectionHandlerContext : HandlerRequest
     {
+        /// <summary>
+        /// A timer representing the timeout for the connection.
+        /// </summary>
+        internal TimeoutTimer TimeoutTimer { get; set; }
+
         /// <summary>
         /// Stream used by readers.
         /// </summary>
@@ -76,6 +84,11 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// The server information created for the connection.
         /// </summary>
         public ServerInfo SeverInfo { get; internal set; }
+        
+        /// <summary>
+        /// The password change request for the connection.
+        /// </summary>
+        public PasswordChangeRequest PasswordChangeRequest { get; internal set; }
 
         /// <summary>
         /// The callback for Access Token Retrieval.
