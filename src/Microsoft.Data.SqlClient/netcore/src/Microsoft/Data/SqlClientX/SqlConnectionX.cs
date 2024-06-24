@@ -12,6 +12,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
 
 #nullable enable
@@ -115,7 +117,7 @@ namespace Microsoft.Data.SqlClientX
                     case ConnectionState.Connecting:
                     case ConnectionState.Fetching:
                     case ConnectionState.Executing:
-                        throw new InvalidOperationException("Can't change connection string on an active connection");
+                        throw throw ADP.OpenConnectionPropertySet(nameof(ConnectionString), connectionInternal.State);
                 }
 
                 _connectionString = value ?? string.Empty;
@@ -171,8 +173,8 @@ namespace Microsoft.Data.SqlClientX
                 case ConnectionState.Fetching:
                     break;
                 case ConnectionState.Connecting:
-                    //TODO: change this to match current behavior. cancels any pending async open task
-                    throw new InvalidOperationException("Can't close connection while in Connecting state");
+                    //TODO: change this to match current behavior. cancels any pending async open tasks
+                    break;
                 default:
                     return Task.CompletedTask;
             }
@@ -236,7 +238,7 @@ namespace Microsoft.Data.SqlClientX
         {
             if (_dataSource == null)
             {
-                throw new InvalidOperationException("No data source or connection string set");
+                throw ADP.NoConnectionString();
             }
 
             _connection = await _dataSource.GetInternalConnection(async, cancellationToken);
