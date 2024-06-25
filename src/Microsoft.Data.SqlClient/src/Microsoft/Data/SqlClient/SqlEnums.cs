@@ -243,6 +243,8 @@ namespace Microsoft.Data.SqlClient
                     return s_metaDateTime2;
                 case SqlDbType.DateTimeOffset:
                     return MetaDateTimeOffset;
+                case (SqlDbType)35:
+                    return s_MetaJson;
                 default:
                     throw SQL.InvalidSqlDbType(target);
             }
@@ -968,7 +970,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static readonly MetaType MetaDateTimeOffset = new(255, 7, -1, false, false, false, TdsEnums.SQLDATETIMEOFFSET, TdsEnums.SQLDATETIMEOFFSET, MetaTypeName.DATETIMEOFFSET, typeof(System.DateTimeOffset), typeof(System.DateTimeOffset), SqlDbType.DateTimeOffset, DbType.DateTimeOffset, 1);
 
-        internal static readonly MetaType MetaJson = new(255, 7, -1, false, false, false, TdsEnums.SQLJSON, TdsEnums.SQLJSON, MetaTypeName.DATETIMEOFFSET, typeof(System.DateTimeOffset), typeof(System.DateTimeOffset), (SqlDbType)35, DbType.DateTimeOffset, 1);
+        internal static readonly MetaType s_MetaJson = new(255, 255, -1, false, true, true, TdsEnums.SQLJSON, TdsEnums.SQLJSON, MetaTypeName.JSON, typeof(SqlJson), typeof(SqlJson), (SqlDbType)35, DbType.String, 0);
 
         public static TdsDateTime FromDateTime(DateTime dateTime, byte cb)
         {

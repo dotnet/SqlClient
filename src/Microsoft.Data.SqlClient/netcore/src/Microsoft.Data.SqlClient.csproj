@@ -36,6 +36,7 @@
   </ItemGroup>  
   <!-- Contains common items shared between NetFx and NetCore -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
+    
     <Compile Include="$(CommonPath)\CoreLib\System\Threading\Tasks\TaskToApm.cs">
       <Link>Common\CoreLib\System\Threading\Tasks\TaskToApm.cs</Link>
     </Compile>
@@ -84,6 +85,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Microsoft\Data\SqlClient\SqlJson.cs">
+      <Link>Microsoft\Data\SqlClient\SqlJson.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\BitConverterCompatible.cs">
       <Link>Microsoft\Data\Common\BitConverterCompatible.cs</Link>
@@ -953,7 +957,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)"  />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
     <!-- Enable the project reference for debugging purposes. -->
     <!-- <ProjectReference Include="$(SqlServerSourceCode)\Microsoft.SqlServer.Server.csproj" /> -->
     <PackageReference Include="Microsoft.SqlServer.Server" Version="$(MicrosoftSqlServerServerVersion)" />
