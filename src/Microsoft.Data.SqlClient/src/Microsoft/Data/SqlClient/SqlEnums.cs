@@ -968,6 +968,8 @@ namespace Microsoft.Data.SqlClient
 
         internal static readonly MetaType MetaDateTimeOffset = new(255, 7, -1, false, false, false, TdsEnums.SQLDATETIMEOFFSET, TdsEnums.SQLDATETIMEOFFSET, MetaTypeName.DATETIMEOFFSET, typeof(System.DateTimeOffset), typeof(System.DateTimeOffset), SqlDbType.DateTimeOffset, DbType.DateTimeOffset, 1);
 
+        internal static readonly MetaType MetaJson = new(255, 7, -1, false, false, false, TdsEnums.SQLJSON, TdsEnums.SQLJSON, MetaTypeName.DATETIMEOFFSET, typeof(System.DateTimeOffset), typeof(System.DateTimeOffset), (SqlDbType)35, DbType.DateTimeOffset, 1);
+
         public static TdsDateTime FromDateTime(DateTime dateTime, byte cb)
         {
             SqlDateTime sqlDateTime;
@@ -1054,6 +1056,7 @@ namespace Microsoft.Data.SqlClient
             public const string TIME = "time";
             public const string DATETIME2 = "datetime2";
             public const string DATETIMEOFFSET = "datetimeoffset";
+            public const string JSON = "json";
         }
     }
 
