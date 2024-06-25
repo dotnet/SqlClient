@@ -5708,6 +5708,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVARCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
+                case TdsEnums.SQLJSON:
                     // If bigvarchar(max), we only read the first chunk here,
                     // expecting the caller to read the rest
                     if (encoding == null)
@@ -6169,14 +6170,14 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
                 case TdsEnums.SQLNCHAR:
-                case TdsEnums.SQLNVARCHAR:
+                case TdsEnums.SQLNVARCHAR: 
                 case TdsEnums.SQLNTEXT:
+                case TdsEnums.SQLJSON:
                     if (!TryReadSqlStringValue(value, tdsType, length, md.encoding, isPlp, stateObj))
                     {
                         return false;
                     }
                     break;
-
                 case TdsEnums.SQLXMLTYPE:
                     // We store SqlCachedBuffer here, so that we can return either SqlBinary, SqlString or SqlXmlReader.
                     SqlCachedBuffer sqlBuf;
@@ -7661,6 +7662,7 @@ namespace Microsoft.Data.SqlClient
             if (colmeta.metaType.IsPlp)
             {
                 Debug.Assert(colmeta.tdsType == TdsEnums.SQLXMLTYPE ||
+                             colmeta.tdsType == TdsEnums.SQLJSON ||
                              colmeta.tdsType == TdsEnums.SQLBIGVARCHAR ||
                              colmeta.tdsType == TdsEnums.SQLBIGVARBINARY ||
                              colmeta.tdsType == TdsEnums.SQLNVARCHAR ||
