@@ -33,6 +33,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.TransportCreation
         [Theory]
         [InlineData(DataSource.Protocol.None)]
         [InlineData(DataSource.Protocol.TCP)]
+        [InlineData(DataSource.Protocol.Admin)]
         internal async Task Handle_ProtocolFromParams_Passes(DataSource.Protocol protocol)
         {
             // Arrange
