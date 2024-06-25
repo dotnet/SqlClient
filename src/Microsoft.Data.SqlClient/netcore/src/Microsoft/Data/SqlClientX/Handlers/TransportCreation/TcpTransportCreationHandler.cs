@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
         public override async ValueTask<Stream> Handle(ConnectionHandlerContext parameters, bool isAsync, CancellationToken ct)
         {
             // This handler cannot process if the protocol does not contain TCP
-            if (parameters.DataSource.ResolvedProtocol is not (DataSource.Protocol.TCP or DataSource.Protocol.None))
+            if (parameters.DataSource.ResolvedProtocol is not (DataSource.Protocol.Admin or DataSource.Protocol.TCP or DataSource.Protocol.None))
             {
                 return await HandleNext(parameters, isAsync, ct);
             }
@@ -49,11 +49,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             switch (parameters.ConnectionString.IPAddressPreference)
             {
                 case SqlConnectionIPAddressPreference.IPv4First:
-                    Array.Sort(ipAddresses, IpAddressVersionSorter.InstanceV4);
+                    Array.Sort(ipAddresses, IpAddressVersionComparer.InstanceV4);
                     break;
 
                 case SqlConnectionIPAddressPreference.IPv6First:
-                    Array.Sort(ipAddresses, IpAddressVersionSorter.InstanceV6);
+                    Array.Sort(ipAddresses, IpAddressVersionComparer.InstanceV6);
                     break;
 
                 case SqlConnectionIPAddressPreference.UsePlatformDefault:
@@ -152,6 +152,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 
             try
             {
+                // Note: Although it seems logical to cancel if cancellation happens, we don't
+                //   need to do that here. Since the socket is set to be non-blocking, once we
+                //   call connect we'll throw and move onto polling where we continuously check
+                //   the cancellation token.
                 socket.Connect(ipEndPoint);
             }
             catch (SocketException e)
@@ -168,11 +172,29 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             }
 
             // Poll the socket until it is open
-            // @TODO: This method can't be cancelled, so we should consider pooling smaller timeouts and looping while
-            //    there is still time left on the timer, checking cancellation token each time.
-            if (!socket.Poll(DefaultPollTimeout, SelectMode.SelectWrite))
+
+            try
             {
-                throw new TimeoutException("Socket failed to open within timeout period.");
+                using (ct.Register(socket.Dispose))
+                {
+                    if (!socket.Poll(DefaultPollTimeout, SelectMode.SelectWrite))
+                    {
+                        throw new TimeoutException();
+                    }
+                }
+            }
+            catch (SocketException se)
+            {
+                // We get a special exception if the cancellation token timed out. If the
+                // cancellation token triggered it, use that exception instead.
+                if (se.ErrorCode == (int)SocketError.Interrupted)
+                {
+                    ct.ThrowIfCancellationRequested();
+                }
+                
+                // This was either some other kind of exception or the polling was interrupted
+                // by some other mechanism.
+                throw;
             }
         }
     }
