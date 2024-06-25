@@ -854,6 +854,8 @@ namespace Microsoft.Data.SqlClient
                     return MetaUdt;
                 case TdsEnums.SQLXMLTYPE:
                     return MetaXml;
+                case TdsEnums.SQLJSON:
+                    return s_MetaJson;
                 case TdsEnums.SQLTABLE:
                     return s_metaTable;
                 case TdsEnums.SQLDATE:

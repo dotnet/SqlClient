@@ -11,6 +11,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -1646,7 +1647,14 @@ namespace Microsoft.Data.SqlClient
                             coercedToDataFeed = true;
                         }
                         break;
-
+                    case TdsEnums.SQLJSON:
+                        Debug.Assert((value is JsonDocument) || (value is string), "Invalid value type of Json datatype");
+                        if (value is string)
+                        {
+                            value = JsonDocument.Parse(value as string);
+                            typeChanged = true;
+                        }
+                        break;
                     default:
                         Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
                         throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), null);

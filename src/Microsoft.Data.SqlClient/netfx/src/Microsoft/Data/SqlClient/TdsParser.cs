@@ -4639,6 +4639,10 @@ namespace Microsoft.Data.SqlClient
             {
                 tdsLen = 3;
             }
+            else if (tdsType == TdsEnums.SQLJSON)
+            {
+                throw new NotImplementedException();
+            }
             else
             {
                 if (!TryGetTokenLength(tdsType, stateObj, out tdsLen))
@@ -5509,7 +5513,7 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
-            if (tdsType == TdsEnums.SQLXMLTYPE)
+            if (tdsType == TdsEnums.SQLXMLTYPE || tdsType == TdsEnums.SQLJSON)
                 col.length = TdsEnums.SQL_USHORTVARMAXLEN;  //Use the same length as other plp datatypes
             else if (IsVarTimeTds(tdsType))
                 col.length = 0;  // placeholder until we read the scale, just make sure it's not SQL_USHORTVARMAXLEN
@@ -5550,7 +5554,8 @@ namespace Microsoft.Data.SqlClient
                                  tdsType == TdsEnums.SQLBIGVARCHAR ||
                                  tdsType == TdsEnums.SQLBIGVARBINARY ||
                                  tdsType == TdsEnums.SQLNVARCHAR ||
-                                 tdsType == TdsEnums.SQLUDT,
+                                 tdsType == TdsEnums.SQLUDT ||
+                                 tdsType == TdsEnums.SQLJSON,
                                  "Invalid streaming datatype");
                     col.metaType = MetaType.GetMaxMetaTypeFromMetaType(col.metaType);
                     Debug.Assert(col.metaType.IsLong, "Max datatype not IsLong");
@@ -5656,6 +5661,10 @@ namespace Microsoft.Data.SqlClient
             // read the collation for 7.x servers
             if (_is2000 && col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE))
             {
+                if (tdsType == TdsEnums.SQLJSON)
+                {
+                    throw new NotImplementedException("JSON type is not supported in this version of the driver.");
+                }
                 if (!TryProcessCollation(stateObj, out col.collation))
                 {
                     return false;

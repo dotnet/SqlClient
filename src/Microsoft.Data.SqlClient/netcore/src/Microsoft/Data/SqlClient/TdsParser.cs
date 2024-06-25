@@ -10007,6 +10007,8 @@ namespace Microsoft.Data.SqlClient
                         WriteIdentifierWithShortLength(metaData.TypeSpecificNamePart3, stateObj);
                     }
                     break;
+                case (SqlDbType)35:
+                    throw new NotImplementedException("Json type not supported in SMI");
                 case SqlDbType.Udt:
                     stateObj.WriteByte(TdsEnums.SQLUDT);
                     WriteIdentifier(metaData.TypeSpecificNamePart1, stateObj);
@@ -12282,7 +12284,19 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(value is SqlString);
                         return SerializeString(((SqlString)value).Value, actualLength, offset);
                     }
+                case TdsEnums.SQLJSON:
+                    if (actualLength != 0)
+                        actualLength >>= 1;
 
+                    if (value is SqlChars)
+                    {
+                        return SerializeCharArray(((SqlChars)value).Value, actualLength, offset);
+                    }
+                    else
+                    {
+                        Debug.Assert(value is SqlString);
+                        return SerializeString(((SqlString)value).Value, actualLength, offset);
+                    }
                 case TdsEnums.SQLNUMERICN:
                     Debug.Assert(type.FixedLength <= 17, "Decimal length cannot be greater than 17 bytes");
                     return SerializeSqlDecimal((SqlDecimal)value, stateObj);
@@ -12361,7 +12375,7 @@ namespace Microsoft.Data.SqlClient
                         WriteInt(unchecked((int)TdsEnums.VARLONGNULL), stateObj);
                     }
                 }
-                else if (type.NullableType == TdsEnums.SQLXMLTYPE || unknownLength)
+                else if (type.NullableType is TdsEnums.SQLXMLTYPE or TdsEnums.SQLJSON|| unknownLength)
                 {
                     WriteUnsignedLong(TdsEnums.SQL_PLP_UNKNOWNLEN, stateObj);
                 }
