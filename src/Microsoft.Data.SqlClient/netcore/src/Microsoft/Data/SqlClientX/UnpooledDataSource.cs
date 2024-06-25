@@ -4,6 +4,7 @@
 
 #if NET8_0_OR_GREATER
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
@@ -27,14 +28,16 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Creates and opens a new SqlConnector.
         /// </summary>
+        /// <param name="owningConnection">The SqlConnectionX object that will exclusively own and use this connector.</param>
+        /// <param name="timeout">The connection timeout for this operation.</param>
         /// <param name="async">Whether this method should be run asynchronously.</param>
         /// <param name="cancellationToken">Cancels an outstanding asynchronous operation.</param>
         /// <returns></returns>
-        internal override async ValueTask<SqlConnector> GetInternalConnection(bool async, CancellationToken cancellationToken)
+        internal override async ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
-            var connection = new SqlConnector();
-            await connection.Open(async, cancellationToken).ConfigureAwait(false);
-            return connection;
+            var connector = new SqlConnector(owningConnection);
+            await connector.Open(timeout, async, cancellationToken).ConfigureAwait(false);
+            return connector;
         }
     }
 }
