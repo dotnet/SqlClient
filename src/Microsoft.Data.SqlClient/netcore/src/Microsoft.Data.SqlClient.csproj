@@ -923,8 +923,8 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\BaseTlsHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\PreloginHandlerContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\PreloginPacketHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\TlsBeginHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\TlsEndHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds8TlsHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds74TlsHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\DataSourceParsingHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ErrorExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

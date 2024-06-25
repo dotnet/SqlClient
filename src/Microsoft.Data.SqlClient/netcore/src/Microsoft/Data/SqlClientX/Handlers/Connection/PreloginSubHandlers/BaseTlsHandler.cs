@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Collections.Generic;
 using System.Net.Security;
 using System.Security.Authentication;
@@ -16,8 +20,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         private static readonly SslProtocols s_supportedProtocols = SslProtocols.None;
 
         private static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
-
-        protected bool ValidateCert { get; set; } = true;
 
         public IHandler<PreLoginHandlerContext> NextHandler { get; set; }
 
@@ -73,7 +75,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                 using (TrySNIEventScope.Create(nameof(PreloginHandler)))
                 {
                     Guid _connectionId = context.ConnectionContext.ConnectionId;
-                    ValidateCert = context.ValidateCertificate;
                     string serverName = context.ConnectionContext.DataSource.ServerName;
                     SslOverTdsStream sslOverTdsStream = context.ConnectionContext.SslOverTdsStream;
                     SslStream sslStream = context.ConnectionContext.SslStream;
@@ -94,7 +95,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                                     ApplicationProtocols = s_tdsProtocols,
                                     ClientCertificates = null
                                 };
-
 
                         if (isAsync)
                         {

@@ -14,12 +14,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
     /// This handler is most significant for Tds 7.4 and below, because it negotiates the TLS encryption,
     /// and validates the server certificate, which are mandatory for Tds 8.0, and are already done at this point.
     /// </summary>
-    internal class TlsEndHandler : BaseTlsHandler
+    internal class Tds74TlsHandler : BaseTlsHandler
     {
         /// <inheritdoc />
         public override async ValueTask Handle(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            if (!context.IsTlsFirst && DoesClientNeedEncryption(context))
+            if (!context.IsTlsFirst && context.DoesClientNeedEncryption())
             {
                 if (!context.ServerSupportsEncryption)
                 {
@@ -30,30 +30,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     context.ConnectionContext.Error = new Exception("Encryption not supported by server");
                     return;
                 }
-
-                context.ValidateCertificate = ShouldValidateSertificate(context);
-
                 await AuthenticateClientInternal(context, isAsync, ct).ConfigureAwait(false);
-            }
-
-            if (context.HasError)
-            {
-                return;
             }
 
             if (NextHandler is not null)
             {
                 await NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
             }
-
-            // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
-            static bool ShouldValidateSertificate(PreLoginHandlerContext context) =>
-                (context.InternalEncryptionOption == EncryptionOptions.ON && !context.TrustServerCert) ||
-                (context.ConnectionContext.AccessTokenInBytes != null && !context.TrustServerCert);
-
-            // Do client settings require encryption?
-            static bool DoesClientNeedEncryption(PreLoginHandlerContext context) =>
-                context.InternalEncryptionOption == EncryptionOptions.ON || context.InternalEncryptionOption == EncryptionOptions.LOGIN;
         }
     }
 }

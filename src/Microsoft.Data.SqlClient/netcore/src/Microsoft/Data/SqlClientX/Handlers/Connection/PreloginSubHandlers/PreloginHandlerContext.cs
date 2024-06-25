@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
     internal class PreLoginHandlerContext : HandlerRequest
     {
         public SqlConnectionEncryptOption ConnectionEncryptionOption { get; private set; }
-        public bool IsTlsFirst { get; private set; }
+        public bool IsTlsFirst => (ConnectionEncryptionOption == SqlConnectionEncryptOption.Strict);
         public bool TrustServerCert { get; private set; }
         public bool IntegratedSecurity { get; private set; }
         public SqlAuthenticationMethod AuthType { get; private set; }
@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         public EncryptionOptions InternalEncryptionOption { get; set; } = EncryptionOptions.OFF;
 
         public ConnectionHandlerContext ConnectionContext { get; private set; }
-        public bool ValidateCertificate { get; internal set; }
+
         public SNIError SniError { get; internal set; }
         public bool ServerSupportsEncryption { get; internal set; }
         public PreLoginHandshakeStatus HandshakeStatus { get; internal set; }
@@ -33,12 +33,36 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             ConnectionContext = connectionContext;
             SqlConnectionString connectionOptions = connectionContext.ConnectionString;
             ConnectionEncryptionOption = connectionOptions.Encrypt;
-            IsTlsFirst = (ConnectionEncryptionOption == SqlConnectionEncryptOption.Strict);
             TrustServerCert = connectionOptions.TrustServerCertificate;
             IntegratedSecurity = connectionOptions.IntegratedSecurity;
             AuthType = connectionOptions.Authentication;
             HostNameInCertificate = connectionOptions.HostNameInCertificate;
             ServerCertificateFilename = connectionOptions.ServerCertificate;
         }
+
+        /// <summary>
+        /// Checks if the client should validate the server certificate.
+        /// </summary>
+        /// <returns></returns>
+        public bool ShouldValidateCertificate()
+        {
+            if (IsTlsFirst)
+            {
+                return true;
+            }
+            else
+            {
+                return (InternalEncryptionOption == EncryptionOptions.ON && !TrustServerCert)
+                || (ConnectionContext.AccessTokenInBytes != null && !TrustServerCert);
+            }
+        }
+
+        /// <summary>
+        /// Checks if the client needs encryption.
+        /// </summary>
+        /// <returns></returns>
+        public bool DoesClientNeedEncryption() =>
+                InternalEncryptionOption == EncryptionOptions.ON || InternalEncryptionOption == EncryptionOptions.LOGIN;
+
     }
 }
