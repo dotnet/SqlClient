@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -23,15 +24,14 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             {
                 return await HandleNext(parameters, isAsync, ct);
             }
-
-            // @TODO: Support named pipe connections
+            
             if (parameters.DataSource.ResolvedProtocol is DataSource.Protocol.None)
             {
-                // Temp code: Let the next handler try if none was specified
+                // @TODO: Support named pipe connections
                 return await HandleNext(parameters, isAsync, ct);
             }
 
-            throw new NoSuitableHandlerFoundException();
+            throw new NotImplementedException();
         }
     }
 }
