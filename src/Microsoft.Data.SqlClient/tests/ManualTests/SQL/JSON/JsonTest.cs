@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JSON
     {
         private readonly ITestOutputHelper _output;
 
+        private readonly string PWD = Environment.GetEnvironmentVariable("SQL_PASSWORD") != null ? Environment.GetEnvironmentVariable("SQL_PASSWORD") : "";
         public JsonTest(ITestOutputHelper output)
         {
             _output = output;
@@ -25,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JSON
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
             builder.DataSource = "tcp:10.224.90.151";
             builder.UserID = "sa";
-            builder.Password = "Yukon900!Welcome";
+            builder.Password = PWD;
             builder.InitialCatalog = "TestJson";
             builder.TrustServerCertificate = true;
             builder.Encrypt = false;
@@ -61,7 +62,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JSON
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
             builder.DataSource = "tcp:10.224.90.151";
             builder.UserID = "sa";
-            builder.Password = "Yukon900!Welcome";
+            builder.Password = PWD;
             builder.InitialCatalog = "TestJson";
             builder.TrustServerCertificate = true;
             builder.Encrypt = false;
