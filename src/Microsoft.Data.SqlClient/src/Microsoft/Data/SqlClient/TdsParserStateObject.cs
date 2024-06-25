@@ -2109,7 +2109,7 @@ namespace Microsoft.Data.SqlClient
         internal void PrepareReplaySnapshot()
         {
             _networkPacketTaskSource = null;
-            //if (!_snapshot.MoveToContinue())
+            if (!_snapshot.MoveToContinue())
             {
                 _snapshot.MoveToStart();
             }
@@ -2676,27 +2676,8 @@ namespace Microsoft.Data.SqlClient
                 public PacketData NextPacket;
                 public PacketData PrevPacket;
 
-                public int DataOffset;
-                public int DataLength;
-
                 public int TotalSize;
 
-                internal int GetPacketTotalSize()
-                {
-                    if (TotalSize == 0)
-                    {
-                        int previous = 0;
-                        if (PrevPacket != null)
-                        {
-                            previous = PrevPacket.TotalSize;
-                        }
-                        return previous;
-                    }
-                    else
-                    {
-                        return TotalSize;
-                    }
-                }
                 internal int GetPacketDataOffset()
                 {
                     int previous = 0;
@@ -2717,8 +2698,6 @@ namespace Microsoft.Data.SqlClient
                         PrevPacket.NextPacket = null;
                         PrevPacket = null;
                     }
-                    DataLength = 0;
-                    DataOffset = 0;
                     SetDebugStackInternal(null);
                     SetDebugPacketIdInternal(0);
                 }
@@ -2776,6 +2755,14 @@ namespace Microsoft.Data.SqlClient
 
                 public int PacketId;
                 public string Stack;
+
+                public int PacketID => Packet.GetIDFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
+
+                public int SPID => Packet.GetSpidFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
+
+                public bool IsEOM => Packet.GetIsEOMFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
+
+                public int DataLength => Packet.GetDataLengthFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
 
                 partial void SetDebugStackInternal(string value) => Stack = value;
 
@@ -2949,7 +2936,6 @@ namespace Microsoft.Data.SqlClient
                     if (_continueSupported == null)
                     {
                         _continueSupported = AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.UseExperimentalAsyncContinue", out bool value) ? value : false;
-                        //_continueSupported = false;
                     }
                     return _continueSupported.Value;
                 }
@@ -3109,14 +3095,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 _current.TotalSize = total + size;
             }
-            internal int GetPacketDataTotalSize()
-            {
-                if (_current == null)
-                {
-                    throw new InvalidOperationException();
-                }
-                return _current.GetPacketTotalSize();
-            }
+
             internal int GetPacketDataOffset()
             {
                 if (_current == null)
