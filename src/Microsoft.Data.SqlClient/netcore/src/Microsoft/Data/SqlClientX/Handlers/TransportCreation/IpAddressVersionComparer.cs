@@ -14,11 +14,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
     /// This class cannot be instantiated, so to use it, use the singleton instances (doubleton?)
     /// <see cref="InstanceV4"/> and <see cref="InstanceV6"/>.
     /// </summary>
-    internal sealed class IpAddressVersionSorter : IComparer<IPAddress>
+    internal sealed class IpAddressVersionComparer : IComparer<IPAddress>
     {
         private readonly AddressFamily _preferredAddressFamily;
 
-        private IpAddressVersionSorter(AddressFamily preferredAddressFamily)
+        private IpAddressVersionComparer(AddressFamily preferredAddressFamily)
         {
             _preferredAddressFamily = preferredAddressFamily;
         }
@@ -26,14 +26,14 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
         /// <summary>
         /// Gets a singleton instance that ranks IPv4 addresses higher than IPv6 addresses.
         /// </summary>
-        public static IpAddressVersionSorter InstanceV4 { get; } =
-            new IpAddressVersionSorter(AddressFamily.InterNetwork);
+        public static IpAddressVersionComparer InstanceV4 { get; } =
+            new IpAddressVersionComparer(AddressFamily.InterNetwork);
 
         /// <summary>
         /// Gets a singleton instance that ranks IPv6 addresses higher than IPv4 addresses.
         /// </summary>
-        public static IpAddressVersionSorter InstanceV6 { get; } =
-            new IpAddressVersionSorter(AddressFamily.InterNetworkV6);
+        public static IpAddressVersionComparer InstanceV6 { get; } =
+            new IpAddressVersionComparer(AddressFamily.InterNetworkV6);
 
         /// <inheritdoc />
         public int Compare(IPAddress x, IPAddress y)
