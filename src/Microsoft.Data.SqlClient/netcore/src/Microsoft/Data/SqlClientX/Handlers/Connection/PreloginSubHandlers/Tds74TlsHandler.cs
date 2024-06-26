@@ -8,6 +8,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
@@ -27,14 +28,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             {
                 if (!context.ServerSupportsEncryption)
                 {
-                    //_physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                    //_physicalStateObj.Dispose();
-                    //ThrowExceptionAndWarning(_physicalStateObj);
-                    // TODO: Error handling needs to be aligned for the new design. This is a placeholder for now.
-                    context.ConnectionContext.Error = new Exception("Encryption not supported by server");
-                    return;
+                    SqlErrorCollection collection = context.ConnectionContext.ErrorCollection;
+                    string serverName = context.ConnectionContext.SeverInfo.ResolvedServerName;
+                    collection.Add(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, serverName, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                    throw SqlException.CreateException(collection, null);
                 }
-                
+
                 await AuthenticateClientInternal(context, isAsync, ct).ConfigureAwait(false);
 
                 // Enable encryption for Login. 
@@ -47,6 +46,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             }
         }
 
+        /// <inheritdoc />
         protected override SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreLoginHandlerContext context)
         {
             string serverName = context.ConnectionContext.DataSource.ServerName;

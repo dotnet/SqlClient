@@ -66,11 +66,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             // If tls first then create a sslStream with the underlying stream as the transport stream.
             // if this is not tlsfirst then ssl over tds stream with transport stream as the underlying stream.
             Stream transportStream = preloginContext.ConnectionContext.ConnectionStream;
+
+            // baseStream is the underlying stream for the SslStream.
             Stream baseStream = transportStream;
             if (!preloginContext.IsTlsFirst)
             {
                 SslOverTdsStream sslOVerTdsStream = new SslOverTdsStream(transportStream, preloginContext.ConnectionContext.ConnectionId);
-
                 // This will be used later to finish the handshake.
                 preloginContext.ConnectionContext.SslOverTdsStream = sslOVerTdsStream;
                 baseStream = sslOVerTdsStream;

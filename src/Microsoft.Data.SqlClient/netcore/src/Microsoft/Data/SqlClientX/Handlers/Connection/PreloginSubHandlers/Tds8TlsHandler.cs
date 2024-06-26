@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// Takes care of beginning TLS handshake in Tls First aka TDS8.0.
         /// </summary>
         /// <param name="context">The prelogin context object.</param>
-        /// <param name="isAsync">Whether this operations should be done asynchronosly or not.</param>
+        /// <param name="isAsync">Whether this operations should be done asynchronously or not.</param>
         /// <param name="ct">Cancellation token for the operation.</param>
         /// <returns></returns>
         public override async ValueTask Handle(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
@@ -44,6 +44,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             }
         }
 
+        /// <inheritdoc />
         protected override SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreLoginHandlerContext context)
         {
             string serverName = context.ConnectionContext.DataSource.ServerName;

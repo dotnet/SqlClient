@@ -22,15 +22,15 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
         protected async ValueTask AuthenticateClientInternal(PreLoginHandlerContext request, bool isAsync, CancellationToken ct)
         {
-            await AuthenticateClient(request, isAsync, ct).ConfigureAwait(false);
-
-            if (request.SniError != null)
-            {
-                SqlError error = request.SniError.ToSqlError(SniContext.Snix_PreLogin,
-                    new ServerInfo(request.ConnectionContext.ConnectionString));
-                // TODO; enhance
-                throw request.Exception;
+            try
+            { 
+                await AuthenticateClient(request, isAsync, ct).ConfigureAwait(false);
             }
+            catch (Exception e)
+            {
+                // Convert to a Sql Exception.
+            }
+            
 
             LogWarningIfNeeded(request);
 
@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     }
 
                     context.ConnectionContext.TdsStream = new TdsStream(new TdsWriteStream(sslStream), new TdsReadStream(sslStream));
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(BaseTlsHandler), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
                 }
             }
             catch (Exception e)

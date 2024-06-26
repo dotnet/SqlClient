@@ -99,15 +99,14 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         // Any response other than NOT_SUP means the server supports encryption.
                         context.ServerSupportsEncryption = serverOption != EncryptionOptions.NOT_SUP;
 
-                        // If server doesn't support encyrption, then we can't proceed, since encryption is always needed
+                        // If server doesn't support encryption, then we can't proceed, since encryption is always needed
                         // for login.
                         if (!context.ServerSupportsEncryption)
                         {
-                            //    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                            //    _physicalStateObj.Dispose();
-                            //    ThrowExceptionAndWarning(_physicalStateObj);
-                            context.ConnectionContext.Error = new Exception("Encryption not supported by server");
-                            return;
+                            SqlErrorCollection collection = context.ConnectionContext.ErrorCollection;
+                            string serverName = context.ConnectionContext.SeverInfo.ResolvedServerName;
+                            collection.Add(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, serverName, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                            throw SqlException.CreateException(collection, null);
                         }
 
                         switch (context.InternalEncryptionOption)
@@ -129,14 +128,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                             case (EncryptionOptions.NOT_SUP):
                                 if (serverOption == EncryptionOptions.REQ)
                                 {
-                                    // Server has enforced encryption, but client does not support it.
-                                    //_physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
-                                    //_physicalStateObj.Dispose();
-                                    //ThrowExceptionAndWarning(_physicalStateObj);
-                                    // TODO : Error handling needs to happen here. Till then 
-                                    // adding an exception and returning 
-                                    context.ConnectionContext.Error = new Exception("Encryption not supported by server");
-                                    return;
+                                    SqlErrorCollection collection = context.ConnectionContext.ErrorCollection;
+                                    string serverName = context.ConnectionContext.SeverInfo.ResolvedServerName;
+                                    collection.Add(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, serverName, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
+                                    throw SqlException.CreateException(collection, null);
                                 }
                                 break;
                             default:

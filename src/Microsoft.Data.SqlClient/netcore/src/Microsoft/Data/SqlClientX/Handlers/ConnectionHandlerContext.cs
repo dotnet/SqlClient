@@ -76,6 +76,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// The server information created for the connection.
         /// </summary>
         public ServerInfo SeverInfo { get; internal set; }
+        public SqlErrorCollection ErrorCollection { get; internal set; } = new SqlErrorCollection();
 
         /// <summary>
         /// The callback for Access Token Retrieval.
