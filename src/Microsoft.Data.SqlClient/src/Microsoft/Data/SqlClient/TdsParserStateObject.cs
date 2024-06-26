@@ -1201,11 +1201,72 @@ namespace Microsoft.Data.SqlClient
         {
             return TryReadByteArray(buff, len, out _);
         }
-
         // NOTE: This method must be retriable WITHOUT replaying a snapshot
         // Every time you call this method increment the offset and decrease len by the value of totalRead
         public TdsOperationStatus TryReadByteArray(Span<byte> buff, int len, out int totalRead)
         {
+
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
+            totalRead = 0;
+
+#if DEBUG
+            if (_snapshot != null && _snapshot.DoPend())
+            {
+                _networkPacketTaskSource = new TaskCompletionSource<object>();
+                Interlocked.MemoryBarrier();
+
+                if (s_forcePendingReadsToWaitForUser)
+                {
+                    _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
+                    _realNetworkPacketTaskSource.SetResult(null);
+                }
+                else
+                {
+                    _networkPacketTaskSource.TrySetResult(null);
+                }
+                return TdsOperationStatus.InvalidData;
+            }
+#endif
+
+            Debug.Assert(buff.IsEmpty || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
+
+            // loop through and read up to array length
+            while (len > 0)
+            {
+                if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
+                {
+                    TdsOperationStatus result = TryPrepareBuffer();
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                }
+
+                int bytesToRead = Math.Min(len, Math.Min(_inBytesPacket, _inBytesRead - _inBytesUsed));
+                Debug.Assert(bytesToRead > 0, "0 byte read in TryReadByteArray");
+                if (!buff.IsEmpty)
+                {
+                    ReadOnlySpan<byte> copyFrom = new ReadOnlySpan<byte>(_inBuff, _inBytesUsed, bytesToRead);
+                    Span<byte> copyTo = buff.Slice(totalRead, bytesToRead);
+                    copyFrom.CopyTo(copyTo);
+                }
+
+                totalRead += bytesToRead;
+                _inBytesUsed += bytesToRead;
+                _inBytesPacket -= bytesToRead;
+                len -= bytesToRead;
+
+                AssertValidState();
+            }
+
+            return TdsOperationStatus.Done;
+        }
+
+
+
+        public TdsOperationStatus TryReadPlpByteArray(Span<byte> buff, int len, out int totalRead)
+        {
+
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
             totalRead = 0;
 
@@ -1832,6 +1893,7 @@ namespace Microsoft.Data.SqlClient
         // Every time you call this method increment the offset and decrease len by the value of totalBytesRead
         internal TdsOperationStatus TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead)
         {
+            totalBytesRead = 0;
             int bytesRead;
             int bytesLeft;
             byte[] newbuf;
@@ -1898,11 +1960,10 @@ namespace Microsoft.Data.SqlClient
             {
                 buff = new byte[_longlenleft];
             }
-
-            totalBytesRead = 0;
-
+            bool stored = false;
             while (bytesLeft > 0)
             {
+                stored = false;
                 int bytesToRead = (int)Math.Min(_longlenleft, (ulong)bytesLeft);
                 if (buff.Length < (offset + bytesToRead))
                 {
@@ -1912,7 +1973,7 @@ namespace Microsoft.Data.SqlClient
                     buff = newbuf;
                 }
 
-                TdsOperationStatus result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out bytesRead);
+                TdsOperationStatus result = TryReadPlpByteArray(buff.AsSpan(offset), bytesToRead, out bytesRead);
                 Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
                 Debug.Assert((ulong)bytesRead <= _longlenleft, "Read more bytes than is available");
 
@@ -1937,7 +1998,8 @@ namespace Microsoft.Data.SqlClient
                         _snapshot._plpBuffer = buff;
                         if (_snapshotStatus != SnapshotStatus.NotActive && _snapshot.ContinueEnabled)
                         {
-                            StoreProgress(this, bytesRead);
+                            StoreReadPlpBytesProgress(this, bytesRead);
+                            stored = true;
                         }
                     }
                 }
@@ -1948,9 +2010,10 @@ namespace Microsoft.Data.SqlClient
                     result = TryReadPlpLength(false, out _);
                     if (result != TdsOperationStatus.Done)
                     {
-                        if (result == TdsOperationStatus.NeedMoreData && _snapshot != null && _snapshot.ContinueEnabled)
+                        if (!stored && result == TdsOperationStatus.NeedMoreData && _snapshot != null && _snapshot.ContinueEnabled)
                         {
-                            StoreProgress(this, bytesRead);
+                            StoreReadPlpBytesProgress(this, bytesRead);
+                            stored = true;
                         }
                         return result;
                     }
@@ -1964,15 +2027,12 @@ namespace Microsoft.Data.SqlClient
             }
             return TdsOperationStatus.Done;
 
-            static void StoreProgress(TdsParserStateObject stateObject, int size)
+            static void StoreReadPlpBytesProgress(TdsParserStateObject stateObject, int size)
             {
-                if (stateObject._snapshot != null)
-                {
-                    if (stateObject._snapshotStatus != SnapshotStatus.NotActive)
-                    {
-                        stateObject._snapshot.SetPacketPayloadSize(size);
-                    }
-                }
+                Debug.Assert(stateObject._snapshot != null, "_snapshot must exist to store plp read progress");
+                Debug.Assert(stateObject._snapshotStatus != SnapshotStatus.NotActive, "_snapshot must be active to store plp read progress");
+
+                stateObject._snapshot.SetPacketPayloadSize(size);
             }
         }
 
@@ -2030,10 +2090,14 @@ namespace Microsoft.Data.SqlClient
                 if (_snapshotStatus != SnapshotStatus.NotActive)
                 {
 #if DEBUG
-                    // in debug builds stack traces contain line numbers so if we want to be
-                    // able to compare the stack traces they must all be created in the same
-                    // location in the code
-                    string stackTrace = Environment.StackTrace;
+                    string stackTrace = null;
+                    if (s_checkNetworkPacketRetryStacks)
+                    {
+                        // in debug builds stack traces contain line numbers so if we want to be
+                        // able to compare the stack traces they must all be created in the same
+                        // location in the code
+                        stackTrace = Environment.StackTrace;
+                    }
 #endif
                     if (_snapshot.MoveNext())
                     {
@@ -2045,14 +2109,14 @@ namespace Microsoft.Data.SqlClient
 #endif
                         return TdsOperationStatus.Done;
                     }
-#if DEBUG
                     else
                     {
+#if DEBUG
                         if (s_checkNetworkPacketRetryStacks)
                         {
                             _lastStack = stackTrace;
                         }
-
+#endif
                         if (_bTmpRead == 0 && _partialHeaderBytesRead == 0 && _longlenleft == 0 && _snapshot.ContinueEnabled)
                         {
                             // no temp between packets
@@ -2060,7 +2124,6 @@ namespace Microsoft.Data.SqlClient
                             _snapshot.CaptureAsContinue(this);
                         }
                     }
-#endif
                 }
 
                 // previous buffer is in snapshot
@@ -2885,7 +2948,7 @@ namespace Microsoft.Data.SqlClient
             private PacketData _continuePacket;
             private PacketData _sparePacket;
 
-            private bool? _continueSupported;
+            //private bool? _continueSupported;
 
 #if DEBUG
             private int _packetCounter;
@@ -2933,11 +2996,12 @@ namespace Microsoft.Data.SqlClient
             {
                 get
                 {
-                    if (_continueSupported == null)
-                    {
-                        _continueSupported = AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.UseExperimentalAsyncContinue", out bool value) ? value : false;
-                    }
-                    return _continueSupported.Value;
+                    //if (_continueSupported == null)
+                    //{
+                    //    _continueSupported = AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.UseExperimentalAsyncContinue", out bool value) ? value : false;
+                    //}
+                    //return _continueSupported.Value;
+                    return true;
                 }
             }
 
@@ -3133,6 +3197,7 @@ namespace Microsoft.Data.SqlClient
                 _packetCounter = 0;
 #endif
                 _stateObj = null;
+                //_continueSupported = null;
             }
         }
     }
