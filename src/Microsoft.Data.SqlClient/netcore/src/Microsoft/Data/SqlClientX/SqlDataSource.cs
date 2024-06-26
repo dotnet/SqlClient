@@ -45,6 +45,7 @@ namespace Microsoft.Data.SqlClientX
             return SqlConnectionX.FromDataSource(this);
         }
 
+        //TODO: rework this so that timeout and cancellationToken are bundled together
         /// <summary>
         /// Returns an opened SqlConnector.
         /// </summary>
