@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         private static readonly SslProtocols s_supportedProtocols = SslProtocols.None;
 
         /// <inheritdoc />
-        public override async ValueTask Handle(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        public override async ValueTask Handle(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             if (!context.IsTlsFirst && context.DoesClientNeedEncryption())
             {
@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         }
 
         /// <inheritdoc />
-        protected override SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreLoginHandlerContext context)
+        protected override SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreloginHandlerContext context)
         {
             string serverName = context.ConnectionContext.DataSource.ServerName;
             return new()

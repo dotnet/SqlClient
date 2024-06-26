@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
     /// <summary>
     /// Handler context for Prelogin.
     /// </summary>
-    internal class PreLoginHandlerContext : HandlerRequest
+    internal class PreloginHandlerContext : HandlerRequest
     {
         public SqlConnectionEncryptOption ConnectionEncryptionOption { get; private set; }
         public bool IsTlsFirst => (ConnectionEncryptionOption == SqlConnectionEncryptOption.Strict);
@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         public bool ServerSupportsEncryption { get; internal set; }
         public PreLoginHandshakeStatus HandshakeStatus { get; internal set; }
 
-        public PreLoginHandlerContext(ConnectionHandlerContext connectionContext)
+        public PreloginHandlerContext(ConnectionHandlerContext connectionContext)
         {
             ConnectionContext = connectionContext;
             SqlConnectionString connectionOptions = connectionContext.ConnectionString;

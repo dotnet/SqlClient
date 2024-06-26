@@ -13,7 +13,7 @@ using Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
-    internal class PreloginPacketHandler : IHandler<PreLoginHandlerContext>
+    internal class PreloginPacketHandler : IHandler<PreloginHandlerContext>
     {
         const int GUID_SIZE = 16;
 
@@ -28,9 +28,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
         internal int ObjectID => _objectID;
 
-        public IHandler<PreLoginHandlerContext> NextHandler { get; set; }
+        public IHandler<PreloginHandlerContext> NextHandler { get; set; }
 
-        public async ValueTask Handle(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        public async ValueTask Handle(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             await PreloginPacketHandler.CreatePreLoginAndSend(context, isAsync, ct).ConfigureAwait(false);
             
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <param name="isAsync"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        private async Task ReadPreLoginresponse(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        private async Task ReadPreLoginresponse(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             context.ConnectionContext.MarsCapable = context.ConnectionContext.ConnectionString.MARS; // Assign default value
             context.ConnectionContext.FedAuthRequired = false;
@@ -223,7 +223,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <param name="isAsync"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        private static async Task CreatePreLoginAndSend(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        private static async Task CreatePreLoginAndSend(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             Debug.Assert(context.ConnectionContext.TdsStream != null, "A Tds Stream is expected");
 

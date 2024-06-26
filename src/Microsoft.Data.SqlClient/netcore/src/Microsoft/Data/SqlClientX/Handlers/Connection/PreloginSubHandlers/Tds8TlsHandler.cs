@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <param name="isAsync">Whether this operations should be done asynchronously or not.</param>
         /// <param name="ct">Cancellation token for the operation.</param>
         /// <returns></returns>
-        public override async ValueTask Handle(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        public override async ValueTask Handle(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             // Check if Tls needs to be negotiated first. This is a safety check to make sure that the handler is not 
             // called when it is not supposed to be.
@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         }
 
         /// <inheritdoc />
-        protected override SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreLoginHandlerContext context)
+        protected override SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreloginHandlerContext context)
         {
             string serverName = context.ConnectionContext.DataSource.ServerName;
             return new()

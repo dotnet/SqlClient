@@ -13,14 +13,14 @@ using Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
-    internal abstract class BaseTlsHandler : IHandler<PreLoginHandlerContext>
+    internal abstract class BaseTlsHandler : IHandler<PreloginHandlerContext>
     {
 
-        public IHandler<PreLoginHandlerContext> NextHandler { get; set; }
+        public IHandler<PreloginHandlerContext> NextHandler { get; set; }
 
-        public abstract ValueTask Handle(PreLoginHandlerContext request, bool isAsync, CancellationToken ct);
+        public abstract ValueTask Handle(PreloginHandlerContext request, bool isAsync, CancellationToken ct);
 
-        protected async ValueTask AuthenticateClientInternal(PreLoginHandlerContext request, bool isAsync, CancellationToken ct)
+        protected async ValueTask AuthenticateClientInternal(PreloginHandlerContext request, bool isAsync, CancellationToken ct)
         {
             try
             { 
@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
             LogWarningIfNeeded(request);
 
-            static void LogWarningIfNeeded(PreLoginHandlerContext request)
+            static void LogWarningIfNeeded(PreloginHandlerContext request)
             {
                 string warningMessage = request.ConnectionContext.SslStream.SslProtocol.GetProtocolWarning();
                 if (!string.IsNullOrEmpty(warningMessage))
@@ -56,13 +56,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                 }
             }
 
-            static bool ShouldNotLogWarning(PreLoginHandlerContext request)
+            static bool ShouldNotLogWarning(PreloginHandlerContext request)
             {
                 return !request.ConnectionEncryptionOption && LocalAppContextSwitches.SuppressInsecureTLSWarning;
             }
         }
 
-        private async ValueTask AuthenticateClient(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        private async ValueTask AuthenticateClient(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             try
             {
@@ -121,6 +121,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        protected abstract SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreLoginHandlerContext context);
+        protected abstract SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreloginHandlerContext context);
     }
 }

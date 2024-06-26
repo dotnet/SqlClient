@@ -27,17 +27,17 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// <inheritdoc />
         public async ValueTask Handle(ConnectionHandlerContext connectionContext, bool isAsync, CancellationToken ct)
         {
-            PreLoginHandlerContext context = new PreLoginHandlerContext(connectionContext);
+            PreloginHandlerContext context = new PreloginHandlerContext(connectionContext);
 
             InitializeSslStream(context);
 
             PreloginPacketHandler preloginPacketHandler = new();
 
-            IHandler<PreLoginHandlerContext> firstHandler;
+            IHandler<PreloginHandlerContext> firstHandler;
 
             if (context.IsTlsFirst)
             {
-                IHandler<PreLoginHandlerContext> tlsHandler = firstHandler = new Tds8TlsHandler();
+                IHandler<PreloginHandlerContext> tlsHandler = firstHandler = new Tds8TlsHandler();
                 tlsHandler.NextHandler = preloginPacketHandler;
             }
             else
@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// In case of Tds7.4, the SslOverTdsStream is created as well.
         /// </summary>
         /// <param name="preloginContext"></param>
-        void InitializeSslStream(PreLoginHandlerContext preloginContext)
+        void InitializeSslStream(PreloginHandlerContext preloginContext)
         {
             // Create the streams
             // If tls first then create a sslStream with the underlying stream as the transport stream.
