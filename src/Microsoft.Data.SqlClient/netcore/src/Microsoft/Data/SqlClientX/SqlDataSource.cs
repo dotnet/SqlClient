@@ -5,6 +5,7 @@
 #if NET8_0_OR_GREATER 
 
 using Microsoft.Data.SqlClient;
+using System;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,13 +45,16 @@ namespace Microsoft.Data.SqlClientX
             return SqlConnectionX.FromDataSource(this);
         }
 
+        //TODO: rework this so that timeout and cancellationToken are bundled together
         /// <summary>
         /// Returns an opened SqlConnector.
         /// </summary>
-        /// <param name="async">Whether this method should run asynchronously.</param>
-        /// <param name="cancellationToken">The token used to cancel an ongoing asynchronous call.</param>
+        /// <param name="owningConnection">The SqlConnectionX object that will exclusively own and use this connector.</param>
+        /// <param name="timeout">The connection timeout for this operation.</param>
+        /// <param name="async">Whether this method should be run asynchronously.</param>
+        /// <param name="cancellationToken">Cancels an outstanding asynchronous operation.</param>
         /// <returns></returns>
-        internal abstract ValueTask<SqlConnector> GetInternalConnection(bool async, CancellationToken cancellationToken);
+        internal abstract ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken);
     }
 }
 
