@@ -3,10 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Net.Security;
 using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
@@ -17,9 +15,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
     internal abstract class BaseTlsHandler : IHandler<PreLoginHandlerContext>
     {
-        private static readonly SslProtocols s_supportedProtocols = SslProtocols.None;
-
-        private static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
 
         public IHandler<PreLoginHandlerContext> NextHandler { get; set; }
 
@@ -75,26 +70,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                 using (TrySNIEventScope.Create(nameof(PreloginHandler)))
                 {
                     Guid _connectionId = context.ConnectionContext.ConnectionId;
-                    string serverName = context.ConnectionContext.DataSource.ServerName;
                     SslOverTdsStream sslOverTdsStream = context.ConnectionContext.SslOverTdsStream;
                     SslStream sslStream = context.ConnectionContext.SslStream;
                     try
                     {
-                        SslClientAuthenticationOptions options =
-                            !context.IsTlsFirst ?
-                                new()
-                                {
-                                    TargetHost = serverName,
-                                    ClientCertificates = null,
-                                    EnabledSslProtocols = s_supportedProtocols,
-                                    CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
-                                } :
-                                new()
-                                {
-                                    TargetHost = serverName,
-                                    ApplicationProtocols = s_tdsProtocols,
-                                    ClientCertificates = null
-                                };
+                        SslClientAuthenticationOptions options = BuildClientAuthenticationOptions(context);
 
                         if (isAsync)
                         {
@@ -132,8 +112,15 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                 SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.AuthenticateClient | Err | Session Id {0}, SNI Handshake failed with exception: {1}",
                     context.ConnectionContext.ConnectionId,
                     e.Message);
-                context.Exception = e;
+                throw;
             }
         }
+
+        /// <summary>
+        /// Builds the Ssl Client authentication options during prelogin.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        protected abstract SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreLoginHandlerContext context);
     }
 }

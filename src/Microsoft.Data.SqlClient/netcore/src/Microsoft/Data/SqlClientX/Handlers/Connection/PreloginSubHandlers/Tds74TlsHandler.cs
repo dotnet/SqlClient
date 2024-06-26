@@ -3,19 +3,23 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Net.Security;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
     /// <summary>
     /// Handler meant to be invoked after the Prelogin exchange is complete.
-    /// This handler is most significant for Tds 7.4 and below, because it negotiates the TLS encryption,
-    /// and validates the server certificate, which are mandatory for Tds 8.0, and are already done at this point.
+    /// This handler is needed for Tds 7.4 and below, because it negotiates the TLS encryption,
+    /// and validates the server certificate after the pre-login exchange.
     /// </summary>
     internal class Tds74TlsHandler : BaseTlsHandler
     {
+        private static readonly SslProtocols s_supportedProtocols = SslProtocols.None;
+
         /// <inheritdoc />
         public override async ValueTask Handle(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
@@ -41,6 +45,25 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             {
                 await NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
             }
+        }
+
+        protected override SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreLoginHandlerContext context)
+        {
+            string serverName = context.ConnectionContext.DataSource.ServerName;
+            return new()
+            {
+                TargetHost = serverName,
+                ClientCertificates = null,
+                EnabledSslProtocols = s_supportedProtocols,
+                //TODO: Revisit the CRL revocation check. 
+                // CRL revocation check can be done online, where the CRL where the CA authority may need to be reached
+                // which could cause delays, and may not be necessary for all scenarios. Deeper investigation is needed about 
+                // the implication of Online/Offline check.
+                // e.g. How does the offline check work, and where are the CRL certificates expected?
+                // How does the offline check deal with CRL list which can be included in the chain of certificates.
+                // How does this compare with Windows cert validation handled in Native SNI?
+                CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+            };
         }
     }
 }

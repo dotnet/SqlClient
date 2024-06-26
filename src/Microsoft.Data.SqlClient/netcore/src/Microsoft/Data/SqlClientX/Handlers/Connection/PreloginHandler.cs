@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
             InitializeSslStream(context);
 
-            var preloginPacketHandler = new PreloginPacketHandler();
+            PreloginPacketHandler preloginPacketHandler = new();
 
             IHandler<PreLoginHandlerContext> firstHandler;
 
@@ -42,9 +42,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             }
             else
             {
-                var tlsEndHandler = new Tds74TlsHandler();
-                preloginPacketHandler.NextHandler = tlsEndHandler;
                 firstHandler = preloginPacketHandler;
+                Tds74TlsHandler tlsEndHandler = new();
+                preloginPacketHandler.NextHandler = tlsEndHandler;
             }
 
             await firstHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
@@ -56,7 +56,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         }
 
         /// <summary>
-        /// Initializes the various streams required for the TLS handshake.
+        /// Initializes the SSL required for the TLS handshake.
+        /// In case of Tds7.4, the SslOverTdsStream is created as well.
         /// </summary>
         /// <param name="preloginContext"></param>
         void InitializeSslStream(PreLoginHandlerContext preloginContext)
@@ -74,11 +75,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 preloginContext.ConnectionContext.SslOverTdsStream = sslOVerTdsStream;
                 baseStream = sslOVerTdsStream;
             }
-            SslStream sslStream = new SslStream(baseStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
+            SslStream sslStream = new SslStream(baseStream, true, ValidateServerCertificate);
             preloginContext.ConnectionContext.SslStream = sslStream;
 
             Stream preloginStream = preloginContext.IsTlsFirst ? (Stream)sslStream : (Stream)preloginContext.ConnectionContext.ConnectionStream;
-                
+
             preloginContext.ConnectionContext.TdsStream = new IO.TdsStream(new IO.TdsWriteStream(preloginStream), new IO.TdsReadStream(preloginStream));
 
             bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
@@ -86,11 +87,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 Guid connectionId = preloginContext.ConnectionContext.ConnectionId;
                 if (!preloginContext.ShouldValidateCertificate())
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(Tds8TlsHandler), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: connectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(PreloginHandler), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: connectionId);
                     return true;
                 }
 
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(Tds8TlsHandler), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: connectionId);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(PreloginHandler), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: connectionId);
 
                 return SNICommon.ValidateSslServerCertificate(connectionId,
                     preloginContext.ConnectionContext.DataSource.ServerName,

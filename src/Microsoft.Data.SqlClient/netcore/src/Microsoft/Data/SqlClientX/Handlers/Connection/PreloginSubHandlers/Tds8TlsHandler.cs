@@ -2,22 +2,22 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlClient.SNI;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
     /// <summary>
-    /// Handler for beginning the TLS process.
+    /// Handler for TDS8 TLS handling. The consumers of this handler, should use this,
+    /// only when TDS8 is being used..
     /// </summary>
     internal class Tds8TlsHandler : BaseTlsHandler
     {
+        private static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
+
         /// <summary>
         /// Takes care of beginning TLS handshake in Tls First aka TDS8.0.
         /// </summary>
@@ -42,6 +42,17 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             {
                 await NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
             }
+        }
+
+        protected override SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreLoginHandlerContext context)
+        {
+            string serverName = context.ConnectionContext.DataSource.ServerName;
+            return new()
+            {
+                TargetHost = serverName,
+                ApplicationProtocols = s_tdsProtocols,
+                ClientCertificates = null
+            };
         }
     }
 }
