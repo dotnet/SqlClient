@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 {
+    /// <summary>
+    /// Handler for creating the connection to the server. This handler passes the context through
+    /// its own chain of responsibilities to determine what protocol to connect with.
+    /// </summary>
     internal sealed class TransportCreationHandler : ContextHandler<ConnectionHandlerContext>
     {
         private readonly ReturningHandler<ConnectionHandlerContext, Stream> _streamCreationChain;
@@ -18,7 +22,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             // Construct the chain of responsibility for handling the connections
             _streamCreationChain = new SharedMemoryTransportCreationHandler();
             _streamCreationChain.NextHandler = new TcpTransportCreationHandler();
-            _streamCreationChain.NextHandler.NextHandler = new SharedMemoryTransportCreationHandler();
+            _streamCreationChain.NextHandler.NextHandler = new NamedPipeTransportCreationHandler();
         }
 
         /// <inheritdoc />

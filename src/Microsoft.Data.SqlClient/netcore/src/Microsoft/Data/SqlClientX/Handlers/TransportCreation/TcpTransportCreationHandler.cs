@@ -14,6 +14,9 @@ using Microsoft.Data.SqlClient.SNI;
 
 namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 {
+    /// <summary>
+    /// Handler for connecting via TCP.
+    /// </summary>
     internal sealed class TcpTransportCreationHandler : ReturningHandler<ConnectionHandlerContext, Stream>
     {
         private const int KeepAliveIntervalSeconds = 1;
@@ -120,13 +123,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             {
                 if (isAsync)
                 {
-                    #if NET6_0_OR_GREATER
                     await socket.ConnectAsync(ipEndPoint, ct).ConfigureAwait(false);
-                    #else
-                    // @TODO: Only real way to cancel this is to register a cancellation token event and dispose of the socket.
-                    await new TaskFactory(ct).FromAsync(socket.BeginConnect, socket.EndConnect, ipEndPoint, null)
-                        .ConfigureAwait(false);
-                    #endif
                 }
                 else
                 {

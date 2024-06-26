@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 {
+    /// <summary>
+    /// Handler for connecting via shared memory.
+    /// </summary>
     internal class SharedMemoryTransportCreationHandler : ReturningHandler<ConnectionHandlerContext, Stream>
     {
         /// <inheritdoc />

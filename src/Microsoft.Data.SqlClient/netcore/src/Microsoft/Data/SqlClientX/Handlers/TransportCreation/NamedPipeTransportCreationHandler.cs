@@ -11,27 +11,25 @@ using Microsoft.Data.SqlClient.SNI;
 
 namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 {
+    /// <summary>
+    /// Handler for connecting via named pipe.
+    /// </summary>
     internal sealed class NamedPipeTransportCreationHandler : ReturningHandler<ConnectionHandlerContext, Stream>
     {
         /// <inheritdoc />
-        public override async ValueTask<Stream> Handle(ConnectionHandlerContext parameters, bool isAsync, CancellationToken ct)
+        public override ValueTask<Stream> Handle(ConnectionHandlerContext parameters, bool isAsync, CancellationToken ct)
         {
             Debug.Assert(parameters is not null, "Parameters must not be null");
             Debug.Assert(parameters.DataSource is not null, "Data source must not be null");
 
             // This handler can only handle connection attempts if named pipes are included
-            if (parameters.DataSource.ResolvedProtocol is not (DataSource.Protocol.NP or DataSource.Protocol.None))
-            {
-                return await HandleNext(parameters, isAsync, ct);
-            }
-            
-            if (parameters.DataSource.ResolvedProtocol is DataSource.Protocol.None)
+            if (parameters.DataSource.ResolvedProtocol is DataSource.Protocol.NP)
             {
                 // @TODO: Support named pipe connections
-                return await HandleNext(parameters, isAsync, ct);
+                throw new NotImplementedException();
             }
 
-            throw new NotImplementedException();
+            return HandleNext(parameters, isAsync, ct);
         }
     }
 }
