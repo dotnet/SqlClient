@@ -14,20 +14,31 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
     /// Handler for TDS8 TLS handling. The consumers of this handler, should use this,
     /// only when TDS8 is being used..
     /// </summary>
-    internal class Tds8TlsHandler : BaseTlsHandler
+    internal class Tds8TlsHandler : IHandler<PreloginHandlerContext>
     {
         private static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
+        
+        private readonly TlsAuthenticator _authenticator;
+
+        public Tds8TlsHandler(TlsAuthenticator authenticator)
+        {
+            this._authenticator = authenticator;
+        }
+
+        public IHandler<PreloginHandlerContext> NextHandler { get; set; }
 
         /// <summary>
-        /// Takes care of beginning TLS handshake in Tls First aka TDS8.0.
+        /// Takes care of setting up TLS in Tls First aka TDS8.0.
         /// </summary>
         /// <param name="context">The prelogin context object.</param>
         /// <param name="isAsync">Whether this operations should be done asynchronously or not.</param>
         /// <param name="ct">Cancellation token for the operation.</param>
         /// <returns></returns>
-        public override async ValueTask Handle(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
+        public async ValueTask Handle(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            await AuthenticateClientInternal(context, isAsync, ct).ConfigureAwait(false);
+            SslClientAuthenticationOptions options = Tds8TlsHandler.BuildClientAuthenticationOptions(context);
+
+            await _authenticator.AuthenticateClientInternal(context, options, isAsync, ct).ConfigureAwait(false);
 
             // Since encryption has already been negotiated, we need to set encryption not supported in
             // prelogin so that we don't try to negotiate encryption again during Pre login response read.
@@ -40,7 +51,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         }
 
         /// <inheritdoc />
-        protected override SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreloginHandlerContext context)
+        protected static SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreloginHandlerContext context)
         {
             string serverName = context.ConnectionContext.DataSource.ServerName;
             return new()

@@ -17,12 +17,22 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
     /// This handler is needed for Tds 7.4 and below, because it negotiates the TLS encryption,
     /// and validates the server certificate after the pre-login exchange.
     /// </summary>
-    internal class Tds74TlsHandler : BaseTlsHandler
+    internal class Tds74TlsHandler : IHandler<PreloginHandlerContext>
     {
-        private static readonly SslProtocols s_supportedProtocols = SslProtocols.None;
+        /// <summary>
+        /// The Tls authenticator to authenticate as client.
+        /// </summary>
+        private readonly TlsAuthenticator _authenticator;
+
+        public Tds74TlsHandler(TlsAuthenticator authenticator)
+        {
+            _authenticator = authenticator;
+        }
+
+        public IHandler<PreloginHandlerContext> NextHandler { get; set; }
 
         /// <inheritdoc />
-        public override async ValueTask Handle(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
+        public async ValueTask Handle(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             if (context.DoesClientNeedEncryption())
             {
@@ -34,7 +44,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     throw SqlException.CreateException(collection, null);
                 }
 
-                await AuthenticateClientInternal(context, isAsync, ct).ConfigureAwait(false);
+                SslClientAuthenticationOptions options = Tds74TlsHandler.BuildClientAuthenticationOptions(context);
+                await _authenticator.AuthenticateClientInternal(context, options, isAsync, ct).ConfigureAwait(false);
 
                 // Enable encryption for Login. 
                 context.ConnectionContext.TdsStream.ReplaceUnderlyingStream(context.ConnectionContext.SslStream);
@@ -46,15 +57,19 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             }
         }
 
-        /// <inheritdoc />
-        protected override SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreloginHandlerContext context)
+        /// <summary>
+        /// Create the SSL Authentication options applicable to TDS 7.4
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        private static SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreloginHandlerContext context)
         {
             string serverName = context.ConnectionContext.DataSource.ServerName;
             return new()
             {
                 TargetHost = serverName,
                 ClientCertificates = null,
-                EnabledSslProtocols = s_supportedProtocols,
+                EnabledSslProtocols = SslProtocols.None,
                 //TODO: Revisit the CRL revocation check. 
                 // CRL revocation check can be done online, where the CRL where the CA authority may need to be reached
                 // which could cause delays, and may not be necessary for all scenarios. Deeper investigation is needed about 

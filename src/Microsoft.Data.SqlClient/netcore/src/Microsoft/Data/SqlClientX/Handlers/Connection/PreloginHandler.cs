@@ -21,6 +21,34 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
     /// </summary>
     internal class PreloginHandler : IHandler<ConnectionHandlerContext>
     {
+        /// <summary>
+        /// The Helper object to perform TLS authentication.
+        /// </summary>
+        private readonly TlsAuthenticator _tlsAuthenticator;
+        
+        /// <summary>
+        /// A Factory to create sub handlers for the prelogin.
+        /// </summary>
+        private readonly PreloginSubHandlerBuilder _subHandlerChainBuilder;
+
+        /// <summary>
+        /// Default constructor which creates an authenticator for TLS.
+        /// </summary>
+        public PreloginHandler() : this(new TlsAuthenticator(), new PreloginSubHandlerBuilder())
+        {
+        }
+
+        /// <summary>
+        /// Constructs Prelogin handler with an authenticator
+        /// </summary>
+        /// <param name="tlsAuthenticator"></param>
+        /// <param name="subHandlerChainBuilder"></param>
+        public PreloginHandler(TlsAuthenticator tlsAuthenticator, PreloginSubHandlerBuilder subHandlerChainBuilder)
+        {
+            _tlsAuthenticator = tlsAuthenticator;
+            _subHandlerChainBuilder = subHandlerChainBuilder;
+        }
+
         /// <inheritdoc />
         public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
 
@@ -31,22 +59,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
             InitializeSslStream(context);
 
-            PreloginPacketHandler preloginPacketHandler = new();
-
-            IHandler<PreloginHandlerContext> firstHandler;
-
-            if (context.IsTlsFirst)
-            {
-                IHandler<PreloginHandlerContext> tlsHandler = firstHandler = new Tds8TlsHandler();
-                tlsHandler.NextHandler = preloginPacketHandler;
-            }
-            else
-            {
-                firstHandler = preloginPacketHandler;
-                Tds74TlsHandler tlsEndHandler = new();
-                preloginPacketHandler.NextHandler = tlsEndHandler;
-            }
-
+            IHandler<PreloginHandlerContext> firstHandler = _subHandlerChainBuilder.CreateChain(context, _tlsAuthenticator);
+            
             await firstHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
 
             if (NextHandler is not null)
@@ -99,6 +113,35 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     preloginContext.HostNameInCertificate,
                     certificate, preloginContext.ServerCertificateFilename,
                     sslPolicyErrors);
+            }
+        }
+
+        /// <summary>
+        /// A builder to build the prelogin handler chain.
+        /// </summary>
+        internal class PreloginSubHandlerBuilder
+        {
+            /// <summary>
+            /// Creates a chain for prelogin based on the context and supplied authenticator.
+            /// </summary>
+            /// <param name="context"></param>
+            /// <param name="authenticator"></param>
+            /// <returns></returns>
+            public virtual IHandler<PreloginHandlerContext> CreateChain(PreloginHandlerContext context, TlsAuthenticator authenticator)
+            {
+                PreloginPacketHandler preloginPacketHandler = new();
+                IHandler<PreloginHandlerContext> firstHandler = preloginPacketHandler;
+                if (context.IsTlsFirst)
+                {
+                    IHandler<PreloginHandlerContext> tlsHandler = firstHandler = new Tds8TlsHandler(authenticator);
+                    tlsHandler.NextHandler = preloginPacketHandler;
+                }
+                else
+                {
+                    Tds74TlsHandler tlsEndHandler = new(authenticator);
+                    preloginPacketHandler.NextHandler = tlsEndHandler;
+                }
+                return firstHandler;
             }
         }
     }

@@ -13,19 +13,13 @@ using Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
-    internal abstract class BaseTlsHandler : IHandler<PreloginHandlerContext>
+    internal class TlsAuthenticator
     {
-        /// <inheritdoc />
-        public IHandler<PreloginHandlerContext> NextHandler { get; set; }
-
-        /// <inheritdoc />
-        public abstract ValueTask Handle(PreloginHandlerContext request, bool isAsync, CancellationToken ct);
-
-        protected async ValueTask AuthenticateClientInternal(PreloginHandlerContext request, bool isAsync, CancellationToken ct)
+        public virtual async ValueTask AuthenticateClientInternal(PreloginHandlerContext request, SslClientAuthenticationOptions options, bool isAsync, CancellationToken ct)
         {
             try
             {
-                await AuthenticateClient(request, isAsync, ct).ConfigureAwait(false);
+                await AuthenticateClient(request, options, isAsync, ct).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -47,7 +41,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     {
                         // Skip console warning
                         SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}",
-                            nameof(PreloginHandler),
+                            nameof(TlsAuthenticator),
                             nameof(AuthenticateClientInternal),
                             SqlClientLogger.LogLevel.Warning,
                             warningMessage);
@@ -55,7 +49,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     else
                     {
                         // This logs console warning of insecure protocol in use.
-                        request.ConnectionContext.Logger.LogWarning(nameof(PreloginHandler), nameof(AuthenticateClientInternal), warningMessage);
+                        request.ConnectionContext.Logger.LogWarning(nameof(TlsAuthenticator), nameof(AuthenticateClientInternal), warningMessage);
                     }
                 }
             }
@@ -66,7 +60,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             }
         }
 
-        private async ValueTask AuthenticateClient(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
+        private async ValueTask AuthenticateClient(PreloginHandlerContext context, SslClientAuthenticationOptions options, bool isAsync, CancellationToken ct)
         {
             try
             {
@@ -78,8 +72,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     SslStream sslStream = context.ConnectionContext.SslStream;
                     try
                     {
-                        SslClientAuthenticationOptions options = BuildClientAuthenticationOptions(context);
-
                         if (isAsync)
                         {
                             await sslStream.AuthenticateAsClientAsync(options, ct).ConfigureAwait(false);
@@ -96,17 +88,17 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
                     catch (AuthenticationException aue)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(BaseTlsHandler), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsAuthenticator), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
                         throw;
                     }
                     catch (InvalidOperationException ioe)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(BaseTlsHandler), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsAuthenticator), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
                         throw;
                     }
 
                     context.ConnectionContext.TdsStream = new TdsStream(new TdsWriteStream(sslStream), new TdsReadStream(sslStream));
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(BaseTlsHandler), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsAuthenticator), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
                 }
             }
             catch (Exception e)
@@ -117,12 +109,5 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                 throw;
             }
         }
-
-        /// <summary>
-        /// Builds the Ssl Client authentication options during prelogin.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        protected abstract SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreloginHandlerContext context);
     }
 }
