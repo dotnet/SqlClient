@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <inheritdoc />
         public override async ValueTask Handle(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            if (!context.IsTlsFirst && context.DoesClientNeedEncryption())
+            if (context.DoesClientNeedEncryption())
             {
                 if (!context.ServerSupportsEncryption)
                 {

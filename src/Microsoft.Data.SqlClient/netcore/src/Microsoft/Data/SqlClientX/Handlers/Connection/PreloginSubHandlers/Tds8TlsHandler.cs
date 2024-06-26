@@ -27,16 +27,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <returns></returns>
         public override async ValueTask Handle(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            // Check if Tls needs to be negotiated first. This is a safety check to make sure that the handler is not 
-            // called when it is not supposed to be.
-            if (context.IsTlsFirst)
-            {
-                await AuthenticateClientInternal(context, isAsync, ct).ConfigureAwait(false);
+            await AuthenticateClientInternal(context, isAsync, ct).ConfigureAwait(false);
 
-                // Since encryption has already been negotiated, we need to set encryption not supported in
-                // prelogin so that we don't try to negotiate encryption again during Pre login response read.
-                context.InternalEncryptionOption = EncryptionOptions.NOT_SUP;
-            }
+            // Since encryption has already been negotiated, we need to set encryption not supported in
+            // prelogin so that we don't try to negotiate encryption again during Pre login response read.
+            context.InternalEncryptionOption = EncryptionOptions.NOT_SUP;
 
             if (NextHandler is not null)
             {

@@ -26,9 +26,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             { 
                 await AuthenticateClient(request, isAsync, ct).ConfigureAwait(false);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                // Convert to a Sql Exception.
+                // TODO: Convert to a Sql Exception.
+                // this would require that we convert the error to a Sql error with the traditional details about 
+                // SNI. A lot of errors strings require SNI providers to be passed in.
+                // So we will stick to the format.
+                throw;
             }
             
 
