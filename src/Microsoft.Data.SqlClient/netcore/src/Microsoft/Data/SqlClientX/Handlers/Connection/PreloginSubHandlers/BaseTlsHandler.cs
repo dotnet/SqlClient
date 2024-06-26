@@ -34,7 +34,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                 // So we will stick to the format.
                 throw;
             }
-            
 
             LogWarningIfNeeded(request);
 
@@ -97,14 +96,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     catch (AuthenticationException aue)
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(BaseTlsHandler), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
-                        context.SniError = new SNIError(SNIProviders.SSL_PROV, SNICommon.InternalExceptionError, aue, SNIError.CertificateValidationErrorCode);
-                        return;
+                        throw;
                     }
                     catch (InvalidOperationException ioe)
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
-                        context.SniError = new SNIError(SNIProviders.SSL_PROV, SNICommon.InternalExceptionError, ioe);
-                        return;
+                        throw;
                     }
 
                     context.ConnectionContext.TdsStream = new TdsStream(new TdsWriteStream(sslStream), new TdsReadStream(sslStream));

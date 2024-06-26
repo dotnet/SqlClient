@@ -24,7 +24,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
         public ConnectionHandlerContext ConnectionContext { get; private set; }
 
-        public SNIError SniError { get; internal set; }
         public bool ServerSupportsEncryption { get; internal set; }
         public PreLoginHandshakeStatus HandshakeStatus { get; internal set; }
 
