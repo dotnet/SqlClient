@@ -3141,12 +3141,6 @@ namespace Microsoft.Data.SqlClient
                 stateObj.HasReceivedError = false;
                 if (stateObj._inBytesUsed >= stateObj._inBytesRead)
                 {
-                    if (stateObj.HasPendingData)
-                    {
-                        // Drain the pending data now if forcing the HasPendingData flag to false since the
-                        // SqlDataReader.TryCloseInternal will not be able to do so as it checks first if that flag is set.
-                        DrainData(stateObj);
-                    }
                     stateObj.HasPendingData = false;
                 }
             }
