@@ -30,7 +30,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     context.ConnectionContext.Error = new Exception("Encryption not supported by server");
                     return;
                 }
+                
                 await AuthenticateClientInternal(context, isAsync, ct).ConfigureAwait(false);
+
+                // Enable encryption for Login. 
+                context.ConnectionContext.TdsStream.ReplaceUnderlyingStream(context.ConnectionContext.SslStream);
             }
 
             if (NextHandler is not null)

@@ -242,7 +242,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             byte[] payload = new byte[(int)PreLoginOptions.NUMOPT * 5 + TdsEnums.MAX_PRELOGIN_PAYLOAD_LENGTH];
             int payloadLength = 0;
 
-            byte[] instanceName = new byte[1];
 
             for (int option = (int)PreLoginOptions.VERSION; option < (int)PreLoginOptions.NUMOPT; option++)
             {
@@ -302,21 +301,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         break;
 
                     case (int)PreLoginOptions.INSTANCE:
-                        int i = 0;
-
-                        while (instanceName[i] != 0)
-                        {
-                            payload[payloadLength] = instanceName[i];
-                            payloadLength++;
-                            i++;
-                        }
-
+                        // We send an empty instance name to the server. 
                         payload[payloadLength] = 0; // null terminate
                         payloadLength++;
-                        i++;
-
-                        offset += i;
-                        optionDataSize = i;
+                        offset += 1;
+                        optionDataSize = 1;
                         break;
 
                     case (int)PreLoginOptions.THREADID:

@@ -72,9 +72,14 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                 // This will be used later to finish the handshake.
                 preloginContext.ConnectionContext.SslOverTdsStream = sslOVerTdsStream;
+                baseStream = sslOVerTdsStream;
             }
             SslStream sslStream = new SslStream(baseStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
             preloginContext.ConnectionContext.SslStream = sslStream;
+
+            Stream preloginStream = preloginContext.IsTlsFirst ? (Stream)sslStream : (Stream)preloginContext.ConnectionContext.ConnectionStream;
+                
+            preloginContext.ConnectionContext.TdsStream = new IO.TdsStream(new IO.TdsWriteStream(preloginStream), new IO.TdsReadStream(preloginStream));
 
             bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
             {

@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     try
                     {
                         SslClientAuthenticationOptions options =
-                            context.IsTlsFirst ?
+                            !context.IsTlsFirst ?
                                 new()
                                 {
                                     TargetHost = serverName,
