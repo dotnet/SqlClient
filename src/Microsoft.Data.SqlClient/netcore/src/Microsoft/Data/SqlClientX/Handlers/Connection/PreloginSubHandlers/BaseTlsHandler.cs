@@ -15,15 +15,16 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
     internal abstract class BaseTlsHandler : IHandler<PreloginHandlerContext>
     {
-
+        /// <inheritdoc />
         public IHandler<PreloginHandlerContext> NextHandler { get; set; }
 
+        /// <inheritdoc />
         public abstract ValueTask Handle(PreloginHandlerContext request, bool isAsync, CancellationToken ct);
 
         protected async ValueTask AuthenticateClientInternal(PreloginHandlerContext request, bool isAsync, CancellationToken ct)
         {
             try
-            { 
+            {
                 await AuthenticateClient(request, isAsync, ct).ConfigureAwait(false);
             }
             catch (Exception)
@@ -31,7 +32,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                 // TODO: Convert to a Sql Exception.
                 // this would require that we convert the error to a Sql error with the traditional details about 
                 // SNI. A lot of errors strings require SNI providers to be passed in.
-                // So we will stick to the format.
+                // So we will stick to the current format in Managed SNI, for creating these exceptions.
                 throw;
             }
 
@@ -100,7 +101,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     }
                     catch (InvalidOperationException ioe)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(BaseTlsHandler), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
                         throw;
                     }
 
