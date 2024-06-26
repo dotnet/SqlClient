@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,12 +14,33 @@ namespace Microsoft.Data.SqlClientX.Handlers
     /// colloquially referred to a chain of handlers (CoH).
     /// </summary>
     /// <typeparam name="TContext">Type of the context that will be passed through the chain of handlers.</typeparam>
-    internal abstract class ContextHandler<TContext>
+    internal abstract class ContextHandler<TContext> : IHandler<TContext>
     {
         /// <summary>
         /// Gets or sets the next handler in the chain of handlers.
         /// </summary>
-        public ContextHandler<TContext> NextHandler { get; set; }
+        public ContextHandler<TContext> NextContextHandler { get; set; }
+
+        /// <summary>
+        /// Gets or sets the next handler in the chain of handlers.
+        /// </summary>
+        /// <remarks>
+        /// This is temporary implementation until IHandler is removed.
+        /// </remarks>
+        /// <exception cref="ArgumentException"></exception>
+        public IHandler<TContext> NextHandler
+        {
+            get => NextContextHandler;
+            set
+            {
+                if (value is not ContextHandler<TContext> contextHandler)
+                {
+                    throw new ArgumentException("Context handler must be of type ContextHandler", nameof(value));
+                }
+
+                NextContextHandler = contextHandler;
+            }
+        }
 
         /// <summary>
         /// Handles the context provided.
