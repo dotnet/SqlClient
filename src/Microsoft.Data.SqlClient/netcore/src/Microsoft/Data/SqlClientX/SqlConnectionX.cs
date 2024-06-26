@@ -245,7 +245,7 @@ namespace Microsoft.Data.SqlClientX
                 throw ADP.NoConnectionString();
             }
 
-            _connection = await _dataSource.GetInternalConnection(async, cancellationToken).ConfigureAwait(false);
+            _connection = await _dataSource.GetInternalConnection(this, TimeSpan.FromSeconds(ConnectionTimeout), async, cancellationToken).ConfigureAwait(false);
         }
 
         #endregion
