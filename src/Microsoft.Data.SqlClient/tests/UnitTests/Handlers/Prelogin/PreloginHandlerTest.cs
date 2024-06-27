@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Net.Security;
 using System.Security.Authentication;
@@ -171,6 +172,22 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             dspHandler.NextHandler = tcHandler;
             tcHandler.NextHandler = plHandler;
             dspHandler.Handle(chc, false, default).GetAwaiter().GetResult();
+        }
+
+        [Fact]
+        public void CheckEndianness()
+        {
+            int offset = 0;
+            byte[] payload = new byte[4];
+            uint sequence = 1234;
+            payload[offset++] = (byte)(0x000000ff & sequence);
+            payload[offset++] = (byte)((0x0000ff00 & sequence) >> 8);
+            payload[offset++] = (byte)((0x00ff0000 & sequence) >> 16);
+            payload[offset++] = (byte)((0xff000000 & sequence) >> 24);
+
+            byte[] payload2 = new byte[4];
+            BinaryPrimitives.WriteUInt32LittleEndian(payload2, sequence);
+            Assert.Equal(payload, payload2);
         }
     }
 }

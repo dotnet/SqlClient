@@ -282,13 +282,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         payload[offset++] = (byte)(systemDataVersion.Major & 0xff);
                         payload[offset++] = (byte)(systemDataVersion.Minor & 0xff);
 
-                        // Build (Big Endian)
-                        payload[offset++] = (byte)((systemDataVersion.Build & 0xff00) >> 8);
-                        payload[offset++] = (byte)(systemDataVersion.Build & 0xff);
-
-                        // Sub-build (Little Endian)
-                        payload[offset++] = (byte)(systemDataVersion.Revision & 0xff);
-                        payload[offset++] = (byte)((systemDataVersion.Revision & 0xff00) >> 8);
+                        BinaryPrimitives.WriteUInt16BigEndian(payload.AsSpan(offset, 2), (ushort)systemDataVersion.Build);
+                        offset += 2;
+                        BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(offset, 2), (ushort)systemDataVersion.Revision);
+                        offset += 2;
                         break;
 
                     case (int)PreLoginOptions.ENCRYPT:
@@ -321,10 +318,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
                     case (int)PreLoginOptions.THREADID:
                         int threadID = TdsParserStaticMethods.GetCurrentThreadIdForTdsLoginOnly();
-                        payload[offset++] = (byte)((0xff000000 & threadID) >> 24);
-                        payload[offset++] = (byte)((0x00ff0000 & threadID) >> 16);
-                        payload[offset++] = (byte)((0x0000ff00 & threadID) >> 8);
-                        payload[offset++] = (byte)(0x000000ff & threadID);
+                        BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(offset, 4), (uint)threadID);
+                        offset += 4;
                         break;
 
                     case (int)PreLoginOptions.MARS:
@@ -338,11 +333,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         ActivityCorrelator.ActivityId actId = ActivityCorrelator.Next();
                         actId.Id.TryWriteBytes(payload.AsSpan(offset, GUID_SIZE));
                         offset += GUID_SIZE;
-
-                        payload[offset++] = (byte)(0x000000ff & actId.Sequence);
-                        payload[offset++] = (byte)((0x0000ff00 & actId.Sequence) >> 8);
-                        payload[offset++] = (byte)((0x00ff0000 & actId.Sequence) >> 16);
-                        payload[offset++] = (byte)((0xff000000 & actId.Sequence) >> 24);
+                        BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(offset, 4), actId.Sequence);
+                        offset += 4;
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}",
                             context.ConnectionContext.ConnectionId, actId);
                         break;
