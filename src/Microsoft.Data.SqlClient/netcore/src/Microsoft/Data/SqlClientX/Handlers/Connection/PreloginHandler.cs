@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         private readonly PreloginSubHandlerBuilder _subHandlerChainBuilder;
 
         /// <summary>
-        /// Default constructor which creates an authenticator for TLS.
+        /// Paraemter-less constructor which creates an authenticator for TLS.
         /// </summary>
         public PreloginHandler() : this(new TlsAuthenticator(), new PreloginSubHandlerBuilder())
         {
@@ -41,8 +41,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// <summary>
         /// Constructs Prelogin handler with an authenticator
         /// </summary>
-        /// <param name="tlsAuthenticator"></param>
-        /// <param name="subHandlerChainBuilder"></param>
+        /// <param name="tlsAuthenticator">The Tls authenticator to use.</param>
+        /// <param name="subHandlerChainBuilder">Chain builder.</param>
         public PreloginHandler(TlsAuthenticator tlsAuthenticator, PreloginSubHandlerBuilder subHandlerChainBuilder)
         {
             _tlsAuthenticator = tlsAuthenticator;
