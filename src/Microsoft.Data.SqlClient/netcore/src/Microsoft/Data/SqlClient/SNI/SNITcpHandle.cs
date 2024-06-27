@@ -644,7 +644,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
                     else
                     {
-                        // TODO: Resolve whether to send _serverNameIndication or _targetServer. _serverNameIndication currently results in error. Why?
                         _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
                     }
                     if (_sslOverTdsStream is not null)
@@ -698,33 +697,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 return true;
             }
 
-            string serverNameToValidate;
-            if (!string.IsNullOrEmpty(_hostNameInCertificate))
-            {
-                serverNameToValidate = _hostNameInCertificate;
-            }
-            else
-            {
-                serverNameToValidate = _targetServer;
-            }
-
-            if (!string.IsNullOrEmpty(_serverCertificateFilename))
-            {
-                X509Certificate clientCertificate = null;
-                try
-                {
-                    clientCertificate = new X509Certificate(_serverCertificateFilename);
-                    return SNICommon.ValidateSslServerCertificate(clientCertificate, serverCertificate, policyErrors);
-                }
-                catch (Exception e)
-                {
-                    // if this fails, then fall back to the HostNameInCertificate or TargetServer validation.
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, IOException occurred: {1}", args0: _connectionId, args1: e.Message);
-                }
-            }
-
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: _connectionId);
-            return SNICommon.ValidateSslServerCertificate(serverNameToValidate, serverCertificate, policyErrors);
+            return SNICommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
         }
 
         /// <summary>
@@ -1008,7 +982,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal static void SetKeepAliveValues(ref Socket socket)
         {
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 1);
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);

@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
         [ActiveIssue("27824")] // When specifying instance name and port number, this method call always returns false
         [ConditionalFact(nameof(IsSPNPortNumberTestForTCP))]
         public static void PortNumberInSPNTestForTCP()

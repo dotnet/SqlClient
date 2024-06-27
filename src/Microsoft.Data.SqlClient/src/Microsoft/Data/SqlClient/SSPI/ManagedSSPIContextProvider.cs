@@ -1,4 +1,4 @@
-﻿#if !NETFRAMEWORK && !NET7_0_OR_GREATER
+﻿#if NET6_0
 
 using System;
 using System.Buffers;
@@ -15,9 +15,8 @@ namespace Microsoft.Data.SqlClient
         protected override void GenerateSspiClientContext(ReadOnlyMemory<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, byte[][] _sniSpnBuffer)
         {
             _sspiClientContextStatus ??= new SspiClientContextStatus();
-
             SNIProxy.GenSspiClientContext(_sspiClientContextStatus, incomingBlob, outgoingBlobWriter, _sniSpnBuffer);
-            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}", _physicalStateObj.SessionId);
+            SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}", nameof(ManagedSSPIContextProvider), nameof(GenerateSspiClientContext), _physicalStateObj.SessionId);
         }
     }
 }

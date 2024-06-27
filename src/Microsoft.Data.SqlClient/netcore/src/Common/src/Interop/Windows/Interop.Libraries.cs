@@ -9,7 +9,7 @@ internal static partial class Interop
         internal const string Crypt32 = "crypt32.dll";
         internal const string Kernel32 = "kernel32.dll";
         internal const string NtDll = "ntdll.dll";
-#if !NET7_0_OR_GREATER
+#if !NET8_0_OR_GREATER
         internal const string SspiCli = "sspicli.dll";
 #endif
     }

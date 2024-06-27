@@ -1448,7 +1448,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlError ProcessSNIError(TdsParserStateObject stateObj)
         {
-            using (TryEventScope.Create("<sc.TdsParser.ProcessSNIError|ERR>"))
+            using (TryEventScope.Create(nameof(TdsParser)))
             {
 #if DEBUG
                 // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
@@ -1774,7 +1774,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void WriteInt(Span<byte> buffer, int value)
         {
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer, value);
 #else
             buffer[0] = (byte)(value & 0xff);
@@ -2739,6 +2739,9 @@ namespace Microsoft.Data.SqlClient
                         // Only set on physical state object - this should only occur on LoginAck prior
                         // to MARS initialization!
                         int packetSize = int.Parse(env._newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
+
+                        SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Server sent env packet size change of {2}, ClientConnectionID {3}",
+                            nameof(TdsParser), nameof(TryProcessEnvChange), packetSize, _connHandler._clientConnectionId);
 
                         if (_physicalStateObj.SetPacketSize(packetSize))
                         {
@@ -6144,7 +6147,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                         value.SqlBinary = SqlBinary.WrapBytes(b);
 #else
                         value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);   // doesn't copy the byte array
@@ -6441,7 +6444,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                         value.SqlBinary = SqlBinary.WrapBytes(b);
 #else
                         value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);
@@ -7313,7 +7316,7 @@ namespace Microsoft.Data.SqlClient
 
 
             Span<uint> data = stackalloc uint[4];
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             d.WriteTdsValue(data);
 #else
             SqlTypeWorkarounds.SqlDecimalExtractData(d, out data[0], out data[1], out data[2], out data[3]);
@@ -7342,7 +7345,7 @@ namespace Microsoft.Data.SqlClient
                 stateObj.WriteByte(0);
 
             Span<uint> data = stackalloc uint[4];
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             d.WriteTdsValue(data);
 #else
             SqlTypeWorkarounds.SqlDecimalExtractData(d, out data[0], out data[1], out data[2], out data[3]);

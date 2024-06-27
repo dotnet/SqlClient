@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void ApplyContextSwitchByManager(string name, bool value)
         {
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
             var appCtxType = s_sqlClientAssembly.GetType(AppCtxCfgTypeName);
             var appCtxObj = Activator.CreateInstance(appCtxType);
             SetValue(appCtxObj, appCtxType, "Value", string.Concat(name, "=", value));

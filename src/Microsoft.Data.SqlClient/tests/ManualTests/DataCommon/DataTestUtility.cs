@@ -467,7 +467,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsSupportingDistributedTransactions()
         {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             return OperatingSystem.IsWindows() && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture != System.Runtime.InteropServices.Architecture.X86 && IsNotAzureServer();
 #elif NETFRAMEWORK
             return IsNotAzureServer();
@@ -481,8 +481,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
 
         public static bool IsUsingNativeSNI() =>
-#if !NETFRAMEWORK
-        DataTestUtility.IsNotUsingManagedSNIOnWindows();
+#if NET6_0_OR_GREATER
+            IsNotUsingManagedSNIOnWindows();
 #else 
             true;
 #endif

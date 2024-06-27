@@ -3182,6 +3182,9 @@ namespace Microsoft.Data.SqlClient
                         // to MARS initialization!
                         int packetSize = int.Parse(env._newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
 
+                        SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Server sent env packet size change of {2}, ClientConnectionID {3}",
+                            nameof(TdsParser), nameof(TryProcessEnvChange), packetSize, _connHandler._clientConnectionId);
+
                         if (_physicalStateObj.SetPacketSize(packetSize))
                         {
                             // If packet size changed, we need to release our SNIPackets since

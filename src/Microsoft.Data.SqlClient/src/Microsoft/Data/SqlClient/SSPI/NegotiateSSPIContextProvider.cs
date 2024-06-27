@@ -1,4 +1,4 @@
-﻿#if NET7_0_OR_GREATER
+﻿#if NET8_0_OR_GREATER
 
 using System;
 using System.Text;
@@ -11,22 +11,22 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class NegotiateSSPIContextProvider : SSPIContextProvider
     {
-        private NegotiateAuthentication? _negotiateAuth = null;
-
         protected override void GenerateSspiClientContext(ReadOnlyMemory<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, byte[][] _sniSpnBuffer)
         {
-            _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = Encoding.Unicode.GetString(_sniSpnBuffer[0]) });
-            var result = _negotiateAuth.GetOutgoingBlob(incomingBlob.Span, out NegotiateAuthenticationStatusCode statusCode)!;
-            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}, StatusCode={1}", _physicalStateObj.SessionId, statusCode);
-            if (statusCode is not NegotiateAuthenticationStatusCode.Completed and not NegotiateAuthenticationStatusCode.ContinueNeeded)
+            for (int i = 0; i < _sniSpnBuffer.Length; i++)
             {
-                throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + Environment.NewLine + statusCode);
+                var negotiateAuth = new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = Encoding.Unicode.GetString(_sniSpnBuffer[i]) });
+                var result = _negotiateAuth.GetOutgoingBlob(incomingBlob.Span, out var statusCode)!;
+                // Log session id, status code and the actual SPN used in the negotiation
+                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}, StatusCode={3}, SPN={4}", nameof(NegotiateSSPIContextProvider),
+                    nameof(GenerateSspiClientContext), _physicalStateObj.SessionId, statusCode, _negotiateAuth.TargetName);
+                if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
+                {
+                    outgoingBlobWriter.Write(result);
+                }
             }
 
-            if (result is { })
-            {
-                outgoingBlobWriter.Write(result);
-            }
+            throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + Environment.NewLine + statusCode);
         }
     }
 }

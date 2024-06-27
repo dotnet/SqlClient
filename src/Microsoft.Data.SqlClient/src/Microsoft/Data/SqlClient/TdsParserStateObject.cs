@@ -976,7 +976,7 @@ namespace Microsoft.Data.SqlClient
                                               _inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
                 _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
                                               _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
 #endif
                 _inBytesUsed += _inputHeaderLen;
@@ -1096,6 +1096,9 @@ namespace Microsoft.Data.SqlClient
                           ||
                           (_outBytesUsed == _outputHeaderLen && _outputPacketNumber == 1),
                           "SetPacketSize called with data in the buffer!");
+
+            SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | State Object Id {2}, Setting packet size to {3}",
+                nameof(TdsParserStateObject), nameof(SetPacketSize), _objectID, size);
 
             if (_inBuff == null || _inBuff.Length != size)
             { // We only check _inBuff, since two buffers should be consistent.

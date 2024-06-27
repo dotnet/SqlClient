@@ -776,7 +776,7 @@ namespace Microsoft.Data.ProviderBase
                     throw;
                 }
 
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
                 if (!IsBlockingPeriodEnabled())
                 {
                     throw;

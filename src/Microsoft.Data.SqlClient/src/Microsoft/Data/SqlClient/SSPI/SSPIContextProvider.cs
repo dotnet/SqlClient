@@ -33,13 +33,16 @@ namespace Microsoft.Data.SqlClient
 
         internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, byte[][] sniSpnBuffer)
         {
-            try
+            using (TrySNIEventScope.Create(nameof(SSPIContextProvider)))
             {
-                GenerateSspiClientContext(receivedBuff, outgoingBlobWriter, sniSpnBuffer);
-            }
-            catch (Exception e)
-            {
-                SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
+                try
+                {
+                  GenerateSspiClientContext(receivedBuff, outgoingBlobWriter, sniSpnBuffer);
+                }
+                catch (Exception e)
+                {
+                    SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
+                }
             }
         }
 

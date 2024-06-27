@@ -5,7 +5,7 @@
 namespace System.Diagnostics.CodeAnalysis
 {
 
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
     internal sealed class MemberNotNullAttribute : Attribute
     {

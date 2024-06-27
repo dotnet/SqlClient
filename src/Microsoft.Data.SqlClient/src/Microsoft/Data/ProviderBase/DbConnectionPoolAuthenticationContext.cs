@@ -102,7 +102,7 @@ namespace Microsoft.Data.ProviderBase
         /// <summary>
         /// Release the lock which was obtained through LockToUpdate.
         /// </summary>
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
 #endif
         internal void ReleaseLockToUpdate()
