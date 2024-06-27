@@ -64,10 +64,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <returns></returns>
         private static SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreloginHandlerContext context)
         {
-            string serverName = context.ConnectionContext.DataSource.ServerName;
             return new()
             {
-                TargetHost = serverName,
+                TargetHost = context.ConnectionContext.DataSource.ServerName,
                 ClientCertificates = null,
                 EnabledSslProtocols = SslProtocols.None,
                 //TODO: Revisit the CRL revocation check. 

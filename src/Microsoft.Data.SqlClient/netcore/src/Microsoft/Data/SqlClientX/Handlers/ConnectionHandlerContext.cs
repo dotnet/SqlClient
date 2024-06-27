@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// <summary>
         /// An error collection for the handlers to add errors to.
         /// </summary>
-        public SqlErrorCollection ErrorCollection { get; internal set; } = new SqlErrorCollection();
+        public SqlErrorCollection ErrorCollection { get; internal set; } = new();
 
         /// <summary>
         /// The callback for Access Token Retrieval.

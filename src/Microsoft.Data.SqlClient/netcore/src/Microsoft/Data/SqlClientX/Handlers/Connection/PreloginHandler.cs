@@ -85,13 +85,15 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             Stream baseStream = transportStream;
             if (!preloginContext.IsTlsFirst)
             {
-                SslOverTdsStream sslOVerTdsStream = new SslOverTdsStream(transportStream, preloginContext.ConnectionContext.ConnectionId);
-                // This will be used later to finish the handshake.
-                preloginContext.ConnectionContext.SslOverTdsStream = sslOVerTdsStream;
-                baseStream = sslOVerTdsStream;
+                SslOverTdsStream sslOVerTdsStream;
+                baseStream = sslOVerTdsStream 
+                    = preloginContext.ConnectionContext.SslOverTdsStream
+                    = new SslOverTdsStream(transportStream, preloginContext.ConnectionContext.ConnectionId);
             }
-            SslStream sslStream = new SslStream(baseStream, true, ValidateServerCertificate);
-            preloginContext.ConnectionContext.SslStream = sslStream;
+
+            SslStream sslStream =
+                preloginContext.ConnectionContext.SslStream 
+                = new SslStream(baseStream, true, ValidateServerCertificate);
 
             Stream preloginStream = preloginContext.IsTlsFirst ? (Stream)sslStream : (Stream)preloginContext.ConnectionContext.ConnectionStream;
 

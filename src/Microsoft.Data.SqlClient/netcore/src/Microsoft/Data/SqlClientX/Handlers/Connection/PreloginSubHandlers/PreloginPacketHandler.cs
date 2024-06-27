@@ -127,10 +127,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         // for login.
                         if (!context.ServerSupportsEncryption)
                         {
-                            SqlErrorCollection collection = context.ConnectionContext.ErrorCollection;
+                            SqlErrorCollection errors = context.ConnectionContext.ErrorCollection;
                             string serverName = context.ConnectionContext.ServerInfo.ResolvedServerName;
-                            collection.Add(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, serverName, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                            throw SqlException.CreateException(collection, null);
+                            errors.Add(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, serverName, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                            throw SqlException.CreateException(errors, null);
                         }
 
                         switch (context.InternalEncryptionOption)

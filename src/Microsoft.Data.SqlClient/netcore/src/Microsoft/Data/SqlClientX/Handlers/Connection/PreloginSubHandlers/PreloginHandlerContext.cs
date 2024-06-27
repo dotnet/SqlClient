@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// </summary>
         /// <returns></returns>
         public bool DoesClientNeedEncryption() =>
-                InternalEncryptionOption == EncryptionOptions.ON || InternalEncryptionOption == EncryptionOptions.LOGIN;
+                InternalEncryptionOption is (EncryptionOptions.ON or EncryptionOptions.LOGIN);
 
     }
 }

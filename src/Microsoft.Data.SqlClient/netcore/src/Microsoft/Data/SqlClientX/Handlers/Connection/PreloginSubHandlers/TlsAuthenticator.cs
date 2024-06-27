@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                 SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.AuthenticateClient | Info | Session Id {0}", context.ConnectionContext.ConnectionId);
                 using (TrySNIEventScope.Create(nameof(PreloginHandler)))
                 {
-                    Guid _connectionId = context.ConnectionContext.ConnectionId;
+                    Guid connectionId = context.ConnectionContext.ConnectionId;
                     SslOverTdsStream sslOverTdsStream = context.ConnectionContext.SslOverTdsStream;
                     SslStream sslStream = context.ConnectionContext.SslStream;
                     try
@@ -90,21 +90,19 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         // is no longer encapsulated in TDS.
                         sslOverTdsStream?.FinishHandshake();
                     }
-
                     catch (AuthenticationException aue)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsAuthenticator), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsAuthenticator), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: connectionId, args1: aue?.Message);
                         throw;
-                        
                     }
                     catch (InvalidOperationException ioe)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsAuthenticator), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsAuthenticator), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: connectionId, args1: ioe?.Message);
                         throw;
                     }
 
                     context.ConnectionContext.TdsStream = new TdsStream(new TdsWriteStream(sslStream), new TdsReadStream(sslStream));
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsAuthenticator), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsAuthenticator), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: connectionId);
                 }
             }
             catch (Exception exception)

@@ -12,11 +12,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
     /// <summary>
     /// Handler for TDS8 TLS handling. The consumers of this handler, should use this,
-    /// only when TDS8 is being used..
+    /// only when TDS8 is being used.
     /// </summary>
     internal class Tds8TlsHandler : IHandler<PreloginHandlerContext>
     {
-        private static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
+        private static readonly List<SslApplicationProtocol> s_tdsProtocols = new(1) { new(TdsEnums.TDS8_Protocol) };
         
         private readonly TlsAuthenticator _authenticator;
 
@@ -53,12 +53,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <inheritdoc />
         protected static SslClientAuthenticationOptions BuildClientAuthenticationOptions(PreloginHandlerContext context)
         {
-            string serverName = context.ConnectionContext.DataSource.ServerName;
             return new()
             {
-                TargetHost = serverName,
+                TargetHost = context.ConnectionContext.DataSource.ServerName,
                 ApplicationProtocols = s_tdsProtocols,
-                ClientCertificates = null
             };
         }
     }

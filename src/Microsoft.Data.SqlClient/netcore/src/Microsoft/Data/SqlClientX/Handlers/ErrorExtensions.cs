@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
     internal static class ErrorExtensions
     {
         /// <summary>
-        /// Convers the SNIError to SNIErrorDetails.
+        /// Converts the SNIError to SNIErrorDetails.
         /// </summary>
         /// <param name="sniError"></param>
         /// <returns></returns>
@@ -116,8 +116,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
                                 ? sniLookupMessage
                                 : (sniLookupMessage + ": " + errorMessage);
             }
-            errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
-                sqlContextInfo, providerName, (int)details.sniErrorNumber, errorMessage);
+            errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})", sqlContextInfo, providerName, (int)details.sniErrorNumber, errorMessage);
 
             SqlClientEventSource.Log.TryAdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}",
                 (int)details.nativeError, (int)details.lineNumber, details.function, details.exception, serverName);
