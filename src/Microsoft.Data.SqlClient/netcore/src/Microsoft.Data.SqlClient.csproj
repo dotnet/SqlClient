@@ -920,6 +920,9 @@
     </Compile>
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ConnectionHandlerContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\DataSourceParsingHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerNotFoundException.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerOrchestrator.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\InternalConnectionContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlDataSource.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlConnector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
