@@ -6,8 +6,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection.Login;
+using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection.LoginSubHandlers;
 using Microsoft.Data.SqlClientX.Handlers;
-using Microsoft.Data.SqlClientX.Handlers.Connection;
 
 namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
 {
@@ -121,18 +122,19 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
             }
 
             TdsEnums.FeatureExtension requestedFeatures = TdsEnums.FeatureExtension.None;
+            TdsFeatures features = context.Features;
             if (context.ConnectionOptions.ConnectRetryCount > 0)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.SessionRecovery;
-                _sessionRecoveryRequested = true;
+                features.SessionRecoveryRequested = true;
             }
 
             
             if (ShouldRequestFedAuth(context))
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
-                _federatedAuthenticationInfoRequested = true;
-                _fedAuthFeatureExtensionData =
+                features.FederatedAuthenticationInfoRequested = true;
+                features.FedAuthFeatureExtensionData =
                     new FederatedAuthenticationFeatureExtensionData
                     {
                         libraryType = TdsEnums.FedAuthLibrary.MSAL,
@@ -144,14 +146,14 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
             if (context.ConnectionContext.AccessTokenInBytes != null)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
-                _fedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
+                features.FedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
                 {
                     libraryType = TdsEnums.FedAuthLibrary.SecurityToken,
                     fedAuthRequiredPreLoginResponse = context.ConnectionContext.FedAuthRequired,
                     accessToken = context.ConnectionContext.AccessTokenInBytes
                 };
                 // No need any further info from the server for token based authentication. So set _federatedAuthenticationRequested to true
-                _federatedAuthenticationRequested = true;
+                features.FederatedAuthenticationRequested = true;
             }
 
             // The GLOBALTRANSACTIONS, DATACLASSIFICATION, TCE, and UTF8 support features are implicitly requested
@@ -160,7 +162,9 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
-            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
+            features.RequestedFeatures = requestedFeatures;
+            context.Login = login;
+            TdsLogin(context);
 
             // If the workflow being used is Active Directory Authentication and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
@@ -180,6 +184,13 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
                                 || context.ConnectionContext.AccessTokenCallback != null;
             }
         }
+
+        private void TdsLogin(LoginHandlerContext context)
+        {
+            // TODO: Set the timeout
+            _ = context.Login.timeout;
+            throw new NotImplementedException();
+        }
     }
 
     internal class LoginHandlerContext : HandlerRequest
@@ -188,12 +199,18 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
         public LoginHandlerContext(ConnectionHandlerContext context)
         {
             this.ConnectionContext = context;
-            this.ServerInfo = context.SeverInfo;
+            this.ServerInfo = context.ServerInfo;
             this.ConnectionOptions = context.ConnectionString;
         }
 
         public ConnectionHandlerContext ConnectionContext { get; }
         public ServerInfo ServerInfo { get; }
         public SqlConnectionString ConnectionOptions { get; }
+
+        /// <summary>
+        /// Features in the login request.
+        /// </summary>
+        public TdsFeatures Features { get; internal set; } = new();
+        public SqlLogin Login { get; internal set; }
     }
 }
