@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.IO;
 using System.Net.Security;
 using System.Security.Authentication;
@@ -11,6 +12,7 @@ using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.Handlers;
 using Microsoft.Data.SqlClientX.Handlers.Connection;
 using Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers;
+using Microsoft.Data.SqlClientX.Handlers.TransportCreation;
 using Microsoft.Data.SqlClientX.IO;
 using Moq;
 using Xunit;
@@ -145,6 +147,33 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                 Assert.Equal(SslProtocols.None, capturedOptions?.EnabledSslProtocols);
                 Assert.Equal(EncryptionOptions.LOGIN, context.InternalEncryptionOption);
             }
+        }
+
+        [Fact]
+        public void TestE2E()
+        {
+            DataSourceParsingHandler dspHandler = new DataSourceParsingHandler();
+            TransportCreationHandler tcHandler = new TransportCreationHandler();
+            PreloginHandler plHandler = new PreloginHandler();
+            ConnectionHandlerContext chc = new ConnectionHandlerContext();
+            SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder();
+            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
+            csb.DataSource = "tcp:saurabhsingh.database.windows.net,1433";
+            csb.UserID = "saurabh";
+            csb.Password = "HappyPass1234";
+            csb.InitialCatalog = "drivers";
+            csb.Encrypt = SqlConnectionEncryptOption.Strict;
+
+            csb.TrustServerCertificate = true;
+
+            SqlConnectionString scs = new SqlConnectionString(csb.ConnectionString);
+            chc.ConnectionString = scs;
+            var serverInfo = new ServerInfo(scs);
+            serverInfo.SetDerivedNames(null, serverInfo.UserServerName);
+            chc.SeverInfo = serverInfo;
+            dspHandler.NextHandler = tcHandler;
+            tcHandler.NextHandler = plHandler;
+            dspHandler.Handle(chc, false, default).GetAwaiter().GetResult();
         }
     }
 }

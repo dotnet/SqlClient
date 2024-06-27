@@ -21,6 +21,30 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
         const int PAYLOAD_LENGTH_SIZE_IN_BYTES = 2;
 
+        private static readonly int[] s_optionsLength = new int[(int)PreLoginOptions.NUMOPT];
+
+        private static int s_optionsPayloadLength;
+
+        /// <summary>
+        /// Static constructor for initializing the Prelogin options length.
+        /// </summary>
+        static PreloginPacketHandler()
+        {
+            s_optionsLength[(int)PreLoginOptions.VERSION] = 6;
+            s_optionsLength[(int)PreLoginOptions.ENCRYPT] = 1; // ENCRYPT
+            s_optionsLength[(int)PreLoginOptions.INSTANCE] = 1; // INSTANCE
+            s_optionsLength[(int)PreLoginOptions.THREADID] = 4; // THREADID
+            s_optionsLength[(int)PreLoginOptions.MARS] = 1; // MARS
+            s_optionsLength[(int)PreLoginOptions.TRACEID] = GUID_SIZE + GUID_SIZE + sizeof(uint); // TRACEID
+            s_optionsLength[(int)PreLoginOptions.FEDAUTHREQUIRED] = 1; // FEDAUTHREQUIRED
+            
+            // Calculate the payload length.
+            for (int i = 0; i < (int)PreLoginOptions.NUMOPT; i++)
+            {
+                s_optionsPayloadLength += s_optionsLength[i];
+            }
+        }
+
         // EventSource counter
         private static int s_objectTypeCount;
 
@@ -232,11 +256,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
             // Initialize option offset into payload buffer
             // 5 bytes for each option (1 byte length, 2 byte offset, 2 byte payload length)
-            int offset = (int)PreLoginOptions.NUMOPT * 5 + 1;
+            int optionsHeaderSize = (int)PreLoginOptions.NUMOPT * 5;
+            int offset = optionsHeaderSize + 1;
 
-            byte[] payload = new byte[(int)PreLoginOptions.NUMOPT * 5 + TdsEnums.MAX_PRELOGIN_PAYLOAD_LENGTH];
+            byte[] payload = new byte[(int)PreLoginOptions.NUMOPT * 5 + s_optionsPayloadLength];
             int payloadLength = 0;
-
 
             for (int option = (int)PreLoginOptions.VERSION; option < (int)PreLoginOptions.NUMOPT; option++)
             {
@@ -266,7 +290,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         payload[payloadLength++] = (byte)(systemDataVersion.Revision & 0xff);
                         payload[payloadLength++] = (byte)((systemDataVersion.Revision & 0xff00) >> 8);
                         offset += 6;
-                        optionDataSize = 6;
+                        optionDataSize = s_optionsLength[option];
                         break;
 
                     case (int)PreLoginOptions.ENCRYPT:
@@ -292,7 +316,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
                         payloadLength += 1;
                         offset += 1;
-                        optionDataSize = 1;
+                        optionDataSize = s_optionsLength[option];
                         break;
 
                     case (int)PreLoginOptions.INSTANCE:
@@ -300,7 +324,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         payload[payloadLength] = 0; // null terminate
                         payloadLength++;
                         offset += 1;
-                        optionDataSize = 1;
+                        optionDataSize = s_optionsLength[option];
                         break;
 
                     case (int)PreLoginOptions.THREADID:
@@ -310,20 +334,19 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         payload[payloadLength++] = (byte)((0x0000ff00 & threadID) >> 8);
                         payload[payloadLength++] = (byte)(0x000000ff & threadID);
                         offset += 4;
-                        optionDataSize = 4;
+                        optionDataSize = s_optionsLength[option];
                         break;
 
                     case (int)PreLoginOptions.MARS:
                         payload[payloadLength++] = (byte)(context.ConnectionContext.ConnectionString.MARS ? 1 : 0);
                         offset += 1;
-                        optionDataSize += 1;
+                        optionDataSize += s_optionsLength[option];
                         break;
 
                     case (int)PreLoginOptions.TRACEID:
                         context.ConnectionContext.ConnectionId.TryWriteBytes(payload.AsSpan(payloadLength, GUID_SIZE));
                         payloadLength += GUID_SIZE;
                         offset += GUID_SIZE;
-                        optionDataSize = GUID_SIZE;
 
                         ActivityCorrelator.ActivityId actId = ActivityCorrelator.Next();
                         actId.Id.TryWriteBytes(payload.AsSpan(payloadLength, GUID_SIZE));
@@ -334,7 +357,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         payload[payloadLength++] = (byte)((0xff000000 & actId.Sequence) >> 24);
                         int actIdSize = GUID_SIZE + sizeof(uint);
                         offset += actIdSize;
-                        optionDataSize += actIdSize;
+                        optionDataSize = s_optionsLength[option];
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}",
                             context.ConnectionContext.ConnectionId, actId);
                         break;
@@ -342,7 +365,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
                         payload[payloadLength++] = 0x01;
                         offset += 1;
-                        optionDataSize += 1;
+                        optionDataSize = s_optionsLength[option];
                         break;
 
                     default:
