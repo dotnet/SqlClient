@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClientX.IO
         private readonly TdsStream _tdsStream;
 
         /// <summary>
-        /// Instantiate TdsWriter with TdsStream
+        /// Instantiate TdsWriter with <see cref="TdsStream" />
         /// </summary>
         /// <param name="stream">Tds Stream instance to work with.</param>
         public TdsWriter(TdsStream stream)
@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct">Cancellation token.</param>
         public ValueTask WriteShortAsync(short value, bool isAsync, CancellationToken ct)
         {
-            var len = sizeof(short);
+            const int len = sizeof(short);
             BinaryPrimitives.WriteInt16LittleEndian(GetBuffer(len), value);
             return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
         }
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct">Cancellation token.</param>
         public ValueTask WriteIntAsync(int value, bool isAsync, CancellationToken ct)
         {
-            var len = sizeof(int);
+            const int len = sizeof(int);
             BinaryPrimitives.WriteInt32LittleEndian(GetBuffer(len), value);
             return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
         }
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct">Cancellation token.</param>
         public ValueTask WriteLongAsync(long value, bool isAsync, CancellationToken ct)
         {
-            var len = sizeof(long);
+            const int len = sizeof(long);
             BinaryPrimitives.WriteInt64LittleEndian(GetBuffer(len), value);
             return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
         }
@@ -103,9 +103,9 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct">Cancellation token.</param>
         public ValueTask WriteFloatAsync(float value, bool isAsync, CancellationToken ct)
         {
-            Debug.Assert(!float.IsInfinity(value) && !float.IsNaN(value), "Float value is out of range.");
+            Debug.Assert(float.IsFinite(value), "Float value is out of range.");
 
-            var len = sizeof(float);
+            const int len = sizeof(float);
             BinaryPrimitives.WriteInt32LittleEndian(GetBuffer(len), BitConverter.SingleToInt32Bits(value));
             return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
         }
@@ -118,9 +118,9 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct">Cancellation token.</param>
         public ValueTask WriteDoubleAsync(double value, bool isAsync, CancellationToken ct)
         {
-            Debug.Assert(!double.IsInfinity(value) && !double.IsNaN(value), "Double value is out of range.");
+            Debug.Assert(double.IsFinite(value), "Double value is out of range.");
 
-            var len = sizeof(double);
+            const int len = sizeof(double);
             BinaryPrimitives.WriteInt64LittleEndian(GetBuffer(len), BitConverter.DoubleToInt64Bits(value));
             return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
         }
@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClientX.IO
             Debug.Assert(length >= 0, "Length should not be negative");
             Debug.Assert(length <= 8, "Length specified is longer than the size of a long");
 
-            var len = sizeof(long);
+            const int len = sizeof(long);
             Span<byte> buffer = GetBuffer(len);
             for (int i = 0; i < length; i++)
             {

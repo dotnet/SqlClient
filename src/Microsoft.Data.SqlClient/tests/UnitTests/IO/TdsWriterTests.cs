@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
         public void TestSerializeDecimal_SerializesSuccessfully()
         {
             TdsWriter writer = _stream.TdsWriter;
-            var data = new decimal(8.5);
+            var data = 8.5m;
             var expectedSign = true;
 
             // Serialize decimal to byte array for Sql Server needs
