@@ -352,26 +352,25 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             // Write out last option.
             payload[optionsHeaderSize] = (byte)PreLoginOptions.LASTOPT;
 
+            // Write the packet to the stream.
+            ct.ThrowIfCancellationRequested();
             if (isAsync)
             {
-                ct.ThrowIfCancellationRequested();
                 await tdsStream.WriteAsync(payload.AsMemory(0, offset), ct).ConfigureAwait(false);
             }
             else
             {
-                ct.ThrowIfCancellationRequested();
                 tdsStream.Write(payload.AsSpan(0, offset));
             }
-            // Flush packet
 
+            // Flush packet
+            ct.ThrowIfCancellationRequested();
             if (isAsync)
             {
-                ct.ThrowIfCancellationRequested();
                 await tdsStream.FlushAsync(ct).ConfigureAwait(false);
             }
             else
             {
-                ct.ThrowIfCancellationRequested();
                 tdsStream.Flush();
             }
         }

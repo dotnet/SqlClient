@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Buffers.Binary;
 using System.IO;
 using System.Net.Security;
 using System.Security.Authentication;
@@ -13,7 +11,6 @@ using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.Handlers;
 using Microsoft.Data.SqlClientX.Handlers.Connection;
 using Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers;
-using Microsoft.Data.SqlClientX.Handlers.TransportCreation;
 using Microsoft.Data.SqlClientX.IO;
 using Moq;
 using Xunit;
@@ -116,23 +113,26 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             mockTlsAuthenticator.Setup(mockTlsAuthenticator => mockTlsAuthenticator.AuthenticateClientInternal(It.IsAny<PreloginHandlerContext>(), It.IsAny<SslClientAuthenticationOptions>(), isAsync, default))
                 .Callback((PreloginHandlerContext context, SslClientAuthenticationOptions options, bool isAsync, CancellationToken ct) => capturedOptions = options).Returns(ValueTask.CompletedTask);
 
-            MemoryStream stream = new MemoryStream();
+            MemoryStream stream = new();
             TdsStream tdsStream = new(new TdsWriteStream(stream), new TdsReadStream(stream));
 
             string connectionString = "Encrypt=Optional";
-            SqlConnectionString connectionOptions = new SqlConnectionString(connectionString);
+            SqlConnectionString connectionOptions = new(connectionString);
 
-            ConnectionHandlerContext connectionContext = new ConnectionHandlerContext();
-            connectionContext.ServerInfo = new ServerInfo(connectionOptions);
-            connectionContext.DataSource = DataSource.ParseServerName("tcp:localhost,1433");
-            connectionContext.ConnectionString = connectionOptions;
-            connectionContext.TdsStream = tdsStream;
+            ConnectionHandlerContext connectionContext = new()
+            {
+                ServerInfo = new ServerInfo(connectionOptions),
+                DataSource = DataSource.ParseServerName("tcp:localhost,1433"),
+                ConnectionString = connectionOptions,
+                TdsStream = tdsStream
+            };
 
-            PreloginHandlerContext context = new(connectionContext);
-
-            // This causes a successful execution.
-            context.ServerSupportsEncryption = serverSupportsEncryption;
-            context.InternalEncryptionOption = EncryptionOptions.LOGIN;
+            PreloginHandlerContext context = new(connectionContext)
+            {
+                // This causes a successful execution.
+                ServerSupportsEncryption = serverSupportsEncryption,
+                InternalEncryptionOption = EncryptionOptions.LOGIN
+            };
 
             Tds74TlsHandler tds74Handler = new(mockTlsAuthenticator.Object)
             {
@@ -148,46 +148,6 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                 Assert.Equal(SslProtocols.None, capturedOptions?.EnabledSslProtocols);
                 Assert.Equal(EncryptionOptions.LOGIN, context.InternalEncryptionOption);
             }
-        }
-
-        [Fact]
-        public void TestE2E()
-        {
-            DataSourceParsingHandler dspHandler = new DataSourceParsingHandler();
-            TransportCreationHandler tcHandler = new TransportCreationHandler();
-            PreloginHandler plHandler = new PreloginHandler();
-            ConnectionHandlerContext chc = new ConnectionHandlerContext();
-            SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder();
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
-            csb.DataSource = "tcp:localhost,1444";
-            csb.Encrypt = SqlConnectionEncryptOption.Mandatory;
-
-            csb.TrustServerCertificate = true;
-
-            SqlConnectionString scs = new SqlConnectionString(csb.ConnectionString);
-            chc.ConnectionString = scs;
-            var serverInfo = new ServerInfo(scs);
-            serverInfo.SetDerivedNames(null, serverInfo.UserServerName);
-            chc.ServerInfo = serverInfo;
-            dspHandler.NextHandler = tcHandler;
-            tcHandler.NextHandler = plHandler;
-            dspHandler.Handle(chc, false, default).GetAwaiter().GetResult();
-        }
-
-        [Fact]
-        public void CheckEndianness()
-        {
-            int offset = 0;
-            byte[] payload = new byte[4];
-            uint sequence = 1234;
-            payload[offset++] = (byte)(0x000000ff & sequence);
-            payload[offset++] = (byte)((0x0000ff00 & sequence) >> 8);
-            payload[offset++] = (byte)((0x00ff0000 & sequence) >> 16);
-            payload[offset++] = (byte)((0xff000000 & sequence) >> 24);
-
-            byte[] payload2 = new byte[4];
-            BinaryPrimitives.WriteUInt32LittleEndian(payload2, sequence);
-            Assert.Equal(payload, payload2);
         }
     }
 }
