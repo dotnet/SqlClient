@@ -56,9 +56,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
         public async ValueTask Handle(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            await PreloginPacketHandler.CreatePreLoginAndSend(context, isAsync, ct).ConfigureAwait(false);
+            await PreloginPacketHandler.CreatePreloginAndSend(context, isAsync, ct).ConfigureAwait(false);
             
-            await ReadPreLoginresponse(context, isAsync, ct).ConfigureAwait(false);
+            await ReadPreloginResponse(context, isAsync, ct).ConfigureAwait(false);
 
             if (NextHandler is not null)
             {
@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <param name="isAsync"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        private async Task ReadPreLoginresponse(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
+        private async Task ReadPreloginResponse(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             context.ConnectionContext.MarsCapable = context.ConnectionContext.ConnectionString.MARS; // Assign default value
             context.ConnectionContext.FedAuthRequired = false;
@@ -207,7 +207,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         if (preloginPayload[payloadOffset] != 0x00 && preloginPayload[payloadOffset] != 0x01)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}|ERR> {1}, " +
-                                "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {2}.", nameof(ReadPreLoginresponse), ObjectID, (int)preloginPayload[payloadOffset]);
+                                "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {2}.", nameof(ReadPreloginResponse), ObjectID, (int)preloginPayload[payloadOffset]);
                             throw SQL.ParsingErrorValue(ParsingErrorState.FedAuthRequiredPreLoginResponseInvalidValue, (int)preloginPayload[payloadOffset]);
                         }
 
@@ -247,7 +247,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <param name="isAsync"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        private static async Task CreatePreLoginAndSend(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
+        private static async Task CreatePreloginAndSend(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             Debug.Assert(context.ConnectionContext.TdsStream != null, "A Tds Stream is expected");
 
@@ -257,140 +257,129 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             // Initialize option offset into payload buffer
             // 5 bytes for each option (1 byte length, 2 byte offset, 2 byte payload length)
             int optionsHeaderSize = (int)PreLoginOptions.NUMOPT * 5;
+
             int offset = optionsHeaderSize + 1;
 
             // Create the payload buffer with the options header and options payload length, which 
             // is precalculated.
-            byte[] payload = new byte[(int)PreLoginOptions.NUMOPT * 5 + s_optionsPayloadLength];
-            int payloadLength = 0;
+            byte[] payload = new byte[optionsHeaderSize + 1 + s_optionsPayloadLength];
+            int payloadWriteOffset = offset;
 
             for (int option = (int)PreLoginOptions.VERSION; option < (int)PreLoginOptions.NUMOPT; option++)
             {
-                int optionDataSize = 0;
-
-                // Fill in the option
-                await tdsStream.WriteByteAsync((byte)option, isAsync, ct);
-
-                // Fill in the offset of the option data
-                await tdsStream.WriteByteAsync((byte)((offset & 0xff00) >> 8), isAsync, ct); // send upper order byte
-                await tdsStream.WriteByteAsync((byte)(offset & 0x00ff), isAsync, ct); // send lower order byte
-
+                int optionHeaderOffset = option * 5;
+                payload[optionHeaderOffset] = (byte)option;
+                payload[optionHeaderOffset + 1] = (byte)((offset & 0xff00) >> 8);
+                payload[optionHeaderOffset + 2] = (byte)(offset & 0x00ff);
+                payload[optionHeaderOffset + 3] = (byte)((s_optionsLength[option] & 0xff00) >> 8);
+                payload[optionHeaderOffset + 4] = (byte)(s_optionsLength[option] & 0x00ff);
+                
                 switch (option)
                 {
                     case (int)PreLoginOptions.VERSION:
                         Version systemDataVersion = ADP.GetAssemblyVersion();
 
                         // Major and minor
-                        payload[payloadLength++] = (byte)(systemDataVersion.Major & 0xff);
-                        payload[payloadLength++] = (byte)(systemDataVersion.Minor & 0xff);
+                        payload[payloadWriteOffset++] = (byte)(systemDataVersion.Major & 0xff);
+                        payload[payloadWriteOffset++] = (byte)(systemDataVersion.Minor & 0xff);
 
                         // Build (Big Endian)
-                        payload[payloadLength++] = (byte)((systemDataVersion.Build & 0xff00) >> 8);
-                        payload[payloadLength++] = (byte)(systemDataVersion.Build & 0xff);
+                        payload[payloadWriteOffset++] = (byte)((systemDataVersion.Build & 0xff00) >> 8);
+                        payload[payloadWriteOffset++] = (byte)(systemDataVersion.Build & 0xff);
 
                         // Sub-build (Little Endian)
-                        payload[payloadLength++] = (byte)(systemDataVersion.Revision & 0xff);
-                        payload[payloadLength++] = (byte)((systemDataVersion.Revision & 0xff00) >> 8);
+                        payload[payloadWriteOffset++] = (byte)(systemDataVersion.Revision & 0xff);
+                        payload[payloadWriteOffset++] = (byte)((systemDataVersion.Revision & 0xff00) >> 8);
                         offset += 6;
-                        optionDataSize = s_optionsLength[option];
                         break;
 
                     case (int)PreLoginOptions.ENCRYPT:
                         if (context.InternalEncryptionOption == EncryptionOptions.NOT_SUP)
                         {
                             //If OS doesn't support encryption and encryption is not required, inform server "not supported" by client.
-                            payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
+                            payload[payloadWriteOffset] = (byte)EncryptionOptions.NOT_SUP;
                         }
                         else
                         {
                             // Else, inform server of user request.
                             if (context.ConnectionEncryptionOption == SqlConnectionEncryptOption.Mandatory)
                             {
-                                payload[payloadLength] = (byte)EncryptionOptions.ON;
+                                payload[payloadWriteOffset] = (byte)EncryptionOptions.ON;
                                 context.InternalEncryptionOption = EncryptionOptions.ON;
                             }
                             else
                             {
-                                payload[payloadLength] = (byte)EncryptionOptions.OFF;
+                                payload[payloadWriteOffset] = (byte)EncryptionOptions.OFF;
                                 context.InternalEncryptionOption = EncryptionOptions.OFF;
                             }
                         }
 
-                        payloadLength += 1;
+                        payloadWriteOffset += 1;
                         offset += 1;
-                        optionDataSize = s_optionsLength[option];
                         break;
 
                     case (int)PreLoginOptions.INSTANCE:
                         // We send an empty instance name to the server. 
-                        payload[payloadLength] = 0; // null terminate
-                        payloadLength++;
+                        payload[payloadWriteOffset] = 0; // null terminate
+                        payloadWriteOffset++;
                         offset += 1;
-                        optionDataSize = s_optionsLength[option];
                         break;
 
                     case (int)PreLoginOptions.THREADID:
                         int threadID = TdsParserStaticMethods.GetCurrentThreadIdForTdsLoginOnly();
-                        payload[payloadLength++] = (byte)((0xff000000 & threadID) >> 24);
-                        payload[payloadLength++] = (byte)((0x00ff0000 & threadID) >> 16);
-                        payload[payloadLength++] = (byte)((0x0000ff00 & threadID) >> 8);
-                        payload[payloadLength++] = (byte)(0x000000ff & threadID);
+                        payload[payloadWriteOffset++] = (byte)((0xff000000 & threadID) >> 24);
+                        payload[payloadWriteOffset++] = (byte)((0x00ff0000 & threadID) >> 16);
+                        payload[payloadWriteOffset++] = (byte)((0x0000ff00 & threadID) >> 8);
+                        payload[payloadWriteOffset++] = (byte)(0x000000ff & threadID);
                         offset += 4;
-                        optionDataSize = s_optionsLength[option];
                         break;
 
                     case (int)PreLoginOptions.MARS:
-                        payload[payloadLength++] = (byte)(context.ConnectionContext.ConnectionString.MARS ? 1 : 0);
+                        payload[payloadWriteOffset++] = (byte)(context.ConnectionContext.ConnectionString.MARS ? 1 : 0);
                         offset += 1;
-                        optionDataSize += s_optionsLength[option];
                         break;
 
                     case (int)PreLoginOptions.TRACEID:
-                        context.ConnectionContext.ConnectionId.TryWriteBytes(payload.AsSpan(payloadLength, GUID_SIZE));
-                        payloadLength += GUID_SIZE;
+                        context.ConnectionContext.ConnectionId.TryWriteBytes(payload.AsSpan(payloadWriteOffset, GUID_SIZE));
+                        payloadWriteOffset += GUID_SIZE;
                         offset += GUID_SIZE;
 
                         ActivityCorrelator.ActivityId actId = ActivityCorrelator.Next();
-                        actId.Id.TryWriteBytes(payload.AsSpan(payloadLength, GUID_SIZE));
-                        payloadLength += GUID_SIZE;
-                        payload[payloadLength++] = (byte)(0x000000ff & actId.Sequence);
-                        payload[payloadLength++] = (byte)((0x0000ff00 & actId.Sequence) >> 8);
-                        payload[payloadLength++] = (byte)((0x00ff0000 & actId.Sequence) >> 16);
-                        payload[payloadLength++] = (byte)((0xff000000 & actId.Sequence) >> 24);
+                        actId.Id.TryWriteBytes(payload.AsSpan(payloadWriteOffset, GUID_SIZE));
+                        payloadWriteOffset += GUID_SIZE;
+                        payload[payloadWriteOffset++] = (byte)(0x000000ff & actId.Sequence);
+                        payload[payloadWriteOffset++] = (byte)((0x0000ff00 & actId.Sequence) >> 8);
+                        payload[payloadWriteOffset++] = (byte)((0x00ff0000 & actId.Sequence) >> 16);
+                        payload[payloadWriteOffset++] = (byte)((0xff000000 & actId.Sequence) >> 24);
                         int actIdSize = GUID_SIZE + sizeof(uint);
                         offset += actIdSize;
-                        optionDataSize = s_optionsLength[option];
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}",
                             context.ConnectionContext.ConnectionId, actId);
                         break;
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
-                        payload[payloadLength++] = 0x01;
+                        payload[payloadWriteOffset++] = 0x01;
                         offset += 1;
-                        optionDataSize = s_optionsLength[option];
                         break;
 
                     default:
                         Debug.Fail("UNKNOWN option in SendPreLoginHandshake");
                         break;
                 }
-
-                await tdsStream.WriteByteAsync((byte)((optionDataSize & 0xff00) >> 8), isAsync, ct).ConfigureAwait(false);
-                await tdsStream.WriteByteAsync((byte)(optionDataSize & 0x00ff), isAsync, ct).ConfigureAwait(false);
             }
 
-            // Write out last option - to let server know the second part of packet completed
-            await tdsStream.WriteByteAsync((byte)PreLoginOptions.LASTOPT, isAsync, ct).ConfigureAwait(false);
+            // Write out last option.
+            payload[optionsHeaderSize] = (byte)PreLoginOptions.LASTOPT;
 
             if (isAsync)
             {
                 ct.ThrowIfCancellationRequested();
-                await tdsStream.WriteAsync(payload.AsMemory(0, payloadLength), ct).ConfigureAwait(false);
+                await tdsStream.WriteAsync(payload.AsMemory(0, payloadWriteOffset), ct).ConfigureAwait(false);
             }
             else
             {
                 ct.ThrowIfCancellationRequested();
-                tdsStream.Write(payload.AsSpan(0, payloadLength));
+                tdsStream.Write(payload.AsSpan(0, payloadWriteOffset));
             }
             // Flush packet
 
