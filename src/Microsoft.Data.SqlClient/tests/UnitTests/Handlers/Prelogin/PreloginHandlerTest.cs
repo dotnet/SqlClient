@@ -2,15 +2,18 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Buffers.Binary;
 using System.IO;
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.SNI;
+using Microsoft.Data.SqlClient.UnitTests.IO;
 using Microsoft.Data.SqlClientX.Handlers;
 using Microsoft.Data.SqlClientX.Handlers.Connection;
 using Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers;
+using Microsoft.Data.SqlClientX.Handlers.TransportCreation;
 using Microsoft.Data.SqlClientX.IO;
 using Moq;
 using Xunit;
@@ -148,6 +151,46 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                 Assert.Equal(SslProtocols.None, capturedOptions?.EnabledSslProtocols);
                 Assert.Equal(EncryptionOptions.LOGIN, context.InternalEncryptionOption);
             }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async void PreloginPacketHandler_HandlePackets(bool isAsync)
+        {
+
+            byte[] preloginResponse = new byte[]
+                {
+                    0, 0, 36, 0, 6,
+                    1, 0, 42, 0, 1,
+                    2, 0, 43, 0, 1,
+                    3, 0, 44, 0, 0,
+                    4, 0, 44, 0, 1,
+                    5, 0, 45, 0, 0,
+                    6, 0, 45, 0, 1,
+                    255,
+                    12, 0, 20, 229, 0, 0, (byte)EncryptionOptions.REQ, 0, 0, 1
+                };
+            TdsReadStreamTest.TdsMessage tdsMessage = TdsReadStreamTest.PrepareTdsMessage(100, preloginResponse, TdsEnums.MT_PRELOGIN);
+            SplittableStream splitStream = new(tdsMessage.GetBytes());
+            TdsStream tdsStream = new(new TdsWriteStream(splitStream), new TdsReadStream(splitStream));
+
+            string connectionString = "Encrypt=Optional";
+            ConnectionHandlerContext connectionContext = new()
+            {
+                TdsStream = tdsStream,
+                ConnectionString = new SqlConnectionString(connectionString)
+            };
+
+            PreloginHandlerContext context = new(connectionContext)
+            {
+                
+            };
+            PreloginPacketHandler preloginPacketHandler = new()
+            {
+                NextHandler = null
+            };
+            await preloginPacketHandler.Handle(context, isAsync, default).ConfigureAwait(false);
         }
     }
 }
