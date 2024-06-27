@@ -5,6 +5,8 @@
 #if NET8_0_OR_GREATER
 
 using System;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
@@ -19,9 +21,20 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Initializes a new instance of UnpooledDataSource.
         /// </summary>
-        /// <param name="connectionString"></param>
+        /// <param name="connectionStringBuilder"></param>
         /// <param name="credential"></param>
-        internal UnpooledDataSource(string connectionString, SqlCredential credential) : base(connectionString, credential)
+        /// <param name="userCertificateValidationCallback"></param>
+        /// <param name="clientCertificatesCallback"></param>
+        internal UnpooledDataSource(
+            SqlConnectionStringBuilder connectionStringBuilder,
+            SqlCredential credential,
+            RemoteCertificateValidationCallback userCertificateValidationCallback,
+            Action<X509CertificateCollection> clientCertificatesCallback) :
+            base(
+                connectionStringBuilder,
+                credential,
+                userCertificateValidationCallback,
+                clientCertificatesCallback)
         {
         }
 
