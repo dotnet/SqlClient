@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         if (!context.ServerSupportsEncryption)
                         {
                             SqlErrorCollection collection = context.ConnectionContext.ErrorCollection;
-                            string serverName = context.ConnectionContext.SeverInfo.ResolvedServerName;
+                            string serverName = context.ConnectionContext.ServerInfo.ResolvedServerName;
                             collection.Add(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, serverName, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
                             throw SqlException.CreateException(collection, null);
                         }
@@ -153,7 +153,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                                 if (serverOption == EncryptionOptions.REQ)
                                 {
                                     SqlErrorCollection collection = context.ConnectionContext.ErrorCollection;
-                                    string serverName = context.ConnectionContext.SeverInfo.ResolvedServerName;
+                                    string serverName = context.ConnectionContext.ServerInfo.ResolvedServerName;
                                     collection.Add(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, serverName, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                                     throw SqlException.CreateException(collection, null);
                                 }
@@ -259,6 +259,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             int optionsHeaderSize = (int)PreLoginOptions.NUMOPT * 5;
             int offset = optionsHeaderSize + 1;
 
+            // Create the payload buffer with the options header and options payload length, which 
+            // is precalculated.
             byte[] payload = new byte[(int)PreLoginOptions.NUMOPT * 5 + s_optionsPayloadLength];
             int payloadLength = 0;
 
@@ -382,21 +384,24 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
             if (isAsync)
             {
-                // Write out payload
+                ct.ThrowIfCancellationRequested();
                 await tdsStream.WriteAsync(payload.AsMemory(0, payloadLength), ct).ConfigureAwait(false);
             }
             else
             {
+                ct.ThrowIfCancellationRequested();
                 tdsStream.Write(payload.AsSpan(0, payloadLength));
             }
             // Flush packet
 
             if (isAsync)
             {
+                ct.ThrowIfCancellationRequested();
                 await tdsStream.FlushAsync(ct).ConfigureAwait(false);
             }
             else
             {
+                ct.ThrowIfCancellationRequested();
                 tdsStream.Flush();
             }
         }

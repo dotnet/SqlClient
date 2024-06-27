@@ -4,18 +4,23 @@
 
 using System;
 using System.Net.Security;
+using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.IO;
+using static Microsoft.Data.SqlClient.SNINativeMethodWrapper;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
     internal class TlsAuthenticator
     {
-        public virtual async ValueTask AuthenticateClientInternal(PreloginHandlerContext request, SslClientAuthenticationOptions options, bool isAsync, CancellationToken ct)
+        public virtual async ValueTask AuthenticateClientInternal(PreloginHandlerContext request,
+            SslClientAuthenticationOptions options,
+            bool isAsync,
+            CancellationToken ct)
         {
             try
             {
@@ -90,6 +95,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsAuthenticator), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
                         throw;
+                        
                     }
                     catch (InvalidOperationException ioe)
                     {
@@ -101,12 +107,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(TlsAuthenticator), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
                 }
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
                 SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.AuthenticateClient | Err | Session Id {0}, SNI Handshake failed with exception: {1}",
                     context.ConnectionContext.ConnectionId,
-                    e.Message);
-                throw;
+                    exception.Message);
+                SqlError sqlError = SNIProviders.SSL_PROV.CreateSqlError(SNICommon.HandshakeFailureError, exception, PreloginHandlerContext.SniContext, context.ServerInfo.ResolvedServerName);
+                throw SqlException.CreateException(context.ConnectionContext.ErrorCollection, null);
             }
         }
     }

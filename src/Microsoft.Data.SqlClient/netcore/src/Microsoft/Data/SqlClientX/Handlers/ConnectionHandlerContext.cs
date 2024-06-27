@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// <summary>
         /// The server information created for the connection.
         /// </summary>
-        public ServerInfo SeverInfo { get; internal set; }
+        public ServerInfo ServerInfo { get; internal set; }
 
         /// <summary>
         /// An error collection for the handlers to add errors to.

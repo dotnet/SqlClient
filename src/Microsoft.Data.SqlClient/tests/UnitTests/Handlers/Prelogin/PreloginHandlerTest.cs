@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             SqlConnectionString connectionOptions = new SqlConnectionString(connectionString);
 
             ConnectionHandlerContext connectionContext = new ConnectionHandlerContext();
-            connectionContext.SeverInfo = new ServerInfo(connectionOptions);
+            connectionContext.ServerInfo = new ServerInfo(connectionOptions);
             connectionContext.DataSource = DataSource.ParseServerName("tcp:localhost,1433");
             connectionContext.ConnectionString = connectionOptions;
             connectionContext.TdsStream = tdsStream;
@@ -147,6 +147,30 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                 Assert.Equal(SslProtocols.None, capturedOptions?.EnabledSslProtocols);
                 Assert.Equal(EncryptionOptions.LOGIN, context.InternalEncryptionOption);
             }
+        }
+
+        [Fact]
+        public void TestE2E()
+        {
+            DataSourceParsingHandler dspHandler = new DataSourceParsingHandler();
+            TransportCreationHandler tcHandler = new TransportCreationHandler();
+            PreloginHandler plHandler = new PreloginHandler();
+            ConnectionHandlerContext chc = new ConnectionHandlerContext();
+            SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder();
+            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
+            csb.DataSource = "tcp:localhost,1444";
+            csb.Encrypt = SqlConnectionEncryptOption.Mandatory;
+
+            csb.TrustServerCertificate = true;
+
+            SqlConnectionString scs = new SqlConnectionString(csb.ConnectionString);
+            chc.ConnectionString = scs;
+            var serverInfo = new ServerInfo(scs);
+            serverInfo.SetDerivedNames(null, serverInfo.UserServerName);
+            chc.ServerInfo = serverInfo;
+            dspHandler.NextHandler = tcHandler;
+            tcHandler.NextHandler = plHandler;
+            dspHandler.Handle(chc, false, default).GetAwaiter().GetResult();
         }
     }
 }

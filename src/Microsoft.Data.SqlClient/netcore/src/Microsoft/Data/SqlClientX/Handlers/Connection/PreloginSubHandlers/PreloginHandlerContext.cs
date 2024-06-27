@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <summary>
         /// If the client should trust the server certificate.
         /// </summary>
-        public bool TrustServerCert { get; private set; }
+        private bool TrustServerCertificate { get; set; }
 
         /// <summary>
         /// Is integrated security enabled? 
@@ -47,6 +47,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         public string ServerCertificateFilename { get; private set; }
 
         /// <summary>
+        /// The server information.
+        /// </summary>
+        public ServerInfo ServerInfo { get; private set; }
+
+        /// <summary>
         /// The encryption option for the client, who state is maintained internally.
         /// </summary>
         public EncryptionOptions InternalEncryptionOption { get; set; } = EncryptionOptions.OFF;
@@ -65,6 +70,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// The Prelogin handshake status.
         /// </summary>
         public PreLoginHandshakeStatus HandshakeStatus { get; internal set; }
+        
+        /// <summary>
+        /// The SNI context in which the operation is being performed.
+        /// This is used for exception reporting.
+        /// </summary>
+        public static SniContext SniContext => SniContext.Snix_PreLogin;
 
         /// <summary>
         /// Constructs the Prelogin context from the connection context.
@@ -75,11 +86,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             ConnectionContext = connectionContext;
             SqlConnectionString connectionOptions = connectionContext.ConnectionString;
             ConnectionEncryptionOption = connectionOptions.Encrypt;
-            TrustServerCert = connectionOptions.TrustServerCertificate;
+            TrustServerCertificate = connectionOptions.TrustServerCertificate;
             IntegratedSecurity = connectionOptions.IntegratedSecurity;
             AuthType = connectionOptions.Authentication;
             HostNameInCertificate = connectionOptions.HostNameInCertificate;
             ServerCertificateFilename = connectionOptions.ServerCertificate;
+            ServerInfo = connectionContext.ServerInfo;
         }
 
         /// <summary>
@@ -94,8 +106,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             }
             else
             {
-                return (InternalEncryptionOption == EncryptionOptions.ON && !TrustServerCert)
-                || (ConnectionContext.AccessTokenInBytes != null && !TrustServerCert);
+                return (InternalEncryptionOption == EncryptionOptions.ON && !TrustServerCertificate)
+                || (ConnectionContext.AccessTokenInBytes != null && !TrustServerCertificate);
             }
         }
 
