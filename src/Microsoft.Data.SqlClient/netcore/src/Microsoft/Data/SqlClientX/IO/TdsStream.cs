@@ -61,6 +61,9 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public byte ReadPacketHeaderType => _readStream.ReadPacketHeaderType;
 
+        /// <summary>
+        /// Tds Writer instance that provides managed buffer for writing data to stream.
+        /// </summary>
         public TdsWriter TdsWriter { get; private set; }
 
         /// <summary>
@@ -202,7 +205,6 @@ namespace Microsoft.Data.SqlClientX.IO
         {
             await _writeStream.DisposeAsync().ConfigureAwait(false);
             await _readStream.DisposeAsync().ConfigureAwait(false);
-            await TdsWriter.DisposeAsync().ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -212,7 +214,6 @@ namespace Microsoft.Data.SqlClientX.IO
             { 
                 _writeStream?.Dispose();
                 _readStream?.Dispose();
-                TdsWriter?.Dispose();
                 _writeStream = null;
                 _readStream = null;
                 TdsWriter = null;
