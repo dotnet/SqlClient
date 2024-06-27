@@ -1,0 +1,122 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: debug
+    type: boolean
+    default: false
+
+  - name: upload
+    type: string
+    default: $(ci_var_uploadTestResult)
+
+  - name: poolName
+    type: string
+    default: $(defaultHostedPoolName)
+
+  - name: image
+    type: string
+    default: 'windows-2022'
+  
+  - name: downloadArtifactsSteps
+    type: stepList
+    default: []
+
+jobs:
+- job: CodeCoverage
+  displayName: 'Merge Code Coverage'
+
+  variables:
+    uploadTestResult: ${{ parameters.upload }}
+
+  pool: 
+    name: '${{ parameters.poolName }}'
+    vmImage: ${{ parameters.image }}
+
+  steps:
+  - ${{if eq(parameters.debug, true)}}:
+    - powershell: |
+        Get-ChildItem env: | Sort-Object Name
+      displayName: 'List Environment Variables [debug]'
+
+  - task: NuGetAuthenticate@1
+    displayName: 'NuGet Authenticate'
+
+  - task: UseDotNet@2
+    displayName: 'Use .NET SDK 7.0.x'
+    inputs:
+      version: 7.0.x
+
+  - ${{ parameters.downloadArtifactsSteps }}
+
+  - ${{ if eq(parameters.debug, true)}}:
+    - powershell: |
+        Get-ChildItem $(Build.SourcesDirectory)\coverageNetFx\ -Recurse -File -Filter *.coverage
+      displayName: 'List coverageNetFx files [debug]'
+    
+    - powershell: |
+        Get-ChildItem $(Build.SourcesDirectory)\coverageNetCore\ -Recurse -File -Filter *.coverage
+      displayName: 'List coverageNetCore files [debug]'
+
+  - powershell: |
+      dotnet tool install --global dotnet-coverage
+
+      $files = Get-ChildItem $(Build.SourcesDirectory)\coverageNetFx\ -Recurse -File -Filter *.coverage
+      # echo $files
+      mkdir coverageNetFxXml
+      $counter=0
+      foreach ($file in $files) {
+        & dotnet-coverage merge $file.FullName --output coverageNetFxXml\$((++$counter)).coveragexml --output-format xml
+      }
+
+      $files = Get-ChildItem $(Build.SourcesDirectory)\coverageNetCore\ -Recurse -File -Filter *.coverage
+      # echo $files
+      mkdir coverageNetCoreXml
+      $counter=0
+      foreach ($file in $files) {
+        & dotnet-coverage merge $file.FullName --output coverageNetCoreXml\$((++$counter)).coveragexml --output-format xml
+      }
+
+      # dir coverageNetFxXml\
+      # dir coverageNetCoreXml\
+
+      Write-Host "Clean up disk ... [removing coverageNetFx & coverageNetCore]"
+
+      Remove-Item $(Build.SourcesDirectory)\coverageNetFx -Recurse -Force
+      Remove-Item $(Build.SourcesDirectory)\coverageNetCore -Recurse -Force
+
+    displayName: 'Convert coverage files to xml'
+
+  - ${{ if eq(parameters.debug, true)}}:
+    - powershell: |
+        dir coverageNetFxXml\
+        dir coverageNetCoreXml\
+      displayName: 'List converted files [debug]'
+
+  - script: |
+      dotnet tool install dotnet-reportgenerator-globaltool --tool-path tools
+
+      tools\reportgenerator "-reports:coverageNetFxXml\*.coveragexml" "-targetdir:coveragereportNetFx" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\netfx\src;$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\src" "-classfilters:+Microsoft.Data.*"
+
+      tools\reportgenerator "-reports:coverageNetCoreXml\*.coveragexml" "-targetdir:coveragereportAddOns" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.alwaysencrypted.azurekeyvaultprovider.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\add-ons\AzureKeyVaultProvider" "-classfilters:+Microsoft.Data.*"
+
+      tools\reportgenerator "-reports:coverageNetCoreXml\*.coveragexml" "-targetdir:coveragereportNetCore" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\netcore\src;$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\src" "-classfilters:+Microsoft.Data.*"
+    displayName: 'Run ReportGenerator'
+
+  - task: PublishCodeCoverageResults@2
+    displayName: 'Publish code coverage from netcore'
+    inputs:
+      summaryFileLocation: '*\Cobertura.xml'
+
+  - powershell: |
+      #download Codecov CLI
+      $ProgressPreference = 'SilentlyContinue' 
+      Invoke-WebRequest -Uri https://cli.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
+      
+      ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN) -f "coveragereportNetFx\Cobertura.xml" -F netfx
+      ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN)  -f "coveragereportNetCore\Cobertura.xml" -F netcore
+      ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN)  -f "coveragereportAddOns\Cobertura.xml" -F addons
+    displayName: 'Upload to CodeCov'
+    condition: and(succeeded(), eq(variables['uploadTestResult'], 'true'))

@@ -4,6 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  - name: debug
+    type: boolean
+    default: false
+
   - name: downloadedNugetPath # path to the downloaded nuget files
     type: string
 
@@ -25,26 +29,33 @@ steps:
     # Get a list of package sources available after the change
     Get-PackageSource
 
-    #Set the Nuget.config file in the project to use extracted package
+    #Set the NuGet.config file in the project to use extracted package
     $rootFolder = Get-location
-    [Xml] $nugetConfig = Get-Content -Path "Nuget.config"
+    [Xml] $nugetConfig = Get-Content -Path "NuGet.config"
     $Value = Resolve-Path ${{parameters.downloadedNugetPath }}
     $newAdd = $nugetConfig.CreateElement("add")
     $newAdd.SetAttribute("key","Package source")
-    $newAdd.SetAttribute("value", "$Value\" )
+    $newAdd.SetAttribute("value", "$Value/" )
     $nugetConfig.configuration.packageSources.AppendChild($newAdd)
-    $nugetConfig.Save("$rootFolder\Nuget.config")
+    $nugetConfig.Save("$rootFolder/NuGet.config")
   displayName: 'Update NuGet config file to read from Nuget folder'
 
-- task: MSBuild@1
-  displayName: 'Restore nugets'
+- ${{ if parameters.debug }}:
+  - powershell: |
+      # Display the content of the NuGet.config file
+      Get-Content -Path "NuGet.config"
+    displayName: 'Read NuGet.config [debug]'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Restore NuGets'
   inputs:
-    solution: build.proj
-    msbuildArchitecture: x64
-    msbuildArguments: '-t:restore'
+    command: 'custom'
+    custom: 'msbuild'
+    arguments: 'build.proj -t:restore'
+    feedsToUse: 'select'
 
 - powershell: |
-    $Doc = [xml](Get-Content ".\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj")
+    $Doc = [xml](Get-Content "./Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj")
     $parent_xpath = '/Project/ItemGroup/ProjectReference'
     $node = $Doc.SelectSingleNode($parent_xpath)
     $parentNode = $node.ParentNode
