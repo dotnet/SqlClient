@@ -148,32 +148,5 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                 Assert.Equal(EncryptionOptions.LOGIN, context.InternalEncryptionOption);
             }
         }
-
-        [Fact]
-        public void TestE2E()
-        {
-            DataSourceParsingHandler dspHandler = new DataSourceParsingHandler();
-            TransportCreationHandler tcHandler = new TransportCreationHandler();
-            PreloginHandler plHandler = new PreloginHandler();
-            ConnectionHandlerContext chc = new ConnectionHandlerContext();
-            SqlConnectionStringBuilder csb = new SqlConnectionStringBuilder();
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
-            csb.DataSource = "tcp:saurabhsingh.database.windows.net,1433";
-            csb.UserID = "saurabh";
-            csb.Password = "HappyPass1234";
-            csb.InitialCatalog = "drivers";
-            csb.Encrypt = SqlConnectionEncryptOption.Strict;
-
-            csb.TrustServerCertificate = true;
-
-            SqlConnectionString scs = new SqlConnectionString(csb.ConnectionString);
-            chc.ConnectionString = scs;
-            var serverInfo = new ServerInfo(scs);
-            serverInfo.SetDerivedNames(null, serverInfo.UserServerName);
-            chc.SeverInfo = serverInfo;
-            dspHandler.NextHandler = tcHandler;
-            tcHandler.NextHandler = plHandler;
-            dspHandler.Handle(chc, false, default).GetAwaiter().GetResult();
-        }
     }
 }
