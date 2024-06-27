@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlClient.SNI;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
@@ -12,22 +11,65 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
     /// </summary>
     internal class PreloginHandlerContext : HandlerRequest
     {
+        /// <summary>
+        /// Encryption options for the connection.
+        /// </summary>
         public SqlConnectionEncryptOption ConnectionEncryptionOption { get; private set; }
+        
+        /// <summary>
+        /// If the client should do TLS first.
+        /// </summary>
         public bool IsTlsFirst => (ConnectionEncryptionOption == SqlConnectionEncryptOption.Strict);
+        
+        /// <summary>
+        /// If the client should trust the server certificate.
+        /// </summary>
         public bool TrustServerCert { get; private set; }
+
+        /// <summary>
+        /// Is integrated security enabled? 
+        /// </summary>
         public bool IntegratedSecurity { get; private set; }
+
+        /// <summary>
+        /// The Sqlauthentication method being used.
+        /// </summary>
         public SqlAuthenticationMethod AuthType { get; private set; }
+
+        /// <summary>
+        /// The hostname in certificate to validate during TLS handshake.
+        /// </summary>
         public string HostNameInCertificate { get; private set; }
+
+        /// <summary>
+        /// The filename with the server certificate to be used for validating the server certificate.
+        /// </summary>
         public string ServerCertificateFilename { get; private set; }
 
+        /// <summary>
+        /// The encryption option for the client, who state is maintained internally.
+        /// </summary>
         public EncryptionOptions InternalEncryptionOption { get; set; } = EncryptionOptions.OFF;
 
+        /// <summary>
+        /// The original connection context. 
+        /// </summary>
         public ConnectionHandlerContext ConnectionContext { get; private set; }
 
+        /// <summary>
+        /// Does the server support encryption?
+        /// </summary>
         public bool ServerSupportsEncryption { get; internal set; }
 
+        /// <summary>
+        /// The Prelogin handshake status.
+        /// </summary>
         public PreLoginHandshakeStatus HandshakeStatus { get; internal set; }
 
+        /// <summary>
+        /// Constructs the Prelogin context from the connection context.
+        /// </summary>
+        /// <param name="connectionContext"></param>
         public PreloginHandlerContext(ConnectionHandlerContext connectionContext)
         {
             ConnectionContext = connectionContext;
