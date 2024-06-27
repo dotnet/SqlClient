@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,13 +13,37 @@ using Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
-    internal class PreloginPacketHandler : IHandler<PreLoginHandlerContext>
+    internal class PreloginPacketHandler : IHandler<PreloginHandlerContext>
     {
         const int GUID_SIZE = 16;
 
         const int PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES = 4;
 
         const int PAYLOAD_LENGTH_SIZE_IN_BYTES = 2;
+
+        private static readonly int[] s_optionsLength = new int[(int)PreLoginOptions.NUMOPT];
+
+        private static int s_optionsPayloadLength;
+
+        /// <summary>
+        /// Static constructor for initializing the Prelogin options length.
+        /// </summary>
+        static PreloginPacketHandler()
+        {
+            s_optionsLength[(int)PreLoginOptions.VERSION] = 6;
+            s_optionsLength[(int)PreLoginOptions.ENCRYPT] = 1; // ENCRYPT
+            s_optionsLength[(int)PreLoginOptions.INSTANCE] = 1; // INSTANCE
+            s_optionsLength[(int)PreLoginOptions.THREADID] = 4; // THREADID
+            s_optionsLength[(int)PreLoginOptions.MARS] = 1; // MARS
+            s_optionsLength[(int)PreLoginOptions.TRACEID] = GUID_SIZE + GUID_SIZE + sizeof(uint); // TRACEID
+            s_optionsLength[(int)PreLoginOptions.FEDAUTHREQUIRED] = 1; // FEDAUTHREQUIRED
+            
+            // Calculate the payload length.
+            for (int i = 0; i < (int)PreLoginOptions.NUMOPT; i++)
+            {
+                s_optionsPayloadLength += s_optionsLength[i];
+            }
+        }
 
         // EventSource counter
         private static int s_objectTypeCount;
@@ -27,21 +52,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
         internal int ObjectID => _objectID;
 
-        public IHandler<PreLoginHandlerContext> NextHandler { get; set; }
+        public IHandler<PreloginHandlerContext> NextHandler { get; set; }
 
-        public async ValueTask Handle(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        public async ValueTask Handle(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            await PreloginPacketHandler.CreatePreLoginAndSend(context, isAsync, ct).ConfigureAwait(false);
-            if (context.HasError)
-            {
-                return;
-            }
-            await ReadPreLoginresponse(context, isAsync, ct).ConfigureAwait(false);
-
-            if (context.HasError)
-            {
-                return;
-            }
+            await PreloginPacketHandler.CreatePreloginAndSend(context, isAsync, ct).ConfigureAwait(false);
+            
+            await ReadPreloginResponse(context, isAsync, ct).ConfigureAwait(false);
 
             if (NextHandler is not null)
             {
@@ -56,74 +73,64 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <param name="isAsync"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        private async Task ReadPreLoginresponse(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        private async Task ReadPreloginResponse(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             context.ConnectionContext.MarsCapable = context.ConnectionContext.ConnectionString.MARS; // Assign default value
             context.ConnectionContext.FedAuthRequired = false;
 
             TdsStream tdsStream = context.ConnectionContext.TdsStream;
 
-            // Look into the first byte to see if we are connecting to a 6.5 or earlier server.
-            int option = await tdsStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
-
-            if (option == 0xaa)
+            // Force a read on the TDS stream;
+            _ = await tdsStream.PeekByteAsync(isAsync, ct).ConfigureAwait(false);
+            
+            byte[] preloginPayload = new byte[tdsStream.PacketDataLeft];
+            if (isAsync)
             {
-                // If the first byte is 0xAA, we are connecting to a 6.5 or earlier server, which
-                // is not supported.
-                throw SQL.InvalidSQLServerVersionUnknown();
+                _ = await tdsStream.ReadAsync(preloginPayload.AsMemory(), ct).ConfigureAwait(false);
             }
-
-            byte[] payload = new byte[tdsStream.PacketDataLeft];
+            else
+            {
+                tdsStream.Read(preloginPayload);
+            }
 
             int payloadOffset = 0;
             int offset = 0;
-
-            while (option != (byte)PreLoginOptions.LASTOPT)
+            PreLoginOptions option = (PreLoginOptions)preloginPayload[offset++];
+            while (option != PreLoginOptions.LASTOPT)
             {
                 switch (option)
                 {
-                    case (int)PreLoginOptions.VERSION:
-
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        offset += PAYLOAD_LENGTH_SIZE_IN_BYTES; // Skip the payload length
-
-                        byte majorVersion = payload[payloadOffset];
-
-                        bool is2005OrLater = majorVersion >= 9;
-                        if (!is2005OrLater)
-                        {
-                            context.ConnectionContext.MarsCapable = false;  // If pre-2005, MARS not supported.
-                        }
-
+                    case PreLoginOptions.VERSION:
+                        // Nothing to do with the version.
+                        offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES; // Skip the payload offset and length
                         break;
 
-                    case (int)PreLoginOptions.ENCRYPT:
+                    case PreLoginOptions.ENCRYPT:
                         if (context.IsTlsFirst)
                         {
                             // Can skip/ignore this option if we are doing TDS 8.
                             // The internal encryption option is set to NOT_SUP in this case.
                             // And it shouldn't be changed.
-                            offset += 4;
+                            offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES;
                             break;
                         }
 
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        offset += 2; // Skip the payload length
+                        payloadOffset = BinaryPrimitives.ReadUInt16BigEndian(preloginPayload.AsSpan(offset, 2));
+                        offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES; // Skip the payload length
 
-                        EncryptionOptions serverOption = (EncryptionOptions)payload[payloadOffset];
+                        EncryptionOptions serverOption = (EncryptionOptions)preloginPayload[payloadOffset];
 
                         // Any response other than NOT_SUP means the server supports encryption.
                         context.ServerSupportsEncryption = serverOption != EncryptionOptions.NOT_SUP;
 
-                        // If server doesn't support encyrption, then we can't proceed, since encryption is always needed
+                        // If server doesn't support encryption, then we can't proceed, since encryption is always needed
                         // for login.
                         if (!context.ServerSupportsEncryption)
                         {
-                            //    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                            //    _physicalStateObj.Dispose();
-                            //    ThrowExceptionAndWarning(_physicalStateObj);
-                            context.ConnectionContext.Error = new Exception("Encryption not supported by server");
-                            return;
+                            SqlErrorCollection errors = context.ConnectionContext.ErrorCollection;
+                            string serverName = context.ConnectionContext.ServerInfo.ResolvedServerName;
+                            errors.Add(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, serverName, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                            throw SqlException.CreateException(errors, null);
                         }
 
                         switch (context.InternalEncryptionOption)
@@ -145,14 +152,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                             case (EncryptionOptions.NOT_SUP):
                                 if (serverOption == EncryptionOptions.REQ)
                                 {
-                                    // Server has enforced encryption, but client does not support it.
-                                    //_physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
-                                    //_physicalStateObj.Dispose();
-                                    //ThrowExceptionAndWarning(_physicalStateObj);
-                                    // TODO : Error handling needs to happen here. Till then 
-                                    // adding an exception and returning 
-                                    context.ConnectionContext.Error = new Exception("Encryption not supported by server");
-                                    return;
+                                    SqlErrorCollection collection = context.ConnectionContext.ErrorCollection;
+                                    string serverName = context.ConnectionContext.ServerInfo.ResolvedServerName;
+                                    collection.Add(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, serverName, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
+                                    throw SqlException.CreateException(collection, null);
                                 }
                                 break;
                             default:
@@ -161,12 +164,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
                         break;
 
-                    case (int)PreLoginOptions.INSTANCE:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        offset += PAYLOAD_LENGTH_SIZE_IN_BYTES; // Skip the payload length
+                    case PreLoginOptions.INSTANCE:
+                        payloadOffset = BinaryPrimitives.ReadUInt16BigEndian(preloginPayload.AsSpan(offset, 2));
+                        offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES;
 
                         byte ERROR_INST = 0x1;
-                        byte instanceResult = payload[payloadOffset];
+                        byte instanceResult = preloginPayload[payloadOffset];
 
                         if (instanceResult == ERROR_INST)
                         {
@@ -178,33 +181,34 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
                         break;
 
-                    case (int)PreLoginOptions.THREADID:
+                    case PreLoginOptions.THREADID:
                         // DO NOTHING FOR THREADID
                         offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES;
                         break;
 
-                    case (int)PreLoginOptions.MARS:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        offset += 2; // Skip the payload length
-                        context.ConnectionContext.MarsCapable = (payload[payloadOffset] != 0);
-                        Debug.Assert(payload[payloadOffset] == 0 || payload[payloadOffset] == 1, "Value for Mars PreLoginHandshake option not equal to 1 or 0!");
+                    case PreLoginOptions.MARS:
+                        payloadOffset = BinaryPrimitives.ReadUInt16BigEndian(preloginPayload.AsSpan(offset, 2));
+                        offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES;
+
+                        context.ConnectionContext.MarsCapable = (preloginPayload[payloadOffset] != 0);
+                        Debug.Assert(preloginPayload[payloadOffset] == 0 || preloginPayload[payloadOffset] == 1, "Value for Mars PreLoginHandshake option not equal to 1 or 0!");
                         break;
 
-                    case (int)PreLoginOptions.TRACEID:
+                    case PreLoginOptions.TRACEID:
                         // DO NOTHING FOR TRACEID
                         offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES;
                         break;
 
-                    case (int)PreLoginOptions.FEDAUTHREQUIRED:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        offset += 2; // Skip the payload length
+                    case PreLoginOptions.FEDAUTHREQUIRED:
+                        payloadOffset = BinaryPrimitives.ReadUInt16BigEndian(preloginPayload.AsSpan(offset, 2));
+                        offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES;
 
                         // Only 0x00 and 0x01 are accepted values from the server.
-                        if (payload[payloadOffset] != 0x00 && payload[payloadOffset] != 0x01)
+                        if (preloginPayload[payloadOffset] != 0x00 && preloginPayload[payloadOffset] != 0x01)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}|ERR> {1}, " +
-                                "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {2}.", nameof(ReadPreLoginresponse), ObjectID, (int)payload[payloadOffset]);
-                            throw SQL.ParsingErrorValue(ParsingErrorState.FedAuthRequiredPreLoginResponseInvalidValue, (int)payload[payloadOffset]);
+                                "Server sent an unexpected value for FedAuthRequired PreLogin Option. Value was {2}.", nameof(ReadPreloginResponse), ObjectID, (int)preloginPayload[payloadOffset]);
+                            throw SQL.ParsingErrorValue(ParsingErrorState.FedAuthRequiredPreLoginResponseInvalidValue, (int)preloginPayload[payloadOffset]);
                         }
 
                         // We must NOT use the response for the FEDAUTHREQUIRED PreLogin option, if the connection string option
@@ -214,7 +218,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                             && context.ConnectionContext.ConnectionString.Authentication != SqlAuthenticationMethod.NotSpecified)
                             || context.ConnectionContext.AccessTokenInBytes != null || context.ConnectionContext.AccessTokenCallback != null)
                         {
-                            context.ConnectionContext.FedAuthRequired = payload[payloadOffset] == 0x01;
+                            context.ConnectionContext.FedAuthRequired = preloginPayload[payloadOffset] == 0x01;
                         }
                         break;
 
@@ -225,9 +229,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         break;
                 }
 
-                if (offset < payload.Length)
+                if (offset < preloginPayload.Length)
                 {
-                    option = payload[offset++];
+                    option = (PreLoginOptions)preloginPayload[offset++];
                 }
                 else
                 {
@@ -243,7 +247,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <param name="isAsync"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        private static async Task CreatePreLoginAndSend(PreLoginHandlerContext context, bool isAsync, CancellationToken ct)
+        private static async Task CreatePreloginAndSend(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             Debug.Assert(context.ConnectionContext.TdsStream != null, "A Tds Stream is expected");
 
@@ -252,153 +256,115 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 
             // Initialize option offset into payload buffer
             // 5 bytes for each option (1 byte length, 2 byte offset, 2 byte payload length)
-            int offset = (int)PreLoginOptions.NUMOPT * 5 + 1;
+            int optionsHeaderSize = (int)PreLoginOptions.NUMOPT * 5;
 
-            byte[] payload = new byte[(int)PreLoginOptions.NUMOPT * 5 + TdsEnums.MAX_PRELOGIN_PAYLOAD_LENGTH];
-            int payloadLength = 0;
+            int offset = optionsHeaderSize + 1;
 
-            byte[] instanceName = new byte[1];
+            // Create the payload buffer with the options header and options payload length, which 
+            // is precalculated.
+            byte[] payload = new byte[optionsHeaderSize + 1 + s_optionsPayloadLength];
 
             for (int option = (int)PreLoginOptions.VERSION; option < (int)PreLoginOptions.NUMOPT; option++)
             {
-                int optionDataSize = 0;
-
-                // Fill in the option
-                await tdsStream.WriteByteAsync((byte)option, isAsync, ct);
-
-                // Fill in the offset of the option data
-                await tdsStream.WriteByteAsync((byte)((offset & 0xff00) >> 8), isAsync, ct); // send upper order byte
-                await tdsStream.WriteByteAsync((byte)(offset & 0x00ff), isAsync, ct); // send lower order byte
-
+                int optionHeaderOffset = option * 5;
+                payload[optionHeaderOffset] = (byte)option;
+                payload[optionHeaderOffset + 1] = (byte)((offset & 0xff00) >> 8);
+                payload[optionHeaderOffset + 2] = (byte)(offset & 0x00ff);
+                payload[optionHeaderOffset + 3] = (byte)((s_optionsLength[option] & 0xff00) >> 8);
+                payload[optionHeaderOffset + 4] = (byte)(s_optionsLength[option] & 0x00ff);
+                
                 switch (option)
                 {
                     case (int)PreLoginOptions.VERSION:
                         Version systemDataVersion = ADP.GetAssemblyVersion();
 
                         // Major and minor
-                        payload[payloadLength++] = (byte)(systemDataVersion.Major & 0xff);
-                        payload[payloadLength++] = (byte)(systemDataVersion.Minor & 0xff);
+                        payload[offset++] = (byte)(systemDataVersion.Major & 0xff);
+                        payload[offset++] = (byte)(systemDataVersion.Minor & 0xff);
 
-                        // Build (Big Endian)
-                        payload[payloadLength++] = (byte)((systemDataVersion.Build & 0xff00) >> 8);
-                        payload[payloadLength++] = (byte)(systemDataVersion.Build & 0xff);
-
-                        // Sub-build (Little Endian)
-                        payload[payloadLength++] = (byte)(systemDataVersion.Revision & 0xff);
-                        payload[payloadLength++] = (byte)((systemDataVersion.Revision & 0xff00) >> 8);
-                        offset += 6;
-                        optionDataSize = 6;
+                        BinaryPrimitives.WriteUInt16BigEndian(payload.AsSpan(offset, 2), (ushort)systemDataVersion.Build);
+                        offset += 2;
+                        BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(offset, 2), (ushort)systemDataVersion.Revision);
+                        offset += 2;
                         break;
 
                     case (int)PreLoginOptions.ENCRYPT:
                         if (context.InternalEncryptionOption == EncryptionOptions.NOT_SUP)
                         {
                             //If OS doesn't support encryption and encryption is not required, inform server "not supported" by client.
-                            payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
+                            payload[offset++] = (byte)EncryptionOptions.NOT_SUP;
                         }
                         else
                         {
                             // Else, inform server of user request.
                             if (context.ConnectionEncryptionOption == SqlConnectionEncryptOption.Mandatory)
                             {
-                                payload[payloadLength] = (byte)EncryptionOptions.ON;
+                                payload[offset++] = (byte)EncryptionOptions.ON;
                                 context.InternalEncryptionOption = EncryptionOptions.ON;
                             }
                             else
                             {
-                                payload[payloadLength] = (byte)EncryptionOptions.OFF;
+                                payload[offset++] = (byte)EncryptionOptions.OFF;
                                 context.InternalEncryptionOption = EncryptionOptions.OFF;
                             }
                         }
 
-                        payloadLength += 1;
-                        offset += 1;
-                        optionDataSize = 1;
                         break;
 
                     case (int)PreLoginOptions.INSTANCE:
-                        int i = 0;
-
-                        while (instanceName[i] != 0)
-                        {
-                            payload[payloadLength] = instanceName[i];
-                            payloadLength++;
-                            i++;
-                        }
-
-                        payload[payloadLength] = 0; // null terminate
-                        payloadLength++;
-                        i++;
-
-                        offset += i;
-                        optionDataSize = i;
+                        // We send an empty instance name to the server. 
+                        payload[offset++] = 0; // null terminate
                         break;
 
                     case (int)PreLoginOptions.THREADID:
                         int threadID = TdsParserStaticMethods.GetCurrentThreadIdForTdsLoginOnly();
-                        payload[payloadLength++] = (byte)((0xff000000 & threadID) >> 24);
-                        payload[payloadLength++] = (byte)((0x00ff0000 & threadID) >> 16);
-                        payload[payloadLength++] = (byte)((0x0000ff00 & threadID) >> 8);
-                        payload[payloadLength++] = (byte)(0x000000ff & threadID);
+                        BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(offset, 4), (uint)threadID);
                         offset += 4;
-                        optionDataSize = 4;
                         break;
 
                     case (int)PreLoginOptions.MARS:
-                        payload[payloadLength++] = (byte)(context.ConnectionContext.ConnectionString.MARS ? 1 : 0);
-                        offset += 1;
-                        optionDataSize += 1;
+                        payload[offset++] = (byte)(context.ConnectionContext.ConnectionString.MARS ? 1 : 0);
                         break;
 
                     case (int)PreLoginOptions.TRACEID:
-                        context.ConnectionContext.ConnectionId.TryWriteBytes(payload.AsSpan(payloadLength, GUID_SIZE));
-                        payloadLength += GUID_SIZE;
+                        context.ConnectionContext.ConnectionId.TryWriteBytes(payload.AsSpan(offset, GUID_SIZE));
                         offset += GUID_SIZE;
-                        optionDataSize = GUID_SIZE;
 
                         ActivityCorrelator.ActivityId actId = ActivityCorrelator.Next();
-                        actId.Id.TryWriteBytes(payload.AsSpan(payloadLength, GUID_SIZE));
-                        payloadLength += GUID_SIZE;
-                        payload[payloadLength++] = (byte)(0x000000ff & actId.Sequence);
-                        payload[payloadLength++] = (byte)((0x0000ff00 & actId.Sequence) >> 8);
-                        payload[payloadLength++] = (byte)((0x00ff0000 & actId.Sequence) >> 16);
-                        payload[payloadLength++] = (byte)((0xff000000 & actId.Sequence) >> 24);
-                        int actIdSize = GUID_SIZE + sizeof(uint);
-                        offset += actIdSize;
-                        optionDataSize += actIdSize;
+                        actId.Id.TryWriteBytes(payload.AsSpan(offset, GUID_SIZE));
+                        offset += GUID_SIZE;
+                        BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(offset, 4), actId.Sequence);
+                        offset += 4;
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}",
                             context.ConnectionContext.ConnectionId, actId);
                         break;
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
-                        payload[payloadLength++] = 0x01;
-                        offset += 1;
-                        optionDataSize += 1;
+                        payload[offset++] = 0x01;
                         break;
 
                     default:
                         Debug.Fail("UNKNOWN option in SendPreLoginHandshake");
                         break;
                 }
-
-                await tdsStream.WriteByteAsync((byte)((optionDataSize & 0xff00) >> 8), isAsync, ct).ConfigureAwait(false);
-                await tdsStream.WriteByteAsync((byte)(optionDataSize & 0x00ff), isAsync, ct).ConfigureAwait(false);
             }
 
-            // Write out last option - to let server know the second part of packet completed
-            await tdsStream.WriteByteAsync((byte)PreLoginOptions.LASTOPT, isAsync, ct).ConfigureAwait(false);
+            // Write out last option.
+            payload[optionsHeaderSize] = (byte)PreLoginOptions.LASTOPT;
 
+            // Write the packet to the stream.
+            ct.ThrowIfCancellationRequested();
             if (isAsync)
             {
-                // Write out payload
-                await tdsStream.WriteAsync(payload.AsMemory(0, payloadLength), ct).ConfigureAwait(false);
+                await tdsStream.WriteAsync(payload.AsMemory(0, offset), ct).ConfigureAwait(false);
             }
             else
             {
-                tdsStream.Write(payload.AsSpan(0, payloadLength));
+                tdsStream.Write(payload.AsSpan(0, offset));
             }
-            // Flush packet
 
+            // Flush packet
+            ct.ThrowIfCancellationRequested();
             if (isAsync)
             {
                 await tdsStream.FlushAsync(ct).ConfigureAwait(false);

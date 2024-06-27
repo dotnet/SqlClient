@@ -15,11 +15,11 @@ namespace Microsoft.Data.SqlClientX.Handlers
     internal static class ErrorExtensions
     {
         /// <summary>
-        /// Convers the SNIError to SNIErrorDetails.
+        /// Converts the SNIError to SNIErrorDetails.
         /// </summary>
         /// <param name="sniError"></param>
         /// <returns></returns>
-        public static SNIErrorDetails ToSniErrorDetails(this SNIError sniError)
+        private static SNIErrorDetails ToSniErrorDetails(this SNIError sniError)
             => new SNIErrorDetails
             {
                 sniErrorNumber = sniError.sniError,
@@ -31,7 +31,14 @@ namespace Microsoft.Data.SqlClientX.Handlers
                 exception = sniError.exception
             };
 
-        public static SqlError ToSqlError(this SNIError sniError, SniContext sniContext, ServerInfo info)
+        /// <summary>
+        /// Converts an SNI error to SqlError.
+        /// </summary>
+        /// <param name="sniError"></param>
+        /// <param name="sniContext"></param>
+        /// <param name="serverName">The server name being connected to.</param>
+        /// <returns></returns>
+        public static SqlError ToSqlError(this SNIError sniError, SniContext sniContext, string serverName)
         {
             SNIErrorDetails details = sniError.ToSniErrorDetails();
 
@@ -59,7 +66,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
             }
 
             SqlClientEventSource.Log.TryAdvancedTraceEvent("< sc.TdsParser.ProcessSNIError |ERR|ADV > Error message Detail: {0}", details.errorMessage);
-            
+
             Debug.Assert(!string.IsNullOrEmpty(details.errorMessage) || details.sniErrorNumber != 0, "Empty error message received from SNI");
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Empty error message received from SNI. Error Message = {0}, SNI Error Number ={1}", details.errorMessage, details.sniErrorNumber);
 
@@ -102,21 +109,56 @@ namespace Microsoft.Data.SqlClientX.Handlers
             }
             else
             {
-                
+
                 // SNI error. Append additional error message info if available and hasn't been included.
                 string sniLookupMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
                 errorMessage = (string.IsNullOrEmpty(errorMessage) || errorMessage.Contains(sniLookupMessage))
                                 ? sniLookupMessage
                                 : (sniLookupMessage + ": " + errorMessage);
             }
-            errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
-                sqlContextInfo, providerName, (int)details.sniErrorNumber, errorMessage);
+            errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})", sqlContextInfo, providerName, (int)details.sniErrorNumber, errorMessage);
 
             SqlClientEventSource.Log.TryAdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}",
-                (int)details.nativeError, (int)details.lineNumber, details.function, details.exception, info.ResolvedServerName);
+                (int)details.nativeError, (int)details.lineNumber, details.function, details.exception, serverName);
 
-            return new SqlError(infoNumber: (int)details.nativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, info.ResolvedServerName,
+            return new SqlError(infoNumber: (int)details.nativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, serverName,
                 errorMessage, details.function, (int)details.lineNumber, win32ErrorCode: details.nativeError, details.exception);
-    }
+        }
+
+
+        public static SqlError ProviderToSqlError(this DataSource datasource, uint nativeError, uint sniErrorCode, string errorMessage, SniContext sniContext, string serverName)
+        {
+            return new SNIError(datasource.ResolveProvider(), nativeError, sniErrorCode, errorMessage).ToSqlError(sniContext, serverName);
+        }
+
+        public static SqlError ProviderToSqlError(this DataSource datasource, uint sniErrorCode, Exception sniException, SniContext sniContext, string serverName, uint nativeErrorCode = 0)
+        {
+            return new SNIError(datasource.ResolveProvider(), sniErrorCode, sniException, nativeErrorCode).ToSqlError(sniContext, serverName);
+        }
+
+        public static SqlError ToSqlError(this SNIProviders provider, uint nativeError, uint sniErrorCode, string errorMessage, SniContext sniContext, string serverName)
+        {
+            return new SNIError(provider, nativeError, sniErrorCode, errorMessage).ToSqlError(sniContext, serverName);
+        }
+
+        public static SqlError CreateSqlError(this SNIProviders provider, uint sniErrorCode, Exception sniException, SniContext sniContext, string serverName, uint nativeErrorCode = 0)
+        {
+            return new SNIError(provider, sniErrorCode, sniException, nativeErrorCode).ToSqlError(sniContext, serverName);
+        }
+
+        /// <summary>
+        /// Resolves the SNIProviders from Datasource.
+        /// </summary>
+        /// <param name="dataSource"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public static SNIProviders ResolveProvider(this DataSource dataSource)
+        {
+            return dataSource.ResolvedProtocol switch
+            {
+                DataSource.Protocol.TCP => SNIProviders.TCP_PROV,
+                _ => throw new NotImplementedException($"{dataSource.ResolvedProtocol.ToString()} provider error handling is not supported"),
+            };
+        }
     }
 }

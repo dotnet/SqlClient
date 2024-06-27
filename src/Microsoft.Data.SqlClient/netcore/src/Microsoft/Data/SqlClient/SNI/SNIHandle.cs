@@ -30,8 +30,6 @@ namespace Microsoft.Data.SqlClient.SNI
                 ClientCertificates = certificate
             };
             await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
-
-            //_sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
         }
 
         protected static void AuthenticateAsClient(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate)

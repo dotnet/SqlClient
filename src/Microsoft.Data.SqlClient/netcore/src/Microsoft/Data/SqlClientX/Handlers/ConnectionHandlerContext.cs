@@ -83,12 +83,12 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// <summary>
         /// The server information created for the connection.
         /// </summary>
-        public ServerInfo SeverInfo { get; internal set; }
-        
+        public ServerInfo ServerInfo { get; internal set; }
+
         /// <summary>
-        /// The password change request for the connection.
+        /// An error collection for the handlers to add errors to.
         /// </summary>
-        public PasswordChangeRequest PasswordChangeRequest { get; internal set; }
+        public SqlErrorCollection ErrorCollection { get; internal set; } = new();
 
         /// <summary>
         /// The callback for Access Token Retrieval.
