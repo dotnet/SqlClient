@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Diagnostics;
 
 #nullable enable
@@ -14,8 +15,6 @@ namespace Microsoft.Data.SqlClient
 
         // variable to hold max SSPI data size, keep for token from server
         private volatile static uint s_maxSSPILength;
-
-        internal override uint MaxSSPILength => s_maxSSPILength;
 
         private protected override void Initialize()
         {
@@ -50,7 +49,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override void GenerateSspiClientContext(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer)
+        protected override void GenerateSspiClientContext(ReadOnlyMemory<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, byte[][] _sniSpnBuffer)
         {
 #if NETFRAMEWORK
             SNIHandle handle = _physicalStateObj.Handle;
@@ -58,10 +57,20 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_physicalStateObj.SessionHandle.Type == SessionHandle.NativeHandleType);
             SNIHandle handle = _physicalStateObj.SessionHandle.NativeHandle;
 #endif
-            if (0 != SNINativeMethodWrapper.SNISecGenClientContext(handle, receivedBuff.Span, sendBuff, ref sendLength, _sniSpnBuffer[0]))
+
+            var outBuff = outgoingBlobWriter.GetSpan((int)s_maxSSPILength);
+
+            if (0 != SNINativeMethodWrapper.SNISecGenClientContext(handle, incomingBlob.Span, outBuff, out var sendLength, _sniSpnBuffer[0]))
             {
                 throw new InvalidOperationException(SQLMessage.SSPIGenerateError());
             }
+
+            if (sendLength > int.MaxValue)
+            {
+                throw SQL.InvalidSSPIPacketSize();  // SqlBu 332503
+            }
+
+            outgoingBlobWriter.Advance((int)sendLength);
         }
     }
 }

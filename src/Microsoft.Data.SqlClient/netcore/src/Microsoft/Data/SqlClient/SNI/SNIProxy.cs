@@ -32,10 +32,10 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="sspiClientContextStatus">SSPI client context status</param>
         /// <param name="receivedBuff">Receive buffer</param>
-        /// <param name="sendBuff">Send buffer</param>
+        /// <param name="sendWriter">Writer for send buffer</param>
         /// <param name="serverName">Service Principal Name buffer</param>
         /// <returns>SNI error code</returns>
-        internal static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, byte[][] serverName)
+        internal static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, ReadOnlyMemory<byte> receivedBuff, IBufferWriter<byte> sendWriter, byte[][] serverName)
         {
             // TODO: this should use ReadOnlyMemory all the way through
             byte[] array = null;
@@ -46,10 +46,10 @@ namespace Microsoft.Data.SqlClient.SNI
                 receivedBuff.CopyTo(array);
             }
 
-            GenSspiClientContext(sspiClientContextStatus, array, ref sendBuff, serverName);
+            GenSspiClientContext(sspiClientContextStatus, array, sendWriter, serverName);
         }
 
-        private static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, ref byte[] sendBuff, byte[][] serverName)
+        private static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, IBufferWriter<byte> sendWriter, byte[][] serverName)
         {
             SafeDeleteContext securityContext = sspiClientContextStatus.SecurityContext;
             ContextFlagsPal contextFlags = sspiClientContextStatus.ContextFlags;
@@ -103,10 +103,9 @@ namespace Microsoft.Data.SqlClient.SNI
                 outSecurityBuffer.token = null;
             }
 
-            sendBuff = outSecurityBuffer.token;
-            if (sendBuff == null)
+            if (outSecurityBuffer.token is { } token)
             {
-                sendBuff = Array.Empty<byte>();
+                sendWriter.Write(token);
             }
 
             sspiClientContextStatus.SecurityContext = securityContext;
