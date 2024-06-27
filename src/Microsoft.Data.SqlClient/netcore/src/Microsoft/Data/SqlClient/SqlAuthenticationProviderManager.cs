@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryMSI = "active directory msi";
         private const string ActiveDirectoryDefault = "active directory default";
         private const string ActiveDirectoryWorkloadIdentity = "active directory workload identity";
+        private const string ActiveDirectoryFederatedIdentityCredentials = "active directory federated identity credentials";
 
         private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;
         private readonly ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers;
@@ -47,6 +48,7 @@ namespace Microsoft.Data.SqlClient
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials, activeDirectoryAuthProvider);
             }
         }
         /// <summary>

@@ -155,6 +155,8 @@ namespace Microsoft.Data.SqlClient
                     return SqlAuthenticationMethod.ActiveDirectoryDefault;
                 case ActiveDirectoryWorkloadIdentity:
                     return SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
+                case ActiveDirectoryFederatedIdentityCredentials:
+                    return SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }

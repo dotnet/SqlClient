@@ -348,6 +348,7 @@ namespace Microsoft.Data.Common
         internal const string ActiveDirectoryMSIString = "Active Directory MSI";
         internal const string ActiveDirectoryDefaultString = "Active Directory Default";
         internal const string ActiveDirectoryWorkloadIdentityString = "Active Directory Workload Identity";
+        internal const string ActiveDirectoryFederatedIdentityCredentialsString = "Active Directory Federated Identity Credentials";
         const string SqlCertificateString = "Sql Certificate";
 
 #if DEBUG
@@ -364,6 +365,7 @@ namespace Microsoft.Data.Common
             "ActiveDirectoryMSI",
             "ActiveDirectoryDefault",
             "ActiveDirectoryWorkloadIdentity",
+            "ActiveDirectoryFederatedIdentityCredentials",
         };
 
         private static bool IsValidAuthenticationMethodEnum()
@@ -459,6 +461,12 @@ namespace Microsoft.Data.Common
                 result = SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
                 isSuccess = true;
             }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryFederatedIdentityCredentialsString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials;
+                isSuccess = true;
+            }
             else
             {
                 result = DbConnectionStringDefaults.Authentication;
@@ -542,6 +550,7 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.SqlCertificate
 #endif
                 || value == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
+                || value == SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 
@@ -564,6 +573,7 @@ namespace Microsoft.Data.Common
                 SqlAuthenticationMethod.SqlCertificate => SqlCertificateString,
 #endif
                 SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity => ActiveDirectoryWorkloadIdentityString,
+                SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials => ActiveDirectoryFederatedIdentityCredentialsString,
                 _ => null
             };
         }

@@ -4737,4 +4737,7 @@
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>Certificato non disponibile durante la convalida del certificato.</value>
   </data>
+  <data name="AAD_FIC_Invalid_Setup" xml:space="preserve">
+    <value>Autenticazione Federated Identity Credentials non disponibile. Le variabili d'ambiente richieste non sono completamente configurate.</value>
+  </data>
 </root>

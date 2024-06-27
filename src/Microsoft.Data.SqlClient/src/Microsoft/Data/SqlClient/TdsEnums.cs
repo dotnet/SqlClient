@@ -277,6 +277,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT = 0x03; // Using the Interactive byte as that is the closest we have to non-password based authentication modes
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYTOKENCREDENTIAL = 0x03; // Using the Interactive byte as that is the closest we have to non-password based authentication modes
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYWORKLOADIDENTITY = 0x03; // Using the Interactive byte as that's supported for Identity based authentication
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYFEDERATEDIDENTITYCREDENTIALS = 0x03; // Using the Interactive byte as that's supported for Identity based authentication
 
         public enum ActiveDirectoryWorkflow : byte
         {
@@ -288,6 +289,7 @@ namespace Microsoft.Data.SqlClient
             ManagedIdentity = MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY,
             Default = MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT,
             WorkloadIdentity = MSALWORKFLOW_ACTIVEDIRECTORYWORKLOADIDENTITY,
+            FederatedIdentityCredentials = MSALWORKFLOW_ACTIVEDIRECTORYFEDERATEDIDENTITYCREDENTIALS,
         }
 
         // The string used for username in the error message when Authentication = Active Directory Integrated with FedAuth is used, if authentication fails.
@@ -1172,6 +1174,9 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryWorkloadIdentity/*'/>
         ActiveDirectoryWorkloadIdentity,
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryFederatedIdentityCredentials/*'/>
+        ActiveDirectoryFederatedIdentityCredentials,
 
 #if ADONET_CERT_AUTH && NETFRAMEWORK
         SqlCertificate,

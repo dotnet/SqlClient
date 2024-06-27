@@ -49,5 +49,9 @@
         <summary>The authentication method uses Active Directory Workload Identity. Use a federated User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Workload Identity. The 'User Id' or 'UID' is required to be set to the "client ID" of the user identity.</summary>
         <value>10</value>
       </ActiveDirectoryWorkloadIdentity>
+      <ActiveDirectoryFederatedIdentityCredentials>
+        <summary>The authentication method uses Active Directory Federated Identity Credentials. Use a federated User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Managed Identity. The 'User Id' or 'UID' is required to be set to the "client ID" of the user identity.</summary>
+        <value>11</value>
+      </ActiveDirectoryFederatedIdentityCredentials>
     </members>
 </docs>
