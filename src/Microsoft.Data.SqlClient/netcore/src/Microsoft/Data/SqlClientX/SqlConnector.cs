@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET8_0_OR_GREATER
+
 using System;
 using System.Data;
 using System.Data.Common;
@@ -15,6 +17,7 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal class SqlConnector
     {
+        private WeakReference<SqlConnectionX> _owningConnection;
         /// <summary>
         /// The datasource accessed by this connector.
         /// </summary>
@@ -30,6 +33,11 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         public ConnectionState State => throw new NotImplementedException();
 
+        internal SqlConnector(SqlConnectionX owningConnection)
+        {
+            _owningConnection = new WeakReference<SqlConnectionX>(owningConnection);
+        }
+
         /// <summary>
         /// Closes this connection. If this connection is pooled, it is cleaned and returned to the pool.
         /// </summary>
@@ -44,13 +52,16 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Opens this connection.
         /// </summary>
-        /// <param name = "async" > Whether this method should run asynchronously.</param>
-        /// <param name="cancellationToken">The token used to cancel an ongoing asynchronous call.</param>
+        /// <param name = "timeout">The connection timeout for this operation.</param>
+        /// <param name = "async">Whether this method should run asynchronously.</param>
+        /// <param name = "cancellationToken">The token used to cancel an ongoing asynchronous call.</param>
         /// <returns>A Task indicating the result of the operation.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        public Task Open(bool async, CancellationToken cancellationToken)
+        public Task Open(TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
     }
 }
+
+#endif

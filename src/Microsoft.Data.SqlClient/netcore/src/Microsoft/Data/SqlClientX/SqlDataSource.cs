@@ -4,10 +4,13 @@
 
 #if NET8_0_OR_GREATER 
 
-using Microsoft.Data.SqlClient;
+using System;
 using System.Data.Common;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClientX
 {
@@ -17,22 +20,13 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal abstract class SqlDataSource : DbDataSource
     {
-        private SqlCredential _credential;
-        private string _connectionString;
-        /// <inheritdoc/>
-        public override string ConnectionString => _connectionString;
-        internal SqlCredential Credential => _credential;
+        private readonly SqlConnectionStringBuilder _connectionStringBuilder;
 
-        /// <summary>
-        /// Initializes a new instance of SqlDataSource
-        /// </summary>
-        /// <param name="connectionString">The connection string this data source should use.</param>
-        /// <param name="credential">The credentials this data source should use.</param>
-        internal SqlDataSource(string connectionString, SqlCredential credential)
-        {
-            _connectionString = connectionString;
-            _credential = credential;
-        }
+        private readonly RemoteCertificateValidationCallback _userCertificateValidationCallback;
+
+        private readonly Action<X509CertificateCollection> _clientCertificatesCallback;
+
+        internal SqlCredential Credential { get; }
 
         //TODO: return SqlConnection after it is updated to wrap SqlConnectionX 
         /// <summary>
@@ -44,13 +38,73 @@ namespace Microsoft.Data.SqlClientX
             return SqlConnectionX.FromDataSource(this);
         }
 
+        internal SqlDataSource(
+            SqlConnectionStringBuilder connectionStringBuilder,
+            SqlCredential credential,
+            RemoteCertificateValidationCallback userCertificateValidationCallback,
+            Action<X509CertificateCollection> clientCertificatesCallback)
+        {
+            _connectionStringBuilder = connectionStringBuilder;
+            Credential = credential;
+            _userCertificateValidationCallback = userCertificateValidationCallback;
+            _clientCertificatesCallback = clientCertificatesCallback;
+        }
+
+        /// <inheritdoc />
+        public override string ConnectionString => _connectionStringBuilder.ConnectionString;
+
+
+        /// <summary>
+        /// Creates a new <see cref="SqlConnection"/> object.
+        /// </summary>
+        public new SqlConnection CreateConnection()
+        {
+            throw new NotImplementedException();
+            // TODO: return (SqlConnection)CreateDbConnection();
+        }
+
+        /// <summary>
+        /// Opens a new <see cref="SqlConnection"/>.
+        /// </summary>
+        public new SqlConnection OpenConnection()
+        {
+            return (SqlConnection)base.OpenConnection();
+        }
+
+        /// <summary>
+        /// Asynchronously opens a new <see cref="SqlConnection"/>.
+        /// </summary>
+        public new async ValueTask<SqlConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)
+        {
+            return (SqlConnection)await base.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="SqlCommand"/> object.
+        /// </summary>
+        public new SqlCommand CreateCommand(string commandText = null)
+        {
+            return (SqlCommand)CreateDbCommand(commandText);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="SqlBatch"/> object.
+        /// </summary>
+        public new SqlBatch CreateBatch()
+        {
+            return (SqlBatch)CreateDbBatch();
+        }
+
+        // TODO: make abstract
         /// <summary>
         /// Returns an opened SqlConnector.
         /// </summary>
-        /// <param name="async">Whether this method should run asynchronously.</param>
-        /// <param name="cancellationToken">The token used to cancel an ongoing asynchronous call.</param>
+        /// <param name="owningConnection">The SqlConnectionX object that will exclusively own and use this connector.</param>
+        /// <param name="timeout">The connection timeout for this operation.</param>
+        /// <param name="async">Whether this method should be run asynchronously.</param>
+        /// <param name="cancellationToken">Cancels an outstanding asynchronous operation.</param>
         /// <returns></returns>
-        internal abstract ValueTask<SqlConnector> GetInternalConnection(bool async, CancellationToken cancellationToken);
+        internal abstract ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken);
     }
 }
 
