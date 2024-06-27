@@ -295,7 +295,12 @@ namespace Microsoft.Data.SqlClient
             return readPacket;
         }
 
-        internal uint CheckConnection() => SNINativeMethodWrapper.SNICheckConnection(Handle);
+        /// <remarks>
+        /// Note <see cref="Handle"/> is not supposed to be null when this method is called and the native implementation doesn't expect null values here.
+        /// The handle will not be null unless this <see cref="TdsParserStateObject"/> instance has been disposed.
+        /// We could probably throw an exception instead of returning success (like managed netcore version does).
+        /// </remarks>
+        internal uint CheckConnection() => Handle == null ? TdsEnums.SNI_SUCCESS : SNINativeMethodWrapper.SNICheckConnection(Handle);
 
         internal void ReleasePacket(PacketHandle syncReadPacket) => SNINativeMethodWrapper.SNIPacketRelease(syncReadPacket);
         
@@ -387,42 +392,6 @@ namespace Microsoft.Data.SqlClient
         internal void StartSession(int objectID)
         {
             _allowObjectID = objectID;
-        }
-
-        /// <summary>
-        /// Checks to see if the underlying connection is still valid (used by idle connection resiliency - for active connections)
-        /// NOTE: This is not safe to do on a connection that is currently in use
-        /// NOTE: This will mark the connection as broken if it is found to be dead
-        /// </summary>
-        /// <returns>True if the connection is still alive, otherwise false</returns>
-        internal bool ValidateSNIConnection()
-        {
-            if ((_parser == null) || ((_parser.State == TdsParserState.Broken) || (_parser.State == TdsParserState.Closed)))
-            {
-                return false;
-            }
-
-            if (DateTime.UtcNow.Ticks - _lastSuccessfulIOTimer._value <= CheckConnectionWindow)
-            {
-                return true;
-            }
-
-            uint error = TdsEnums.SNI_SUCCESS;
-            SniContext = SniContext.Snix_Connect;
-            try
-            {
-                Interlocked.Increment(ref _readingCount);
-                SNIHandle handle = Handle;
-                if (handle != null)
-                {
-                    error = SNINativeMethodWrapper.SNICheckConnection(handle);
-                }
-            }
-            finally
-            {
-                Interlocked.Decrement(ref _readingCount);
-            }
-            return (error == TdsEnums.SNI_SUCCESS) || (error == TdsEnums.SNI_WAIT_TIMEOUT);
         }
 
         // This method should only be called by ReadSni!  If not - it may have problems with timeouts!
