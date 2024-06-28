@@ -4,17 +4,19 @@
 
 using System;
 using System.Net.Security;
-using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.IO;
-using static Microsoft.Data.SqlClient.SNINativeMethodWrapper;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
+    /// <summary>
+    /// TlsAuthenticator takes care of authenticating a client using TLS.
+    /// It is meant to be used during pre-login.
+    /// </summary>
     internal class TlsAuthenticator
     {
         public virtual async ValueTask AuthenticateClientInternal(PreloginHandlerContext request,
@@ -22,18 +24,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             bool isAsync,
             CancellationToken ct)
         {
-            try
-            {
-                await AuthenticateClient(request, options, isAsync, ct).ConfigureAwait(false);
-            }
-            catch (Exception)
-            {
-                // TODO: Convert to a Sql Exception.
-                // this would require that we convert the error to a Sql error with the traditional details about 
-                // SNI. A lot of errors strings require SNI providers to be passed in.
-                // So we will stick to the current format in Managed SNI, for creating these exceptions.
-                throw;
-            }
+            await AuthenticateClient(request, options, isAsync, ct).ConfigureAwait(false);   
 
             LogWarningIfNeeded(request);
 
@@ -54,7 +45,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     else
                     {
                         // This logs console warning of insecure protocol in use.
-                        request.ConnectionContext.Logger.LogWarning(nameof(TlsAuthenticator), nameof(AuthenticateClientInternal), warningMessage);
+                        ConnectionHandlerContext.Logger.LogWarning(nameof(TlsAuthenticator), nameof(AuthenticateClientInternal), warningMessage);
                     }
                 }
             }
@@ -77,6 +68,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     SslStream sslStream = context.ConnectionContext.SslStream;
                     try
                     {
+                        ct.ThrowIfCancellationRequested();
                         if (isAsync)
                         {
                             await sslStream.AuthenticateAsClientAsync(options, ct).ConfigureAwait(false);
@@ -111,6 +103,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     context.ConnectionContext.ConnectionId,
                     exception.Message);
                 SqlError sqlError = SNIProviders.SSL_PROV.CreateSqlError(SNICommon.HandshakeFailureError, exception, PreloginHandlerContext.SniContext, context.ServerInfo.ResolvedServerName);
+                context.ConnectionContext.ErrorCollection.Add(sqlError);
                 throw SqlException.CreateException(context.ConnectionContext.ErrorCollection, null);
             }
         }
