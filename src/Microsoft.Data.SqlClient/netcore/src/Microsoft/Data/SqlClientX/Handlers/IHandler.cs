@@ -13,7 +13,6 @@ namespace Microsoft.Data.SqlClientX.Handlers
     /// </summary>
     /// <typeparam name="TRequest">The Type of the request object.</typeparam>
     internal interface IHandler<TRequest>
-        where TRequest : HandlerRequest
     {
         /// <summary>
         /// Allows getting and setting the next handler.

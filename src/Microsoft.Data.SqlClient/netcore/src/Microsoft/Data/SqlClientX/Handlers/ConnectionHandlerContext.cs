@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
 {    /// <summary>
      /// Class that contains all context data needed for various handlers.
      /// </summary>
-    internal class ConnectionHandlerContext : HandlerRequest
+    internal class ConnectionHandlerContext
     {
         /// <summary>
         /// Stream used by readers.

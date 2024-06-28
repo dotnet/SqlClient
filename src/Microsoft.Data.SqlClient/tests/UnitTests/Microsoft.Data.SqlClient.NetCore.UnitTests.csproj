@@ -7,7 +7,7 @@
     <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="xunit" Version="$(XunitVersion)" />
+    <PackageReference Include="xunit" Version="2.4.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitrunnervisualstudioVersion)">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
