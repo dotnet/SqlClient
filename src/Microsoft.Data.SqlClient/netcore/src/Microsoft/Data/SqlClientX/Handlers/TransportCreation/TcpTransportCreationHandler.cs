@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
     /// <summary>
     /// Handler for connecting via TCP.
     /// </summary>
-    internal sealed class TcpTransportCreationHandler : ReturningHandler<ConnectionHandlerContext, Stream>
+    internal sealed class TcpTransportCreationHandler : IReturningHandler<ConnectionHandlerContext, Stream>
     {
         private const int KeepAliveIntervalSeconds = 1;
         private const int KeepAliveTimeSeconds = 30;
@@ -29,12 +29,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
         #endif
 
         /// <inheritdoc />
-        public override async ValueTask<Stream> Handle(ConnectionHandlerContext parameters, bool isAsync, CancellationToken ct)
+        public async ValueTask<Stream> Handle(ConnectionHandlerContext parameters, bool isAsync, CancellationToken ct)
         {
             // This handler cannot process if the protocol does not contain TCP
             if (parameters.DataSource.ResolvedProtocol is not (DataSource.Protocol.Admin or DataSource.Protocol.TCP or DataSource.Protocol.None))
             {
-                return await HandleNext(parameters, isAsync, ct);
+                return null;
             }
 
             ct.ThrowIfCancellationRequested();

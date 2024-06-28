@@ -919,13 +919,15 @@
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\IHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\IReturningHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\ReturningHandlerChain.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\ReturningHandlerChainExceptionBehavior.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlDataSource.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlConnector.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ConnectionHandlerContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ContextHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\DataSourceParsingHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\NoSuitableHandlerFoundException.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\ReturningHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\IpAddressVersionComparer.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\NamedPipeTransportCreationHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\SharedMemoryTransportCreationHandler.cs" />

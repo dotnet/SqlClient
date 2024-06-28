@@ -15,14 +15,19 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
     /// </summary>
     internal sealed class TransportCreationHandler : ContextHandler<ConnectionHandlerContext>
     {
-        private readonly ReturningHandler<ConnectionHandlerContext, Stream> _streamCreationChain;
+        private readonly ReturningHandlerChain<ConnectionHandlerContext, Stream> _streamCreationChain;
 
         public TransportCreationHandler()
         {
             // Construct the chain of responsibility for handling the connections
-            _streamCreationChain = new SharedMemoryTransportCreationHandler();
-            _streamCreationChain.NextHandler = new TcpTransportCreationHandler();
-            _streamCreationChain.NextHandler.NextHandler = new NamedPipeTransportCreationHandler();
+            _streamCreationChain = new ReturningHandlerChain<ConnectionHandlerContext, Stream>(
+                new IReturningHandler<ConnectionHandlerContext, Stream>[]
+                {
+                    new SharedMemoryTransportCreationHandler(),
+                    new TcpTransportCreationHandler(),
+                    new NamedPipeTransportCreationHandler(),
+                },
+                ReturningHandlerChainExceptionBehavior.ThrowLast);
         }
 
         /// <inheritdoc />

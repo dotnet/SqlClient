@@ -14,10 +14,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
     /// <summary>
     /// Handler for connecting via named pipe.
     /// </summary>
-    internal sealed class NamedPipeTransportCreationHandler : ReturningHandler<ConnectionHandlerContext, Stream>
+    internal sealed class NamedPipeTransportCreationHandler : IReturningHandler<ConnectionHandlerContext, Stream>
     {
         /// <inheritdoc />
-        public override ValueTask<Stream> Handle(ConnectionHandlerContext parameters, bool isAsync, CancellationToken ct)
+        public ValueTask<Stream> Handle(ConnectionHandlerContext parameters, bool isAsync, CancellationToken ct)
         {
             Debug.Assert(parameters is not null, "Parameters must not be null");
             Debug.Assert(parameters.DataSource is not null, "Data source must not be null");
@@ -26,10 +26,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             if (parameters.DataSource.ResolvedProtocol is DataSource.Protocol.NP)
             {
                 // @TODO: Support named pipe connections
-                throw new NotImplementedException();
+                return ValueTask.FromException<Stream>(new NotImplementedException());
             }
 
-            return HandleNext(parameters, isAsync, ct);
+            return ValueTask.FromResult<Stream>(null);
         }
     }
 }

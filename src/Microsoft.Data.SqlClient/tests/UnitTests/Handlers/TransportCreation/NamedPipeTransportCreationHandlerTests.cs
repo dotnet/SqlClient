@@ -4,12 +4,10 @@
 
 using System;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.Handlers;
 using Microsoft.Data.SqlClientX.Handlers.TransportCreation;
-using Moq;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.TransportCreation
@@ -37,19 +35,14 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.TransportCreation
         internal async Task Handle_ProtocolFromParams_Passes(DataSource.Protocol protocol)
         {
             // Arrange
-            var handler2 = new Mock<ReturningHandler<ConnectionHandlerContext, Stream>>();
-            handler2.Setup(h => h.Handle(It.IsAny<ConnectionHandlerContext>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-                .Returns(new ValueTask<Stream>());
-                
-            var handler1 = new NamedPipeTransportCreationHandler { NextHandler = handler2.Object };
-
+            var handler1 = new NamedPipeTransportCreationHandler();
             var context = new ConnectionHandlerContext { DataSource = new DataSource(protocol) };
             
             // Act
-            _ = await handler1.Handle(context, false, default);
-            
+            var result = await handler1.Handle(context, false, default);
+
             // Assert
-            handler2.Verify(h => h.Handle(context, false, default), Times.Once);
+            Assert.Null(result);
         }
     }
 }
