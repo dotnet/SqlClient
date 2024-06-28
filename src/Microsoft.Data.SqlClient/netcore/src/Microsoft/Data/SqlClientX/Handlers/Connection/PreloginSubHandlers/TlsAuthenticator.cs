@@ -4,17 +4,19 @@
 
 using System;
 using System.Net.Security;
-using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.IO;
-using static Microsoft.Data.SqlClient.SNINativeMethodWrapper;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
 {
+    /// <summary>
+    /// TlsAuthenticator takes care of authenticating a client using TLS.
+    /// It is meant to be used during pre-login.
+    /// </summary>
     internal class TlsAuthenticator
     {
         public virtual async ValueTask AuthenticateClientInternal(PreloginHandlerContext request,
@@ -77,6 +79,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     SslStream sslStream = context.ConnectionContext.SslStream;
                     try
                     {
+                        ct.ThrowIfCancellationRequested();
                         if (isAsync)
                         {
                             await sslStream.AuthenticateAsClientAsync(options, ct).ConfigureAwait(false);
@@ -111,6 +114,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     context.ConnectionContext.ConnectionId,
                     exception.Message);
                 SqlError sqlError = SNIProviders.SSL_PROV.CreateSqlError(SNICommon.HandshakeFailureError, exception, PreloginHandlerContext.SniContext, context.ServerInfo.ResolvedServerName);
+                context.ConnectionContext.ErrorCollection.Add(sqlError);
                 throw SqlException.CreateException(context.ConnectionContext.ErrorCollection, null);
             }
         }

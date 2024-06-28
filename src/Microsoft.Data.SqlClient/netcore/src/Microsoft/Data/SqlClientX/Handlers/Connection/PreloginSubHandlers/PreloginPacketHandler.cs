@@ -84,6 +84,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             _ = await tdsStream.PeekByteAsync(isAsync, ct).ConfigureAwait(false);
             
             byte[] preloginPayload = new byte[tdsStream.PacketDataLeft];
+
+            ct.ThrowIfCancellationRequested();
             if (isAsync)
             {
                 _ = await tdsStream.ReadAsync(preloginPayload.AsMemory(), ct).ConfigureAwait(false);
