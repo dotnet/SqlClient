@@ -17,7 +17,5 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// and it can choose to execute or perform any clean ups.
         /// </summary>
         public Exception Exception { get; set; }
-
-        public SqlClientLogger Logger { get; } = new();
     }
 }

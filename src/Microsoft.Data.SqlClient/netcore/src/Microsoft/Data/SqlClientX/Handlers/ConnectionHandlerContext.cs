@@ -83,6 +83,11 @@ namespace Microsoft.Data.SqlClientX.Handlers
         public SqlErrorCollection ErrorCollection { get; internal set; } = new();
 
         /// <summary>
+        /// Logger.
+        /// </summary>
+        public static SqlClientLogger Logger { get; } = new();
+
+        /// <summary>
         /// The callback for Access Token Retrieval.
         /// </summary>
         internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback { get; set; }

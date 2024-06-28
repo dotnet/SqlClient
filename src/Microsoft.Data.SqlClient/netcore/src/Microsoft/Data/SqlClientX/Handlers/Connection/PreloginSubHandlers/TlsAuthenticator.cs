@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                     else
                     {
                         // This logs console warning of insecure protocol in use.
-                        request.ConnectionContext.Logger.LogWarning(nameof(TlsAuthenticator), nameof(AuthenticateClientInternal), warningMessage);
+                        ConnectionHandlerContext.Logger.LogWarning(nameof(TlsAuthenticator), nameof(AuthenticateClientInternal), warningMessage);
                     }
                 }
             }
