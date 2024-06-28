@@ -18,6 +18,11 @@ namespace Microsoft.Data.SqlClientX.IO
     internal interface ITdsReadStream : ITdsStream
     {
         /// <summary>
+        /// The number of bytes left in the current packet.
+        /// </summary>
+        int PacketDataLeft { get; }
+
+        /// <summary>
         /// The packet header type of the current read operation.
         /// </summary>
         byte ReadPacketHeaderType { get; }

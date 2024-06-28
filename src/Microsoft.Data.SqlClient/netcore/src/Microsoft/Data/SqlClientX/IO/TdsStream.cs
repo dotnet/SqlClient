@@ -61,6 +61,9 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public byte ReadPacketHeaderType => _readStream.ReadPacketHeaderType;
 
+        /// <inheritdoc />
+        public int PacketDataLeft => _readStream.PacketDataLeft;
+
         /// <summary>
         /// Tds Writer instance that provides managed buffer for writing data to stream.
         /// </summary>
