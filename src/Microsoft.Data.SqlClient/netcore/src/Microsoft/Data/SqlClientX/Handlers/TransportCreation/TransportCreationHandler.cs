@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
         {
             try
             {
-                context.ConnectionStream = await _streamCreationChain.Handle(context, isAsync, ct);
+                context.ConnectionStream = await _streamCreationChain.Handle(context, isAsync, ct).ConfigureAwait(false);
             }
             catch (Exception e)
             {

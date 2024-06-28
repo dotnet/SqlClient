@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
         #if NET8_0_OR_GREATER
         private static readonly TimeSpan DefaultPollTimeout = TimeSpan.FromSeconds(30);
         #else
-        private const int DefaultPollTimeout = 30 * 100000; // 30 seconds as microseconds
+        private const int DefaultPollTimeout = 30 * 1000000; // 30 seconds as microseconds
         #endif
 
         /// <inheritdoc />
@@ -58,11 +58,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
                 case SqlConnectionIPAddressPreference.IPv6First:
                     Array.Sort(ipAddresses, IpAddressVersionComparer.InstanceV6);
                     break;
-
-                case SqlConnectionIPAddressPreference.UsePlatformDefault:
-                default:
-                    // Not sorting necessary
-                    break;
             }
 
             // Attempt to connect to one of the matching IP addresses
@@ -73,13 +68,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             int portToUse = parameters.DataSource.ResolvedPort < 0
                 ? parameters.DataSource.Port
                 : parameters.DataSource.ResolvedPort;
-            var ipEndpoint = new IPEndPoint(IPAddress.None, portToUse); // Allocate once
+            var ipEndPoint = new IPEndPoint(IPAddress.None, portToUse); // Allocate once
             foreach (IPAddress ipAddress in ipAddresses)
             {
-                ipEndpoint.Address = ipAddress;
+                ipEndPoint.Address = ipAddress;
                 try
                 {
-                    socket = await OpenSocket(ipEndpoint, isAsync, ct).ConfigureAwait(false);
+                    socket = await OpenSocket(ipEndPoint, isAsync, ct).ConfigureAwait(false);
                     break;
                 }
                 catch(Exception e)
@@ -149,10 +144,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 
             try
             {
-                // Note: Although it seems logical to cancel if cancellation happens, we don't
-                //   need to do that here. Since the socket is set to be non-blocking, once we
-                //   call connect we'll throw and move onto polling where we continuously check
-                //   the cancellation token.
+                // Note: Although it seems logical to dispose the socket (ie, cancel connecting) if
+                //   the cancellation token fires, we don't need to do that here. Since the socket
+                //   is set to be non-blocking, once we call connect we'll throw and move onto
+                //   polling where we continuously check the cancellation token.
                 socket.Connect(ipEndPoint);
             }
             catch (SocketException e)
@@ -167,11 +162,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
                     throw;
                 }
             }
-
-            // Poll the socket until it is open
-
+            
             try
             {
+                // Poll the socket until it is open. If the cancellation token fires, we will
+                // dispose of the socket, effectively cancelling the polling.
                 using (ct.Register(socket.Dispose))
                 {
                     if (!socket.Poll(DefaultPollTimeout, SelectMode.SelectWrite))
