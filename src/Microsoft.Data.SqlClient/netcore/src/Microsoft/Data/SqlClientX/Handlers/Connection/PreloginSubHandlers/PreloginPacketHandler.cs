@@ -270,10 +270,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             {
                 int optionHeaderOffset = option * 5;
                 payload[optionHeaderOffset] = (byte)option;
-                payload[optionHeaderOffset + 1] = (byte)((offset & 0xff00) >> 8);
-                payload[optionHeaderOffset + 2] = (byte)(offset & 0x00ff);
-                payload[optionHeaderOffset + 3] = (byte)((s_optionsLength[option] & 0xff00) >> 8);
-                payload[optionHeaderOffset + 4] = (byte)(s_optionsLength[option] & 0x00ff);
+                BinaryPrimitives.WriteInt16BigEndian(payload.AsSpan(optionHeaderOffset + 1, 2), (short)offset);
+                BinaryPrimitives.WriteInt16BigEndian(payload.AsSpan(optionHeaderOffset + 3, 2), (short)s_optionsLength[option]);
                 
                 switch (option)
                 {
