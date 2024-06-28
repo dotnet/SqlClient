@@ -922,8 +922,6 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\IReturningHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ReturningHandlerChain.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ReturningHandlerChainExceptionBehavior.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\SqlDataSource.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\SqlConnector.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ConnectionHandlerContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ContextHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\DataSourceParsingHandler.cs" />
@@ -941,6 +939,10 @@
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriteStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlConnectionX.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\SqlConnector.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\SqlDataSource.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\SqlDataSourceBuilder.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\UnpooledDataSource.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
