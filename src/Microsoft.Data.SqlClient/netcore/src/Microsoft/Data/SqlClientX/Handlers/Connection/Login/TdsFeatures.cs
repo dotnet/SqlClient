@@ -7,8 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 
-namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection.Login
+namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
 {
     internal class TdsFeatures
     {

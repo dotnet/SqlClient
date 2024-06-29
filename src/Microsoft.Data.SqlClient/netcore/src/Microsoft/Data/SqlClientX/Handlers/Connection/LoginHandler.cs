@@ -3,13 +3,16 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection.Login;
-using Microsoft.Data.SqlClientX.Handlers;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClientX.Handlers.Connection.Login;
+using Microsoft.Data.SqlClientX.IO;
 
-namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
+namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {
     internal class LoginHandler : IHandler<ConnectionHandlerContext>
     {
@@ -190,7 +193,113 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
         {
             // TODO: Set the timeout
             _ = context.Login.timeout;
-            throw new NotImplementedException();
+
+            // TODO: Add debug asserts.
+
+            // TODO: Add timeout internal details.
+
+            // TODO: Password Change
+
+            context.ConnectionContext.TdsStream.PacketHeaderType = TdsStreamPacketType.Login7;
+
+            // Fixed length of the login record
+            int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
+
+
+            string clientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
+            Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= clientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
+
+            SqlLogin rec = context.Login;
+
+            // Calculate the fixed length
+            checked
+            {
+                
+
+                length += (rec.hostName.Length + rec.applicationName.Length +
+                            rec.serverName.Length + clientInterfaceName.Length +
+                            rec.language.Length + rec.database.Length +
+                            rec.attachDBFilename.Length) * 2;
+                if (context.Features.RequestedFeatures != TdsEnums.FeatureExtension.None)
+                {
+                    length += 4;
+                }
+            }
+
+            byte[] rentedSSPIBuff = null;
+            byte[] outSSPIBuff = null; // track the rented buffer as a separate variable in case it is updated via the ref parameter
+            uint outSSPILength = 0;
+
+            // only add lengths of password and username if not using SSPI or requesting federated authentication info
+            if (!rec.useSSPI && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
+            {
+                checked
+                {
+                    length += (userName.Length * 2) + encryptedPasswordLengthInBytes
+                    + encryptedChangePasswordLengthInBytes;
+                }
+            }
+            else
+            {
+                if (rec.useSSPI)
+                {
+                    // now allocate proper length of buffer, and set length
+                    outSSPILength = _authenticationProvider.MaxSSPILength;
+                    rentedSSPIBuff = ArrayPool<byte>.Shared.Rent((int)outSSPILength);
+                    outSSPIBuff = rentedSSPIBuff;
+
+                    // Call helper function for SSPI data and actual length.
+                    // Since we don't have SSPI data from the server, send null for the
+                    // byte[] buffer and 0 for the int length.
+                    Debug.Assert(SniContext.Snix_Login == _physicalStateObj.SniContext, $"Unexpected SniContext. Expecting Snix_Login, actual value is '{_physicalStateObj.SniContext}'");
+                    _physicalStateObj.SniContext = SniContext.Snix_LoginSspi;
+                    _authenticationProvider.SSPIData(ReadOnlyMemory<byte>.Empty, ref outSSPIBuff, ref outSSPILength, _sniSpnBuffer);
+
+                    if (outSSPILength > int.MaxValue)
+                    {
+                        throw SQL.InvalidSSPIPacketSize();  // SqlBu 332503
+                    }
+                    _physicalStateObj.SniContext = SniContext.Snix_Login;
+
+                    checked
+                    {
+                        length += (int)outSSPILength;
+                    }
+                }
+            }
+
+
+            int feOffset = length;
+            // calculate and reserve the required bytes for the featureEx
+            length = ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length);
+
+            WriteLoginData(rec,
+                           requestedFeatures,
+                           recoverySessionData,
+                           fedAuthFeatureExtensionData,
+                           encrypt,
+                           encryptedPassword,
+                           encryptedChangePassword,
+                           encryptedPasswordLengthInBytes,
+                           encryptedChangePasswordLengthInBytes,
+                           useFeatureExt,
+                           userName,
+                           length,
+                           feOffset,
+                           clientInterfaceName,
+                           outSSPIBuff,
+                           outSSPILength);
+
+            if (rentedSSPIBuff != null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedSSPIBuff, clearArray: true);
+            }
+
+            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
+            _physicalStateObj.ResetSecurePasswordsInformation();     // Password information is needed only from Login process; done with writing login packet and should clear information
+            _physicalStateObj.HasPendingData = true;
+            _physicalStateObj._messageStatus = 0;
+
         }
     }
 
