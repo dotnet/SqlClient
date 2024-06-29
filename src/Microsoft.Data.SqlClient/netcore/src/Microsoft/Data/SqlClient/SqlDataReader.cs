@@ -3517,7 +3517,7 @@ namespace Microsoft.Data.SqlClient
             bool more;
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            TdsOperationStatus  result = TryReadInternal(true, out more);
+            TdsOperationStatus result = TryReadInternal(true, out more);
 
             if (result != TdsOperationStatus.Done)
             {

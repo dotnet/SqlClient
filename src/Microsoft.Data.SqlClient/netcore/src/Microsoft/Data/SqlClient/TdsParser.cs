@@ -1949,7 +1949,7 @@ namespace Microsoft.Data.SqlClient
 
                 bool dataReady;
                 TdsOperationStatus result = TryRun(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj, out dataReady);
-                Debug.Assert(result == TdsOperationStatus.Done, "Should never return false when _syncOverAsync is set");
+                Debug.Assert(result == TdsOperationStatus.Done, "Should always return Done when _syncOverAsync is set");
                 return dataReady;
             }
             finally
