@@ -27,10 +27,6 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 CheckDisposed();
-                //if (value > 7992)
-                //{
-                //    Debugger.Break();
-                //}
                 _dataLength = value;
             }
         }

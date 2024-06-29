@@ -27,8 +27,8 @@ namespace Microsoft.Data.SqlClient
     internal enum TdsOperationStatus : int
     {
         Done = 0,
-        NeedMoreData = 2,
-        InvalidData = 3
+        NeedMoreData = 1,
+        InvalidData = 2
     }
 
     partial class TdsParserStateObject
@@ -1205,68 +1205,6 @@ namespace Microsoft.Data.SqlClient
         // Every time you call this method increment the offset and decrease len by the value of totalRead
         public TdsOperationStatus TryReadByteArray(Span<byte> buff, int len, out int totalRead)
         {
-
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
-            totalRead = 0;
-
-#if DEBUG
-            if (_snapshot != null && _snapshot.DoPend())
-            {
-                _networkPacketTaskSource = new TaskCompletionSource<object>();
-                Interlocked.MemoryBarrier();
-
-                if (s_forcePendingReadsToWaitForUser)
-                {
-                    _realNetworkPacketTaskSource = new TaskCompletionSource<object>();
-                    _realNetworkPacketTaskSource.SetResult(null);
-                }
-                else
-                {
-                    _networkPacketTaskSource.TrySetResult(null);
-                }
-                return TdsOperationStatus.InvalidData;
-            }
-#endif
-
-            Debug.Assert(buff.IsEmpty || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
-
-            // loop through and read up to array length
-            while (len > 0)
-            {
-                if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
-                {
-                    TdsOperationStatus result = TryPrepareBuffer();
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                }
-
-                int bytesToRead = Math.Min(len, Math.Min(_inBytesPacket, _inBytesRead - _inBytesUsed));
-                Debug.Assert(bytesToRead > 0, "0 byte read in TryReadByteArray");
-                if (!buff.IsEmpty)
-                {
-                    ReadOnlySpan<byte> copyFrom = new ReadOnlySpan<byte>(_inBuff, _inBytesUsed, bytesToRead);
-                    Span<byte> copyTo = buff.Slice(totalRead, bytesToRead);
-                    copyFrom.CopyTo(copyTo);
-                }
-
-                totalRead += bytesToRead;
-                _inBytesUsed += bytesToRead;
-                _inBytesPacket -= bytesToRead;
-                len -= bytesToRead;
-
-                AssertValidState();
-            }
-
-            return TdsOperationStatus.Done;
-        }
-
-
-
-        public TdsOperationStatus TryReadPlpByteArray(Span<byte> buff, int len, out int totalRead)
-        {
-
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
             totalRead = 0;
 
@@ -1973,7 +1911,7 @@ namespace Microsoft.Data.SqlClient
                     buff = newbuf;
                 }
 
-                TdsOperationStatus result = TryReadPlpByteArray(buff.AsSpan(offset), bytesToRead, out bytesRead);
+                TdsOperationStatus result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out bytesRead);
                 Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
                 Debug.Assert((ulong)bytesRead <= _longlenleft, "Read more bytes than is available");
 
@@ -2010,10 +1948,9 @@ namespace Microsoft.Data.SqlClient
                     result = TryReadPlpLength(false, out _);
                     if (result != TdsOperationStatus.Done)
                     {
-                        if (!stored && result == TdsOperationStatus.NeedMoreData && _snapshot != null && _snapshot.ContinueEnabled)
+                        if (!stored && result == TdsOperationStatus.NeedMoreData && _snapshot != null && _snapshotStatus != SnapshotStatus.NotActive && _snapshot.ContinueEnabled)
                         {
                             StoreReadPlpBytesProgress(this, bytesRead);
-                            stored = true;
                         }
                         return result;
                     }
@@ -2948,7 +2885,7 @@ namespace Microsoft.Data.SqlClient
             private PacketData _continuePacket;
             private PacketData _sparePacket;
 
-            //private bool? _continueSupported;
+            private bool? _continueSupported;
 
 #if DEBUG
             private int _packetCounter;
@@ -2996,12 +2933,11 @@ namespace Microsoft.Data.SqlClient
             {
                 get
                 {
-                    //if (_continueSupported == null)
-                    //{
-                    //    _continueSupported = AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.UseExperimentalAsyncContinue", out bool value) ? value : false;
-                    //}
-                    //return _continueSupported.Value;
-                    return true;
+                    if (_continueSupported == null)
+                    {
+                        _continueSupported = AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.UseExperimentalAsyncContinue", out bool value) ? value : false;
+                    }
+                    return _continueSupported.Value;
                 }
             }
 
@@ -3197,7 +3133,7 @@ namespace Microsoft.Data.SqlClient
                 _packetCounter = 0;
 #endif
                 _stateObj = null;
-                //_continueSupported = null;
+                _continueSupported = null;
             }
         }
     }
