@@ -12,12 +12,17 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClientX.Handlers.Connection.Login;
 using Microsoft.Data.SqlClientX.IO;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {
+    /// <summary>
+    /// A handler for Sql Server login. 
+    /// </summary>
     internal class LoginHandler : IHandler<ConnectionHandlerContext>
     {
+        // NIC address caching
+        private static byte[] s_nicAddress;             // cache the NIC address from the registry
+        
         public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
 
         public ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
@@ -326,100 +331,36 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         {
             try
             {
-                TdsWriter writer = context.ConnectionContext.TdsStream.TdsWriter;
+                TdsStream stream = context.ConnectionContext.TdsStream;
+                TdsWriter writer = stream.TdsWriter;
                 await writer.WriteIntAsync(length, isAsync, ct).ConfigureAwait(false);
-                WriteInt(length, _physicalStateObj);
+                await writer.WriteIntAsync(length, isAsync, ct).ConfigureAwait(false);
                 if (recoverySessionData == null)
                 {
-                    if (encrypt == SqlConnectionEncryptOption.Strict)
-                    {
-                        WriteInt((TdsEnums.TDS8_MAJOR << 24) | (TdsEnums.TDS8_INCREMENT << 16) | TdsEnums.TDS8_MINOR, _physicalStateObj);
-                    }
-                    else
-                    {
-                        WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
-                    }
+                    int protocolVersion = encrypt == SqlConnectionEncryptOption.Strict
+                        ? (TdsEnums.TDS8_MAJOR << 24) | (TdsEnums.TDS8_INCREMENT << 16) | TdsEnums.TDS8_MINOR 
+                        : (TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR;
+                    await writer.WriteIntAsync(protocolVersion, isAsync, ct).ConfigureAwait(false);
                 }
                 else
                 {
-                    WriteUnsignedInt(recoverySessionData._tdsVersion, _physicalStateObj);
+                    await writer.WriteUnsignedIntAsync(recoverySessionData._tdsVersion, isAsync, ct).ConfigureAwait(false);
                 }
-                WriteInt(rec.packetSize, _physicalStateObj);
-                WriteInt(TdsEnums.CLIENT_PROG_VER, _physicalStateObj);
-                WriteInt(TdsParserStaticMethods.GetCurrentProcessIdForTdsLoginOnly(), _physicalStateObj);
-                WriteInt(0, _physicalStateObj); // connectionID is unused
+
+                await writer.WriteIntAsync(rec.packetSize, isAsync, ct).ConfigureAwait(false);
+                await writer.WriteIntAsync(TdsEnums.CLIENT_PROG_VER, isAsync, ct).ConfigureAwait(false);
+                await writer.WriteIntAsync(TdsParserStaticMethods.GetCurrentProcessIdForTdsLoginOnly(), isAsync, ct).ConfigureAwait(false);
+                await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false); // connectionID is unused
 
                 // Log7Flags (DWORD)
-                int log7Flags = 0;
-
-                /*
-                 Current snapshot from TDS spec with the offsets added:
-                    0) fByteOrder:1,                // byte order of numeric data types on client
-                    1) fCharSet:1,                  // character set on client
-                    2) fFloat:2,                    // Type of floating point on client
-                    4) fDumpLoad:1,                 // Dump/Load and BCP enable
-                    5) fUseDb:1,                    // USE notification
-                    6) fDatabase:1,                 // Initial database fatal flag
-                    7) fSetLang:1,                  // SET LANGUAGE notification
-                    8) fLanguage:1,                 // Initial language fatal flag
-                    9) fODBC:1,                     // Set if client is ODBC driver
-                   10) fTranBoundary:1,             // Transaction boundary notification
-                   11) fDelegatedSec:1,             // Security with delegation is available
-                   12) fUserType:3,                 // Type of user
-                   15) fIntegratedSecurity:1,       // Set if client is using integrated security
-                   16) fSQLType:4,                  // Type of SQL sent from client
-                   20) fOLEDB:1,                    // Set if client is OLEDB driver
-                   21) fSpare1:3,                   // first bit used for read-only intent, rest unused
-                   24) fResetPassword:1,            // set if client wants to reset password
-                   25) fNoNBCAndSparse:1,           // set if client does not support NBC and Sparse column
-                   26) fUserInstance:1,             // This connection wants to connect to a SQL "user instance"
-                   27) fUnknownCollationHandling:1, // This connection can handle unknown collation correctly.
-                   28) fExtension:1                 // Extensions are used
-                   32 - total
-                */
-
-                // first byte
-                log7Flags |= TdsEnums.USE_DB_ON << 5;
-                log7Flags |= TdsEnums.INIT_DB_FATAL << 6;
-                log7Flags |= TdsEnums.SET_LANG_ON << 7;
-
-                // second byte
-                log7Flags |= TdsEnums.INIT_LANG_FATAL << 8;
-                log7Flags |= TdsEnums.ODBC_ON << 9;
-                if (rec.useReplication)
-                {
-                    log7Flags |= TdsEnums.REPL_ON << 12;
-                }
-                if (rec.useSSPI)
-                {
-                    log7Flags |= TdsEnums.SSPI_ON << 15;
-                }
-
-                // third byte
-                if (rec.readOnlyIntent)
-                {
-                    log7Flags |= TdsEnums.READONLY_INTENT_ON << 21; // read-only intent flag is a first bit of fSpare1
-                }
-
-                // 4th one
-                if (!string.IsNullOrEmpty(rec.newPassword) || (rec.newSecurePassword != null && rec.newSecurePassword.Length != 0))
-                {
-                    log7Flags |= 1 << 24;
-                }
-                if (rec.userInstance)
-                {
-                    log7Flags |= 1 << 26;
-                }
-                if (useFeatureExt)
-                {
-                    log7Flags |= 1 << 28;
-                }
-
-                WriteInt(log7Flags, _physicalStateObj);
+                 
+                int log7Flags = CreateLogin7Flags(context);
+                await writer.WriteIntAsync(log7Flags, isAsync, ct).ConfigureAwait(false);
+                
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.TdsLogin|ADV> {0}, TDS Login7 flags = {1}:", ObjectID, log7Flags);
 
-                WriteInt(0, _physicalStateObj);  // ClientTimeZone is not used
-                WriteInt(0, _physicalStateObj);  // LCID is unused by server
+                await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);  // ClientTimeZone is not used
+                await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);  // LCID is unused by server
 
                 // Start writing offset and length of variable length portions
                 int offset = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
@@ -427,96 +368,103 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 // write offset/length pairs
 
                 // note that you must always set ibHostName since it indicates the beginning of the variable length section of the login record
-                WriteShort(offset, _physicalStateObj); // host name offset
-                WriteShort(rec.hostName.Length, _physicalStateObj);
+                await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // host name offset
+                await writer.WriteShortAsync(rec.hostName.Length, isAsync, ct).ConfigureAwait(false);
                 offset += rec.hostName.Length * 2;
 
                 // Only send user/password over if not fSSPI...  If both user/password and SSPI are in login
                 // rec, only SSPI is used.  Confirmed same behavior as in luxor.
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
-                    WriteShort(offset, _physicalStateObj);  // userName offset
-                    WriteShort(userName.Length, _physicalStateObj);
+                    await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);  // userName offset
+                    await writer.WriteShortAsync(userName.Length, isAsync, ct).ConfigureAwait(false);
                     offset += userName.Length * 2;
 
                     // the encrypted password is a byte array - so length computations different than strings
-                    WriteShort(offset, _physicalStateObj); // password offset
-                    WriteShort(encryptedPasswordLengthInBytes / 2, _physicalStateObj);
+                    await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // password offset
+                    await writer.WriteShortAsync(encryptedPasswordLengthInBytes / 2, isAsync, ct).ConfigureAwait(false);
                     offset += encryptedPasswordLengthInBytes;
                 }
                 else
                 {
                     // case where user/password data is not used, send over zeros
-                    WriteShort(0, _physicalStateObj);  // userName offset
-                    WriteShort(0, _physicalStateObj);
-                    WriteShort(0, _physicalStateObj);  // password offset
-                    WriteShort(0, _physicalStateObj);
+                    await writer.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);  // userName offset
+                    await writer.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);
+                    await writer.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);  // password offset
+                    await writer.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);
                 }
 
-                WriteShort(offset, _physicalStateObj); // app name offset
-                WriteShort(rec.applicationName.Length, _physicalStateObj);
+                await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // app name offset
+                await writer.WriteShortAsync(rec.applicationName.Length, isAsync, ct).ConfigureAwait(false);
                 offset += rec.applicationName.Length * 2;
 
-                WriteShort(offset, _physicalStateObj); // server name offset
-                WriteShort(rec.serverName.Length, _physicalStateObj);
+                await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // server name offset
+                await writer.WriteShortAsync(rec.serverName.Length, isAsync, ct).ConfigureAwait(false);
                 offset += rec.serverName.Length * 2;
 
-                WriteShort(offset, _physicalStateObj);
+                await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
                 if (useFeatureExt)
                 {
-                    WriteShort(4, _physicalStateObj); // length of ibFeatgureExtLong (which is a DWORD)
+                    await writer.WriteShortAsync(4, isAsync, ct).ConfigureAwait(false); // length of ibFeatgureExtLong (which is a DWORD)
                     offset += 4;
                 }
                 else
                 {
-                    WriteShort(0, _physicalStateObj); // unused (was remote password ?)
+                    await writer.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false); // unused (was remote password ?)
                 }
 
-                WriteShort(offset, _physicalStateObj); // client interface name offset
-                WriteShort(clientInterfaceName.Length, _physicalStateObj);
+                await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // client interface name offset
+                await writer.WriteShortAsync(clientInterfaceName.Length, isAsync, ct).ConfigureAwait(false);
                 offset += clientInterfaceName.Length * 2;
 
-                WriteShort(offset, _physicalStateObj); // language name offset
-                WriteShort(rec.language.Length, _physicalStateObj);
+                await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // language name offset
+                await writer.WriteShortAsync(rec.language.Length, isAsync, ct).ConfigureAwait(false);
                 offset += rec.language.Length * 2;
 
-                WriteShort(offset, _physicalStateObj); // database name offset
-                WriteShort(rec.database.Length, _physicalStateObj);
+                await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // database name offset
+                await writer.WriteShortAsync(rec.database.Length, isAsync, ct).ConfigureAwait(false);
                 offset += rec.database.Length * 2;
 
                 if (null == s_nicAddress)
                     s_nicAddress = TdsParserStaticMethods.GetNetworkPhysicalAddressForTdsLoginOnly();
 
-                _physicalStateObj.WriteByteArray(s_nicAddress, s_nicAddress.Length, 0);
+                if (isAsync)
+                {
+                    await stream.WriteAsync(s_nicAddress.AsMemory(), ct).ConfigureAwait(false);
+                }
+                else
+                {
+                    stream.Write(s_nicAddress.AsSpan());
+                }
 
-                WriteShort(offset, _physicalStateObj); // ibSSPI offset
+                await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // ibSSPI offset
                 if (rec.useSSPI)
                 {
-                    WriteShort((int)outSSPILength, _physicalStateObj);
+                    await writer.WriteShortAsync((int)outSSPILength, isAsync, ct).ConfigureAwait(false);
                     offset += (int)outSSPILength;
                 }
                 else
                 {
-                    WriteShort(0, _physicalStateObj);
+                    await writer.WriteShortAsync(0, isAsync, ct).ConfigureAwait(false);
                 }
 
-                WriteShort(offset, _physicalStateObj); // DB filename offset
-                WriteShort(rec.attachDBFilename.Length, _physicalStateObj);
+                await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // DB filename offset
+                await writer.WriteShortAsync(rec.attachDBFilename.Length, isAsync, ct).ConfigureAwait(false);
                 offset += rec.attachDBFilename.Length * 2;
 
-                WriteShort(offset, _physicalStateObj); // reset password offset
-                WriteShort(encryptedChangePasswordLengthInBytes / 2, _physicalStateObj);
+                await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // reset password offset
+                await writer.WriteShortAsync(encryptedChangePasswordLengthInBytes / 2, isAsync, ct).ConfigureAwait(false);
 
-                WriteInt(0, _physicalStateObj);        // reserved for chSSPI
+                await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);        // reserved for chSSPI
 
                 // write variable length portion
-                WriteString(rec.hostName, _physicalStateObj);
+                await writer.WriteStringAsync(rec.hostName, isAsync, ct).ConfigureAwait(false);
 
                 // if we are using SSPI, do not send over username/password, since we will use SSPI instead
                 // same behavior as Luxor
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
-                    WriteString(userName, _physicalStateObj);
+                    await writer.WriteStringAsync(userName, isAsync, ct).ConfigureAwait(false);
 
                     if (rec.credential != null)
                     {
@@ -528,8 +476,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     }
                 }
 
-                WriteString(rec.applicationName, _physicalStateObj);
-                WriteString(rec.serverName, _physicalStateObj);
+                await writer.WriteStringAsync(rec.applicationName, isAsync, ct).ConfigureAwait(false);
+                await writer.WriteStringAsync(rec.serverName, isAsync, ct).ConfigureAwait(false);
 
                 // write ibFeatureExtLong
                 if (useFeatureExt)
@@ -539,18 +487,18 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request");
                     }
 
-                    WriteInt(featureExOffset, _physicalStateObj);
+                    await writer.WriteIntAsync(featureExOffset, isAsync, ct).ConfigureAwait(false);
                 }
 
-                WriteString(clientInterfaceName, _physicalStateObj);
-                WriteString(rec.language, _physicalStateObj);
-                WriteString(rec.database, _physicalStateObj);
+                await writer.WriteStringAsync(clientInterfaceName, isAsync, ct).ConfigureAwait(false);
+                await writer.WriteStringAsync(rec.language, isAsync, ct).ConfigureAwait(false);
+                await writer.WriteStringAsync(rec.database, isAsync, ct).ConfigureAwait(false);
 
                 // send over SSPI data if we are using SSPI
                 if (rec.useSSPI)
                     _physicalStateObj.WriteByteArray(outSSPIBuff, (int)outSSPILength, 0);
 
-                WriteString(rec.attachDBFilename, _physicalStateObj);
+                await writer.WriteStringAsync(rec.attachDBFilename, isAsync, ct).ConfigureAwait(false);
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
                     if (rec.newSecurePassword != null)
@@ -577,6 +525,78 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 throw;
             }
         }
+
+        private static int CreateLogin7Flags(LoginHandlerContext context)
+        {
+            SqlLogin rec = context.Login;
+            bool useFeatureExt = context.UseFeatureExt;
+
+            int log7Flags = 0;
+            /*
+             Current snapshot from TDS spec with the offsets added:
+                0) fByteOrder:1,                // byte order of numeric data types on client
+                1) fCharSet:1,                  // character set on client
+                2) fFloat:2,                    // Type of floating point on client
+                4) fDumpLoad:1,                 // Dump/Load and BCP enable
+                5) fUseDb:1,                    // USE notification
+                6) fDatabase:1,                 // Initial database fatal flag
+                7) fSetLang:1,                  // SET LANGUAGE notification
+                8) fLanguage:1,                 // Initial language fatal flag
+                9) fODBC:1,                     // Set if client is ODBC driver
+               10) fTranBoundary:1,             // Transaction boundary notification
+               11) fDelegatedSec:1,             // Security with delegation is available
+               12) fUserType:3,                 // Type of user
+               15) fIntegratedSecurity:1,       // Set if client is using integrated security
+               16) fSQLType:4,                  // Type of SQL sent from client
+               20) fOLEDB:1,                    // Set if client is OLEDB driver
+               21) fSpare1:3,                   // first bit used for read-only intent, rest unused
+               24) fResetPassword:1,            // set if client wants to reset password
+               25) fNoNBCAndSparse:1,           // set if client does not support NBC and Sparse column
+               26) fUserInstance:1,             // This connection wants to connect to a SQL "user instance"
+               27) fUnknownCollationHandling:1, // This connection can handle unknown collation correctly.
+               28) fExtension:1                 // Extensions are used
+               32 - total
+            */
+
+            // first byte
+            log7Flags |= TdsEnums.USE_DB_ON << 5;
+            log7Flags |= TdsEnums.INIT_DB_FATAL << 6;
+            log7Flags |= TdsEnums.SET_LANG_ON << 7;
+
+            // second byte
+            log7Flags |= TdsEnums.INIT_LANG_FATAL << 8;
+            log7Flags |= TdsEnums.ODBC_ON << 9;
+            if (rec.useReplication)
+            {
+                log7Flags |= TdsEnums.REPL_ON << 12;
+            }
+            if (rec.useSSPI)
+            {
+                log7Flags |= TdsEnums.SSPI_ON << 15;
+            }
+
+            // third byte
+            if (rec.readOnlyIntent)
+            {
+                log7Flags |= TdsEnums.READONLY_INTENT_ON << 21; // read-only intent flag is a first bit of fSpare1
+            }
+
+            // 4th one
+            if (!string.IsNullOrEmpty(rec.newPassword) || (rec.newSecurePassword != null && rec.newSecurePassword.Length != 0))
+            {
+                log7Flags |= 1 << 24;
+            }
+            if (rec.userInstance)
+            {
+                log7Flags |= 1 << 26;
+            }
+            if (useFeatureExt)
+            {
+                log7Flags |= 1 << 28;
+            }
+
+            return log7Flags;
+        }
     }
 
     internal class LoginHandlerContext : HandlerRequest
@@ -597,6 +617,15 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// Features in the login request.
         /// </summary>
         public TdsFeatures Features { get; internal set; } = new();
+
+        /// <summary>
+        /// The login record.
+        /// </summary>
         public SqlLogin Login { get; internal set; }
+
+        /// <summary>
+        /// If feature extensions being used.
+        /// </summary>
+        public bool UseFeatureExt => Features.RequestedFeatures != TdsEnums.FeatureExtension.None;
     }
 }
