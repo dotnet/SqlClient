@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
-        /// Writes the least significant 2 bytes as short value to out buffer, as little-endian.
+        /// Writes the least significant 2 bytes as short value to the stream, as little-endian.
         /// </summary>
         /// <param name="value">Value to write.</param>
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>

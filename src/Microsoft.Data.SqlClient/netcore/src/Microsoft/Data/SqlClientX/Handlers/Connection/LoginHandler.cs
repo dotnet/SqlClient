@@ -196,7 +196,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             }
         }
 
-        private void TdsLogin(LoginHandlerContext context)
+        private async ValueTask TdsLogin(LoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             // TODO: Set the timeout
             _ = context.Login.timeout;
@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             // calculate and reserve the required bytes for the featureEx
             length = ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length);
 
-            WriteLoginData(rec,
+            await WriteLoginData(rec,
                            requestedFeatures,
                            recoverySessionData,
                            fedAuthFeatureExtensionData,
@@ -295,18 +295,31 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                            feOffset,
                            clientInterfaceName,
                            outSSPIBuff,
-                           outSSPILength);
+                           outSSPILength,
+                           isAsync,
+                           ct).ConfigureAwait(false);
 
             if (rentedSSPIBuff != null)
             {
                 ArrayPool<byte>.Shared.Return(rentedSSPIBuff, clearArray: true);
             }
 
-            _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
+
+            TdsStream stream = context.ConnectionContext.TdsStream;
+            ct.ThrowIfCancellationRequested();
+            
+            if (isAsync)
+            {
+                await stream.FlushAsync(ct).ConfigureAwait(false);
+            }
+            else
+            {
+                stream.Flush();
+            }
+
             _physicalStateObj.ResetSecurePasswordsInformation();     // Password information is needed only from Login process; done with writing login packet and should clear information
             _physicalStateObj.HasPendingData = true;
             _physicalStateObj._messageStatus = 0;
-
         }
 
         private async ValueTask WriteLoginData(SqlLogin rec,
@@ -374,7 +387,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                 // Only send user/password over if not fSSPI...  If both user/password and SSPI are in login
                 // rec, only SSPI is used.  Confirmed same behavior as in luxor.
-                if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
+                if (!rec.useSSPI && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
                 {
                     await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);  // userName offset
                     await writer.WriteShortAsync(userName.Length, isAsync, ct).ConfigureAwait(false);
@@ -462,7 +475,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                 // if we are using SSPI, do not send over username/password, since we will use SSPI instead
                 // same behavior as Luxor
-                if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
+                if (!rec.useSSPI && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
                 {
                     await writer.WriteStringAsync(userName, isAsync, ct).ConfigureAwait(false);
 
@@ -496,10 +509,18 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                 // send over SSPI data if we are using SSPI
                 if (rec.useSSPI)
-                    _physicalStateObj.WriteByteArray(outSSPIBuff, (int)outSSPILength, 0);
-
+                { 
+                    if (isAsync)
+                    {
+                        await stream.WriteAsync(outSSPIBuff.AsMemory(0, (int)outSSPILength), ct).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        stream.Write(outSSPIBuff.AsSpan(0, (int)outSSPILength));
+                    }
+                }
                 await writer.WriteStringAsync(rec.attachDBFilename, isAsync, ct).ConfigureAwait(false);
-                if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
+                if (!rec.useSSPI && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
                 {
                     if (rec.newSecurePassword != null)
                     {
