@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
     {
         public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
 
-        public async ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
+        public ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
         {
             ValidateIncomingContext(context);
 
@@ -44,6 +44,8 @@ namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection
                     return;
                 }
             }
+
+            return ValueTask.CompletedTask;
         }
 
         private void PrepareLoginDetails(LoginHandlerContext context)
