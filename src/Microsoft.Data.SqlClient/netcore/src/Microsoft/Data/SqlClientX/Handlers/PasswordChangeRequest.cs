@@ -3,8 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Security;
+using Microsoft.Data.SqlClient;
 
-namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection.LoginSubHandlers
+namespace Microsoft.Data.SqlClientX.Handlers
 {
     internal class PasswordChangeRequest
     {

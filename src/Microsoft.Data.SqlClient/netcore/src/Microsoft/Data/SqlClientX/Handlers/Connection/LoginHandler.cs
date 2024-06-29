@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection.Login;
-using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection.LoginSubHandlers;
 using Microsoft.Data.SqlClientX.Handlers;
 
 namespace Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection

@@ -9,10 +9,7 @@ using System.Threading;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.IO;
-using System.Security;
-using Microsoft.Data.SqlClientX.Handlers.Connection;
 using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient.Microsoft.Data.SqlClientX.Handlers.Connection.LoginSubHandlers;
 
 namespace Microsoft.Data.SqlClientX.Handlers
 {    /// <summary>
