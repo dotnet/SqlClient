@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
         {
 
             int negotiatedPacketSize = 200;
-            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 100);
+            TdsMessage message = TdsReadStreamTest.PrepareTdsMessage(negotiatedPacketSize, 100);
             SplittableStream splitStream = SplittableStream.FromMessage(message);
 
             using TdsReadStream stream = new(splitStream);
@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
         public async void ReadStream_ReadSingleByte(bool isAsync)
         {
             int negotiatedPacketSize = 200;
-            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 100);
+            TdsMessage message = TdsReadStreamTest.PrepareTdsMessage(negotiatedPacketSize, 100);
             SplittableStream splitStream = SplittableStream.FromMessage(message);
 
             using TdsReadStream stream = new(splitStream);
@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
         {
             int negotiatedPacketSize = 200;
 
-            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 100);
+            TdsMessage message = TdsReadStreamTest.PrepareTdsMessage(negotiatedPacketSize, 100);
             SplittableStream splitStream = SplittableStream.FromMessage(message);
 
             using TdsReadStream stream = new(splitStream);
@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
         {
 
             int negotiatedPacketSize = 200;
-            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 100);
+            TdsMessage message = TdsReadStreamTest.PrepareTdsMessage(negotiatedPacketSize, 100);
 
             int splitSize = 4;
             byte[] messageBytes = message.GetBytes();
@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
         {
 
             int negotiatedPacketSize = 200;
-            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 500);
+            TdsMessage message = TdsReadStreamTest.PrepareTdsMessage(negotiatedPacketSize, 500);
 
             SplittableStream splitStream = SplittableStream.FromMessage(message, negotiatedPacketSize + 3);
 
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
         {
 
             int negotiatedPacketSize = 200;
-            TdsMessage message = PrepareTdsMessage(negotiatedPacketSize, 500);
+            TdsMessage message = TdsReadStreamTest.PrepareTdsMessage(negotiatedPacketSize, 500);
 
             SplittableStream splitStream = SplittableStream.FromMessage(message, negotiatedPacketSize + TdsEnums.HEADER_LEN + 10);
 
@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
 
         private static ushort GenerateSpid() => (ushort)new Random().Next();
 
-        private TdsMessage PrepareTdsMessage(int negotiatedPacketSize, int payloadSize)
+        private static TdsMessage PrepareTdsMessage(int negotiatedPacketSize, int payloadSize)
         {
             byte[] payload = new byte[payloadSize];
             for (int i = 0; i < payload.Length; i++)
@@ -167,6 +167,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
                 payload[i] = (byte)i;
             }
             byte messageType = TdsEnums.MT_PRELOGIN;
+            int spid = TdsReadStreamTest.GenerateSpid();
+            return new TdsMessage(negotiatedPacketSize, payload, messageType, spid);
+        }
+
+        internal static TdsMessage PrepareTdsMessage(int negotiatedPacketSize, byte[] payload, byte messageType)
+        {
             int spid = TdsReadStreamTest.GenerateSpid();
             return new TdsMessage(negotiatedPacketSize, payload, messageType, spid);
         }

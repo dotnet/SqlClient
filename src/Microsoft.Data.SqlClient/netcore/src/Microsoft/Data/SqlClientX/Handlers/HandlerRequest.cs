@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClientX.Handlers
 {
@@ -11,11 +12,6 @@ namespace Microsoft.Data.SqlClientX.Handlers
     /// </summary>
     internal abstract class HandlerRequest
     {
-        /// <summary>
-        /// Exposes the request type for this handler.
-        /// </summary>
-        public HandlerRequestType RequestType { get; internal set; }
-
         /// <summary>
         /// When the Exception is set, that means that the next handler knows about the exception,
         /// and it can choose to execute or perform any clean ups.
