@@ -6,6 +6,8 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -19,7 +21,6 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal sealed class PoolingDataSource : SqlDataSource
     {
-        private Channel<SqlConnector> _sqlConnectors;
         private DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
 
         internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
@@ -28,29 +29,31 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Initializes a new PoolingDataSource.
         /// </summary>
-        /// <param name="connectionString">The connection string used for connections.</param>
-        /// <param name="credential">The credential used for connections.</param>
-        /// <param name="options">The options used for this pool.</param>
         //TODO: support auth contexts and provider info
-        PoolingDataSource(string connectionString, SqlCredential credential, DbConnectionPoolGroupOptions options) : base(connectionString, credential)
+        PoolingDataSource(SqlConnectionStringBuilder connectionStringBuilder,
+            SqlCredential credential,
+            RemoteCertificateValidationCallback userCertificateValidationCallback,
+            Action<X509CertificateCollection> clientCertificatesCallback,
+            DbConnectionPoolGroupOptions options) : base(connectionStringBuilder, credential, userCertificateValidationCallback, clientCertificatesCallback)
         {
             _connectionPoolGroupOptions = options;
             //TODO: other construction
         }
 
         /// <inheritdoc/>
-        internal override ValueTask<SqlConnector> GetInternalConnection(bool async, CancellationToken cancellationToken)
+        internal override ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        internal ValueTask<SqlConnector> OpenNewInternalConnection(bool async, CancellationToken cancellationToken)
+        /// <inheritdoc/>
+        internal override ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
-
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        internal override void ReturnInternalConnection(SqlConnector connection)
+        internal override ValueTask ReturnInternalConnection(bool async, SqlConnector connection)
         {
             throw new NotImplementedException();
         }

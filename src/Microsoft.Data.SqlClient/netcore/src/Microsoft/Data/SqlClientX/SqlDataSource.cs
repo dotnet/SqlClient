@@ -105,12 +105,23 @@ namespace Microsoft.Data.SqlClientX
         /// <param name="cancellationToken">Cancels an outstanding asynchronous operation.</param>
         /// <returns></returns>
         internal abstract ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken);
-    
+
         /// <summary>
         /// Returns a SqlConnector to the data source for recycling or finalization.
         /// </summary>
+        /// <param name="async">Whether this method should be run asynchronously.</param>
         /// <param name="connection">The connection returned to the data source.</param>
-        internal abstract void ReturnInternalConnection(SqlConnector connection)
+        internal abstract ValueTask ReturnInternalConnection(bool async, SqlConnector connection);
+
+        /// <summary>
+        /// Opens a new SqlConnector.
+        /// </summary>
+        /// <param name="owningConnection">The SqlConnectionX object that will exclusively own and use this connector.</param>
+        /// <param name="timeout">The connection timeout for this operation.</param>
+        /// <param name="async">Whether this method should be run asynchronously.</param>
+        /// <param name="cancellationToken">Cancels an outstanding asynchronous operation.</param>
+        /// <returns></returns>
+        internal abstract ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken);
     }
 }
 

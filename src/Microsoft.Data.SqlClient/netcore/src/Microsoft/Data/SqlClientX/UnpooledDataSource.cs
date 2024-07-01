@@ -38,19 +38,25 @@ namespace Microsoft.Data.SqlClientX
         {
         }
 
-        /// <summary>
-        /// Creates and opens a new SqlConnector.
-        /// </summary>
-        /// <param name="owningConnection">The SqlConnectionX object that will exclusively own and use this connector.</param>
-        /// <param name="timeout">The connection timeout for this operation.</param>
-        /// <param name="async">Whether this method should be run asynchronously.</param>
-        /// <param name="cancellationToken">Cancels an outstanding asynchronous operation.</param>
-        /// <returns></returns>
-        internal override async ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+
+        /// <inheritdoc/>
+        internal override ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        {
+            return OpenNewInternalConnection(owningConnection, timeout, async, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        internal override async ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
             var connector = new SqlConnector(owningConnection);
             await connector.Open(timeout, async, cancellationToken).ConfigureAwait(false);
             return connector;
+        }
+
+        /// <inheritdoc/>
+        internal override async ValueTask ReturnInternalConnection(bool async, SqlConnector connection)
+        {
+            await connection.Close(async).ConfigureAwait(false);
         }
     }
 }
