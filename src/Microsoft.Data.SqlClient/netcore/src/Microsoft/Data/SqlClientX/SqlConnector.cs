@@ -10,6 +10,8 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClientX
 {
     /// <summary>
@@ -17,25 +19,27 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal class SqlConnector
     {
-        private WeakReference<SqlConnectionX> _owningConnection;
+        internal SqlConnectionX? OwningConnection { get; set; }
+
         /// <summary>
-        /// The datasource accessed by this connector.
+        /// The data source that generated this connector.
         /// </summary>
-        public string DataSource => throw new NotImplementedException();
+        internal SqlDataSource DataSource { get; }
 
         /// <summary>
         /// The server version this connector is connected to.
         /// </summary>
-        public string ServerVersion => throw new NotImplementedException();
+        internal string ServerVersion => throw new NotImplementedException();
 
         /// <summary>
         /// Represents the current state of this connection.
         /// </summary>
-        public ConnectionState State => throw new NotImplementedException();
+        internal ConnectionState State => throw new NotImplementedException();
 
-        internal SqlConnector(SqlConnectionX owningConnection)
+        internal SqlConnector(SqlConnectionX owningConnection, SqlDataSource dataSource)
         {
-            _owningConnection = new WeakReference<SqlConnectionX>(owningConnection);
+            OwningConnection = owningConnection;
+            DataSource = dataSource;
         }
 
         /// <summary>
@@ -44,7 +48,7 @@ namespace Microsoft.Data.SqlClientX
         /// <param name = "async" > Whether this method should run asynchronously.</param>
         /// <returns>A Task indicating the result of the operation.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        public Task Close(bool async)
+        internal ValueTask Close(bool async)
         {
             throw new NotImplementedException();
         }
@@ -57,10 +61,17 @@ namespace Microsoft.Data.SqlClientX
         /// <param name = "cancellationToken">The token used to cancel an ongoing asynchronous call.</param>
         /// <returns>A Task indicating the result of the operation.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        public Task Open(TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        internal ValueTask Open(TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
+
+        /// <summary>
+        /// Returns this connection to the data source that generated it.
+        /// </summary>
+        /// <param name="async">Whether this method should run asynchronously.</param>
+        /// <returns></returns>
+        internal ValueTask Return(bool async) => DataSource.ReturnInternalConnection(async, this);
     }
 }
 

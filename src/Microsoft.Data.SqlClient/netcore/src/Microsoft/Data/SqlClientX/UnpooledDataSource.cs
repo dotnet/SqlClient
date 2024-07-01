@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClientX
         /// <inheritdoc/>
         internal override async ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
-            var connector = new SqlConnector(owningConnection);
+            var connector = new SqlConnector(owningConnection, this);
             await connector.Open(timeout, async, cancellationToken).ConfigureAwait(false);
             return connector;
         }
