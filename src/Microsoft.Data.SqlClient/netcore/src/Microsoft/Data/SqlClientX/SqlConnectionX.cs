@@ -194,8 +194,8 @@ namespace Microsoft.Data.SqlClientX
                     //TODO: cancel outstanding operations on connection before close
                     //TODO: if pooling, reset the connector
 
-                    await internalConnection.Return(async).ConfigureAwait(false);
                     internalConnection.OwningConnection = null;
+                    await internalConnection.Return(async).ConfigureAwait(false);
                     _internalConnection = null;
                 }
 
