@@ -51,6 +51,12 @@ namespace Microsoft.Data.SqlClientX
         /// <param name="cancellationToken">The token used to cancel an ongoing asynchronous call.</param>
         /// <returns></returns>
         internal abstract ValueTask<SqlConnector> GetInternalConnection(bool async, CancellationToken cancellationToken);
+        
+        /// <summary>
+        /// Returns a SqlConnector to the data source for recycling or finalization.
+        /// </summary>
+        /// <param name="connection">The connection returned to the data source.</param>
+        internal abstract void ReturnInternalConnection(SqlConnector connection)
     }
 }
 
