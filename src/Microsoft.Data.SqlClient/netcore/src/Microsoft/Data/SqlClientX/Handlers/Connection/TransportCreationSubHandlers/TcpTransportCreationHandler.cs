@@ -150,17 +150,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreationSubHand
                 //   polling where we continuously check the cancellation token.
                 socket.Connect(ipEndPoint);
             }
-            catch (SocketException e)
+            catch (SocketException e) when (e.SocketErrorCode is SocketError.WouldBlock)
             {
                 // Because the socket is configured to be non-blocking, any operation that would
                 // block will throw an exception indicating it would block. Since opening a TCP
                 // connection will always block, we expect to get an exception for it, and will
                 // ignore it. This allows us to immediately return from connect and poll it,
                 // allowing us to observe timeouts and cancellation.
-                if (e.SocketErrorCode is not SocketError.WouldBlock)
-                {
-                    throw;
-                }
             }
             
             try
@@ -175,18 +171,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreationSubHand
                     }
                 }
             }
-            catch (SocketException se)
+            catch (SocketException se) when (se.ErrorCode is (int)SocketError.Interrupted)
             {
                 // We get a special exception if the cancellation token timed out. If the
                 // cancellation token triggered it, use that exception instead.
-                if (se.ErrorCode == (int)SocketError.Interrupted)
-                {
-                    ct.ThrowIfCancellationRequested();
-                }
-                
-                // This was either some other kind of exception or the polling was interrupted
-                // by some other mechanism.
-                throw;
+                ct.ThrowIfCancellationRequested();
             }
         }
     }
