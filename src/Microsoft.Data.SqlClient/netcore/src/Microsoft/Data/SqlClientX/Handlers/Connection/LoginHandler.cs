@@ -25,12 +25,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         
         public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
 
-        public ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
+        public async ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
         {
             ValidateIncomingContext(context);
 
             LoginHandlerContext loginHandlerContext = new LoginHandlerContext(context);
-            PrepareLoginDetails(loginHandlerContext);
+            await PrepareLoginDetails(loginHandlerContext, isAsync, ct).ConfigureAwait(false);
 
             void ValidateIncomingContext(ConnectionHandlerContext context)
             {
@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             return ValueTask.CompletedTask;
         }
 
-        private void PrepareLoginDetails(LoginHandlerContext context)
+        private async ValueTask PrepareLoginDetails(LoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             SqlLogin login = new SqlLogin();
 
@@ -175,7 +175,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
             features.RequestedFeatures = requestedFeatures;
             context.Login = login;
-            TdsLogin(context);
+
+            await TdsLogin(context, isAsync, ct).ConfigureAwait(false);
 
             // If the workflow being used is Active Directory Authentication and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
@@ -321,6 +322,356 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             _physicalStateObj.HasPendingData = true;
             _physicalStateObj._messageStatus = 0;
         }
+
+        private ValueTask<int> ApplyFeatureExData(LoginHandlerContext context,
+                                        TdsEnums.FeatureExtension requestedFeatures,
+                                        SessionData recoverySessionData,
+                                        FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
+                                        bool useFeatureExt,
+                                        int length,
+                                        bool isAsync,
+                                        CancellationToken ct,
+                                        bool write = false)
+        {
+            if (useFeatureExt)
+            {
+                if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)
+                {
+                    length += WriteSessionRecoveryFeatureRequest(recoverySessionData, write);
+                }
+                if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request & wirte = {0}", write);
+                    Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
+                    length += WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: write);
+                }
+                if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
+                {
+                    length += WriteTceFeatureRequest(write);
+                }
+                if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
+                {
+                    length += WriteGlobalTransactionsFeatureRequest(write);
+                }
+                if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
+                {
+                    length += WriteDataClassificationFeatureRequest(write);
+                }
+                if ((requestedFeatures & TdsEnums.FeatureExtension.UTF8Support) != 0)
+                {
+                    length += WriteUTF8SupportFeatureRequest(write);
+                }
+
+                if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
+                {
+                    length += WriteSQLDNSCachingFeatureRequest(write);
+                }
+
+                length++; // for terminator
+                if (write)
+                {
+                    _physicalStateObj.WriteByte(0xFF); // terminator
+                }
+            }
+
+            return length;
+        }
+
+
+        internal int WriteSessionRecoveryFeatureRequest(LoginHandlerContext context, SessionData reconnectData, bool write /* if false just calculates the length */)
+        {
+            int len = 1;
+            if (write)
+            {
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_SRECOVERY);
+            }
+            if (reconnectData == null)
+            {
+                if (write)
+                {
+                    WriteInt(0, _physicalStateObj);
+                }
+                len += 4;
+            }
+            else
+            {
+                Debug.Assert(reconnectData._unrecoverableStatesCount == 0, "Unrecoverable state count should be 0");
+                int initialLength = 0; // sizeof(DWORD) - length itself
+                initialLength += 1 + 2 * TdsParserStaticMethods.NullAwareStringLength(reconnectData._initialDatabase);
+                initialLength += 1 + 2 * TdsParserStaticMethods.NullAwareStringLength(reconnectData._initialLanguage);
+                initialLength += (reconnectData._initialCollation == null) ? 1 : 6;
+                for (int i = 0; i < SessionData._maxNumberOfSessionStates; i++)
+                {
+                    if (reconnectData._initialState[i] != null)
+                    {
+                        initialLength += 1 /* StateId*/ + StateValueLength(reconnectData._initialState[i].Length);
+                    }
+                }
+                int currentLength = 0; // sizeof(DWORD) - length itself
+                currentLength += 1 + 2 * (reconnectData._initialDatabase == reconnectData._database ? 0 : TdsParserStaticMethods.NullAwareStringLength(reconnectData._database));
+                currentLength += 1 + 2 * (reconnectData._initialLanguage == reconnectData._language ? 0 : TdsParserStaticMethods.NullAwareStringLength(reconnectData._language));
+                currentLength += (reconnectData._collation != null && !SqlCollation.Equals(reconnectData._collation, reconnectData._initialCollation)) ? 6 : 1;
+                bool[] writeState = new bool[SessionData._maxNumberOfSessionStates];
+                for (int i = 0; i < SessionData._maxNumberOfSessionStates; i++)
+                {
+                    if (reconnectData._delta[i] != null)
+                    {
+                        Debug.Assert(reconnectData._delta[i]._recoverable, "State should be recoverable");
+                        writeState[i] = true;
+                        if (reconnectData._initialState[i] != null && reconnectData._initialState[i].Length == reconnectData._delta[i]._dataLength)
+                        {
+                            writeState[i] = false;
+                            for (int j = 0; j < reconnectData._delta[i]._dataLength; j++)
+                            {
+                                if (reconnectData._initialState[i][j] != reconnectData._delta[i]._data[j])
+                                {
+                                    writeState[i] = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (writeState[i])
+                        {
+                            currentLength += 1 /* StateId*/ + StateValueLength(reconnectData._delta[i]._dataLength);
+                        }
+                    }
+                }
+                if (write)
+                {
+                    WriteInt(8 + initialLength + currentLength, _physicalStateObj); // length of data w/o total length (initial + current + 2 * sizeof(DWORD))
+                    WriteInt(initialLength, _physicalStateObj);
+                    WriteIdentifier(reconnectData._initialDatabase, _physicalStateObj);
+                    WriteCollation(reconnectData._initialCollation, _physicalStateObj);
+                    WriteIdentifier(reconnectData._initialLanguage, _physicalStateObj);
+                    for (int i = 0; i < SessionData._maxNumberOfSessionStates; i++)
+                    {
+                        if (reconnectData._initialState[i] != null)
+                        {
+                            _physicalStateObj.WriteByte((byte)i);
+                            if (reconnectData._initialState[i].Length < 0xFF)
+                            {
+                                _physicalStateObj.WriteByte((byte)reconnectData._initialState[i].Length);
+                            }
+                            else
+                            {
+                                _physicalStateObj.WriteByte(0xFF);
+                                WriteInt(reconnectData._initialState[i].Length, _physicalStateObj);
+                            }
+                            _physicalStateObj.WriteByteArray(reconnectData._initialState[i], reconnectData._initialState[i].Length, 0);
+                        }
+                    }
+                    WriteInt(currentLength, _physicalStateObj);
+                    WriteIdentifier(reconnectData._database != reconnectData._initialDatabase ? reconnectData._database : null, _physicalStateObj);
+                    WriteCollation(SqlCollation.Equals(reconnectData._initialCollation, reconnectData._collation) ? null : reconnectData._collation, _physicalStateObj);
+                    WriteIdentifier(reconnectData._language != reconnectData._initialLanguage ? reconnectData._language : null, _physicalStateObj);
+                    for (int i = 0; i < SessionData._maxNumberOfSessionStates; i++)
+                    {
+                        if (writeState[i])
+                        {
+                            _physicalStateObj.WriteByte((byte)i);
+                            if (reconnectData._delta[i]._dataLength < 0xFF)
+                            {
+                                _physicalStateObj.WriteByte((byte)reconnectData._delta[i]._dataLength);
+                            }
+                            else
+                            {
+                                _physicalStateObj.WriteByte(0xFF);
+                                WriteInt(reconnectData._delta[i]._dataLength, _physicalStateObj);
+                            }
+                            _physicalStateObj.WriteByteArray(reconnectData._delta[i]._data, reconnectData._delta[i]._dataLength, 0);
+                        }
+                    }
+                }
+                len += initialLength + currentLength + 12 /* length fields (initial, current, total) */;
+            }
+            return len;
+        }
+
+        internal int WriteFedAuthFeatureRequest(LoginHandlerContext context, FederatedAuthenticationFeatureExtensionData fedAuthFeatureData,
+                                                bool write /* if false just calculates the length */)
+        {
+            Debug.Assert(fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.MSAL || fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.SecurityToken,
+                "only fed auth library type MSAL and Security Token are supported in writing feature request");
+
+            int dataLen = 0;
+            int totalLen = 0;
+
+            // set dataLen and totalLen
+            switch (fedAuthFeatureData.libraryType)
+            {
+                case TdsEnums.FedAuthLibrary.MSAL:
+                    dataLen = 2;  // length of feature data = 1 byte for library and echo + 1 byte for workflow
+                    break;
+                case TdsEnums.FedAuthLibrary.SecurityToken:
+                    Debug.Assert(fedAuthFeatureData.accessToken != null, "AccessToken should not be null.");
+                    dataLen = 1 + sizeof(int) + fedAuthFeatureData.accessToken.Length; // length of feature data = 1 byte for library and echo, security token length and sizeof(int) for token length itself
+                    break;
+                default:
+                    Debug.Fail("Unrecognized library type for fedauth feature extension request");
+                    break;
+            }
+
+            totalLen = dataLen + 5; // length of feature id (1 byte), data length field (4 bytes), and feature data (dataLen)
+
+            // write feature id
+            if (write)
+            {
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_FEDAUTH);
+
+                // set options
+                byte options = 0x00;
+
+                // set upper 7 bits of options to indicate fed auth library type
+                switch (fedAuthFeatureData.libraryType)
+                {
+                    case TdsEnums.FedAuthLibrary.MSAL:
+                        Debug.Assert(_connHandler._federatedAuthenticationInfoRequested == true, "_federatedAuthenticationInfoRequested field should be true");
+                        options |= TdsEnums.FEDAUTHLIB_MSAL << 1;
+                        break;
+                    case TdsEnums.FedAuthLibrary.SecurityToken:
+                        Debug.Assert(_connHandler._federatedAuthenticationRequested == true, "_federatedAuthenticationRequested field should be true");
+                        options |= TdsEnums.FEDAUTHLIB_SECURITYTOKEN << 1;
+                        break;
+                    default:
+                        Debug.Fail("Unrecognized FedAuthLibrary type for feature extension request");
+                        break;
+                }
+
+                options |= (byte)(fedAuthFeatureData.fedAuthRequiredPreLoginResponse == true ? 0x01 : 0x00);
+
+                // write dataLen and options
+                WriteInt(dataLen, _physicalStateObj);
+                _physicalStateObj.WriteByte(options);
+
+                // write accessToken for FedAuthLibrary.SecurityToken
+                switch (fedAuthFeatureData.libraryType)
+                {
+                    case TdsEnums.FedAuthLibrary.MSAL:
+                        byte workflow = 0x00;
+                        switch (fedAuthFeatureData.authentication)
+                        {
+                            case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                            case SqlAuthenticationMethod.ActiveDirectoryMSI:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryDefault:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYWORKLOADIDENTITY;
+                                break;
+                            default:
+                                if (_connHandler._accessTokenCallback != null)
+                                {
+                                    workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYTOKENCREDENTIAL;
+                                }
+                                else
+                                {
+                                    Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
+                                }
+                                break;
+                        }
+
+                        _physicalStateObj.WriteByte(workflow);
+                        break;
+                    case TdsEnums.FedAuthLibrary.SecurityToken:
+                        WriteInt(fedAuthFeatureData.accessToken.Length, _physicalStateObj);
+                        _physicalStateObj.WriteByteArray(fedAuthFeatureData.accessToken, fedAuthFeatureData.accessToken.Length, 0);
+                        break;
+                    default:
+                        Debug.Fail("Unrecognized FedAuthLibrary type for feature extension request");
+                        break;
+                }
+            }
+            return totalLen;
+        }
+
+        internal int WriteTceFeatureRequest(LoginHandlerContext context, bool write /* if false just calculates the length */)
+        {
+            int len = 6; // (1byte = featureID, 4bytes = featureData length, 1 bytes = Version
+
+            if (write)
+            {
+                // Write Feature ID, length of the version# field and TCE Version#
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_TCE);
+                WriteInt(1, _physicalStateObj);
+                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_TCE_VERSION);
+            }
+
+            return len; // size of data written
+        }
+
+        internal int WriteDataClassificationFeatureRequest(LoginHandlerContext context, bool write /* if false just calculates the length */)
+        {
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
+
+            if (write)
+            {
+                // Write Feature ID, length of the version# field and Sensitivity Classification Version#
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_DATACLASSIFICATION);
+                WriteInt(1, _physicalStateObj);
+                _physicalStateObj.WriteByte(TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED);
+            }
+
+            return len; // size of data written
+        }
+
+        internal int WriteGlobalTransactionsFeatureRequest(LoginHandlerContext context, bool write /* if false just calculates the length */)
+        {
+            int len = 5; // 1byte = featureID, 4bytes = featureData length
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS);
+                WriteInt(0, _physicalStateObj); // we don't send any data
+            }
+
+            return len;
+        }
+        internal int WriteUTF8SupportFeatureRequest(LoginHandlerContext context, bool write /* if false just calculates the length */)
+        {
+            int len = 5; // 1byte = featureID, 4bytes = featureData length, sizeof(DWORD)
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_UTF8SUPPORT);
+                WriteInt(0, _physicalStateObj); // we don't send any data
+            }
+
+            return len;
+        }
+
+        internal int WriteSQLDNSCachingFeatureRequest(LoginHandlerContext context, bool write /* if false just calculates the length */)
+        {
+            int len = 5; // 1byte = featureID, 4bytes = featureData length
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_SQLDNSCACHING);
+                WriteInt(0, _physicalStateObj); // we don't send any data
+            }
+
+            return len;
+        }
+
 
         private async ValueTask WriteLoginData(SqlLogin rec,
                                      TdsEnums.FeatureExtension requestedFeatures,
