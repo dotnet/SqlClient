@@ -197,7 +197,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             SNIHandle sniHandle = null;
-            switch (details._connectionProtocol)
+            switch (details.ResolvedProtocol)
             {
                 case DataSource.Protocol.Admin:
                 case DataSource.Protocol.None: // default to using tcp if no protocol is provided
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     sniHandle = CreateNpHandle(details, timeout, parallel, tlsFirst, hostNameInCertificate, serverCertificateFilename);
                     break;
                 default:
-                    Debug.Fail($"Unexpected connection protocol: {details._connectionProtocol}");
+                    Debug.Fail($"Unexpected connection protocol: {details.ResolvedProtocol}");
                     break;
             }
 
@@ -245,11 +245,11 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             else if (!string.IsNullOrWhiteSpace(dataSource.InstanceName))
             {
-                postfix = dataSource._connectionProtocol == DataSource.Protocol.TCP ? dataSource.ResolvedPort.ToString() : dataSource.InstanceName;
+                postfix = dataSource.ResolvedProtocol == DataSource.Protocol.TCP ? dataSource.ResolvedPort.ToString() : dataSource.InstanceName;
             }
 
             SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, postfix {3}", dataSource?.ServerName, dataSource?.InstanceName, dataSource?.Port, postfix);
-            return GetSqlServerSPNs(hostName, postfix, dataSource._connectionProtocol);
+            return GetSqlServerSPNs(hostName, postfix, dataSource.ResolvedProtocol);
         }
 
         private static byte[][] GetSqlServerSPNs(string hostNameOrAddress, string portOrInstanceName, DataSource.Protocol protocol)
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             int port = -1;
-            bool isAdminConnection = details._connectionProtocol == DataSource.Protocol.Admin;
+            bool isAdminConnection = details.ResolvedProtocol == DataSource.Protocol.Admin;
             if (details.IsSsrpRequired)
             {
                 try
@@ -440,8 +440,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal enum Protocol { TCP, NP, None, Admin };
 
-        internal Protocol _connectionProtocol = Protocol.None;
-
         /// <summary>
         /// Provides the HostName of the server to connect to for TCP protocol.
         /// This information is also used for finding the SPN of SqlServer
@@ -473,6 +471,12 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         internal string PipeHostName { get; private set; }
 
+        /// <summary>
+        /// Gets or sets the protocol that was resolved from the connection string. If this is
+        /// <see cref="Protocol.None"/>, the protocol could not reliably be determined.
+        /// </summary>
+        internal Protocol ResolvedProtocol { get; private set; }
+
         private string _workingDataSource;
         private string _dataSourceAfterTrimmingProtocol;
 
@@ -489,16 +493,16 @@ namespace Microsoft.Data.SqlClient.SNI
 
             PopulateProtocol();
 
-            _dataSourceAfterTrimmingProtocol = (firstIndexOfColon > -1) && _connectionProtocol != Protocol.None
+            _dataSourceAfterTrimmingProtocol = (firstIndexOfColon > -1) && ResolvedProtocol != Protocol.None
                 ? _workingDataSource.Substring(firstIndexOfColon + 1).Trim() : _workingDataSource;
 
             if (_dataSourceAfterTrimmingProtocol.Contains(Slash)) // Pipe paths only allow back slashes
             {
-                if (_connectionProtocol == Protocol.None)
+                if (ResolvedProtocol == Protocol.None)
                     ReportSNIError(SNIProviders.INVALID_PROV);
-                else if (_connectionProtocol == Protocol.NP)
+                else if (ResolvedProtocol == Protocol.NP)
                     ReportSNIError(SNIProviders.NP_PROV);
-                else if (_connectionProtocol == Protocol.TCP)
+                else if (ResolvedProtocol == Protocol.TCP)
                     ReportSNIError(SNIProviders.TCP_PROV);
             }
         }
@@ -509,7 +513,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             if (splitByColon.Length <= 1)
             {
-                _connectionProtocol = Protocol.None;
+                ResolvedProtocol = Protocol.None;
             }
             else
             {
@@ -517,17 +521,17 @@ namespace Microsoft.Data.SqlClient.SNI
                 switch (splitByColon[0].Trim())
                 {
                     case TdsEnums.TCP:
-                        _connectionProtocol = Protocol.TCP;
+                        ResolvedProtocol = Protocol.TCP;
                         break;
                     case TdsEnums.NP:
-                        _connectionProtocol = Protocol.NP;
+                        ResolvedProtocol = Protocol.NP;
                         break;
                     case TdsEnums.ADMIN:
-                        _connectionProtocol = Protocol.Admin;
+                        ResolvedProtocol = Protocol.Admin;
                         break;
                     default:
                         // None of the supported protocols were found. This may be a IPv6 address
-                        _connectionProtocol = Protocol.None;
+                        ResolvedProtocol = Protocol.None;
                         break;
                 }
             }
@@ -611,7 +615,7 @@ namespace Microsoft.Data.SqlClient.SNI
             // If Server name is empty or localhost, then use "localhost"
             if (string.IsNullOrEmpty(ServerName) || IsLocalHost(ServerName) ||
                 (Environment.MachineName.Equals(ServerName, StringComparison.CurrentCultureIgnoreCase) &&
-                 _connectionProtocol == Protocol.Admin))
+                 ResolvedProtocol == Protocol.Admin))
             {
                 // For DAC use "localhost" instead of the server name.
                 ServerName = DefaultHostName;
@@ -643,11 +647,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 // For Tcp and Only Tcp are parameters allowed.
-                if (_connectionProtocol == Protocol.None)
+                if (ResolvedProtocol == Protocol.None)
                 {
-                    _connectionProtocol = Protocol.TCP;
+                    ResolvedProtocol = Protocol.TCP;
                 }
-                else if (_connectionProtocol != Protocol.TCP)
+                else if (ResolvedProtocol != Protocol.TCP)
                 {
                     // Parameter has been specified for non-TCP protocol. This is not allowed.
                     ReportSNIError(SNIProviders.INVALID_PROV);
@@ -705,7 +709,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private bool InferNamedPipesInformation()
         {
             // If we have a datasource beginning with a pipe or we have already determined that the protocol is Named Pipe
-            if (_dataSourceAfterTrimmingProtocol.StartsWith(PipeBeginning, StringComparison.Ordinal) || _connectionProtocol == Protocol.NP)
+            if (_dataSourceAfterTrimmingProtocol.StartsWith(PipeBeginning, StringComparison.Ordinal) || ResolvedProtocol == Protocol.NP)
             {
                 // If the data source starts with "np:servername"
                 if (!_dataSourceAfterTrimmingProtocol.Contains(PipeBeginning))
@@ -713,7 +717,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance, 
                     // separate servername and instance and prepend instance with MSSQL$ and append default pipe path 
                     // https://learn.microsoft.com/en-us/sql/tools/configuration-manager/named-pipes-properties?view=sql-server-ver16
-                    if (_dataSourceAfterTrimmingProtocol.Contains(PathSeparator) && _connectionProtocol == Protocol.NP)
+                    if (_dataSourceAfterTrimmingProtocol.Contains(PathSeparator) && ResolvedProtocol == Protocol.NP)
                     {
                         string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter);
                         if (tokensByBackSlash.Length == 2)
@@ -800,11 +804,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 // DataSource is something like "\\pipename"
-                if (_connectionProtocol == Protocol.None)
+                if (ResolvedProtocol == Protocol.None)
                 {
-                    _connectionProtocol = Protocol.NP;
+                    ResolvedProtocol = Protocol.NP;
                 }
-                else if (_connectionProtocol != Protocol.NP)
+                else if (ResolvedProtocol != Protocol.NP)
                 {
                     // In case the path began with a "\\" and protocol was not Named Pipes
                     ReportSNIError(SNIProviders.NP_PROV);
