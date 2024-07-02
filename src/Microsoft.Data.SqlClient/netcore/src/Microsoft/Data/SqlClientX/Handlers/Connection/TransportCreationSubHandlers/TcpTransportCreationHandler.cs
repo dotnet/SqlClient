@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreationSubHand
         #if NET8_0_OR_GREATER
         private static readonly TimeSpan DefaultPollTimeout = TimeSpan.FromSeconds(30);
         #else
-        private const int DefaultPollTimeout = 30 * 1000000; // 30 seconds as microseconds
+        private const int DefaultPollTimeout = 30 * 1_000_000; // 30 seconds as microseconds
         #endif
 
         /// <inheritdoc />
@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreationSubHand
             }
 
             // Create the stream for the socket
-            return new NetworkStream(socket);
+            return new NetworkStream(socket, ownsSocket: true);
         }
 
         private async ValueTask<Socket> OpenSocket(IPEndPoint ipEndPoint, bool isAsync, CancellationToken ct)
