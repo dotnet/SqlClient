@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 
-namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
+namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreationSubHandlers
 {
     /// <summary>
     /// Handler for connecting via TCP.

@@ -6,8 +6,9 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreationSubHandlers;
 
-namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
+namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {
     /// <summary>
     /// Handler for creating the connection to the server. This handler passes the context through
@@ -42,6 +43,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
                 context.Error = e;
                 return;
             }
+
+            // Every physical connection has a Unique ID which is used by the rest 
+            // of the connection for tracing on the server side, to correlate with 
+            // the connectivity telemetry and diagnosis.
+            context.ConnectionId = Guid.NewGuid();
 
             if (NextHandler is not null)
             {

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
+namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreationSubHandlers
 {
     /// <summary>
     /// Comparer that sorts IP addresses based on the version of the internet protocol it is using.

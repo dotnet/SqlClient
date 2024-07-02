@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClientX
     {
         private SqlCredential? _credential;
         private SqlDataSource? _dataSource;
-        private SqlConnector? _connection;
+        private SqlConnector? _internalConnection;
 
         //TODO: Investigate if we can just use dataSource.ConnectionString. Do this when this class can resolve its own data source.
         private string _connectionString = string.Empty;
@@ -184,13 +184,20 @@ namespace Microsoft.Data.SqlClientX
 
             async Task CloseAsync(bool async)
             {
-                Debug.Assert(_connection != null);
-                var internalConnection = _connection;
+                Debug.Assert(_internalConnection != null);
+                Debug.Assert(_dataSource != null);
 
-                //TODO: cancel outstanding operations on connection before close
-                await internalConnection.Close(async).ConfigureAwait(false);
+                var internalConnection = _internalConnection;
 
-                //TODO: remove the internal connection's reference to this wrapper connection
+                if (internalConnection != null)
+                {
+                    //TODO: cancel outstanding operations on connection before close
+                    //TODO: if pooling, reset the connector
+
+                    internalConnection.OwningConnection = null;
+                    await internalConnection.Return(async).ConfigureAwait(false);
+                    _internalConnection = null;
+                }
 
                 _connectionState = ConnectionState.Closed;
             }
@@ -245,7 +252,7 @@ namespace Microsoft.Data.SqlClientX
                 throw ADP.NoConnectionString();
             }
 
-            _connection = await _dataSource.GetInternalConnection(this, TimeSpan.FromSeconds(ConnectionTimeout), async, cancellationToken).ConfigureAwait(false);
+            _internalConnection = await _dataSource.GetInternalConnection(this, TimeSpan.FromSeconds(ConnectionTimeout), async, cancellationToken).ConfigureAwait(false);
         }
 
         #endregion

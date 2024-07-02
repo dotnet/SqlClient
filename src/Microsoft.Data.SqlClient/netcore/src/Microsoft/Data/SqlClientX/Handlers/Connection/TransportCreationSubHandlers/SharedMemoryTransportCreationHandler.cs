@@ -7,12 +7,12 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
+namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreationSubHandlers
 {
     /// <summary>
     /// Handler for connecting via shared memory.
     /// </summary>
-    internal class SharedMemoryTransportCreationHandler : IReturningHandler<ConnectionHandlerContext, Stream>
+    internal sealed class SharedMemoryTransportCreationHandler : IReturningHandler<ConnectionHandlerContext, Stream>
     {
         /// <inheritdoc />
         public ValueTask<Stream> Handle(ConnectionHandlerContext parameters, bool isAsync, CancellationToken ct)

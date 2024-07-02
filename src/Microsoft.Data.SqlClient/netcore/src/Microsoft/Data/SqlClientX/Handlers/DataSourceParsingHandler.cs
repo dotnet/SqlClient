@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// <inheritdoc />
         public override async ValueTask Handle(ConnectionHandlerContext request, bool isAsync, CancellationToken ct)
         {
-            ServerInfo serverInfo = new ServerInfo(request.ConnectionString);
+            ServerInfo serverInfo = request.ServerInfo;
             string fullServerName = serverInfo.ExtendedServerName;
             string localDBDataSource = GetLocalDBDataSource(fullServerName, out bool errorWithLocalDBProcessing);
 
