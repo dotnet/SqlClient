@@ -4,7 +4,6 @@
 
 using System;
 using System.Buffers;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +12,6 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClientX.Handlers.Connection.Login;
 using Microsoft.Data.SqlClientX.IO;
-using Microsoft.Identity.Client.Extensibility;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {
