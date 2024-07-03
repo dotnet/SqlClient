@@ -869,7 +869,7 @@ namespace Microsoft.Data.SqlClient
             {
                 byte token;
                 TdsOperationStatus debugResult = _stateObj.TryPeekByte(out token);
-                if ( debugResult != TdsOperationStatus.Done)
+                if (debugResult != TdsOperationStatus.Done)
                 {
                     return debugResult;
                 }
@@ -1094,7 +1094,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 cleanDataFailed = true;
                                 result = TryCleanPartialRead();
-                                if (result != TdsOperationStatus.Done)
+                                if (result == TdsOperationStatus.Done)
                                 {
                                     cleanDataFailed = false;
                                 }
@@ -4685,7 +4685,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
             else
             {
-                //Debug.Assert((_sharedState._columnDataBytesRemaining == 0 || _sharedState._columnDataBytesRemaining == -1) && _stateObj._longlen == 0, "Haven't read header yet, but column is partially read?");
+                Debug.Assert((_sharedState._columnDataBytesRemaining == 0 || _sharedState._columnDataBytesRemaining == -1) && _stateObj._longlen == 0, "Haven't read header yet, but column is partially read?");
             }
 #endif
 
@@ -5280,7 +5280,7 @@ namespace Microsoft.Data.SqlClient
                 context.totalBytesRead += bytesReadThisIteration;
                 Debug.Assert(context.totalBytesRead <= context.length, "Read more bytes than required");
 
-                if (result != TdsOperationStatus.Done)
+                if (result == TdsOperationStatus.Done)
                 {
                     return Task.FromResult<int>(context.totalBytesRead);
                 }
@@ -5540,7 +5540,7 @@ namespace Microsoft.Data.SqlClient
 
                     // if non-sequentialaccess then read entire row before returning
                     result = reader.TryReadColumn(reader._metaData.Length - 1, true);
-                    if (result != TdsOperationStatus.Done)
+                    if (result == TdsOperationStatus.Done)
                     {
                         // completed 
                         return ADP.TrueTask;

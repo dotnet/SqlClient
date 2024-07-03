@@ -3565,7 +3565,6 @@ namespace Microsoft.Data.SqlClient
             int sensitivityRank = (int)SensitivityRank.NOT_DEFINED;
             if (DataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT)
             {
-                
                 result = stateObj.TryReadInt32(out sensitivityRank);
                 if (result != TdsOperationStatus.Done)
                 {
@@ -3631,7 +3630,6 @@ namespace Microsoft.Data.SqlClient
                     int sensitivityRankProperty = (int)SensitivityRank.NOT_DEFINED;
                     if (DataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT)
                     {
-                        
                         result = stateObj.TryReadInt32(out sensitivityRankProperty);
                         if (result != TdsOperationStatus.Done)
                         {
