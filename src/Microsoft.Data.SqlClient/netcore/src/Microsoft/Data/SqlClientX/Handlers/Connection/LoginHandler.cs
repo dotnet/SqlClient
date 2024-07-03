@@ -7,6 +7,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
@@ -22,13 +23,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
     {
         // NIC address caching
         private static byte[] s_nicAddress;             // cache the NIC address from the registry
-        private GlobalTransactionsFeature _globalTransactionsFeature;
-        private DataClassificationFeature _dataClassificationFeature;
-        private Utf8Feature _utf8SupportFeature;
-        private SqlDnsCachingFeature _sqlDnsCachingFeature;
-        private SessionRecoveryFeature _sessionRecoveryFeature;
-        private FedAuthFeature _fedAuthFeature;
-        private TceFeature _tceFeature;
+        private readonly GlobalTransactionsFeature _globalTransactionsFeature;
+        private readonly DataClassificationFeature _dataClassificationFeature;
+        private readonly Utf8Feature _utf8SupportFeature;
+        private readonly SqlDnsCachingFeature _sqlDnsCachingFeature;
+        private readonly SessionRecoveryFeature _sessionRecoveryFeature;
+        private readonly FedAuthFeature _fedAuthFeature;
+        private readonly TceFeature _tceFeature;
 
         public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
 
@@ -49,7 +50,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             ValidateIncomingContext(context);
 
             LoginHandlerContext loginHandlerContext = new LoginHandlerContext(context);
-            await PrepareLoginDetails(loginHandlerContext, isAsync, ct).ConfigureAwait(false);
+            await SendLogin(loginHandlerContext, isAsync, ct).ConfigureAwait(false);
+
+            // TODO : Figure out what this means.
+            bool enlistInDistributedTransaction = !context.ConnectionString.Pooling; 
+            await CompleteLogin(loginHandlerContext, enlistInDistributedTransaction, isAsync, ct).ConfigureAwait(false);
 
             void ValidateIncomingContext(ConnectionHandlerContext context)
             {
@@ -75,7 +80,73 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             }
         }
 
-        private async ValueTask PrepareLoginDetails(LoginHandlerContext context, bool isAsync, CancellationToken ct)
+        private async ValueTask CompleteLogin(LoginHandlerContext context, bool enlistInDistributedTransaction, bool isAsync, CancellationToken ct)
+        {
+            bool enlist = context.ConnectionContext.ConnectionString.Enlist;
+            _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
+
+            if (RoutingInfo == null)
+            {
+                // ROR should not affect state of connection recovery
+                if (context.Features.FederatedAuthenticationRequested && !context.Features.FederatedAuthenticationAcknowledged)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {0}, Server did not acknowledge the federated authentication request", ObjectID);
+                    throw SQL.ParsingError(ParsingErrorState.FedAuthNotAcknowledged);
+                }
+                if (context.Features.FederatedAuthenticationInfoRequested && !context.Features.FederatedAuthenticationInfoReceived)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {0}, Server never sent the requested federated authentication info", ObjectID);
+                    throw SQL.ParsingError(ParsingErrorState.FedAuthInfoNotReceived);
+                }
+                if (!_sessionRecoveryAcknowledged)
+                {
+                    _currentSessionData = null;
+                    if (_recoverySessionData != null)
+                    {
+                        throw SQL.CR_NoCRAckAtReconnection(this);
+                    }
+                }
+                if (_currentSessionData != null && _recoverySessionData == null)
+                {
+                    _currentSessionData._initialDatabase = CurrentDatabase;
+                    _currentSessionData._initialCollation = _currentSessionData._collation;
+                    _currentSessionData._initialLanguage = _currentLanguage;
+                }
+                bool isEncrypted = _parser.EncryptionOptions == EncryptionOptions.ON;
+                if (_recoverySessionData != null)
+                {
+                    if (_recoverySessionData._encrypted != isEncrypted)
+                    {
+                        throw SQL.CR_EncryptionChanged(this);
+                    }
+                }
+                if (_currentSessionData != null)
+                {
+                    _currentSessionData._encrypted = isEncrypted;
+                }
+                _recoverySessionData = null;
+            }
+
+            Debug.Assert(SniContext.Snix_Login == Parser._physicalStateObj.SniContext, $"SniContext should be Snix_Login; actual Value: {Parser._physicalStateObj.SniContext}");
+            _parser._physicalStateObj.SniContext = SniContext.Snix_EnableMars;
+            _parser.EnableMars();
+
+            _fConnectionOpen = true; // mark connection as open
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ADV> Post-Login Phase: Server connection obtained.");
+
+            // for non-pooled connections, enlist in a distributed transaction
+            // if present - and user specified to enlist
+            if (enlistInDistributedTransaction && enlist && RoutingInfo == null)
+            {
+                _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
+                Transaction tx = ADP.GetCurrentTransaction();
+                Enlist(tx);
+            }
+
+            _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+        }
+
+        private async ValueTask SendLogin(LoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             SqlLogin login = new SqlLogin();
 
@@ -399,6 +470,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             return feLength;
         }
 
+
         private async ValueTask WriteLoginData(LoginHandlerContext context, 
                                      SessionData recoverySessionData,
                                      byte[] encryptedPassword,
@@ -627,7 +699,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     }
                 }
 
-                await ApplyFeatureExData(context, 
+                await SendFeatureExtensionData(context, 
                     requestedFeatures, 
                     recoverySessionData, 
                     fedAuthFeatureExtensionData, 
@@ -646,7 +718,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             }
         }
 
-        private async ValueTask ApplyFeatureExData(LoginHandlerContext context,
+        private async ValueTask SendFeatureExtensionData(LoginHandlerContext context,
                                         TdsEnums.FeatureExtension requestedFeatures,
                                         SessionData recoverySessionData,
                                         FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,

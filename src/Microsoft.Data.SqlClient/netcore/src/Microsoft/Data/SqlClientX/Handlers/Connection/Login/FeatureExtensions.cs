@@ -19,6 +19,17 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
         public bool FederatedAuthenticationRequested { get; internal set; }
         public TdsEnums.FeatureExtension RequestedFeatures { get; internal set; }
         public SessionData ReconnectData { get; internal set; }
+
+        /// <summary>
+        /// Whether FedAuth was acknowledged by the server.
+        /// </summary>
+        public bool FederatedAuthenticationAcknowledged { get; internal set; }
+
+        /// <summary>
+        /// Whether Fed Auth information was received from the server.
+        /// This is set while processing the Login acknowledgement.
+        /// </summary>
+        public bool FederatedAuthenticationInfoReceived { get; internal set; }
     }
 
     internal abstract class FeatureExtensionFeatures
