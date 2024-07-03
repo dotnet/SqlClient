@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         private async Task ReadPreloginResponse(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
             context.ConnectionContext.MarsCapable = context.ConnectionContext.ConnectionString.MARS; // Assign default value
-            context.ConnectionContext.FedAuthRequired = false;
+            context.ConnectionContext.FedAuthNegotiatedInPrelogin = false;
 
             TdsStream tdsStream = context.ConnectionContext.TdsStream;
 
@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                             && context.ConnectionContext.ConnectionString.Authentication != SqlAuthenticationMethod.NotSpecified)
                             || context.ConnectionContext.AccessTokenInBytes != null || context.ConnectionContext.AccessTokenCallback != null)
                         {
-                            context.ConnectionContext.FedAuthRequired = preloginPayload[payloadOffset] == 0x01;
+                            context.ConnectionContext.FedAuthNegotiatedInPrelogin = preloginPayload[payloadOffset] == 0x01;
                         }
                         break;
 

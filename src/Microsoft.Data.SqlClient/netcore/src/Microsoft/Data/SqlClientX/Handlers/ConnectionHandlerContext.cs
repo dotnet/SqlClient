@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// <summary>
         /// Indicates if fed auth needed for this connection.
         /// </summary>
-        public bool FedAuthRequired { get; internal set; }
+        public bool FedAuthNegotiatedInPrelogin { get; internal set; }
 
         /// <summary>
         /// The access token in bytes.
