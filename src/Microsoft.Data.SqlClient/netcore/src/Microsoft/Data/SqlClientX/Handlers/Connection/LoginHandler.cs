@@ -83,6 +83,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         private async ValueTask CompleteLogin(LoginHandlerContext context, bool enlistInDistributedTransaction, bool isAsync, CancellationToken ct)
         {
             bool enlist = context.ConnectionContext.ConnectionString.Enlist;
+
+            await ProcessLoginFromStream(context, isAsync, ct).ConfigureAwait(false);
+
             _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
 
             if (RoutingInfo == null)
@@ -144,6 +147,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             }
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+        }
+
+        private async ValueTask ProcessLoginFromStream(LoginHandlerContext context, bool isAsync, CancellationToken ct)
+        {
+            TdsStream tdsStream = context.ConnectionContext.TdsStream;
+
+            // Create a chain of handlers for login.
         }
 
         private async ValueTask SendLogin(LoginHandlerContext context, bool isAsync, CancellationToken ct)
