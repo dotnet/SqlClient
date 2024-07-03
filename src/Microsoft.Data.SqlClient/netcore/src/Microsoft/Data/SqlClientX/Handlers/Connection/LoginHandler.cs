@@ -33,6 +33,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
         public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
 
+        /// <summary>
+        /// Parameterless constructor for the login handler.
+        /// </summary>
         public LoginHandler()
         {
             // Setup the feature extensions.
@@ -47,114 +50,88 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
         public async ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            ValidateIncomingContext(context);
-
             LoginHandlerContext loginHandlerContext = new LoginHandlerContext(context);
             await SendLogin(loginHandlerContext, isAsync, ct).ConfigureAwait(false);
 
-            // TODO : Figure out what this means.
             bool enlistInDistributedTransaction = !context.ConnectionString.Pooling; 
-            await CompleteLogin(loginHandlerContext, enlistInDistributedTransaction, isAsync, ct).ConfigureAwait(false);
-
-            void ValidateIncomingContext(ConnectionHandlerContext context)
-            {
-                if (context.ConnectionString is null)
-                {
-                    throw new ArgumentNullException(nameof(context.ConnectionString));
-                }
-
-                if (context.DataSource is null)
-                {
-                    throw new ArgumentNullException(nameof(context.DataSource));
-                }
-
-                if (context.ConnectionStream is null)
-                {
-                    throw new ArgumentNullException(nameof(context.ConnectionStream));
-                }
-
-                if (context.Error is not null)
-                {
-                    return;
-                }
-            }
+            //await CompleteLogin(loginHandlerContext, enlistInDistributedTransaction, isAsync, ct).ConfigureAwait(false);
         }
 
-        private async ValueTask CompleteLogin(LoginHandlerContext context, bool enlistInDistributedTransaction, bool isAsync, CancellationToken ct)
-        {
-            bool enlist = context.ConnectionContext.ConnectionString.Enlist;
+        //private async ValueTask CompleteLogin(LoginHandlerContext context, bool enlistInDistributedTransaction, bool isAsync, CancellationToken ct)
+        //{
+        //    bool enlist = context.ConnectionContext.ConnectionString.Enlist;
 
-            await ProcessLoginFromStream(context, isAsync, ct).ConfigureAwait(false);
+        //    await ProcessLoginFromStream(context, isAsync, ct).ConfigureAwait(false);
 
-            _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
+        //    _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
 
-            if (RoutingInfo == null)
-            {
-                // ROR should not affect state of connection recovery
-                if (context.Features.FederatedAuthenticationRequested && !context.Features.FederatedAuthenticationAcknowledged)
-                {
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {0}, Server did not acknowledge the federated authentication request", ObjectID);
-                    throw SQL.ParsingError(ParsingErrorState.FedAuthNotAcknowledged);
-                }
-                if (context.Features.FederatedAuthenticationInfoRequested && !context.Features.FederatedAuthenticationInfoReceived)
-                {
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {0}, Server never sent the requested federated authentication info", ObjectID);
-                    throw SQL.ParsingError(ParsingErrorState.FedAuthInfoNotReceived);
-                }
-                if (!_sessionRecoveryAcknowledged)
-                {
-                    _currentSessionData = null;
-                    if (_recoverySessionData != null)
-                    {
-                        throw SQL.CR_NoCRAckAtReconnection(this);
-                    }
-                }
-                if (_currentSessionData != null && _recoverySessionData == null)
-                {
-                    _currentSessionData._initialDatabase = CurrentDatabase;
-                    _currentSessionData._initialCollation = _currentSessionData._collation;
-                    _currentSessionData._initialLanguage = _currentLanguage;
-                }
-                bool isEncrypted = _parser.EncryptionOptions == EncryptionOptions.ON;
-                if (_recoverySessionData != null)
-                {
-                    if (_recoverySessionData._encrypted != isEncrypted)
-                    {
-                        throw SQL.CR_EncryptionChanged(this);
-                    }
-                }
-                if (_currentSessionData != null)
-                {
-                    _currentSessionData._encrypted = isEncrypted;
-                }
-                _recoverySessionData = null;
-            }
+        //    if (RoutingInfo == null)
+        //    {
+        //        // ROR should not affect state of connection recovery
+        //        if (context.Features.FederatedAuthenticationRequested && !context.Features.FederatedAuthenticationAcknowledged)
+        //        {
+        //            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {0}, Server did not acknowledge the federated authentication request", ObjectID);
+        //            throw SQL.ParsingError(ParsingErrorState.FedAuthNotAcknowledged);
+        //        }
+        //        if (context.Features.FederatedAuthenticationInfoRequested && !context.Features.FederatedAuthenticationInfoReceived)
+        //        {
+        //            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ERR> {0}, Server never sent the requested federated authentication info", ObjectID);
+        //            throw SQL.ParsingError(ParsingErrorState.FedAuthInfoNotReceived);
+        //        }
+        //        if (!_sessionRecoveryAcknowledged)
+        //        {
+        //            _currentSessionData = null;
+        //            if (_recoverySessionData != null)
+        //            {
+        //                throw SQL.CR_NoCRAckAtReconnection(this);
+        //            }
+        //        }
+        //        if (_currentSessionData != null && _recoverySessionData == null)
+        //        {
+        //            _currentSessionData._initialDatabase = CurrentDatabase;
+        //            _currentSessionData._initialCollation = _currentSessionData._collation;
+        //            _currentSessionData._initialLanguage = _currentLanguage;
+        //        }
+        //        bool isEncrypted = _parser.EncryptionOptions == EncryptionOptions.ON;
+        //        if (_recoverySessionData != null)
+        //        {
+        //            if (_recoverySessionData._encrypted != isEncrypted)
+        //            {
+        //                throw SQL.CR_EncryptionChanged(this);
+        //            }
+        //        }
+        //        if (_currentSessionData != null)
+        //        {
+        //            _currentSessionData._encrypted = isEncrypted;
+        //        }
+        //        _recoverySessionData = null;
+        //    }
 
-            Debug.Assert(SniContext.Snix_Login == Parser._physicalStateObj.SniContext, $"SniContext should be Snix_Login; actual Value: {Parser._physicalStateObj.SniContext}");
-            _parser._physicalStateObj.SniContext = SniContext.Snix_EnableMars;
-            _parser.EnableMars();
+        //    Debug.Assert(SniContext.Snix_Login == Parser._physicalStateObj.SniContext, $"SniContext should be Snix_Login; actual Value: {Parser._physicalStateObj.SniContext}");
+        //    _parser._physicalStateObj.SniContext = SniContext.Snix_EnableMars;
+        //    _parser.EnableMars();
 
-            _fConnectionOpen = true; // mark connection as open
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ADV> Post-Login Phase: Server connection obtained.");
+        //    _fConnectionOpen = true; // mark connection as open
+        //    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.CompleteLogin|ADV> Post-Login Phase: Server connection obtained.");
 
-            // for non-pooled connections, enlist in a distributed transaction
-            // if present - and user specified to enlist
-            if (enlistInDistributedTransaction && enlist && RoutingInfo == null)
-            {
-                _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
-                Transaction tx = ADP.GetCurrentTransaction();
-                Enlist(tx);
-            }
+        //    // for non-pooled connections, enlist in a distributed transaction
+        //    // if present - and user specified to enlist
+        //    if (enlistInDistributedTransaction && enlist && RoutingInfo == null)
+        //    {
+        //        _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
+        //        Transaction tx = ADP.GetCurrentTransaction();
+        //        Enlist(tx);
+        //    }
 
-            _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
-        }
+        //    _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+        //}
 
-        private async ValueTask ProcessLoginFromStream(LoginHandlerContext context, bool isAsync, CancellationToken ct)
-        {
-            TdsStream tdsStream = context.ConnectionContext.TdsStream;
+        //private async ValueTask ProcessLoginFromStream(LoginHandlerContext context, bool isAsync, CancellationToken ct)
+        //{
+        //    TdsStream tdsStream = context.ConnectionContext.TdsStream;
 
-            // Create a chain of handlers for login.
-        }
+        //    // Create a chain of handlers for login.
+        //}
 
         private async ValueTask SendLogin(LoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
