@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             // Test 1 - B
-            badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { Password = string.Empty, IntegratedSecurity = false };
+            badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { Password = string.Empty, IntegratedSecurity = false, Authentication = SqlAuthenticationMethod.NotSpecified };
             using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
             {
                 string errorMessage = string.Format(CultureInfo.InvariantCulture, logonFailedErrorMessage, badBuilder.UserID);

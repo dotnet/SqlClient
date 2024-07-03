@@ -67,6 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string EnclaveAzureDatabaseConnString = null;
         public static bool ManagedIdentitySupported = true;
         public static string AADAccessToken = null;
+        public static bool SupportsSystemAssignedManagedIdentity = false;
         public static string AADSystemIdentityAccessToken = null;
         public static string AADUserIdentityAccessToken = null;
         public const string ApplicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
@@ -645,7 +646,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static string GetSystemIdentityAccessToken()
         {
-            if (true == ManagedIdentitySupported && null == AADSystemIdentityAccessToken && IsAADPasswordConnStrSetup())
+            if (ManagedIdentitySupported && SupportsSystemAssignedManagedIdentity && null == AADSystemIdentityAccessToken && IsAADPasswordConnStrSetup())
             {
                 AADSystemIdentityAccessToken = AADUtility.GetManagedIdentityToken().GetAwaiter().GetResult();
                 if (AADSystemIdentityAccessToken == null)
@@ -658,7 +659,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static string GetUserIdentityAccessToken()
         {
-            if (true == ManagedIdentitySupported && null == AADUserIdentityAccessToken && IsAADPasswordConnStrSetup())
+            if (ManagedIdentitySupported && null == AADUserIdentityAccessToken && IsAADPasswordConnStrSetup())
             {
                 // Pass User Assigned Managed Identity Client Id here.
                 AADUserIdentityAccessToken = AADUtility.GetManagedIdentityToken(UserManagedIdentityClientId).GetAwaiter().GetResult();
