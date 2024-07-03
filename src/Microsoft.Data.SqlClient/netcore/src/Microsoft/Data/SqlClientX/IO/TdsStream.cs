@@ -228,5 +228,9 @@ namespace Microsoft.Data.SqlClientX.IO
         {
             await _writeStream.WriteByteAsync(value, isAsync, ct).ConfigureAwait(false);
         }
+
+        /// <inheritdocs />
+        public ValueTask WriteStringAsync(string value, bool isAsync, CancellationToken ct) 
+            => _writeStream.WriteStringAsync(value, isAsync , ct);
     }
 }

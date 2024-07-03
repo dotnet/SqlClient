@@ -5,8 +5,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClientX.IO
@@ -214,7 +216,27 @@ namespace Microsoft.Data.SqlClientX.IO
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
             => WriteAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
 
-        
+        /// <inheritdoc />
+        public async ValueTask WriteStringAsync(string value, bool isAsync, CancellationToken ct)
+        {
+            int cBytes = ADP.CharSize * value.Length;
+            
+            // There is enough space in the buffer.
+            if (cBytes > _writeBuffer.Length - _writeBufferOffset)
+            {
+                Encoding.Unicode.GetBytes(value.AsSpan(), _writeBuffer.AsSpan(_writeBufferOffset, value.Length));
+                _writeBufferOffset += cBytes;
+            }
+            else
+            {
+                int spaceLeft = _writeBuffer.Length - _writeBufferOffset;
+                Encoding.Unicode.GetBytes(value.AsSpan(0, spaceLeft), _writeBuffer.AsSpan(_writeBufferOffset, spaceLeft));
+                await FlushPacketAsync(false, isAsync, ct).ConfigureAwait(false);
+                // Write the rest of the string.
+                Encoding.Unicode.GetBytes(value.AsSpan(spaceLeft), _writeBuffer.AsSpan(_writeBufferOffset, cBytes - spaceLeft));
+            }
+        }
+
         /// <summary>
         /// Queues the TDS cancellation token for the stream.
         /// </summary>
@@ -306,6 +328,9 @@ namespace Microsoft.Data.SqlClientX.IO
             _writeBuffer[4] = 0;
             _writeBuffer[5] = 0;
         }
+
+
+        
 
         #endregion
     }

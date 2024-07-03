@@ -54,8 +54,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     return;
                 }
             }
-
-            return ValueTask.CompletedTask;
         }
 
         private async ValueTask PrepareLoginDetails(LoginHandlerContext context, bool isAsync, CancellationToken ct)
@@ -133,7 +131,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             }
 
             TdsEnums.FeatureExtension requestedFeatures = TdsEnums.FeatureExtension.None;
-            TdsFeatures features = context.Features;
+            FeatureExtensions features = context.Features;
             if (context.ConnectionOptions.ConnectRetryCount > 0)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.SessionRecovery;
@@ -822,26 +820,36 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);        // reserved for chSSPI
 
                 // write variable length portion
-                await writer.WriteStringAsync(rec.hostName, isAsync, ct).ConfigureAwait(false);
+                await stream.WriteStringAsync(rec.hostName, isAsync, ct).ConfigureAwait(false);
 
                 // if we are using SSPI, do not send over username/password, since we will use SSPI instead
                 // same behavior as Luxor
                 if (!rec.useSSPI && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
                 {
-                    await writer.WriteStringAsync(userName, isAsync, ct).ConfigureAwait(false);
+                    await stream.WriteStringAsync(userName, isAsync, ct).ConfigureAwait(false);
 
                     if (rec.credential != null)
                     {
-                        _physicalStateObj.WriteSecureString(rec.credential.Password);
+                        // TODO: Implement secure string save.
+                        throw new NotImplementedException();
+                        // _physicalStateObj.WriteSecureString(rec.credential.Password);
                     }
                     else
                     {
-                        _physicalStateObj.WriteByteArray(encryptedPassword, encryptedPasswordLengthInBytes, 0);
+                        if (isAsync)
+                        { 
+                            await stream.WriteAsync(encryptedPassword.AsMemory(0, encryptedChangePasswordLengthInBytes), ct).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            stream.Write(encryptedPassword.AsSpan(0, encryptedPasswordLengthInBytes));
+                        }
                     }
                 }
 
-                await writer.WriteStringAsync(rec.applicationName, isAsync, ct).ConfigureAwait(false);
-                await writer.WriteStringAsync(rec.serverName, isAsync, ct).ConfigureAwait(false);
+                await stream.WriteStringAsync(rec.applicationName, isAsync, ct).ConfigureAwait(false);
+
+                await stream.WriteStringAsync(rec.serverName, isAsync, ct).ConfigureAwait(false);
 
                 // write ibFeatureExtLong
                 if (useFeatureExt)
@@ -854,9 +862,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     await writer.WriteIntAsync(featureExOffset, isAsync, ct).ConfigureAwait(false);
                 }
 
-                await writer.WriteStringAsync(clientInterfaceName, isAsync, ct).ConfigureAwait(false);
-                await writer.WriteStringAsync(rec.language, isAsync, ct).ConfigureAwait(false);
-                await writer.WriteStringAsync(rec.database, isAsync, ct).ConfigureAwait(false);
+                await stream.WriteStringAsync(clientInterfaceName, isAsync, ct).ConfigureAwait(false);
+                await stream.WriteStringAsync(rec.language, isAsync, ct).ConfigureAwait(false);
+                await stream.WriteStringAsync(rec.database, isAsync, ct).ConfigureAwait(false);
 
                 // send over SSPI data if we are using SSPI
                 if (rec.useSSPI)
@@ -870,7 +878,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                         stream.Write(outSSPIBuff.AsSpan(0, (int)outSSPILength));
                     }
                 }
-                await writer.WriteStringAsync(rec.attachDBFilename, isAsync, ct).ConfigureAwait(false);
+                await stream.WriteStringAsync(rec.attachDBFilename, isAsync, ct).ConfigureAwait(false);
                 if (!rec.useSSPI && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
                 {
                     if (rec.newSecurePassword != null)
@@ -988,7 +996,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// <summary>
         /// Features in the login request.
         /// </summary>
-        public TdsFeatures Features { get; internal set; } = new();
+        public FeatureExtensions Features { get; internal set; } = new();
 
         /// <summary>
         /// The login record.

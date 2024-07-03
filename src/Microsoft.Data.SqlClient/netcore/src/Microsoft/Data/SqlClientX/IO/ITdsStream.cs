@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClientX.IO
 {
@@ -24,5 +26,14 @@ namespace Microsoft.Data.SqlClientX.IO
         /// </summary>
         /// <param name="stream"></param>
         public void ReplaceUnderlyingStream(Stream stream);
+
+        /// <summary>
+        /// Writes the string to the stream. Uses Unicode encoding.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="isAsync"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        ValueTask WriteStringAsync(string value, bool isAsync, CancellationToken ct);
     }
 }
