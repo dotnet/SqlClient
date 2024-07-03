@@ -783,7 +783,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup), nameof(IsManagedIdentitySetup))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup), nameof(IsManagedIdentitySetup), nameof(SupportsSystemAssignedManagedIdentity))]
         public static void Azure_AccessToken_SystemManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };

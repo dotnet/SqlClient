@@ -109,6 +109,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static bool TcpConnectionStringDoesNotUseAadAuth
+        {
+            get
+            {
+                SqlConnectionStringBuilder builder = new (TCPConnectionString);
+                return builder.Authentication == SqlAuthenticationMethod.SqlPassword || builder.Authentication == SqlAuthenticationMethod.NotSpecified;
+            }
+        }
+
         public static string SQLServerVersion
         {
             get
