@@ -989,7 +989,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static bool CanRunSchemaTests()
+        {
+            return DataTestUtility.AreConnStringsSetup() &&
+                // Tests switch to master database, which is not guaranteed when using AAD auth
+                DataTestUtility.TcpConnectionStringDoesNotUseAadAuth;
+        }
+
+        [ConditionalFact(nameof(CanRunSchemaTests))]
         public void SelectAllTest()
         {
             // Test exceptions
