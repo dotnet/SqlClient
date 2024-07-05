@@ -919,6 +919,7 @@
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsBufferAlloc.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\IO\TdsReader.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriter.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ConnectionHandlerContext.cs" />

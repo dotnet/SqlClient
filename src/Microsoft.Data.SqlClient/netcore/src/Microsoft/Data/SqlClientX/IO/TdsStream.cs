@@ -70,6 +70,11 @@ namespace Microsoft.Data.SqlClientX.IO
         public TdsWriter TdsWriter { get; private set; }
 
         /// <summary>
+        /// Tds Reader instance that provides managed buffer for reading data from stream.
+        /// </summary>
+        public TdsReader TdsReader { get; private set; }
+
+        /// <summary>
         /// Constructor for instantiating the TdsStream
         /// </summary>
         /// <param name="writeStream">The stream for outgoing TDS packets</param>
@@ -79,6 +84,7 @@ namespace Microsoft.Data.SqlClientX.IO
             _writeStream = writeStream;
             _readStream = readStream;
             TdsWriter = new TdsWriter(this);
+            TdsReader = new TdsReader(this);
         }
 
         /// <summary>
@@ -220,6 +226,7 @@ namespace Microsoft.Data.SqlClientX.IO
                 _writeStream = null;
                 _readStream = null;
                 TdsWriter = null;
+                TdsReader = null;
             }
             base.Dispose(disposing);
         }
