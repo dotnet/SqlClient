@@ -120,10 +120,10 @@ namespace Microsoft.Data.SqlClient
             using CancellationTokenSource cts = new();
 
             // Use Connection timeout value to cancel token acquire request after certain period of time.
-            int timeout = parameters.ConnectionTimeout * 1000;
-            if (timeout > 0) // if ConnectionTimeout is 0 or the above overflows an int, no need to set CancelAfter
+            int timeout = parameters.ConnectionTimeout * 1000; // Convert to milliseconds
+            if (timeout > 0) // if ConnectionTimeout is 0 or the millis overflows an int, no need to set CancelAfter
             {
-                cts.CancelAfter(parameters.ConnectionTimeout * 1000); // Convert to milliseconds
+                cts.CancelAfter(timeout);
             }
 
             string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix, StringComparison.Ordinal) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
