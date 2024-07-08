@@ -151,6 +151,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
+            AADAccessToken = c.AADAccessToken;
             AADAuthorityURL = c.AADAuthorityURL;
             AADPasswordConnectionString = c.AADPasswordConnectionString;
             AADServicePrincipalId = c.AADServicePrincipalId;
@@ -226,6 +227,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
             }
+        }
+
+        public static SqlConnection GetSqlConnection(string connectionString)
+        {
+            var connection = new SqlConnection(connectionString);
+
+            if (Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(connectionString).DataSource))
+            {
+                connection.AccessToken = AADAccessToken;
+            }
+
+            return connection;
         }
 
         public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);

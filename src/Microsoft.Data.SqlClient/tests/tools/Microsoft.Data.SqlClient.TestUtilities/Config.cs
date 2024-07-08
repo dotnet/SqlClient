@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string TCPConnectionStringHGSVBS = null;
         public string TCPConnectionStringNoneVBS = null;
         public string TCPConnectionStringAASSGX = null;
+        public string AADAccessToken = null;
         public string AADAuthorityURL = null;
         public string AADPasswordConnectionString = null;
         public string AADServicePrincipalId = null;
