@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void OpenConnection(string connString)
         {
-            using SqlConnection connection = new(connString);
+            using SqlConnection connection = DataTestUtility.GetSqlConnection(connString);
             connection.Open();
             Assert.Equal(System.Data.ConnectionState.Open, connection.State);
             using SqlCommand command = new SqlCommand("SELECT @@SERVERNAME", connection);

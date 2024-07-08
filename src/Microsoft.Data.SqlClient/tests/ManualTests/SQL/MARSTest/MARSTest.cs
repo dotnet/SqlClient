@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task MARSAsyncBusyReaderTest()
         {
-            using SqlConnection con = new(_connStr);
+            using SqlConnection con = DataTestUtility.GetSqlConnection(_connStr);
             con.Open();
 
             using SqlCommand com1 = new("select * from Orders", con);
@@ -253,7 +253,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async void MARSAsyncExecuteNonQueryTest()
         {
-            using SqlConnection con = new(_connStr);
+            using SqlConnection con = DataTestUtility.GetSqlConnection(_connStr);
             con.Open();
 
             using SqlCommand com1 = new("select * from Orders", con);
@@ -300,7 +300,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async void MARSAsyncExecuteReaderTest1()
         {
-            using SqlConnection con = new(_connStr);
+            using SqlConnection con = DataTestUtility.GetSqlConnection(_connStr);
             con.Open();
 
             using SqlCommand com1 = new("select * from Orders", con);
@@ -414,7 +414,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async void MARSAsyncExecuteReaderTest2()
         {
-            using SqlConnection con = new(_connStr);
+            using SqlConnection con = DataTestUtility.GetSqlConnection(_connStr);
             con.Open();
 
             using SqlCommand com1 = new("select * from Orders", con);
@@ -465,7 +465,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async void MARSAsyncExecuteReaderTest3()
         {
-            using SqlConnection con = new(_connStr);
+            using SqlConnection con = DataTestUtility.GetSqlConnection(_connStr);
             con.Open();
 
             using SqlCommand com1 = new("select * from Orders", con);
@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async void MARSAsyncExecuteReaderTest4()
         {
-            using SqlConnection con = new(_connStr);
+            using SqlConnection con = DataTestUtility.GetSqlConnection(_connStr);
             con.Open();
 
             using SqlCommand com1 = new("select * from Orders where OrderID = 10248", con);
@@ -624,7 +624,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.ConnectTimeout = 5;
             string connectionString = builder.ConnectionString;
 
-            using SqlConnection con = new(connectionString);
+            using SqlConnection con = DataTestUtility.GetSqlConnection(connectionString);
             await con.OpenAsync();
 
             SqlCommand productsCommand = new("SELECT SupplierID FROM dbo.Products ORDER BY UnitsInStock", con);

@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Timeout = TransactionManager.DefaultTimeout
                 }, TransactionScopeAsyncFlowOption.Enabled);
 
-                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+                using SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
                 connection.Open();
                 System.Transactions.Transaction.Current.EnlistDurable(EnlistmentForPrepare.s_id, new EnlistmentForPrepare(), EnlistmentOptions.None);
                 txScope.Complete();

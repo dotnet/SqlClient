@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             InternalConnectionWrapper wrapper = null;
 
-            using (SqlConnection connection = new(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 wrapper = new InternalConnectionWrapper(connection);
@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 wrapper.KillConnection();
             }
 
-            using (SqlConnection connection2 = new(connectionString))
+            using (SqlConnection connection2 = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection2.Open();
                 Assert.False(wrapper.IsInternalConnectionOf(connection2), "New connection has internal connection that was just killed");

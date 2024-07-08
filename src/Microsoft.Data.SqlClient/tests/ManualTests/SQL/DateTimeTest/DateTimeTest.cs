@@ -878,7 +878,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                using SqlConnection connDst = new(DataTestUtility.TCPConnectionString);
+                using SqlConnection connDst = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
                 connDst.Open();
                 using SqlCommand cmd2 = connDst.CreateCommand();
                 cmd2.CommandText = prepTableDst3;

@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             byte[] outputData = null;
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("data");
 
-            using (SqlConnection connection = new(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 await connection.OpenAsync();
 

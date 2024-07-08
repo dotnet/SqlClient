@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (proceed)
             {
-                using SqlConnection connection = new(builder.ConnectionString);
+                using SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
                 connection.Open();
                 connection.Close();
 
@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     IPAddress[] addresses = Dns.GetHostAddresses(hostname);
                     builder.DataSource = builder.DataSource.Replace(hostname, addresses[0].ToString());
                     builder.TrustServerCertificate = true;
-                    using SqlConnection connection2 = new(builder.ConnectionString);
+                    using SqlConnection connection2 = DataTestUtility.GetSqlConnection(builder.ConnectionString);
                     connection2.Open();
                     connection2.Close();
                 }
@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName))
             {
                 builder.DataSource = hostname + "\\" + instanceName;
-                using SqlConnection connection = new(builder.ConnectionString);
+                using SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
                 connection.Open();
             }
 
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 builder.DataSource = hostname + "\\" + instanceName;
 
-                using SqlConnection connection = new(builder.ConnectionString);
+                using SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
                 SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
                 Assert.Contains("Error Locating Server/Instance Specified", ex.Message);
             }
@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.False(string.IsNullOrEmpty(hostname), "Hostname must be included in the data source.");
             Assert.False(string.IsNullOrEmpty(instanceName), "Instance name must be included in the data source.");
 
-            using (SqlConnection connection = new(builder.ConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString))
             {
                 connection.Open();
 

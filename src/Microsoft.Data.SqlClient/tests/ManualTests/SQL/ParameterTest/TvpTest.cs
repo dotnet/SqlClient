@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestConnectionIsSafeToReuse()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
 
             // Bad Scenario - exception expected.
             try

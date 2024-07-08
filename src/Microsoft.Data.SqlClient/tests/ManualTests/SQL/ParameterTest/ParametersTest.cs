@@ -256,7 +256,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Rows = { { x, y } }
             };
 
-            using SqlConnection connection = new(builder.ConnectionString);
+            using SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Table");
             string procName = DataTestUtility.GetUniqueNameForSqlServer("Proc");
             string typeName = DataTestUtility.GetUniqueName("Type");
@@ -337,7 +337,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 record2,
             };
             
-            using SqlConnection connection = new(builder.ConnectionString);
+            using SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
             string procName = DataTestUtility.GetUniqueNameForSqlServer("Proc");
             string typeName = DataTestUtility.GetUniqueName("Type");
             try
@@ -400,7 +400,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tableTypeName = "[dbo]." + DataTestUtility.GetUniqueNameForSqlServer("UDTTTestDateOnlyTVP");
             string spName = DataTestUtility.GetUniqueNameForSqlServer("spTestDateOnlyTVP");
-            SqlConnection connection = new(s_connString);
+            SqlConnection connection = DataTestUtility.GetSqlConnection(s_connString);
             try
             {
                 connection.Open();
@@ -465,7 +465,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("CAST(-0.0000000000000000000000000001 as decimal(38, 38))", "-0.0000000000000000000000000001")]
         public static void SqlDecimalConvertToDecimal_TestInRange(string sqlDecimalValue, string expectedDecimalValue)
         {
-            using SqlConnection cnn = new(s_connString);
+            using SqlConnection cnn = DataTestUtility.GetSqlConnection(s_connString);
             cnn.Open();
             using SqlCommand cmd = new($"SELECT {sqlDecimalValue} val");
             cmd.Connection = cnn;
@@ -485,7 +485,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("CAST(0.123456789012345678901234567890 as decimal(38, 36))")]
         public static void SqlDecimalConvertToDecimal_TestOutOfRange(string sqlDecimalValue)
         {
-            using SqlConnection cnn = new(s_connString);
+            using SqlConnection cnn = DataTestUtility.GetSqlConnection(s_connString);
             cnn.Open();
             using SqlCommand cmd = new($"SELECT {sqlDecimalValue} val");
             cmd.Connection = cnn;
@@ -613,7 +613,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static SqlConnection InitialDatabaseUDTT(string cnnString, string tableName, string tableTypeName, string spName)
         {
-            SqlConnection connection = new(cnnString);
+            SqlConnection connection = DataTestUtility.GetSqlConnection(cnnString);
             connection.Open();
             using (SqlCommand cmd = connection.CreateCommand())
             {
@@ -629,7 +629,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static SqlConnection InitialDatabaseTable(string cnnString, string tableName)
         {
-            SqlConnection connection = new(cnnString);
+            SqlConnection connection = DataTestUtility.GetSqlConnection(cnnString);
             connection.Open();
             using (SqlCommand cmd = connection.CreateCommand())
             {

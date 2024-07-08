@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (TransactionScope transScope = new())
             {
                 using SqlConnection connection1 = new(connectionString);
-                using SqlConnection connection2 = new(connectionString);
+                using SqlConnection connection2 = DataTestUtility.GetSqlConnection(connectionString);
                 connection1.Open();
                 connection2.Open();
                 connectionPool = new ConnectionPoolWrapper(connection1);
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (TransactionScope transScope = new())
             {
                 using SqlConnection connection1 = new(connectionString);
-                using SqlConnection connection2 = new(connectionString);
+                using SqlConnection connection2 = DataTestUtility.GetSqlConnection(connectionString);
                 connection1.Open();
                 connection2.Open();
                 InternalConnectionWrapper internalConnection1 = new(connection1);

@@ -2184,7 +2184,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             builder.AttestationProtocol = SqlConnectionAttestationProtocol.None;
             builder.EnclaveAttestationUrl = string.Empty;
 
-            using (SqlConnection connection = new(builder.ConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString))
             {
                 InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => connection.Open());
                 string expectedErrorMessage = string.Format(
@@ -2205,7 +2205,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SQLSetupStrategyAzureKeyVault.RegisterGlobalProviders(sqlColumnEncryptionAzureKeyVaultProvider);
             }
 
-            using (SqlConnection connection = new(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
 
@@ -2237,7 +2237,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 Assert.Equal(_providerNotFoundMessage, ex.Message);
             }
 
-            using (SqlConnection connection = new(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
 
@@ -2260,7 +2260,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SQLSetupStrategyAzureKeyVault.RegisterGlobalProviders(sqlColumnEncryptionAzureKeyVaultProvider);
             }
 
-            using (SqlConnection connection = new(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 using (SqlCommand command = CreateCommandThatRequiresCustomKeyStoreProvider(connection))
@@ -2312,7 +2312,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             };
 
-            using (SqlConnection connection = new(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);
@@ -2321,7 +2321,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 Assert.Equal(3, reader.VisibleFieldCount);
             }
 
-            using (SqlConnection connection = new(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);

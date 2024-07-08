@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
             var dt = new DataTable();
             using SqlCommand command = connection.CreateCommand();
@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MultiQuerySchema()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
             using SqlCommand command = connection.CreateCommand();
             // Use multiple queries
@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Pooling = false
             };
 
-            using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection con = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             using SqlCommand cmd = con.CreateCommand();
             try
             {
@@ -223,7 +223,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Type[] types = null;
             string[] names = null;
 
-            using (SqlConnection connection = new(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
 
@@ -272,7 +272,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.False);
                 try
                 {
-                    using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                    using SqlConnection con = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
                     con.Open();
                     using SqlCommand command = con.CreateCommand();
                     command.CommandText = "select cast(null as rowversion) rv";
@@ -309,7 +309,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.True);
                 try
                 {
-                    using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                    using SqlConnection con = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
                     con.Open();
                     using SqlCommand command = con.CreateCommand();
                     command.CommandText = "select cast(null as rowversion) rv";

@@ -142,7 +142,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 builder.HostNameInCertificate = connectionTestParameters.HostNameInCertificate;
             }
 
-            using SqlConnection connection = new(builder.ConnectionString);
+            using SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
             try
             {
                 connection.Open();

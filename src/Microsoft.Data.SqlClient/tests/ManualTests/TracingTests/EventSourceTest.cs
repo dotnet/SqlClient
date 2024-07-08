@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void EventSourceTestAll()
         {
             using DataTestUtility.MDSEventListener TraceListener = new();
-            using (SqlConnection connection = new(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
                 using SqlCommand command = new("SELECT @@VERSION", connection);

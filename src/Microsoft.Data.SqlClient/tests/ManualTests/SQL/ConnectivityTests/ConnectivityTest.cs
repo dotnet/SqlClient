@@ -222,7 +222,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 double totalTime = 0;
                 for (int i = 0; i < _numOfTry; ++i)
                 {
-                    using (SqlConnection con = new(_connectionString))
+                    using (SqlConnection con = DataTestUtility.GetSqlConnection(_connectionString))
                     {
                         sw.Start();
                         try

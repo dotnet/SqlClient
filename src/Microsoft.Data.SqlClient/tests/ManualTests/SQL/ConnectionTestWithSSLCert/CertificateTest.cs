@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 HostNameInCertificate = LocalHost
                 //HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName
             };
-            using SqlConnection connection = new(builder.ConnectionString);
+            using SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
             connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
 
@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.DataSource = IPV6 + SlashInstanceName;
             builder.HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName;
             builder.Encrypt = SqlConnectionEncryptOption.Mandatory;
-            using SqlConnection connection2 = new(builder.ConnectionString);
+            using SqlConnection connection2 = DataTestUtility.GetSqlConnection(builder.ConnectionString);
             connection2.Open();
             Assert.Equal(ConnectionState.Open, connection2.State);
 
@@ -175,7 +175,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
                 HostNameInCertificate = "BadHostName"
             };
-            using SqlConnection connection = new(builder.ConnectionString);
+            using SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
             SqlException exception = Assert.Throws<SqlException>(() => connection.Open());
             Assert.StartsWith("A connection was successfully established with the server, but then an error occurred during the pre-login handshake. (provider: TCP Provider, error: 35 - An internal exception was caught)", exception.Message);
             Assert.Equal(20, exception.Class);

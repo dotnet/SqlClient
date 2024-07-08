@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 string tempTable = SetupTable(connString);
                 int nRow = 0;
                 byte[] retrievedValue;
-                using SqlConnection connection = new(connString);
+                using SqlConnection connection = DataTestUtility.GetSqlConnection(connString);
                 connection.Open();
                 SqlCommand command = new($"SELECT Photo.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT(),EmployeeId FROM {tempTable} ORDER BY EmployeeId", connection);
                 try
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Array.Reverse(insertedValue);
                 try
                 {
-                    using SqlConnection connection = new(connString);
+                    using SqlConnection connection = DataTestUtility.GetSqlConnection(connString);
                     connection.Open();
                     SqlCommand command = new($"SELECT TOP(1) Photo.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT(),EmployeeId FROM {tempTable} ORDER BY EmployeeId", connection);
 
@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 try
                 {
-                    using SqlConnection connection = new(connString);
+                    using SqlConnection connection = DataTestUtility.GetSqlConnection(connString);
                     connection.Open();
                     SqlCommand command = new($"SELECT TOP(1) Photo.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT(),EmployeeId FROM {tempTable} ORDER BY EmployeeId", connection);
 
@@ -232,7 +232,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                          LOG ON
                                           (NAME = PhotoLibrary_log,
                                            FILENAME = '{fileStreamDir}PhotoLibrary_log.ldf')";
-                    using SqlConnection con = new(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { InitialCatalog = "master", IntegratedSecurity = true }.ConnectionString);
+                    using SqlConnection con = DataTestUtility.GetSqlConnection(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { InitialCatalog = "master", IntegratedSecurity = true }.ConnectionString);
                     con.Open();
                     using SqlCommand cmd = con.CreateCommand();
                     cmd.CommandText = createDBQuery;
@@ -252,7 +252,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                using SqlConnection con = new(new SqlConnectionStringBuilder(connString) { InitialCatalog = "master" }.ConnectionString);
+                using SqlConnection con = DataTestUtility.GetSqlConnection(new SqlConnectionStringBuilder(connString) { InitialCatalog = "master" }.ConnectionString);
                 con.Open();
                 DataTestUtility.DropDatabase(con, s_fileStreamDBName);
                 s_fileStreamDBName = null;
