@@ -20,6 +20,13 @@
     <NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn>
     <RootNamespace />
   </PropertyGroup>
+  <!--Generating Strong Name in official pipelines -->
+  <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official AND $(SigningKeyPath) != ''">
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>true</DelaySign>
+    <KeyFile>$(SigningKeyPath)</KeyFile>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
