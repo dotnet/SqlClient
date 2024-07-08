@@ -211,7 +211,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             else
             {
-                // Strip the password in connection string as Authentication=Active Directory Managed Identity can not be used with Password
+                // Strip the password in connection string as Authentication=Active Directory Managed Identity can not be used with a Password
                 string[] removeKeys = { "Password", "PWD" };
                 string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys);
                 builder = new SqlConnectionStringBuilder(connStr);
