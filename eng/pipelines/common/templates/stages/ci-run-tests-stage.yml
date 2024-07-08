@@ -43,7 +43,7 @@ stages:
         - ${{ each platform in config.value.buildPlatforms }}:
           - ${{ each testSet in config.value.TestSets }}:
             - ${{ if contains(targetFramework, 'net4') }}: # .NET Framework
-              - template: ../jobs/ci-run-tests-job.yml
+              - template: ../jobs/ci-run-tests-job.yml@self
                 parameters:
                   debug: ${{ parameters.debug }}
                   buildType: ${{ parameters.buildType }}
@@ -66,7 +66,7 @@ stages:
                         enableX86Test: true
             - ${{ else }}: # .NET
               - ${{ each useManagedSNI in config.value.useManagedSNI }}:
-                - template: ../jobs/ci-run-tests-job.yml
+                - template: ../jobs/ci-run-tests-job.yml@self
                   parameters:
                     debug: ${{ parameters.debug }}
                     buildType: ${{ parameters.buildType }}

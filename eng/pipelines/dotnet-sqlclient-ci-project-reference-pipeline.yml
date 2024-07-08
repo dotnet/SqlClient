@@ -74,7 +74,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
     - Package
 
 extends:
-  template: dotnet-sqlclient-ci-core.yml
+  template: dotnet-sqlclient-ci-core.yml@self
   parameters:
     debug: ${{ parameters.debug }}
     targetFrameworks: ${{ parameters.targetFrameworks }}

@@ -72,7 +72,7 @@ parameters:
 steps:
 - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
   # windows only steps
-  - template: configure-sql-server-win-step.yml
+  - template: configure-sql-server-win-step.yml@self
     parameters:
       instanceName: ${{parameters.instanceName}}
       user: ${{parameters.user}}
@@ -90,7 +90,7 @@ steps:
 
 - ${{ elseif eq(parameters.operatingSystem, 'Linux') }}:
   # Linux only steps
-  - template: configure-sql-server-linux-step.yml
+  - template: configure-sql-server-linux-step.yml@self
     parameters:
       password: ${{parameters.password}}
       targetNetCoreVersion: ${{parameters.targetNetCoreVersion}}

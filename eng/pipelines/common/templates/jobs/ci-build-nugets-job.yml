@@ -38,13 +38,13 @@ jobs:
     - msbuild
 
   variables:
-    - template: ../../../libraries/ci-build-variables.yml
+    - template: ../../../libraries/ci-build-variables.yml@self
 
   steps:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
-  - template: ../steps/ci-project-build-step.yml
+  - template: ../steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}
       configuration: ${{ parameters.configuration }}

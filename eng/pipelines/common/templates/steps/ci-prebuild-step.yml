@@ -34,10 +34,10 @@ steps:
       patterns: '**/*.nupkg'
       targetPath: $(Pipeline.Workspace)/${{parameters.artifactName }}
 
-  - template: update-nuget-config-local-feed-step.yml
+  - template: update-nuget-config-local-feed-step.yml@self
     parameters:
       downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.artifactName }}
       debug: ${{ parameters.debug }}
 
 - ${{ else }}: # project
-  - template: ci-project-build-step.yml
+  - template: ci-project-build-step.yml@self
