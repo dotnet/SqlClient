@@ -229,7 +229,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static SqlConnection GetSqlConnection(string connectionString)
+        public static SqlConnection GetSqlConnection(string connectionString = "")
         {
             var connection = new SqlConnection(connectionString);
 
