@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (TransactionScope txScope = new TransactionScope(TransactionScopeOption.Required, TimeSpan.MaxValue))
             {
-                using (SqlConnection connection = new SqlConnection(ConnectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(ConnectionString))
                 {
                     connection.Open();
                     using (SqlCommand command = connection.CreateCommand())
@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (TransactionScope txScope = new TransactionScope(TransactionScopeOption.Required, TimeSpan.MaxValue))
             {
-                using (SqlConnection connection = new SqlConnection(ConnectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(ConnectionString))
                 {
                     connection.Open();
                     using (SqlCommand command = connection.CreateCommand())
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.Enlist = false;
             ConnectionString = builder.ConnectionString;
 
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(ConnectionString))
             {
                 connection.Open();
                 using (TransactionScope txScope = new TransactionScope())
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.Enlist = false;
             ConnectionString = builder.ConnectionString;
 
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(ConnectionString))
             {
                 connection.Open();
                 using (TransactionScope txScope = new TransactionScope())
@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.Enlist = false;
             ConnectionString = builder.ConnectionString;
 
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(ConnectionString))
             {
                 connection.Open();
                 using (TransactionScope txScope = new TransactionScope())

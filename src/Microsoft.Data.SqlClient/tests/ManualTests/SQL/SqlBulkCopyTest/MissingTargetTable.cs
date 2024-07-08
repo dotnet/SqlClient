@@ -12,12 +12,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         public static void Test(string srcConstr, string dstConstr, string targetTable)
         {
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
 
-                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(srcConstr))
                 using (SqlCommand srcCmd = new SqlCommand("select top 5 EmployeeID, LastName, FirstName from employees", srcConn))
                 {
                     srcConn.Open();

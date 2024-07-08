@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTParams_Early()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();
@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTParams_Binary()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = new SqlCommand("vicinity", conn))
             {
                 conn.Open();
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string spInsertCustomer = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCustomer");
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2");
 
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTParams_Invalid()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = new SqlCommand("vicinity", conn))
             {
                 conn.Open();
@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string spInsertCustomer = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCustomer");
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2_Customer");
 
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();
@@ -191,7 +191,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string spInsertCustomer = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCustomer");
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2_Customer");
 
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();
@@ -235,7 +235,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string spInsertCity = DataTestUtility.GetUniqueNameForSqlServer("spUdtTest2_InsertCity");
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("UdtTest2");
 
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             {
                 conn.Open();
 
@@ -294,7 +294,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDTFields_WrongType()
         {
-            using (SqlConnection cn = new SqlConnection(_connStr))
+            using (SqlConnection cn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = new SqlCommand("select name,location from cities order by name", cn))
             {
                 cn.Open();
@@ -324,7 +324,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void UDT_DataSetFill()
         {
-            using (SqlConnection cn = new SqlConnection(_connStr))
+            using (SqlConnection cn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = new SqlCommand("select * from cities", cn))
             using (SqlDataAdapter adapter = new SqlDataAdapter("select * from cities", cn))
             {
@@ -348,7 +348,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Reader_PointEarly()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = new SqlCommand("select name, location from cities", conn))
             {
                 conn.Open();
@@ -382,7 +382,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Reader_LineEarly()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = new SqlCommand("select * from lines", conn))
             {
                 conn.Open();
@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Reader_PointLate()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = new SqlCommand("select name, location from cities", conn))
             {
                 conn.Open();
@@ -475,7 +475,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Reader_CircleLate()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = new SqlCommand("select * from circles", conn))
             {
                 conn.Open();
@@ -507,7 +507,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestSchemaTable()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             using (SqlCommand cmd = new SqlCommand("select * from lines", conn))
             {
                 conn.Open();
@@ -607,7 +607,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             table.Columns.Add();
             table.Rows.Add("john", addr);
 
-            using (SqlConnection connection = new SqlConnection(_connStr))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(_connStr))
             {
                 connection.Open();
                 using (SqlTransaction transaction = connection.BeginTransaction())
@@ -659,7 +659,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             table.Columns.Add();
             table.Rows.Add("john", addr);
 
-            using (SqlConnection connection = new SqlConnection(_connStr))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(_connStr))
             {
                 connection.Open();
                 using (SqlTransaction transaction = connection.BeginTransaction())

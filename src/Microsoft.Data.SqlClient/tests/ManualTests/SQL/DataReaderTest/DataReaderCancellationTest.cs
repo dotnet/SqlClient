@@ -27,7 +27,7 @@ select *
 from ThousandRows as A, ThousandRows as B, ThousandRows as C;";
 
             using (var source = new CancellationTokenSource())
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 await connection.OpenAsync(source.Token);
 
@@ -63,7 +63,7 @@ select *
 from ThousandRows as A, ThousandRows as B, ThousandRows as C;";
 
             using (var source = new CancellationTokenSource())
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 await connection.OpenAsync(source.Token);
 

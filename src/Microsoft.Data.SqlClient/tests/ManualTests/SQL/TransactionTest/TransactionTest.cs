@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (System.Transactions.TransactionScope scope = new System.Transactions.TransactionScope())
             {
-                using (SqlConnection sqlConnection = new SqlConnection(connString))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connString))
                 {
                     SqlCommand cmd = new SqlCommand("SELECT 1", sqlConnection);
                     sqlConnection.Open();
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     scope.Dispose();
                 }
 
-                using (SqlConnection sqlConnection = new SqlConnection(connString))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connString))
                 using (SqlCommand cmd = new SqlCommand("SELECT 2", sqlConnection))
                 {
                     sqlConnection.Open();
@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
 
-                using (SqlConnection sqlConnection = new SqlConnection(connString))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connString))
                 using (SqlCommand cmd = new SqlCommand("SELECT 3", sqlConnection))
                 {
                     sqlConnection.Open();
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 if (DataTestUtility.IsNotAzureSynapse())
                 {
-                    using (SqlConnection sqlConnection = new SqlConnection(connString))
+                    using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connString))
                     using (SqlCommand cmd = new SqlCommand("SELECT TOP(1) 4 Clm0 FROM sysobjects FOR XML AUTO", sqlConnection))
                     {
                         sqlConnection.Open();
@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             private void PrepareTables()
             {
-                using (var conn = new SqlConnection(_connectionString))
+                using (var conn = DataTestUtility.GetSqlConnection(_connectionString))
                 {
                     conn.Open();
                     SqlCommand command = new SqlCommand(string.Format("CREATE TABLE [{0}]([CustomerID] [nchar](5) NOT NULL PRIMARY KEY, [CompanyName] [nvarchar](40) NOT NULL, [ContactName] [nvarchar](30) NULL)", _tempTableName1), conn);
@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             private void DropTempTables()
             {
-                using (var conn = new SqlConnection(_connectionString))
+                using (var conn = DataTestUtility.GetSqlConnection(_connectionString))
                 {
                     SqlCommand command = new SqlCommand(
                             string.Format("DROP TABLE [{0}]; DROP TABLE [{1}]", _tempTableName1, _tempTableName2), conn);
@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             public void ResetTables()
             {
-                using (SqlConnection connection = new SqlConnection(_connectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(_connectionString))
                 {
                     connection.Open();
                     using (SqlCommand command = new SqlCommand(string.Format("TRUNCATE TABLE [{0}]; TRUNCATE TABLE [{1}]", _tempTableName1, _tempTableName2), connection))
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             private void CommitTransactionTest()
             {
-                using (SqlConnection connection = new SqlConnection(_connectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(_connectionString))
                 {
                     SqlCommand command = new SqlCommand("select * from " + _tempTableName1 + " where CustomerID='ZYXWV'", connection);
 
@@ -231,7 +231,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             private void RollbackTransactionTest()
             {
-                using (SqlConnection connection = new SqlConnection(_connectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(_connectionString))
                 {
                     SqlCommand command = new SqlCommand("select * from " + _tempTableName1 + " where CustomerID='ZYXWV'",
                         connection);
@@ -271,7 +271,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             private void ScopedTransactionTest()
             {
-                using (SqlConnection connection = new SqlConnection(_connectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(_connectionString))
                 {
                     SqlCommand command = new SqlCommand("select * from " + _tempTableName1 + " where CustomerID='ZYXWV'",
                         connection);
@@ -323,7 +323,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             private void ExceptionTest()
             {
-                using (SqlConnection connection = new SqlConnection(_connectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(_connectionString))
                 {
                     connection.Open();
 
@@ -341,7 +341,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
                     {
-                        using (SqlConnection con1 = new SqlConnection(_connectionString))
+                        using (SqlConnection con1 = DataTestUtility.GetSqlConnection(_connectionString))
                         {
                             con1.Open();
 
@@ -385,7 +385,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             private void ReadUncommitedIsolationLevel_ShouldReturnUncommitedData()
             {
-                using (SqlConnection connection1 = new SqlConnection(_connectionString))
+                using (SqlConnection connection1 = DataTestUtility.GetSqlConnection(_connectionString))
                 {
                     connection1.Open();
                     SqlTransaction tx1 = connection1.BeginTransaction();
@@ -397,7 +397,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         command1.CommandText = "INSERT INTO " + _tempTableName1 + " VALUES ( 'ZYXWV', 'XYZ', 'John' );";
                         command1.ExecuteNonQuery();
                     }
-                    using (SqlConnection connection2 = new SqlConnection(_connectionString))
+                    using (SqlConnection connection2 = DataTestUtility.GetSqlConnection(_connectionString))
                     {
                         SqlCommand command2 =
                             new SqlCommand("select * from " + _tempTableName1 + " where CustomerID='ZYXWV'",
@@ -425,7 +425,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             private void ReadCommitedIsolationLevel_ShouldReceiveTimeoutExceptionBecauseItWaitsForUncommitedTransaction()
             {
-                using (SqlConnection connection1 = new SqlConnection(_connectionString))
+                using (SqlConnection connection1 = DataTestUtility.GetSqlConnection(_connectionString))
                 {
                     connection1.Open();
                     SqlTransaction tx1 = connection1.BeginTransaction();
@@ -437,7 +437,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         command1.ExecuteNonQuery();
                     }
 
-                    using (SqlConnection connection2 = new SqlConnection(_connectionString))
+                    using (SqlConnection connection2 = DataTestUtility.GetSqlConnection(_connectionString))
                     {
                         SqlCommand command2 =
                             new SqlCommand("select * from " + _tempTableName1 + " where CustomerID='ZYXWV'",

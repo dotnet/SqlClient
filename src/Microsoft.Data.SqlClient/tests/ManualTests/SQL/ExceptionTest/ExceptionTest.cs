@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 };
 
             SqlInfoMessageEventHandler handler = new SqlInfoMessageEventHandler(warningCallback);
-            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = false }).ConnectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = false }).ConnectionString))
             {
                 sqlConnection.InfoMessage += handler;
                 sqlConnection.Open();
@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (DataTestUtility.TCPConnectionString == null || DataTestUtility.IsAzureSynapse)
                 return false;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 };
 
             SqlInfoMessageEventHandler handler = new SqlInfoMessageEventHandler(warningCallback);
-            SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             sqlConnection.InfoMessage += handler;
             sqlConnection.Open();
             foreach (string orderClause in new string[] { "", " order by FirstName" })
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Test 1 - A
             SqlConnectionStringBuilder badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
-            using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
+            using (var sqlConnection = DataTestUtility.GetSqlConnection(badBuilder.ConnectionString))
             {
                 using (SqlCommand command = sqlConnection.CreateCommand())
                 {
@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Test 1 - B
             badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { Password = string.Empty, IntegratedSecurity = false, Authentication = SqlAuthenticationMethod.NotSpecified };
-            using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
+            using (var sqlConnection = DataTestUtility.GetSqlConnection(badBuilder.ConnectionString))
             {
                 string errorMessage = string.Format(CultureInfo.InvariantCulture, logonFailedErrorMessage, badBuilder.UserID);
                 VerifyConnectionFailure<SqlException>(() => sqlConnection.Open(), errorMessage, (ex) => VerifyException(ex, 1, 18456, 1, 14));
@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
 
             SqlConnectionStringBuilder badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
-            using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
+            using (var sqlConnection = DataTestUtility.GetSqlConnection(badBuilder.ConnectionString))
             {
                 // Test 1
                 VerifyConnectionFailure<SqlException>(() => sqlConnection.Open(), sqlsvrBadConn, VerifyException);
@@ -254,19 +254,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connectionStringWithEnclave = connectionStringWithAttestationURL + ";Attestation Protocol = HGS;";
             string connectionStringWithNoneAttestationProtocol = DataTestUtility.TCPConnectionString + ";Attestation Protocol = None;";
 
-            InvalidOperationException e1 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithAttestationURL).Open());
+            InvalidOperationException e1 = Assert.Throws<InvalidOperationException>(() => DataTestUtility.GetSqlConnection(connectionStringWithAttestationURL).Open());
             Assert.Contains("You have specified the enclave attestation URL in the connection string", e1.Message);
 
-            InvalidOperationException e2 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithAttestationProtocol).Open());
+            InvalidOperationException e2 = Assert.Throws<InvalidOperationException>(() => DataTestUtility.GetSqlConnection(connectionStringWithAttestationProtocol).Open());
             Assert.Contains("You have specified the attestation protocol in the connection string", e2.Message);
 
-            InvalidOperationException e3 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithEnclave).Open());
+            InvalidOperationException e3 = Assert.Throws<InvalidOperationException>(() => DataTestUtility.GetSqlConnection(connectionStringWithEnclave).Open());
             Assert.Contains("You have specified the enclave attestation URL and attestation protocol in the connection string", e3.Message);
 
             if (DataTestUtility.EnclaveEnabled)
             {
                 // connection should work if attestation protocol is None but no attestation url is provided
-                SqlConnection sqlConnection = new(connectionStringWithNoneAttestationProtocol);
+                SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connectionStringWithNoneAttestationProtocol);
                 sqlConnection.Open();
                 Assert.Equal(ConnectionState.Open, sqlConnection.State);
             }
@@ -285,7 +285,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             TaskScheduler.UnobservedTaskException += handler;
 
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 await connection.OpenAsync();
                 using (var command = new SqlCommand("select null; select * from dbo.NonexistentTable;", connection))
@@ -316,7 +316,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void GenerateConnectionException(string connectionString)
         {
-            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 sqlConnection.Open();
                 using (SqlCommand command = sqlConnection.CreateCommand())

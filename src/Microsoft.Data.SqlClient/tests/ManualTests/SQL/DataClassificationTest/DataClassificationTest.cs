@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TestDataClassificationResultSetRank()
         {
             s_tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand sqlCommand = sqlConnection.CreateCommand())
             {
                 try
@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TestDataClassificationResultSet()
         {
             s_tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand sqlCommand = sqlConnection.CreateCommand())
             {
                 try
@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             var tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
 
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
                 try

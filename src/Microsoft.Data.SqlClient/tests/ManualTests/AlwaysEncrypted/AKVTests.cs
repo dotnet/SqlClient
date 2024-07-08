@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
                 EnclaveAttestationUrl = ""
             };
-            using SqlConnection sqlConnection = new (builder.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
 
             sqlConnection.Open();
             Customer customer = new(45, "Microsoft", "Corporation");
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 EnclaveAttestationUrl = ""
             };
 
-            using SqlConnection sqlConnection = new(builder.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
 
             sqlConnection.Open();
 

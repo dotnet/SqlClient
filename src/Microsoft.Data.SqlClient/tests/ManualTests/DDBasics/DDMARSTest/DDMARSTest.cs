@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string cmdText1 = "select * from Orders; select count(*) from Customers";
             string cmdText2 = "select * from Customers; select count(*) from Orders";
 
-            using (var conn = new SqlConnection(connstr))
+            using (var conn = DataTestUtility.GetSqlConnection(connstr))
             {
                 conn.Open();
 

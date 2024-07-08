@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string targetCustomerTable = targettable + "_customer";
 
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         " )" +
                         ") ON [PRIMARY]");
 
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                    using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(srcConstr))
                     {
                         srcConn.Open();
 

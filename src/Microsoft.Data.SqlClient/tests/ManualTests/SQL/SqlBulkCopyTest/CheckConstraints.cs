@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         public static void Test(string constr, string srctable, string dstTable)
         {
-            using (SqlConnection dstConn = new SqlConnection(constr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(constr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     Helpers.TryExecute(dstCmd, "create table " + dstTable + " (col1 int primary key, col2 int CONSTRAINT CK_" + dstTable + " CHECK (col2 < 500), col3 text)");
 
-                    using (SqlConnection srcConn = new SqlConnection(constr))
+                    using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(constr))
                     using (SqlCommand srcCmd = new SqlCommand("select * from " + srctable, srcConn))
                     {
                         srcConn.Open();

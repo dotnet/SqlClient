@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             foreach (string value in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(value))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(value))
                 {
                     sqlConnection.Open();
                     databaseObjects.ForEach(o => o.Create(sqlConnection));
@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     ConnectTimeout = 10000
                 };
                 Customer customer = new Customer(45, "Microsoft", "Corporation");
-                using (SqlConnection sqlConn = new SqlConnection(builder.ToString()))
+                using (SqlConnection sqlConn = DataTestUtility.GetSqlConnection(builder.ToString()))
                 {
                     sqlConn.Open();
                     DatabaseHelper.InsertCustomerData(sqlConn, null, TrustedMasterKeyPathsTestTable.Name, customer);
@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             databaseObjects.Reverse();
             foreach (string value in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(value))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(value))
                 {
                     sqlConnection.Open();
                     databaseObjects.ForEach(o => o.Drop(sqlConnection));

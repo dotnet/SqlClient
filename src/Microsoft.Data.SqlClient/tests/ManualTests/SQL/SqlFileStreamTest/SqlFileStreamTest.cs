@@ -283,7 +283,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void ExecuteNonQueryCommand(string cmdText, string connString)
         {
-            using (SqlConnection conn = new SqlConnection(connString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connString))
             {
                 conn.Open();
                 using SqlCommand cmd = conn.CreateCommand();
@@ -295,7 +295,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static byte[] RetrieveData(string tempTable, string connString, int len)
         {
             byte[] bArray = new byte[len];
-            using (SqlConnection conn = new SqlConnection(connString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connString))
             {
                 conn.Open();
                 SqlCommand command = new($"SELECT TOP(1) Photo FROM {tempTable}", conn);

@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             bool hitException = false;
             try
             {
-                using (var connection = new SqlConnection(encryptionEnabledConnectionString))
+                using (var connection = DataTestUtility.GetSqlConnection(encryptionEnabledConnectionString))
                 using (var bulkCopy = new SqlBulkCopy(connection)
                 {
                     EnableStreaming = true,

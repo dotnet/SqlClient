@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 1
             };
 
-            using (var cnn1 = new SqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 60, Pooling = false }.ConnectionString))
+            using (var cnn1 = DataTestUtility.GetSqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 60, Pooling = false }.ConnectionString))
             {
                 cnn1.Open();
                 using (var cmd = cnn1.CreateCommand())
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             }
                         };
 
-                        using (var cnn2 = new SqlConnection(builder.ConnectionString))
+                        using (var cnn2 = DataTestUtility.GetSqlConnection(builder.ConnectionString))
                         {
                             cnn2.RetryLogicProvider = provider;
                             cnn2.Open();
@@ -142,10 +142,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 InitialCatalog = InvalidInitialCatalog
             }.ConnectionString;
 
-            Assert.Throws<SqlException>(() => new SqlConnection(cnnString).Open());
-            Assert.ThrowsAsync<SqlException>(() => new SqlConnection(cnnString).OpenAsync()).Wait();
+            Assert.Throws<SqlException>(() => DataTestUtility.GetSqlConnection(cnnString).Open());
+            Assert.ThrowsAsync<SqlException>(() => DataTestUtility.GetSqlConnection(cnnString).OpenAsync()).Wait();
 
-            using (var cnn = new SqlConnection(cnnString))
+            using (var cnn = DataTestUtility.GetSqlConnection(cnnString))
             {
                 cnn.RetryLogicProvider = cnnProvider;
                 Assert.Throws<SqlException>(() => cnn.Open());
@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 InitialCatalog = InvalidInitialCatalog
             };
 
-            SqlConnection cnn = new SqlConnection(builder.ConnectionString);
+            SqlConnection cnn = DataTestUtility.GetSqlConnection(builder.ConnectionString);
             cnn.RetryLogicProvider = provider;
             cnn.RetryLogicProvider.Retrying += (s, e) =>
             {

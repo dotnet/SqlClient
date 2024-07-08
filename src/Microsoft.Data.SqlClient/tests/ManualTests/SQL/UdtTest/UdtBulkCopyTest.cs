@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void RunCopyTest()
         {
             _connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { InitialCatalog = DataTestUtility.UdtTestDbName }).ConnectionString;
-            SqlConnection conn = new SqlConnection(_connStr);
+            SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr);
 
             string cities = DataTestUtility.GetUniqueNameForSqlServer("UdtBulkCopy_cities");
             string customers = DataTestUtility.GetUniqueNameForSqlServer("UdtBulkCopy_customers");
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void ExecuteNonQueryCommand(string cmdText, string connStr)
         {
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connStr))
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void CopyTableTest(string connStr, string sourceTable, string targetTable, string expectedResults)
         {
-            using (SqlConnection srcConn = new SqlConnection(connStr))
+            using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(connStr))
             {
                 srcConn.Open();
 

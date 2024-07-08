@@ -302,7 +302,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static string GetSqlServerProperty(string connectionString, string propertyName)
         {
             string propertyValue = string.Empty;
-            using SqlConnection conn = new(connectionString);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString);
             conn.Open();
             SqlCommand command = conn.CreateCommand();
             command.CommandText = $"SELECT SERVERProperty('{propertyName}')";
@@ -331,7 +331,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
             try
             {
-                SqlConnection conn = new(builder.ConnectionString);
+                SqlConnection conn = DataTestUtility.GetSqlConnection(builder.ConnectionString);
                 conn.Open();
                 isTDS8Supported = true;
             }
@@ -352,7 +352,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 var builder = new SqlConnectionStringBuilder(TCPConnectionString);
                 builder.ConnectTimeout = 2;
-                using (var connection = new SqlConnection(builder.ToString()))
+                using (var connection = DataTestUtility.GetSqlConnection(builder.ToString()))
                 using (var command = new SqlCommand("SELECT COUNT(*) FROM sys.databases WHERE name=@name", connection))
                 {
                     connection.Open();
@@ -383,7 +383,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                using (var connection = new SqlConnection(TCPConnectionString))
+                using (var connection = DataTestUtility.GetSqlConnection(TCPConnectionString))
                 using (var command = new SqlCommand("SELECT * FROM SYS.SENSITIVITY_CLASSIFICATIONS", connection))
                 {
                     connection.Open();
@@ -516,7 +516,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool retval = false;
             if (AreConnStringsSetup() && IsNotAzureSynapse())
             {
-                using (SqlConnection connection = new SqlConnection(TCPConnectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(TCPConnectionString))
                 using (SqlCommand command = new SqlCommand())
                 {
                     command.Connection = connection;
@@ -547,7 +547,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 return false;
             }
-            using (var connection = new SqlConnection(DNSCachingConnString))
+            using (var connection = DataTestUtility.GetSqlConnection(DNSCachingConnString))
             {
                 List<IPAddress> ipAddresses = Dns.GetHostAddresses(connection.DataSource).ToList();
                 return ipAddresses.Exists(ip => ip.AddressFamily == AddressFamily.InterNetwork) &&
@@ -815,7 +815,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 try
                 {
-                    using (SqlConnection connection = new SqlConnection(connectionString))
+                    using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
                     using (SqlCommand command = connection.CreateCommand())
                     {
                         connection.Open();
@@ -839,7 +839,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static DataTable RunQuery(string connectionString, string sql)
         {
             DataTable result = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())

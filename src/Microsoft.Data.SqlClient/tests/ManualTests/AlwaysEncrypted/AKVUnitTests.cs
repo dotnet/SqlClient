@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             if (SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
             {
-                SqlConnection conn = new();
+                SqlConnection conn = DataTestUtility.GetSqlConnection();
                 FieldInfo globalCacheField = conn.GetType().GetField(
                     "s_globalCustomColumnEncryptionKeyStoreProviders", BindingFlags.Static | BindingFlags.NonPublic);
                 IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> globalProviders =

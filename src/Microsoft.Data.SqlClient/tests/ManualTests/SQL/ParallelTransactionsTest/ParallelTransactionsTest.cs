@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void BasicParallelTest(string connectionString, string tempTableName)
         {
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 SqlTransaction trans1 = connection.BeginTransaction();
@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void MultipleExecutesInSameTransactionTest(string connectionString, string tempTableName)
         {
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 SqlTransaction trans1 = connection.BeginTransaction();
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             var uniqueKey = string.Format("{0}_{1}_{2}", Environment.GetEnvironmentVariable("ComputerName"), Environment.TickCount, Guid.NewGuid()).Replace("-", "_");
             var tempTableName = "TEMP_" + uniqueKey;
-            using (var conn = new SqlConnection(connectionString))
+            using (var conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 SqlCommand cmd = new SqlCommand(string.Format("SELECT EmployeeID, LastName, FirstName, Title, Address, City, Region, PostalCode, Country into {0} from Employees", tempTableName), conn);
@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void DropTempTable(string connectionString, string tempTableName)
         {
-            using (SqlConnection con1 = new SqlConnection(connectionString))
+            using (SqlConnection con1 = DataTestUtility.GetSqlConnection(connectionString))
             {
                 con1.Open();
                 SqlCommand cmd = new SqlCommand("Drop table " + tempTableName, con1);

@@ -250,7 +250,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal static SqlConnection GetOpenConnection(bool fTceEnabled, SqlConnectionStringBuilder sb, bool fSuppressAttestation = false)
         {
-            SqlConnection conn = new SqlConnection(GetConnectionString(fTceEnabled, sb, fSuppressAttestation));
+            SqlConnection conn = DataTestUtility.GetSqlConnection(GetConnectionString(fTceEnabled, sb, fSuppressAttestation));
             try
             {
                 conn.Open();

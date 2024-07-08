@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             foreach (string connStr in DataTestUtility.AEConnStringsSetup)
             {
                 // Insert data and create functions for SqlNullValues test.
-                using (SqlConnection sqlConnection = new SqlConnection(connStr))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connStr))
                 {
                     sqlConnection.Open();
 
@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     break;
             }
 
-            using (SqlConnection sqlConn = new SqlConnection(connString))
+            using (SqlConnection sqlConn = DataTestUtility.GetSqlConnection(connString))
             {
                 sqlConn.Open();
                 object value1;
@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             foreach (string connStrAE in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(connStrAE))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connStrAE))
                 {
                     sqlConnection.Open();
                     Table.DeleteData(fixture.SqlNullValuesTable.Name, sqlConnection);

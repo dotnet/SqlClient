@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             string query = "SELECT bad command";
 
-            using (SqlConnection cnn = new SqlConnection(cnnString))
+            using (SqlConnection cnn = DataTestUtility.GetSqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
                 cmd.CommandText = query;
@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             string query = "SELECT bad command";
 
-            using (SqlConnection cnn = new SqlConnection(cnnString))
+            using (SqlConnection cnn = DataTestUtility.GetSqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
                 cmd.CommandText = query;
@@ -147,7 +147,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string query = "SELECT bad command";
 
             using (TransactionScope transScope = new TransactionScope())
-            using (SqlConnection cnn = new SqlConnection(cnnString))
+            using (SqlConnection cnn = DataTestUtility.GetSqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
                 cmd.CommandText = query;
@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             string query = "SELECT bad command";
 
-            using (SqlConnection cnn = new SqlConnection(cnnString))
+            using (SqlConnection cnn = DataTestUtility.GetSqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             using (SqlTransaction tran = cnn.BeginTransaction())
             {
@@ -218,7 +218,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int currentRetries = 0;
             provider.Retrying += (s, e) => currentRetries = e.RetryCount;
 
-            using (SqlConnection cnn = new SqlConnection(cnnString))
+            using (SqlConnection cnn = DataTestUtility.GetSqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
                 #region unauthorized
@@ -275,9 +275,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 1
             };
 
-            using (var cnn3 = new SqlConnection(cnnString))
-            using (var cnn2 = new SqlConnection(builder.ConnectionString))
-            using (var cnn1 = new SqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 120 }.ConnectionString))
+            using (var cnn3 = DataTestUtility.GetSqlConnection(cnnString))
+            using (var cnn2 = DataTestUtility.GetSqlConnection(builder.ConnectionString))
+            using (var cnn1 = DataTestUtility.GetSqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 120 }.ConnectionString))
             using (var cmd = new SqlCommand())
             {
                 cnn1.Open();
@@ -333,9 +333,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Region");
             string fieldName = "RegionDescription";
 
-            using (var cnn1 = new SqlConnection(cnnString))
+            using (var cnn1 = DataTestUtility.GetSqlConnection(cnnString))
             using (var cmd1 = new SqlCommand())
-            using (var cnn2 = new SqlConnection(cnnString))
+            using (var cnn2 = DataTestUtility.GetSqlConnection(cnnString))
             using (var cmd2 = new SqlCommand())
             {
                 cnn1.Open();
@@ -388,7 +388,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string query = "SELECT bad command";
 
-            using (SqlConnection cnn = new SqlConnection(cnnString))
+            using (SqlConnection cnn = DataTestUtility.GetSqlConnection(cnnString))
             using (SqlCommand cmd = new SqlCommand())
             {
                 cnn.Open();
@@ -426,7 +426,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             string query = "SELECT bad command";
 
-            using (SqlConnection cnn = new SqlConnection(cnnString))
+            using (SqlConnection cnn = DataTestUtility.GetSqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
                 cmd.CommandText = query;
@@ -491,7 +491,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             string query = "SELECT bad command";
 
-            using (SqlConnection cnn = new SqlConnection(cnnString))
+            using (SqlConnection cnn = DataTestUtility.GetSqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
                 cmd.CommandText = query;
@@ -611,7 +611,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Parallel.For(0, ConcurrentParallelExecutions,
             i =>
             {
-                using (SqlConnection cnn = new SqlConnection(cnnString))
+                using (SqlConnection cnn = DataTestUtility.GetSqlConnection(cnnString))
                 {
                     cnn.Open();
                     Assert.True(cnn.State == ConnectionState.Open, UnexpectedSqlConnectionExceptionMessage);
@@ -643,7 +643,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 tasks.Add(Task.Run(async () =>
                 {
-                    using (SqlConnection cnn = new SqlConnection(cnnString))
+                    using (SqlConnection cnn = DataTestUtility.GetSqlConnection(cnnString))
                     {
                         await cnn.OpenAsync();
                         Assert.True(cnn.State == ConnectionState.Open, UnexpectedSqlConnectionExceptionMessage);

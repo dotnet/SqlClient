@@ -43,8 +43,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         static void BulkCopy(string connectionString)
         {
-            using (SqlConnection connectionSrc = new SqlConnection(connectionString))
-            using (SqlConnection connectionDst = new SqlConnection(connectionString))
+            using (SqlConnection connectionSrc = DataTestUtility.GetSqlConnection(connectionString))
+            using (SqlConnection connectionDst = DataTestUtility.GetSqlConnection(connectionString))
             using (SqlCommand commandSrc = new SqlCommand(s_sqlBulkCopyCmd, connectionSrc))
             using (SqlCommand commandDst = connectionDst.CreateCommand())
             {

@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlDataAdapter adapter;
             DataTable datatable;
 
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 try
                 {
                     Helpers.TryExecute(dstCmd, "create table " + dstTable + " (col1 int, col2 nvarchar(20), col3 nvarchar(10), col4 datetime)");
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                    using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(srcConstr))
                     using (SqlCommand srcCmd = new SqlCommand("select * from employees", srcConn))
                     {
                         srcConn.Open();

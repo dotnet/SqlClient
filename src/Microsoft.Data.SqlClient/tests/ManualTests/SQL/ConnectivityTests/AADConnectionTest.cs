@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void ConnectAndDisconnect(string connectionString, SqlCredential credential = null)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 if (credential != null)
                 {
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void KustoDatabaseTest()
         {
             // This is a sample Kusto database that can be connected by any AD account.
-            using SqlConnection connection = new SqlConnection($"Data Source=help.kusto.windows.net; Authentication=Active Directory Default;Trust Server Certificate=True;User ID = {DataTestUtility.UserManagedIdentityClientId};");
+            using SqlConnection connection = DataTestUtility.GetSqlConnection($"Data Source=help.kusto.windows.net; Authentication=Active Directory Default;Trust Server Certificate=True;User ID = {DataTestUtility.UserManagedIdentityClientId};");
             connection.Open();
             Assert.True(connection.State == System.Data.ConnectionState.Open);
         }
@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
-            using (SqlConnection connection = new SqlConnection(connStr))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connStr))
             {
                 connection.AccessToken = DataTestUtility.GetAccessToken();
                 connection.Open();
@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
-            using (SqlConnection connection = new SqlConnection(connStr))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connStr))
             {
                 connection.AccessToken = DataTestUtility.GetAccessToken() + "abc";
                 SqlException e = Assert.Throws<SqlException>(() => connection.Open());
@@ -126,7 +126,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string[] credKeys = { "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
-            using (SqlConnection connection = new SqlConnection(connStr))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connStr))
             {
                 InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
                     connection.AccessToken = DataTestUtility.GetAccessToken());
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string[] credKeys = { "Authentication" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
-            using (SqlConnection connection = new SqlConnection(connStr))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connStr))
             {
                 InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
                 connection.AccessToken = DataTestUtility.GetAccessToken());
@@ -160,7 +160,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
-            using (SqlConnection connection = new SqlConnection(connStr))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connStr))
             {
                 connection.AccessToken = "";
                 SqlException e = Assert.Throws<SqlException>(() => connection.Open());
@@ -177,7 +177,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) + "Integrated Security=True;";
 
-            using (SqlConnection connection = new SqlConnection(connStr))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connStr))
             {
                 InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "");
 
@@ -227,7 +227,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // Clear token cache for code coverage.
             ActiveDirectoryAuthenticationProvider.ClearUserTokenCache();
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.AADPasswordConnectionString))
             {
                 connection.Open();
                 Assert.True(connection.State == System.Data.ConnectionState.Open);
@@ -238,7 +238,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TestADPasswordAuthentication()
         {
             // Connect to Azure DB with password and retrieve user name.
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.AADPasswordConnectionString))
             {
                 conn.Open();
                 using (SqlCommand sqlCommand = new SqlCommand
@@ -260,7 +260,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
             // Connect to Azure DB with password and retrieve user name using custom authentication provider
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.AADPasswordConnectionString))
             {
                 conn.Open();
                 using (SqlCommand sqlCommand = new SqlCommand
@@ -584,7 +584,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "Authentication=ActiveDirectoryDefault";
             InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
             {
-                using (SqlConnection conn = new SqlConnection(connStrWithNoCred))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(connStrWithNoCred))
                 {
                     conn.AccessTokenCallback = (ctx, token) =>
                         Task.FromResult(new SqlAuthenticationToken("my token", DateTimeOffset.MaxValue));
@@ -605,7 +605,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
             var cred = DataTestUtility.GetTokenCredential();
             const string defaultScopeSuffix = "/.default";
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connStr))
             {
                 conn.AccessTokenCallback = (ctx, cancellationToken) =>
                 {
@@ -632,7 +632,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                  $"User ID={userId}; Password={pwd}";
             var cred = DataTestUtility.GetTokenCredential();
             const string defaultScopeSuffix = "/.default";
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connStr))
             {
                 conn.AccessTokenCallback = (parms, cancellationToken) =>
                 {
@@ -676,7 +676,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var connString = DataTestUtility.AADPasswordConnectionString;
 
             //Ensure server endpoints are warm
-            using (var connectionDrill = new SqlConnection(connString))
+            using (var connectionDrill = DataTestUtility.GetSqlConnection(connString))
             {
                 connectionDrill.Open();
             }
@@ -687,12 +687,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Stopwatch firstConnectionTime = new Stopwatch();
             Stopwatch secondConnectionTime = new Stopwatch();
 
-            using (var connectionDrill = new SqlConnection(connString))
+            using (var connectionDrill = DataTestUtility.GetSqlConnection(connString))
             {
                 firstConnectionTime.Start();
                 connectionDrill.Open();
                 firstConnectionTime.Stop();
-                using (var connectionDrill2 = new SqlConnection(connString))
+                using (var connectionDrill2 = DataTestUtility.GetSqlConnection(connString))
                 {
                     secondConnectionTime.Start();
                     connectionDrill2.Open();
@@ -730,7 +730,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys);
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.AccessToken = DataTestUtility.GetSystemIdentityAccessToken();
                 conn.Open();
@@ -744,7 +744,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys);
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.AccessToken = DataTestUtility.GetUserIdentityAccessToken();
                 conn.Open();
@@ -760,7 +760,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys)
                 + $"Authentication=Active Directory Managed Identity;";
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
 
@@ -775,7 +775,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys)
                 + $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityClientId}";
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
 
@@ -788,7 +788,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
             string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys);
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.AccessToken = DataTestUtility.GetSystemIdentityAccessToken();
                 conn.Open();
@@ -802,7 +802,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
             string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys);
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.AccessToken = DataTestUtility.GetUserIdentityAccessToken();
                 conn.Open();

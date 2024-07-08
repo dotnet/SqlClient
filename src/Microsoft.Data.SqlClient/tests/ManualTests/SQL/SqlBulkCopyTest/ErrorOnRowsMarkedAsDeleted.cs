@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void Test(string dstConstr, string targettable)
         {
-            using (SqlConnection destConn = new SqlConnection(dstConstr))
+            using (SqlConnection destConn = DataTestUtility.GetSqlConnection(dstConstr))
             {
                 destConn.Open();
 

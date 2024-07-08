@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "create table " + dstTable + "_dst (col_1 int primary key, col_2 sql_variant)",
             };
 
-            using (SqlConnection dstConn = new SqlConnection(constr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(constr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         Helpers.TryExecute(dstCmd, cmdtext);
                     }
-                    using (SqlConnection srcConn = new SqlConnection(constr))
+                    using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(constr))
                     using (SqlCommand srcCmd = new SqlCommand("select * from " + dstTable + "_src", srcConn))
                     {
                         srcConn.Open();

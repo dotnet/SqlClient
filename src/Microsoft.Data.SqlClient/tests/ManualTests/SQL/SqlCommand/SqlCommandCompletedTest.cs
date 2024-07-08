@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("stmt");
 
-            using (var conn = new SqlConnection(s_connStr))
+            using (var conn = DataTestUtility.GetSqlConnection(s_connStr))
             using (var cmd = conn.CreateCommand())
             {
                 try

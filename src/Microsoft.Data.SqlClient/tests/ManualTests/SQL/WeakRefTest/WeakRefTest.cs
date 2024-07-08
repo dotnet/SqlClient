@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             WeakReference weak = null;
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DataTestUtility.GetSqlConnection(connectionString))
             {
                 con.Open();
 
@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             WeakReference weak = null;
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DataTestUtility.GetSqlConnection(connectionString))
             {
                 con.Open();
 

@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             try
             {
                 //Populate table TabIntSourceDirect with parameters @c1,@c2
-                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     connection.Open();
                     using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [dbo].[{tableNames["TabIntSourceDirect"]}] VALUES (@c1, @c2)",
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             try
             {
                 //Populate table TabIntSourceDirect with parameters @c1,@c2
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
                 {
                     connection.Open();
                     using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection,
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             try
             {
                 //Populate table TabIntSourceDirect with parameters @c1,@c2 as Integers.
-                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     connection.Open();
                     using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             try
             {
                 //Populate table TabIntSourceDirect with parameters @c1,@c2
-                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     connection.Open();
                     using (SqlCommand cmd = new SqlCommand($@"INSERT INTO [{tableNames["TabIntSourceDirect"]}] ([c1],[c2]) VALUES (@c1, @c2)", connection))
@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 DoBulkCopy(tableNames["TabDatetime2Source"], tableNames["TabDatetime2Target"], connectionString);
 
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlConnection.ClearPool(connection);
@@ -285,7 +285,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 DoBulkCopy(tableNames["TabVarCharSmallSource"], tableNames["TabVarCharTarget"], connectionString);
 
-                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
                 using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{tableNames["TabVarCharTarget"]}]", connection))
                 {
                     connection.Open();
@@ -314,7 +314,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 DoBulkCopy(tableNames["TabVarCharMaxSource"], tableNames["TabVarCharMaxTarget"], connectionString);
 
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
                 using (SqlCommand cmd = new SqlCommand($@"SELECT [c2] from [{tableNames["TabVarCharMaxTarget"]}]", connection, null, SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     connection.Open();
@@ -379,7 +379,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 DoBulkCopy(tableNames["TabBinaryMaxSource"], tableNames["TabBinaryTarget"], connectionString);
 
                 // Verify the target column has (infact) the truncated value
-                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     connection.Open();
 
@@ -417,7 +417,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 DoBulkCopy(tableNames["TabSmallBinarySource"], tableNames["TabSmallBinaryTarget"], connectionString);
                 // Verify its 8000            
-                using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     conn.Open();
                     using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallBinaryTarget"]}]", conn))
@@ -449,7 +449,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 DoBulkCopy(tableNames["TabSmallBinarySource"], tableNames["TabSmallBinaryMaxTarget"], connectionString);
 
                 // Verify its 3000
-                using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     conn.Open();
                     using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallBinaryMaxTarget"]}]", conn))
@@ -488,7 +488,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 DoBulkCopy($"{tableNames["TabSmallCharSource"]}", $"{tableNames["TabSmallCharTarget"]}", connectionString);
 
                 // Verify the truncated value
-                using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     connection.Open();
 
@@ -507,7 +507,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 DoBulkCopy($"{tableNames["TabSmallCharSource"]}", $"{tableNames["TabSmallCharMaxTarget"]}", connectionString);
 
-                using (SqlConnection conn = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     conn.Open();
                     using (SqlCommand cmd = new SqlCommand($"SELECT c2 from [{tableNames["TabSmallCharMaxTarget"]}]", conn))
@@ -532,7 +532,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal void TruncateTables(string sourceName, string targetName, string connectionString)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 if (!string.IsNullOrEmpty(sourceName))
@@ -564,11 +564,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal void DoBulkCopy(string sourceTable, string targetTable, string connectionString)
         {
-            using (SqlConnection connection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
             {
                 connection.Open();
 
-                using (SqlConnection bulkCopyConnection = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlConnection bulkCopyConnection = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     bulkCopyConnection.Open();
                     using (SqlCommand cmd = new SqlCommand($"SELECT c1, c2 FROM [dbo].[{sourceTable}]", connection))
@@ -589,7 +589,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal void DoBulkCopyDirect(string sourceTable, string targetTable, string connectionString, bool isEncryptionEnabledOnSource, bool isEncryptionEnabledOnTarget)
         {
-            using (SqlConnection connSource = new SqlConnection(GetOpenConnectionString(connectionString, isEncryptionEnabledOnSource)))
+            using (SqlConnection connSource = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, isEncryptionEnabledOnSource)))
             {
                 connSource.Open();
                 using (SqlCommand cmd = new SqlCommand($"SELECT c1, c2 FROM [dbo].[{sourceTable}]", connSource))
@@ -612,11 +612,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal void VerifyTablesEqual(string sourceTable, string targetTable, string connectionString)
         {
-            using (SqlConnection connSource = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+            using (SqlConnection connSource = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
             {
                 connSource.Open();
 
-                using (SqlConnection connTarget = new SqlConnection(GetOpenConnectionString(connectionString, true)))
+                using (SqlConnection connTarget = DataTestUtility.GetSqlConnection(GetOpenConnectionString(connectionString, true)))
                 {
                     connTarget.Open();
 
@@ -654,7 +654,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal void PopulateTable(string tableName, string values, string connectionString)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 ExecuteQuery(connection, $@"INSERT INTO [dbo].[{tableNames[tableName]}] values ({values})");

@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 InitialCatalog = "master"
             };
 
-            using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString))
             {
                 // Connect to the database then retrieve the schema information
                 connection.Open();

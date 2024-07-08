@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SimpleFillTest()
         {
-            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             using SqlDataAdapter adapter = new("SELECT EmployeeID, LastName, FirstName, Title, Address, City, Region, PostalCode, Country FROM Employees", conn);
 
             DataSet employeesSet = new();
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 1
             };
 
-            using var connection = new SqlConnection(builder.ConnectionString);
+            using var connection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
             using SqlCommand command = new(query, connection);
             command.CommandTimeout = 1;
             command.RetryLogicProvider = provider;
@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void PrepUnprepTest()
         {
             // share the connection
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand("select * from shippers", connection))
             using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
             {
@@ -248,7 +248,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tableName = DataTestUtility.GenerateObjectName();
             // good test for null values and unicode strings
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand(null, conn))
             using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
             {
@@ -392,7 +392,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ExecuteNonQueryCommand(spCreateAllTypes);
                 dropSP = true;
 
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlCommand cmd = new SqlCommand(procName, conn))
                 using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
                 {
@@ -571,7 +571,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ExecuteNonQueryCommand(spCreateInOut);
                 dropSP = true;
 
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlCommand cmd = new SqlCommand(procName, conn))
                 using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
                 {
@@ -653,7 +653,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UpdateTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlDataAdapter adapterVerify = new SqlDataAdapter())
@@ -738,7 +738,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void BulkUpdateTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlDataAdapter adapterVerify = new SqlDataAdapter())
@@ -854,7 +854,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool dropSP = false;
 
             using (SqlDataAdapter adapter = new SqlDataAdapter())
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand(null, conn))
             using (SqlCommand temp = new SqlCommand("SELECT id, LastName, FirstName into " + _tempTable + $" from {identTableName}", conn))
             using (SqlCommand tableClean = new SqlCommand("", conn))
@@ -944,7 +944,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool dropSP = false;
 
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
             using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
             using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
@@ -1001,7 +1001,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool dropSP = false;
 
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
             using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
             using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
@@ -1070,7 +1070,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void SelectAllTest()
         {
             // Test exceptions
-            using (SqlDataAdapter sqlAdapter = new SqlDataAdapter(new SqlCommand("select * from sys.columns", new SqlConnection(DataTestUtility.TCPConnectionString))))
+            using (SqlDataAdapter sqlAdapter = new SqlDataAdapter(new SqlCommand("select * from sys.columns", DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))))
             {
                 DataSet dataset = new DataSet();
                 sqlAdapter.TableMappings.Add("View", "sys.columns");
@@ -1083,7 +1083,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void AutoGenUpdateTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlDataAdapter adapterVerify = new SqlDataAdapter())
@@ -1161,7 +1161,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "LastName nvarchar(50) NULL," +
                 "Firstname nvarchar(50) NULL)";
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand($"SELECT * into {_tempTable} from {identTableName}", conn))
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             {
@@ -1203,7 +1203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void AutoGenBulkUpdateTest()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlDataAdapter adapterVerify = new SqlDataAdapter())
@@ -1314,7 +1314,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 ExecuteNonQueryCommand(spEmployeeSales);
-                using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlCommand cmd = new SqlCommand(procName, connection))
                 {
                     string errorMessage = string.Format(SystemDataResourceManager.Instance.ADP_DeriveParametersNotSupported, "SqlCommand", cmd.CommandType);
@@ -1354,7 +1354,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TestReadOnlyColumnMetadata()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
@@ -1409,7 +1409,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(nameof(SqlCommandBuilder.GetDeleteCommand), true)]
         public void VerifyGetCommand(string methodName, bool? useColumnsForParameterNames)
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
                 using (SqlDataAdapter dataAdapter = new SqlDataAdapter("SELECT * FROM dbo.Customers", connection))
@@ -1897,7 +1897,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void ExecuteNonQueryCommand(string cmdText)
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();

@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string streamTypeName = null;
             byte[] outputData = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             bool isAsync = false;
             string outputXml = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string streamTypeName = null;
             string outputText = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string streamTypeName = null;
             string outputText = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             bool isAsync = false;
             string outputXml = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string streamTypeName = null;
             byte[] outputData = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string streamTypeName = null;
             string outputText = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -267,7 +267,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string streamTypeName = null;
             byte[] outputData = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             bool isAsync = false;
             string outputXml = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -337,7 +337,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string streamTypeName = null;
             string outputText = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -366,7 +366,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string query = "SELECT convert(xml,NULL) AS XmlData, convert(nvarchar(max),NULL) as TextData, convert(varbinary(max),NULL) as StreamData";
 
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -451,7 +451,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string query = "SELECT convert(xml,NULL) AS XmlData, convert(nvarchar(max),NULL) as TextData";
 
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -480,7 +480,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string query = $"SELECT CAST('{expectedXml}' AS NVARCHAR(MAX))";
 
             string returnedXml = null;
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();

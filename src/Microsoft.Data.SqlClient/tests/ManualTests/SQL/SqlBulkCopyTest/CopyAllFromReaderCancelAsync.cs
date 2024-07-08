@@ -32,14 +32,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string sourceQuery = string.Format(sourceQueryTemplate, srcTable);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
 
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
                 try
                 {
                     Helpers.TryExecute(dstCmd, initialQuery);
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                    using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(srcConstr))
                     using (SqlCommand srcCmd = new SqlCommand(sourceQuery, srcConn))
                     {
                         srcConn.Open();

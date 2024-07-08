@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc1");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
                 xsql(conn, string.Format("create proc {0} (@param {1}) as begin select @param end;", procName, expectedBaseTypeName));
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
             }
@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc2");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
                 xsql(conn, string.Format("create proc {0} (@param sql_variant) as begin select @param, sql_variant_property(@param,'BaseType') as BaseType end;", procName));
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
             }
@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 {1})", tvpTypeName, expectedBaseTypeName));
@@ -188,7 +188,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
             }
@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpVariant");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 sql_variant)", tvpTypeName));
@@ -235,7 +235,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
             }
@@ -248,7 +248,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 {1})", tvpTypeName, expectedBaseTypeName));
@@ -283,7 +283,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
             }
@@ -298,7 +298,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpVariant");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
                 xsql(conn, string.Format("create type dbo.{0} as table (f1 sql_variant)", tvpTypeName));
@@ -335,7 +335,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropType(conn, tvpTypeName);
             }
@@ -353,7 +353,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string ProcName = DataTestUtility.GetUniqueNameForSqlServer("spTVPProc");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
 
                 DropStoredProcedure(conn, ProcName);
@@ -415,7 +415,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropStoredProcedure(conn, ProcName);
                 DropTable(conn, InputTableName);
@@ -434,7 +434,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string ProcName = DataTestUtility.GetUniqueNameForSqlServer("spTVPProc_DRdrTVPVar");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
 
                 DropStoredProcedure(conn, ProcName);
@@ -497,7 +497,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropStoredProcedure(conn, ProcName);
                 DropTable(conn, InputTableName);
@@ -516,7 +516,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc3");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, inputTable);
                 DropStoredProcedure(conn, procName);
@@ -557,7 +557,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
                 DropTable(conn, inputTable);
@@ -572,7 +572,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string procName = DataTestUtility.GetUniqueNameForSqlServer("paramProc4");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, inputTable);
                 DropStoredProcedure(conn, procName);
@@ -613,7 +613,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropStoredProcedure(conn, procName);
                 DropTable(conn, inputTable);
@@ -628,7 +628,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestTable");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
@@ -686,7 +686,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 DropTable(conn, bulkCopySrcTableName);
@@ -702,7 +702,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestTable");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
@@ -765,7 +765,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 DropTable(conn, bulkCopySrcTableName);
@@ -779,7 +779,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestType");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
@@ -824,7 +824,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }
@@ -839,7 +839,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestVariant");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
@@ -876,7 +876,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }
@@ -889,7 +889,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestType");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 {1})", bulkCopyTableName, expectedBaseTypeName));
@@ -929,7 +929,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }
@@ -944,7 +944,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string bulkCopyTableName = DataTestUtility.GetUniqueNameForSqlServer("bulkDestVariant");
             try
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
                 xsql(conn, string.Format("create table {0} (f1 sql_variant)", bulkCopyTableName));
@@ -976,7 +976,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.Open();
                 DropTable(conn, bulkCopyTableName);
             }

@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <returns></returns>
         private static SqlDataReader GetReaderForVariant(object paramValue, bool includeBaseType)
         {
-            SqlConnection conn = new(s_connStr);
+            SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
             conn.Open();
             SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "select @p1 as f1";

@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DataTable datatable;
             DataRow[] rows;
 
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Helpers.TryExecute(dstCmd, "create table " + dstTable + " (orderid int, customerid nchar(5), rdate datetime, freight money, shipname nvarchar(40))");
 
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                    using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(srcConstr))
                     using (SqlCommand srcCmd = new SqlCommand("select top 100 * from orders", srcConn))
                     {
                         srcConn.Open();

@@ -193,7 +193,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void MultipleResults(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 string query =
@@ -259,7 +259,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void InvalidRead(string connectionString)
         {
-            using (SqlConnection c = new SqlConnection(connectionString))
+            using (SqlConnection c = DataTestUtility.GetSqlConnection(connectionString))
             {
                 c.Open();
                 string sqlBatch = "select * from orders where orderid < 10253";
@@ -274,7 +274,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void VariantRead(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 string sqlBatch = "select * from orders where orderid < 10253";
@@ -326,7 +326,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void TypeRead(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 string sqlBatch = "select * from orders where orderid < 10253";
@@ -365,7 +365,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void GetValueOfTRead(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 string sqlBatch = "select *, CAST(N'<test>Hello, World</test>' AS XML), CAST(NULL AS XML) from orders where orderid < 10253 and shipregion is null";
@@ -443,7 +443,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void OutOfOrderGetChars(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
 
@@ -484,7 +484,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void SQLTypeRead(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 using (SqlCommand cmd = new SqlCommand("select * from orders where orderid < 10253", conn))
@@ -519,7 +519,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void RowBuffer(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 using (SqlCommand cmd = new SqlCommand("select * from orders where orderid < 10253", conn))
@@ -549,7 +549,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             string tempTable = DataTestUtility.GetUniqueNameForSqlServer("##Temp");
             tempTable = tempTable.Replace('-', '_');
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 using (SqlCommand cmdDefault = new SqlCommand("", conn))
@@ -583,7 +583,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void BufferSize(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 using (SqlCommand cmd = new SqlCommand("select * from orders where orderid<@id", conn))
@@ -616,7 +616,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void OrphanReader(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 using (SqlCommand cmd = new SqlCommand("select * from orders where orderid < 10253", conn))
@@ -676,7 +676,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void ExecuteXmlReaderTest(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 using (SqlCommand cmd = new SqlCommand("select employeeId, lastname, firstname from employees for xml auto", conn))
@@ -806,7 +806,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             int i;
             SqlBinary sqlbin;
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 using (SqlCommand cmd = new SqlCommand("select * from orders for xml auto", conn))
@@ -1044,7 +1044,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             string tempTable = DataTestUtility.GetUniqueNameForSqlServer("##Temp");
             tempTable = tempTable.Replace('-', '_');
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
@@ -1090,7 +1090,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void HasRowsTest(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 string sqlBatch =
@@ -1141,7 +1141,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void SqlCharsBytesTest(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
 
@@ -1184,7 +1184,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void CloseConnection(string connectionString)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 using (SqlCommand cmd = new SqlCommand("select * from orders where orderid < 10253", conn))
@@ -1208,7 +1208,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
         private static void OpenConnection(string connectionString)
         {
             // Isolates OpenConnection behavior for sanity testing on x-plat
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 conn.Open();
                 DataTestUtility.AssertEqualsWithDescription(ConnectionState.Open, conn.State, "FAILED: Connection should be in open state");
@@ -1225,7 +1225,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void GetStream(string connectionString)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 using (SqlCommand cmd = new SqlCommand("SELECT 0x12341234, 0x12341234, 12, CAST(NULL AS VARBINARY(MAX)), 0x12341234, 0x12341234, 0x12341234, CAST(REPLICATE('a', 8000) AS VARBINARY(MAX)), 0x12341234", connection))
@@ -1335,7 +1335,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                 string.Format("SELECT {0} {1}, {0} {1}, 12, CAST(NULL AS VARCHAR(MAX)), {0} {1}, {0} {1}, {0} {1}, CAST(REPLICATE(('\uFF8A' {1}), 8000) AS VARCHAR(MAX)), {0} {1}", "'\uFF8A\uFF9B\uFF70\uFF9C\uFF70\uFF99\uFF84\uFF9E'", "COLLATE Japanese_CI_AS")
             };
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 foreach (string query in queryStrings)
@@ -1442,7 +1442,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void GetXmlReader(string connectionString)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 string xml = "CAST('<test><subtest /><subtest>asdfasdfasdf</subtest></test>' AS XML)";
@@ -1496,7 +1496,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void ReadStream(string connectionString)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 CommandBehavior[] behaviors = new CommandBehavior[] { CommandBehavior.Default, CommandBehavior.SequentialAccess };
@@ -1680,7 +1680,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
                 foreach (string correctString in correctStrings)
                 {
-                    using (SqlConnection connection = new SqlConnection(connectionString))
+                    using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
                     {
                         connection.Open();
                         char[] smallBuffer = new char[2];
@@ -1794,7 +1794,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void StreamingBlobDataTypes(string connectionString)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 CommandBehavior[] behaviors = new CommandBehavior[] { CommandBehavior.Default, CommandBehavior.SequentialAccess };
@@ -1875,7 +1875,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             string dbName = DataTestUtility.GetUniqueName("JPN");
             string tableName = DataTestUtility.GetUniqueName("T");
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 using (SqlCommand cmd = new SqlCommand())
@@ -1924,7 +1924,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                 {
                     // Read XEvents
                     int streamXeventCount = 3;
-                    using (SqlConnection xEventsReadConnection = new SqlConnection(connectionString))
+                    using (SqlConnection xEventsReadConnection = DataTestUtility.GetSqlConnection(connectionString))
                     {
                         xEventsReadConnection.Open();
                         string xEventDataStreamCommand = "USE master; " + @"select [type], [data] from sys.fn_MSxe_read_event_stream ('" + sessionName + "',0)";
@@ -1944,7 +1944,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 if (i == 0 || i == streamXeventCount - 1)
                                     continue;
 
-                                using (SqlConnection xEventWriteConnection = new SqlConnection(connectionString))
+                                using (SqlConnection xEventWriteConnection = DataTestUtility.GetSqlConnection(connectionString))
                                 {
                                     xEventWriteConnection.Open();
                                     string xEventWriteCommandText = @"exec sp_trace_generateevent 90, N'Test2'";
@@ -1981,7 +1981,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             
                         ALTER EVENT SESSION [" + sessionName + "] ON SERVER STATE = START ";
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 using (SqlCommand createXeventSession = new SqlCommand(xEventCreateAndStartCommandText, connection))
@@ -1996,7 +1996,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             string deleteXeventSessionCommand = $"IF EXISTS (select * from sys.server_event_sessions where name ='{sessionName}')" +
                     $" DROP EVENT SESSION [{sessionName}] ON SERVER";
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
                 using (SqlCommand deleteXeventSession = new SqlCommand(deleteXeventSessionCommand, connection))
@@ -2014,7 +2014,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             proxy.SimulatedOutDelay = true;
             try
             {
-                using (SqlConnection conn = new SqlConnection(connectionString))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
                 {
                     // Start the command
                     conn.Open();
@@ -2055,7 +2055,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             proxy.SimulatedOutDelay = true;
             try
             {
-                using (SqlConnection conn = new SqlConnection(connectionString))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
                 {
                     // Start the command
                     conn.Open();

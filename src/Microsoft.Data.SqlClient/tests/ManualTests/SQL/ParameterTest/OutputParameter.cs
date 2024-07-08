@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             Console.WriteLine("Test setting output SqlParameter to an invalid value");
 
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
 

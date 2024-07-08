@@ -452,7 +452,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void QueryHintsTest()
         {
-            using SqlConnection conn = new(_connStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr);
             conn.Open();
 
             Guid randomizer = Guid.NewGuid();
@@ -690,7 +690,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static async Task RunPacketNumberWraparound(WraparoundRowEnumerator enumerator)
         {
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             using var cmd = new SqlCommand("unimportant")
             {
                 CommandType = CommandType.StoredProcedure,
@@ -1202,7 +1202,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             tsql.Append(")");
 
-            using SqlConnection conn = new(_connStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr);
             conn.Open();
 
             // execute it to create the type
@@ -1238,7 +1238,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void DropServerObjects(StePermutation tvpPerm)
         {
             string dropText = "DROP PROC " + GetProcName(tvpPerm) + "; DROP TYPE " + GetTypeName(tvpPerm);
-            using SqlConnection conn = new(_connStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr);
             conn.Open();
 
             SqlCommand cmd = new(dropText, conn);
@@ -1254,7 +1254,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void ExecuteAndVerify(SqlCommand cmd, StePermutation tvpPerm, object[][] objValues, DataTable dtValues)
         {
-            using SqlConnection conn = new(_connStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr);
             conn.Open();
             cmd.Connection = conn;
             if (DataTestUtility.IsNotAzureServer())

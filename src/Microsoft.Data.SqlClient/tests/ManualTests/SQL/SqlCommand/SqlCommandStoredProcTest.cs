@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string baseCommandText = "random text\u0000\u400a\u7300\u7400\u6100\u7400\u6500\u6d00\u6500\u6e00\u7400\u0000\u0006\u01ff\u0900\uf004\u0000\uffdc\u0001";
             string exceededLengthText = baseCommandText + new string(' ', 2000);
-            using SqlConnection conn = new(s_tcp_connStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(s_tcp_connStr);
             conn.Open();
             using SqlCommand command = new()
             {

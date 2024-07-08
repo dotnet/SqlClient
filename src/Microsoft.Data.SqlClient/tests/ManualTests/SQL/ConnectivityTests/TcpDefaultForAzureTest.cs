@@ -126,7 +126,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Debug.Assert(!string.IsNullOrWhiteSpace(connString));
 
             string errorMessage = null;
-            using (SqlConnection connection = new SqlConnection(connString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connString))
             {
                 try
                 {

@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void RunTest()
         {
-            MultipleErrorHandling(new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString));
+            MultipleErrorHandling(DataTestUtility.GetSqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString));
         }
 
         private void MultipleErrorHandling(DbConnection connection)

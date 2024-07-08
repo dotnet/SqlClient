@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             if (_spid != null)
             {
-                using (SqlConnection connection = new SqlConnection(GetKillByTSqlConnectionString()))
+                using (SqlConnection connection = DataTestUtility.GetSqlConnection(GetKillByTSqlConnectionString()))
                 {
                     connection.Open();
                     using (SqlCommand command = new SqlCommand(string.Format("KILL {0}", _spid), connection))

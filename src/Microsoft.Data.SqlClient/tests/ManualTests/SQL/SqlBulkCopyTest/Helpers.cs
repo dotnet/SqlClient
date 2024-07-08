@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static int TryDropTable(string dstConstr, string tableName)
         {
-            using (SqlConnection dropConn = new SqlConnection(dstConstr))
+            using (SqlConnection dropConn = DataTestUtility.GetSqlConnection(dstConstr))
             using (SqlCommand dropCmd = dropConn.CreateCommand())
             {
                 dropConn.Open();
@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static int ExecuteNonQueryAzure(string strConnectionString, string strCommand, int commandTimeout = 60)
         {
-            using (SqlConnection connection = new SqlConnection(strConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(strConnectionString))
             using (SqlCommand command = connection.CreateCommand())
             {
                 connection.Open();

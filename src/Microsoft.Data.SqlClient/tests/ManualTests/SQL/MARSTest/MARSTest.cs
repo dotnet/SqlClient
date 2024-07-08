@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.MultipleActiveResultSets = true;
             builder.ConnectTimeout = 5;
 
-            using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(builder.ConnectionString))
             {
                 conn.Open();
                 using (SqlCommand command = new SqlCommand("SELECT @@SERVERNAME", conn))
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void MARSAsyncTimeoutTest()
         {
-            using (SqlConnection connection = new SqlConnection(_connStr))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(_connStr))
             {
                 connection.Open();
                 SqlCommand command = new SqlCommand("WAITFOR DELAY '01:00:00';SELECT 1", connection);
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncTimeoutTest()
         {
-            using (SqlConnection connection = new SqlConnection(_connStr))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(_connStr))
             {
                 connection.Open();
                 SqlCommand command = new SqlCommand("WAITFOR DELAY '01:00:00';SELECT 1", connection);
@@ -212,7 +212,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var query = "SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10";
             var rowCount = 10;
 
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             {
                 conn.Open();
 
@@ -278,7 +278,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncExecuteNonQueryTest()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             {
                 conn.Open();
 
@@ -363,7 +363,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var query = "SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10";
             var rowCount = 10;
 
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             {
                 conn.Open();
 
@@ -446,7 +446,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncExecuteReaderTest2()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             {
                 conn.Open();
 
@@ -501,7 +501,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncExecuteReaderTest3()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             {
                 conn.Open();
 
@@ -552,7 +552,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncExecuteReaderTest4()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             {
                 conn.Open();
 
@@ -577,7 +577,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string queryString = "SELECT 1";
 
             // With MARS on, one SqlCommand cannot have multiple DataReaders
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
             {
                 string openReaderExistsMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists("Command");
 
@@ -596,7 +596,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             // With MARS off, one SqlConnection cannot have multiple DataReaders even if they are from different SqlCommands
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 string openReaderExistsMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists("Connection");
 
@@ -644,7 +644,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void MarsConcurrencyTest()
         {
             var table = DataTestUtility.GenerateObjectName();
-            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 conn.Open();
                 using var cmd = new SqlCommand
@@ -662,7 +662,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             var connString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }.ConnectionString;
-            using (var conn = new SqlConnection(connString))
+            using (var conn = DataTestUtility.GetSqlConnection(connString))
             {
                 conn.Open();
                 try
@@ -692,7 +692,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 finally
                 {
-                    using var dropConn = new SqlConnection(DataTestUtility.TCPConnectionString);
+                    using var dropConn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
                     dropConn.Open();
                     DataTestUtility.DropTable(dropConn, table);
                 }

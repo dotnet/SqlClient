@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void PlainCancel(string connString)
         {
-            using (SqlConnection conn = new SqlConnection(connString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connString))
             using (SqlCommand cmd = new SqlCommand("select * from dbo.Orders; waitfor delay '00:00:10'; select * from dbo.Orders", conn))
             {
                 conn.Open();
@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void PlainCancelAsync(string connString)
         {
-            using (SqlConnection conn = new SqlConnection(connString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connString))
             using (SqlCommand cmd = new SqlCommand("select * from dbo.Orders; waitfor delay '00:00:10'; select * from dbo.Orders", conn))
             {
                 conn.Open();
@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void CancelFollowedByTransaction(string constr)
         {
-            using (SqlConnection connection = new SqlConnection(constr))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(constr))
             {
                 connection.Open();
                 using (SqlCommand cmd = connection.CreateCommand())
@@ -277,7 +277,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 try
                 {
-                    using (var conn = new SqlConnection(constr))
+                    using (var conn = DataTestUtility.GetSqlConnection(constr))
                     {
                         conn.Open();
                         using (SqlCommand cmd = conn.CreateCommand())
@@ -323,7 +323,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void MultiThreadedCancel(string constr, bool async)
         {
-            using (SqlConnection con = new SqlConnection(constr))
+            using (SqlConnection con = DataTestUtility.GetSqlConnection(constr))
             {
                 con.Open();
                 using (var command = con.CreateCommand())
@@ -348,7 +348,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TimeoutCancel(string constr)
         {
-            using (SqlConnection con = new SqlConnection(constr))
+            using (SqlConnection con = DataTestUtility.GetSqlConnection(constr))
             {
                 con.Open();
                 using (SqlCommand cmd = con.CreateCommand())
@@ -374,7 +374,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void CancelAndDisposePreparedCommand(string constr)
         {
             int expectedValue = 1;
-            using (var connection = new SqlConnection(constr))
+            using (var connection = DataTestUtility.GetSqlConnection(constr))
             {
                 try
                 {
@@ -460,7 +460,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(constr))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(constr))
                 {
                     // Start the command
                     conn.Open();
@@ -504,7 +504,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             const int delaySeconds = 30;
             const int cancelSeconds = 1;
 
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connStr))
             using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
             {
                 conn.Open();
@@ -536,7 +536,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             const int delaySeconds = 30;
             const int cancelSeconds = 1;
 
-            using (SqlConnection conn = new SqlConnection(connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connStr))
             using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
             {
                 await conn.OpenAsync();

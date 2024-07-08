@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DataSet dataset;
             SqlDataAdapter adapter;
 
-            using (SqlConnection srcConn = new SqlConnection(srcConstr))
+            using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(srcConstr))
             using (SqlCommand srcCmd = new SqlCommand("select top 20 * from orders", srcConn))
             {
                 srcConn.Open();
@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 _dataTable = dataset.Tables[0];
             }
 
-            using (_dstConn = new SqlConnection(dstConstr))
+            using (_dstConn = DataTestUtility.GetSqlConnection(dstConstr))
             {
                 _dstConn.Open();
                 _dstcmd = _dstConn.CreateCommand();

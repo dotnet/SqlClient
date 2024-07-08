@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Interlocked.Increment(ref _start);
             Interlocked.Increment(ref _inFlight);
 
-            using (SqlConnection marsConnection = new SqlConnection(connectionStringBuilder.ToString()))
+            using (SqlConnection marsConnection = DataTestUtility.GetSqlConnection(connectionStringBuilder.ToString()))
             {
                 if (connectionStringBuilder.MultipleActiveResultSets)
                 {
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
 
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = DataTestUtility.GetSqlConnection(connectionString))
                 {
                     if (marsConnection != null && marsConnection.State == System.Data.ConnectionState.Open)
                     {

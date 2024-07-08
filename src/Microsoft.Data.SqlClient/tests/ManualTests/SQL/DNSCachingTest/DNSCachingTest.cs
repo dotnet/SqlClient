@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string expectedDNSCachingSupportedCR = DataTestUtility.IsDNSCachingSupportedCR ? "true" : "false";
             string expectedDNSCachingSupportedTR = DataTestUtility.IsDNSCachingSupportedTR ? "true" : "false";
 
-            using(SqlConnection connection = new SqlConnection(DataTestUtility.DNSCachingConnString))
+            using(SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.DNSCachingConnString))
             {
                 connection.Open();
 
@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsDNSCachingSetup))]
         public void DNSCachingGetDNSInfo()
         {            
-            using(SqlConnection connection = new SqlConnection(DataTestUtility.DNSCachingConnString))
+            using(SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.DNSCachingConnString))
             {
                 connection.Open();
             }

@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void OpenMarsConnection(string cmdText)
         {
-            using (SqlConnection conn = new SqlConnection((new SqlConnectionStringBuilder(BaseConnString) { MultipleActiveResultSets = true }).ConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection((new SqlConnectionStringBuilder(BaseConnString) { MultipleActiveResultSets = true }).ConnectionString))
             {
                 conn.Open();
                 using (SqlCommand cmd1 = new SqlCommand(cmdText, conn))
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void OpenConnection()
         {
-            using (SqlConnection conn = new SqlConnection(BaseConnString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(BaseConnString))
             {
                 conn.Open();
                 using (SqlCommand cmd = new SqlCommand("select * from Orders", conn))

@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "drop table [" + dsttable + "]",
             };
 
-            using (SqlConnection dstConn = new SqlConnection(constr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(constr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Helpers.ProcessCommandBatch(typeof(SqlConnection), constr, epilogue);
 
-                    using (SqlConnection srcConn = new SqlConnection(constr))
+                    using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(constr))
                     using (SqlCommand srcCmd = new SqlCommand(string.Format("select * from {0} ", srctable), srcConn))
                     {
                         srcConn.Open();

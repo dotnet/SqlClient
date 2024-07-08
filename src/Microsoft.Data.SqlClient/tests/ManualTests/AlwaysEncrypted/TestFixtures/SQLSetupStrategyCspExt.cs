@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             foreach(string value in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(value))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(value))
                 {
                     sqlConnection.Open();
                     databaseObjects.ForEach(o => o.Create(sqlConnection));

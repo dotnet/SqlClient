@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string dstTable = dstPrefix + "_Table'-]['']";
             dstTable = EscapeIdentifier(dstTable);
 
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Helpers.TryExecute(dstCmd, "create schema " + dstschema);
                     Helpers.TryExecute(dstCmd, "create table " + dstTable + " (orderid int, customerid nchar(5))");
 
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                    using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(srcConstr))
                     using (SqlCommand srcCmd = new SqlCommand("select top 2 orderid, customerid from orders", srcConn))
                     {
                         srcConn.Open();

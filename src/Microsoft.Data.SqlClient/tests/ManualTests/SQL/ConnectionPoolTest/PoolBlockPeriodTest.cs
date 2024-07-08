@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private int GetConnectionOpenTimeInSeconds(string connString)
         {
-            using (SqlConnection conn = new SqlConnection(connString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connString))
             {
                 System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
                 try

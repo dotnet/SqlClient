@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 foreach (string connString in connStrings)
                 {
-                    using (SqlConnection connection = new SqlConnection(connString))
+                    using (SqlConnection connection = DataTestUtility.GetSqlConnection(connString))
                     {
                         connection.Open();
                         databaseObjects.ForEach(o => o.Create(connection));
@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             foreach (string connString in connStrings)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(connString))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connString))
                 {
                     sqlConnection.Open();
 
@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 databaseObjects.Reverse();
                 foreach (string connStr in connStrings)
                 {
-                    using (SqlConnection sqlConnection = new SqlConnection(connStr))
+                    using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connStr))
                     {
                         sqlConnection.Open();
                         databaseObjects.ForEach(o => o.Drop(sqlConnection));

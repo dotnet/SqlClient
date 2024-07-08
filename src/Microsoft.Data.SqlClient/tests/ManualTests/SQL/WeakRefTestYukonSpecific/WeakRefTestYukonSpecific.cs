@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlCommand[] cmd = new SqlCommand[CONCURRENT_COMMANDS];
             SqlDataReader[] gch = new SqlDataReader[CONCURRENT_COMMANDS];
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DataTestUtility.GetSqlConnection(connectionString))
             {
                 con.Open();
 
@@ -201,7 +201,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             WeakReference weak = null;
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = DataTestUtility.GetSqlConnection(connectionString))
             {
                 con.Open();
 

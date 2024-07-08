@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TestStreamHelper(byte[] val, object stream, bool sync, bool oldTypes, int paramLen, bool expectException, bool addWithValue)
         {
-            using SqlConnection conn = new(s_connStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
             conn.Open();
             using SqlCommand command = new()
             {
@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TestTextWrite(string s, object reader, bool sync, bool oldTypes, int paramLen, bool nvarchar, bool expectException, bool addWithValue)
         {
-            using SqlConnection conn = new(s_connStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
             conn.Open();
             SqlCommand command = new()
             {
@@ -381,7 +381,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void TestXML(bool sync, bool lengthLimited, bool addWithValue = false)
         {
 
-            using SqlConnection conn = new(s_connStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
             conn.Open();
             SqlCommand command = new()
             {
@@ -468,7 +468,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             Console.WriteLine("Test immediate cancel for binary stream");
             CancellationTokenSource cts = new();
-            using SqlConnection conn = new(s_connStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
             conn.OpenAsync().Wait();
             using SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "create table #blobs (Id int, blob varbinary(max))";
@@ -512,7 +512,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             Console.WriteLine("Test immediate cancel for text stream");
             CancellationTokenSource cts = new();
-            using SqlConnection conn = new(s_connStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
             conn.OpenAsync().Wait();
             using SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "create table #blobs (Id int, blob varchar(max))";
@@ -550,7 +550,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             Console.WriteLine("Test immediate cancel for xml stream");
             CancellationTokenSource cts = new();
-            using SqlConnection conn = new(s_connStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
             conn.OpenAsync().Wait();
             using SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "create table #blobs (Id int, blob xml)";
@@ -584,7 +584,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void PrepareCommand()
         {
             Console.Write("Test command preparation ");
-            using (SqlConnection conn = new(s_connStr))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr))
             {
                 conn.Open();
                 using SqlCommand cmd = conn.CreateCommand();
@@ -618,7 +618,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             })
             {
                 CancellationTokenSource cts = new();
-                using SqlConnection conn = new(s_connStr);
+                using SqlConnection conn = DataTestUtility.GetSqlConnection(s_connStr);
                 conn.OpenAsync().Wait();
                 Console.WriteLine("Test reuse of command after cancel");
                 using SqlCommand cmd = conn.CreateCommand();

@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string sourceQueryTemplate = "select top 5 EmployeeID, LastName, FirstName from {0}";
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
 
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 try
                 {
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                    using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(srcConstr))
                     using (SqlCommand srcCmd = new SqlCommand(sourceQuery, srcConn))
                     {
                         srcConn.Open();

@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         public static void Test(string srcConstr, string dstConstr, string dstTable)
         {
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
@@ -19,13 +19,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Helpers.TryExecute(dstCmd, "create table " + dstTable + " (col1 int, col2 nvarchar(20), col3 nvarchar(10))");
 
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                    using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(srcConstr))
                     using (SqlCommand srcCmd = new SqlCommand("select top 5 EmployeeID, LastName, FirstName from employees", srcConn))
                     {
                         srcConn.Open();
 
                         using (DbDataReader reader = srcCmd.ExecuteReader())
-                        using (SqlConnection conn3 = new SqlConnection(srcConstr))
+                        using (SqlConnection conn3 = DataTestUtility.GetSqlConnection(srcConstr))
                         {
                             conn3.Open();
                             // Start a local transaction on the wrong connection.

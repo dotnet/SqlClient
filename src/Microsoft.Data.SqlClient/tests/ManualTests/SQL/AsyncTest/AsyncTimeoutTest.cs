@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 MultipleActiveResultSets = marsEnabled
             }.ConnectionString;
 
-            using (SqlConnection sqlConnection = new SqlConnection(connString))
+            using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connString))
             {
                 sqlConnection.Open();
                 if (timeoutDelay != 0)

@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void InvalidLocalDBTest()
         {
-            using var connection = new SqlConnection(s_badConnectionString);
+            using var connection = DataTestUtility.GetSqlConnection(s_badConnectionString);
             DataTestUtility.AssertThrowsWrapper<SqlException>(() => connection.Open());
         }
 #endregion

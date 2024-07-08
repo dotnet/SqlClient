@@ -225,7 +225,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region private methods
         private void TestConnection(SqlRetryLogicBaseProvider provider, RetryLogicConfigs cnfig)
         {
-            using (SqlConnection cnn = new SqlConnection(InvalidTcpCnnString))
+            using (SqlConnection cnn = DataTestUtility.GetSqlConnection(InvalidTcpCnnString))
             {
                 cnn.RetryLogicProvider = provider;
                 var ex = Assert.Throws<AggregateException>(() => cnn.Open());
@@ -237,7 +237,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void TestCommandExecute(SqlRetryLogicBaseProvider provider, RetryLogicConfigs cnfig)
         {
-            using (SqlConnection cnn = new SqlConnection(TcpCnnString))
+            using (SqlConnection cnn = DataTestUtility.GetSqlConnection(TcpCnnString))
             using (SqlCommand cmd = new SqlCommand())
             {
                 cnn.Open();
@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private async Task TestCommandExecuteAsync(SqlRetryLogicBaseProvider provider, RetryLogicConfigs cnfig)
         {
-            using (SqlConnection cnn = new SqlConnection(TcpCnnString))
+            using (SqlConnection cnn = DataTestUtility.GetSqlConnection(TcpCnnString))
             using (SqlCommand cmd = new SqlCommand())
             {
                 cnn.Open();

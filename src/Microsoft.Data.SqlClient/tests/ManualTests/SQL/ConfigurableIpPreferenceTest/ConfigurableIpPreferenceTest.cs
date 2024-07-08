@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(";IPAddressPreference=UsePlatformDefault")]
         public void ConfigurableIpPreference(string ipPreference)
         {
-            using (SqlConnection connection = new SqlConnection(TCPConnectionString + ipPreference
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(TCPConnectionString + ipPreference
 #if NETFRAMEWORK
                 + ";TransparentNetworkIPResolution=false"   // doesn't support in .NET Core
 #endif
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void TestCachedConfigurableIpPreference(string ipPreference, string cnnString)
         {
-            using (SqlConnection connection = new SqlConnection(cnnString + ipPreference))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(cnnString + ipPreference))
             {
                 // each successful connection updates the dns cache entry for the data source
                 connection.Open();

@@ -16,8 +16,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string destTableName = DataTestUtility.GetUniqueNameForSqlServer("BCP_DST");
 
             // this test copies float and real inexact numeric types into decimal targets using bulk copy to check that the widening of the type succeeds.
-            using (var sourceConnection = new SqlConnection(sourceDatabaseConnectionString))
-            using (var destinationConnection = new SqlConnection(destinationDatabaseConnectionString))
+            using (var sourceConnection = DataTestUtility.GetSqlConnection(sourceDatabaseConnectionString))
+            using (var destinationConnection = DataTestUtility.GetSqlConnection(destinationDatabaseConnectionString))
             {
                 try
                 {

@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
             }.ConnectionString;
 
-            using (var connection = new SqlConnection(encryptionEnabledConnectionString))
+            using (var connection = DataTestUtility.GetSqlConnection(encryptionEnabledConnectionString))
             using (var bulkCopy = new SqlBulkCopy(connection)
             {
                 EnableStreaming = true,
@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             foreach (string connection in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(connection))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connection))
                 {
                     sqlConnection.Open();
                     Table.DeleteData(fixture.BulkCopyAETestTable.Name, sqlConnection);

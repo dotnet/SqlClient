@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string connectionString = DataTestUtility.AADPasswordConnectionString;
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 connection.Open();
 
@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(result != string.Empty, "The connection's command must return a value");
 
                 // The new connection will use the same FedAuthToken but will refresh it first as it will expire in 1 minute.
-                using (SqlConnection connection2 = new SqlConnection(connectionString))
+                using (SqlConnection connection2 = DataTestUtility.GetSqlConnection(connectionString))
                 {
                     connection2.Open();
 

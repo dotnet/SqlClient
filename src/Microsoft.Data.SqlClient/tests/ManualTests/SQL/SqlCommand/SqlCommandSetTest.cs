@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string procName = DataTestUtility.GetUniqueNameForSqlServer("CMD");
             byte[] bArray = new byte[] { 1, 2, 3 };
 
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             using (var cmd = new SqlCommand(procName, connection))
             {
                 try

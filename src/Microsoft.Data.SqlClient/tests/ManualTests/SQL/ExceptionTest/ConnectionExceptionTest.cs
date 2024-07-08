@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void TestConnectionStateWithErrorClass20()
         {
             using TestTdsServer server = TestTdsServer.StartTestServer();
-            using SqlConnection conn = new(server.ConnectionString);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(server.ConnectionString);
 
             conn.Open();
             SqlCommand cmd = conn.CreateCommand();
@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
 
             SqlConnectionStringBuilder badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
-            using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
+            using (var sqlConnection = DataTestUtility.GetSqlConnection(badBuilder.ConnectionString))
             {
                 using (SqlCommand command = sqlConnection.CreateCommand())
                 {
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
 
             SqlConnectionStringBuilder badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
-            using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
+            using (var sqlConnection = DataTestUtility.GetSqlConnection(badBuilder.ConnectionString))
             {
                 VerifyConnectionFailure<SqlException>(() => sqlConnection.Open(), sqlsvrBadConn, VerifyException);
             }
@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
 
             SqlConnectionStringBuilder badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
-            using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
+            using (var sqlConnection = DataTestUtility.GetSqlConnection(badBuilder.ConnectionString))
             {
                 using (SqlCommand command = new SqlCommand(orderIdQuery, sqlConnection))
                 {
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.DataSource = dataSource;
             builder.ConnectTimeout = 1;
 
-            using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString))
             {
                 string expectedErrorMsg = "(provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)";
                 VerifyConnectionFailure<SqlException>(() => connection.Open(), expectedErrorMsg);
@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void GenerateConnectionException(string connectionString)
         {
-            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connectionString))
             {
                 sqlConnection.Open();
                 using (SqlCommand command = sqlConnection.CreateCommand())
@@ -204,7 +204,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void OpenBadConnection(string connectionString, string errorMsg)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
             {
                 VerifyConnectionFailure<SqlException>(() => conn.Open(), errorMsg);
             }

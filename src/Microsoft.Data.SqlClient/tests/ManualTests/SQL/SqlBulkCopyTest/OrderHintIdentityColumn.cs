@@ -20,12 +20,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
             string getRowCountQuery = string.Format(getRowCountQueryTemplate, sourceTable);
 
-            using (SqlConnection dstConn = new SqlConnection(connStr))
+            using (SqlConnection dstConn = DataTestUtility.GetSqlConnection(connStr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
                 Helpers.TryExecute(dstCmd, initialQuery);
-                using (SqlConnection srcConn = new SqlConnection(connStr))
+                using (SqlConnection srcConn = DataTestUtility.GetSqlConnection(connStr))
                 using (SqlCommand srcCmd = new SqlCommand(getRowCountQuery, srcConn))
                 {
                     srcConn.Open();

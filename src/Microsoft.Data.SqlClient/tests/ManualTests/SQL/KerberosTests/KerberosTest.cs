@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void IsKerBerosSetupTestAsync(string connectionStr)
         {
             KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser, DataTestUtility.KerberosDomainPassword);
-            using SqlConnection conn = new(connectionStr);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(connectionStr);
 
             conn.Open();
             using SqlCommand command = new("SELECT auth_scheme from sys.dm_exec_connections where session_id = @@spid", conn);

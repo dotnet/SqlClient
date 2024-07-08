@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string createStatementFormat = createBuilder.ToString();
 
             // add a row with nulls only
-            using SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection con = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             using SqlCommand cmd = con.CreateCommand();
             try
             {

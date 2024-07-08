@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void Test_Copy_SqlParameter()
         {
-            using var conn = new SqlConnection(s_connString);
+            using var conn = DataTestUtility.GetSqlConnection(s_connString);
             string cTableName = DataTestUtility.GetUniqueNameForSqlServer("#tmp");
             try
             {
@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void Test_SqlParameter_Constructor()
         {
-            using var conn = new SqlConnection(s_connString);
+            using var conn = DataTestUtility.GetSqlConnection(s_connString);
             var dataTable = new DataTable();
             var adapter = new SqlDataAdapter
             {
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void Test_WithEnumValue_ShouldInferToUnderlyingType()
         {
-            using var conn = new SqlConnection(s_connString);
+            using var conn = DataTestUtility.GetSqlConnection(s_connString);
             conn.Open();
             var cmd = new SqlCommand("select @input", conn);
             cmd.Parameters.AddWithValue("@input", MyEnum.B);
@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void Test_WithOutputEnumParameter_ShouldReturnEnum()
         {
-            using var conn = new SqlConnection(s_connString);
+            using var conn = DataTestUtility.GetSqlConnection(s_connString);
             conn.Open();
             var cmd = new SqlCommand("set @output = @input", conn);
             cmd.Parameters.AddWithValue("@input", MyEnum.B);
@@ -222,7 +222,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void Test_WithDecimalValue_ShouldReturnDecimal()
         {
-            using var conn = new SqlConnection(s_connString);
+            using var conn = DataTestUtility.GetSqlConnection(s_connString);
             conn.Open();
             var cmd = new SqlCommand("select @foo", conn);
             cmd.Parameters.AddWithValue("@foo", new SqlDecimal(0.5));
@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void Test_WithGuidValue_ShouldReturnGuid()
         {
-            using var conn = new SqlConnection(s_connString);
+            using var conn = DataTestUtility.GetSqlConnection(s_connString);
             conn.Open();
             var expectedGuid = Guid.NewGuid();
             var cmd = new SqlCommand("select @input", conn);
@@ -694,7 +694,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void ExecuteNonQueryCommand(string connectionString, string cmdText)
         {
-            using SqlConnection conn = new(connectionString);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString);
             using SqlCommand cmd = conn.CreateCommand();
             conn.Open();
             cmd.CommandText = cmdText;
@@ -706,7 +706,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int firstInput = 1;
             int secondInput = 2;
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var command = new SqlCommand("SELECT @Second, @First", connection);
@@ -727,7 +727,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         private static void EnableOptimizedParameterBinding_NamesMustMatch()
         {
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var command = new SqlCommand("SELECT @DoesNotExist", connection);
@@ -752,7 +752,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         private static void EnableOptimizedParameterBinding_AllNamesMustBeDeclared()
         {
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var command = new SqlCommand("SELECT @Exists, @DoesNotExist", connection);
@@ -781,7 +781,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int secondInput = 2;
             int thirdInput = 3;
 
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var command = new SqlCommand("SELECT @First, @Second, @First", connection);
@@ -809,7 +809,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int secondInput = 2;
             int thirdInput = 3;
 
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection);
@@ -831,7 +831,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int secondInput = 2;
             int thirdInput = 3;
 
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             using var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection);
@@ -864,7 +864,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 ExecuteNonQueryCommand(DataTestUtility.TCPConnectionString, createSprocQuery);
 
-                using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+                using var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
                 connection.Open();
 
                 using var command = new SqlCommand(sprocName, connection) { CommandType = CommandType.StoredProcedure };
@@ -917,7 +917,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var cancellationToken = new CancellationTokenSource(50);
             var expectedGuid = Guid.NewGuid();
 
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
             using SqlCommand cm = connection.CreateCommand();
             cm.CommandType = CommandType.Text;

@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connectionStr))
                 {
                     sqlConnection.Open();
                     _databaseObjects.ForEach(o => o.Create(sqlConnection));
@@ -106,8 +106,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             CompareTables(connString, encryptedTableName, unencryptedTableName);
 
             // Now send a query with a predicate using the larger type and confirm that the row that was inserted with the smaller type can still be found.
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(connString))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(connString))
+            using (SqlConnection sqlConnectionEncrypted = DataTestUtility.GetSqlConnection(connString))
+            using (SqlConnection sqlConnectionUnencrypted = DataTestUtility.GetSqlConnection(connString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -192,8 +192,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             CompareTables(connString, targetTableName, witnessTableName);
 
             // Now send a query with a predicate using the larger type and confirm that the row that was inserted with the smaller type can still be found.
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(connString))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(connString))
+            using (SqlConnection sqlConnectionEncrypted = DataTestUtility.GetSqlConnection(connString))
+            using (SqlConnection sqlConnectionUnencrypted = DataTestUtility.GetSqlConnection(connString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -269,8 +269,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             List<ValueErrorTuple> valueList = GenerateOutOfRangeValuesForType(currentDbType, currentColumnInfo.ColumnSize, currentColumnInfo.Precision, currentColumnInfo.Scale);
             Assert.True(valueList.Count != 0, "Test bug, the list is empty!");
 
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(connString))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(connString))
+            using (SqlConnection sqlConnectionEncrypted = DataTestUtility.GetSqlConnection(connString))
+            using (SqlConnection sqlConnectionUnencrypted = DataTestUtility.GetSqlConnection(connString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -715,7 +715,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             object[] valueArray = new object[NumberOfRows];
 
-            using (SqlConnection sqlConnection = new SqlConnection(connString))
+            using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connString))
             {
                 sqlConnection.Open();
 
@@ -764,7 +764,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             object[] valueArray = new object[NumberOfRows];
 
-            using (SqlConnection sqlConnection = new SqlConnection(connSting))
+            using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connSting))
             {
                 sqlConnection.Open();
 
@@ -802,7 +802,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlConnectionStringBuilder strbld = new SqlConnectionStringBuilder(connString);
             strbld.ColumnEncryptionSetting = sourceConnectionFlag;
 
-            using (SqlConnection sourceConnection = new SqlConnection(strbld.ToString()))
+            using (SqlConnection sourceConnection = DataTestUtility.GetSqlConnection(strbld.ToString()))
             {
                 sourceConnection.Open();
 
@@ -812,7 +812,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SqlDataReader reader = sourceCmd.ExecuteReader();
 
                 strbld.ColumnEncryptionSetting = targetConnectionFlag;
-                using (SqlConnection targetConnection = new SqlConnection(strbld.ToString()))
+                using (SqlConnection targetConnection = DataTestUtility.GetSqlConnection(strbld.ToString()))
                 {
                     targetConnection.Open();
 
@@ -843,7 +843,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             object[] valueArray = new object[NumberOfRows];
             int index = 0;
 
-            using (SqlConnection sqlConnection = new SqlConnection(connString))
+            using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connString))
             {
                 sqlConnection.Open();
 
@@ -874,8 +874,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <param name="unencryptedTableName"></param>
         private void CompareTables(string connString, string encryptedTableName, string unencryptedTableName)
         {
-            using (SqlConnection sqlConnectionEncrypted = new SqlConnection(connString))
-            using (SqlConnection sqlConnectionUnencrypted = new SqlConnection(connString))
+            using (SqlConnection sqlConnectionEncrypted = DataTestUtility.GetSqlConnection(connString))
+            using (SqlConnection sqlConnectionUnencrypted = DataTestUtility.GetSqlConnection(connString))
             {
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
@@ -1268,7 +1268,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                       )";
             }
 
-            using (SqlConnection sqlConn = new SqlConnection(connString))
+            using (SqlConnection sqlConn = DataTestUtility.GetSqlConnection(connString))
             {
                 sqlConn.Open();
 
@@ -1322,7 +1322,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             _databaseObjects.Reverse();
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
+                using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connectionStr))
                 {
                     sqlConnection.Open();
                     foreach (string table in _tables)

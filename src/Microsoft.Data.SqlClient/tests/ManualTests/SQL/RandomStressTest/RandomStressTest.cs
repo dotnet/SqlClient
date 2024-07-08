@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string connString = _connectionStrings[rand.Next(_connectionStrings.Length)];
 
-            con = new SqlConnection(connString);
+            con = DataTestUtility.GetSqlConnection(connString);
             con.Open();
         }
 

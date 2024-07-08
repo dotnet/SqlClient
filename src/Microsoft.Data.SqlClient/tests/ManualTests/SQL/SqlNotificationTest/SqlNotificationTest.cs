@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test_SingleDependency_NoStart()
         {
-            using (SqlConnection conn = new SqlConnection(_execConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_execConnectionString))
             using (SqlCommand cmd = new SqlCommand("SELECT a, b, c FROM " + _tableName, conn))
             {
                 conn.Open();
@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlDependency.Start(_startConnectionString);
             SqlDependency.Stop(_startConnectionString);
 
-            using (SqlConnection conn = new SqlConnection(_execConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_execConnectionString))
             using (SqlCommand cmd = new SqlCommand("SELECT a, b, c FROM " + _tableName, conn))
             {
                 conn.Open();
@@ -149,7 +149,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ManualResetEventSlim notificationReceived = new ManualResetEventSlim(false);
                 ManualResetEventSlim updateCompleted = new ManualResetEventSlim(false);
 
-                using (SqlConnection conn = new SqlConnection(_execConnectionString))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(_execConnectionString))
                 using (SqlCommand cmd = new SqlCommand("SELECT a, b, c FROM " + _tableName, conn))
                 {
                     conn.Open();
@@ -193,7 +193,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ManualResetEventSlim notificationReceived = new ManualResetEventSlim(false);
                 ManualResetEventSlim updateCompleted = new ManualResetEventSlim(false);
 
-                using (SqlConnection conn = new SqlConnection(_execConnectionString))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(_execConnectionString))
                 using (SqlCommand cmd = new SqlCommand("SELECT a, b, c FROM " + _tableName, conn))
                 {
                     conn.Open();
@@ -244,7 +244,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ManualResetEventSlim notificationReceived = new ManualResetEventSlim(false);
                 DateTime startUtcTime;
 
-                using (SqlConnection conn = new SqlConnection(_execConnectionString))
+                using (SqlConnection conn = DataTestUtility.GetSqlConnection(_execConnectionString))
                 using (SqlCommand cmd = new SqlCommand("SELECT a, b, c FROM " + _tableName, conn))
                 {
                     conn.Open();
@@ -324,7 +324,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private int RunSQL(params string[] stmts)
         {
             int count = -1;
-            using (SqlConnection conn = new SqlConnection(_execConnectionString))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_execConnectionString))
             {
                 conn.Open();
 
