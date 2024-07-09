@@ -918,20 +918,20 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\ConnectionHandlerContext.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\DataSourceParsingHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\PreloginHandlerContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\PreloginPacketHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds8TlsHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds74TlsHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\TlsAuthenticator.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\ConnectionHandlerContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreationHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreationSubHandlers\IpAddressVersionComparer.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreationSubHandlers\NamedPipeTransportCreationHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreationSubHandlers\SharedMemoryTransportCreationHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreationSubHandlers\TcpTransportCreationHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreation\IpAddressVersionComparer.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreation\NamedPipeTransportCreationHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreation\SharedMemoryTransportCreationHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreation\TcpTransportCreationHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ContextHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\DataSourceParsingHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequest.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\IHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\IReturningHandler.cs" />

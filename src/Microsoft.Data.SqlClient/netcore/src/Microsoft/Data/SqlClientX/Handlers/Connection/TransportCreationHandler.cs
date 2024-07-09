@@ -6,7 +6,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreationSubHandlers;
+using Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreation;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {

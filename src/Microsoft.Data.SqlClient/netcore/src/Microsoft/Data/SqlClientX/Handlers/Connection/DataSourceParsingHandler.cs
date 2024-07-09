@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 
-namespace Microsoft.Data.SqlClientX.Handlers
+namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {
     /// <summary>
     /// Handler to populate data source information required for transport handler

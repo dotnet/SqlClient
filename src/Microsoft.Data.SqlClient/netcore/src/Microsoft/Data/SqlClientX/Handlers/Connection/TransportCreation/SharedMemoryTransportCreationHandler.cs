@@ -7,7 +7,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreationSubHandlers
+namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreation
 {
     /// <summary>
     /// Handler for connecting via shared memory.

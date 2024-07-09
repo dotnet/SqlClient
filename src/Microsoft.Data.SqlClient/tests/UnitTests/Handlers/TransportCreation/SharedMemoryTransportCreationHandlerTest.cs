@@ -4,8 +4,8 @@
 
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.SNI;
-using Microsoft.Data.SqlClientX.Handlers;
-using Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreationSubHandlers;
+using Microsoft.Data.SqlClientX.Handlers.Connection;
+using Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreation;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.TransportCreation
