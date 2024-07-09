@@ -1577,6 +1577,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.Char:
                         case SqlDbType.VarChar:
                         case SqlDbType.Text:
+                        case (SqlDbType)35:
                             {
                                 // for these types, ActualSize is the num of chars, not actual bytes - since non-unicode chars are not always uniform size
                                 coercedSize = (!HasFlag(SqlParameterFlags.IsNull) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;

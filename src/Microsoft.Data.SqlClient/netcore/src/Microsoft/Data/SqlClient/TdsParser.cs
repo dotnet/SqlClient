@@ -11842,7 +11842,8 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
-                    {
+                case TdsEnums.SQLJSON:
+                {
                         Debug.Assert(!isDataFeed || (value is TextDataFeed || value is XmlDataFeed), "Value must be a TextReader or XmlReader");
                         Debug.Assert(isDataFeed || (value is string || value is byte[]), "Value is a byte array or string");
 
@@ -12381,7 +12382,7 @@ namespace Microsoft.Data.SqlClient
                         WriteInt(unchecked((int)TdsEnums.VARLONGNULL), stateObj);
                     }
                 }
-                else if (type.NullableType is TdsEnums.SQLXMLTYPE or TdsEnums.SQLJSON|| unknownLength)
+                else if (type.NullableType is TdsEnums.SQLXMLTYPE || unknownLength)
                 {
                     WriteUnsignedLong(TdsEnums.SQL_PLP_UNKNOWNLEN, stateObj);
                 }

@@ -114,7 +114,8 @@ namespace Microsoft.Data.SqlClient
             type == SqlDbType.NChar ||
             type == SqlDbType.NVarChar ||
             type == SqlDbType.Xml ||
-            type == SqlDbType.NText;
+            type == SqlDbType.NText || 
+            type == (SqlDbType)35;
 
         private static bool _IsCharType(SqlDbType type) =>
             type == SqlDbType.NChar ||
@@ -123,13 +124,15 @@ namespace Microsoft.Data.SqlClient
             type == SqlDbType.Char ||
             type == SqlDbType.VarChar ||
             type == SqlDbType.Text ||
-            type == SqlDbType.Xml;
+            type == SqlDbType.Xml ||
+            type == (SqlDbType)35;
 
         private static bool _IsNCharType(SqlDbType type) =>
             type == SqlDbType.NChar ||
             type == SqlDbType.NVarChar ||
             type == SqlDbType.NText ||
-            type == SqlDbType.Xml;
+            type == SqlDbType.Xml ||
+            type == (SqlDbType)35;
 
         private static bool _IsBinType(SqlDbType type) =>
             type == SqlDbType.Image ||
@@ -972,7 +975,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static readonly MetaType MetaDateTimeOffset = new(255, 7, -1, false, false, false, TdsEnums.SQLDATETIMEOFFSET, TdsEnums.SQLDATETIMEOFFSET, MetaTypeName.DATETIMEOFFSET, typeof(System.DateTimeOffset), typeof(System.DateTimeOffset), SqlDbType.DateTimeOffset, DbType.DateTimeOffset, 1);
 
-        internal static readonly MetaType s_MetaJson = new(255, 255, -1, false, true, true, TdsEnums.SQLJSON, TdsEnums.SQLJSON, MetaTypeName.JSON, typeof(SqlJson), typeof(SqlJson), (SqlDbType)35, DbType.String, 0);
+        internal static readonly MetaType s_MetaJson = new(255, 255, -1, false, true, false, TdsEnums.SQLJSON, TdsEnums.SQLJSON, MetaTypeName.JSON, typeof(string), typeof(SqlJson), (SqlDbType)35, DbType.String, 0);
 
         public static TdsDateTime FromDateTime(DateTime dateTime, byte cb)
         {
