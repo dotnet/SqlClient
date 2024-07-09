@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             var connection = new SqlConnection(connectionString);
 
-            if (Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(connectionString).DataSource))
+            if (!string.IsNullOrEmpty(AADAccessToken)))
             {
                 connection.AccessToken = AADAccessToken;
             }
