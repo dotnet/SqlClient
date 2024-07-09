@@ -2,10 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Security;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.IO;
@@ -16,6 +17,8 @@ namespace Microsoft.Data.SqlClientX.Handlers
      /// </summary>
     internal class ConnectionHandlerContext : HandlerRequest, ICloneable
     {
+
+        // TODO: Decide if we need a default constructor depending on the latest design 
         /// <summary>
         /// Stream used by readers.
         /// </summary>
@@ -78,6 +81,11 @@ namespace Microsoft.Data.SqlClientX.Handlers
         public ServerInfo ServerInfo { get; internal set; }
 
         /// <summary>
+        /// The history of previous <see cref="ConnectionHandlerContext"/> in case of reroute
+        /// </summary>
+        public List<ConnectionHandlerContext> RoutingHistory { get; set; }
+
+        /// <summary>
         /// An error collection for the handlers to add errors to.
         /// </summary>
         public SqlErrorCollection ErrorCollection { get; internal set; } = new();
@@ -91,5 +99,46 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// The callback for Access Token Retrieval.
         /// </summary>
         internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback { get; set; }
+
+        /// <summary>
+        /// Clone <see cref="ConnectionHandlerContext"/> as part of history along the chain.
+        /// </summary>
+        /// <returns>A new instance of ConnectionHandlerContext with copied values.</returns>
+        public object Clone()
+        {
+            return new ConnectionHandlerContext
+            {
+                ConnectionStream = this.ConnectionStream, 
+                ConnectionString = this.ConnectionString, 
+                DataSource = this.DataSource, 
+                Error = this.Error, 
+                ConnectionId = this.ConnectionId,
+                SslStream = this.SslStream, 
+                SslOverTdsStream = this.SslOverTdsStream, 
+                TdsStream = this.TdsStream, 
+                MarsCapable = this.MarsCapable,
+                FedAuthRequired = this.FedAuthRequired,
+                AccessTokenInBytes = this.AccessTokenInBytes,
+                ServerInfo = this.ServerInfo, 
+                ErrorCollection = this.ErrorCollection, 
+                AccessTokenCallback = this.AccessTokenCallback // Assuming delegate cloning is not required
+            };
+        }
+
+        /// <summary>
+        /// Adds the context of previous handler into the routingHistory object in case
+        /// of a reroute
+        /// </summary>
+        /// <param name="context"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        private void AddToRoutingHistory(ConnectionHandlerContext context)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context), "Context cannot be null");
+            }
+            RoutingHistory.Add(context);
+        }
+
     }
 }

@@ -12,22 +12,18 @@ namespace Microsoft.Data.SqlClientX.Handlers
     internal class HandlerOrchestrator
     {
         /// <summary>
-        /// Class responsible to create the chain of handlers, initiate chain, retain handler-context, maintain 
+        /// Class responsible for creation of chain of handlers, initiate chain, retain handler-context, maintain 
         /// routing count and history of all handler contexts for all handlers in the chain
         /// </summary>
         private  IHandler<HandlerRequest> _initialHandler;
         private ConnectionHandlerContext _initialConnectionHandlerContext;
         private InternalConnectionContext _internalConnectionContext;
-        private int _routingCount;
-        private List<ConnectionHandlerContext> _routingHistory;
 
         public HandlerOrchestrator(IHandler<HandlerRequest> initialHandler, ConnectionHandlerContext initialConnectionHandlerContext, InternalConnectionContext internalConnectionContext, List<ConnectionHandlerContext> history)
         {
             _initialHandler = initialHandler;
             _initialConnectionHandlerContext = initialConnectionHandlerContext;
             _internalConnectionContext = internalConnectionContext;
-            _routingHistory = history;
-            _routingCount = 0;
         }
 
         /// <summary>
@@ -37,18 +33,16 @@ namespace Microsoft.Data.SqlClientX.Handlers
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="HandlerNotFoundException"></exception>
-        public async Task ProcessRequestAsync(bool isAsync, CancellationToken ct) 
+        public async ValueTask ProcessRequestAsync(bool isAsync, CancellationToken ct) 
         {
             CreateHandlerChain();
-            if (_initialHandler != null)
-            {
-                await _initialHandler.Handle(_initialConnectionHandlerContext, isAsync, ct).ConfigureAwait(false);
-            }
-            else
+            if (_initialHandler is not null)
             {
                 //TODO: Deal with missing handler exception in the connector and populate relevant SqlException in future.
                 throw new HandlerNotFoundException();
+                
             }
+            await _initialHandler.Handle(_initialConnectionHandlerContext, isAsync, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -72,24 +66,9 @@ namespace Microsoft.Data.SqlClientX.Handlers
             // Set the first handler in the chain
             if (handlers.Count > 0)
             {
+                // explicit cast because handlers currently use ConnectionHandlerContext
                 _initialHandler = (IHandler<HandlerRequest>)handlers[0];
             }
-        }
-
-        /// <summary>
-        /// Adds the context of previous handler into the routingHistory object in case
-        /// of a reroute, exception etc.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <exception cref="ArgumentNullException"></exception>
-        private void AddToHistory(ConnectionHandlerContext context)
-        {
-            if (context == null)
-            {
-                throw new ArgumentNullException(nameof(context), "Context cannot be null");
-            }
-            _routingHistory.Add((ConnectionHandlerContext)context.Clone());
-            _routingCount++;
         }
     }
 }
