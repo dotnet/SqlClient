@@ -19,7 +19,7 @@
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
   </PropertyGroup>
   <!--Generating Strong Name in official pipelines -->
-  <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official AND $(SigningKeyPath) != ''">
+  <PropertyGroup Condition="$(SigningKeyPath) != ''">
     <SignAssembly>true</SignAssembly>
     <DelaySign>true</DelaySign>
     <KeyFile>$(SigningKeyPath)</KeyFile>
