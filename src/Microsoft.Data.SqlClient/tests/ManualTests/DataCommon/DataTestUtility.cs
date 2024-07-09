@@ -231,14 +231,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static SqlConnection GetSqlConnection(string connectionString = "")
         {
-            var connection = new SqlConnection(connectionString);
-
             if (!string.IsNullOrEmpty(AADAccessToken))
             {
-                connection.AccessToken = AADAccessToken;
+                string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
+                connectionString = RemoveKeysInConnStr(connectionString, credKeys);
+                var connection = new SqlConnection(connectionString)
+                {
+                    AccessToken = AADAccessToken
+                };
+
+                return connection;
             }
 
-            return connection;
+            return new SqlConnection(connectionString);
         }
 
         public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
