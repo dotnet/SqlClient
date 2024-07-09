@@ -3,8 +3,12 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.IO;
+using System.Net.Security;
+using System.Threading.Tasks;
+using System.Threading;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
+using Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.Handlers
 {    /// <summary>
@@ -33,38 +37,59 @@ namespace Microsoft.Data.SqlClientX.Handlers
         public Exception Error { get; set; }
 
         /// <summary>
-        /// Method needed to clone ConnectionHandlerContext as part of history along the chain.
+        /// The Guid of the Connection.
         /// </summary>
-        public object Clone() 
-        {
-            ConnectionHandlerContext clonedContext = new ConnectionHandlerContext();
+        public Guid ConnectionId { get; internal set; } = Guid.Empty;
 
-            if (this.ConnectionStream != null)
-            {
-                MemoryStream clonedStream = new MemoryStream();
-                this.ConnectionStream.CopyTo(clonedStream);
-                clonedStream.Position = 0;
-                clonedContext.ConnectionStream = clonedStream;
-            }
+        /// <summary>
+        /// The SslStream used by the connection.
+        /// </summary>
+        public SslStream SslStream { get; internal set; }
 
-            if (this.ConnectionString != null)
-            {
-                clonedContext.ConnectionString = new SqlConnectionString(this.ConnectionString.ToString());
-            }
+        /// <summary>
+        /// The SslOverTdsStream used by the connection in case of Tds below 7.4.
+        /// </summary>
+        public SslOverTdsStream SslOverTdsStream { get; internal set; }
 
-            if (this.DataSource != null)
-            {
-                //TODO: Move DataSource class into SqlClientX and implement clone
-                clonedContext.DataSource = (DataSource)this.DataSource;
-            }
+        /// <summary>
+        /// The TdsStream to write Tds Packets to.
+        /// </summary>
+        public TdsStream TdsStream { get; internal set; }
 
-            if (this.Error != null)
-            {
-                clonedContext.Error = new Exception(this.Error.Message, this.Error.InnerException);
-            }
+        /// <summary>
+        /// Whether the connection is capable of MARS
+        /// This is negotiated after pre-login.
+        /// </summary>
+        public bool MarsCapable { get; internal set; }
 
-            return clonedContext;
-        }
+        /// <summary>
+        /// Indicates if fed auth needed for this connection.
+        /// </summary>
+        public bool FedAuthRequired { get; internal set; }
+
+        /// <summary>
+        /// The access token in bytes.
+        /// </summary>
+        public byte[] AccessTokenInBytes { get; internal set; }
+
+        /// <summary>
+        /// The server information created for the connection.
+        /// </summary>
+        public ServerInfo ServerInfo { get; internal set; }
+
+        /// <summary>
+        /// An error collection for the handlers to add errors to.
+        /// </summary>
+        public SqlErrorCollection ErrorCollection { get; internal set; } = new();
+
+        /// <summary>
+        /// Logger.
+        /// </summary>
+        public static SqlClientLogger Logger { get; } = new();
+
+        /// <summary>
+        /// The callback for Access Token Retrieval.
+        /// </summary>
+        internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback { get; set; }
     }
 }
-

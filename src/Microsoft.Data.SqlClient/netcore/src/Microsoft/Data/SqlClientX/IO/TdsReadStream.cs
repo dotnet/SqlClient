@@ -37,9 +37,7 @@ namespace Microsoft.Data.SqlClientX.IO
         // The end of the data index in the buffer.
         private int _readBufferDataEnd = 0;
 
-        // The number of bytes left in the packet to be consumed.
-        // This is not necessarily the number of bytes available in the buffer.
-        private int _packetDataLeft = 0;
+        
 
         #endregion
 
@@ -70,6 +68,8 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <inheritdoc />
         public override long Length => throw new NotSupportedException();
 
+        /// <inheritdoc />
+        public virtual int PacketDataLeft { get; private set; }
 
         /// <inheritdoc />
         public virtual byte ReadPacketHeaderType { get; private set; }
@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClientX.IO
         private void AdvanceBufferOnRead(int length)
         {
             _readIndex += length;
-            _packetDataLeft -= length;
+            PacketDataLeft -= length;
         }
 
         /// <summary>
@@ -250,7 +250,7 @@ namespace Microsoft.Data.SqlClientX.IO
             // else we will read either the data in packet, or the 
             // data in buffer, whichever is smaller.
             // If the data spans multiple packets, then the caller will go ahead and post a network read.
-            return Math.Min(Math.Min(_packetDataLeft, _readBufferDataEnd - _readIndex), maxByteCountExpected);
+            return Math.Min(Math.Min(PacketDataLeft, _readBufferDataEnd - _readIndex), maxByteCountExpected);
         }
 
         /// <summary>
@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <returns></returns>
         private async ValueTask PrepareBufferAsync(bool isAsync, CancellationToken ct)
         {
-            bool shouldReadMoreData = _packetDataLeft == 0 || _readBufferDataEnd == _readIndex;
+            bool shouldReadMoreData = PacketDataLeft == 0 || _readBufferDataEnd == _readIndex;
 
             // Fail fast in case we don't need to prepare the buffer.
             if (!shouldReadMoreData)
@@ -272,7 +272,7 @@ namespace Microsoft.Data.SqlClientX.IO
             }
             // We have read all the data from the packet as stated in the header, this means that we have to 
             // process the next packet header.
-            if (_packetDataLeft == 0 && _readBufferDataEnd > _readIndex)
+            if (PacketDataLeft == 0 && _readBufferDataEnd > _readIndex)
             {
                 await ProcessHeaderAsync(isAsync, ct).ConfigureAwait(false);
             }
@@ -281,7 +281,7 @@ namespace Microsoft.Data.SqlClientX.IO
             if (_readIndex == _readBufferDataEnd)
             {
                 // 1.1 If we have left over data indicated in the packet header, then we simply need to get data from the network.
-                if (_packetDataLeft > 0)
+                if (PacketDataLeft > 0)
                 {
                     _readBufferDataEnd = isAsync ?
                         await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false) :
@@ -289,7 +289,7 @@ namespace Microsoft.Data.SqlClientX.IO
                     _readIndex = 0;
                 }
                 // 1.2. There is no data left as indicated by packet header and the buffer is empty.
-                else if (_packetDataLeft == 0)
+                else if (PacketDataLeft == 0)
                 {
                     _readBufferDataEnd = isAsync ?
                         await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false) :
@@ -347,7 +347,7 @@ namespace Microsoft.Data.SqlClientX.IO
 
             ReadPacketHeaderType = _readBuffer[_readIndex];
             ReadPacketStatus = _readBuffer[_readIndex + 1];
-            _packetDataLeft = BinaryPrimitives.ReadUInt16BigEndian(_readBuffer.AsSpan(_readIndex + TdsEnums.HEADER_LEN_FIELD_OFFSET, 2)) - TdsEnums.HEADER_LEN;
+            PacketDataLeft = BinaryPrimitives.ReadUInt16BigEndian(_readBuffer.AsSpan(_readIndex + TdsEnums.HEADER_LEN_FIELD_OFFSET, 2)) - TdsEnums.HEADER_LEN;
             Spid = BinaryPrimitives.ReadUInt16BigEndian(_readBuffer.AsSpan(_readIndex + TdsEnums.SPID_OFFSET, 2));
             // Position the read index to the start of the packet data.
             _readIndex += TdsEnums.HEADER_LEN;
