@@ -25,6 +25,7 @@ using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
 using Microsoft.Data.ProviderBase;
+using System.IdentityModel.Tokens;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -6515,6 +6516,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVARCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
+                case TdsEnums.SQLJSONTYPE:
                     // If bigvarchar(max), we only read the first chunk here,
                     // expecting the caller to read the rest
                     if (encoding == null)
@@ -6953,6 +6955,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNCHAR:
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
+                case TdsEnums.SQLJSONTYPE:
                     if (!TryReadSqlStringValue(value, tdsType, length, md.encoding, isPlp, stateObj))
                     {
                         return false;
@@ -8428,6 +8431,7 @@ namespace Microsoft.Data.SqlClient
             if (_is2005 && colmeta.metaType.IsPlp)
             {
                 Debug.Assert(colmeta.tdsType == TdsEnums.SQLXMLTYPE ||
+                             colmeta.tdsType == TdsEnums.SQLJSONTYPE ||
                              colmeta.tdsType == TdsEnums.SQLBIGVARCHAR ||
                              colmeta.tdsType == TdsEnums.SQLBIGVARBINARY ||
                              colmeta.tdsType == TdsEnums.SQLNVARCHAR ||
@@ -11854,6 +11858,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     tokenLength = 8;
                 }
+                else if (token == TdsEnums.SQLJSONTYPE)
+                {
+                    tokenLength = 8;
+                }
             }
 
             if (tokenLength == 0)
@@ -12113,7 +12121,6 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(value is SqlString);
                         return WriteString(((SqlString)value).Value, actualLength, offset, stateObj, canAccumulate: false);
                     }
-
                 case TdsEnums.SQLNUMERICN:
                     Debug.Assert(type.FixedLength <= 17, "Decimal length cannot be greater than 17 bytes");
                     WriteSqlDecimal((SqlDecimal)value, stateObj);
@@ -12777,6 +12784,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
+                case TdsEnums.SQLJSONTYPE:
                     {
                         Debug.Assert(!isDataFeed || (value is TextDataFeed || value is XmlDataFeed), "Value must be a TextReader or XmlReader");
                         Debug.Assert(isDataFeed || (value is string || value is byte[]), "Value is a byte array or string");

@@ -5705,6 +5705,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVARCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
+                case TdsEnums.SQLJSONTYPE:
                     // If bigvarchar(max), we only read the first chunk here,
                     // expecting the caller to read the rest
                     if (encoding == null)
@@ -6162,6 +6163,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNCHAR:
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
+                case TdsEnums.SQLJSONTYPE:
                     if (!TryReadSqlStringValue(value, tdsType, length, md.encoding, isPlp, stateObj))
                     {
                         return false;
@@ -7652,6 +7654,7 @@ namespace Microsoft.Data.SqlClient
             if (colmeta.metaType.IsPlp)
             {
                 Debug.Assert(colmeta.tdsType == TdsEnums.SQLXMLTYPE ||
+                             colmeta.tdsType == TdsEnums.SQLJSONTYPE ||
                              colmeta.tdsType == TdsEnums.SQLBIGVARCHAR ||
                              colmeta.tdsType == TdsEnums.SQLBIGVARBINARY ||
                              colmeta.tdsType == TdsEnums.SQLNVARCHAR ||
@@ -11175,6 +11178,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
+                case TdsEnums.SQLJSONTYPE:
 
                     if (type.IsPlp)
                     {
@@ -11825,6 +11829,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
+                case TdsEnums.SQLJSONTYPE:
                     {
                         Debug.Assert(!isDataFeed || (value is TextDataFeed || value is XmlDataFeed), "Value must be a TextReader or XmlReader");
                         Debug.Assert(isDataFeed || (value is string || value is byte[]), "Value is a byte array or string");

@@ -1563,6 +1563,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.NVarChar:
                         case SqlDbType.NText:
                         case SqlDbType.Xml:
+                        case (SqlDbType)35:
                             {
                                 coercedSize = ((!HasFlag(SqlParameterFlags.IsNull)) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType)) : 0;
                                 _actualSize = (ShouldSerializeSize() ? Size : 0);
