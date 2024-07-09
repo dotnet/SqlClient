@@ -918,16 +918,18 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\ConnectionHandlerContext.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\DataSource.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\DataSourceParsingHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\DataSourceProtocol.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsBufferAlloc.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriter.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\ConnectionHandlerContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\PreloginHandlerContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\PreloginPacketHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds8TlsHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds74TlsHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\TlsAuthenticator.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\DataSourceParsingHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\UnpooledDataSource.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\PoolingDataSource.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlDataSource.cs" />

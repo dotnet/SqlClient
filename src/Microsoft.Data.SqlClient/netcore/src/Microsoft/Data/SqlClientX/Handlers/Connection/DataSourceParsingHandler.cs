@@ -6,8 +6,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
+using DataSourceX = Microsoft.Data.SqlClientX.Handlers.Connection.DataSource;
 
-namespace Microsoft.Data.SqlClientX.Handlers
+namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {
     /// <summary>
     /// Handler to populate data source information required for transport handler
@@ -22,25 +23,45 @@ namespace Microsoft.Data.SqlClientX.Handlers
         {
             ServerInfo serverInfo = request.ServerInfo;
             string fullServerName = serverInfo.ExtendedServerName;
-            string localDBDataSource = GetLocalDBDataSource(fullServerName, out bool errorWithLocalDBProcessing);
+            string localDbDataSource = GetLocalDbDataSource(fullServerName, out bool errorWithLocalDbProcessing);
 
-            if (errorWithLocalDBProcessing)
+            if (errorWithLocalDbProcessing)
             {
                 //TODO: populate other details for the SQLException
-                SqlErrorCollection collection = new SqlErrorCollection();
-                collection.Add(new SqlError(0,0,TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString("LocalDB_UnobtainableMessage"), null, 0));
+                SqlErrorCollection collection = new SqlErrorCollection
+                {
+                    new SqlError(
+                        0,
+                        0,
+                        TdsEnums.FATAL_ERROR_CLASS,
+                        null,
+                        StringsHelper.GetString("LocalDB_UnobtainableMessage"),
+                        null,
+                        0)
+                };
+                
                 request.Error = SqlException.CreateException(collection, null);
                 return;
             }
             
             // If a localDB Data source is available, we need to use it.
-            fullServerName = localDBDataSource ?? fullServerName;
-            DataSource details = DataSource.ParseServerName(fullServerName);
+            fullServerName = localDbDataSource ?? fullServerName;
+            DataSourceX details = DataSourceX.ParseServerName(fullServerName);
             if (details == null)
             {
                 //TODO: populate other details for the SQLException
-                SqlErrorCollection collection = new SqlErrorCollection();
-                collection.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString("LocalDB_UnobtainableMessage"), null, 0));
+                SqlErrorCollection collection = new SqlErrorCollection
+                {
+                    new SqlError(
+                        0, 
+                        0,
+                        TdsEnums.FATAL_ERROR_CLASS,
+                        null,
+                        StringsHelper.GetString("LocalDB_UnobtainableMessage"),
+                        null,
+                        0)
+                };
+                
                 request.Error = SqlException.CreateException(collection, null);
                 return;
             }
@@ -53,23 +74,23 @@ namespace Microsoft.Data.SqlClientX.Handlers
             }
         }
         //TODO: Refactor function for better handling of error flag and return params
-        private static string GetLocalDBDataSource(string fullServerName, out bool error)
+        private static string GetLocalDbDataSource(string fullServerName, out bool error)
         {
-            string localDBConnectionString = null;
-            string localDBInstance = DataSource.GetLocalDBInstance(fullServerName, out bool isBadLocalDBDataSource);
+            string localDbConnectionString = null;
+            string localDbInstance = DataSourceX.GetLocalDbInstance(fullServerName, out bool isBadLocalDbDataSource);
 
-            if (isBadLocalDBDataSource)
+            if (isBadLocalDbDataSource)
             {
                 error = true;
                 return null;
             }
 
-            else if (!string.IsNullOrEmpty(localDBInstance))
+            if (!string.IsNullOrEmpty(localDbInstance))
             {
                 // We have successfully received a localDBInstance which is valid.
-                localDBConnectionString = LocalDB.GetLocalDBConnectionString(localDBInstance);
+                localDbConnectionString = LocalDB.GetLocalDBConnectionString(localDbInstance);
 
-                if (fullServerName == null || string.IsNullOrEmpty(localDBConnectionString))
+                if (fullServerName == null || string.IsNullOrEmpty(localDbConnectionString))
                 {
                     // The Last error is set in LocalDB.GetLocalDBConnectionString. We don't need to set Last here.
                     error = true;
@@ -78,7 +99,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
             }
             
             error = false;
-            return localDBConnectionString;
+            return localDbConnectionString;
         }
     }
 }

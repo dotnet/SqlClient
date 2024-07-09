@@ -11,7 +11,8 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlClient.SNI;
+using Microsoft.Data.SqlClientX.Handlers.Connection;
+using DataSource = Microsoft.Data.SqlClient.SNI.DataSource;
 
 namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 {
@@ -37,7 +38,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             try
             {
                 // @TODO: Build CoR for handling the different protocols in order
-                if (context.DataSource.ResolvedProtocol is DataSource.Protocol.TCP)
+                if (context.DataSource.Protocol is DataSourceProtocol.Tcp)
                 {
                     context.ConnectionStream = await HandleTcpRequest(context, isAsync, ct).ConfigureAwait(false);
                 }
@@ -108,9 +109,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             Socket socket = null;
             var socketOpenExceptions = new List<Exception>();
 
-            int portToUse = context.DataSource.ResolvedPort < 0
-                ? context.DataSource.Port
-                : context.DataSource.ResolvedPort;
+            int portToUse = context.DataSource.ResolvedPort ?? context.DataSource.Port;
             var ipEndpoint = new IPEndPoint(IPAddress.None, portToUse); // Allocate once
             foreach (IPAddress ipAddress in ipAddresses)
             {

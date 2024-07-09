@@ -7,7 +7,6 @@ using System.Net.Security;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClient.UnitTests.IO;
 using Microsoft.Data.SqlClientX.Handlers;
 using Microsoft.Data.SqlClientX.Handlers.Connection;
@@ -156,7 +155,6 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [InlineData(false)]
         public async void PreloginPacketHandler_HandlePackets(bool isAsync)
         {
-
             byte[] preloginResponse = new byte[]
                 {
                     0, 0, 36, 0, 6,
