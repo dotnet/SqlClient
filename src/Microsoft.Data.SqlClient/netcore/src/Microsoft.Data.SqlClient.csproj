@@ -928,11 +928,10 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds74TlsHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\TlsAuthenticator.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\DataSourceParsingHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\UnpooledDataSource.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\PoolingDataSource.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerNotFoundException.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerOrchestrator.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\InternalConnectionContext.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\UnpooledDataSource.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlDataSource.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlConnector.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\SqlUtilsX.cs" />
