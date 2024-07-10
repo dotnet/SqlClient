@@ -9,7 +9,7 @@ namespace Microsoft.Data.ProviderBase
     using System.Diagnostics;
     using System.Threading.Tasks;
     using Microsoft.Data.Common;
-    using SysTx = System.Transactions;
+    using System.Transactions;
 
     abstract internal class DbConnectionClosed : DbConnectionInternal
     {
@@ -26,12 +26,12 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        override protected void Activate(SysTx.Transaction transaction)
+        override protected void Activate(Transaction transaction)
         {
             throw ADP.ClosedConnectionError();
         }
 
-        override public DbTransaction BeginTransaction(IsolationLevel il)
+        override public DbTransaction BeginTransaction(System.Data.IsolationLevel il)
         {
             throw ADP.ClosedConnectionError();
         }
@@ -51,7 +51,7 @@ namespace Microsoft.Data.ProviderBase
             throw ADP.ClosedConnectionError();
         }
 
-        override public void EnlistTransaction(SysTx.Transaction transaction)
+        override public void EnlistTransaction(Transaction transaction)
         {
             throw ADP.ClosedConnectionError();
         }

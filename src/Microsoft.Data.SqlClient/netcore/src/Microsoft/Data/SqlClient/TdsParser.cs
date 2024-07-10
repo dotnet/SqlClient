@@ -1448,7 +1448,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlError ProcessSNIError(TdsParserStateObject stateObj)
         {
-            using (TryEventScope.Create("<sc.TdsParser.ProcessSNIError|ERR>"))
+            using (TryEventScope.Create(nameof(TdsParser)))
             {
 #if DEBUG
                 // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
