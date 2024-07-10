@@ -19,6 +19,13 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Product>Core $(BaseProduct)</Product>
   </PropertyGroup>
+  <!--Generating Strong Name-->
+  <PropertyGroup Condition="$(SigningKeyPath) != ''">
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>true</DelaySign>
+    <KeyFile>$(SigningKeyPath)</KeyFile>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <PropertyGroup>
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
