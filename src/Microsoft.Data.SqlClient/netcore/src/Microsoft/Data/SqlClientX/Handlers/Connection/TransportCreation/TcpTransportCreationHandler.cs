@@ -1,10 +1,9 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -13,9 +12,12 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 
-namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
+namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreation
 {
-    internal sealed class TransportCreationHandler : IHandler<ConnectionHandlerContext>
+    /// <summary>
+    /// Handler for connecting via TCP.
+    /// </summary>
+    internal sealed class TcpTransportCreationHandler : IReturningHandler<ConnectionHandlerContext, Stream>
     {
         private const int KeepAliveIntervalSeconds = 1;
         private const int KeepAliveTimeSeconds = 30;
@@ -23,83 +25,38 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
         #if NET8_0_OR_GREATER
         private static readonly TimeSpan DefaultPollTimeout = TimeSpan.FromSeconds(30);
         #else
-        private const int DefaultPollTimeout = 30 * 100000; // 30 seconds as microseconds
+        private const int DefaultPollTimeout = 30 * 1_000_000; // 30 seconds as microseconds
         #endif
 
         /// <inheritdoc />
-        public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
-
-        /// <inheritdoc />
-        public async ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
+        public async ValueTask<Stream> Handle(ConnectionHandlerContext parameters, bool isAsync, CancellationToken ct)
         {
-            Debug.Assert(context.DataSource is not null, "context.DataSource is null");
-
-            try
+            // This handler cannot process if the protocol does not contain TCP
+            if (parameters.DataSource.ResolvedProtocol is not (DataSource.Protocol.Admin or DataSource.Protocol.TCP or DataSource.Protocol.None))
             {
-                // @TODO: Build CoR for handling the different protocols in order
-                if (context.DataSource.ResolvedProtocol is DataSource.Protocol.TCP)
-                {
-                    context.ConnectionStream = await HandleTcpRequest(context, isAsync, ct).ConfigureAwait(false);
-                }
-                else
-                {
-                    throw new NotImplementedException();
-                }
-            }
-            catch (Exception e)
-            {
-                context.Error = e;
-                return;
+                return null;
             }
 
-            // Every physical connection has a Unique ID which is used by the rest 
-            // of the connection for tracing on the server side, to correlate with 
-            // the connectivity telemetry and diagnosis.
-            context.ConnectionId = Guid.NewGuid();
-
-            if (NextHandler is not null)
-            {
-                await NextHandler.Handle(context, isAsync, ct).ConfigureAwait(false);
-            }
-        }
-
-        private ValueTask<Stream> HandleNamedPipeRequest()
-        {
-            throw new NotImplementedException();
-        }
-
-        private ValueTask<Stream> HandleSharedMemoryRequest()
-        {
-            throw new NotImplementedException();
-        }
-
-        private async ValueTask<Stream> HandleTcpRequest(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
-        {
             ct.ThrowIfCancellationRequested();
 
             // DNS lookup
             IPAddress[] ipAddresses = isAsync
-                ? await Dns.GetHostAddressesAsync(context.DataSource.ServerName, ct).ConfigureAwait(false)
-                : Dns.GetHostAddresses(context.DataSource.ServerName);
+                ? await Dns.GetHostAddressesAsync(parameters.DataSource.ServerName, ct).ConfigureAwait(false)
+                : Dns.GetHostAddresses(parameters.DataSource.ServerName);
             if (ipAddresses is null || ipAddresses.Length == 0)
             {
                 throw new SocketException((int)SocketError.HostNotFound);
             }
 
             // If there is an IP version preference, apply it
-            switch (context.ConnectionString.IPAddressPreference)
+            switch (parameters.ConnectionString.IPAddressPreference)
             {
                 case SqlConnectionIPAddressPreference.IPv4First:
-                    Array.Sort(ipAddresses, IpAddressVersionSorter.InstanceV4);
+                    Array.Sort(ipAddresses, IpAddressVersionComparer.InstanceV4);
                     break;
 
                 case SqlConnectionIPAddressPreference.IPv6First:
-                    Array.Sort(ipAddresses, IpAddressVersionSorter.InstanceV6);
-                    break;
-
-                case SqlConnectionIPAddressPreference.UsePlatformDefault:
-                default:
-                    // Not sorting necessary
+                    Array.Sort(ipAddresses, IpAddressVersionComparer.InstanceV6);
                     break;
             }
 
@@ -108,16 +65,16 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             Socket socket = null;
             var socketOpenExceptions = new List<Exception>();
 
-            int portToUse = context.DataSource.ResolvedPort < 0
-                ? context.DataSource.Port
-                : context.DataSource.ResolvedPort;
-            var ipEndpoint = new IPEndPoint(IPAddress.None, portToUse); // Allocate once
+            int portToUse = parameters.DataSource.ResolvedPort < 0
+                ? parameters.DataSource.Port
+                : parameters.DataSource.ResolvedPort;
+            var ipEndPoint = new IPEndPoint(IPAddress.None, portToUse); // Allocate once
             foreach (IPAddress ipAddress in ipAddresses)
             {
-                ipEndpoint.Address = ipAddress;
+                ipEndPoint.Address = ipAddress;
                 try
                 {
-                    socket = await OpenSocket(ipEndpoint, isAsync, ct).ConfigureAwait(false);
+                    socket = await OpenSocket(ipEndPoint, isAsync, ct).ConfigureAwait(false);
                     break;
                 }
                 catch(Exception e)
@@ -143,7 +100,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             }
 
             // Create the stream for the socket
-            return new NetworkStream(socket);
+            return new NetworkStream(socket, ownsSocket: true);
         }
 
         private async ValueTask<Socket> OpenSocket(IPEndPoint ipEndPoint, bool isAsync, CancellationToken ct)
@@ -161,13 +118,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
             {
                 if (isAsync)
                 {
-                    #if NET6_0_OR_GREATER
                     await socket.ConnectAsync(ipEndPoint, ct).ConfigureAwait(false);
-                    #else
-                    // @TODO: Only real way to cancel this is to register a cancellation token event and dispose of the socket.
-                    await new TaskFactory(ct).FromAsync(socket.BeginConnect, socket.EndConnect, ipEndPoint, null)
-                        .ConfigureAwait(false);
-                    #endif
                 }
                 else
                 {
@@ -193,27 +144,38 @@ namespace Microsoft.Data.SqlClientX.Handlers.TransportCreation
 
             try
             {
+                // Note: Although it seems logical to dispose the socket (ie, cancel connecting) if
+                //   the cancellation token fires, we don't need to do that here. Since the socket
+                //   is set to be non-blocking, once we call connect we'll throw and move onto
+                //   polling where we continuously check the cancellation token.
                 socket.Connect(ipEndPoint);
             }
-            catch (SocketException e)
+            catch (SocketException e) when (e.SocketErrorCode is SocketError.WouldBlock)
             {
                 // Because the socket is configured to be non-blocking, any operation that would
                 // block will throw an exception indicating it would block. Since opening a TCP
                 // connection will always block, we expect to get an exception for it, and will
                 // ignore it. This allows us to immediately return from connect and poll it,
                 // allowing us to observe timeouts and cancellation.
-                if (e.SocketErrorCode is not SocketError.WouldBlock)
+            }
+            
+            try
+            {
+                // Poll the socket until it is open. If the cancellation token fires, we will
+                // dispose of the socket, effectively cancelling the polling.
+                using (ct.Register(socket.Dispose))
                 {
-                    throw;
+                    if (!socket.Poll(DefaultPollTimeout, SelectMode.SelectWrite))
+                    {
+                        throw new TimeoutException();
+                    }
                 }
             }
-
-            // Poll the socket until it is open
-            // @TODO: This method can't be cancelled, so we should consider pooling smaller timeouts and looping while
-            //    there is still time left on the timer, checking cancellation token each time.
-            if (!socket.Poll(DefaultPollTimeout, SelectMode.SelectWrite))
+            catch (SocketException se) when (se.ErrorCode is (int)SocketError.Interrupted)
             {
-                throw new TimeoutException("Socket failed to open within timeout period.");
+                // We get a special exception if the cancellation token timed out. If the
+                // cancellation token triggered it, use that exception instead.
+                ct.ThrowIfCancellationRequested();
             }
         }
     }
