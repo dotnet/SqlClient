@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Fetch reader using type.
             using SqlDataReader dr = GetReaderForVariant(paramValue, false);
-            using SqlConnection connBulk = new(s_connStr);
+            using SqlConnection connBulk = DataTestUtility.GetSqlConnection(s_connStr);
             connBulk.Open();
 
             ExecuteSQL(connBulk, "create table dbo.{0} (f1 sql_variant)", bulkCopyTableName);
