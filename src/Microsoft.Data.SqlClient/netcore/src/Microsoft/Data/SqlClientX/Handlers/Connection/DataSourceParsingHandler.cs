@@ -7,18 +7,15 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 
-namespace Microsoft.Data.SqlClientX.Handlers
+namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {
     /// <summary>
     /// Handler to populate data source information required for transport handler
     /// </summary>
-    internal class DataSourceParsingHandler : IHandler<ConnectionHandlerContext>
+    internal class DataSourceParsingHandler : ContextHandler<ConnectionHandlerContext>
     {
         /// <inheritdoc />
-        public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
-
-        /// <inheritdoc />
-        public async ValueTask Handle(ConnectionHandlerContext request, bool isAsync, CancellationToken ct)
+        public override async ValueTask Handle(ConnectionHandlerContext request, bool isAsync, CancellationToken ct)
         {
             ServerInfo serverInfo = request.ServerInfo;
             string fullServerName = serverInfo.ExtendedServerName;
@@ -52,6 +49,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
                 await NextHandler.Handle(request, isAsync, ct).ConfigureAwait(false);
             }
         }
+
         //TODO: Refactor function for better handling of error flag and return params
         private static string GetLocalDBDataSource(string fullServerName, out bool error)
         {
@@ -64,7 +62,7 @@ namespace Microsoft.Data.SqlClientX.Handlers
                 return null;
             }
 
-            else if (!string.IsNullOrEmpty(localDBInstance))
+            if (!string.IsNullOrEmpty(localDBInstance))
             {
                 // We have successfully received a localDBInstance which is valid.
                 localDBConnectionString = LocalDB.GetLocalDBConnectionString(localDBInstance);
