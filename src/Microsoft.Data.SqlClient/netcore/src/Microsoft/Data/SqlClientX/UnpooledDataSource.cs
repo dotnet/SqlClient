@@ -23,18 +23,8 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         /// <param name="connectionStringBuilder"></param>
         /// <param name="credential"></param>
-        /// <param name="userCertificateValidationCallback"></param>
-        /// <param name="clientCertificatesCallback"></param>
-        internal UnpooledDataSource(
-            SqlConnectionStringBuilder connectionStringBuilder,
-            SqlCredential credential,
-            RemoteCertificateValidationCallback userCertificateValidationCallback,
-            Action<X509CertificateCollection> clientCertificatesCallback) :
-            base(
-                connectionStringBuilder,
-                credential,
-                userCertificateValidationCallback,
-                clientCertificatesCallback)
+        internal UnpooledDataSource(SqlConnectionStringBuilder connectionStringBuilder, SqlCredential credential) :
+            base(connectionStringBuilder, credential)
         {
         }
 

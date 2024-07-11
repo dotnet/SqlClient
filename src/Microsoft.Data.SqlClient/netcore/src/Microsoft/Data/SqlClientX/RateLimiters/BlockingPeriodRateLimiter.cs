@@ -16,24 +16,6 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
     /// </summary>
     internal class BlockingPeriodRateLimiter : IRateLimiter
     {
-        private const int ERROR_WAIT_DEFAULT = 5 * 1000; // 5 seconds
-
-        private Exception? _error;
-        private bool _errorOccurred;
-        private Timer? _errorTimer;
-        private int _errorWait;
-
-        /// <summary>
-        /// Initializes a new BlockingPeriodRateLimiter
-        /// </summary>
-        internal BlockingPeriodRateLimiter()
-        {
-            _error = null;
-            _errorOccurred = false;
-            _errorTimer = null;
-            _errorWait = ERROR_WAIT_DEFAULT;
-        }
-
         /// <summary>
         /// Executes the provided callback in the context of the blocking period rate limit logic.
         /// </summary>
@@ -43,7 +25,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         /// <param name="cancellationToken">Cancels outstanding requests.</param>
         /// <returns>Returns the result of the callback or the next rate limiter.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        internal override async ValueTask<TResult> Execute<TResult>(Func<ValueTask<TResult>> callback, bool async, CancellationToken cancellationToken = default)
+        internal override ValueTask<TResult> Execute<TResult>(Func<ValueTask<TResult>> callback, bool async, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

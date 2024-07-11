@@ -71,9 +71,7 @@ namespace Microsoft.Data.SqlClientX
             {
                 return new UnpooledDataSource(
                     ConnectionStringBuilder,
-                    Credential,
-                    UserCertificateValidationCallback,
-                    ClientCertificatesCallback);
+                    Credential);
             }
         }
 

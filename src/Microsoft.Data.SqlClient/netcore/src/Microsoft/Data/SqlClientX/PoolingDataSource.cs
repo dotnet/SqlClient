@@ -32,10 +32,10 @@ namespace Microsoft.Data.SqlClientX
         /// Initializes a new PoolingDataSource.
         /// </summary>
         //TODO: support auth contexts and provider info
-        PoolingDataSource(SqlConnectionStringBuilder connectionStringBuilder,
+        internal PoolingDataSource(SqlConnectionStringBuilder connectionStringBuilder,
             SqlCredential credential,
             DbConnectionPoolGroupOptions options,
-            IRateLimiter rateLimiter) : base(connectionStringBuilder, credential, userCertificateValidationCallback, clientCertificatesCallback)
+            IRateLimiter rateLimiter) : base(connectionStringBuilder, credential)
         {
             _connectionPoolGroupOptions = options;
             _rateLimiter = rateLimiter;

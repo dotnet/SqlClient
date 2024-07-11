@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         }
 
         /// <summary>
-        /// Executes the provided callback in the context of the concurrency limit logic.
+        /// Executes the provided callback in the context of the blocking period rate limit logic.
         /// </summary>
         /// <typeparam name="TResult">The type of the result returned by the callback.</typeparam>
         /// <param name="callback">The callback function to execute.</param>
@@ -35,25 +35,19 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         /// <returns>Returns the result of the callback or the next rate limiter.</returns>
         internal override async ValueTask<TResult> Execute<TResult>(Func<ValueTask<TResult>> callback, bool async, CancellationToken cancellationToken = default)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return ValueTask.FromCanceled(cancellationToken);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
 
-            //TODO: in future, can enforce order
+            //TODO: in the future, we can enforce order
             if (async)
             {
-                await _concurrencyLimitSemaphore.WaitAsync(cancellationToken);
+                await _concurrencyLimitSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             }
             else
             {
                 _concurrencyLimitSemaphore.Wait(cancellationToken);
             }
 
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return ValueTask.FromCanceled(cancellationToken);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
 
             TResult result;
 
