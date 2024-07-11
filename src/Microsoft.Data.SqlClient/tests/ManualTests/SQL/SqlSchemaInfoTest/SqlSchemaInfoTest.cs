@@ -86,7 +86,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 string currentDb = connection.Database;
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
                 PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(builder);
-                PropertyDescriptor descriptor = properties["InitialCatalog"];
+                foreach(PropertyDescriptor prop in properties)
+                {
+                    Console.WriteLine($"Property Descriptor = {prop.Name}");
+                }
+
+                PropertyDescriptor descriptor = properties["Initial Catalog"];
                 Console.WriteLine($"descriptor = {(descriptor == null ? "null": descriptor.Name)}");
                 DataTestUtility.AssertEqualsWithDescription(
                     "SqlInitialCatalogConverter", descriptor.Converter.GetType().Name,
