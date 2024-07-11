@@ -13,6 +13,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClientX.RateLimiters;
 
 namespace Microsoft.Data.SqlClientX
 {
@@ -22,6 +23,7 @@ namespace Microsoft.Data.SqlClientX
     internal sealed class PoolingDataSource : SqlDataSource
     {
         private DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
+        private IRateLimiter _rateLimiter;
 
         internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
         internal int MaxPoolSize => _connectionPoolGroupOptions.MaxPoolSize;
@@ -34,9 +36,11 @@ namespace Microsoft.Data.SqlClientX
             SqlCredential credential,
             RemoteCertificateValidationCallback userCertificateValidationCallback,
             Action<X509CertificateCollection> clientCertificatesCallback,
-            DbConnectionPoolGroupOptions options) : base(connectionStringBuilder, credential, userCertificateValidationCallback, clientCertificatesCallback)
+            DbConnectionPoolGroupOptions options,
+            IRateLimiter rateLimiter) : base(connectionStringBuilder, credential, userCertificateValidationCallback, clientCertificatesCallback)
         {
             _connectionPoolGroupOptions = options;
+            _rateLimiter = rateLimiter;
             //TODO: other construction
         }
 
@@ -49,7 +53,12 @@ namespace Microsoft.Data.SqlClientX
         /// <inheritdoc/>
         internal override ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return _rateLimiter.Execute<SqlConnector>(() => RateLimitedOpen(owningConnection, timeout, async, cancellationToken), async, cancellationToken);
+
+            ValueTask<SqlConnector> RateLimitedOpen(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         /// <inheritdoc/>
