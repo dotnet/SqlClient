@@ -87,12 +87,11 @@ jobs:
 
   - ${{ if eq(parameters.operatingSystem, 'Mac') }}:
     - task: AzureCLI@2
-    inputs:
+      inputs:
         azureSubscription: ADO.Net-UAMI
         scriptType: 'pscore'
         scriptLocation: 'inlineScript'
         inlineScript: |
-    
             $token = az account get-access-token --query accessToken --resource https://database.windows.net/ -o tsv
             Write-Host "##vso[task.setvariable variable=UAMI_Access_Token;issecret=true]$token"
 
