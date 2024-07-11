@@ -246,6 +246,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             Console.WriteLine("--------------------------------Not hit-------------------------------");
+            Console.WriteLine(connectionString);
             return new SqlConnection(connectionString);
         }
 

@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void ExecuteReaderWithCommandBehaviorTest()
         {
             RemoteExecutor.Invoke(() =>
-            {   
+            {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
                     using (SqlConnection conn = new SqlConnection(connectionString))
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 CollectStatisticsDiagnostics(_ =>
                 {
                     // @TODO: Test TDS server doesn't support ExecuteXmlReader, so connect to real server as workaround
-                    using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -374,7 +374,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -401,7 +401,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
