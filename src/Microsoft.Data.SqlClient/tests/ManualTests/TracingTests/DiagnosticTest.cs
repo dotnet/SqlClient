@@ -71,18 +71,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [Fact]
         public void ExecuteNonQueryTest()
         {
-            CollectStatisticsDiagnostics(connectionString =>
+            var connectionString = "Data Source=localhost,51555;Connect Timeout=5;Encrypt=False";
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand())
             {
-                using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
-                using (SqlCommand cmd = new SqlCommand())
-                {
-                    cmd.Connection = conn;
-                    cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
+                cmd.Connection = conn;
+                cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
 
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
-                }
-            });
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+            {
+                conn.Open();
+            }
         }
 
         [Fact]
