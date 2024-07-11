@@ -93,7 +93,7 @@ jobs:
         scriptLocation: 'inlineScript'
         inlineScript: |
             $token = az account get-access-token --query accessToken --resource https://database.windows.net/ -o tsv
-            Write-Host "##vso[task.setvariable variable=UAMI_Access_Token;issecret=true]$token"
+            Write-Host "##vso[task.setvariable variable=UAMI_Access_Token;issecret=true;]$token"
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: ../steps/update-config-file-step.yml@self # update config.json file
@@ -105,7 +105,7 @@ jobs:
         ${{ if parameters.configProperties.NPConnectionString }}:
           NPConnectionString: ${{ parameters.configProperties.NPConnectionString }}
         ${{ if eq(parameters.operatingSystem, 'Mac') }}:
-          AADAccessToken: $(UAMI_Access_Token)
+          AADAccessToken: ${{ variables['UAMI_Access_Token'] }}
         ${{ if parameters.configProperties.AADAuthorityURL }}:
           AADAuthorityURL: ${{ parameters.configProperties.AADAuthorityURL }}
         ${{ if parameters.configProperties.TCPConnectionStringHGSVBS }}:
