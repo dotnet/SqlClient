@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Server;
 
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
@@ -596,7 +597,7 @@ namespace Microsoft.Data.SqlClient
                 if (null != _activeConnection)
                 {
                     if (_activeConnection.StatisticsEnabled ||
-                        s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand))
+                        s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name))
                     {
                         return _activeConnection.Statistics;
                     }

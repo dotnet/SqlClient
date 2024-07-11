@@ -3,9 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Runtime.Caching;
 using System.Security.Cryptography;
 using System.Threading;
+using Microsoft.Extensions.Caching.Memory;
 
 // Enclave session locking model
 // 1. For doing the enclave attestation, driver makes either 1, 2 or 3 API calls(in order)
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly Object lockUpdateSessionLock = new Object();
 
         // It is used to save the attestation url and nonce value across API calls
-        protected static readonly MemoryCache ThreadRetryCache = new MemoryCache("ThreadRetryCache");
+        protected static readonly MemoryCache ThreadRetryCache = new MemoryCache(new MemoryCacheOptions());
         #endregion
 
         #region protected methods
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient
 
                 // In case if on some thread we are running SQL workload which don't require attestation, then in those cases we don't want same thread to wait for event to be signaled.
                 // hence skipping it
-                string retryThreadID = ThreadRetryCache[Thread.CurrentThread.ManagedThreadId.ToString()] as string;
+                string retryThreadID = ThreadRetryCache.Get<string>(Thread.CurrentThread.ManagedThreadId.ToString());
                 if (!string.IsNullOrEmpty(retryThreadID))
                 {
                     sameThreadRetry = true;
@@ -167,7 +167,11 @@ namespace Microsoft.Data.SqlClient
                         retryThreadID = Thread.CurrentThread.ManagedThreadId.ToString();
                     }
 
-                    ThreadRetryCache.Set(Thread.CurrentThread.ManagedThreadId.ToString(), retryThreadID, DateTime.UtcNow.AddMinutes(ThreadRetryCacheTimeoutInMinutes));
+                    MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(ThreadRetryCacheTimeoutInMinutes)
+                    };
+                    ThreadRetryCache.Set<string>(Thread.CurrentThread.ManagedThreadId.ToString(), retryThreadID, options);
                 }
             }
         }

@@ -102,6 +102,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", 
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnOrderHint.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnOrderHint.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnOrderHintCollection.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnOrderHintCollection.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyOptions.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyOptions.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlClientDiagnostic.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlClientDiagnostic.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlClientFactory.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlClientFactory.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlClientLogger.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlClientLogger.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlClientMetaDataCollectionNames.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlClientMetaDataCollectionNames.xml
