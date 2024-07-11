@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
-                    using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    using (SqlConnection conn = new SqlConnection(connectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
-                    using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    using (SqlConnection conn = new SqlConnection(connectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
-                    using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    using (SqlConnection conn = new SqlConnection(connectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -164,10 +164,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void ExecuteReaderWithCommandBehaviorTest()
         {
             RemoteExecutor.Invoke(() =>
-            {
+            {   
                 CollectStatisticsDiagnostics(connectionString =>
                 {
-                    using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    using (SqlConnection conn = new SqlConnection(connectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 CollectStatisticsDiagnostics(_ =>
                 {
                     // @TODO: Test TDS server doesn't support ExecuteXmlReader, so connect to real server as workaround
-                    using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+                    using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
-                    using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    using (SqlConnection conn = new SqlConnection(connectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -241,7 +241,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -262,7 +262,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -283,7 +283,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -304,7 +304,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -325,7 +325,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -350,7 +350,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -374,7 +374,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+                    await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -401,7 +401,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+                    await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -426,7 +426,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
-                    using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connectionString))
+                    using (SqlConnection sqlConnection = new SqlConnection(connectionString))
                     {
                         sqlConnection.Open();
                     }
@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnostics(_ =>
                 {
-                    using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(BadConnectionString))
+                    using (SqlConnection sqlConnection = new SqlConnection(BadConnectionString))
                     {
                         Assert.Throws<SqlException>(() => sqlConnection.Open());
                     }
@@ -458,7 +458,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    await using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connectionString))
+                    await using (SqlConnection sqlConnection = new SqlConnection(connectionString))
                     {
                         await sqlConnection.OpenAsync();
                     }
@@ -474,7 +474,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    await using (SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(BadConnectionString))
+                    await using (SqlConnection sqlConnection = new SqlConnection(BadConnectionString))
                     {
                         await Assert.ThrowsAsync<SqlException>(() => sqlConnection.OpenAsync());
                     }
