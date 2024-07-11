@@ -36,6 +36,10 @@ parameters:
     type: boolean
     default: false
     
+  - name: AADAccessToken
+    type: string
+    default: ''
+
   - name: AADAuthorityURL
     type: string
     default: ''
@@ -133,6 +137,8 @@ steps:
         $p.TCPConnectionString="${{parameters.TCPConnectionString }}"
 
         $p.NPConnectionString="${{parameters.NPConnectionString }}"
+
+        $p.AADAccessToken="${{parameters.AADAccessToken}}"
 
         $p.AADAuthorityURL="${{parameters.AADAuthorityURL }}"
 
