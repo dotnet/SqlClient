@@ -5,9 +5,13 @@
 #if NET8_0_OR_GREATER
 
 using System;
+using System.Diagnostics;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClientX.RateLimiters;
 
 namespace Microsoft.Data.SqlClientX
 {
@@ -42,11 +46,69 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         public SqlDataSource Build()
         {
-            return new UnpooledDataSource(
-                ConnectionStringBuilder,
-                Credential,
-                UserCertificateValidationCallback,
-                ClientCertificatesCallback);
+            if (ConnectionStringBuilder.Pooling)
+            {
+                //TODO: pool group layer
+
+                DbConnectionPoolGroupOptions poolGroupOptions = new DbConnectionPoolGroupOptions(
+                    ConnectionStringBuilder.IntegratedSecurity,
+                    ConnectionStringBuilder.MinPoolSize,
+                    ConnectionStringBuilder.MaxPoolSize,
+                    //TODO: carry over connect timeout conversion logic from SqlConnectionFactory? if not, don't need an extra allocation for this object, just use connection string builder
+                    ConnectionStringBuilder.ConnectTimeout,
+                    ConnectionStringBuilder.LoadBalanceTimeout,
+                    ConnectionStringBuilder.Enlist);
+
+                //TODO: evaluate app context switch for concurrency limit
+                IRateLimiter rateLimiter = IsBlockingPeriodEnabled() ? new BlockingPeriodRateLimiter() : new PassthroughRateLimiter();
+
+                return new PoolingDataSource(ConnectionStringBuilder,
+                    Credential,
+                    poolGroupOptions,
+                    rateLimiter);
+            }
+            else
+            {
+                return new UnpooledDataSource(
+                    ConnectionStringBuilder,
+                    Credential,
+                    UserCertificateValidationCallback,
+                    ClientCertificatesCallback);
+            }
+        }
+
+        private bool IsBlockingPeriodEnabled()
+        {
+            var policy = ConnectionStringBuilder.PoolBlockingPeriod;
+
+            switch (policy)
+            {
+                case PoolBlockingPeriod.Auto:
+                    {
+                        if (ADP.IsAzureSqlServerEndpoint(ConnectionStringBuilder.DataSource))
+                        {
+                            return false; // in Azure it will be Disabled
+                        }
+                        else
+                        {
+                            return true; // in Non Azure, it will be Enabled
+                        }
+                    }
+                case PoolBlockingPeriod.AlwaysBlock:
+                    {
+                        return true; //Enabled
+                    }
+                case PoolBlockingPeriod.NeverBlock:
+                    {
+                        return false; //Disabled
+                    }
+                default:
+                    {
+                        //we should never get into this path.
+                        Debug.Fail("Unknown PoolBlockingPeriod. Please specify explicit results in above switch case statement.");
+                        return true;
+                    }
+            }
         }
     }
 }

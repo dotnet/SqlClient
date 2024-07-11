@@ -34,8 +34,6 @@ namespace Microsoft.Data.SqlClientX
         //TODO: support auth contexts and provider info
         PoolingDataSource(SqlConnectionStringBuilder connectionStringBuilder,
             SqlCredential credential,
-            RemoteCertificateValidationCallback userCertificateValidationCallback,
-            Action<X509CertificateCollection> clientCertificatesCallback,
             DbConnectionPoolGroupOptions options,
             IRateLimiter rateLimiter) : base(connectionStringBuilder, credential, userCertificateValidationCallback, clientCertificatesCallback)
         {

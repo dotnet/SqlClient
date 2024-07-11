@@ -13,6 +13,8 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
     /// </summary>
     internal class PassthroughRateLimiter : IRateLimiter
     {
+        //TODO: no state, add static instance
+
         /// <summary>
         /// Executes the provided callback or passes through to the next rate limiter.
         /// </summary>
