@@ -71,21 +71,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [Fact]
         public void ExecuteNonQueryTest()
         {
-            var connectionString = "Data Source=localhost,51555;Connect Timeout=5;Encrypt=False";
-            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
-            using (SqlCommand cmd = new SqlCommand())
+            RemoteExecutor.Invoke(() =>
             {
-                cmd.Connection = conn;
-                cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
+                CollectStatisticsDiagnostics(connectionString =>
+                {
+                    using (SqlConnection conn = new SqlConnection())
+                    using (SqlCommand cmd = new SqlCommand())
+                    {
+                        cmd.Connection = conn;
+                        cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
 
-                conn.Open();
-                cmd.ExecuteNonQuery();
-            }
-
-            using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
-            {
-                conn.Open();
-            }
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+                });
+                return RemoteExecutor.SuccessExitCode;
+            }).Dispose();
         }
 
         [Fact]
@@ -95,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
-                    using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    using (SqlConnection conn = new SqlConnection())
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -119,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
-                    using (SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString))
+                    using (SqlConnection conn = new SqlConnection())
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
