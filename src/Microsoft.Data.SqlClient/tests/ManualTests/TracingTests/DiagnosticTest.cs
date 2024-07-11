@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
-                    using (SqlConnection conn = new SqlConnection())
+                    using (SqlConnection conn = new SqlConnection(connectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
-                    using (SqlConnection conn = new SqlConnection())
+                    using (SqlConnection conn = new SqlConnection(connectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnostics(connectionString =>
                 {
-                    using (SqlConnection conn = new SqlConnection())
+                    using (SqlConnection conn = new SqlConnection(connectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
