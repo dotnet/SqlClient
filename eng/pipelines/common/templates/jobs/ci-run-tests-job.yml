@@ -85,6 +85,16 @@ jobs:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
+  - ${{ if eq(parameters.operatingSystem, 'Mac') }}:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: ADO.Net-UAMI
+        scriptType: 'pscore'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+            $token = az account get-access-token --query accessToken --resource https://database.windows.net/ -o tsv
+            Write-Host "##vso[task.setvariable variable=UAMI_Access_Token;issecret=true]$token"
+
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: ../steps/update-config-file-step.yml@self # update config.json file
       parameters:
@@ -94,6 +104,8 @@ jobs:
           TCPConnectionString: ${{ parameters.configProperties.TCPConnectionString }}
         ${{ if parameters.configProperties.NPConnectionString }}:
           NPConnectionString: ${{ parameters.configProperties.NPConnectionString }}
+        ${{ if eq(parameters.operatingSystem, 'Mac') }}:
+          AADAccessToken: $(UAMI_Access_Token)
         ${{ if parameters.configProperties.AADAuthorityURL }}:
           AADAuthorityURL: ${{ parameters.configProperties.AADAuthorityURL }}
         ${{ if parameters.configProperties.TCPConnectionStringHGSVBS }}:
