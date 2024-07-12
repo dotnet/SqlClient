@@ -81,17 +81,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             Console.WriteLine($"TCPConnectionString = {DataTestUtility.TCPConnectionString}");
 
-            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString)) //DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 string currentDb = connection.Database;
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
                 PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(builder);
-                foreach(PropertyDescriptor prop in properties)
-                {
-                    Console.WriteLine($"Property Descriptor = {prop.Name}");
-                }
-
-                PropertyDescriptor descriptor = properties["Initial Catalog"];
+                PropertyDescriptor descriptor = properties["InitialCatalog"];
                 Console.WriteLine($"descriptor = {(descriptor == null ? "null": descriptor.Name)}");
                 DataTestUtility.AssertEqualsWithDescription(
                     "SqlInitialCatalogConverter", descriptor.Converter.GetType().Name,
