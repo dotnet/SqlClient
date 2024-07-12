@@ -81,10 +81,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             Console.WriteLine($"TCPConnectionString = {DataTestUtility.TCPConnectionString}");
 
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString)) //DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 string currentDb = connection.Database;
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
+                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(builder);
                 PropertyDescriptor descriptor = properties["InitialCatalog"];
                 Console.WriteLine($"descriptor = {(descriptor == null ? "null": descriptor.Name)}");
