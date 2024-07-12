@@ -233,8 +233,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             if (!string.IsNullOrEmpty(AADAccessToken))
             {
-                Console.WriteLine("--------------------------------Hit-------------------------------");
-                Console.WriteLine(connectionString);
                 string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                 connectionString = RemoveKeysInConnStr(connectionString, credKeys);
                 var connection = new SqlConnection(connectionString)
@@ -245,8 +243,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return connection;
             }
 
-            Console.WriteLine("--------------------------------Not hit-------------------------------");
-            Console.WriteLine(connectionString);
             return new SqlConnection(connectionString);
         }
 

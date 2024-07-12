@@ -24,9 +24,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DbProviderFactory provider = SqlClientFactory.Instance;
             try
             {
-                using (DbConnection con = provider.CreateConnection())
+                using (SqlConnection con = provider.CreateConnection() as SqlConnection)
                 {
                     con.ConnectionString = connectionString;
+                    con.AccessToken = DataTestUtility.AADAccessToken;
                     con.Open();
 
                     using (DbCommand cmd = provider.CreateCommand())
