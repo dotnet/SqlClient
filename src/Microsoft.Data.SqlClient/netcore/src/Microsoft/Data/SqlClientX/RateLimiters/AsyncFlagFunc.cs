@@ -1,11 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClientX.RateLimiters
 {
-    internal delegate TResult AsyncFlagFunc<out TResult>(bool isAsync, CancellationToken cancellationToken);
+    /// <summary>
+    /// A function that operates asynchronously based on a flag. If isAsync is true, the function operates asynchronously.
+    /// If isAsync is false, the function operates synchronously.
+    /// </summary>
+    /// <typeparam name="State">The type accepted by the callback as input.</typeparam>
+    /// <typeparam name="TResult">The returned by the callback.</typeparam>
+    /// <param name="state">An instance of State to be passed to the callback.</param>
+    /// <param name="isAsync">Indicates whether the function should operate asynchronously.</param>
+    /// <param name="cancellationToken">Allows cancellation of the operation.</param>
+    /// <returns>Returns the result of the callback.</returns>
+    internal delegate TResult AsyncFlagFunc<in State, out TResult>(State state, bool isAsync, CancellationToken cancellationToken);
 }

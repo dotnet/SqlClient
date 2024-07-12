@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClientX
     internal sealed class PoolingDataSource : SqlDataSource
     {
         private DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
-        private IRateLimiter _rateLimiter;
+        private IRateLimiter _connectionRateLimiter;
 
         internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
         internal int MaxPoolSize => _connectionPoolGroupOptions.MaxPoolSize;
@@ -35,10 +35,10 @@ namespace Microsoft.Data.SqlClientX
         internal PoolingDataSource(SqlConnectionStringBuilder connectionStringBuilder,
             SqlCredential credential,
             DbConnectionPoolGroupOptions options,
-            IRateLimiter rateLimiter) : base(connectionStringBuilder, credential)
+            IRateLimiter connectionRateLimiter) : base(connectionStringBuilder, credential)
         {
             _connectionPoolGroupOptions = options;
-            _rateLimiter = rateLimiter;
+            _connectionRateLimiter = connectionRateLimiter;
             //TODO: other construction
         }
 
@@ -48,12 +48,29 @@ namespace Microsoft.Data.SqlClientX
             throw new NotImplementedException();
         }
 
+        internal struct OpenInternalConnectionState
+        {
+            readonly SqlConnectionX _owningConnection;
+            readonly TimeSpan _timeout;
+
+            internal OpenInternalConnectionState(SqlConnectionX owningConnection, TimeSpan timeout)
+            {
+                _owningConnection = owningConnection;
+                _timeout = timeout;
+            }
+        }
+
         /// <inheritdoc/>
         internal override ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
-            return _rateLimiter.Execute<SqlConnector>((bool _isAsync, CancellationToken _ct) => RateLimitedOpen(owningConnection, timeout, _isAsync, _ct), async, cancellationToken);
+            return _connectionRateLimiter.Execute<OpenInternalConnectionState, SqlConnector>(
+                RateLimitedOpen,
+                new OpenInternalConnectionState(owningConnection, timeout),
+                async,
+                cancellationToken
+            );
 
-            ValueTask<SqlConnector> RateLimitedOpen(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+            ValueTask<SqlConnector> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
             {
                 throw new NotImplementedException();
             }

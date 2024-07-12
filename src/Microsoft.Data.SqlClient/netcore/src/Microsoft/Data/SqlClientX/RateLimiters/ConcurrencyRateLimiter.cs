@@ -25,15 +25,8 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
             _concurrencyLimitSemaphore = new SemaphoreSlim(concurrencyLimit);
         }
 
-        /// <summary>
-        /// Executes the provided callback in the context of the blocking period rate limit logic.
-        /// </summary>
-        /// <typeparam name="TResult">The type of the result returned by the callback.</typeparam>
-        /// <param name="callback">The callback function to execute.</param>
-        /// <param name="async">Whether this method should run asynchronously.</param>
-        /// <param name="cancellationToken">Cancels outstanding requests.</param>
-        /// <returns>Returns the result of the callback or the next rate limiter.</returns>
-        internal override async ValueTask<TResult> Execute<TResult>(AsyncFlagFunc<ValueTask<TResult>> callback, bool async, CancellationToken cancellationToken = default)
+        /// <inheritdoc/>
+        internal override async ValueTask<TResult> Execute<State, TResult>(AsyncFlagFunc<State, ValueTask<TResult>> callback, State state, bool async, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -47,20 +40,22 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
                 _concurrencyLimitSemaphore.Wait(cancellationToken);
             }
 
-            cancellationToken.ThrowIfCancellationRequested();
-
-            TResult result;
-
             try
             {
-                result = await callback(async, cancellationToken).ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
+                if (Next != null)
+                {
+                    return await Next.Execute<State, TResult>(callback, state, async, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    return await callback(state, async, cancellationToken).ConfigureAwait(false);
+                }
             }
             finally
             {
                 _concurrencyLimitSemaphore.Release();
             }
-
-            return result;
         }
     }
 }

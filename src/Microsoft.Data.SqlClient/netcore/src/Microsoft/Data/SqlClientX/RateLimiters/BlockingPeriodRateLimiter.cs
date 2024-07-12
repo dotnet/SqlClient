@@ -16,16 +16,9 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
     /// </summary>
     internal class BlockingPeriodRateLimiter : IRateLimiter
     {
-        /// <summary>
-        /// Executes the provided callback in the context of the blocking period rate limit logic.
-        /// </summary>
-        /// <typeparam name="TResult">The type of the result returned by the callback.</typeparam>
-        /// <param name="callback">The callback function to execute.</param>
-        /// <param name="async">Whether this method should run asynchronously.</param>
-        /// <param name="cancellationToken">Cancels outstanding requests.</param>
-        /// <returns>Returns the result of the callback or the next rate limiter.</returns>
-        /// <exception cref="NotImplementedException"></exception>
-        internal override ValueTask<TResult> Execute<TResult>(AsyncFlagFunc<ValueTask<TResult>> callback, bool async, CancellationToken cancellationToken = default)
+
+        /// <inheritdoc/>
+        internal override ValueTask<TResult> Execute<State, TResult>(AsyncFlagFunc<State, ValueTask<TResult>> callback, State state, bool async, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
