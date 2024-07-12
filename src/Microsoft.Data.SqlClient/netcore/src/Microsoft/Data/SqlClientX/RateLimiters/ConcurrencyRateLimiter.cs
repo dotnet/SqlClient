@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         /// <param name="async">Whether this method should run asynchronously.</param>
         /// <param name="cancellationToken">Cancels outstanding requests.</param>
         /// <returns>Returns the result of the callback or the next rate limiter.</returns>
-        internal override async ValueTask<TResult> Execute<TResult>(Func<ValueTask<TResult>> callback, bool async, CancellationToken cancellationToken = default)
+        internal override async ValueTask<TResult> Execute<TResult>(AsyncFlagFunc<ValueTask<TResult>> callback, bool async, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
 
             try
             {
-                result = await callback().ConfigureAwait(false);
+                result = await callback(async, cancellationToken).ConfigureAwait(false);
             }
             finally
             {

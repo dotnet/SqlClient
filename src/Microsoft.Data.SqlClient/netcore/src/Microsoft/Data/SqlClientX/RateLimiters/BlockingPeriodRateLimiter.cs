@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         /// <param name="cancellationToken">Cancels outstanding requests.</param>
         /// <returns>Returns the result of the callback or the next rate limiter.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        internal override ValueTask<TResult> Execute<TResult>(Func<ValueTask<TResult>> callback, bool async, CancellationToken cancellationToken = default)
+        internal override ValueTask<TResult> Execute<TResult>(AsyncFlagFunc<ValueTask<TResult>> callback, bool async, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

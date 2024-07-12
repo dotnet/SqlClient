@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClientX
         /// <inheritdoc/>
         internal override ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
-            return _rateLimiter.Execute<SqlConnector>(() => RateLimitedOpen(owningConnection, timeout, async, cancellationToken), async, cancellationToken);
+            return _rateLimiter.Execute<SqlConnector>((bool _isAsync, CancellationToken _ct) => RateLimitedOpen(owningConnection, timeout, _isAsync, _ct), async, cancellationToken);
 
             ValueTask<SqlConnector> RateLimitedOpen(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
             {

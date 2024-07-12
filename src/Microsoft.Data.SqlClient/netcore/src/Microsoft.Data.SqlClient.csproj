@@ -949,6 +949,7 @@
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriter.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriteStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\PoolingDataSource.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\AsyncFlagFunc.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\BlockingPeriodRateLimiter.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\ConcurrencyRateLimiter.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\IRateLimiter.cs" />

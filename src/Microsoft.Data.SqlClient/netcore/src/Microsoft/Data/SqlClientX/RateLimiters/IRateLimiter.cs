@@ -32,6 +32,6 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         /// <param name="async">Whether this method should run asynchronously.</param>
         /// <param name="cancellationToken">Cancels outstanding requests.</param>
         /// <returns>Returns the result of the callback or the next rate limiter.</returns>
-        internal abstract ValueTask<TResult> Execute<TResult>(Func<ValueTask<TResult>> callback, bool async, CancellationToken cancellationToken = default);
+        internal abstract ValueTask<TResult> Execute<TResult>(AsyncFlagFunc<ValueTask<TResult>> callback, bool async, CancellationToken cancellationToken = default);
     }
 }
