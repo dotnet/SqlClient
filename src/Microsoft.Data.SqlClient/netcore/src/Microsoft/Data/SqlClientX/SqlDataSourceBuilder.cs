@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClientX
                     ConnectionStringBuilder.Enlist);
 
                 //TODO: evaluate app context switch for concurrency limit
-                IRateLimiter rateLimiter = IsBlockingPeriodEnabled() ? new BlockingPeriodRateLimiter() : new PassthroughRateLimiter();
+                RateLimiterBase rateLimiter = IsBlockingPeriodEnabled() ? new BlockingPeriodRateLimiter() : new PassthroughRateLimiter();
 
                 return new PoolingDataSource(ConnectionStringBuilder,
                     Credential,

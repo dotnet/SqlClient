@@ -11,14 +11,14 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
     /// <summary>
     /// An interface for rate limiters that execute arbitraty code. Intended to be small and self contained and chained together to achieve more complex behavior.
     /// </summary>
-    internal abstract class IRateLimiter
+    internal abstract class RateLimiterBase
     {
-        private IRateLimiter _next;
+        private RateLimiterBase _next;
 
         /// <summary>
         /// The next rate limiter that should be executed within the context of this rate limiter.
         /// </summary>
-        internal virtual IRateLimiter Next
+        internal virtual RateLimiterBase Next
         {
             get => _next;
             set => _next = value;

@@ -957,7 +957,7 @@
     <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\AsyncFlagFunc.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\BlockingPeriodRateLimiter.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\ConcurrencyRateLimiter.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\IRateLimiter.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\RateLimiterBase.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\PassthroughRateLimiter.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlConnectionX.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlConnector.cs" />
@@ -987,7 +987,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)"  />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
     <!-- Enable the project reference for debugging purposes. -->
     <!-- <ProjectReference Include="$(SqlServerSourceCode)\Microsoft.SqlServer.Server.csproj" /> -->
     <PackageReference Include="Microsoft.SqlServer.Server" Version="$(MicrosoftSqlServerServerVersion)" />

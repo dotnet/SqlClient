@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClientX
     internal sealed class PoolingDataSource : SqlDataSource
     {
         private DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
-        private IRateLimiter _connectionRateLimiter;
+        private RateLimiterBase _connectionRateLimiter;
 
         internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
         internal int MaxPoolSize => _connectionPoolGroupOptions.MaxPoolSize;
@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClientX
         internal PoolingDataSource(SqlConnectionStringBuilder connectionStringBuilder,
             SqlCredential credential,
             DbConnectionPoolGroupOptions options,
-            IRateLimiter connectionRateLimiter) : base(connectionStringBuilder, credential)
+            RateLimiterBase connectionRateLimiter) : base(connectionStringBuilder, credential)
         {
             _connectionPoolGroupOptions = options;
             _connectionRateLimiter = connectionRateLimiter;

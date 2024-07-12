@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
     /// A rate limiter that enforces a concurrency limit. 
     /// When the limit is reached, new requests must wait until a spot is freed upon completion of an existing request.
     /// </summary>
-    internal class ConcurrencyRateLimiter : IRateLimiter
+    internal class ConcurrencyRateLimiter : RateLimiterBase
     {
         private SemaphoreSlim _concurrencyLimitSemaphore;
 
@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         }
 
         /// <inheritdoc/>
-        internal override async ValueTask<TResult> Execute<State, TResult>(AsyncFlagFunc<State, ValueTask<TResult>> callback, State state, bool async, CancellationToken cancellationToken = default)
+        internal sealed override async ValueTask<TResult> Execute<State, TResult>(AsyncFlagFunc<State, ValueTask<TResult>> callback, State state, bool async, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 

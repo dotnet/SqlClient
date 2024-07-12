@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
     /// A rate limiter that enforces a backoff (blocking) period upon error. 
     /// Each subsequent error increases the blocking duration, up to a maximum, until a success occurs.
     /// </summary>
-    internal class BlockingPeriodRateLimiter : IRateLimiter
+    internal sealed class BlockingPeriodRateLimiter : RateLimiterBase
     {
 
         /// <inheritdoc/>
