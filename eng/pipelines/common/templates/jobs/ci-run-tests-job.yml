@@ -105,7 +105,7 @@ jobs:
         ${{ if parameters.configProperties.NPConnectionString }}:
           NPConnectionString: ${{ parameters.configProperties.NPConnectionString }}
         ${{ if eq(parameters.operatingSystem, 'Mac') }}:
-          AADAccessToken: ${{ variables['UAMI_Access_Token'] }}
+          AADAccessToken: $(UAMI_Access_Token)
         ${{ if parameters.configProperties.AADAuthorityURL }}:
           AADAuthorityURL: ${{ parameters.configProperties.AADAuthorityURL }}
         ${{ if parameters.configProperties.TCPConnectionStringHGSVBS }}:
