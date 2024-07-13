@@ -235,6 +235,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                 connectionString = RemoveKeysInConnStr(connectionString, credKeys);
+                connectionString += ";Pooling=False;";
                 var connection = new SqlConnection(connectionString)
                 {
                     AccessToken = AADAccessToken
