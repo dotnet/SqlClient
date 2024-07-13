@@ -194,9 +194,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 CollectStatisticsDiagnostics(_ =>
                 {
                     // @TODO: Test TDS server doesn't support ExecuteXmlReader, so connect to real server as workaround
-                    using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+                    using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
+                        conn.AccessToken = DataTestUtility.AADAccessToken;
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT TOP 10 * FROM sys.objects FOR xml auto, xmldata;";
 
@@ -374,9 +375,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+                    await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
+                        conn.AccessToken = DataTestUtility.AADAccessToken;
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT TOP 10 * FROM sys.objects FOR xml auto, xmldata;";
 
@@ -401,9 +403,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+                    await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
+                        conn.AccessToken = DataTestUtility.AADAccessToken;
                         cmd.Connection = conn;
                         cmd.CommandText = "select *, baddata = 1 / 0 from sys.objects for xml auto, xmldata;";
 
