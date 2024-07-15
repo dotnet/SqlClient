@@ -196,7 +196,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpVariant");
 
+            Console.WriteLine($">>>>>>> connection string = {s_connStr}, getting access token..."); 
             using SqlConnection connTvp = DataTestUtility.GetSqlConnection(s_connStr);
+            Console.WriteLine($">>>>>>> access token = {connTvp.AccessToken}");
+
             connTvp.Open();
 
             ExecuteSQL(connTvp, "create type dbo.{0} as table (f1 sql_variant)", tvpTypeName);

@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // This test validates behavior of SqlInitialCatalogConverter used to present database names in PropertyGrid
         // with the SqlConnectionStringBuilder object presented in the control underneath.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void TestInitialCatalogStandardValues()
         {
             Console.WriteLine($"TCPConnectionString = {DataTestUtility.TCPConnectionString}");
@@ -84,17 +84,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 string currentDb = connection.Database;
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
                 PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(builder);
                 PropertyDescriptor descriptor = properties["InitialCatalog"];
-                Console.WriteLine($"descriptor = {(descriptor == null ? "null": descriptor.Name)}");
                 DataTestUtility.AssertEqualsWithDescription(
                     "SqlInitialCatalogConverter", descriptor.Converter.GetType().Name,
                     "Unexpected TypeConverter type.");
 
                 // GetStandardValues of this converter calls GetSchema("DATABASES")
                 var dbNames = descriptor.Converter.GetStandardValues(new DescriptorContext(descriptor, builder));
-                Console.WriteLine($"dbNames = {(dbNames == null ? "null" : dbNames[0].ToString())}");
                 HashSet<string> searchSet = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
                 foreach (string name in dbNames)
                 {
