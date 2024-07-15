@@ -61,6 +61,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         public override void Dispose()
         {
             _concurrencyLimitSemaphore.Dispose();
+            Next.Dispose();
         }
     }
 }

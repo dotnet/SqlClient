@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +19,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         {
             if (Next != null)
             {
-                return Next.Execute<State, TResult>(callback, state, async, cancellationToken);
+                return Next.Execute(callback, state, async, cancellationToken);
             }
             else
             {
@@ -30,7 +29,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
 
         public override void Dispose()
         {
-            //TODO: dispose next
+            Next.Dispose();
         }
     }
 }
