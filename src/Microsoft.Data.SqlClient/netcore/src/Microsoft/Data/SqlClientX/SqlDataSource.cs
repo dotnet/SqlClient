@@ -22,10 +22,6 @@ namespace Microsoft.Data.SqlClientX
     {
         private readonly SqlConnectionStringBuilder _connectionStringBuilder;
 
-        private readonly RemoteCertificateValidationCallback _userCertificateValidationCallback;
-
-        private readonly Action<X509CertificateCollection> _clientCertificatesCallback;
-
         internal SqlCredential Credential { get; }
 
         //TODO: return SqlConnection after it is updated to wrap SqlConnectionX 
@@ -40,14 +36,10 @@ namespace Microsoft.Data.SqlClientX
 
         internal SqlDataSource(
             SqlConnectionStringBuilder connectionStringBuilder,
-            SqlCredential credential,
-            RemoteCertificateValidationCallback userCertificateValidationCallback,
-            Action<X509CertificateCollection> clientCertificatesCallback)
+            SqlCredential credential)
         {
             _connectionStringBuilder = connectionStringBuilder;
             Credential = credential;
-            _userCertificateValidationCallback = userCertificateValidationCallback;
-            _clientCertificatesCallback = clientCertificatesCallback;
         }
 
         /// <inheritdoc />
