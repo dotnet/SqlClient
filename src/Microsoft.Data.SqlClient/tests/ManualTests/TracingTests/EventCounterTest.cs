@@ -27,11 +27,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             var ahc = SqlClientEventSourceProps.ActiveHardConnections;
             var npc = SqlClientEventSourceProps.NonPooledConnections;
-            Console.WriteLine($">>>>>>> connection string = {stringBuilder.ToString()}, getting access token...");
             using (var conn = DataTestUtility.GetSqlConnection(stringBuilder.ToString()))
             {
                 conn.AccessToken = DataTestUtility.AADAccessToken;
-                Console.WriteLine($">>>>>>> access token = {conn.AccessToken.ToString()}");
                 //initially we have no open physical connections
                 Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
                     SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
