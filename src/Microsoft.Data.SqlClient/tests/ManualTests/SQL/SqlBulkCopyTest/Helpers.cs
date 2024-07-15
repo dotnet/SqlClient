@@ -15,10 +15,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 object[] activatorArgs = new object[1];
                 activatorArgs[0] = constr;
-                using (DbConnection conn = (DbConnection)Activator.CreateInstance(connType, activatorArgs))
+                using (SqlConnection conn = (SqlConnection)Activator.CreateInstance(connType, activatorArgs))
                 {
+                    if (!DataTestUtility.AuthenticatingWithoutAccessToken)
+                    {
+                        conn.AccessToken = DataTestUtility.AADAccessToken;
+                    }
+                    
                     conn.Open();
-                    DbCommand cmd = conn.CreateCommand();
+                    SqlCommand cmd = conn.CreateCommand();
 
                     ProcessCommandBatch(cmd, batch);
                 }

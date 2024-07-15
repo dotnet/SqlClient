@@ -198,7 +198,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
-                        conn.AccessToken = DataTestUtility.AADAccessToken;
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT TOP 10 * FROM sys.objects FOR xml auto, xmldata;";
 
@@ -380,7 +379,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
-                        conn.AccessToken = DataTestUtility.AADAccessToken;
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT TOP 10 * FROM sys.objects FOR xml auto, xmldata;";
 
@@ -397,7 +395,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Access token authentication does not work with RemoteExecutor
-        [ConditionalFact(nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public void ExecuteXmlReaderAsyncErrorTest()
         {
             // @TODO: TestTdsServer does not handle xml reader, so connect to a real server as a workaround
@@ -409,7 +407,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
-                        conn.AccessToken = DataTestUtility.AADAccessToken;
                         cmd.Connection = conn;
                         cmd.CommandText = "select *, baddata = 1 / 0 from sys.objects for xml auto, xmldata;";
 
