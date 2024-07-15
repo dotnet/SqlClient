@@ -87,7 +87,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(builder);
                 PropertyDescriptor descriptor = properties["InitialCatalog"];
-                Console.WriteLine($"descriptor = {(descriptor == null ? "null": descriptor.Name)}");
                 DataTestUtility.AssertEqualsWithDescription(
                     "SqlInitialCatalogConverter", descriptor.Converter.GetType().Name,
                     "Unexpected TypeConverter type.");
