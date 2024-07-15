@@ -28,6 +28,11 @@ namespace Microsoft.Data.SqlClientX
         internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
         internal int MaxPoolSize => _connectionPoolGroupOptions.MaxPoolSize;
 
+        internal int ObjectID => objectID;
+
+        private static int _objectTypeCount; // EventSource counter
+        private readonly int objectID = Interlocked.Increment(ref _objectTypeCount);
+
         /// <summary>
         /// Initializes a new PoolingDataSource.
         /// </summary>
@@ -98,6 +103,15 @@ namespace Microsoft.Data.SqlClientX
         internal void WarmUp()
         {
             throw new NotImplementedException();
+        }
+
+        internal void Shutdown()
+        {
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", ObjectID);
+            if (_connectionRateLimiter != null) {
+                _connectionRateLimiter.Dispose();
+                _connectionRateLimiter = null;
+            }
         }
     }
 }
