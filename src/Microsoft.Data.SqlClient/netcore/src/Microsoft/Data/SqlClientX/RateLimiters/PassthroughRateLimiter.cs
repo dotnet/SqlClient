@@ -27,5 +27,10 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
                 return callback(state, async, cancellationToken);
             }
         }
+
+        public override void Dispose()
+        {
+            //TODO: dispose next
+        }
     }
 }

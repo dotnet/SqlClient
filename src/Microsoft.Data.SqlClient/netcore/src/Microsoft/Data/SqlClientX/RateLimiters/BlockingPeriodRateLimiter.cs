@@ -22,5 +22,10 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         {
             throw new NotImplementedException();
         }
+
+        public override void Dispose()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

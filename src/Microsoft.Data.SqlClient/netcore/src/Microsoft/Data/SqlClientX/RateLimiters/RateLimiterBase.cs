@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
     /// <summary>
     /// An interface for rate limiters that execute arbitraty code. Intended to be small and self contained and chained together to achieve more complex behavior.
     /// </summary>
-    internal abstract class RateLimiterBase
+    internal abstract class RateLimiterBase : IDisposable
     {
         private RateLimiterBase _next;
 
@@ -35,5 +35,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         /// <param name="cancellationToken">Cancels outstanding requests.</param>
         /// <returns>Returns the result of the callback or the next rate limiter.</returns>
         internal abstract ValueTask<TResult> Execute<State, TResult>(AsyncFlagFunc<State, ValueTask<TResult>> callback, State state, bool async, CancellationToken cancellationToken = default);
+
+        public abstract void Dispose();
     }
 }
