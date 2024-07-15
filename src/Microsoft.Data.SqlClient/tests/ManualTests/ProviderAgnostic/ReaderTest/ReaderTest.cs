@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DbProviderFactory provider = SqlClientFactory.Instance;
             try
             {
-                using (SqlConnection con = (SqlConnection)provider.CreateConnection())
+                using (SqlConnection con = (SqlConnection) provider.CreateConnection())
                 {
                     con.AccessToken = DataTestUtility.AADAccessToken;
                     con.ConnectionString = connectionString;
@@ -255,8 +255,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using (DbConnection con = provider.CreateConnection())
+                using (SqlConnection con = (SqlConnection) provider.CreateConnection())
                 {
+                    con.AccessToken = DataTestUtility.AADAccessToken;
                     con.ConnectionString = connectionString;
                     con.Open();
 
@@ -284,7 +285,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             //Arrange
             DbProviderFactory provider = SqlClientFactory.Instance;
 
-            using DbConnection con = provider.CreateConnection();
+            using SqlConnection con = (SqlConnection) provider.CreateConnection();
+            con.AccessToken = DataTestUtility.AADAccessToken;
             con.ConnectionString = DataTestUtility.TCPConnectionString;
             con.Open();
             string sqlQueryOne = $"CREATE TABLE {tableName} ([CustomerId] [int],[FirstName] [nvarchar](50),[BoolCol] [BIT],[ShortCol] [SMALLINT],[ByteCol] [TINYINT],[LongCol] [BIGINT]);";
@@ -383,7 +385,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             //Arrange
             DbProviderFactory provider = SqlClientFactory.Instance;
 
-            using DbConnection con = provider.CreateConnection();
+            using SqlConnection con = (SqlConnection) provider.CreateConnection();
+            con.AccessToken = DataTestUtility.AADAccessToken;
             con.ConnectionString = DataTestUtility.TCPConnectionString;
             con.Open();
             string sqlQueryOne = $"CREATE TABLE {tableName} ([CustomerId] [int],[FirstName] [nvarchar](50),[BoolCol] [BIT],[ShortCol] [SMALLINT],[ByteCol] [TINYINT],[LongCol] [BIGINT]);";

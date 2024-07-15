@@ -118,6 +118,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static bool AuthenticatingWithoutAccessToken
+        {
+            get
+            {
+                return string.IsNullOrEmpty(AADAccessToken);
+            }
+        }
+
         public static string SQLServerVersion
         {
             get
@@ -231,7 +239,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static SqlConnection GetSqlConnection(string connectionString = "")
         {
-            if (!string.IsNullOrEmpty(AADAccessToken))
+            if (!AuthenticatingWithoutAccessToken)
             {
                 string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                 connectionString = RemoveKeysInConnStr(connectionString, credKeys);
