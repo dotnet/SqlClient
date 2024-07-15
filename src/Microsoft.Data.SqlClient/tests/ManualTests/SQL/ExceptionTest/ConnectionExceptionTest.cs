@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void TestConnectionStateWithErrorClass20()
         {
             using TestTdsServer server = TestTdsServer.StartTestServer();
-            using SqlConnection conn = new SqlConnection(server.ConnectionString);
+            using SqlConnection conn = DataTestUtility.GetSqlConnection(server.ConnectionString);
 
             conn.Open();
             SqlCommand cmd = conn.CreateCommand();
