@@ -22,16 +22,16 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal sealed class PoolingDataSource : SqlDataSource
     {
-        private DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
+        private readonly DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
         private RateLimiterBase _connectionRateLimiter;
 
         internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
         internal int MaxPoolSize => _connectionPoolGroupOptions.MaxPoolSize;
 
-        internal int ObjectID => objectID;
+        internal int ObjectID => _objectID;
 
         private static int _objectTypeCount; // EventSource counter
-        private readonly int objectID = Interlocked.Increment(ref _objectTypeCount);
+        private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
 
         /// <summary>
         /// Initializes a new PoolingDataSource.
@@ -40,7 +40,8 @@ namespace Microsoft.Data.SqlClientX
         internal PoolingDataSource(SqlConnectionStringBuilder connectionStringBuilder,
             SqlCredential credential,
             DbConnectionPoolGroupOptions options,
-            RateLimiterBase connectionRateLimiter) : base(connectionStringBuilder, credential)
+            RateLimiterBase connectionRateLimiter)
+            : base(connectionStringBuilder, credential)
         {
             _connectionPoolGroupOptions = options;
             _connectionRateLimiter = connectionRateLimiter;
@@ -53,7 +54,7 @@ namespace Microsoft.Data.SqlClientX
             throw new NotImplementedException();
         }
 
-        internal struct OpenInternalConnectionState
+        internal readonly struct OpenInternalConnectionState
         {
             readonly SqlConnectionX _owningConnection;
             readonly TimeSpan _timeout;

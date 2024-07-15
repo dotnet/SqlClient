@@ -13,16 +13,11 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
     /// </summary>
     internal abstract class RateLimiterBase : IDisposable
     {
-        private RateLimiterBase _next;
 
         /// <summary>
         /// The next rate limiter that should be executed within the context of this rate limiter.
         /// </summary>
-        internal virtual RateLimiterBase Next
-        {
-            get => _next;
-            set => _next = value;
-        }
+        protected readonly RateLimiterBase Next;
 
         /// <summary>
         /// Execute the provided callback within the context of the rate limit, or pass the responsibility along to the next rate limiter.
@@ -31,10 +26,14 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         /// <typeparam name="TResult">The type of the result returned by the callback.</typeparam>
         /// <param name="callback">The callback function to execute.</param>
         /// <param name="state">An instance of State to be passed to the callback.</param>
-        /// <param name="async">Whether this method should run asynchronously.</param>
+        /// <param name="isAsync">Whether this method should run asynchronously.</param>
         /// <param name="cancellationToken">Cancels outstanding requests.</param>
         /// <returns>Returns the result of the callback or the next rate limiter.</returns>
-        internal abstract ValueTask<TResult> Execute<State, TResult>(AsyncFlagFunc<State, ValueTask<TResult>> callback, State state, bool async, CancellationToken cancellationToken = default);
+        internal abstract ValueTask<TResult> Execute<State, TResult>(
+            AsyncFlagFunc<State, ValueTask<TResult>> callback,
+            State state,
+            bool isAsync,
+            CancellationToken cancellationToken = default);
 
         public abstract void Dispose();
     }

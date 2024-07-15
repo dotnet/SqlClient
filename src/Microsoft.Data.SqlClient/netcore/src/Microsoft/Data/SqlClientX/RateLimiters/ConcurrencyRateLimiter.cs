@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
     /// </summary>
     internal class ConcurrencyRateLimiter : RateLimiterBase
     {
-        private SemaphoreSlim _concurrencyLimitSemaphore;
+        private readonly SemaphoreSlim _concurrencyLimitSemaphore;
 
         /// <summary>
         /// Initializes a new ConcurrencyRateLimiter with the specified concurrency limit.
@@ -26,12 +26,12 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         }
 
         /// <inheritdoc/>
-        internal sealed override async ValueTask<TResult> Execute<State, TResult>(AsyncFlagFunc<State, ValueTask<TResult>> callback, State state, bool async, CancellationToken cancellationToken = default)
+        internal sealed override async ValueTask<TResult> Execute<State, TResult>(AsyncFlagFunc<State, ValueTask<TResult>> callback, State state, bool isAsync, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             //TODO: in the future, we can enforce order
-            if (async)
+            if (isAsync)
             {
                 await _concurrencyLimitSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             }
@@ -45,11 +45,11 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
                 cancellationToken.ThrowIfCancellationRequested();
                 if (Next != null)
                 {
-                    return await Next.Execute<State, TResult>(callback, state, async, cancellationToken).ConfigureAwait(false);
+                    return await Next.Execute(callback, state, isAsync, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
-                    return await callback(state, async, cancellationToken).ConfigureAwait(false);
+                    return await callback(state, isAsync, cancellationToken).ConfigureAwait(false);
                 }
             }
             finally

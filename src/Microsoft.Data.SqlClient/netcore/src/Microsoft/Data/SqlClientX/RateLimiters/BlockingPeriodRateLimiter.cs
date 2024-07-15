@@ -16,9 +16,12 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
     /// </summary>
     internal sealed class BlockingPeriodRateLimiter : RateLimiterBase
     {
-
         /// <inheritdoc/>
-        internal override ValueTask<TResult> Execute<State, TResult>(AsyncFlagFunc<State, ValueTask<TResult>> callback, State state, bool async, CancellationToken cancellationToken = default)
+        internal override ValueTask<TResult> Execute<State, TResult>(
+            AsyncFlagFunc<State, ValueTask<TResult>> callback, 
+            State state, 
+            bool isAsync, 
+            CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

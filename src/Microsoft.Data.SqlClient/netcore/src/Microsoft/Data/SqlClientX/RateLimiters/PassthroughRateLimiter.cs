@@ -15,15 +15,19 @@ namespace Microsoft.Data.SqlClientX.RateLimiters
         //TODO: no state, add static instance
 
         /// <inheritdoc/>
-        internal override ValueTask<TResult> Execute<State, TResult>(AsyncFlagFunc<State, ValueTask<TResult>> callback, State state, bool async, CancellationToken cancellationToken = default)
+        internal override ValueTask<TResult> Execute<State, TResult>(
+            AsyncFlagFunc<State, ValueTask<TResult>> callback,
+            State state,
+            bool isAsync,
+            CancellationToken cancellationToken = default)
         {
             if (Next != null)
             {
-                return Next.Execute(callback, state, async, cancellationToken);
+                return Next.Execute(callback, state, isAsync, cancellationToken);
             }
             else
             {
-                return callback(state, async, cancellationToken);
+                return callback(state, isAsync, cancellationToken);
             }
         }
 
