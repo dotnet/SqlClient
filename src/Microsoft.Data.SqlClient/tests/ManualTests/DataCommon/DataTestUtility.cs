@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             get
             {
                 SqlConnectionStringBuilder builder = new (TCPConnectionString);
-                return builder.Authentication == SqlAuthenticationMethod.SqlPassword || builder.Authentication == SqlAuthenticationMethod.NotSpecified;
+                return builder.Authentication == SqlAuthenticationMethod.SqlPassword || (builder.Authentication == SqlAuthenticationMethod.NotSpecified && AuthenticatingWithoutAccessToken);
             }
         }
 
