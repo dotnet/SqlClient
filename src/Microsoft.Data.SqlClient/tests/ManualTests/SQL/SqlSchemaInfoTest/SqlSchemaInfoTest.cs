@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // This test validates behavior of SqlInitialCatalogConverter used to present database names in PropertyGrid
         // with the SqlConnectionStringBuilder object presented in the control underneath.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public static void TestInitialCatalogStandardValues()
         {
             Console.WriteLine($"TCPConnectionString = {DataTestUtility.TCPConnectionString}");
@@ -84,9 +84,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 string currentDb = connection.Database;
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
+                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(builder);
                 PropertyDescriptor descriptor = properties["InitialCatalog"];
+                Console.WriteLine($"descriptor = {(descriptor == null ? "null": descriptor.Name)}");
                 DataTestUtility.AssertEqualsWithDescription(
                     "SqlInitialCatalogConverter", descriptor.Converter.GetType().Name,
                     "Unexpected TypeConverter type.");

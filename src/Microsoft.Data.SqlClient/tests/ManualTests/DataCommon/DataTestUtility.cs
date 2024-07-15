@@ -114,7 +114,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             get
             {
                 SqlConnectionStringBuilder builder = new (TCPConnectionString);
-                return builder.Authentication == SqlAuthenticationMethod.SqlPassword || builder.Authentication == SqlAuthenticationMethod.NotSpecified;
+                return builder.Authentication == SqlAuthenticationMethod.SqlPassword || (builder.Authentication == SqlAuthenticationMethod.NotSpecified && AuthenticatingWithoutAccessToken);
+            }
+        }
+
+        public static bool AuthenticatingWithoutAccessToken
+        {
+            get
+            {
+                return string.IsNullOrEmpty(AADAccessToken);
             }
         }
 
@@ -231,10 +239,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static SqlConnection GetSqlConnection(string connectionString = "")
         {
-            if (!string.IsNullOrEmpty(AADAccessToken))
+            if (!AuthenticatingWithoutAccessToken)
             {
-                Console.WriteLine("--------------------------------Hit-------------------------------");
-                Console.WriteLine(connectionString);
                 string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                 connectionString = RemoveKeysInConnStr(connectionString, credKeys);
                 var connection = new SqlConnection(connectionString)
@@ -245,8 +251,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return connection;
             }
 
-            Console.WriteLine("--------------------------------Not hit-------------------------------");
-            Console.WriteLine(connectionString);
             return new SqlConnection(connectionString);
         }
 

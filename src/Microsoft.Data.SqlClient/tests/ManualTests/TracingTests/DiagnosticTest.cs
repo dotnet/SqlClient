@@ -185,8 +185,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }).Dispose();
         }
 
+        // Access token authentication does not work with RemoteExecutor
         // Synapse: Parse error at line: 1, column: 27: Incorrect syntax near 'for'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public void ExecuteXmlReaderTest()
         {
             RemoteExecutor.Invoke(() =>
@@ -194,7 +195,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 CollectStatisticsDiagnostics(_ =>
                 {
                     // @TODO: Test TDS server doesn't support ExecuteXmlReader, so connect to real server as workaround
-                    using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+                    using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -366,7 +367,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse:  Parse error at line: 1, column: 27: Incorrect syntax near 'for'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        // Access token authentication does not work with RemoteExecutor
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public void ExecuteXmlReaderAsyncTest()
         {
             // @TODO: TestTdsServer does not handle xml reader, so connect to a real server as a workaround
@@ -374,7 +376,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+                    await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
@@ -392,7 +394,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }).Dispose();
         }
 
-        [Fact]
+        // Access token authentication does not work with RemoteExecutor
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public void ExecuteXmlReaderAsyncErrorTest()
         {
             // @TODO: TestTdsServer does not handle xml reader, so connect to a real server as a workaround
@@ -401,7 +404,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    await using (SqlConnection conn = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+                    await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
