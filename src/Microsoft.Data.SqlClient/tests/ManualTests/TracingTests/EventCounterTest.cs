@@ -30,7 +30,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.WriteLine($">>>>>>> connection string = {stringBuilder.ToString()}, getting access token...");
             using (var conn = DataTestUtility.GetSqlConnection(stringBuilder.ToString()))
             {
-                Console.WriteLine($">>>>>>> access token = {conn.AccessToken}");
+                conn.AccessToken = DataTestUtility.AADAccessToken;
+                Console.WriteLine($">>>>>>> access token = {conn.AccessToken.ToString()}");
                 //initially we have no open physical connections
                 Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
                     SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);

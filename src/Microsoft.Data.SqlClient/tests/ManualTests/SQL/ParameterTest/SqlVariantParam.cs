@@ -198,7 +198,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Console.WriteLine($">>>>>>> connection string = {s_connStr}, getting access token..."); 
             using SqlConnection connTvp = DataTestUtility.GetSqlConnection(s_connStr);
-            Console.WriteLine($">>>>>>> access token = {connTvp.AccessToken}");
+            connTvp.AccessToken = DataTestUtility.AADAccessToken;
+            Console.WriteLine($">>>>>>> access token = {connTvp.AccessToken.ToString()}");
 
             connTvp.Open();
 
