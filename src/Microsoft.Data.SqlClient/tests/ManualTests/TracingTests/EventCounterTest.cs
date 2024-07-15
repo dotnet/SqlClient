@@ -29,7 +29,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var npc = SqlClientEventSourceProps.NonPooledConnections;
             using (var conn = DataTestUtility.GetSqlConnection(stringBuilder.ToString()))
             {
-                conn.AccessToken = DataTestUtility.AADAccessToken;
                 //initially we have no open physical connections
                 Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
                     SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
@@ -187,10 +186,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             long acpg = SqlClientEventSourceProps.ActiveConnectionPoolGroups;
             long iacpg = SqlClientEventSourceProps.InactiveConnectionPoolGroups;
 
-            using (SqlConnection conn = new SqlConnection(stringBuilder.ToString()))
+            using (SqlConnection conn = DataTestUtility.GetSqlConnection(stringBuilder.ToString()))
             {
-                conn.AccessToken = DataTestUtility.AADAccessToken;
-
                 conn.Open();
 
                 // when calling open, we have 1 more active connection pool group
