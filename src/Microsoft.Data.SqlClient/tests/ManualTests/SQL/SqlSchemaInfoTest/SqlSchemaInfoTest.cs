@@ -87,14 +87,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
                 PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(builder);
                 PropertyDescriptor descriptor = properties["InitialCatalog"];
-                Console.WriteLine($"descriptor = {(descriptor == null ? "null": descriptor.Name)}");
                 DataTestUtility.AssertEqualsWithDescription(
                     "SqlInitialCatalogConverter", descriptor.Converter.GetType().Name,
                     "Unexpected TypeConverter type.");
 
                 // GetStandardValues of this converter calls GetSchema("DATABASES")
                 var dbNames = descriptor.Converter.GetStandardValues(new DescriptorContext(descriptor, builder));
-                Console.WriteLine($"dbNames = {(dbNames == null ? "null" : dbNames[0].ToString())}");
                 HashSet<string> searchSet = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
                 foreach (string name in dbNames)
                 {
