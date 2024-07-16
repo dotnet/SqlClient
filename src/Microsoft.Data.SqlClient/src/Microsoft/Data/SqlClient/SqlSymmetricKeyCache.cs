@@ -4,8 +4,8 @@
 
 using System;
 using System.Diagnostics;
-using System.Runtime.Caching;
 using System.Text;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlSymmetricKeyCache()
         {
-            _cache = new MemoryCache("ColumnEncryptionKeyCache");
+            _cache = new MemoryCache(new MemoryCacheOptions());
         }
 
         internal static SqlSymmetricKeyCache GetInstance()
@@ -53,7 +53,8 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
 
             // Lookup the key in cache
-            if (!(_cache.Get(cacheLookupKey) is SqlClientSymmetricKey encryptionKey))
+            SqlClientSymmetricKey encryptionKey;
+            if (!(_cache.TryGetValue(cacheLookupKey, out encryptionKey)))
             {
                 Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths is not null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
 
@@ -90,8 +91,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     // In case multiple threads reach here at the same time, the first one wins.
                     // The allocated memory will be reclaimed by Garbage Collector.
-                    DateTimeOffset expirationTime = DateTimeOffset.UtcNow.Add(SqlConnection.ColumnEncryptionKeyCacheTtl);
-                    _cache.Add(cacheLookupKey, encryptionKey, expirationTime);
+                    MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = SqlConnection.ColumnEncryptionKeyCacheTtl
+                    };
+                    _cache.Set<SqlClientSymmetricKey>(cacheLookupKey, encryptionKey, options);
                 }
             }
 
