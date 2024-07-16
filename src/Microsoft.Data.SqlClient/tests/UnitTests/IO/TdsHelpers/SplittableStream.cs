@@ -4,9 +4,8 @@
 
 using System;
 using System.IO;
-using static Microsoft.Data.SqlClient.UnitTests.IO.TdsReadStreamTest;
 
-namespace Microsoft.Data.SqlClient.UnitTests.IO
+namespace Microsoft.Data.SqlClient.UnitTests.IO.TdsHelpers
 {
     /// <summary>
     /// A stream which can split the payload across multiple reads.
