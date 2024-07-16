@@ -33,6 +33,25 @@ namespace Microsoft.Data.SqlClientX.IO
         #region Public APIs
 
         /// <summary>
+        /// Reads bytes asynchronously for the length of buffer.
+        /// Recommended to be used by Tds Parser: 
+        ///     Read entire buffer for the expected data, and then break down data from packets to avoid multiple async calls.
+        /// </summary>
+        /// <param name="buffer">Buffer to use for reading bytes.</param>
+        /// <param name="isAsync">Whether the call should be made asynchronously or synchronously.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns></returns>
+        public async ValueTask<int> ReadBytesAsync(Memory<byte> buffer, bool isAsync, CancellationToken ct)
+        {
+            // Throw operation canceled exception before write.
+            ct.ThrowIfCancellationRequested();
+
+            return isAsync
+                ? await _tdsStream.ReadAsync(buffer, ct).ConfigureAwait(false)
+                : _tdsStream.Read(buffer.Span);
+        }
+
+        /// <summary>
         /// Reads byte from TDS stream asynchronously.
         /// </summary>
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
@@ -43,10 +62,11 @@ namespace Microsoft.Data.SqlClientX.IO
             // Throw operation canceled exception before write.
             ct.ThrowIfCancellationRequested();
 
-            return isAsync ?
-                await _tdsStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false)
+            return isAsync
+                ? await _tdsStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false)
                 : (byte)_tdsStream.ReadByte(); // UNSAFE - TODO Expose ReadByte from TdsStream that returns 'byte'.
         }
+
         /// <summary>
         /// Reads next char from TDS stream asynchronously.
         /// </summary>
@@ -304,16 +324,6 @@ namespace Microsoft.Data.SqlClientX.IO
                 return 16 * defaultBufferSize; // 64 KB
             else
                 return 64 * defaultBufferSize; // 256 KB
-        }
-
-        public async ValueTask<int> ReadBytesAsync(Memory<byte> buffer, bool isAsync, CancellationToken ct)
-        {
-            // Throw operation canceled exception before write.
-            ct.ThrowIfCancellationRequested();
-
-            return isAsync ?
-                await _tdsStream.ReadAsync(buffer, ct).ConfigureAwait(false)
-                : _tdsStream.Read(buffer.Span);
         }
 
         #endregion

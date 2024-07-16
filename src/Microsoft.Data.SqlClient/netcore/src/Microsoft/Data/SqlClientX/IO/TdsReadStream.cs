@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClientX.IO
         // The end of the data index in the buffer.
         private int _readBufferDataEnd = 0;
 
-        
+
 
         #endregion
 
@@ -78,10 +78,10 @@ namespace Microsoft.Data.SqlClientX.IO
         public virtual byte ReadPacketStatus { get; private set; }
 
         /// <inheritdoc />
-        public override long Position 
+        public override long Position
         {
-            get => throw new NotSupportedException(); 
-            set => throw new NotSupportedException(); 
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
         }
 
         /// <inheritdoc />
@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClientX.IO
             while (lengthToFill > 0)
             {
                 ValueTask vt = PrepareBufferAsync(isAsync: false, CancellationToken.None);
-                Debug.Assert(vt.IsCompletedSuccessfully, 
+                Debug.Assert(vt.IsCompletedSuccessfully,
                     "The Value task should have completed successfully, since the call was synchronous");
 
                 int lengthToCopy = MinDataAvailableBeforeRead(lengthToFill);
@@ -283,18 +283,18 @@ namespace Microsoft.Data.SqlClientX.IO
                 // 1.1 If we have left over data indicated in the packet header, then we simply need to get data from the network.
                 if (PacketDataLeft > 0)
                 {
-                    _readBufferDataEnd = isAsync ?
-                        await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false) :
-                        _underlyingStream.Read(_readBuffer);
+                    _readBufferDataEnd = isAsync
+                        ? await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false)
+                        : _underlyingStream.Read(_readBuffer);
                     _readIndex = 0;
                 }
                 // 1.2. There is no data left as indicated by packet header and the buffer is empty.
                 else if (PacketDataLeft == 0)
                 {
-                    _readBufferDataEnd = isAsync ?
-                        await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false) :
-                        _underlyingStream.Read(_readBuffer);
-                    
+                    _readBufferDataEnd = isAsync
+                        ? await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false)
+                        : _underlyingStream.Read(_readBuffer);
+
                     _readIndex = 0;
 
                     await ProcessHeaderAsync(isAsync, ct).ConfigureAwait(false);
@@ -303,9 +303,9 @@ namespace Microsoft.Data.SqlClientX.IO
                     // return any more data for the packet. In that case, post another read to have packet data ready..
                     if (_readBufferDataEnd == _readIndex)
                     {
-                        _readBufferDataEnd = isAsync ?
-                            await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false) :
-                            _underlyingStream.Read(_readBuffer);
+                        _readBufferDataEnd = isAsync
+                            ? await _underlyingStream.ReadAsync(_readBuffer, ct).ConfigureAwait(false)
+                            : _underlyingStream.Read(_readBuffer);
 
                         _readIndex = 0;
                     }
@@ -336,9 +336,10 @@ namespace Microsoft.Data.SqlClientX.IO
 
                 while (bytesNeededToCompleteHeader > 0)
                 {
-                    int bytesRead = isAsync ? 
-                        await _underlyingStream.ReadAsync(_readBuffer.AsMemory(_readBufferDataEnd), ct).ConfigureAwait(false) 
-                            : _underlyingStream.Read(_readBuffer.AsSpan(_readBufferDataEnd));
+                    int bytesRead = isAsync
+                        ? await _underlyingStream.ReadAsync(_readBuffer.AsMemory(_readBufferDataEnd), ct).ConfigureAwait(false)
+                        : _underlyingStream.Read(_readBuffer.AsSpan(_readBufferDataEnd));
+                    
                     // Reduce the number of bytes needed
                     bytesNeededToCompleteHeader -= bytesRead;
                     _readBufferDataEnd += bytesRead;
@@ -352,7 +353,7 @@ namespace Microsoft.Data.SqlClientX.IO
             // Position the read index to the start of the packet data.
             _readIndex += TdsEnums.HEADER_LEN;
         }
-        
+
         #endregion
     }
 }
