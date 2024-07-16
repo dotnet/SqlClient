@@ -239,7 +239,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static SqlConnection GetSqlConnection(string connectionString = "")
         {
-            if (!AuthenticatingWithoutAccessToken)
+            // Testing in macOS Azure SQL container requires access token authentication
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource))
             {
                 string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                 connectionString = RemoveKeysInConnStr(connectionString, credKeys);
@@ -529,7 +530,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool retval = false;
             if (AreConnStringsSetup() && IsNotAzureSynapse())
             {
-                using (SqlConnection connection = DataTestUtility.GetSqlConnection(TCPConnectionString))
+                using (SqlConnection connection = GetSqlConnection(TCPConnectionString))
                 using (SqlCommand command = new SqlCommand())
                 {
                     command.Connection = connection;
@@ -560,7 +561,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 return false;
             }
-            using (var connection = DataTestUtility.GetSqlConnection(DNSCachingConnString))
+            using (var connection = GetSqlConnection(DNSCachingConnString))
             {
                 List<IPAddress> ipAddresses = Dns.GetHostAddresses(connection.DataSource).ToList();
                 return ipAddresses.Exists(ip => ip.AddressFamily == AddressFamily.InterNetwork) &&
@@ -669,8 +670,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static string GetAccessToken()
         {
-            Console.WriteLine($"AADAccessToken = {AADAccessToken}");
-            if (null == AADAccessToken && IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
+            if (string.IsNullOrEmpty(AADAccessToken) && IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
             {
                 Console.WriteLine($"Generating new access token...");
                 string username = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "User ID", "UID" });
@@ -678,7 +678,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);
             }
             // Creates a new Object Reference of Access Token - See GitHub Issue 438
-            return (null != AADAccessToken) ? new string(AADAccessToken.ToCharArray()) : null;
+            return (!string.IsNullOrEmpty(AADAccessToken)) ? new string(AADAccessToken.ToCharArray()) : null;
         }
 
         public static string GetSystemIdentityAccessToken()
@@ -830,7 +830,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 try
                 {
-                    using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
+                    using (SqlConnection connection = GetSqlConnection(connectionString))
                     using (SqlCommand command = connection.CreateCommand())
                     {
                         connection.Open();
@@ -854,7 +854,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static DataTable RunQuery(string connectionString, string sql)
         {
             DataTable result = null;
-            using (SqlConnection connection = DataTestUtility.GetSqlConnection(connectionString))
+            using (SqlConnection connection = GetSqlConnection(connectionString))
             {
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
