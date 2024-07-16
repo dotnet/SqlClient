@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public TdsReader(TdsStream stream)
         {
             _tdsStream = stream;
-            _reader = new BinaryReader(stream);
+            _reader = new BinaryReader(stream, Encoding.Unicode);
         }
 
         #region Public APIs
@@ -55,6 +55,11 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="char"/> value.</returns>
         public async ValueTask<char> ReadCharAsync(bool isAsync, CancellationToken ct)
         {
+            if (!isAsync)
+            {
+                return _reader.ReadChar();
+            }
+
             var buffer = GetBuffer(sizeof(char));
             await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
 
@@ -74,6 +79,11 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="char"/> array.</returns>
         public async ValueTask<char[]> ReadCharArrayAsync(int length, bool isAsync, CancellationToken ct)
         {
+            if (!isAsync)
+            {
+                return _reader.ReadChars(length);
+            }
+
             // Calculate byte length for char array
             int byteLength = sizeof(char) * length;
 

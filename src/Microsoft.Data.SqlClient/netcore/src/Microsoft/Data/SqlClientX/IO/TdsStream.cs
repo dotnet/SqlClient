@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClientX.IO
         public override bool CanRead => _readStream != null && _readStream.CanRead;
         
         /// <inheritdoc />
-        public override bool CanSeek => throw new NotSupportedException();
+        public override bool CanSeek => _readStream != null && _readStream.CanSeek;
 
         /// <inheritdoc />
         public override bool CanWrite => _writeStream != null && _writeStream.CanWrite;
