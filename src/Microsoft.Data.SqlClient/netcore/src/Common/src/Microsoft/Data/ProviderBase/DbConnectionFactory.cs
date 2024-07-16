@@ -267,6 +267,7 @@ namespace Microsoft.Data.ProviderBase
 
                         // lock prevents race condition with PruneConnectionPoolGroups
                         newConnectionPoolGroups.Add(key, newConnectionPoolGroup);
+                        Console.WriteLine($">>> Log and increment ActiveConnectionPoolGroup..."); 
                         SqlClientEventSource.Log.EnterActiveConnectionPoolGroup();
                         connectionPoolGroup = newConnectionPoolGroup;
                         _connectionPoolGroups = newConnectionPoolGroups;

@@ -179,11 +179,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void EventCounter_ConnectionPoolGroupsCounter_Functional()
         {
+            Console.WriteLine($">>>>>> Before ClearAllPools _activeConnectionPoolGroupsCounter = {SqlClientEventSourceProps.ActiveConnectionPoolGroups}");
             SqlConnection.ClearAllPools();
-
+            Console.WriteLine($">>>>>> After ClearAllPools _activeConnectionPoolGroupsCounter = {SqlClientEventSourceProps.ActiveConnectionPoolGroups}");
             var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true };
 
             long acpg = SqlClientEventSourceProps.ActiveConnectionPoolGroups;
+            Console.WriteLine($">>>>>> After assigning to acpg _activeConnectionPoolGroupsCounter = {SqlClientEventSourceProps.ActiveConnectionPoolGroups}");
             long iacpg = SqlClientEventSourceProps.InactiveConnectionPoolGroups;
 
             using (SqlConnection conn = DataTestUtility.GetSqlConnection(stringBuilder.ToString()))
