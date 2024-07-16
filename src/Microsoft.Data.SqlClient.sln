@@ -196,7 +196,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4F3CD363-B1E6-4D6D-9466-97D78A56BE45}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
-		NuGet.config = NuGet.config
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.SqlServer.Server", "Microsoft.SqlServer.Server\Microsoft.SqlServer.Server.csproj", "{A314812A-7820-4565-A2A8-ABBE391C11E4}"

@@ -129,7 +129,7 @@
     </ContentWithTargetPath>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
+    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">

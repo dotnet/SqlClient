@@ -338,7 +338,6 @@
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" Version="$(MicrosoftDotNetXUnitExtensionsVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Win32.Registry" Version="$(MicrosoftWin32RegistryVersion)" />
   </ItemGroup>
   <ItemGroup>
