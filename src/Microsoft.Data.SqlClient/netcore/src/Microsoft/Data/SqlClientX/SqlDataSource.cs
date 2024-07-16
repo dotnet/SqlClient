@@ -3,9 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 #if NET8_0_OR_GREATER 
+#nullable enable
 
 using System;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -21,8 +23,10 @@ namespace Microsoft.Data.SqlClientX
     internal abstract class SqlDataSource : DbDataSource
     {
         private readonly SqlConnectionStringBuilder _connectionStringBuilder;
+        private protected volatile int _isDisposed;
 
         internal SqlCredential Credential { get; }
+
 
         //TODO: return SqlConnection after it is updated to wrap SqlConnectionX 
         /// <summary>
@@ -74,7 +78,7 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Creates a new <see cref="SqlCommand"/> object.
         /// </summary>
-        public new SqlCommand CreateCommand(string commandText = null)
+        public new SqlCommand CreateCommand(string? commandText)
         {
             return (SqlCommand)CreateDbCommand(commandText);
         }
@@ -87,7 +91,6 @@ namespace Microsoft.Data.SqlClientX
             return (SqlBatch)CreateDbBatch();
         }
 
-        // TODO: make abstract
         /// <summary>
         /// Returns an opened SqlConnector.
         /// </summary>
@@ -97,6 +100,7 @@ namespace Microsoft.Data.SqlClientX
         /// <param name="cancellationToken">Cancels an outstanding asynchronous operation.</param>
         /// <returns></returns>
         internal abstract ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken);
+
 
         /// <summary>
         /// Returns a SqlConnector to the data source for recycling or finalization.
@@ -114,6 +118,13 @@ namespace Microsoft.Data.SqlClientX
         /// <param name="cancellationToken">Cancels an outstanding asynchronous operation.</param>
         /// <returns></returns>
         internal abstract ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken);
+
+        private protected void CheckDisposed()
+        {
+            //TODO: implement disposal
+            if (_isDisposed == 1)
+                ThrowHelper.ThrowObjectDisposedException(GetType().FullName);
+        }
     }
 }
 

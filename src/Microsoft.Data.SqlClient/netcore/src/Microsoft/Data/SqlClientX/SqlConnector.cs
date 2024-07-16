@@ -36,6 +36,10 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         internal ConnectionState State => throw new NotImplementedException();
 
+        internal bool IsOpen => State == ConnectionState.Open;
+        internal bool IsClosed => State == ConnectionState.Closed;
+        internal bool IsBroken => State == ConnectionState.Broken;
+
         internal SqlConnector(SqlConnectionX owningConnection, SqlDataSource dataSource)
         {
             OwningConnection = owningConnection;
@@ -45,10 +49,9 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Closes this connection. If this connection is pooled, it is cleaned and returned to the pool.
         /// </summary>
-        /// <param name = "async" > Whether this method should run asynchronously.</param>
         /// <returns>A Task indicating the result of the operation.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        internal ValueTask Close(bool async)
+        internal void Close()
         {
             throw new NotImplementedException();
         }
@@ -57,11 +60,11 @@ namespace Microsoft.Data.SqlClientX
         /// Opens this connection.
         /// </summary>
         /// <param name = "timeout">The connection timeout for this operation.</param>
-        /// <param name = "async">Whether this method should run asynchronously.</param>
+        /// <param name = "isAsync">Whether this method should run asynchronously.</param>
         /// <param name = "cancellationToken">The token used to cancel an ongoing asynchronous call.</param>
         /// <returns>A Task indicating the result of the operation.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        internal ValueTask Open(TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        internal ValueTask Open(TimeSpan timeout, bool isAsync, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
@@ -69,9 +72,9 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Returns this connection to the data source that generated it.
         /// </summary>
-        /// <param name="async">Whether this method should run asynchronously.</param>
+        /// <param name="isAsync">Whether this method should run asynchronously.</param>
         /// <returns></returns>
-        internal ValueTask Return(bool async) => DataSource.ReturnInternalConnection(async, this);
+        internal ValueTask Return(bool isAsync) => DataSource.ReturnInternalConnection(isAsync, this);
     }
 }
 

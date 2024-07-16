@@ -963,6 +963,7 @@
     <Compile Include="Microsoft\Data\SqlClientX\SqlConnector.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlDataSource.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlDataSourceBuilder.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\ThrowHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\UnpooledDataSource.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
