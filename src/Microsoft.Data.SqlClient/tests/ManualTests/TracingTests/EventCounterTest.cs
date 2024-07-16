@@ -182,7 +182,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void EventCounter_ConnectionPoolGroupsCounter_Functional()
         {
             SqlConnection.ClearAllPools();
-
             var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true };
 
             long acpg = SqlClientEventSourceProps.ActiveConnectionPoolGroups;
@@ -190,13 +189,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (SqlConnection conn = DataTestUtility.GetSqlConnection(stringBuilder.ToString()))
             {
-                Console.WriteLine($">>>>>> Before Reset _activeConnectionPoolGroupsCounter = {SqlClientEventSourceProps.ActiveConnectionPoolGroups}");
                 SqlClientEventSourceProps.ResetActiveConnectionPoolGroupsCounter();
-                Console.WriteLine($">>>>>> Before Open _activeConnectionPoolGroupsCounter = {SqlClientEventSourceProps.ActiveConnectionPoolGroups}");
                 conn.Open();
-                Console.WriteLine($">>>>>> After Open _activeConnectionPoolGroupsCounter = {SqlClientEventSourceProps.ActiveConnectionPoolGroups}");
 
-                long activeConnectionPoolGroups = SqlClientEventSourceProps.ActiveConnectionPoolGroups;
                 // when calling open, we have 1 more active connection pool group
                 Assert.Equal(acpg + 1, SqlClientEventSourceProps.ActiveConnectionPoolGroups);
 
