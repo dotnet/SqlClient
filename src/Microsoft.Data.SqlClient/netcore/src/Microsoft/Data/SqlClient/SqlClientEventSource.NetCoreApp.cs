@@ -264,9 +264,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal override void EnterActiveConnectionPoolGroup()
         {
-            Console.WriteLine($"Called from Event Counter Test old value = {_activeConnectionPoolGroupsCounter}...");
             Interlocked.Increment(ref _activeConnectionPoolGroupsCounter);
-            Console.WriteLine($"Called from Event Counter Test new value = {_activeConnectionPoolGroupsCounter}...");
         }
 
         /// <summary>
