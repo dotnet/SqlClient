@@ -185,8 +185,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }).Dispose();
         }
 
-        // Access token authentication does not work with RemoteExecutor
         // Synapse: Parse error at line: 1, column: 27: Incorrect syntax near 'for'.
+        // Skip: Access token authentication does not work with RemoteExecutor
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public void ExecuteXmlReaderTest()
         {
@@ -367,7 +367,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse:  Parse error at line: 1, column: 27: Incorrect syntax near 'for'.
-        // Access token authentication does not work with RemoteExecutor
+        // Skip: Access token authentication does not work with RemoteExecutor
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public void ExecuteXmlReaderAsyncTest()
         {
@@ -394,7 +394,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }).Dispose();
         }
 
-        // Access token authentication does not work with RemoteExecutor
+        // Skip: Access token authentication does not work with RemoteExecutor
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public void ExecuteXmlReaderAsyncErrorTest()
         {

@@ -118,11 +118,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // Testing in macOS Azure SQL container requires access token authentication
         public static bool AuthenticatingWithoutAccessToken
         {
             get
             {
-                return string.IsNullOrEmpty(AADAccessToken);
+                return !RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
             }
         }
 
@@ -316,7 +317,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static string GetSqlServerProperty(string connectionString, string propertyName)
         {
             string propertyValue = string.Empty;
-            using SqlConnection conn = DataTestUtility.GetSqlConnection(connectionString);
+            using SqlConnection conn = GetSqlConnection(connectionString);
             conn.Open();
             SqlCommand command = conn.CreateCommand();
             command.CommandText = $"SELECT SERVERProperty('{propertyName}')";
@@ -345,7 +346,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
             try
             {
-                SqlConnection conn = DataTestUtility.GetSqlConnection(builder.ConnectionString);
+                SqlConnection conn = GetSqlConnection(builder.ConnectionString);
                 conn.Open();
                 isTDS8Supported = true;
             }
@@ -366,7 +367,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 var builder = new SqlConnectionStringBuilder(TCPConnectionString);
                 builder.ConnectTimeout = 2;
-                using (var connection = DataTestUtility.GetSqlConnection(builder.ToString()))
+                using (var connection = GetSqlConnection(builder.ToString()))
                 using (var command = new SqlCommand("SELECT COUNT(*) FROM sys.databases WHERE name=@name", connection))
                 {
                     connection.Open();
@@ -397,7 +398,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                using (var connection = DataTestUtility.GetSqlConnection(TCPConnectionString))
+                using (var connection = GetSqlConnection(TCPConnectionString))
                 using (var command = new SqlCommand("SELECT * FROM SYS.SENSITIVITY_CLASSIFICATIONS", connection))
                 {
                     connection.Open();

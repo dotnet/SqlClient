@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class AdjustPrecScaleForBulkCopy
     {
-        // Cannot assign access token for database authentication
+        // Skip: We cannot assign an access token to the connection in this test
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public static void RunTest()
         {

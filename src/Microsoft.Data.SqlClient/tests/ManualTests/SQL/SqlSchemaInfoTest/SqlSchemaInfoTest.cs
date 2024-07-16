@@ -76,6 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // This test validates behavior of SqlInitialCatalogConverter used to present database names in PropertyGrid
         // with the SqlConnectionStringBuilder object presented in the control underneath.
+        // Skip: We cannot assign an access token to the connection in this test
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public static void TestInitialCatalogStandardValues()
         {
