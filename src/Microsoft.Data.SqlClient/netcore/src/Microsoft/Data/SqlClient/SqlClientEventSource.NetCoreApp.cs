@@ -264,9 +264,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal override void EnterActiveConnectionPoolGroup()
         {
-            Console.WriteLine($">>>>>>> _activeConnectionPoolGroupsCounter before increment = {_activeConnectionPoolGroupsCounter}");
             Interlocked.Increment(ref _activeConnectionPoolGroupsCounter);
-            Console.WriteLine($">>>>>>> _activeConnectionPoolGroupsCounter after increment = {_activeConnectionPoolGroupsCounter}");
         }
 
         /// <summary>
