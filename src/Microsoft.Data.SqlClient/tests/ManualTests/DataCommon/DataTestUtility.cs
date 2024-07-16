@@ -669,8 +669,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static string GetAccessToken()
         {
+            Console.WriteLine($"AADAccessToken = {AADAccessToken}");
             if (null == AADAccessToken && IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
             {
+                Console.WriteLine($"Generating new access token...");
                 string username = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "User ID", "UID" });
                 string password = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "Password", "PWD" });
                 AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);
