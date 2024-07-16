@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             get
             {
-                return !RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
+                return !RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
             }
         }
 
