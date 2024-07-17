@@ -16,6 +16,8 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClientX
 {
+    //TODO: update this whole class to return SqlConnection after it is changed to wrap SqlConnectionX 
+
     /// <summary>
     /// Represents a data source that can be used to obtain SqlConnections. 
     /// SqlDataSource can also create and open SqlConnectors, which are the internal/physical connections wrapped by SqlConnection.
@@ -28,7 +30,6 @@ namespace Microsoft.Data.SqlClientX
         internal SqlCredential Credential { get; }
 
 
-        //TODO: return SqlConnection after it is updated to wrap SqlConnectionX 
         /// <summary>
         /// Creates a new, unopened SqlConnection.
         /// </summary>
@@ -53,26 +54,26 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Creates a new <see cref="SqlConnection"/> object.
         /// </summary>
-        public new SqlConnection CreateConnection()
+        public new SqlConnectionX CreateConnection()
         {
             throw new NotImplementedException();
-            // TODO: return (SqlConnection)CreateDbConnection();
+            // TODO: return (SqlConnectionX)CreateDbConnection();
         }
 
         /// <summary>
         /// Opens a new <see cref="SqlConnection"/>.
         /// </summary>
-        public new SqlConnection OpenConnection()
+        public new SqlConnectionX OpenConnection()
         {
-            return (SqlConnection)base.OpenConnection();
+            return (SqlConnectionX)base.OpenConnection();
         }
 
         /// <summary>
         /// Asynchronously opens a new <see cref="SqlConnection"/>.
         /// </summary>
-        public new async ValueTask<SqlConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)
+        public new async ValueTask<SqlConnectionX> OpenConnectionAsync(CancellationToken cancellationToken = default)
         {
-            return (SqlConnection)await base.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+            return (SqlConnectionX)await base.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>

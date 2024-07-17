@@ -12,6 +12,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClientX.RateLimiters;
+using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
 
 namespace Microsoft.Data.SqlClientX
 {
@@ -35,10 +36,14 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Constructs a new <see cref="SqlDataSourceBuilder" />, optionally starting out from the given <paramref name="connectionString"/>.
         /// </summary>
-        public SqlDataSourceBuilder(string connectionString = null, SqlCredential credential = null)
+        public SqlDataSourceBuilder(string connectionString = null, SqlCredential credential = null) 
+            : this(new SqlConnectionStringBuilder(connectionString), credential)
+        {}
+
+        public SqlDataSourceBuilder(SqlConnectionStringBuilder connectionStringBuilder, SqlCredential sqlCredential = null)
         {
-            ConnectionStringBuilder = new SqlConnectionStringBuilder(connectionString);
-            Credential = credential;
+            ConnectionStringBuilder = connectionStringBuilder;
+            Credential = sqlCredential;
         }
 
         /// <summary>

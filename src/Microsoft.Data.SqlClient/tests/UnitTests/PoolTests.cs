@@ -1,19 +1,29 @@
-﻿using System;
+﻿#if NET8_0_OR_GREATER
+
+using System;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.NetCore.UnitTests.Util;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
 {
-
     public class PoolTests
     {
+        private TestBase testBase;
+
+        public PoolTests()
+        {
+            testBase = new TestBase();
+        }
+
+
         [Fact]
         public async Task MinPoolSize_equals_MaxPoolSize()
         {
-            await using var dataSource = CreateDataSource(csb =>
+            await using var dataSource = testBase.CreateDataSource(csb =>
             {
                 csb.MinPoolSize = 30;
                 csb.MaxPoolSize = 30;
@@ -25,7 +35,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         public void MinPoolSize_bigger_than_MaxPoolSize_throws()
             => Assert.ThrowsAsync<ArgumentException>(async () =>
             {
-                await using var dataSource = CreateDataSource(csb =>
+                await using var dataSource = testBase.CreateDataSource(csb =>
                 {
                     csb.MinPoolSize = 2;
                     csb.MaxPoolSize = 1;
@@ -35,18 +45,18 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [Fact]
         public async Task Reuse_connector_before_creating_new()
         {
-            await using var dataSource = CreateDataSource();
+            await using var dataSource = testBase.CreateDataSource();
             await using var conn = await dataSource.OpenConnectionAsync();
-            var backendId = conn.Connector!.BackendProcessId;
+            var backendId = conn.InternalConnection!.BackendProcessId;
             await conn.CloseAsync();
             await conn.OpenAsync();
-            Assert.That(conn.Connector.BackendProcessId, Is.EqualTo(backendId));
+            Assert.Equal(conn.InternalConnection!.BackendProcessId, backendId);
         }
 
         [Fact]
         public async Task Get_connector_from_exhausted_pool([Values(true, false)] bool async)
         {
-            await using var dataSource = CreateDataSource(csb =>
+            await using var dataSource = testBase.CreateDataSource(csb =>
             {
                 csb.MaxPoolSize = 1;
                 csb.Timeout = 0;
@@ -72,7 +82,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [Fact]
         public async Task Timeout_getting_connector_from_exhausted_pool([Values(true, false)] bool async)
         {
-            await using var dataSource = CreateDataSource(csb =>
+            await using var dataSource = testBase.CreateDataSource(csb =>
             {
                 csb.MaxPoolSize = 1;
                 csb.Timeout = 2;
@@ -99,7 +109,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [Explicit("Timing-based")]
         public async Task OpenAsync_cancel()
         {
-            await using var dataSource = CreateDataSource(csb => csb.MaxPoolSize = 1);
+            await using var dataSource = testBase.CreateDataSource(csb => csb.MaxPoolSize = 1);
             await using var conn1 = await dataSource.OpenConnectionAsync();
 
             AssertPoolState(dataSource, open: 1, idle: 0);
@@ -126,7 +136,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [Fact, Description("Makes sure that when a pooled connection is closed it's properly reset, and that parameter settings aren't leaked")]
         public async Task ResetOnClose()
         {
-            await using var dataSource = CreateDataSource(csb => csb.SearchPath = "public");
+            await using var dataSource = testBase.CreateDataSource(csb => csb.SearchPath = "public");
             await using var conn = await dataSource.OpenConnectionAsync();
             Assert.That(await conn.ExecuteScalarAsync("SHOW search_path"), Is.Not.Contains("pg_temp"));
             var backendId = conn.Connector!.BackendProcessId;
@@ -142,14 +152,14 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         public void ConnectionPruningInterval_zero_throws()
             => Assert.ThrowsAsync<ArgumentException>(async () =>
             {
-                await using var dataSource = CreateDataSource(csb => csb.ConnectionPruningInterval = 0);
+                await using var dataSource = testBase.CreateDataSource(csb => csb.ConnectionPruningInterval = 0);
             });
 
         [Fact]
         public void ConnectionPruningInterval_bigger_than_ConnectionIdleLifetime_throws()
             => Assert.ThrowsAsync<ArgumentException>(async () =>
             {
-                await using var dataSource = CreateDataSource(csb =>
+                await using var dataSource = testBase.CreateDataSource(csb =>
                 {
                     csb.ConnectionIdleLifetime = 1;
                     csb.ConnectionPruningInterval = 2;
@@ -165,7 +175,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [TestCase(2, 20, 3, 7)] // test high samples.
         public async Task Prune_idle_connectors(int minPoolSize, int connectionIdleLifeTime, int connectionPruningInterval, int samples)
         {
-            await using var dataSource = CreateDataSource(csb =>
+            await using var dataSource = testBase.CreateDataSource(csb =>
             {
                 csb.MinPoolSize = minPoolSize;
                 csb.ConnectionIdleLifetime = connectionIdleLifeTime;
@@ -206,7 +216,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [Explicit("Timing-based")]
         public async Task Prune_counts_max_lifetime_exceeded()
         {
-            await using var dataSource = CreateDataSource(csb =>
+            await using var dataSource = testBase.CreateDataSource(csb =>
             {
                 csb.MinPoolSize = 0;
                 // Idle lifetime 2 seconds, 2 samples
@@ -249,7 +259,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [Fact, Description("Makes sure that when a waiting async open is is given a connection, the continuation is executed in the TP rather than on the closing thread")]
         public async Task Close_releases_waiter_on_another_thread()
         {
-            await using var dataSource = CreateDataSource(csb => csb.MaxPoolSize = 1);
+            await using var dataSource = testBase.CreateDataSource(csb => csb.MaxPoolSize = 1);
             await using var conn1 = await dataSource.OpenConnectionAsync(); // Pool is now exhausted
 
             AssertPoolState(dataSource, open: 1, idle: 0);
@@ -277,7 +287,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [Fact] //TODO: parallelize
         public async Task Release_waiter_on_connection_failure()
         {
-            await using var dataSource = CreateDataSource(csb =>
+            await using var dataSource = testBase.CreateDataSource(csb =>
             {
                 csb.Port = 9999;
                 csb.MaxPoolSize = 1;
@@ -373,7 +383,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [Fact, Description("https://github.com/npgsql/npgsql/commit/45e33ecef21f75f51a625c7b919a50da3ed8e920#r28239653")]
         public void Open_physical_failure()
         {
-            using var dataSource = CreateDataSource(csb =>
+            using var dataSource = testBase.CreateDataSource(csb =>
             {
                 csb.Port = 44444;
                 csb.MaxPoolSize = 1;
@@ -393,7 +403,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         //[TestCase(10, 20, 30, false)]
         public async Task Exercise_pool(int maxPoolSize, int numTasks, int seconds, bool async)
         {
-            await using var dataSource = CreateDataSource(csb => csb.MaxPoolSize = maxPoolSize);
+            await using var dataSource = testBase.CreateDataSource(csb => csb.MaxPoolSize = maxPoolSize);
 
             Console.WriteLine($"Spinning up {numTasks} parallel tasks for {seconds} seconds (MaxPoolSize={maxPoolSize})...");
             StopFlag = 0;
@@ -419,7 +429,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [Fact]
         public async Task ConnectionLifetime()
         {
-            await using var dataSource = CreateDataSource(csb => csb.ConnectionLifetime = 1);
+            await using var dataSource = testBase.CreateDataSource(csb => csb.ConnectionLifetime = 1);
             await using var conn = await dataSource.OpenConnectionAsync();
             var processId = conn.ProcessID;
             await conn.CloseAsync();
@@ -451,7 +461,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         {
             const int numParallelCommands = 10000;
 
-            await using var dataSource = CreateDataSource(csb =>
+            await using var dataSource = testBase.CreateDataSource(csb =>
             {
                 csb.MaxPoolSize = 1;
                 csb.MaxAutoPrepare = 5;
@@ -477,7 +487,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         [Ignore("Multiplexing: fails")]
         public async Task MultiplexedCommandDoesntGetExecutedOnTransactionedConnector()
         {
-            await using var dataSource = CreateDataSource(csb =>
+            await using var dataSource = testBase.CreateDataSource(csb =>
             {
                 csb.MaxPoolSize = 1;
                 csb.Timeout = 1;
@@ -496,3 +506,5 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         #endregion
     }
 }
+
+#endif

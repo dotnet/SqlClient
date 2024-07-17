@@ -32,6 +32,8 @@ namespace Microsoft.Data.SqlClientX
         private SqlDataSource? _dataSource;
         private SqlConnector? _internalConnection;
 
+        internal SqlConnector? InternalConnection { get => _internalConnection; }
+
         //TODO: Investigate if we can just use dataSource.ConnectionString. Do this when this class can resolve its own data source.
         private string _connectionString = string.Empty;
         private ConnectionState _connectionState = ConnectionState.Closed;

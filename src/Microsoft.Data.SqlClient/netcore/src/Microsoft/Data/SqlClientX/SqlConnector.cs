@@ -40,6 +40,9 @@ namespace Microsoft.Data.SqlClientX
         internal bool IsClosed => State == ConnectionState.Closed;
         internal bool IsBroken => State == ConnectionState.Broken;
 
+        //TODO: set this
+        internal int BackendProcessId { get; private set; }
+
         internal SqlConnector(SqlConnectionX owningConnection, SqlDataSource dataSource)
         {
             OwningConnection = owningConnection;
