@@ -114,16 +114,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             get
             {
                 SqlConnectionStringBuilder builder = new (TCPConnectionString);
-                return builder.Authentication == SqlAuthenticationMethod.SqlPassword || (builder.Authentication == SqlAuthenticationMethod.NotSpecified && AuthenticatingWithoutAccessToken);
+                return builder.Authentication == SqlAuthenticationMethod.SqlPassword || (builder.Authentication == SqlAuthenticationMethod.NotSpecified && string.IsNullOrEmpty(AADAccessToken));
             }
         }
 
-        // Testing in macOS Azure SQL container requires access token authentication
+        // Skip tests when we require an access token to authenticate to Azure SQL DB
         public static bool AuthenticatingWithoutAccessToken
         {
             get
             {
-                return !RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+                SqlConnectionStringBuilder builder = new(TCPConnectionString);
+                var containsAuthentication = builder.Authentication != SqlAuthenticationMethod.NotSpecified || !string.IsNullOrEmpty(builder.Password) || !string.IsNullOrEmpty(builder.UserID);
+
+                return containsAuthentication || !Utils.IsAzureSqlServer(builder.DataSource);
             }
         }
 
@@ -240,8 +243,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static SqlConnection GetSqlConnection(string connectionString = "")
         {
-            // Testing in macOS Azure SQL container requires access token authentication
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource))
+            // If there is no authentication method specified in the TCP connection string and it's connecting to an Azure SQL DB, add an access token
+            if (!AuthenticatingWithoutAccessToken && !string.IsNullOrEmpty(AADAccessToken))
             {
                 string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                 connectionString = RemoveKeysInConnStr(connectionString, credKeys);
