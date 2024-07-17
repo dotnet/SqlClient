@@ -4979,7 +4979,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // read the collation for 7.x servers
-            if (col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE))
+            if (col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE) && (tdsType != TdsEnums.SQLJSON))
             {
                 if (!TryProcessCollation(stateObj, out col.collation))
                 {
@@ -9589,7 +9589,7 @@ namespace Microsoft.Data.SqlClient
 
             // write out collation or xml metadata
 
-            if ((mt.SqlDbType == SqlDbType.Xml || mt.SqlDbType == (SqlDbType)35))
+            if (mt.SqlDbType == SqlDbType.Xml)
             {
                 if (mt.SqlDbType == SqlDbType.Xml)
                 { 
@@ -9638,7 +9638,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-            else if (mt.IsCharType)
+            else if (mt.IsCharType && mt.SqlDbType != (SqlDbType)35)
             {
                 // if it is not supplied, simply write out our default collation, otherwise, write out the one attached to the parameter
                 SqlCollation outCollation = (param.Collation != null) ? param.Collation : _defaultCollation;
