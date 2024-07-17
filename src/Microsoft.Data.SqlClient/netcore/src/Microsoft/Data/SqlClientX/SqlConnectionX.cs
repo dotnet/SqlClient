@@ -32,10 +32,15 @@ namespace Microsoft.Data.SqlClientX
         private SqlDataSource? _dataSource;
         private SqlConnector? _internalConnection;
 
+        bool _disposed;
+
         internal SqlConnector? InternalConnection { get => _internalConnection; }
 
         //TODO: Investigate if we can just use dataSource.ConnectionString. Do this when this class can resolve its own data source.
         private string _connectionString = string.Empty;
+        internal SqlConnectionStringBuilder Settings { get; private set; } = DefaultSettings;
+        static readonly SqlConnectionStringBuilder DefaultSettings = new();
+
         private ConnectionState _connectionState = ConnectionState.Closed;
 
         #region constructors
@@ -99,8 +104,7 @@ namespace Microsoft.Data.SqlClientX
             => throw new NotImplementedException();
 
         /// <inheritdoc/>
-        public override int ConnectionTimeout
-            => throw new NotImplementedException();
+        public override int ConnectionTimeout => Settings.ConnectTimeout;
 
         /// <summary>
         /// Gets or sets the connection string used to connect to the database.
@@ -208,9 +212,14 @@ namespace Microsoft.Data.SqlClientX
         #endregion
 
         /// <inheritdoc/>
-        public override ValueTask DisposeAsync()
-            => throw new NotImplementedException();
+        public override async ValueTask DisposeAsync()
+        {
+            if (_disposed)
+                return;
 
+            await CloseAsync().ConfigureAwait(false);
+            _disposed = true;
+        }
         /// <inheritdoc/>
         public override void EnlistTransaction(Transaction? transaction)
             => throw new NotImplementedException();

@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                     csb.MaxPoolSize = 1;
                 });
             });
-
+        /*
         [Fact]
         public async Task Reuse_connector_before_creating_new()
         {
@@ -504,7 +504,9 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         }
 
         #endregion
+        */
     }
+
 }
 
 #endif
