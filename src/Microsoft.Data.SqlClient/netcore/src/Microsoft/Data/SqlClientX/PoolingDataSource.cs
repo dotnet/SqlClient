@@ -352,16 +352,36 @@ namespace Microsoft.Data.SqlClientX
         }
 
         /// <inheritdoc/>
-        internal override ValueTask ReturnInternalConnection(bool async, SqlConnector connection)
+        internal override void ReturnInternalConnection(SqlConnector connector)
         {
-            throw new NotImplementedException();
+
+            /*TODO: verify transaction state
+            Debug.Assert(!connector.InTransaction);
+            Debug.Assert(connector.MultiplexAsyncWritingLock == 0 || connector.IsBroken || connector.IsClosed,
+                $"About to return multiplexing connector to the pool, but {nameof(connector.MultiplexAsyncWritingLock)} is {connector.MultiplexAsyncWritingLock}");
+            */
+
+            // If Clear/ClearAll has been been called since this connector was first opened,
+            // throw it away. The same if it's broken (in which case CloseConnector is only
+            // used to update state/perf counter).
+            //TODO: connector.ClearCounter != _clearCounter
+            if (connector.IsBroken)
+            {
+                CloseConnector(connector);
+                return;
+            }
+
+            // Statement order is important since we have synchronous completions on the channel.
+            Interlocked.Increment(ref _idleCount);
+            var written = IdleConnectorWriter.TryWrite(connector);
+            Debug.Assert(written);
         }
 
-        /// <summary>
-        /// Closes extra idle connections.
-        /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
-        internal void PruneIdleConnections()
+            /// <summary>
+            /// Closes extra idle connections.
+            /// </summary>
+            /// <exception cref="NotImplementedException"></exception>
+            internal void PruneIdleConnections()
         {
             throw new NotImplementedException();
         }

@@ -34,19 +34,23 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Represents the current state of this connection.
         /// </summary>
-        internal ConnectionState State => throw new NotImplementedException();
+        /// TODO: set and change state appropriately
+        internal ConnectionState State = ConnectionState.Open;
 
         internal bool IsOpen => State == ConnectionState.Open;
         internal bool IsClosed => State == ConnectionState.Closed;
         internal bool IsBroken => State == ConnectionState.Broken;
 
-        //TODO: set this
-        internal int BackendProcessId { get; private set; }
+        //TODO: set this based on login info
+        internal int ServerProcessId { get; private set; }
+
+        private static int SpoofedServerProcessId = 1;
 
         internal SqlConnector(SqlConnectionX owningConnection, SqlDataSource dataSource)
         {
             OwningConnection = owningConnection;
             DataSource = dataSource;
+            ServerProcessId = Interlocked.Increment(ref SpoofedServerProcessId);
         }
 
         /// <summary>
@@ -75,9 +79,7 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Returns this connection to the data source that generated it.
         /// </summary>
-        /// <param name="isAsync">Whether this method should run asynchronously.</param>
-        /// <returns></returns>
-        internal ValueTask Return(bool isAsync) => DataSource.ReturnInternalConnection(isAsync, this);
+        internal void Return() => DataSource.ReturnInternalConnection(this);
     }
 }
 

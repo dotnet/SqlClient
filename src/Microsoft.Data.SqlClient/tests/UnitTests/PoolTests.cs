@@ -1,6 +1,7 @@
 ﻿#if NET8_0_OR_GREATER
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -41,18 +42,20 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                     csb.MaxPoolSize = 1;
                 });
             });
-        /*
+
         [Fact]
         public async Task Reuse_connector_before_creating_new()
         {
             await using var dataSource = testBase.CreateDataSource();
             await using var conn = await dataSource.OpenConnectionAsync();
-            var backendId = conn.InternalConnection!.BackendProcessId;
+            var backendId = conn.InternalConnection!.ServerProcessId;
+            Debug.WriteLine($"server process id: {backendId}");
             await conn.CloseAsync();
             await conn.OpenAsync();
-            Assert.Equal(conn.InternalConnection!.BackendProcessId, backendId);
+            Assert.Equal(conn.InternalConnection!.ServerProcessId, backendId);
         }
 
+        /*
         [Fact]
         public async Task Get_connector_from_exhausted_pool([Values(true, false)] bool async)
         {

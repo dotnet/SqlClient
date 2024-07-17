@@ -106,9 +106,8 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Returns a SqlConnector to the data source for recycling or finalization.
         /// </summary>
-        /// <param name="async">Whether this method should be run asynchronously.</param>
-        /// <param name="connection">The connection returned to the data source.</param>
-        internal abstract ValueTask ReturnInternalConnection(bool async, SqlConnector connection);
+        /// <param name="connector">The connection returned to the data source.</param>
+        internal abstract void ReturnInternalConnection(SqlConnector connector);
 
         /// <summary>
         /// Opens a new SqlConnector.

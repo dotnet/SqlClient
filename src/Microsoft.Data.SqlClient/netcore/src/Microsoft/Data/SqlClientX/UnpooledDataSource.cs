@@ -44,10 +44,9 @@ namespace Microsoft.Data.SqlClientX
         }
 
         /// <inheritdoc/>
-        internal override ValueTask ReturnInternalConnection(bool async, SqlConnector connection)
+        internal override void ReturnInternalConnection(SqlConnector connection)
         {
             connection.Close();
-            return ValueTask.CompletedTask;
         }
     }
 }

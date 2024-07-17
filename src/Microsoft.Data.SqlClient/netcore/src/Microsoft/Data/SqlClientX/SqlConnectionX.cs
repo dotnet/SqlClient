@@ -56,6 +56,7 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         internal SqlConnectionX(string connectionString) : this()
         {
+            _connectionState = ConnectionState.Connecting;
             _connectionString = connectionString;
         }
 
@@ -188,7 +189,7 @@ namespace Microsoft.Data.SqlClientX
 
             return CloseAsync(async);
 
-            async Task CloseAsync(bool async)
+            Task CloseAsync(bool async)
             {
                 Debug.Assert(_internalConnection != null);
                 Debug.Assert(_dataSource != null);
@@ -201,11 +202,12 @@ namespace Microsoft.Data.SqlClientX
                     //TODO: if pooling, reset the connector
 
                     internalConnection.OwningConnection = null;
-                    await internalConnection.Return(async).ConfigureAwait(false);
+                    internalConnection.Return();
                     _internalConnection = null;
                 }
 
                 _connectionState = ConnectionState.Closed;
+                return Task.CompletedTask;
             }
         }
 
@@ -264,6 +266,7 @@ namespace Microsoft.Data.SqlClientX
             }
 
             _internalConnection = await _dataSource.GetInternalConnection(this, TimeSpan.FromSeconds(ConnectionTimeout), async, cancellationToken).ConfigureAwait(false);
+            _connectionState = ConnectionState.Open;
         }
 
         #endregion
