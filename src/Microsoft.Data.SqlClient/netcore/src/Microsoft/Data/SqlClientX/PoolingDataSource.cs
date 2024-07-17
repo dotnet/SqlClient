@@ -13,6 +13,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClientX.RateLimiters;
 
 namespace Microsoft.Data.SqlClientX
 {
@@ -21,22 +22,29 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal sealed class PoolingDataSource : SqlDataSource
     {
-        private DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
+        private readonly DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
+        private RateLimiterBase _connectionRateLimiter;
 
         internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
         internal int MaxPoolSize => _connectionPoolGroupOptions.MaxPoolSize;
+
+        internal int ObjectID => _objectID;
+
+        private static int _objectTypeCount; // EventSource counter
+        private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
 
         /// <summary>
         /// Initializes a new PoolingDataSource.
         /// </summary>
         //TODO: support auth contexts and provider info
-        PoolingDataSource(SqlConnectionStringBuilder connectionStringBuilder,
+        internal PoolingDataSource(SqlConnectionStringBuilder connectionStringBuilder,
             SqlCredential credential,
-            RemoteCertificateValidationCallback userCertificateValidationCallback,
-            Action<X509CertificateCollection> clientCertificatesCallback,
-            DbConnectionPoolGroupOptions options) : base(connectionStringBuilder, credential, userCertificateValidationCallback, clientCertificatesCallback)
+            DbConnectionPoolGroupOptions options,
+            RateLimiterBase connectionRateLimiter)
+            : base(connectionStringBuilder, credential)
         {
             _connectionPoolGroupOptions = options;
+            _connectionRateLimiter = connectionRateLimiter;
             //TODO: other construction
         }
 
@@ -46,10 +54,32 @@ namespace Microsoft.Data.SqlClientX
             throw new NotImplementedException();
         }
 
+        internal readonly struct OpenInternalConnectionState
+        {
+            readonly SqlConnectionX _owningConnection;
+            readonly TimeSpan _timeout;
+
+            internal OpenInternalConnectionState(SqlConnectionX owningConnection, TimeSpan timeout)
+            {
+                _owningConnection = owningConnection;
+                _timeout = timeout;
+            }
+        }
+
         /// <inheritdoc/>
         internal override ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return _connectionRateLimiter.Execute<OpenInternalConnectionState, SqlConnector>(
+                RateLimitedOpen,
+                new OpenInternalConnectionState(owningConnection, timeout),
+                async,
+                cancellationToken
+            );
+
+            ValueTask<SqlConnector> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         /// <inheritdoc/>
@@ -74,6 +104,15 @@ namespace Microsoft.Data.SqlClientX
         internal void WarmUp()
         {
             throw new NotImplementedException();
+        }
+
+        internal void Shutdown()
+        {
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", ObjectID);
+            if (_connectionRateLimiter != null) {
+                _connectionRateLimiter.Dispose();
+                _connectionRateLimiter = null;
+            }
         }
     }
 }
