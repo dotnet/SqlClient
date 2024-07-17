@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Util
         /// test database.
         /// </summary>
         public const string DefaultConnectionString =
-            "Server=localhost;User Id=sql_tests;Password=sql_tests;Database=sql_tests;Connection Timeout=0";
+            "Server=localhost;User Id=sql_tests;Password=sql_tests;Database=sql_tests;Connection Timeout=0;PoolBlockingPeriod=NeverBlock";
 
         /// <summary>
         /// The connection string that will be used when opening the connection to the tests database.

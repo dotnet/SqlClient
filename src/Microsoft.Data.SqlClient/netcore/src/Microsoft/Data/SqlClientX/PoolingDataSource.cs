@@ -267,8 +267,8 @@ namespace Microsoft.Data.SqlClientX
 
         internal readonly struct OpenInternalConnectionState
         {
-            readonly SqlConnectionX _owningConnection;
-            readonly TimeSpan _timeout;
+            internal readonly SqlConnectionX _owningConnection;
+            internal readonly TimeSpan _timeout;
 
             internal OpenInternalConnectionState(SqlConnectionX owningConnection, TimeSpan timeout)
             {
@@ -278,7 +278,7 @@ namespace Microsoft.Data.SqlClientX
         }
 
         /// <inheritdoc/>
-        internal override ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        internal override ValueTask<SqlConnector?> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
             return _connectionRateLimiter.Execute(
                 RateLimitedOpen,
@@ -287,9 +287,67 @@ namespace Microsoft.Data.SqlClientX
                 cancellationToken
             );
 
-            ValueTask<SqlConnector> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
+            ValueTask<SqlConnector?> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
             {
-                throw new NotImplementedException();
+                // As long as we're under max capacity, attempt to increase the connector count and open a new connection.
+                for (var numConnectors = _numConnectors; numConnectors < MaxPoolSize; numConnectors = _numConnectors)
+                {
+                    // Note that we purposefully don't use SpinWait for this: https://github.com/dotnet/coreclr/pull/21437
+                    if (Interlocked.CompareExchange(ref _numConnectors, numConnectors + 1, numConnectors) != numConnectors)
+                        continue;
+
+                    try
+                    {
+                        // We've managed to increase the open counter, open a physical connections.
+#if NET7_0_OR_GREATER
+                        var startTime = Stopwatch.GetTimestamp();
+#endif
+                        SqlConnector? connector = new SqlConnector(state._owningConnection, this);
+                        //TODO: set clear counter on connector
+
+                        //TODO: actually open the connector
+                        //await connector.Open(timeout, async, cancellationToken).ConfigureAwait(false);
+#if NET7_0_OR_GREATER
+                        //TODO: MetricsReporter.ReportConnectionCreateTime(Stopwatch.GetElapsedTime(startTime));
+#endif
+
+                        var i = 0;
+                        for (; i < MaxPoolSize; i++)
+                            if (Interlocked.CompareExchange(ref _connectors[i], connector, null) == null)
+                                break;
+
+                        Debug.Assert(i < MaxPoolSize, $"Could not find free slot in {_connectors} when opening.");
+                        if (i == MaxPoolSize)
+                            //TODO: generic exception?
+                            throw new Exception($"Could not find free slot in {_connectors} when opening. Please report a bug.");
+
+                        // Only start pruning if we've incremented open count past _min.
+                        // Note that we don't do it only once, on equality, because the thread which incremented open count past _min might get exception
+                        // on NpgsqlConnector.Open due to timeout, CancellationToken or other reasons.
+                        //TODO:
+                        //if (numConnectors >= MinConnections)
+                        //  UpdatePruningTimer();
+
+                        return ValueTask.FromResult<SqlConnector?>(connector);
+                    }
+                    catch
+                    {
+                        // Physical open failed, decrement the open and busy counter back down.
+                        Interlocked.Decrement(ref _numConnectors);
+
+                        // In case there's a waiting attempt on the channel, we write a null to the idle connector channel
+                        // to wake it up, so it will try opening (and probably throw immediately)
+                        // Statement order is important since we have synchronous completions on the channel.
+                        IdleConnectorWriter.TryWrite(null);
+
+                        // Just in case we always call UpdatePruningTimer for failed physical open
+                        //TODO: UpdatePruningTimer();
+
+                        throw;
+                    }
+                }
+
+                return ValueTask.FromResult<SqlConnector?>(null);
             }
         }
 

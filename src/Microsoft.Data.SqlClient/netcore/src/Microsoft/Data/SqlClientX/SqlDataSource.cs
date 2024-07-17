@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClientX
         /// <param name="async">Whether this method should be run asynchronously.</param>
         /// <param name="cancellationToken">Cancels an outstanding asynchronous operation.</param>
         /// <returns></returns>
-        internal abstract ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken);
+        internal abstract ValueTask<SqlConnector?> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken);
 
         private protected void CheckDisposed()
         {
