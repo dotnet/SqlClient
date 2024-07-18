@@ -39,7 +39,6 @@ steps:
           -p:configuration=Release 
           -p:GenerateNuget=false 
           -p:BuildTools=false 
-          ${{ if eq(variables['CDP_BUILD_TYPE'], 'Official') }}:
           -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
           
   - ${{ if eq(parameters.product, 'AKV') }}:

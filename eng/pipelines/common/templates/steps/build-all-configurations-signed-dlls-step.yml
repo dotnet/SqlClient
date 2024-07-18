@@ -40,7 +40,6 @@ steps:
                          -p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} 
                          -t:BuildAllConfigurations 
                          -p:GenerateNuget=false 
-                         ${{ if eq(variables['CDP_BUILD_TYPE'], 'Official') }}:
                          -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
 
 - ${{ if eq(parameters.product, 'AKV') }}:
