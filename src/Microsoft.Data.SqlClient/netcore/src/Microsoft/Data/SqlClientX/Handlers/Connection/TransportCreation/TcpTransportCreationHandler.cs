@@ -10,7 +10,8 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlClient.SNI;
+using Microsoft.Data.SqlClientX.Handlers.Connection;
+using DataSource = Microsoft.Data.SqlClient.SNI.DataSource;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreation
 {
@@ -32,7 +33,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreation
         public async ValueTask<Stream> Handle(ConnectionHandlerContext parameters, bool isAsync, CancellationToken ct)
         {
             // This handler cannot process if the protocol does not contain TCP
-            if (parameters.DataSource.ResolvedProtocol is not (DataSource.Protocol.Admin or DataSource.Protocol.TCP or DataSource.Protocol.None))
+            if (parameters.DataSource.Protocol is not (DataSourceProtocol.Admin or DataSourceProtocol.Tcp or DataSourceProtocol.NotSpecified))
             {
                 return null;
             }
@@ -65,9 +66,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreation
             Socket socket = null;
             var socketOpenExceptions = new List<Exception>();
 
-            int portToUse = parameters.DataSource.ResolvedPort < 0
-                ? parameters.DataSource.Port
-                : parameters.DataSource.ResolvedPort;
+            int portToUse = parameters.DataSource.ResolvedPort ?? parameters.DataSource.Port;
             var ipEndPoint = new IPEndPoint(IPAddress.None, portToUse); // Allocate once
             foreach (IPAddress ipAddress in ipAddresses)
             {

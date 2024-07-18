@@ -5,7 +5,6 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.Handlers.Connection;
 using Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreation;
 using Xunit;
@@ -19,7 +18,10 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.TransportCreation
         {
             // Arrange
             var handler = new NamedPipeTransportCreationHandler();
-            var parameters = new ConnectionHandlerContext { DataSource = new DataSource(DataSource.Protocol.NP) };
+            var parameters = new ConnectionHandlerContext
+            {
+                DataSource = new DataSource {Protocol = DataSourceProtocol.NamedPipe}
+            };
 
             // Act
             Func<Task<Stream>> action = () => handler.Handle(parameters, false, default).AsTask();
@@ -29,14 +31,14 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.TransportCreation
         }
 
         [Theory]
-        [InlineData(DataSource.Protocol.None)]
-        [InlineData(DataSource.Protocol.TCP)]
-        [InlineData(DataSource.Protocol.Admin)]
-        internal async Task Handle_ProtocolFromParams_Passes(DataSource.Protocol protocol)
+        [InlineData(DataSourceProtocol.NotSpecified)]
+        [InlineData(DataSourceProtocol.Tcp)]
+        [InlineData(DataSourceProtocol.Admin)]
+        internal async Task Handle_ProtocolFromParams_Passes(DataSourceProtocol protocol)
         {
             // Arrange
             var handler1 = new NamedPipeTransportCreationHandler();
-            var context = new ConnectionHandlerContext { DataSource = new DataSource(protocol) };
+            var context = new ConnectionHandlerContext { DataSource = new DataSource { Protocol = protocol } };
             
             // Act
             var result = await handler1.Handle(context, false, default);

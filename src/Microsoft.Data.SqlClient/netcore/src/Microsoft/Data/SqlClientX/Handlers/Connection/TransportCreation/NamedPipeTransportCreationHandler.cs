@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreation
             Debug.Assert(parameters.DataSource is not null, "Data source must not be null");
 
             // This handler can only handle connection attempts if named pipes are included
-            if (parameters.DataSource.ResolvedProtocol is DataSource.Protocol.NP)
+            if (parameters.DataSource.Protocol is DataSourceProtocol.NamedPipe)
             {
                 // @TODO: Support named pipe connections
                 return ValueTask.FromException<Stream>(new NotImplementedException());

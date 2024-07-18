@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.IO;
+using DataSourceX = Microsoft.Data.SqlClientX.Handlers.Connection.DataSource;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {    /// <summary>
@@ -32,7 +33,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// <summary>
         /// Class required by DataSourceParser and Transport layer.
         /// </summary>
-        public DataSource DataSource { get; set; }
+        public DataSourceX DataSource { get; set; }
 
         /// <summary>
         /// Class used by orchestrator while chaining handlers.

@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -20,7 +21,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreation
             Debug.Assert(parameters is not null, "Parameters must not be null");
             Debug.Assert(parameters.DataSource is not null, "Data source must not be null");
 
-            // @TODO: When we have an enum value for shared memory, we should check for it
+            // This handler can only handle connection attempts if named pipes are included
+            if (parameters.DataSource.Protocol is DataSourceProtocol.SharedMemory)
+            {
+                // @TODO: Support shared memory connection
+                return ValueTask.FromException<Stream>(new NotImplementedException());
+            }
 
             // For now, we just pass it along to the next handler
             return ValueTask.FromResult<Stream>(null);
