@@ -57,6 +57,16 @@ namespace Microsoft.Data.SqlClientX
         readonly ChannelReader<SqlConnector?> _idleConnectorReader;
         internal ChannelWriter<SqlConnector?> IdleConnectorWriter { get; }
 
+        internal sealed override (int Total, int Idle, int Busy) Statistics
+        {
+            get
+            {
+                var numConnectors = _numConnectors;
+                var idleCount = _idleCount;
+                return (numConnectors, idleCount, numConnectors - idleCount);
+            }
+        }
+
         /// <summary>
         /// Initializes a new PoolingDataSource.
         /// </summary>

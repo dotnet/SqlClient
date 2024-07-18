@@ -213,6 +213,20 @@ namespace Microsoft.Data.SqlClientX
 
         #endregion
 
+        /// <summary>
+        /// Releases all resources used by the <see cref="SqlConnectionX"/>.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> when called from <see cref="Dispose"/>;
+        /// <see langword="false"/> when being called from the finalizer.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+            if (disposing)
+                Close();
+            _disposed = true;
+        }
+
         /// <inheritdoc/>
         public override async ValueTask DisposeAsync()
         {

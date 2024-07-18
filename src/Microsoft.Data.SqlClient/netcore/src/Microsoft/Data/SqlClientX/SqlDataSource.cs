@@ -29,6 +29,7 @@ namespace Microsoft.Data.SqlClientX
 
         internal SqlCredential Credential { get; }
 
+        internal abstract (int Total, int Idle, int Busy) Statistics { get; }
 
         /// <summary>
         /// Creates a new, unopened SqlConnection.

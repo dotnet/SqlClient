@@ -2,11 +2,10 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.NetCore.UnitTests.Util;
+using Microsoft.Data.SqlClientX;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
@@ -113,35 +112,35 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             // conn1 should now be back in the pool as idle
             await using var conn3 = await dataSource.OpenConnectionAsync();
         }
-        /*
+        
         [Fact]
-        [Explicit("Timing-based")]
+        //[Explicit("Timing-based")]
         public async Task OpenAsync_cancel()
         {
             await using var dataSource = testBase.CreateDataSource(csb => csb.MaxPoolSize = 1);
             await using var conn1 = await dataSource.OpenConnectionAsync();
 
-            AssertPoolState(dataSource, open: 1, idle: 0);
+            AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
 
             // Pool is exhausted
             await using (var conn2 = dataSource.CreateConnection())
             {
                 var cts = new CancellationTokenSource(1000);
                 var openTask = conn2.OpenAsync(cts.Token);
-                AssertPoolState(dataSource, open: 1, idle: 0);
-                Assert.That(async () => await openTask, Throws.Exception.TypeOf<OperationCanceledException>());
+                AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
+                await Assert.ThrowsAsync<OperationCanceledException>(async () => await openTask);
             }
 
-            AssertPoolState(dataSource, open: 1, idle: 0);
+            AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
             await using (var conn2 = dataSource.CreateConnection())
             await using (new Timer(o => conn1.Close(), null, 1000, Timeout.Infinite))
             {
                 await conn2.OpenAsync();
-                AssertPoolState(dataSource, open: 1, idle: 0);
+                AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
             }
-            AssertPoolState(dataSource, open: 1, idle: 1);
+            AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 1);
         }
-
+        /*
         [Fact, Description("Makes sure that when a pooled connection is closed it's properly reset, and that parameter settings aren't leaked")]
         public async Task ResetOnClose()
         {
@@ -156,14 +155,14 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             Assert.That(conn.Connector.BackendProcessId, Is.EqualTo(backendId));
             Assert.That(await conn.ExecuteScalarAsync("SHOW search_path"), Is.EqualTo("public"));
         }
-
+        
         [Fact]
         public void ConnectionPruningInterval_zero_throws()
             => Assert.ThrowsAsync<ArgumentException>(async () =>
             {
                 await using var dataSource = testBase.CreateDataSource(csb => csb.ConnectionPruningInterval = 0);
             });
-
+        
         [Fact]
         public void ConnectionPruningInterval_bigger_than_ConnectionIdleLifetime_throws()
             => Assert.ThrowsAsync<ArgumentException>(async () =>
@@ -263,24 +262,25 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             // - conn2 or conn3 should have been closed due to idle pruning
             // - conn3 or conn2 should remain
             AssertPoolState(dataSource, open: 1, idle: 1);
-        }
+        }*/
 
-        [Fact, Description("Makes sure that when a waiting async open is is given a connection, the continuation is executed in the TP rather than on the closing thread")]
+        //Makes sure that when a waiting async open is given a connection, the continuation is executed in the TP rather than on the closing thread
+        [Fact]
         public async Task Close_releases_waiter_on_another_thread()
         {
             await using var dataSource = testBase.CreateDataSource(csb => csb.MaxPoolSize = 1);
             await using var conn1 = await dataSource.OpenConnectionAsync(); // Pool is now exhausted
 
-            AssertPoolState(dataSource, open: 1, idle: 0);
+            AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
 
             Func<Task<int>> asyncOpener = async () =>
             {
                 using (var conn2 = dataSource.CreateConnection())
                 {
                     await conn2.OpenAsync();
-                    AssertPoolState(dataSource, open: 1, idle: 0);
+                    AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
                 }
-                AssertPoolState(dataSource, open: 1, idle: 1);
+                AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 1);
                 return Environment.CurrentManagedThreadId;
             };
 
@@ -288,11 +288,11 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             var asyncOpenerTask = asyncOpener();
             conn1.Close();  // Complete the async open by closing conn1
             var asyncOpenerThreadId = asyncOpenerTask.GetAwaiter().GetResult();
-            AssertPoolState(dataSource, open: 1, idle: 1);
+            AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 1);
 
-            Assert.That(asyncOpenerThreadId, Is.Not.EqualTo(Environment.CurrentManagedThreadId));
+            Assert.NotEqual(Environment.CurrentManagedThreadId, asyncOpenerThreadId);
         }
-
+        /*
         [Fact] //TODO: parallelize
         public async Task Release_waiter_on_connection_failure()
         {
@@ -448,21 +448,21 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             await conn.OpenAsync();
             Assert.That(conn.ProcessID, Is.Not.EqualTo(processId));
         }
-
+        */
         #region Support
 
-        volatile int StopFlag;
+        //volatile int StopFlag;
 
-        void AssertPoolState(NpgsqlDataSource? pool, int open, int idle)
+        void AssertPoolState(SqlDataSource? pool, int expectedOpen, int expectedIdle)
         {
-            if (pool == null)
-                throw new ArgumentNullException(nameof(pool));
+            ArgumentNullException.ThrowIfNull(pool, nameof(pool));
 
             var (openState, idleState, _) = pool.Statistics;
-            Assert.That(openState, Is.EqualTo(open), $"Open should be {open} but is {openState}");
-            Assert.That(idleState, Is.EqualTo(idle), $"Idle should be {idle} but is {idleState}");
+            Assert.Equal(expectedOpen, openState);
+            Assert.Equal(expectedIdle, idleState);
         }
-
+        #endregion Support
+        /*
         // With MaxPoolSize=1, opens many connections in parallel and executes a simple SELECT. Since there's only one
         // physical connection, all operations will be completely serialized
         [Fact]
@@ -512,7 +512,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             Assert.ThrowsAsync<NpgsqlException>(() => cmd.ExecuteScalarAsync());
         }
 
-        #endregion
+        //#endregion
         */
     }
 
