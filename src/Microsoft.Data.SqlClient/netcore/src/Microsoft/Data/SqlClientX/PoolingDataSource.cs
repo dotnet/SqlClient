@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClientX
                                 $"The connection pool has been exhausted, either raise 'Max Pool Size' (currently {MaxConnections}) " +
                                 $"or 'Timeout' (currently {Settings.Timeout} seconds) in your connection string.",
                                 new TimeoutException());*/
-                            throw new Exception("Pool exhausted");
+                            throw new Exception("Pool exhausted", new TimeoutException());
                         }
                         catch (ChannelClosedException)
                         {

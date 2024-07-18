@@ -86,14 +86,15 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             else
                 conn2.Open();
         }
-        /*
-        [Fact]
-        public async Task Timeout_getting_connector_from_exhausted_pool([Values(true, false)] bool async)
+        
+        [Theory]
+        [MemberData(nameof(AsyncParams))]
+        public async Task Timeout_getting_connector_from_exhausted_pool(bool async)
         {
             await using var dataSource = testBase.CreateDataSource(csb =>
             {
                 csb.MaxPoolSize = 1;
-                csb.Timeout = 2;
+                csb.ConnectTimeout = 2;
             });
 
             await using (var conn1 = dataSource.CreateConnection())
@@ -103,16 +104,16 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
 
                 await using var conn2 = dataSource.CreateConnection();
                 var e = async
-                    ? Assert.ThrowsAsync<NpgsqlException>(async () => await conn2.OpenAsync())!
-                    : Assert.Throws<NpgsqlException>(() => conn2.Open())!;
+                    ? await Assert.ThrowsAsync<Exception>(async () => await conn2.OpenAsync())!
+                    : Assert.Throws<Exception>(() => conn2.Open())!;
 
-                Assert.That(e.InnerException, Is.TypeOf<TimeoutException>());
+                Assert.IsType<TimeoutException>(e.InnerException);
             }
 
             // conn1 should now be back in the pool as idle
             await using var conn3 = await dataSource.OpenConnectionAsync();
         }
-
+        /*
         [Fact]
         [Explicit("Timing-based")]
         public async Task OpenAsync_cancel()
