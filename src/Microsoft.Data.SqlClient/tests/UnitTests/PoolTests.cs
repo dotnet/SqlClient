@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.NetCore.UnitTests.Util;
@@ -292,13 +293,12 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
 
             Assert.NotEqual(Environment.CurrentManagedThreadId, asyncOpenerThreadId);
         }
-        /*
-        [Fact] //TODO: parallelize
+
+        /*[Fact] //TODO: inject internal connection creation logic to force throw an error and make this test offline compatible
         public async Task Release_waiter_on_connection_failure()
         {
             await using var dataSource = testBase.CreateDataSource(csb =>
             {
-                csb.Port = 9999;
                 csb.MaxPoolSize = 1;
             });
 
@@ -308,11 +308,12 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             })).ToArray();
 
             var ex = Assert.Throws<AggregateException>(() => Task.WaitAll(tasks))!;
-            Assert.That(ex.InnerExceptions, Has.Count.EqualTo(2));
+            Assert.Equal(2, ex.InnerExceptions.Count);
             foreach (var inner in ex.InnerExceptions)
-                Assert.That(inner, Is.TypeOf<NpgsqlException>());
-        }
+                Assert.IsType<Exception>(inner);
+        }*/
 
+        /* TODO: implement clear
         [Fact]
         [TestCase(1)]
         [TestCase(2)]
@@ -347,7 +348,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                     NpgsqlConnection.ClearPool(conn);
             }
         }
-
+        
         [Fact]
         public void ClearPool_with_busy()
         {
@@ -388,7 +389,9 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             using var conn = new NpgsqlConnection(connString);
             NpgsqlConnection.ClearPool(conn);
         }
+        */
 
+        /*TODO: inject failure
         [Fact, Description("https://github.com/npgsql/npgsql/commit/45e33ecef21f75f51a625c7b919a50da3ed8e920#r28239653")]
         public void Open_physical_failure()
         {
@@ -403,13 +406,23 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                     .TypeOf<NpgsqlException>()
                     .With.InnerException.TypeOf<SocketException>());
             AssertPoolState(dataSource, open: 0, idle: 0);
-        }
+        }*/
 
         //[Test, Explicit]
         //[TestCase(10, 10, 30, true)]
         //[TestCase(10, 10, 30, false)]
         //[TestCase(10, 20, 30, true)]
         //[TestCase(10, 20, 30, false)]
+        public static object[][] PoolExerciseCases = new object[][]
+        {
+            new object[] {10, 10, 30, true},
+            new object[] {10, 10, 30, false},
+            new object[] {10, 20, 30, true},
+            new object[] {10, 20, 30, false }
+        };
+
+        [Theory]
+        [MemberData(nameof(PoolExerciseCases))]
         public async Task Exercise_pool(int maxPoolSize, int numTasks, int seconds, bool async)
         {
             await using var dataSource = testBase.CreateDataSource(csb => csb.MaxPoolSize = maxPoolSize);
@@ -435,6 +448,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             Console.WriteLine("Done");
         }
 
+        /* TODO: respect connection lifetime
         [Fact]
         public async Task ConnectionLifetime()
         {
@@ -451,7 +465,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         */
         #region Support
 
-        //volatile int StopFlag;
+        volatile int StopFlag;
 
         void AssertPoolState(SqlDataSource? pool, int expectedOpen, int expectedIdle)
         {

@@ -410,6 +410,32 @@ namespace Microsoft.Data.SqlClientX
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", ObjectID);
             _connectionRateLimiter?.Dispose();
         }
+
+        /* TODO: implement clear
+        internal override void Clear()
+        {
+            Interlocked.Increment(ref _clearCounter);
+
+            if (Interlocked.CompareExchange(ref _isClearing, 1, 0) == 1)
+                return;
+
+            try
+            {
+                var count = _idleCount;
+                while (count > 0 && _idleConnectorReader.TryRead(out var connector))
+                {
+                    if (CheckIdleConnector(connector))
+                    {
+                        CloseConnector(connector);
+                        count--;
+                    }
+                }
+            }
+            finally
+            {
+                _isClearing = 0;
+            }
+        }*/
     }
 }
 
