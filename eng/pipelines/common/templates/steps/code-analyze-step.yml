@@ -35,7 +35,6 @@ steps:
         msBuildArchitecture: x64
         setupCommandlinePicker: vs2022
         msBuildCommandline: 'msbuild  ${{parameters.sourceRoot}}\build.proj -p:configuration=Release -p:GenerateNuget=false -p:BuildTools=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
-          
   - ${{ if eq(parameters.product, 'AKV') }}:
     - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
       displayName: 'Guardian Dotnet Analyzers '
