@@ -19,10 +19,13 @@
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
   </PropertyGroup>
   <!--Generating Strong Name-->
-  <PropertyGroup Condition="$(SigningKeyPath) != ''">
+  <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
     <SignAssembly>true</SignAssembly>
     <DelaySign>true</DelaySign>
     <KeyFile>$(SigningKeyPath)</KeyFile>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(CDP_BUILD_TYPE)!=Official">
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <!-- Override debugtype=portable in Directory.Build.props for netfx -->
