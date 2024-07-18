@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private readonly string _connStr;
 
         // Synapse: The statement failed. Column 'blob' has a data type that cannot participate in a columnstore index.
-        // TODO: Investigate access token authentication to Azure SQL DB (#31362)
+        // TODO: Investigate access token authentication to Azure SQL DB (Active issue #31362)
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public void TestMain()
         {

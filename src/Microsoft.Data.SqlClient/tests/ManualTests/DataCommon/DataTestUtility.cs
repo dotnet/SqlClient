@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics.Tracing;
 using System.Globalization;
@@ -257,6 +258,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             return new SqlConnection(connectionString);
+        }
+
+        public static DbConnection GetSqlConnectionWithProvider(DbProviderFactory provider)
+        {
+            DbConnection conn = provider.CreateConnection();
+
+            if (!AuthenticatingWithoutAccessToken && !string.IsNullOrEmpty(AADAccessToken) && conn is SqlConnection sqlConn)
+            {
+                sqlConn.AccessToken = AADAccessToken;
+                return sqlConn;
+            }
+
+            return conn;
         }
 
         public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
@@ -676,7 +690,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             if (string.IsNullOrEmpty(AADAccessToken) && IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
             {
-                Console.WriteLine($"Generating new access token...");
                 string username = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "User ID", "UID" });
                 string password = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "Password", "PWD" });
                 AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);

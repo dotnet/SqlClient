@@ -177,7 +177,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Skip: The length of time to validate the access token causes multiple calls to EnterActiveConnectionPoolGroup
-        // which increments the _activeConnectionPoolGroupsCounter twice instead of once. (#31362)
+        // which increments the _activeConnectionPoolGroupsCounter twice instead of once. (Active issue #31362)
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public void EventCounter_ConnectionPoolGroupsCounter_Functional()
         {

@@ -24,13 +24,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DbProviderFactory provider = SqlClientFactory.Instance;
             try
             {
-                using (SqlConnection con = (SqlConnection) provider.CreateConnection())
+                using (DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider))
                 {
-                    // Testing in macOS Azure SQL container requires access token authentication
-                    if (!DataTestUtility.AuthenticatingWithoutAccessToken)
-                    {
-                        con.AccessToken = DataTestUtility.AADAccessToken;
-                    }
                     con.ConnectionString = connectionString;
                     con.Open();
 
@@ -259,13 +254,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using (SqlConnection con = (SqlConnection) provider.CreateConnection())
+                using (DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider))
                 {
-                    // Testing in macOS Azure SQL container requires access token authentication
-                    if (!DataTestUtility.AuthenticatingWithoutAccessToken)
-                    {
-                        con.AccessToken = DataTestUtility.AADAccessToken;
-                    }
                     con.ConnectionString = connectionString;
                     con.Open();
 
@@ -293,12 +283,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             //Arrange
             DbProviderFactory provider = SqlClientFactory.Instance;
 
-            using SqlConnection con = (SqlConnection) provider.CreateConnection();
-            // Testing in macOS Azure SQL container requires access token authentication
-            if (!DataTestUtility.AuthenticatingWithoutAccessToken)
-            {
-                con.AccessToken = DataTestUtility.AADAccessToken;
-            }
+            using DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider);
+
             con.ConnectionString = DataTestUtility.TCPConnectionString;
             con.Open();
             string sqlQueryOne = $"CREATE TABLE {tableName} ([CustomerId] [int],[FirstName] [nvarchar](50),[BoolCol] [BIT],[ShortCol] [SMALLINT],[ByteCol] [TINYINT],[LongCol] [BIGINT]);";
@@ -397,12 +383,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             //Arrange
             DbProviderFactory provider = SqlClientFactory.Instance;
 
-            using SqlConnection con = (SqlConnection) provider.CreateConnection();
-            // Testing in macOS Azure SQL container requires access token authentication
-            if (!DataTestUtility.AuthenticatingWithoutAccessToken)
-            {
-                con.AccessToken = DataTestUtility.AADAccessToken;
-            }
+            using DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider);
+
             con.ConnectionString = DataTestUtility.TCPConnectionString;
             con.Open();
             string sqlQueryOne = $"CREATE TABLE {tableName} ([CustomerId] [int],[FirstName] [nvarchar](50),[BoolCol] [BIT],[ShortCol] [SMALLINT],[ByteCol] [TINYINT],[LongCol] [BIGINT]);";
