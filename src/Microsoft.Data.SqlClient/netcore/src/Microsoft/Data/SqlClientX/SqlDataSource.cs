@@ -56,8 +56,7 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         public new SqlConnectionX CreateConnection()
         {
-            throw new NotImplementedException();
-            // TODO: return (SqlConnectionX)CreateDbConnection();
+            return CreateDbConnection();
         }
 
         /// <summary>

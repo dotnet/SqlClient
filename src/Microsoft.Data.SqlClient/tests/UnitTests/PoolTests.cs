@@ -55,14 +55,19 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             Assert.Equal(conn.InternalConnection!.ServerProcessId, backendId);
         }
 
-        /*
-        [Fact]
-        public async Task Get_connector_from_exhausted_pool([Values(true, false)] bool async)
+        public static readonly object[][] AsyncParams = new object[][] { 
+            new object[] { true }, 
+            new object[] { false } 
+        };
+
+        [Theory]
+        [MemberData(nameof(AsyncParams))]
+        public async Task Get_connector_from_exhausted_pool(bool async)
         {
             await using var dataSource = testBase.CreateDataSource(csb =>
             {
                 csb.MaxPoolSize = 1;
-                csb.Timeout = 0;
+                csb.ConnectTimeout = 0;
             });
 
             await using var conn1 = await dataSource.OpenConnectionAsync();
@@ -81,7 +86,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             else
                 conn2.Open();
         }
-
+        /*
         [Fact]
         public async Task Timeout_getting_connector_from_exhausted_pool([Values(true, false)] bool async)
         {
