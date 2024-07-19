@@ -35,6 +35,10 @@ parameters:
   - name: TracingEnabled
     type: boolean
     default: false
+
+  - name: UseAccessTokenAuth
+    type: boolean
+    default: false
     
   - name: AADAccessToken
     type: string
@@ -137,6 +141,8 @@ steps:
         $p.TCPConnectionString="${{parameters.TCPConnectionString }}"
 
         $p.NPConnectionString="${{parameters.NPConnectionString }}"
+
+        $p.UseAccessTokenAuth="${{parameters.UseAccessTokenAuth}}"
 
         $p.AADAccessToken="${{parameters.AADAccessToken}}"
 

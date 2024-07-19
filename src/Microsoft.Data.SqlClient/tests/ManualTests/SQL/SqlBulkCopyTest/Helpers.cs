@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlConnection conn = (SqlConnection)Activator.CreateInstance(connType, activatorArgs))
                 {
                     // Testing in macOS Azure SQL container requires access token authentication
-                    if (!DataTestUtility.AuthenticatingWithoutAccessToken)
+                    if (DataTestUtility.UseAccessTokenAuth)
                     {
                         conn.AccessToken = DataTestUtility.AADAccessToken;
                     }
