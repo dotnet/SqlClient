@@ -243,12 +243,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static SqlConnection GetSqlConnection(string connectionString = "")
         {
-            // If there is no authentication method specified in the TCP connection string and it's connecting to an Azure SQL DB, add an access token
+            Console.WriteLine("---------------> Connection String:" + connectionString);
             if (UseAccessTokenAuth)
             {
-                string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
-                connectionString = RemoveKeysInConnStr(connectionString, credKeys);
-                var connection = new SqlConnection(connectionString)
+                string[] credKeys = { "UserID", "Password", "UID", "PWD", "Authentication" };
+                string connectionStringRemovedAuth = RemoveKeysInConnStr(connectionString, credKeys);
+                var connection = new SqlConnection(connectionStringRemovedAuth)
                 {
                     AccessToken = AADAccessToken
                 };
@@ -259,15 +259,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return new SqlConnection(connectionString);
         }
 
-        public static DbConnection GetSqlConnectionWithProvider(DbProviderFactory provider)
+        public static DbConnection GetSqlConnectionWithProvider(DbProviderFactory provider, string connectionString = "")
         {
+            Console.WriteLine("---------------> Connection String:" + connectionString);
             DbConnection conn = provider.CreateConnection();
-
+            
             if (UseAccessTokenAuth && conn is SqlConnection sqlConn)
             {
+                string[] credKeys = { "UserID", "Password", "UID", "PWD", "Authentication" };
+                string connectionStringRemovedAuth = RemoveKeysInConnStr(connectionString, credKeys);
+                sqlConn.ConnectionString = connectionStringRemovedAuth;
                 sqlConn.AccessToken = AADAccessToken;
                 return sqlConn;
             }
+
+            conn.ConnectionString = connectionString;
 
             return conn;
         }

@@ -24,9 +24,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DbProviderFactory provider = SqlClientFactory.Instance;
             try
             {
-                using (DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider))
+                using (DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider, connectionString))
                 {
-                    con.ConnectionString = connectionString;
                     con.Open();
 
                     using (DbCommand cmd = provider.CreateCommand())
@@ -254,9 +253,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                using (DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider))
+                using (DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider, connectionString))
                 {
-                    con.ConnectionString = connectionString;
                     con.Open();
 
                     using (DbCommand cmd = provider.CreateCommand())
@@ -283,9 +281,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             //Arrange
             DbProviderFactory provider = SqlClientFactory.Instance;
 
-            using DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider);
+            using DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider, DataTestUtility.TCPConnectionString);
 
-            con.ConnectionString = DataTestUtility.TCPConnectionString;
             con.Open();
             string sqlQueryOne = $"CREATE TABLE {tableName} ([CustomerId] [int],[FirstName] [nvarchar](50),[BoolCol] [BIT],[ShortCol] [SMALLINT],[ByteCol] [TINYINT],[LongCol] [BIGINT]);";
             string sqlQueryTwo = $"ALTER TABLE {tableName} ADD [DoubleCol] [FLOAT],[SingleCol] [REAL],[GUIDCol] [uniqueidentifier],[DateTimeCol] [DateTime],[DecimalCol] [SmallMoney],[DateTimeOffsetCol] [DateTimeOffset], [DateCol] [Date], [TimeCol] [Time];";
@@ -383,9 +380,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             //Arrange
             DbProviderFactory provider = SqlClientFactory.Instance;
 
-            using DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider);
+            using DbConnection con = DataTestUtility.GetSqlConnectionWithProvider(provider, DataTestUtility.TCPConnectionString);
 
-            con.ConnectionString = DataTestUtility.TCPConnectionString;
             con.Open();
             string sqlQueryOne = $"CREATE TABLE {tableName} ([CustomerId] [int],[FirstName] [nvarchar](50),[BoolCol] [BIT],[ShortCol] [SMALLINT],[ByteCol] [TINYINT],[LongCol] [BIGINT]);";
             string sqlQueryTwo = $"ALTER TABLE {tableName} ADD [DoubleCol] [FLOAT],[SingleCol] [REAL],[GUIDCol] [uniqueidentifier],[DateTimeCol] [DateTime],[DecimalCol] [SmallMoney],[DateTimeOffsetCol] [DateTimeOffset], [DateCol] [Date], [TimeCol] [Time];";
