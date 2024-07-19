@@ -41,14 +41,14 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether the call should be made asynchronously or synchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns></returns>
-        public async ValueTask<int> ReadBytesAsync(Memory<byte> buffer, bool isAsync, CancellationToken ct)
+        public ValueTask<int> ReadBytesAsync(Memory<byte> buffer, bool isAsync, CancellationToken ct)
         {
             // Throw operation canceled exception before write.
             ct.ThrowIfCancellationRequested();
 
             return isAsync
-                ? await _tdsStream.ReadAsync(buffer, ct).ConfigureAwait(false)
-                : _tdsStream.Read(buffer.Span);
+                ? _tdsStream.ReadAsync(buffer, ct)
+                : new ValueTask<int>(_tdsStream.Read(buffer.Span));
         }
 
         /// <summary>
@@ -57,14 +57,14 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="byte"/> value.</returns>
-        public async ValueTask<byte> ReadByteAsync(bool isAsync, CancellationToken ct)
+        public ValueTask<byte> ReadByteAsync(bool isAsync, CancellationToken ct)
         {
             // Throw operation canceled exception before write.
             ct.ThrowIfCancellationRequested();
 
             return isAsync
-                ? await _tdsStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false)
-                : (byte)_tdsStream.ReadByte(); // UNSAFE - TODO Expose ReadByte from TdsStream that returns 'byte'.
+                ? _tdsStream.ReadByteAsync(isAsync, ct)
+                : new ValueTask<byte>((byte)_tdsStream.ReadByte()); // UNSAFE - TODO Expose ReadByte from TdsStream that returns 'byte'.
         }
 
         /// <summary>
@@ -73,22 +73,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="char"/> value.</returns>
-        public async ValueTask<char> ReadCharAsync(bool isAsync, CancellationToken ct)
-        {
-            if (!isAsync)
-            {
-                return _reader.ReadChar();
-            }
-
-            var buffer = GetBuffer(sizeof(char));
-            await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
-
-            // Access bytes using Memory<T> APIs
-            byte byte1 = buffer.Span[1];
-            byte byte0 = buffer.Span[0];
-
-            return (char)((byte1 << 8) + byte0);
-        }
+        public ValueTask<char> ReadCharAsync(bool isAsync, CancellationToken ct)
+            => isAsync
+            ? ReadCharInternalAsync(ct)
+            : new ValueTask<char>(_reader.ReadChar());
 
         /// <summary>
         /// Reads char array from Tds Stream of defined <paramref name="length"/> asynchronously.
@@ -125,17 +113,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="short"/> value.</returns>
-        public async ValueTask<short> ReadInt16Async(bool isAsync, CancellationToken ct)
-        {
-            if (!isAsync)
-            {
-                return _reader.ReadInt16();
-            }
-
-            var buffer = GetBuffer(sizeof(short));
-            await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
-            return BinaryPrimitives.ReadInt16LittleEndian(buffer.Span);
-        }
+        public ValueTask<short> ReadInt16Async(bool isAsync, CancellationToken ct)
+            => isAsync
+                ? ReadInt16InternalAsync(ct)
+                : new ValueTask<short>(_reader.ReadInt16());
 
         /// <summary>
         /// Reads int value from Tds Stream asynchronously.
@@ -143,17 +124,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="int"/> value.</returns>
-        public async ValueTask<int> ReadInt32Async(bool isAsync, CancellationToken ct)
-        {
-            if (!isAsync)
-            {
-                return _reader.ReadInt32();
-            }
-
-            var buffer = GetBuffer(sizeof(int));
-            await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
-            return BinaryPrimitives.ReadInt32LittleEndian(buffer.Span);
-        }
+        public ValueTask<int> ReadInt32Async(bool isAsync, CancellationToken ct)
+            => isAsync
+                ? ReadInt32InternalAsync(ct)
+                : new ValueTask<int>(_reader.ReadInt32());
 
         /// <summary>
         /// Reads long value from Tds Stream asynchronously.
@@ -161,17 +135,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="long"/> value.</returns>
-        public async ValueTask<long> ReadInt64Async(bool isAsync, CancellationToken ct)
-        {
-            if (!isAsync)
-            {
-                return _reader.ReadInt64();
-            }
-
-            var buffer = GetBuffer(sizeof(long));
-            await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
-            return BinaryPrimitives.ReadInt64LittleEndian(buffer.Span);
-        }
+        public ValueTask<long> ReadInt64Async(bool isAsync, CancellationToken ct)
+            => isAsync
+                ? ReadInt64InternalAsync(ct)
+                : new ValueTask<long>(_reader.ReadInt64());
 
         /// <summary>
         /// Reads unsigned short value from Tds Stream asynchronously.
@@ -179,17 +146,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="ushort"/> value.</returns>
-        public async ValueTask<ushort> ReadUInt16Async(bool isAsync, CancellationToken ct)
-        {
-            if (!isAsync)
-            {
-                return _reader.ReadUInt16();
-            }
-
-            var buffer = GetBuffer(sizeof(ushort));
-            await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
-            return BinaryPrimitives.ReadUInt16LittleEndian(buffer.Span);
-        }
+        public ValueTask<ushort> ReadUInt16Async(bool isAsync, CancellationToken ct)
+            => isAsync
+                ? ReadUInt16InternalAsync(ct)
+                : new ValueTask<ushort>(_reader.ReadUInt16());
 
         /// <summary>
         /// Reads unsigned int value from Tds Stream asynchronously.
@@ -197,17 +157,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="uint"/> value.</returns>
-        public async ValueTask<uint> ReadUInt32Async(bool isAsync, CancellationToken ct)
-        {
-            if (!isAsync)
-            {
-                return _reader.ReadUInt32();
-            }
-
-            var buffer = GetBuffer(sizeof(uint));
-            await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
-            return BinaryPrimitives.ReadUInt32LittleEndian(buffer.Span);
-        }
+        public ValueTask<uint> ReadUInt32Async(bool isAsync, CancellationToken ct)
+            => isAsync
+                ? ReadUInt32InternalAsync(ct)
+                : new ValueTask<uint>(_reader.ReadUInt32());
 
         /// <summary>
         /// Reads unsigned long value from Tds Stream asynchronously.
@@ -215,17 +168,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="ulong"/> value.</returns>
-        public async ValueTask<ulong> ReadUInt64Async(bool isAsync, CancellationToken ct)
-        {
-            if (!isAsync)
-            {
-                return _reader.ReadUInt64();
-            }
-
-            var buffer = GetBuffer(sizeof(ulong));
-            await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
-            return BinaryPrimitives.ReadUInt64LittleEndian(buffer.Span);
-        }
+        public ValueTask<ulong> ReadUInt64Async(bool isAsync, CancellationToken ct)
+            => isAsync
+                ? ReadUInt64InternalAsync(ct)
+                : new ValueTask<ulong>(_reader.ReadUInt64());
 
         /// <summary>
         /// Reads float value from Tds Stream asynchronously.
@@ -233,17 +179,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="float"/> value.</returns>
-        public async ValueTask<float> ReadSingleAsync(bool isAsync, CancellationToken ct)
-        {
-            if (!isAsync)
-            {
-                return _reader.ReadSingle();
-            }
-
-            var buffer = GetBuffer(sizeof(float));
-            await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
-            return BinaryPrimitives.ReadSingleLittleEndian(buffer.Span);
-        }
+        public ValueTask<float> ReadSingleAsync(bool isAsync, CancellationToken ct)
+            => isAsync
+                ? ReadSingleInternalAsync(ct)
+                : new ValueTask<float>(_reader.ReadSingle());
 
         /// <summary>
         /// Reads double value from Tds Stream asynchronously.
@@ -251,17 +190,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="double"/> value.</returns>
-        public async ValueTask<double> ReadDoubleAsync(bool isAsync, CancellationToken ct)
-        {
-            if (!isAsync)
-            {
-                return _reader.ReadDouble();
-            }
-
-            var buffer = GetBuffer(sizeof(double));
-            await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
-            return BinaryPrimitives.ReadDoubleLittleEndian(buffer.Span);
-        }
+        public ValueTask<double> ReadDoubleAsync(bool isAsync, CancellationToken ct)
+            => isAsync
+                ? ReadDoubleInternalAsync(ct)
+                : new ValueTask<double>(_reader.ReadDouble());
 
         /// <summary>
         /// Reads string value from Tds Stream asynchronously.
@@ -273,20 +205,13 @@ namespace Microsoft.Data.SqlClientX.IO
         public async ValueTask<string> ReadStringAsync(int length, bool isAsync, CancellationToken ct)
         {
             int byteLength = length * 2; // 2 bytes per char
-            int bufferSize = CalculateBufferSize(byteLength);
-            byte[] buffer = new byte[bufferSize];
-            int bytesRead;
+            byte[] buffer = new byte[byteLength];
 
-            StringBuilder sb = new StringBuilder();
-            while (byteLength > 0 && (bytesRead = isAsync
-                ? await _tdsStream.ReadAsync(buffer.AsMemory(0, Math.Min(bufferSize, byteLength)), ct).ConfigureAwait(false)
-                : _tdsStream.Read(buffer.AsSpan(0, Math.Min(bufferSize, byteLength)))) > 0)
-            {
-                sb.Append(Encoding.Unicode.GetString(buffer, 0, bytesRead));
-                byteLength -= bytesRead;
-            }
+            int bytesRead = isAsync
+                ? await _tdsStream.ReadAsync(buffer.AsMemory(0, byteLength), ct).ConfigureAwait(false)
+                : _tdsStream.Read(buffer.AsSpan(0, byteLength));
 
-            return sb.ToString();
+            return Encoding.Unicode.GetString(buffer, 0, bytesRead);
         }
 
         /// <summary>
@@ -305,25 +230,119 @@ namespace Microsoft.Data.SqlClientX.IO
         #endregion
 
         #region Private helpers
-        /// <summary>
-        /// Calculates optimal buffer size for chunk reading based on string length
-        /// </summary>
-        /// <param name="stringLength">Length of string to read</param>
-        /// <returns></returns>
-        private static int CalculateBufferSize(int stringLength)
-        {
-            // Default buffer size
-            int defaultBufferSize = 4096; // 4 KB
 
-            // Estimate buffer size based on string length
-            if (stringLength < defaultBufferSize)
-                return stringLength;           // < 4 KB
-            else if (stringLength < 16 * defaultBufferSize)
-                return defaultBufferSize;      // 4 KB
-            else if (stringLength < 64 * defaultBufferSize)
-                return 16 * defaultBufferSize; // 64 KB
-            else
-                return 64 * defaultBufferSize; // 256 KB
+        private ValueTask<char> ReadCharInternalAsync(CancellationToken ct)
+        {
+            Memory<byte> buffer = GetBuffer(sizeof(char));
+            ValueTask<int> task = ReadBytesAsync(buffer, true, ct);
+
+            return task.IsCompleted
+                ? new ValueTask<char>(doWork())
+                : new ValueTask<char>(task.AsTask().ContinueWith((task) => doWork()));
+
+            char doWork()
+            {
+                byte byte1 = buffer.Span[1];
+                byte byte0 = buffer.Span[0];
+
+                return (char)((byte1 << 8) + byte0);
+            }
+        }
+
+        private ValueTask<short> ReadInt16InternalAsync(CancellationToken ct)
+        {
+            Memory<byte> buffer = GetBuffer(sizeof(short));
+            ValueTask<int> task = ReadBytesAsync(buffer, true, ct);
+
+            return task.IsCompleted
+                ? new ValueTask<short>(doWork())
+                : new ValueTask<short>(task.AsTask().ContinueWith((task) => doWork()));
+
+            short doWork() => BinaryPrimitives.ReadInt16LittleEndian(buffer.Span);
+        }
+
+        private ValueTask<int> ReadInt32InternalAsync(CancellationToken ct)
+        {
+            Memory<byte> buffer = GetBuffer(sizeof(int));
+            ValueTask<int> task = ReadBytesAsync(buffer, true, ct);
+
+            return task.IsCompleted
+                ? new ValueTask<int>(doWork())
+                : new ValueTask<int>(task.AsTask().ContinueWith((task) => doWork()));
+
+            int doWork() => BinaryPrimitives.ReadInt32LittleEndian(buffer.Span);
+        }
+
+        private ValueTask<long> ReadInt64InternalAsync(CancellationToken ct)
+        {
+            Memory<byte> buffer = GetBuffer(sizeof(long));
+            ValueTask<int> task = ReadBytesAsync(buffer, true, ct);
+
+            return task.IsCompleted
+                ? new ValueTask<long>(doWork())
+                : new ValueTask<long>(task.AsTask().ContinueWith((task) => doWork()));
+
+            long doWork() => BinaryPrimitives.ReadInt64LittleEndian(buffer.Span);
+        }
+
+        private ValueTask<ushort> ReadUInt16InternalAsync(CancellationToken ct)
+        {
+            Memory<byte> buffer = GetBuffer(sizeof(ushort));
+            ValueTask<int> task = ReadBytesAsync(buffer, true, ct);
+
+            return task.IsCompleted
+                ? new ValueTask<ushort>(doWork())
+                : new ValueTask<ushort>(task.AsTask().ContinueWith((task) => doWork()));
+
+            ushort doWork() => BinaryPrimitives.ReadUInt16LittleEndian(buffer.Span);
+        }
+
+        private ValueTask<uint> ReadUInt32InternalAsync(CancellationToken ct)
+        {
+            Memory<byte> buffer = GetBuffer(sizeof(uint));
+            ValueTask<int> task = ReadBytesAsync(buffer, true, ct);
+
+            return task.IsCompleted
+                ? new ValueTask<uint>(doWork())
+                : new ValueTask<uint>(task.AsTask().ContinueWith((task) => doWork()));
+
+            uint doWork() => BinaryPrimitives.ReadUInt32LittleEndian(buffer.Span);
+        }
+
+        private ValueTask<ulong> ReadUInt64InternalAsync(CancellationToken ct)
+        {
+            Memory<byte> buffer = GetBuffer(sizeof(ulong));
+            ValueTask<int> task = ReadBytesAsync(buffer, true, ct);
+
+            return task.IsCompleted
+                ? new ValueTask<ulong>(doWork())
+                : new ValueTask<ulong>(task.AsTask().ContinueWith((task) => doWork()));
+
+            ulong doWork() => BinaryPrimitives.ReadUInt64LittleEndian(buffer.Span);
+        }
+
+        private ValueTask<float> ReadSingleInternalAsync(CancellationToken ct)
+        {
+            Memory<byte> buffer = GetBuffer(sizeof(float));
+            ValueTask<int> task = ReadBytesAsync(buffer, true, ct);
+
+            return task.IsCompleted
+                ? new ValueTask<float>(doWork())
+                : new ValueTask<float>(task.AsTask().ContinueWith((task) => doWork()));
+
+            float doWork() => BinaryPrimitives.ReadSingleLittleEndian(buffer.Span);
+        }
+
+        private ValueTask<double> ReadDoubleInternalAsync(CancellationToken ct)
+        {
+            Memory<byte> buffer = GetBuffer(sizeof(double));
+            ValueTask<int> task = ReadBytesAsync(buffer, true, ct);
+
+            return task.IsCompleted
+                ? new ValueTask<double>(doWork())
+                : new ValueTask<double>(task.AsTask().ContinueWith((task) => doWork()));
+
+            double doWork() => BinaryPrimitives.ReadDoubleLittleEndian(buffer.Span);
         }
 
         #endregion
