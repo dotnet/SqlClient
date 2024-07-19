@@ -187,7 +187,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Parse error at line: 1, column: 27: Incorrect syntax near 'for'.
         // Skip: Access token authentication does not work with RemoteExecutor (Active issue #31362)
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.UseAccessTokenAuth))]
         public void ExecuteXmlReaderTest()
         {
             RemoteExecutor.Invoke(() =>

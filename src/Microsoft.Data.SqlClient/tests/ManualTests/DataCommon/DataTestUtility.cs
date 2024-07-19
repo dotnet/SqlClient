@@ -67,6 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
         public static bool ManagedIdentitySupported = true;
+        public static bool UseAccessTokenAuth = false;
         public static string AADAccessToken = null;
         public static bool SupportsSystemAssignedManagedIdentity = false;
         public static string AADSystemIdentityAccessToken = null;
@@ -119,15 +120,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // Skip tests when we require an access token to authenticate to Azure SQL DB
+        // Skip tests when we use access token to authenticate to the database
         public static bool AuthenticatingWithoutAccessToken
         {
             get
             {
-                SqlConnectionStringBuilder builder = new(TCPConnectionString);
-                var containsAuthentication = builder.Authentication != SqlAuthenticationMethod.NotSpecified || !string.IsNullOrEmpty(builder.Password) || !string.IsNullOrEmpty(builder.UserID);
-
-                return containsAuthentication || !Utils.IsAzureSqlServer(builder.DataSource);
+                return !UseAccessTokenAuth;
             }
         }
 
@@ -164,6 +162,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
+            UseAccessTokenAuth = c.UseAccessTokenAuth;
             AADAccessToken = c.AADAccessToken;
             AADAuthorityURL = c.AADAuthorityURL;
             AADPasswordConnectionString = c.AADPasswordConnectionString;
@@ -245,7 +244,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static SqlConnection GetSqlConnection(string connectionString = "")
         {
             // If there is no authentication method specified in the TCP connection string and it's connecting to an Azure SQL DB, add an access token
-            if (!AuthenticatingWithoutAccessToken && !string.IsNullOrEmpty(AADAccessToken))
+            if (UseAccessTokenAuth)
             {
                 string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                 connectionString = RemoveKeysInConnStr(connectionString, credKeys);
@@ -264,7 +263,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             DbConnection conn = provider.CreateConnection();
 
-            if (!AuthenticatingWithoutAccessToken && !string.IsNullOrEmpty(AADAccessToken) && conn is SqlConnection sqlConn)
+            if (UseAccessTokenAuth && conn is SqlConnection sqlConn)
             {
                 sqlConn.AccessToken = AADAccessToken;
                 return sqlConn;

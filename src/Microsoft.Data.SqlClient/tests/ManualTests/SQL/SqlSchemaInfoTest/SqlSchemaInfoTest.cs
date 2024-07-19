@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
             {
                 string currentDb = connection.Database;
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
                 PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(builder);
                 PropertyDescriptor descriptor = properties["InitialCatalog"];
                 DataTestUtility.AssertEqualsWithDescription(

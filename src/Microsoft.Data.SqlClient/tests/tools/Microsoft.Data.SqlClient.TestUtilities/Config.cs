@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json;
 
 namespace Microsoft.Data.SqlClient.TestUtilities
@@ -15,6 +16,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string TCPConnectionStringHGSVBS = null;
         public string TCPConnectionStringNoneVBS = null;
         public string TCPConnectionStringAASSGX = null;
+        public bool UseAccessTokenAuth = false;
         public string AADAccessToken = null;
         public string AADAuthorityURL = null;
         public string AADPasswordConnectionString = null;

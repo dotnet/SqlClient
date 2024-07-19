@@ -6,6 +6,7 @@
     "TCPConnectionStringAASSGX": "",
     "EnclaveEnabled": false,
     "TracingEnabled": false,
+    "UseAccessTokenAuth": false,
     "AADAccessToken": "",
     "AADAuthorityURL": "",
     "AADPasswordConnectionString": "",

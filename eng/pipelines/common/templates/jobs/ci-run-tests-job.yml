@@ -85,7 +85,7 @@ jobs:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
-  - ${{ if eq(parameters.operatingSystem, 'Mac') }}:
+  - ${{ if parameters.configProperties.UseAccessTokenAuth }}:
     - task: AzureCLI@2
       inputs:
         azureSubscription: ADO.Net-UAMI
@@ -104,7 +104,8 @@ jobs:
           TCPConnectionString: ${{ parameters.configProperties.TCPConnectionString }}
         ${{ if parameters.configProperties.NPConnectionString }}:
           NPConnectionString: ${{ parameters.configProperties.NPConnectionString }}
-        ${{ if eq(parameters.operatingSystem, 'Mac') }}:
+        ${{ if parameters.configProperties.UseAccessTokenAuth }}:
+          UseAccessTokenAuth: ${{ parameters.configProperties.UseAccessTokenAuth }}
           AADAccessToken: $(UAMI_Access_Token)
         ${{ if parameters.configProperties.AADAuthorityURL }}:
           AADAuthorityURL: ${{ parameters.configProperties.AADAuthorityURL }}
