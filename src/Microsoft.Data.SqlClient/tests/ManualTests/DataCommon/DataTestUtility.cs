@@ -243,7 +243,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static SqlConnection GetSqlConnection(string connectionString = "")
         {
-            Console.WriteLine("---------------> Connection String:" + connectionString);
+            if (connectionString != TCPConnectionString)
+            {
+                return null;
+            }
+
             if (UseAccessTokenAuth)
             {
                 string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
@@ -261,7 +265,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static DbConnection GetSqlConnectionWithProvider(DbProviderFactory provider, string connectionString = "")
         {
-            Console.WriteLine("---------------> Connection String:" + connectionString);
             DbConnection conn = provider.CreateConnection();
             
             if (UseAccessTokenAuth && conn is SqlConnection sqlConn)
