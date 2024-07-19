@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Util
     internal class TestUtil
     {
         /// <summary>
-        /// Unless the NPGSQL_TEST_DB environment variable is defined, this is used as the connection string for the
+        /// Unless the SQL_TEST_DB environment variable is defined, this is used as the connection string for the
         /// test database.
         /// </summary>
         public const string DefaultConnectionString =

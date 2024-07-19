@@ -12,7 +12,6 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClientX.RateLimiters;
-using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
 
 namespace Microsoft.Data.SqlClientX
 {

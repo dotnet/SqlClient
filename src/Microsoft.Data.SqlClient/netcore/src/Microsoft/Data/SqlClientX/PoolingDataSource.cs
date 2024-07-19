@@ -37,11 +37,15 @@ namespace Microsoft.Data.SqlClientX
 
         //TODO: readonly TimeSpan _connectionLifetime;
 
+        // Counts the total number of open connectors tracked by the pool.
         volatile int _numConnectors;
 
+        // Counts the number of connectors currently sitting idle in the pool.
         volatile int _idleCount;
 
-        static SemaphoreSlim SyncOverAsyncSemaphore { get; } = new(Math.Max(1, Environment.ProcessorCount / 2));
+        // Prevents synchronous operations from blocking on all available threads,
+        // which would stop async tasks from being scheduled and cause deadlocks.
+        private static SemaphoreSlim SyncOverAsyncSemaphore { get; } = new(Math.Max(1, Environment.ProcessorCount / 2));
 
         /// <summary>
         /// Tracks all connectors currently managed by this pool, whether idle or busy.
@@ -185,6 +189,11 @@ namespace Microsoft.Data.SqlClientX
             }
         }
 
+        /// <summary>
+        /// Tries to read a connector from the idle connector channel.
+        /// </summary>
+        /// <param name="connector">Out parameter to store the connector result.</param>
+        /// <returns>Returns true if a valid idles connector is found, otherwise returns false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryGetIdleConnector([NotNullWhen(true)] out SqlConnector? connector)
         {
@@ -195,8 +204,14 @@ namespace Microsoft.Data.SqlClientX
             return false;
         }
 
+        /// <summary>
+        /// Checks that the provided connector is live and unexpired.
+        /// If true, indicates that the connector may be returned by the pool.
+        /// </summary>
+        /// <param name="connector">The connector to be checked.</param>
+        /// <returns>Returns true if the connector is live and unexpired, otherwise returns false.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool CheckIdleConnector([NotNullWhen(true)] SqlConnector? connector)
+        private bool CheckIdleConnector([NotNullWhen(true)] SqlConnector? connector)
         {
             if (connector is null)
                 return false;
@@ -239,6 +254,10 @@ namespace Microsoft.Data.SqlClientX
             return true;
         }
 
+        /// <summary>
+        /// Closes the provided connector and adjust pool state accordingly.
+        /// </summary>
+        /// <param name="connector">The connector to be closed.</param>
         private void CloseConnector(SqlConnector connector)
         {
             try
@@ -275,6 +294,9 @@ namespace Microsoft.Data.SqlClientX
             //  UpdatePruningTimer();
         }
 
+        /// <summary>
+        /// A state object used to pass context to the rate limited connector creation operation.
+        /// </summary>
         internal readonly struct OpenInternalConnectionState
         {
             internal readonly SqlConnectionX _owningConnection;
@@ -405,6 +427,9 @@ namespace Microsoft.Data.SqlClientX
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Shutsdown the pool and disposes pool resources.
+        /// </summary>
         internal void Shutdown()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", ObjectID);
