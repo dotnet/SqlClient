@@ -5,8 +5,6 @@
 #if NET8_0_OR_GREATER
 
 using System;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;

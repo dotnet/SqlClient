@@ -7,9 +7,6 @@
 
 using System;
 using System.Data.Common;
-using System.Diagnostics.CodeAnalysis;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
