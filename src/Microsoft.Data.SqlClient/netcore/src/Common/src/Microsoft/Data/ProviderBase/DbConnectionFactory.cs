@@ -49,7 +49,7 @@ namespace Microsoft.Data.ProviderBase
 
         public void ClearAllPools()
         {
-            using (TryEventScope.Create("<prov.DbConnectionFactory.ClearAllPools|API"))
+            using (TryEventScope.Create(nameof(DbConnectionFactory)))
             {
                 Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
                 foreach (KeyValuePair<DbConnectionPoolKey, DbConnectionPoolGroup> entry in connectionPoolGroups)
