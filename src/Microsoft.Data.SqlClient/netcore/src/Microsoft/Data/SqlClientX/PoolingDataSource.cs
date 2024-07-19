@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClientX
             CheckDisposed();
 
             return TryGetIdleConnector(out SqlConnector? connector)
-                ? new ValueTask<SqlConnector>(connector)
+                ? ValueTask.FromResult(connector)
                 : RentAsync(owningConnection, timeout, async, cancellationToken);
 
             async ValueTask<SqlConnector> RentAsync(
@@ -132,7 +132,7 @@ namespace Microsoft.Data.SqlClientX
                                 {
                                     ConfiguredValueTaskAwaitable<SqlConnector?>.ConfiguredValueTaskAwaiter awaiter = 
                                         _idleConnectorReader.ReadAsync(finalToken).ConfigureAwait(false).GetAwaiter();
-                                    ManualResetEventSlim mres = new ManualResetEventSlim(false, 0);
+                                    using ManualResetEventSlim mres = new ManualResetEventSlim(false, 0);
 
                                     // Cancellation happens through the ReadAsync call, which will complete the task.
                                     awaiter.UnsafeOnCompleted(() => mres.Set());
