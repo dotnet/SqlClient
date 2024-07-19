@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Console.WriteLine("---------------> Connection String:" + connectionString);
             if (UseAccessTokenAuth)
             {
-                string[] credKeys = { "UserID", "Password", "UID", "PWD", "Authentication" };
+                string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                 string connectionStringRemovedAuth = RemoveKeysInConnStr(connectionString, credKeys);
                 var connection = new SqlConnection(connectionStringRemovedAuth)
                 {
@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             
             if (UseAccessTokenAuth && conn is SqlConnection sqlConn)
             {
-                string[] credKeys = { "UserID", "Password", "UID", "PWD", "Authentication" };
+                string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                 string connectionStringRemovedAuth = RemoveKeysInConnStr(connectionString, credKeys);
                 sqlConn.ConnectionString = connectionStringRemovedAuth;
                 sqlConn.AccessToken = AADAccessToken;
