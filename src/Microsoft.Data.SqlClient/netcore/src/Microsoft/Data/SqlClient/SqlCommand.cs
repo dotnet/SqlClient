@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
 
             public TaskCompletionSource<int> TaskCompletionSource => _source;
 
-            public void Set(SqlCommand command, TaskCompletionSource<int> source, CancellationTokenRegistration disposable,  Guid operationID)
+            public void Set(SqlCommand command, TaskCompletionSource<int> source, CancellationTokenRegistration disposable, Guid operationID)
             {
                 base.Set(command, source, disposable);
                 OperationID = operationID;
@@ -250,9 +250,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool ShouldUseEnclaveBasedWorkflow => 
-            (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) && 
-                    IsColumnEncryptionEnabled; 
+        internal bool ShouldUseEnclaveBasedWorkflow =>
+            (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) &&
+                    IsColumnEncryptionEnabled;
 
         /// <summary>
         /// Per-command custom providers. It can be provided by the user and can be set more than once. 
@@ -1319,13 +1319,13 @@ namespace Microsoft.Data.SqlClient
                 // In these cases finalize the call internally and trigger a retry when needed.
                 if (
                     !TriggerInternalEndAndRetryIfNecessary(
-                        behavior, 
-                        stateObject, 
-                        timeout, 
-                        usedCache, 
-                        inRetry, 
-                        asyncWrite, 
-                        globalCompletion, 
+                        behavior,
+                        stateObject,
+                        timeout,
+                        usedCache,
+                        inRetry,
+                        asyncWrite,
+                        globalCompletion,
                         localCompletion,
                         endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
                         {
@@ -1607,9 +1607,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         bool dataReady;
                         Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                        bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj,
+                        TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj,
                             out dataReady);
-                        if (!result)
+                        if (result != TdsOperationStatus.Done)
                         {
                             throw SQL.SynchronousCallMayNotPend();
                         }
@@ -1849,13 +1849,13 @@ namespace Microsoft.Data.SqlClient
                 // In these cases finalize the call internally and trigger a retry when needed.
                 if (
                     !TriggerInternalEndAndRetryIfNecessary(
-                        behavior, 
-                        stateObject, 
-                        timeout, 
-                        usedCache, 
-                        inRetry, 
-                        asyncWrite, 
-                        globalCompletion, 
+                        behavior,
+                        stateObject,
+                        timeout,
+                        usedCache,
+                        inRetry,
+                        asyncWrite,
+                        globalCompletion,
                         localCompletion,
                         endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
                         {
@@ -2295,13 +2295,13 @@ namespace Microsoft.Data.SqlClient
                 // In these cases finalize the call internally and trigger a retry when needed.
                 if (
                     !TriggerInternalEndAndRetryIfNecessary(
-                        behavior, 
-                        stateObject, 
-                        timeout, 
-                        usedCache, 
-                        inRetry, 
-                        asyncWrite, 
-                        globalCompletion, 
+                        behavior,
+                        stateObject,
+                        timeout,
+                        usedCache,
+                        inRetry,
+                        asyncWrite,
+                        globalCompletion,
                         localCompletion,
                         endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
                         {
@@ -2898,7 +2898,7 @@ namespace Microsoft.Data.SqlClient
                                 // exception thrown by Dispose...
                                 source.SetException(e);
                             }
-                        }, 
+                        },
                         TaskScheduler.Default
                     );
                 }
@@ -2972,7 +2972,7 @@ namespace Microsoft.Data.SqlClient
                                 // exception thrown by Dispose...
                                 source.SetException(e);
                             }
-                        }, 
+                        },
                         TaskScheduler.Default
                     );
                 }
@@ -3682,9 +3682,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
-                    if (!result)
-                    { throw SQL.SynchronousCallMayNotPend(); }
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        throw SQL.SynchronousCallMayNotPend();
+                    }
                 }
             }
             catch (Exception e)
@@ -4589,7 +4591,7 @@ namespace Microsoft.Data.SqlClient
                             SqlParameter sqlParameter = rpc.userParams[index];
                             Debug.Assert(sqlParameter != null, "sqlParameter should not be null.");
 
-                            if (SqlParameter.ParameterNamesEqual(sqlParameter.ParameterName,parameterName,StringComparison.Ordinal))
+                            if (SqlParameter.ParameterNamesEqual(sqlParameter.ParameterName, parameterName, StringComparison.Ordinal))
                             {
                                 Debug.Assert(sqlParameter.CipherMetadata == null, "param.CipherMetadata should be null.");
                                 sqlParameter.HasReceivedMetadata = true;
@@ -4920,7 +4922,7 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl) && 
+            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl) &&
                 Connection.AttestationProtocol != SqlConnectionAttestationProtocol.None)
             {
                 throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(this._activeConnection.Parser.EnclaveType);
@@ -5136,9 +5138,11 @@ namespace Microsoft.Data.SqlClient
                         Task executeTask = _stateObj.Parser.TdsExecuteSQLBatch(optionSettings, timeout, this.Notification, _stateObj, sync: true);
                         Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
                         Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                        bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out bool dataReady);
-                        if (!result)
-                        { throw SQL.SynchronousCallMayNotPend(); }
+                        TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out bool dataReady);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            throw SQL.SynchronousCallMayNotPend();
+                        }
                         // and turn OFF when the ds exhausts the stream on Close()
                         optionSettings = GetResetOptionsString(cmdBehavior);
                     }
@@ -5296,9 +5300,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out dataReady);
-                    if (!result)
-                    { throw SQL.SynchronousCallMayNotPend(); }
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out dataReady);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        throw SQL.SynchronousCallMayNotPend();
+                    }
                 }
                 catch (Exception e)
                 {
@@ -5869,9 +5875,9 @@ namespace Microsoft.Data.SqlClient
                     thisParam = parameters[i];
                     // searching for Output or InputOutput or ReturnValue with matching name
                     if (
-                        thisParam.Direction != ParameterDirection.Input && 
-                        thisParam.Direction != ParameterDirection.ReturnValue && 
-                        SqlParameter.ParameterNamesEqual(paramName, thisParam.ParameterName,StringComparison.Ordinal)
+                        thisParam.Direction != ParameterDirection.Input &&
+                        thisParam.Direction != ParameterDirection.ReturnValue &&
+                        SqlParameter.ParameterNamesEqual(paramName, thisParam.ParameterName, StringComparison.Ordinal)
                     )
                     {
                         foundParam = true;

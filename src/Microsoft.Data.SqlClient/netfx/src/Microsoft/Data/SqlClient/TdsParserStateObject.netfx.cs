@@ -467,7 +467,7 @@ namespace Microsoft.Data.SqlClient
                                 if (TdsEnums.SNI_SUCCESS == error)
                                 {
                                     // We will end up letting the run method deal with the expected done:done_attn token stream.
-                                    stateObj.ProcessSniPacket(syncReadPacket, 0);
+                                    stateObj.ProcessSniPacket(syncReadPacket, TdsEnums.SNI_SUCCESS);
                                     return;
                                 }
                                 else
