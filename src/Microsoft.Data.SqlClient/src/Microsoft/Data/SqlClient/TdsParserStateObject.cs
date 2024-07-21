@@ -1383,7 +1383,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // If the int isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-                TdsOperationStatus result = TryReadByteArray(buffer, 2);
+                TdsOperationStatus result = TryReadByteArray(buffer, 4);
                 if (result != TdsOperationStatus.Done)
                 {
                     value = default;
