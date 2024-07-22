@@ -931,6 +931,7 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds8TlsHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds74TlsHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\TlsAuthenticator.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\SSRPHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreationHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreation\IpAddressVersionComparer.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreation\NamedPipeTransportCreationHandler.cs" />
@@ -996,6 +997,9 @@
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="microsoft.data.sqlclient\netcore\src\microsoft\data\sqlclientx\handlers\connection\" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />

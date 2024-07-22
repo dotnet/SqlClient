@@ -6,9 +6,11 @@
 
 using System;
 using System.Data;
-using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClientX.Handlers;
+using Microsoft.Data.SqlClientX.Handlers.Connection;
 
 #nullable enable
 
@@ -61,9 +63,15 @@ namespace Microsoft.Data.SqlClientX
         /// <param name = "cancellationToken">The token used to cancel an ongoing asynchronous call.</param>
         /// <returns>A Task indicating the result of the operation.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        internal ValueTask Open(TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        internal async ValueTask Open(TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            HandlerOrchestrator orchestrator = HandlerOrchestrator.Instance;
+            ConnectionHandlerContext context = new ConnectionHandlerContext
+            {
+                ConnectionString = new SqlConnectionString(DataSource.ConnectionString)
+            };
+            //TODO: a call to SqlCommandX once you reach end of chain.
+            await orchestrator.ProcessRequestAsync(context, async, cancellationToken).ConfigureAwait(false);         
         }
 
         /// <summary>
