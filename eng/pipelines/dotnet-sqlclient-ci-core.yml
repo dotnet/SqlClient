@@ -380,8 +380,8 @@ stages:
           operatingSystem: Mac
           configProperties:
             # config.json properties
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
+            TCPConnectionString: $(AZURE_DB_SP_TCP_CONN_STRING)
+            NPConnectionString: $(AZURE_DB_SP_NP_CONN_STRING)
             SupportsIntegratedSecurity: false
             ManagedIdentitySupported: false
             LocalDbAppName: $(LocalDbAppName)
