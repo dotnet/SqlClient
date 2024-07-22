@@ -21,10 +21,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     if (DataTestUtility.UseAccessTokenAuth)
                     {
-                        Console.WriteLine("Test --------------------->" + conn.ConnectionString);
-                        string[] credKeys = { "UserID", "Password", "UID", "PWD", "Authentication" };
+                        string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                         string connectionStringRemovedAuth = DataTestUtility.RemoveKeysInConnStr(conn.ConnectionString, credKeys);
                         conn.ConnectionString = connectionStringRemovedAuth;
+                        Console.WriteLine("Test -------------------------->" + conn.ConnectionString);
                         conn.AccessToken = DataTestUtility.AADAccessToken;
                     }
                     
