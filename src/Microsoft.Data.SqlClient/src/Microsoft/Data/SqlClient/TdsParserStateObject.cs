@@ -1288,7 +1288,6 @@ namespace Microsoft.Data.SqlClient
                     _networkPacketTaskSource.TrySetResult(null);
                 }
                 return TdsOperationStatus.InvalidData;
-                ;
             }
 #endif
 
@@ -2032,7 +2031,6 @@ namespace Microsoft.Data.SqlClient
 
                 // previous buffer is in snapshot
                 _inBuff = new byte[_inBuff.Length];
-                result = TdsOperationStatus.NeedMoreData;
             }
 
             if (_syncOverAsync)
