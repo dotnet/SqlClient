@@ -484,6 +484,16 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal bool IsSsrpRequired { get; private set; } = false;
 
+        /// <summary>
+        /// Constructs and initializes a data source <b>for testing purposes</b> that
+        /// is of the provided protocol.
+        /// </summary>
+        /// <param name="protocol">Protocol to set the instance to use.</param>
+        internal DataSource(Protocol protocol)
+        {
+            ResolvedProtocol = protocol;
+        }
+
         private DataSource(string dataSource)
         {
             // Remove all whitespaces from the datasource and all operations will happen on lower case.

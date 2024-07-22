@@ -10,6 +10,7 @@ using System.Data.SqlTypes;
 using System.Threading;
 using Xunit;
 #if NET6_0_OR_GREATER
+using Microsoft.SqlServer.Types;
 using Microsoft.Data.SqlClient.Server;
 #endif
 
@@ -243,7 +244,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithDatatablesTVPInsert()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
@@ -310,6 +311,90 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
 #if NET6_0_OR_GREATER
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void TestParametersWithSqlRecordsTVPInsert()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+
+            SqlGeography geog = SqlGeography.Point(43, -81, 4326);
+
+            SqlMetaData[] metadata = new SqlMetaData[]
+            {
+                new SqlMetaData("Id", SqlDbType.UniqueIdentifier),
+                new SqlMetaData("geom", SqlDbType.Udt, typeof(SqlGeography), "Geography")
+            };
+
+            SqlDataRecord record1 = new SqlDataRecord(metadata);
+            record1.SetValues(Guid.NewGuid(), geog);
+
+            SqlDataRecord record2 = new SqlDataRecord(metadata);
+            record2.SetValues(Guid.NewGuid(), geog);
+
+            IList<SqlDataRecord> featureInserts = new List<SqlDataRecord>
+            {
+                record1,
+                record2,
+            };
+            
+            using SqlConnection connection = new(builder.ConnectionString);
+            string procName = DataTestUtility.GetUniqueNameForSqlServer("Proc");
+            string typeName = DataTestUtility.GetUniqueName("Type");
+            try
+            {
+                connection.Open();
+
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = $"CREATE TYPE {typeName} AS TABLE([Id] [uniqueidentifier] NULL, [geom] [geography] NULL)";
+                    cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = @$"CREATE PROCEDURE {procName}
+                        @newRoads as {typeName} READONLY
+                        AS
+                        BEGIN
+                         SELECT* FROM @newRoads
+                        END";
+                    cmd.ExecuteNonQuery();
+
+                }
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    // Update Data Using TVPs
+                    cmd.CommandText = procName;
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    SqlParameter param = new SqlParameter("@newRoads", SqlDbType.Structured);
+                    param.Value = featureInserts;
+                    param.TypeName = typeName;
+
+                    cmd.Parameters.Add(param);
+
+                    using var reader = cmd.ExecuteReader();
+
+                    Assert.True(reader.HasRows);
+
+                    int count = 0;
+                    while (reader.Read())
+                    {
+                        Assert.NotNull(reader[0]);
+                        Assert.NotNull(reader[1]);
+                        count++;
+                    }
+
+                    Assert.Equal(2, count);
+                }
+            }
+            finally
+            {
+                using SqlCommand cmd = connection.CreateCommand();
+                cmd.CommandText = "DROP PROCEDURE " + procName;
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "DROP TYPE " + typeName;
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPDataTable_CommandSP()
         {

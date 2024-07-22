@@ -18,9 +18,10 @@
     <Product>Core $(BaseProduct)</Product>
     <EnableTrimAnalyzer Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">true</EnableTrimAnalyzer>
     <NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn>
+    <RootNamespace />
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFramework)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
+    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
@@ -152,6 +153,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs</Link>
+    </Compile>    
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ApplicationIntent.cs">
       <Link>Microsoft\Data\SqlClient\ApplicationIntent.cs</Link>
     </Compile>
@@ -621,7 +625,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.CrossPlatform.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
@@ -646,6 +649,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnostic.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnosticListenerExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
@@ -662,7 +666,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
@@ -832,6 +835,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
@@ -843,7 +849,6 @@
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
@@ -918,8 +923,8 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClientX\IO\TdsBufferAlloc.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriter.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\ConnectionHandlerContext.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\DataSourceParsingHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\LoginHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\PasswordChangeRequest.cs" />
@@ -930,26 +935,42 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds8TlsHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds74TlsHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\TlsAuthenticator.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\DataSourceParsingHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\UnpooledDataSource.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\SqlDataSource.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\SqlConnector.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreationHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreation\IpAddressVersionComparer.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreation\NamedPipeTransportCreationHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreation\SharedMemoryTransportCreationHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\TransportCreation\TcpTransportCreationHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\ContextHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequest.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\IHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\IReturningHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\NoSuitableHandlerFoundException.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\ReturningHandlerChain.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\ReturningHandlerChainExceptionBehavior.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerOrchestrator.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\InternalConnectionContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\SqlUtilsX.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\SqlDataSourceBuilder.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsReadStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsWriteStream.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\IO\TdsBufferAlloc.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsReadStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsStreamPacketType.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsStream.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequest.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerRequestType.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\IHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\IpAddressVersionComparer.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\TransportCreation\TransportCreationHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriter.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriteStream.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\PoolingDataSource.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\AsyncFlagFunc.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\BlockingPeriodRateLimiter.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\ConcurrencyRateLimiter.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\RateLimiterBase.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\RateLimiters\PassthroughRateLimiter.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\SqlConnectionX.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\SqlConnector.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\SqlDataSource.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\SqlDataSourceBuilder.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\UnpooledDataSource.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\Strings.resx">
       <Link>Resources\Strings.resx</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
@@ -959,6 +980,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\$(ResxFileName).*.resx">
       <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <LogicalName>Microsoft.Data.SqlClient.Resources.%(Filename).resources</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
@@ -968,7 +990,6 @@
   <!-- Package References Etc -->
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
-    <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
@@ -977,7 +998,6 @@
     <!-- <ProjectReference Include="$(SqlServerSourceCode)\Microsoft.SqlServer.Server.csproj" /> -->
     <PackageReference Include="Microsoft.SqlServer.Server" Version="$(MicrosoftSqlServerServerVersion)" />
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
   </ItemGroup>

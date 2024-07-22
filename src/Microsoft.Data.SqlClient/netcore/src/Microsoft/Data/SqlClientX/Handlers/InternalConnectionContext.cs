@@ -1,18 +1,19 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClientX.Handlers
 {
     /// <summary>
-    /// The request type for the handler. This should be appended to contain any
-    /// other requests types as well.
+    /// Placeholder context class needed for SqlConnector
     /// </summary>
-    internal enum HandlerRequestType
+    internal class InternalConnectionContext
     {
-        /// <summary>
-        /// Request type with Context for Connection Request.
-        /// </summary>
-        ConnectionHandlerContext,
+
     }
 }
