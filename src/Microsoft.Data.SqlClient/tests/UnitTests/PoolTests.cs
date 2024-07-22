@@ -24,7 +24,6 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             testBase = new TestBase();
         }
 
-
         [Fact]
         public async Task MinPoolSize_equals_MaxPoolSize()
         {

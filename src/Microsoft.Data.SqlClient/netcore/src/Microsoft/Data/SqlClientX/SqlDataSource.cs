@@ -7,6 +7,7 @@
 
 using System;
 using System.Data.Common;
+using System.Security.AccessControl;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
@@ -21,12 +22,34 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal abstract class SqlDataSource : DbDataSource
     {
+        #region private
         private readonly SqlConnectionStringBuilder _connectionStringBuilder;
         private protected volatile int _isDisposed;
+        #endregion
+
+        #region constructors
+        /// <summary>
+        /// Initializes a new instance of SqlDataSource.
+        /// </summary>
+        /// <param name="connectionStringBuilder">The connection string that connections produced by this data source should use.</param>
+        /// <param name="credential">The credentials that connections produced by this data source should use.</param>
+        internal SqlDataSource(
+            SqlConnectionStringBuilder connectionStringBuilder,
+            SqlCredential credential)
+        {
+            _connectionStringBuilder = connectionStringBuilder;
+            Credential = credential;
+        }
+        #endregion
+
+        #region properties
+        /// <inheritdoc />
+        public override string ConnectionString => _connectionStringBuilder.ConnectionString;
 
         internal SqlCredential Credential { get; }
 
         internal abstract (int Total, int Idle, int Busy) Statistics { get; }
+        #endregion
 
         /// <summary>
         /// Creates a new, unopened SqlConnection.
@@ -36,18 +59,6 @@ namespace Microsoft.Data.SqlClientX
         {
             return SqlConnectionX.FromDataSource(this);
         }
-
-        internal SqlDataSource(
-            SqlConnectionStringBuilder connectionStringBuilder,
-            SqlCredential credential)
-        {
-            _connectionStringBuilder = connectionStringBuilder;
-            Credential = credential;
-        }
-
-        /// <inheritdoc />
-        public override string ConnectionString => _connectionStringBuilder.ConnectionString;
-
 
         /// <summary>
         /// Creates a new <see cref="SqlConnection"/> object.
@@ -76,7 +87,7 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Creates a new <see cref="SqlCommand"/> object.
         /// </summary>
-        public new SqlCommand CreateCommand(string? commandText)
+        public new SqlCommand CreateCommand(string? commandText = null)
         {
             return (SqlCommand)CreateDbCommand(commandText);
         }
@@ -120,7 +131,9 @@ namespace Microsoft.Data.SqlClientX
         {
             //TODO: implement disposal
             if (_isDisposed == 1)
-                ThrowHelper.ThrowObjectDisposedException(GetType().FullName);
+            {
+                throw new ObjectDisposedException(GetType().FullName);
+            }
         }
     }
 }

@@ -18,6 +18,20 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal class SqlConnector
     {
+        #region private
+        private static int SpoofedServerProcessId = 1;
+        #endregion
+
+        #region constructors
+        internal SqlConnector(SqlConnectionX owningConnection, SqlDataSource dataSource)
+        {
+            OwningConnection = owningConnection;
+            DataSource = dataSource;
+            ServerProcessId = Interlocked.Increment(ref SpoofedServerProcessId);
+        }
+        #endregion
+
+        #region properties
         internal SqlConnectionX? OwningConnection { get; set; }
 
         /// <summary>
@@ -42,15 +56,7 @@ namespace Microsoft.Data.SqlClientX
 
         //TODO: set this based on login info
         internal int ServerProcessId { get; private set; }
-
-        private static int SpoofedServerProcessId = 1;
-
-        internal SqlConnector(SqlConnectionX owningConnection, SqlDataSource dataSource)
-        {
-            OwningConnection = owningConnection;
-            DataSource = dataSource;
-            ServerProcessId = Interlocked.Increment(ref SpoofedServerProcessId);
-        }
+        #endregion
 
         /// <summary>
         /// Closes this connection. If this connection is pooled, it is cleaned and returned to the pool.

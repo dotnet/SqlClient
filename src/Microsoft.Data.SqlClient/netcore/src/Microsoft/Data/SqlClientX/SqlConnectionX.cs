@@ -28,20 +28,20 @@ namespace Microsoft.Data.SqlClientX
     [DesignerCategory("")]
     internal sealed class SqlConnectionX : DbConnection, ICloneable
     {
+        #region private
+        private static readonly SqlConnectionStringBuilder DefaultSettings = new();
+
         private SqlCredential? _credential;
         private SqlDataSource? _dataSource;
         private SqlConnector? _internalConnection;
 
-        bool _disposed;
-
-        internal SqlConnector? InternalConnection { get => _internalConnection; }
+        private bool _disposed;
 
         //TODO: Investigate if we can just use dataSource.ConnectionString. Do this when this class can resolve its own data source.
         private string _connectionString = string.Empty;
-        internal SqlConnectionStringBuilder Settings { get; private set; } = DefaultSettings;
-        static readonly SqlConnectionStringBuilder DefaultSettings = new();
-
+        
         private ConnectionState _connectionState = ConnectionState.Closed;
+        #endregion
 
         #region constructors
 
@@ -146,6 +146,10 @@ namespace Microsoft.Data.SqlClientX
         protected override DbProviderFactory? DbProviderFactory
             => throw new NotImplementedException();
 
+        internal SqlConnector? InternalConnection => _internalConnection;
+
+        internal SqlConnectionStringBuilder Settings { get; private set; } = DefaultSettings;
+
         #endregion
 
         /// <inheritdoc/>
@@ -221,9 +225,14 @@ namespace Microsoft.Data.SqlClientX
         protected override void Dispose(bool disposing)
         {
             if (_disposed)
+            {
                 return;
+            }
             if (disposing)
+            {
                 Close();
+            }
+            
             _disposed = true;
         }
 
@@ -231,7 +240,9 @@ namespace Microsoft.Data.SqlClientX
         public override async ValueTask DisposeAsync()
         {
             if (_disposed)
+            {
                 return;
+            }
 
             await CloseAsync().ConfigureAwait(false);
             _disposed = true;
