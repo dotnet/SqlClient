@@ -24,28 +24,20 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal sealed class PoolingDataSource : SqlDataSource
     {
-        private readonly DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
-        private readonly RateLimiterBase _connectionRateLimiter;
-
-        internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
-        internal int MaxPoolSize => _connectionPoolGroupOptions.MaxPoolSize;
-
-        internal int ObjectID => _objectID;
-
-        private static int _objectTypeCount; // EventSource counter
-        private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
-
-        //TODO: readonly TimeSpan _connectionLifetime;
-
-        // Counts the total number of open connectors tracked by the pool.
-        volatile int _numConnectors;
-
-        // Counts the number of connectors currently sitting idle in the pool.
-        volatile int _idleCount;
-
+        #region private static
         // Prevents synchronous operations from blocking on all available threads,
         // which would stop async tasks from being scheduled and cause deadlocks.
+        // Use ProcessorCount/2 as a balance between sync and async tasks.
         private static SemaphoreSlim SyncOverAsyncSemaphore { get; } = new(Math.Max(1, Environment.ProcessorCount / 2));
+
+        private static int _objectTypeCount; // EventSource counter
+        #endregion
+
+        #region private readonly
+        private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        private readonly DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
+        private readonly RateLimiterBase _connectionRateLimiter;
+        //TODO: readonly TimeSpan _connectionLifetime;
 
         /// <summary>
         /// Tracks all connectors currently managed by this pool, whether idle or busy.
@@ -53,13 +45,28 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         private readonly SqlConnector?[] _connectors;
 
-
         /// <summary>
         /// Reader side for the idle connector channel. Contains nulls in order to release waiting attempts after
         /// a connector has been physically closed/broken.
         /// </summary>
-        readonly ChannelReader<SqlConnector?> _idleConnectorReader;
-        internal ChannelWriter<SqlConnector?> IdleConnectorWriter { get; }
+        private readonly ChannelReader<SqlConnector?> _idleConnectorReader;
+        private readonly ChannelWriter<SqlConnector?> _idleConnectorWriter;
+        #endregion
+
+        #region private modifiable
+        // Counts the total number of open connectors tracked by the pool.
+        private volatile int _numConnectors;
+
+        // Counts the number of connectors currently sitting idle in the pool.
+        private volatile int _idleCount;
+        #endregion
+
+        #region internal properties
+        internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
+        internal int MaxPoolSize => _connectionPoolGroupOptions.MaxPoolSize;
+        internal int ObjectID => _objectID;
+        #endregion
+
 
         internal sealed override (int Total, int Idle, int Busy) Statistics
         {
@@ -90,102 +97,109 @@ namespace Microsoft.Data.SqlClientX
             // On the producing side, we have connections being released back into the pool (both multiplexing and not)
             var idleChannel = Channel.CreateUnbounded<SqlConnector?>();
             _idleConnectorReader = idleChannel.Reader;
-            IdleConnectorWriter = idleChannel.Writer;
+            _idleConnectorWriter = idleChannel.Writer;
 
             //TODO: initiate idle lifetime and pruning fields
         }
 
         /// <inheritdoc/>
-        internal override ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        internal override async ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
             CheckDisposed();
 
-            return TryGetIdleConnector(out SqlConnector? connector)
-                ? ValueTask.FromResult(connector)
-                : RentAsync(owningConnection, timeout, async, cancellationToken);
-
-            async ValueTask<SqlConnector> RentAsync(
-                SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+            if (TryGetIdleConnector(out SqlConnector? connector))
             {
-                // First, try to open a new physical connector. This will fail if we're at max capacity.
-                SqlConnector? connector = await OpenNewInternalConnection(owningConnection, timeout, async, cancellationToken).ConfigureAwait(false);
-                if (connector != null)
-                    return connector;
+                return connector;
+            }
 
-                // We're at max capacity. Block on the idle channel with a timeout.
-                // Note that Channels guarantee fair FIFO behavior to callers of ReadAsync (first-come first-
-                // served), which is crucial to us.
-                using CancellationTokenSource linkedSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                CancellationToken finalToken = linkedSource.Token;
-                linkedSource.CancelAfter(timeout);
-                //TODO: respect remaining time, linkedSource.CancelAfter(timeout.CheckAndGetTimeLeft());
-                //TODO: MetricsReporter.ReportPendingConnectionRequestStart();
+            // First, try to open a new physical connector. This will fail if we're at max capacity.
+            connector = await OpenNewInternalConnection(owningConnection, timeout, async, cancellationToken).ConfigureAwait(false);
+            if (connector != null)
+            {
+                return connector;
+            }
 
-                try
+            // We're at max capacity. Block on the idle channel with a timeout.
+            // Note that Channels guarantee fair FIFO behavior to callers of ReadAsync (first-come first-
+            // served), which is crucial to us.
+            using CancellationTokenSource linkedSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            CancellationToken finalToken = linkedSource.Token;
+            linkedSource.CancelAfter(timeout);
+            //TODO: respect remaining time, linkedSource.CancelAfter(timeout.CheckAndGetTimeLeft());
+            //TODO: MetricsReporter.ReportPendingConnectionRequestStart();
+
+            try
+            {
+                while (true)
                 {
-                    while (true)
+                    try
                     {
-                        try
+                        if (async)
                         {
-                            if (async)
-                                connector = await _idleConnectorReader.ReadAsync(finalToken).ConfigureAwait(false);
-                            else
+                            connector = await _idleConnectorReader.ReadAsync(finalToken).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            SyncOverAsyncSemaphore.Wait(finalToken);
+                            try
                             {
-                                SyncOverAsyncSemaphore.Wait(finalToken);
-                                try
-                                {
-                                    ConfiguredValueTaskAwaitable<SqlConnector?>.ConfiguredValueTaskAwaiter awaiter = 
-                                        _idleConnectorReader.ReadAsync(finalToken).ConfigureAwait(false).GetAwaiter();
-                                    using ManualResetEventSlim mres = new ManualResetEventSlim(false, 0);
+                                ConfiguredValueTaskAwaitable<SqlConnector?>.ConfiguredValueTaskAwaiter awaiter =
+                                    _idleConnectorReader.ReadAsync(finalToken).ConfigureAwait(false).GetAwaiter();
+                                using ManualResetEventSlim mres = new ManualResetEventSlim(false, 0);
 
-                                    // Cancellation happens through the ReadAsync call, which will complete the task.
-                                    awaiter.UnsafeOnCompleted(() => mres.Set());
-                                    mres.Wait(CancellationToken.None);
-                                    connector = awaiter.GetResult();
-                                }
-                                finally
-                                {
-                                    SyncOverAsyncSemaphore.Release();
-                                }
+                                // Cancellation happens through the ReadAsync call, which will complete the task.
+                                awaiter.UnsafeOnCompleted(() => mres.Set());
+                                mres.Wait(CancellationToken.None);
+                                connector = awaiter.GetResult();
                             }
-
-                            if (CheckIdleConnector(connector))
-                                return connector;
+                            finally
+                            {
+                                SyncOverAsyncSemaphore.Release();
+                            }
                         }
-                        catch (OperationCanceledException)
+
+                        if (CheckIdleConnector(connector))
                         {
-                            cancellationToken.ThrowIfCancellationRequested();
-                            Debug.Assert(finalToken.IsCancellationRequested);
-
-                            //TODO: MetricsReporter.ReportConnectionPoolTimeout();
-                            /*TODO: throw new NpgsqlException(
-                                $"The connection pool has been exhausted, either raise 'Max Pool Size' (currently {MaxConnections}) " +
-                                $"or 'Timeout' (currently {Settings.Timeout} seconds) in your connection string.",
-                                new TimeoutException());*/
-                            throw new Exception("Pool exhausted", new TimeoutException());
-                        }
-                        catch (ChannelClosedException)
-                        {
-                            //throw new NpgsqlException("The connection pool has been shut down.");
-                            throw new Exception("The connection pool has been shut down.");
-                        }
-
-                        // If we're here, our waiting attempt on the idle connector channel was released with a null
-                        // (or bad connector), or we're in sync mode. Check again if a new idle connector has appeared since we last checked.
-                        if (TryGetIdleConnector(out connector))
                             return connector;
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        Debug.Assert(finalToken.IsCancellationRequested);
 
-                        // We might have closed a connector in the meantime and no longer be at max capacity
-                        // so try to open a new connector and if that fails, loop again.
-                        connector = await OpenNewInternalConnection(owningConnection, timeout, async, cancellationToken).ConfigureAwait(false);
-                        if (connector != null)
-                            return connector;
+                        //TODO: MetricsReporter.ReportConnectionPoolTimeout();
+                        /*TODO: throw new NpgsqlException(
+                            $"The connection pool has been exhausted, either raise 'Max Pool Size' (currently {MaxConnections}) " +
+                            $"or 'Timeout' (currently {Settings.Timeout} seconds) in your connection string.",
+                            new TimeoutException());*/
+                        throw new Exception("Pool exhausted", new TimeoutException());
+                    }
+                    catch (ChannelClosedException)
+                    {
+                        //throw new NpgsqlException("The connection pool has been shut down.");
+                        throw new Exception("The connection pool has been shut down.");
+                    }
+
+                    // If we're here, our waiting attempt on the idle connector channel was released with a null
+                    // (or bad connector), or we're in sync mode. Check again if a new idle connector has appeared since we last checked.
+                    if (TryGetIdleConnector(out connector))
+                    {
+                        return connector;
+                    }
+
+                    // We might have closed a connector in the meantime and no longer be at max capacity
+                    // so try to open a new connector and if that fails, loop again.
+                    connector = await OpenNewInternalConnection(owningConnection, timeout, async, cancellationToken).ConfigureAwait(false);
+                    if (connector != null)
+                    {
+                        return connector;
                     }
                 }
-                finally
-                {
-                    //TODO: MetricsReporter.ReportPendingConnectionRequestStop();
-                }
+            }
+            finally
+            {
+                //TODO: MetricsReporter.ReportPendingConnectionRequestStop();
             }
         }
 
@@ -198,8 +212,12 @@ namespace Microsoft.Data.SqlClientX
         internal bool TryGetIdleConnector([NotNullWhen(true)] out SqlConnector? connector)
         {
             while (_idleConnectorReader.TryRead(out connector))
+            {
                 if (CheckIdleConnector(connector))
+                {
                     return true;
+                }
+            }
 
             return false;
         }
@@ -214,7 +232,9 @@ namespace Microsoft.Data.SqlClientX
         private bool CheckIdleConnector([NotNullWhen(true)] SqlConnector? connector)
         {
             if (connector is null)
+            {
                 return false;
+            }
 
             // Only decrement when the connector has a value.
             Interlocked.Decrement(ref _idleCount);
@@ -271,14 +291,20 @@ namespace Microsoft.Data.SqlClientX
 
             var i = 0;
             for (; i < MaxPoolSize; i++)
+            {
                 if (Interlocked.CompareExchange(ref _connectors[i], null, connector) == connector)
+                {
                     break;
+                }
+            }
 
             // If CloseConnector is being called from within OpenNewConnector (e.g. an error happened during a connection initializer which
             // causes the connector to Break, and therefore return the connector), then we haven't yet added the connector to Connectors.
             // In this case, there's no state to revert here (that's all taken care of in OpenNewConnector), skip it.
             if (i == MaxPoolSize)
+            {
                 return;
+            }
 
             var numConnectors = Interlocked.Decrement(ref _numConnectors);
             Debug.Assert(numConnectors >= 0);
@@ -286,7 +312,7 @@ namespace Microsoft.Data.SqlClientX
             // If a connector has been closed for any reason, we write a null to the idle connector channel to wake up
             // a waiter, who will open a new physical connection
             // Statement order is important since we have synchronous completions on the channel.
-            IdleConnectorWriter.TryWrite(null);
+            _idleConnectorWriter.TryWrite(null);
 
             // Only turn off the timer one time, when it was this Close that brought Open back to _min.
             //TODO: pruning
@@ -326,7 +352,9 @@ namespace Microsoft.Data.SqlClientX
                 {
                     // Note that we purposefully don't use SpinWait for this: https://github.com/dotnet/coreclr/pull/21437
                     if (Interlocked.CompareExchange(ref _numConnectors, numConnectors + 1, numConnectors) != numConnectors)
+                    {
                         continue;
+                    }
 
                     try
                     {
@@ -345,13 +373,19 @@ namespace Microsoft.Data.SqlClientX
 
                         var i = 0;
                         for (; i < MaxPoolSize; i++)
+                        {
                             if (Interlocked.CompareExchange(ref _connectors[i], connector, null) == null)
+                            {
                                 break;
+                            }
+                        }
 
                         Debug.Assert(i < MaxPoolSize, $"Could not find free slot in {_connectors} when opening.");
                         if (i == MaxPoolSize)
+                        {
                             //TODO: generic exception?
                             throw new Exception($"Could not find free slot in {_connectors} when opening. Please report a bug.");
+                        }
 
                         // Only start pruning if we've incremented open count past _min.
                         // Note that we don't do it only once, on equality, because the thread which incremented open count past _min might get exception
@@ -370,7 +404,7 @@ namespace Microsoft.Data.SqlClientX
                         // In case there's a waiting attempt on the channel, we write a null to the idle connector channel
                         // to wake it up, so it will try opening (and probably throw immediately)
                         // Statement order is important since we have synchronous completions on the channel.
-                        IdleConnectorWriter.TryWrite(null);
+                        _idleConnectorWriter.TryWrite(null);
 
                         // Just in case we always call UpdatePruningTimer for failed physical open
                         //TODO: UpdatePruningTimer();
@@ -405,15 +439,15 @@ namespace Microsoft.Data.SqlClientX
 
             // Statement order is important since we have synchronous completions on the channel.
             Interlocked.Increment(ref _idleCount);
-            var written = IdleConnectorWriter.TryWrite(connector);
+            var written = _idleConnectorWriter.TryWrite(connector);
             Debug.Assert(written);
         }
 
-            /// <summary>
-            /// Closes extra idle connections.
-            /// </summary>
-            /// <exception cref="NotImplementedException"></exception>
-            internal void PruneIdleConnections()
+        /// <summary>
+        /// Closes extra idle connections.
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
+        internal void PruneIdleConnections()
         {
             throw new NotImplementedException();
         }
