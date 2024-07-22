@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // InstanceName will get replaced with an instance name in the connection string
         private static string InstanceName = "MSSQLSERVER";
         
-        // InstanceNamePrefix will get replaced with MSSQL$ is there is an instance name in connection string
+        // s_instanceNamePrefix will get replaced with MSSQL$ is there is an instance name in connection string
         private static string InstanceNamePrefix = "";
 
         // SlashInstance is used to override IPV4 and IPV6 defined about so it includes an instance name

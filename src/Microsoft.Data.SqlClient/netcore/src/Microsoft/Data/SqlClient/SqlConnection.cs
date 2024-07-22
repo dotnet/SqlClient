@@ -19,6 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
@@ -227,6 +228,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _accessToken = connection._accessToken;
+            _accessTokenCallback = connection._accessTokenCallback;
             CacheConnectionStringProperties();
         }
 
@@ -1688,8 +1690,8 @@ namespace Microsoft.Data.SqlClient
                     TaskCompletionSource<DbConnectionInternal> completion = new TaskCompletionSource<DbConnectionInternal>(transaction);
                     TaskCompletionSource<object> result = new TaskCompletionSource<object>(state: this);
 
-                    if (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection) ||
-                        s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
+                    if (s_diagnosticListener.IsEnabled(SqlClientConnectionOpenAfter.Name) ||
+                        s_diagnosticListener.IsEnabled(SqlClientConnectionOpenError.Name))
                     {
                         result.Task.ContinueWith(
                             continuationAction: s_openAsyncComplete,
@@ -1878,8 +1880,8 @@ namespace Microsoft.Data.SqlClient
         private void PrepareStatisticsForNewConnection()
         {
             if (StatisticsEnabled ||
-                s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) ||
-                s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection))
+                s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name) ||
+                s_diagnosticListener.IsEnabled(SqlClientConnectionOpenAfter.Name))
             {
                 if (null == _statistics)
                 {
@@ -1984,7 +1986,7 @@ namespace Microsoft.Data.SqlClient
             // The _statistics can change with StatisticsEnabled. Copying to a local variable before checking for a null value.
             SqlStatistics statistics = _statistics;
             if (StatisticsEnabled ||
-                (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) && statistics != null))
+                (s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name) && statistics != null))
             {
                 _statistics._openTimestamp = ADP.TimerCurrent();
                 tdsInnerConnection.Parser.Statistics = _statistics;

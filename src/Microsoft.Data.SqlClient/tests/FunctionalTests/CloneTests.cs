@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -18,10 +19,19 @@ namespace Microsoft.Data.SqlClient.Tests
             builder.ConnectTimeout = 1;
             builder.InitialCatalog = "northwinddb";
             SqlConnection connection = new SqlConnection(builder.ConnectionString);
+            connection.AccessToken = Guid.NewGuid().ToString();
 
             SqlConnection clonedConnection = (connection as ICloneable).Clone() as SqlConnection;
             Assert.Equal(connection.ConnectionString, clonedConnection.ConnectionString);
             Assert.Equal(connection.ConnectionTimeout, clonedConnection.ConnectionTimeout);
+            Assert.Equal(connection.AccessToken, clonedConnection.AccessToken);
+            Assert.NotEqual(connection, clonedConnection);
+
+            connection = new SqlConnection(builder.ConnectionString);
+            connection.AccessTokenCallback = (ctx, token) =>
+                        Task.FromResult(new SqlAuthenticationToken(Guid.NewGuid().ToString(), DateTimeOffset.MaxValue));
+            clonedConnection = (connection as ICloneable).Clone() as SqlConnection;
+            Assert.Equal(connection.AccessTokenCallback, clonedConnection.AccessTokenCallback);
             Assert.NotEqual(connection, clonedConnection);
         }
 

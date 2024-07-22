@@ -1097,6 +1097,9 @@ namespace Microsoft.Data.SqlClient
                           (_outBytesUsed == _outputHeaderLen && _outputPacketNumber == 1),
                           "SetPacketSize called with data in the buffer!");
 
+            SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | State Object Id {2}, Setting packet size to {3}",
+                nameof(TdsParserStateObject), nameof(SetPacketSize), _objectID, size);
+
             if (_inBuff == null || _inBuff.Length != size)
             { // We only check _inBuff, since two buffers should be consistent.
                 // Allocate or re-allocate _inBuff.

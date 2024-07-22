@@ -1450,7 +1450,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlError ProcessSNIError(TdsParserStateObject stateObj)
         {
-            using (TryEventScope.Create("<sc.TdsParser.ProcessSNIError|ERR>"))
+            using (TryEventScope.Create(nameof(TdsParser)))
             {
 #if DEBUG
                 // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
@@ -2741,6 +2741,9 @@ namespace Microsoft.Data.SqlClient
                         // Only set on physical state object - this should only occur on LoginAck prior
                         // to MARS initialization!
                         int packetSize = int.Parse(env._newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
+
+                        SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Server sent env packet size change of {2}, ClientConnectionID {3}",
+                            nameof(TdsParser), nameof(TryProcessEnvChange), packetSize, _connHandler._clientConnectionId);
 
                         if (_physicalStateObj.SetPacketSize(packetSize))
                         {
@@ -6140,6 +6143,12 @@ namespace Microsoft.Data.SqlClient
                                 // call to decrypt column keys has failed. The data wont be decrypted.
                                 // Not setting the value to false, forces the driver to look for column value.
                                 // Packet received from Key Vault will throws invalid token header.
+                                if (stateObj.HasPendingData)
+                                {
+                                    // Drain the pending data now if setting the HasPendingData to false.
+                                    // SqlDataReader.TryCloseInternal can not drain if HasPendingData = false.
+                                    DrainData(stateObj);
+                                }
                                 stateObj.HasPendingData = false;
                             }
                             throw SQL.ColumnDecryptionFailed(columnName, null, e);

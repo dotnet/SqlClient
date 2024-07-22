@@ -74,13 +74,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool IsAccessTokenSetup() => DataTestUtility.IsAccessTokenSetup();
         private static bool IsAADConnStringsSetup() => DataTestUtility.IsAADPasswordConnStrSetup();
         private static bool IsManagedIdentitySetup() => DataTestUtility.ManagedIdentitySupported;
+        private static bool SupportsSystemAssignedManagedIdentity() => DataTestUtility.SupportsSystemAssignedManagedIdentity;
 
         [PlatformSpecific(TestPlatforms.Windows)]
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup))]
         public static void KustoDatabaseTest()
         {
             // This is a sample Kusto database that can be connected by any AD account.
-            using SqlConnection connection = new SqlConnection("Data Source=help.kusto.windows.net; Authentication=Active Directory Default;Trust Server Certificate=True;");
+            using SqlConnection connection = new SqlConnection($"Data Source=help.kusto.windows.net; Authentication=Active Directory Default;Trust Server Certificate=True;User ID = {DataTestUtility.UserManagedIdentityClientId};");
             connection.Open();
             Assert.True(connection.State == System.Data.ConnectionState.Open);
         }
@@ -602,7 +603,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
-            var cred = new DefaultAzureCredential();
+            var cred = DataTestUtility.GetTokenCredential();
             const string defaultScopeSuffix = "/.default";
             using (SqlConnection conn = new SqlConnection(connStr))
             {
@@ -629,7 +630,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
                  $"User ID={userId}; Password={pwd}";
-            var cred = new DefaultAzureCredential();
+            var cred = DataTestUtility.GetTokenCredential();
             const string defaultScopeSuffix = "/.default";
             using (SqlConnection conn = new SqlConnection(connStr))
             {
@@ -645,12 +646,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup))]
         public static void ActiveDirectoryDefaultMustPass()
         {
             string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                "Authentication=ActiveDirectoryDefault;";
+                $"Authentication=ActiveDirectoryDefault;User ID={DataTestUtility.UserManagedIdentityClientId};";
 
             // Connection should be established using Managed Identity by default.
             ConnectAndDisconnect(connStr);
@@ -706,7 +707,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region Managed Identity Authentication tests
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup), nameof(SupportsSystemAssignedManagedIdentity))]
         public static void SystemAssigned_ManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
@@ -724,7 +725,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectAndDisconnect(connStr);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup))]
+        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup), nameof(SupportsSystemAssignedManagedIdentity))]
         public static void AccessToken_SystemManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
@@ -752,7 +753,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsManagedIdentitySetup))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsManagedIdentitySetup), nameof(SupportsSystemAssignedManagedIdentity))]
         public static void Azure_SystemManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
@@ -782,7 +783,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup), nameof(IsManagedIdentitySetup))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup), nameof(IsManagedIdentitySetup), nameof(SupportsSystemAssignedManagedIdentity))]
         public static void Azure_AccessToken_SystemManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };

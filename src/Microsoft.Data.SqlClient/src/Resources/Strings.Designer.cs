@@ -10216,6 +10216,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The certificate provided by the server does not match the certificate provided by the ServerCertificate option..
+        /// </summary>
+        internal static string SQL_RemoteCertificateDoesNotMatchServerCertificate {
+            get {
+                return ResourceManager.GetString("SQL_RemoteCertificateDoesNotMatchServerCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Certificate name mismatch. The provided &apos;DataSource&apos; or &apos;HostNameInCertificate&apos; does not match the name in the certificate..
         /// </summary>
         internal static string SQL_RemoteCertificateNameMismatch {

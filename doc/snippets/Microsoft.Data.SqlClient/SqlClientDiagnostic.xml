@@ -1,0 +1,312 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SqlClientDiagnostic">
+    <OperationId>
+      <summary>A guid value used to correlate before, after and error events.</summary>
+    </OperationId>
+    <Operation>
+      <summary>The name of the operation.</summary>
+    </Operation>
+    <Timestamp>
+      <summary>The timestamp of the event.</summary>
+    </Timestamp>
+    <Item1>
+      <summary>
+        Gets the element at the specified index in the read-only list.
+      </summary>
+      <param name="index">The zero-based index of the element to get.</param>
+      <returns>The element at the specified index in the read-only list.</returns>
+      <exception cref="IndexOutOfRangeException"></exception>
+    </Item1>
+    <Count>
+      <summary>Gets the number of elements in the collection.</summary>
+      <returns>The number of elements in the collection.</returns>
+    </Count>
+    <GetEnumerator>
+      <summary>Returns an enumerator that iterates through the collection.</summary>
+      <returns>An enumerator that can be used to iterate through the collection.</returns>   
+    </GetEnumerator>
+  </members>
+  <members name="SqlClientCommandBefore">
+    <SqlClientCommandBefore>
+      <summary>Contains diagnostic information emitted before a command is executed.</summary>
+    </SqlClientCommandBefore>
+    <Name>
+      <summary>The name of the event that needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <ConnectionId>
+      <summary>A nullable guid uniquely identifying the connection that the xommand is being executed on.</summary>
+    </ConnectionId>
+    <TransactionId>
+      <summary>A nullable long uniquely identifying the transaction that the command enrolled in if it is enrolled in one.</summary>
+    </TransactionId>
+    <Command>
+      <summary>The command object that is executing.</summary>
+    </Command>
+  </members>
+  <members name="SqlClientCommandAfter">
+    <SqlClientCommandAfter>
+      <summary>Contains diagnostic information emitted after a command is successfully executed.</summary>
+    </SqlClientCommandAfter>
+    <Name>
+      <summary>The name of the event that needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <ConnectionId>
+      <summary>A nullable guid uniquely identifying the connection that the command is being executed on.</summary>
+    </ConnectionId>
+    <TransactionId>
+      <summary>A nullable long uniquely identifying the transaction that the command is enrolled in if it is enrolled in one, or null.</summary>
+    </TransactionId>
+    <Command>
+      <summary>The command object that is executing.</summary>
+    </Command>
+    <Statistics>
+      <summary>An IDictionary of statistic information about the event that has completed.</summary>
+    </Statistics>
+  </members>
+  <members name="SqlClientCommandError">
+    <SqlClientCommandError>
+      <summary>Contains diagnostic information emitted after a command execution fails with an exception.</summary>
+    </SqlClientCommandError>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <ConnectionId>
+      <summary>A nullable guid uniquely identifying the connection that the command is being executed on.</summary>
+    </ConnectionId>
+    <TransactionId>
+      <summary>A nullable long uniquely identifying the transaction that the command is enrolled in if it is enrolled in one, or null.</summary>
+    </TransactionId>
+    <Command>
+      <summary>The command object that is executing.</summary>
+    </Command>
+    <Exception>
+      <summary>The exception object that caused the command execution to fail.</summary>
+    </Exception>
+  </members>
+  <members name="SqlClientConnectionOpenBefore">
+    <SqlClientConnectionOpenBefore>
+      <summary>Contains diagnostic information emitted before a connection is opened.</summary>
+    </SqlClientConnectionOpenBefore>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that is being opened.</summary>
+    </Connection>
+    <ClientVersion>
+      <summary>The version of the SqlClient library.</summary>
+    </ClientVersion>
+  </members>
+  <members name="SqlClientConnectionOpenAfter">
+    <SqlClientConnectionOpenAfter>
+      <summary>Contains diagnostic information emitted after a connection has been successfully opened.</summary>
+    </SqlClientConnectionOpenAfter>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that has been opened.</summary>
+    </Connection>
+    <ClientVersion>
+      <summary>The version of the SqlClient library.</summary>
+    </ClientVersion>
+    <ConnectionId>
+      <summary>The unique guid assigned to the connection.</summary>
+    </ConnectionId>
+    <Statistics>
+      <summary>An IDictionary of statistic information about the event that has completed.</summary>
+    </Statistics>
+  </members>
+  <members name="SqlClientConnectionOpenError">
+    <SqlClientConnectionOpenError>
+      <summary>Contains diagnostic information emitted after a connection open fails with an exception.</summary>
+    </SqlClientConnectionOpenError>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that has been opened.</summary>
+    </Connection>
+    <ClientVersion>
+      <summary>The version of the SqlClient library.</summary>
+    </ClientVersion>
+    <ConnectionId>
+      <summary>The unique guid assigned to the connection.</summary>
+    </ConnectionId>
+    <Exception>
+      <summary>The exception object that caused the command execution to fail.</summary>
+    </Exception>
+  </members>
+  <members name="SqlClientConnectionCloseBefore">
+    <SqlClientConnectionCloseBefore>
+      <summary>Contains diagnostic information emitted before a connection is closed.</summary>
+    </SqlClientConnectionCloseBefore>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that is being closed.</summary>
+    </Connection>
+    <ConnectionId>
+      <summary>The unique guid assigned to the connection.</summary>
+    </ConnectionId>
+    <Statistics>
+      <summary>An IDictionary of statistic information about the connection.</summary>
+    </Statistics>
+  </members>
+  <members name="SqlClientConnectionCloseAfter">
+    <SqlClientConnectionCloseAfter>
+      <summary>Contains diagnostic information emitted after a connection has been successfully closed.</summary>
+    </SqlClientConnectionCloseAfter>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that has been closed.</summary>
+    </Connection>
+    <ConnectionId>
+      <summary>The unique guid assigned to the connection.</summary>
+    </ConnectionId>
+    <Statistics>
+      <summary>An IDictionary of statistic information about the connection.</summary>
+    </Statistics>
+  </members>
+  <members name="SqlClientConnectionCloseError">
+    <SqlClientConnectionCloseError>
+      <summary>Contains diagnostic information emitted after a connection close fails with an exception.</summary>
+    </SqlClientConnectionCloseError>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that has been closed.</summary>
+    </Connection>
+    <ConnectionId>
+      <summary>The unique guid assigned to the connection.</summary>
+    </ConnectionId>
+    <Statistics>
+      <summary>An IDictionary of statistic information about the connection.</summary>
+    </Statistics>
+    <Exception>
+      <summary>The exception object that caused the command execution to fail.</summary>
+    </Exception>
+  </members>
+  <members name="SqlClientTransactionCommitBefore">
+    <SqlClientTransactionCommitBefore>
+      <summary>Contains diagnostic information emitted before a transaction is opened.</summary>
+    </SqlClientTransactionCommitBefore>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that the transaction belongs to.</summary>
+    </Connection>
+    <IsolationLevel>
+      <summary>The IsolationLevel of the transaction.</summary>
+    </IsolationLevel>
+    <TransactionId>
+      <summary>A nullable long uniquely identifying the transaction that the command is enrolled in if it is enrolled in one, or null.</summary>
+    </TransactionId>
+  </members>
+  <members name="SqlClientTransactionCommitAfter">
+    <SqlClientTransactionCommitAfter>
+      <summary>Contains diagnostic information emitted after a transaction is successfully committed.</summary>
+    </SqlClientTransactionCommitAfter>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that the transaction belongs to.</summary>
+    </Connection>
+    <IsolationLevel>
+      <summary>The IsolationLevel of the transaction.</summary>
+    </IsolationLevel>
+    <TransactionId>
+      <summary>A nullable long uniquely identifying the transaction that the command is enrolled in if it is enrolled in one, or null.</summary>
+    </TransactionId>
+  </members>
+  <members name="SqlClientTransactionCommitError">
+    <SqlClientTransactionCommitError>
+      <summary>Contains diagnostic information emitted after a transaction commit fails with an exception.</summary>
+    </SqlClientTransactionCommitError>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that the transaction belongs to.</summary>
+    </Connection>
+    <IsolationLevel>
+      <summary>The IsolationLevel of the transaction.</summary>
+    </IsolationLevel>
+    <TransactionId>
+      <summary>A nullable long uniquely identifying the transaction that the command is enrolled in if it is enrolled in one, or null.</summary>
+    </TransactionId>
+    <Exception>
+      <summary>The exception object that caused the command execution to fail.</summary>
+    </Exception>
+  </members>
+  <members name="SqlClientTransactionRollbackBefore">
+    <SqlClientTransactionRollbackBefore>
+      <summary>Contains diagnostic information emitted before a transaction rollback is rolled back.</summary>
+    </SqlClientTransactionRollbackBefore>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that the transaction belongs to.</summary>
+    </Connection>
+    <IsolationLevel>
+      <summary>The IsolationLevel of the transaction.</summary>
+    </IsolationLevel>
+    <TransactionId>
+      <summary>A nullable long uniquely identifying the transaction that the command is enrolled in if it is enrolled in one, or null.</summary>
+    </TransactionId>
+    <TransactionName>
+      <summary>The name of the transaction which is being rolled back.</summary>
+    </TransactionName>
+  </members>
+  <members name="SqlClientTransactionRollbackAfter">
+    <SqlClientTransactionRollbackAfter>
+      <summary>Contains diagnostic information emitted after a transaction is rolled back successfully.</summary>
+    </SqlClientTransactionRollbackAfter>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that the transaction belongs to.</summary>
+    </Connection>
+    <IsolationLevel>
+      <summary>The IsolationLevel of the transaction.</summary>
+    </IsolationLevel>
+    <TransactionId>
+      <summary>A nullable long uniquely identifying the transaction, or null.</summary>
+    </TransactionId>
+    <TransactionName>
+      <summary>The name of the transaction which is being rolled back.</summary>
+    </TransactionName>
+  </members>
+  <members name="SqlClientTransactionRollbackError">
+    <SqlClientTransactionRollbackError>
+      <summary>Contains diagnostic information emitted after a transaction roll back failes with an exception.</summary>
+    </SqlClientTransactionRollbackError>
+    <Name>
+      <summary>The name of the event that  needs to be enabled for the event to be raised.</summary>
+    </Name>
+    <Connection>
+      <summary>The connection object that the transaction belongs to.</summary>
+    </Connection>
+    <IsolationLevel>
+      <summary>The IsolationLevel of the transaction.</summary>
+    </IsolationLevel>
+    <TransactionId>
+      <summary>A nullable long uniquely identifying the transaction , or null.</summary>
+    </TransactionId>
+    <TransactionName>
+      <summary>The name of the transaction which is being rolled back.</summary>
+    </TransactionName>
+    <Exception>
+      <summary>The exception object that caused the command execution to fail.</summary>
+    </Exception>
+  </members>
+</docs>

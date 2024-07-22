@@ -4737,4 +4737,7 @@
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>驗證在進行憑證驗證時無法使用。</value>
   </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>伺服器提供的憑證不符合 ServerCertificate 選項所提供的憑證。</value>
+  </data>
 </root>

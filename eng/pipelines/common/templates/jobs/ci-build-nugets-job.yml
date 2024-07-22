@@ -1,0 +1,77 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: poolName
+    type: string
+    default: $(ci_var_defaultPoolName)
+
+  - name: imageOverride
+    type: string
+    default: ADO-MMS22-SQL19
+
+  - name: artifactName
+    type: string
+    default: Artifacts
+  
+  - name: platform
+    type: string
+    default: $(Platform)
+  
+  - name: configuration
+    type: string
+    default: $(Configuration)
+
+  - name: prebuildSteps
+    type: stepList
+    default: []
+
+jobs:
+- job: build_nugets
+
+  pool:
+    name: ${{parameters.poolName }}
+    demands:
+    - imageOverride -equals ${{ parameters.imageOverride }}
+    - msbuild
+
+  variables:
+    - template: ../../../libraries/ci-build-variables.yml@self
+
+  steps:
+  - ${{ if ne(parameters.prebuildSteps, '') }}:
+    - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
+
+  - template: ../steps/ci-project-build-step.yml@self
+    parameters:
+      platform: ${{ parameters.platform }}
+      configuration: ${{ parameters.configuration }}
+      operatingSystem: Windows
+      build: all
+
+  - template: ../steps/generate-nuget-package-step.yml@self
+    parameters:
+      NugetPackageVersion: $(NugetPackageVersion)
+      configuration: $(Configuration)
+      nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
+      OutputDirectory: $(packagePath)
+      generateSymbolsPackage: false
+      displayName: 'Generate NuGet package M.D.SqlClient'
+
+  - template: ../steps/generate-nuget-package-step.yml@self
+    parameters:
+      NugetPackageVersion: $(NugetPackageVersion)
+      configuration: $(Configuration)
+      nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
+      OutputDirectory: $(packagePath)
+      generateSymbolsPackage: false
+      installNuget: false
+      displayName: 'Generate NuGet package AKV Provider'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact: Artifacts'
+    inputs:
+      PathtoPublish: $(packagePath)
+      ArtifactName: ${{ parameters.artifactName }}

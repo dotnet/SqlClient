@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.IO;
@@ -17,7 +18,7 @@ namespace Microsoft.Data.SqlClient
 
         private const string ServerVersionNormalized90 = "09.00.0000";
         private const string ServerVersionNormalized10 = "10.00.0000";
-
+        private readonly HashSet<int> _assemblyPropertyUnsupportedEngines = new() { 6, 9, 11 };
 
         public SqlMetaDataFactory(Stream XMLStream,
                                     string serverVersion,
@@ -51,11 +52,13 @@ namespace Microsoft.Data.SqlClient
 
             SqlCommand engineEditionCommand = connection.CreateCommand();
             engineEditionCommand.CommandText = "SELECT SERVERPROPERTY('EngineEdition');";
-            var engineEdition = (int)engineEditionCommand.ExecuteScalar()!;
+            var engineEdition = (int)engineEditionCommand.ExecuteScalar();
 
-            if (engineEdition == 9)
+            if (_assemblyPropertyUnsupportedEngines.Contains(engineEdition))
             {
-                // Azure SQL Edge throws an exception when querying sys.assemblies
+                // Azure SQL Edge (9) throws an exception when querying sys.assemblies
+                // Azure Synapse Analytics (6) and Azure Synapse serverless SQL pool (11)
+                // do not support ASSEMBLYPROPERTY
                 return;
             }
 

@@ -80,12 +80,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-  </PropertyGroup>
-  <ItemGroup>
-   <PackageReference Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All">
-    </PackageReference>	
-  </ItemGroup>
-  
+  </PropertyGroup>  
 
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
@@ -95,6 +90,7 @@
   <!-- Provides Build properties -->
   <Import Project="$(ToolsDir)props\AssemblyInfo.props" /> 
   <Import Project="$(ToolsDir)props\AssemblyRef.props" />
+  <Import Project="$(ToolsDir)targets\RepositoryInfo.targets" />
 
   <!-- Fix GetTargetPath issues - see https://github.com/dotnet/msbuild/issues/4303#issuecomment-482345617 -->
   <PropertyGroup>

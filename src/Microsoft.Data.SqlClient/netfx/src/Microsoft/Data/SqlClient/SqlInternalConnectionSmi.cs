@@ -8,7 +8,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
-using SysTx = System.Transactions;
+using System.Transactions;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -222,20 +222,20 @@ namespace Microsoft.Data.SqlClient
         // Context transactions SHOULD be considered enlisted.
         //   This works for now only because we can't unenlist from the context transaction
         // DON'T START USING THIS ANYWHERE EXCEPT IN InternalTransaction and in InternalConnectionSmi!!!
-        private SysTx.Transaction ContextTransaction
+        private Transaction ContextTransaction
         {
             get;
             set;
         }
 
-        private SysTx.Transaction InternalEnlistedTransaction
+        private Transaction InternalEnlistedTransaction
         {
             get
             {
                 // Workaround to access context transaction without rewriting connection pool & internalconnections properly.
                 // This SHOULD be a simple wrapper around EnlistedTransaction.
                 //   This works for now only because we can't unenlist from the context transaction
-                SysTx.Transaction tx = EnlistedTransaction;
+                Transaction tx = EnlistedTransaction;
 
                 if (null == tx)
                 {
@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected void Activate(SysTx.Transaction transaction)
+        override protected void Activate(Transaction transaction)
         {
             Debug.Assert(false, "Activating an internal SMI connection?"); // we should never be activating, because that would indicate we're being pooled.
         }
@@ -266,8 +266,8 @@ namespace Microsoft.Data.SqlClient
 
         internal void AutomaticEnlistment()
         {
-            SysTx.Transaction currentSystemTransaction = ADP.GetCurrentTransaction();      // NOTE: Must be first to ensure _smiContext.ContextTransaction is set!
-            SysTx.Transaction contextTransaction = _smiContext.ContextTransaction; // returns the transaction that was handed to SysTx that wraps the ContextTransactionId.
+            Transaction currentSystemTransaction = ADP.GetCurrentTransaction();      // NOTE: Must be first to ensure _smiContext.ContextTransaction is set!
+            Transaction contextTransaction = _smiContext.ContextTransaction; // returns the transaction that was handed to SysTx that wraps the ContextTransactionId.
             long contextTransactionId = _smiContext.ContextTransactionId;
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}, contextTransactionId=0x{1}, contextTransaction={2}, currentSystemTransaction={3}.", ObjectID, contextTransactionId, (null != contextTransaction) ? contextTransaction.GetHashCode() : 0, (null != currentSystemTransaction) ? currentSystemTransaction.GetHashCode() : 0);
 
@@ -357,7 +357,7 @@ namespace Microsoft.Data.SqlClient
         override internal void ExecuteTransaction(
                     TransactionRequest transactionRequest,
                     string transactionName,
-                    IsolationLevel iso,
+                    System.Data.IsolationLevel iso,
                     SqlInternalTransaction internalTransaction,
                     bool isDelegateControlRequest)
         {
@@ -429,7 +429,7 @@ namespace Microsoft.Data.SqlClient
             return whereAbouts;
         }
 
-        internal void GetCurrentTransactionPair(out long transactionId, out SysTx.Transaction transaction)
+        internal void GetCurrentTransactionPair(out long transactionId, out Transaction transaction)
         {
             // SQLBU 214740: Transaction state could change between obtaining tranid and transaction
             //  due to background SqlDelegatedTransaction processing. Lock the connection to prevent that.

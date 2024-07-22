@@ -12,8 +12,7 @@ namespace Microsoft.Data.SqlClient
     using System.Threading;
     using Microsoft.Data.Common;
     using Microsoft.Data.ProviderBase;
-
-    using SysTx = System.Transactions;
+    using System.Transactions;
 
     public sealed partial class SqlConnection : DbConnection
     {
@@ -242,11 +241,11 @@ namespace Microsoft.Data.SqlClient
             permissionSet.Demand();
 
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
-            SysTx.Transaction indigoTransaction = null;
+            Transaction indigoTransaction = null;
 
             if (null != transaction)
             {
-                indigoTransaction = SysTx.TransactionInterop.GetTransactionFromDtcTransaction((SysTx.IDtcTransaction)transaction);
+                indigoTransaction = TransactionInterop.GetTransactionFromDtcTransaction((IDtcTransaction)transaction);
             }
 
             RepairInnerConnection();
@@ -263,7 +262,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
-        override public void EnlistTransaction(SysTx.Transaction transaction)
+        override public void EnlistTransaction(Transaction transaction)
         {
             SqlConnection.ExecutePermission.Demand();
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
@@ -277,7 +276,7 @@ namespace Microsoft.Data.SqlClient
             // NOTE: since transaction enlistment involves round trips to the
             // server, we don't want to lock here, we'll handle the race conditions
             // elsewhere.
-            SysTx.Transaction enlistedTransaction = innerConnection.EnlistedTransaction;
+            Transaction enlistedTransaction = innerConnection.EnlistedTransaction;
             if (enlistedTransaction != null)
             {
                 // Allow calling enlist if already enlisted (no-op)
@@ -287,7 +286,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Allow enlisting in a different transaction if the enlisted transaction has completed.
-                if (enlistedTransaction.TransactionInformation.Status == SysTx.TransactionStatus.Active)
+                if (enlistedTransaction.TransactionInformation.Status == TransactionStatus.Active)
                 {
                     throw ADP.TransactionPresent();
                 }

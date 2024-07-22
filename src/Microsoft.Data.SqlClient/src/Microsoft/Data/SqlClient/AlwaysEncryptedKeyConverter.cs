@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -39,6 +39,7 @@ namespace Microsoft.Data.SqlClient
         // => ECDiffieHellmanPublicKey.ToByteArray() is not supported in Unix
         internal static byte[] GetECDiffieHellmanPublicKeyBlob(ECDiffieHellman ecDiffieHellman)
         {
+#if NET6_0_OR_GREATER	
             byte[] keyBlob = new byte[ECCPublicKeyBlob.Size];
 
             // Set magic number
@@ -53,6 +54,16 @@ namespace Microsoft.Data.SqlClient
             Buffer.BlockCopy(ecPoint.X, 0, keyBlob, ECCPublicKeyBlob.HeaderSize, ECCPublicKeyBlob.KeySize);
             Buffer.BlockCopy(ecPoint.Y, 0, keyBlob, ECCPublicKeyBlob.HeaderSize + ECCPublicKeyBlob.KeySize, ECCPublicKeyBlob.KeySize);
             return keyBlob;
+#else
+            if (ecDiffieHellman is ECDiffieHellmanCng cng)
+            {
+                return cng.Key.Export(CngKeyBlobFormat.EccPublicBlob);
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
+#endif
         }
 
         // The RSA public key blob is structured as follows:
@@ -75,6 +86,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static RSA CreateRSAFromPublicKeyBlob(byte[] keyBlob)
         {
+#if NET6_0_OR_GREATER	
             Debug.Assert(keyBlob.Length == RSAPublicKeyBlob.Size, $"RSA public key blob was not the expected length. Actual: {keyBlob.Length}. Expected: {RSAPublicKeyBlob.Size}");
 
             byte[] exponent = new byte[RSAPublicKeyBlob.ExponentSize];
@@ -87,10 +99,15 @@ namespace Microsoft.Data.SqlClient
                 Modulus = modulus
             };
             return RSA.Create(rsaParameters);
+#else
+            CngKey key = CngKey.Import(keyBlob, CngKeyBlobFormat.GenericPublicBlob);
+            return new RSACng(key);
+#endif	    
         }
 
         internal static ECDiffieHellman CreateECDiffieHellmanFromPublicKeyBlob(byte[] keyBlob)
         {
+#if NET6_0_OR_GREATER
             Debug.Assert(keyBlob.Length == ECCPublicKeyBlob.Size, $"ECC public key blob was not the expected length. Actual: {keyBlob.Length}. Expected: {ECCPublicKeyBlob.Size}");
 
             byte[] x = new byte[ECCPublicKeyBlob.KeySize];
@@ -109,27 +126,61 @@ namespace Microsoft.Data.SqlClient
             };
 
             return ECDiffieHellman.Create(parameters);
+#else
+            CngKey key = CngKey.Import(keyBlob, CngKeyBlobFormat.GenericPublicBlob);
+            return new ECDiffieHellmanCng(key);
+#endif	    
         }
 
         internal static ECDiffieHellman CreateECDiffieHellman(int keySize)
         {
+#if NET6_0_OR_GREATER	
             // platform agnostic creates a key of the correct size but does not
             // set the key derivation type or algorithm, these must be set by calling
             // DeriveKeyFromHash later in DeriveKey
             ECDiffieHellman clientDHKey = ECDiffieHellman.Create();
             clientDHKey.KeySize = keySize;
+#else
+            // Cng sets the key size and hash algorithm at creation time and these
+            // parameters are then used later when DeriveKeyMaterial is called
+            ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(keySize);
+            clientDHKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
+            clientDHKey.HashAlgorithm = CngAlgorithm.Sha256;
+#endif
             return clientDHKey;
         }
 
-        internal static byte[] DeriveKey(ECDiffieHellman ecd, ECDiffieHellmanPublicKey publicKey)
+        internal static byte[] DeriveKey(ECDiffieHellman ecDiffieHellman, ECDiffieHellmanPublicKey publicKey)
         {
+#if NET6_0_OR_GREATER	
             // see notes in CreateECDDiffieHellman
-            return ecd.DeriveKeyFromHash(publicKey, HashAlgorithmName.SHA256);
+            return ecDiffieHellman.DeriveKeyFromHash(publicKey, HashAlgorithmName.SHA256);
+#else
+            if (ecDiffieHellman is ECDiffieHellmanCng cng)
+            {
+                return cng.DeriveKeyMaterial(publicKey);
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
+#endif
         }
 
         internal static RSA GetRSAFromCertificate(X509Certificate2 certificate)
         {
+#if NET6_0_OR_GREATER
             return certificate.GetRSAPublicKey();
+#else
+            RSAParameters parameters;
+            using (RSA rsaCsp = certificate.GetRSAPublicKey())
+            {
+                parameters = rsaCsp.ExportParameters(includePrivateParameters: false);
+            }
+            RSACng rsaCng = new RSACng();
+            rsaCng.ImportParameters(parameters);
+            return rsaCng;
+#endif
         }
     }
 }

@@ -1449,5 +1449,4 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
-
 }

@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Identity.Client;
-using SysTx = System.Transactions;
+using System.Transactions;
 
 
 namespace Microsoft.Data.SqlClient
@@ -952,7 +952,7 @@ namespace Microsoft.Data.SqlClient
         {
             // If we are enlisted in a transaction, check that transaction is active.
             // When using explicit transaction unbinding, also verify that the enlisted transaction is the current transaction.
-            SysTx.Transaction enlistedTransaction = EnlistedTransaction;
+            Transaction enlistedTransaction = EnlistedTransaction;
 
             if (enlistedTransaction != null)
             {
@@ -960,16 +960,16 @@ namespace Microsoft.Data.SqlClient
 
                 if (requireExplicitTransactionUnbind)
                 {
-                    SysTx.Transaction currentTransaction = SysTx.Transaction.Current;
+                    Transaction currentTransaction = Transaction.Current;
 
-                    if (SysTx.TransactionStatus.Active != enlistedTransaction.TransactionInformation.Status || !enlistedTransaction.Equals(currentTransaction))
+                    if (TransactionStatus.Active != enlistedTransaction.TransactionInformation.Status || !enlistedTransaction.Equals(currentTransaction))
                     {
                         throw ADP.TransactionConnectionMismatch();
                     }
                 }
                 else // implicit transaction unbind
                 {
-                    if (SysTx.TransactionStatus.Active != enlistedTransaction.TransactionInformation.Status)
+                    if (TransactionStatus.Active != enlistedTransaction.TransactionInformation.Status)
                     {
                         if (EnlistedTransactionDisposed)
                         {
@@ -1012,7 +1012,7 @@ namespace Microsoft.Data.SqlClient
         // POOLING METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        override protected void Activate(SysTx.Transaction transaction)
+        override protected void Activate(Transaction transaction)
         {
             FailoverPermissionDemand(); // Demand for unspecified failover pooled connections
 
@@ -1146,12 +1146,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, IsolationLevel iso)
+        internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso)
         {
             ExecuteTransaction(transactionRequest, name, iso, null, false);
         }
 
-        override internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, IsolationLevel iso, SqlInternalTransaction internalTransaction, bool isDelegateControlRequest)
+        override internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso, SqlInternalTransaction internalTransaction, bool isDelegateControlRequest)
         {
             if (IsConnectionDoomed)
             {  // doomed means we can't do anything else...
@@ -1189,35 +1189,35 @@ namespace Microsoft.Data.SqlClient
         internal void ExecuteTransactionPre2005(
                     TransactionRequest transactionRequest,
                     string transactionName,
-                    IsolationLevel iso,
+                    System.Data.IsolationLevel iso,
                     SqlInternalTransaction internalTransaction)
         {
             StringBuilder sqlBatch = new StringBuilder();
 
             switch (iso)
             {
-                case IsolationLevel.Unspecified:
+                case System.Data.IsolationLevel.Unspecified:
                     break;
-                case IsolationLevel.ReadCommitted:
+                case System.Data.IsolationLevel.ReadCommitted:
                     sqlBatch.Append(TdsEnums.TRANS_READ_COMMITTED);
                     sqlBatch.Append(";");
                     break;
-                case IsolationLevel.ReadUncommitted:
+                case System.Data.IsolationLevel.ReadUncommitted:
                     sqlBatch.Append(TdsEnums.TRANS_READ_UNCOMMITTED);
                     sqlBatch.Append(";");
                     break;
-                case IsolationLevel.RepeatableRead:
+                case System.Data.IsolationLevel.RepeatableRead:
                     sqlBatch.Append(TdsEnums.TRANS_REPEATABLE_READ);
                     sqlBatch.Append(";");
                     break;
-                case IsolationLevel.Serializable:
+                case System.Data.IsolationLevel.Serializable:
                     sqlBatch.Append(TdsEnums.TRANS_SERIALIZABLE);
                     sqlBatch.Append(";");
                     break;
-                case IsolationLevel.Snapshot:
-                    throw SQL.SnapshotNotSupported(IsolationLevel.Snapshot);
+                case System.Data.IsolationLevel.Snapshot:
+                    throw SQL.SnapshotNotSupported(System.Data.IsolationLevel.Snapshot);
 
-                case IsolationLevel.Chaos:
+                case System.Data.IsolationLevel.Chaos:
                     throw SQL.NotSupportedIsolationLevel(iso);
 
                 default:
@@ -1278,7 +1278,7 @@ namespace Microsoft.Data.SqlClient
         internal void ExecuteTransaction2005(
                     TransactionRequest transactionRequest,
                     string transactionName,
-                    IsolationLevel iso,
+                    System.Data.IsolationLevel iso,
                     SqlInternalTransaction internalTransaction,
                     bool isDelegateControlRequest)
         {
@@ -1287,25 +1287,25 @@ namespace Microsoft.Data.SqlClient
 
             switch (iso)
             {
-                case IsolationLevel.Unspecified:
+                case System.Data.IsolationLevel.Unspecified:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.Unspecified;
                     break;
-                case IsolationLevel.ReadCommitted:
+                case System.Data.IsolationLevel.ReadCommitted:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.ReadCommitted;
                     break;
-                case IsolationLevel.ReadUncommitted:
+                case System.Data.IsolationLevel.ReadUncommitted:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.ReadUncommitted;
                     break;
-                case IsolationLevel.RepeatableRead:
+                case System.Data.IsolationLevel.RepeatableRead:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.RepeatableRead;
                     break;
-                case IsolationLevel.Serializable:
+                case System.Data.IsolationLevel.Serializable:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.Serializable;
                     break;
-                case IsolationLevel.Snapshot:
+                case System.Data.IsolationLevel.Snapshot:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.Snapshot;
                     break;
-                case IsolationLevel.Chaos:
+                case System.Data.IsolationLevel.Chaos:
                     throw SQL.NotSupportedIsolationLevel(iso);
                 default:
                     throw ADP.InvalidIsolationLevel(iso);
@@ -1508,7 +1508,7 @@ namespace Microsoft.Data.SqlClient
             if (enlistOK && ConnectionOptions.Enlist && _routingInfo == null)
             {
                 _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
-                SysTx.Transaction tx = ADP.GetCurrentTransaction();
+                Transaction tx = ADP.GetCurrentTransaction();
                 Enlist(tx);
             }
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;

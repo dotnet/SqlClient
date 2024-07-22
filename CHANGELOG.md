@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable release 5.2.1] - 2024-05-31
+
+This update brings the below changes over the previous release:
+
+### Changed
+
+- Upgraded `Azure.Identity` version from 1.10.3 to 1.11.3 [#2492](https://github.com/dotnet/SqlClient/pull/2492), [#2528](https://github.com/dotnet/SqlClient/pull/2528)
+- Upgraded `Microsoft.Identity.Client` version from 4.56.0 to 4.60.3 [#2492](https://github.com/dotnet/SqlClient/pull/2492)
+- Code Health improvements: [#2467](https://github.com/dotnet/SqlClient/pull/2467)
+
+### Fixed
+
+- Fixed connection errors on Linux when Data Source property contains both named instance and port [#2436](https://github.com/dotnet/SqlClient/pull/2436)
+- Fixed `SqlConnection.FireInfoMessageEventOnUserErrors` when set to true throws an exception [#2505](https://github.com/dotnet/SqlClient/pull/2505)
+- Fixed exception when using `DATETIMEOFFSET(n)` in a TVP if `n` is 1, 2, 3, or 4 [#2506](https://github.com/dotnet/SqlClient/pull/2506)
+- Reverted PR [#1983](https://github.com/dotnet/SqlClient/pull/1938) which caused connection failure delays when using `OpenAsync` [#2507](https://github.com/dotnet/SqlClient/pull/2507)
+- Fixed `SqlConnection.Clone()` to include `AccessTokenCallback` [#2527](https://github.com/dotnet/SqlClient/pull/2527)
+
 ## [Stable release 5.2.0] - 2024-02-28
 
 ### Added
