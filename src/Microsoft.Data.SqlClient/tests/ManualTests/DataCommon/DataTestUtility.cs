@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!Utils.IsAzureSqlServer(new SqlConnectionStringBuilder((connectionString)).DataSource))
             {
                 Console.WriteLine("----------------> FAILED HERE");
-                return new SqlConnection("Failed");
+                return new SqlConnection(connectionString);
             }
 
             if (UseAccessTokenAuth)
