@@ -10,17 +10,6 @@
     <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETCoreApp'">netcoreapp</TargetGroup>
     <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
-   <!--Generating Strong Name-->
-   <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
-    <SignAssembly>true</SignAssembly>
-    <DelaySign>true</DelaySign>
-    <KeyFile>$(SigningKeyPath)</KeyFile>
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="$(CDP_BUILD_TYPE)!=Official">
-    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  
   <ItemGroup>
     <Compile Include="Microsoft.Data.SqlClient.cs" />
     <Compile Include="Microsoft.Data.SqlClient.Manual.cs" />
