@@ -194,6 +194,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal int DataClassificationVersion { get; set; }
 
+        internal bool IsJsonSupportEnabled = false;
+
         private SqlCollation _cachedCollation;
 
         internal TdsParser(bool MARS, bool fAsynchronous)
@@ -5706,6 +5708,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVARCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
+                case TdsEnums.SQLJSONTYPE:
                     // If bigvarchar(max), we only read the first chunk here,
                     // expecting the caller to read the rest
                     if (encoding == null)
@@ -6169,6 +6172,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNCHAR:
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
+                case TdsEnums.SQLJSONTYPE:
                     if (!TryReadSqlStringValue(value, tdsType, length, md.encoding, isPlp, stateObj))
                     {
                         return false;
@@ -7659,6 +7663,7 @@ namespace Microsoft.Data.SqlClient
             if (colmeta.metaType.IsPlp)
             {
                 Debug.Assert(colmeta.tdsType == TdsEnums.SQLXMLTYPE ||
+                             colmeta.tdsType == TdsEnums.SQLJSONTYPE ||
                              colmeta.tdsType == TdsEnums.SQLBIGVARCHAR ||
                              colmeta.tdsType == TdsEnums.SQLBIGVARBINARY ||
                              colmeta.tdsType == TdsEnums.SQLNVARCHAR ||
@@ -8115,6 +8120,21 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        internal int WriteJsonSupportFeatureRequest(bool write /* if false just calculates the length */)
+        {
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_JSONSUPPORT);
+                WriteInt(1, _physicalStateObj);
+                _physicalStateObj.WriteByte(1);
+            }
+
+            return len;
+        }
+
         private void WriteLoginData(SqlLogin rec,
                                      TdsEnums.FeatureExtension requestedFeatures,
                                      SessionData recoverySessionData,
@@ -8423,6 +8443,11 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
                 {
                     length += WriteSQLDNSCachingFeatureRequest(write);
+                }
+
+                if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
+                {
+                    length += WriteJsonSupportFeatureRequest(write);
                 }
 
                 length++; // for terminator
@@ -11162,6 +11187,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
+                case TdsEnums.SQLJSONTYPE:
 
                     if (type.IsPlp)
                     {
@@ -11812,6 +11838,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
+                case TdsEnums.SQLJSONTYPE:
                     {
                         Debug.Assert(!isDataFeed || (value is TextDataFeed || value is XmlDataFeed), "Value must be a TextReader or XmlReader");
                         Debug.Assert(isDataFeed || (value is string || value is byte[]), "Value is a byte array or string");

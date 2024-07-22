@@ -708,6 +708,7 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netfx.cs" />
+    <Compile Include="Microsoft\Data\SqlTypes\SqlJson.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netfx.cs" />
@@ -775,6 +776,9 @@
     <PackageReference Include="System.Buffers">
       <Version>$(SystemBuffersVersion)</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="microsoft.data.sqlclient\netfx\src\microsoft\data\sqltypes\" />
   </ItemGroup>
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />

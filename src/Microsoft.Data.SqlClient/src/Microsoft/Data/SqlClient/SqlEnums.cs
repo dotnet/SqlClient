@@ -190,6 +190,8 @@ namespace Microsoft.Data.SqlClient
                     return MetaImage;
                 case SqlDbType.Int:
                     return s_metaInt;
+                case (SqlDbType)35:
+                    return s_metaJson;
                 case SqlDbType.Money:
                     return s_metaMoney;
                 case SqlDbType.NChar:
@@ -852,6 +854,8 @@ namespace Microsoft.Data.SqlClient
                     return MetaUdt;
                 case TdsEnums.SQLXMLTYPE:
                     return MetaXml;
+                case TdsEnums.SQLJSONTYPE:
+                    return s_metaJson;
                 case TdsEnums.SQLTABLE:
                     return s_metaTable;
                 case TdsEnums.SQLDATE:
@@ -968,6 +972,8 @@ namespace Microsoft.Data.SqlClient
 
         internal static readonly MetaType MetaDateTimeOffset = new(255, 7, -1, false, false, false, TdsEnums.SQLDATETIMEOFFSET, TdsEnums.SQLDATETIMEOFFSET, MetaTypeName.DATETIMEOFFSET, typeof(System.DateTimeOffset), typeof(System.DateTimeOffset), SqlDbType.DateTimeOffset, DbType.DateTimeOffset, 1);
 
+        private static readonly MetaType s_metaJson = new(255, 255, -1, false, true, true, TdsEnums.SQLJSONTYPE, TdsEnums.SQLJSONTYPE, MetaTypeName.JSON, typeof(string), typeof(SqlJson), (SqlDbType)35, DbType.String, 0);
+
         public static TdsDateTime FromDateTime(DateTime dateTime, byte cb)
         {
             SqlDateTime sqlDateTime;
@@ -1054,6 +1060,7 @@ namespace Microsoft.Data.SqlClient
             public const string TIME = "time";
             public const string DATETIME2 = "datetime2";
             public const string DATETIMEOFFSET = "datetimeoffset";
+            public const string JSON = "json";
         }
     }
 

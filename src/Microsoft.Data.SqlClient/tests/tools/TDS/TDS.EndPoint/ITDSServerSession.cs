@@ -77,5 +77,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// Indicates whether this session supports transport-level recovery
         /// </summary>
         bool IsSessionRecoveryEnabled { get; set; }
+
+        /// <summary>
+        /// Indicates whether the client supports Json column type
+        /// </summary>
+        bool IsJsonSupportEnabled { get; set; }
     }
 }

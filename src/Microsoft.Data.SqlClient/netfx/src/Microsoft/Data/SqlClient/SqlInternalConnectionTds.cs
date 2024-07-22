@@ -1638,6 +1638,8 @@ namespace Microsoft.Data.SqlClient
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
+            requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
+
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo, encrypt);
         }
 
@@ -3236,6 +3238,24 @@ namespace Microsoft.Data.SqlClient
 
                         // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
 
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_JSONSUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for JSONSUPPORT", ObjectID);
+                        if (data.Length != 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for JSONSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        byte JsonSupportVersion = data[0];
+                        if (JsonSupportVersion == 0 || JsonSupportVersion > 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for JSONSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        _parser.IsJsonSupportEnabled = true;
                         break;
                     }
 
