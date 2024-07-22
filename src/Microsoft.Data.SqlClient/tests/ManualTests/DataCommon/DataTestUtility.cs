@@ -243,7 +243,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static SqlConnection GetSqlConnection(string connectionString = "")
         {
-            if (UseAccessTokenAuth)
+/*            if (UseAccessTokenAuth)
             {
                 string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                 string connectionStringRemovedAuth = RemoveKeysInConnStr(connectionString, credKeys);
@@ -253,7 +253,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 };
 
                 return connection;
-            }
+            }*/
 
             return new SqlConnection(connectionString);
         }
