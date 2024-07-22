@@ -243,11 +243,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static SqlConnection GetSqlConnection(string connectionString = "")
         {
-            string[] credKeysTest = { "UserID", "User ID", "Password", "UID", "PWD", "Authentication" };
-
-            if (credKeysTest.Any(key => connectionString.Contains(key)))
+            if (!Utils.IsAzureSqlServer(new SqlConnectionStringBuilder((connectionString)).DataSource))
             {
-                return null;
+                Console.WriteLine("----------------> FAILED HERE");
+                return new SqlConnection("Failed");
             }
 
             if (UseAccessTokenAuth)
