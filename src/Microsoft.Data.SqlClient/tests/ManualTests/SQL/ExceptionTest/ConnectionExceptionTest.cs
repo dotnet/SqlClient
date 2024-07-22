@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
 
             SqlConnectionStringBuilder badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
-            using (var sqlConnection = DataTestUtility.GetSqlConnection(badBuilder.ConnectionString))
+            using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
             {
                 using (SqlCommand command = sqlConnection.CreateCommand())
                 {

@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName))
             {
                 builder.DataSource = hostname + "\\" + instanceName;
-                using SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
+                using SqlConnection connection = new SqlConnection(builder.ConnectionString);
                 connection.Open();
             }
 
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 builder.DataSource = hostname + "\\" + instanceName;
 
-                using SqlConnection connection = DataTestUtility.GetSqlConnection(builder.ConnectionString);
+                using SqlConnection connection = new SqlConnection(builder.ConnectionString);
                 SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
                 Assert.Contains("Error Locating Server/Instance Specified", ex.Message);
             }

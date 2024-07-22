@@ -370,7 +370,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Pooling = false,
                 ConnectTimeout = 15
             };
-            using SqlConnection sqlConnection = DataTestUtility.GetSqlConnection(connectionStringBuilder.ConnectionString);
+            using SqlConnection sqlConnection = new SqlConnection(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
 
             timer.Start();

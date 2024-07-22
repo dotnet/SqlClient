@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.MultipleActiveResultSets = true;
             builder.ConnectTimeout = 5;
 
-            using (SqlConnection conn = DataTestUtility.GetSqlConnection(builder.ConnectionString))
+            using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
             {
                 conn.Open();
                 using (SqlCommand command = new SqlCommand("SELECT @@SERVERNAME", conn))

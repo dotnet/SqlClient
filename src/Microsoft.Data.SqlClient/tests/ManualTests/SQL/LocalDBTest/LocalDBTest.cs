@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void InvalidLocalDBTest()
         {
-            using var connection = DataTestUtility.GetSqlConnection(s_badConnectionString);
+            using var connection = new SqlConnection(s_badConnectionString);
             DataTestUtility.AssertThrowsWrapper<SqlException>(() => connection.Open());
         }
 #endregion
@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void OpenConnection(string connString)
         {
-            using SqlConnection connection = DataTestUtility.GetSqlConnection(connString);
+            using SqlConnection connection = new SqlConnection(connString);
             connection.Open();
             Assert.Equal(System.Data.ConnectionState.Open, connection.State);
             using SqlCommand command = new SqlCommand("SELECT @@SERVERNAME", connection);

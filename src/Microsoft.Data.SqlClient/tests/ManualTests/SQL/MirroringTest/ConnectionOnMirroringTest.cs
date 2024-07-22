@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 for (int i = 0; i < 10; ++i)
                 {
-                    SqlConnection conn = DataTestUtility.GetSqlConnection(_connectionString);
+                    SqlConnection conn = new SqlConnection(_connectionString);
                     list.Add(conn);
                     conn.Open();
                 }

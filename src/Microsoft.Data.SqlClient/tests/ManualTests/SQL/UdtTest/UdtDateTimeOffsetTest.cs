@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SelectFromSqlParameterShouldSucceed()
         {
-            using SqlConnection connection = DataTestUtility.GetSqlConnection(_connectionString);
+            using SqlConnection connection = new SqlConnection(_connectionString);
             connection.Open();
             SetupUserDefinedTableType(connection, _udtTableType);
 
@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType");
 
-            using SqlConnection connection = DataTestUtility.GetSqlConnection(_connectionString);
+            using SqlConnection connection = new SqlConnection(_connectionString);
             connection.Open();
 
             try

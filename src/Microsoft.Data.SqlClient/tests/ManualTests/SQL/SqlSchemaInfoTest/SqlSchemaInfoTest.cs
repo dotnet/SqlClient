@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.AuthenticatingWithoutAccessToken))]
         public static void TestInitialCatalogStandardValues()
         {
-            using (SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 string currentDb = connection.Database;
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);

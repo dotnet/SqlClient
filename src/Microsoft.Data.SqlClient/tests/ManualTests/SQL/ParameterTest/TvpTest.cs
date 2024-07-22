@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     SteAttributeKey.LocaleId,
                     SteAttributeKey.CompareOptions,
                     SteAttributeKey.TypeName,
-                    SteAttributeKey.Type,
+                    SteAttributeKey.Type, 
                     SteAttributeKey.Fields,
                     SteAttributeKey.Value
                 }).AsReadOnly();
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestConnectionIsSafeToReuse()
         {
-            using SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
 
             // Bad Scenario - exception expected.
             try
@@ -453,7 +453,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void QueryHintsTest()
         {
-            using SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr);
+            using SqlConnection conn = new SqlConnection(_connStr);
             conn.Open();
 
             Guid randomizer = Guid.NewGuid();
@@ -691,7 +691,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static async Task RunPacketNumberWraparound(WraparoundRowEnumerator enumerator)
         {
-            using var connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             using var cmd = new SqlCommand("unimportant")
             {
                 CommandType = CommandType.StoredProcedure,
@@ -1203,7 +1203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             tsql.Append(")");
 
-            using SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr);
+            using SqlConnection conn = new SqlConnection(_connStr);
             conn.Open();
 
             // execute it to create the type
@@ -1239,7 +1239,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void DropServerObjects(StePermutation tvpPerm)
         {
             string dropText = "DROP PROC " + GetProcName(tvpPerm) + "; DROP TYPE " + GetTypeName(tvpPerm);
-            using SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr);
+            using SqlConnection conn = new SqlConnection(_connStr);
             conn.Open();
 
             SqlCommand cmd = new(dropText, conn);
@@ -1255,10 +1255,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void ExecuteAndVerify(SqlCommand cmd, StePermutation tvpPerm, object[][] objValues, DataTable dtValues)
         {
-            using SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr);
+            using SqlConnection conn = new SqlConnection(_connStr);
             conn.Open();
             cmd.Connection = conn;
-            if (DataTestUtility.IsNotAzureServer())
+            if (DataTestUtility.IsNotAzureServer()) 
             {
                 // Choose the 2628 error message instead of 8152 in SQL Server 2016 & 2017
                 using SqlCommand cmdFix = new("DBCC TRACEON(460)", conn);

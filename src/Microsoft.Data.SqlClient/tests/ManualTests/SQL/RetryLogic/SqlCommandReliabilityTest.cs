@@ -275,9 +275,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 1
             };
 
-            using (var cnn3 = DataTestUtility.GetSqlConnection(cnnString))
-            using (var cnn2 = DataTestUtility.GetSqlConnection(builder.ConnectionString))
-            using (var cnn1 = DataTestUtility.GetSqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 120 }.ConnectionString))
+            using (var cnn3 = new SqlConnection(cnnString))
+            using (var cnn2 = new SqlConnection(builder.ConnectionString))
+            using (var cnn1 = new SqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 120 }.ConnectionString))
             using (var cmd = new SqlCommand())
             {
                 cnn1.Open();

@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void ReaderTest()
         {
-            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
+            using (SqlConnection conn = new SqlConnection(_connStr))
             {
                 conn.Open();
 
@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void ExecuteScalarTest()
         {
-            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
+            using (SqlConnection conn = new SqlConnection(_connStr))
             {
                 conn.Open();
                 using (SqlCommand com = new SqlCommand()
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void InputParameterTest()
         {
-            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
+            using (SqlConnection conn = new SqlConnection(_connStr))
             {
                 conn.Open();
 
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void OutputParameterTest()
         {
-            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
+            using (SqlConnection conn = new SqlConnection(_connStr))
             {
                 conn.Open();
 
@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void FillTest()
         {
-            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
+            using (SqlConnection conn = new SqlConnection(_connStr))
             {
                 conn.Open();
                 DataSet ds = new DataSet();
@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void UpdateTest()
         {
-            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
+            using (SqlConnection conn = new SqlConnection(_connStr))
             {
                 conn.Open();
                 DataSet ds = new DataSet();
@@ -227,7 +227,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void NullTest()
         {
-            using (SqlConnection conn = DataTestUtility.GetSqlConnection(_connStr))
+            using (SqlConnection conn = new SqlConnection(_connStr))
             {
                 conn.Open();
 

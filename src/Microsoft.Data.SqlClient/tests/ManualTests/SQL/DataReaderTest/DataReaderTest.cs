@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Pooling = false
             };
 
-            using SqlConnection con = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString);
             using SqlCommand cmd = con.CreateCommand();
             try
             {

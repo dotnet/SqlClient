@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Test 1 - A
             SqlConnectionStringBuilder badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
-            using (var sqlConnection = DataTestUtility.GetSqlConnection(badBuilder.ConnectionString))
+            using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
             {
                 using (SqlCommand command = sqlConnection.CreateCommand())
                 {
@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Test 1 - B
             badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { Password = string.Empty, IntegratedSecurity = false, Authentication = SqlAuthenticationMethod.NotSpecified };
-            using (var sqlConnection = DataTestUtility.GetSqlConnection(badBuilder.ConnectionString))
+            using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
             {
                 string errorMessage = string.Format(CultureInfo.InvariantCulture, logonFailedErrorMessage, badBuilder.UserID);
                 VerifyConnectionFailure<SqlException>(() => sqlConnection.Open(), errorMessage, (ex) => VerifyException(ex, 1, 18456, 1, 14));

@@ -187,7 +187,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             long acpg = SqlClientEventSourceProps.ActiveConnectionPoolGroups;
             long iacpg = SqlClientEventSourceProps.InactiveConnectionPoolGroups;
 
-            using (SqlConnection conn = DataTestUtility.GetSqlConnection(stringBuilder.ToString()))
+            using (SqlConnection conn = new SqlConnection(stringBuilder.ToString()))
             {
                 SqlClientEventSourceProps.ResetActiveConnectionPoolGroupsCounter();
                 conn.Open();

@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void SetupTestTables()
         {
             // Create the source table and insert some data
-            using SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             DataTestUtility.DropTable(connection, _tableName1);
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void RemoveTestTables()
         {
             // Simplify the using statement in a small block of code
-            using SqlConnection connection = DataTestUtility.GetSqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
 
             DataTestUtility.DropTable(connection, _tableName1);
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void DoBulkCopy(DataRow[] dataRows)
         {
-            using SqlConnection connection = DataTestUtility.GetSqlConnection(_connectionString);
+            using SqlConnection connection = new SqlConnection(_connectionString);
             connection.Open();
 
             using SqlCommand command = connection.CreateCommand();
@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private async Task DoBulkCopyAsync(DataRow[] dataRows)
         {
             // Test should be run with MARS enabled
-            using SqlConnection connection = DataTestUtility.GetSqlConnection(_connectionString);
+            using SqlConnection connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
 
             using SqlCommand command = connection.CreateCommand();
