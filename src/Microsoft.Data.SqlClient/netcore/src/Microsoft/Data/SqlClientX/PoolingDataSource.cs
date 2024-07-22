@@ -208,6 +208,7 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         /// <param name="connector">Out parameter to store the connector result.</param>
         /// <returns>Returns true if a valid idles connector is found, otherwise returns false.</returns>
+        /// TODO: profile the inlining to see if it's necessary
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryGetIdleConnector([NotNullWhen(true)] out SqlConnector? connector)
         {
@@ -228,6 +229,7 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         /// <param name="connector">The connector to be checked.</param>
         /// <returns>Returns true if the connector is live and unexpired, otherwise returns false.</returns>
+        /// TODO: profile the inlining to see if it's necessary
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool CheckIdleConnector([NotNullWhen(true)] SqlConnector? connector)
         {
@@ -289,8 +291,9 @@ namespace Microsoft.Data.SqlClientX
                 //TODO: LogMessages.ExceptionWhenClosingPhysicalConnection(_logger, connector.Id, exception);
             }
 
-            var i = 0;
-            for (; i < MaxPoolSize; i++)
+
+            int i; 
+            for (i = 0; i < MaxPoolSize; i++)
             {
                 if (Interlocked.CompareExchange(ref _connectors[i], null, connector) == connector)
                 {
@@ -371,8 +374,8 @@ namespace Microsoft.Data.SqlClientX
                         //TODO: MetricsReporter.ReportConnectionCreateTime(Stopwatch.GetElapsedTime(startTime));
 #endif
 
-                        var i = 0;
-                        for (; i < MaxPoolSize; i++)
+                        int i;
+                        for (i = 0; i < MaxPoolSize; i++)
                         {
                             if (Interlocked.CompareExchange(ref _connectors[i], connector, null) == null)
                             {
