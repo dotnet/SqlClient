@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
                         string connectionStringRemovedAuth = DataTestUtility.RemoveKeysInConnStr(conn.ConnectionString, credKeys);
                         conn.ConnectionString = connectionStringRemovedAuth;
-                        Console.WriteLine("Test -------------------------->" + conn.ConnectionString);
+
                         conn.AccessToken = DataTestUtility.AADAccessToken;
                     }
                     
