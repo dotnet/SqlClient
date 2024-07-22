@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClientX.IO
             byte[] bytes = new byte[byteLength];
 
             // Read bytes asynchronously
-            await ReadBytesAsync(new ArraySegment<byte>(bytes), isAsync, ct);
+            await ReadBytesAsync(new ArraySegment<byte>(bytes), isAsync, ct).ConfigureAwait(false);
 
             // Convert bytes to char array
             char[] chars = new char[length];
