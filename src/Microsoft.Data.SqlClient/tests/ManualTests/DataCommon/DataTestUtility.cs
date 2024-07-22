@@ -243,7 +243,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static SqlConnection GetSqlConnection(string connectionString = "")
         {
-            if (connectionString != TCPConnectionString)
+            string[] credKeysTest = { "UserID", "User ID", "Password", "UID", "PWD", "Authentication" };
+
+            if (credKeysTest.Any(key => connectionString.Contains(key)))
             {
                 return null;
             }
