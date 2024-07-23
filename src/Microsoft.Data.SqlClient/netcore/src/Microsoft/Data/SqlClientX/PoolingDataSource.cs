@@ -102,7 +102,8 @@ namespace Microsoft.Data.SqlClientX
         {
             CheckDisposed();
 
-            if (TryGetIdleConnector(out SqlConnector? connector))
+            SqlConnector? connector = GetIdleConnector();
+            if (connector != null)
             {
                 return connector;
             }
@@ -178,7 +179,8 @@ namespace Microsoft.Data.SqlClientX
 
                     // If we're here, our waiting attempt on the idle connector channel was released with a null
                     // (or bad connector), or we're in sync mode. Check again if a new idle connector has appeared since we last checked.
-                    if (TryGetIdleConnector(out connector))
+                    connector = GetIdleConnector();
+                    if (connector != null)
                     {
                         return connector;
                     }
@@ -201,21 +203,21 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Tries to read a connector from the idle connector channel.
         /// </summary>
-        /// <param name="connector">Out parameter to store the connector result.</param>
         /// <returns>Returns true if a valid idles connector is found, otherwise returns false.</returns>
         /// TODO: profile the inlining to see if it's necessary
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool TryGetIdleConnector([NotNullWhen(true)] out SqlConnector? connector)
+        internal SqlConnector? GetIdleConnector()
         {
-            while (_idleConnectorReader.TryRead(out connector))
+
+            while (_idleConnectorReader.TryRead(out SqlConnector? connector))
             {
                 if (CheckIdleConnector(connector))
                 {
-                    return true;
+                    return connector;
                 }
             }
 
-            return false;
+            return null;
         }
 
         /// <summary>
