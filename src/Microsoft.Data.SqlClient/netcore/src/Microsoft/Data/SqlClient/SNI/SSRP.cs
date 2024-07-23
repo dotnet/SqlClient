@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <summary>
         /// Finds instance port number for given instance name.
         /// </summary>
-        /// <param name="browserHostName">SQL Sever Browser hostname</param>
+        /// <param name="browserHostName">SQL Server Browser hostname</param>
         /// <param name="instanceName">instance name to find port number</param>
         /// <param name="timeout">Connection timer expiration</param>
         /// <param name="allIPsInParallel">query all resolved IP addresses in parallel</param>
