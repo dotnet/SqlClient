@@ -444,7 +444,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                                 await conn.OpenAsync();
                             else
                                 conn.Open();
-                            Thread.Sleep(200);
+                            //Thread.Sleep(200);
                         }
                         catch (Exception ex)
                         {
