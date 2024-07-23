@@ -12,13 +12,14 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.IO
 {
-    public class TdsWriterTests: IDisposable
+    public class TdsWriterTests : IDisposable
     {
         private readonly TdsStream _stream;
         private readonly MemoryStream _msWrite;
         private readonly MemoryStream _msRead;
 
-        public TdsWriterTests() {
+        public TdsWriterTests()
+        {
             _msWrite = new();
             _msRead = new();
             TdsWriteStream tdsWriteStream = new(_msWrite);
@@ -42,8 +43,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
             var data = 8.5m;
             var expectedSign = true;
 
+            byte[] buffer = new byte[17];
+
             // Serialize decimal to byte array for Sql Server needs
-            Span<byte> resultBytes = writer.SerializeDecimal(data);
+            Span<byte> resultBytes = TdsWriter.SerializeDecimal(data, buffer);
 
             // Assert format is correct
             Assert.Equal(17, resultBytes.Length);

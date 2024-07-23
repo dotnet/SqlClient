@@ -3,9 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
-using System.IO;
 using Microsoft.Data.SqlClientX.IO;
+using Microsoft.Data.SqlClient.UnitTests.IO.TdsHelpers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.IO
@@ -147,7 +146,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
 
             SplittableStream splitStream = SplittableStream.FromMessage(message, negotiatedPacketSize + TdsEnums.HEADER_LEN + 10);
 
-            using TdsReadStream stream = new TdsReadStream(splitStream);
+            using TdsReadStream stream = new (splitStream);
             byte[] readBuffer = new byte[message.Payload.Length];
 
             int readCount = isAsync ? await stream.ReadAsync(readBuffer, 0, message.Payload.Length) :
@@ -157,8 +156,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
             Assert.Equal(message.Payload.AsSpan(0, readCount).ToArray(), readBuffer.AsSpan(0, readCount).ToArray());
         }
 
-        private static ushort GenerateSpid() => (ushort)new Random().Next();
-
         private static TdsMessage PrepareTdsMessage(int negotiatedPacketSize, int payloadSize)
         {
             byte[] payload = new byte[payloadSize];
@@ -167,121 +164,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.IO
                 payload[i] = (byte)i;
             }
             byte messageType = TdsEnums.MT_PRELOGIN;
-            int spid = TdsReadStreamTest.GenerateSpid();
+            int spid = TdsUtils.GenerateSpid();
             return new TdsMessage(negotiatedPacketSize, payload, messageType, spid);
         }
 
         internal static TdsMessage PrepareTdsMessage(int negotiatedPacketSize, byte[] payload, byte messageType)
         {
-            int spid = TdsReadStreamTest.GenerateSpid();
+            int spid = TdsUtils.GenerateSpid();
             return new TdsMessage(negotiatedPacketSize, payload, messageType, spid);
-        }
-
-        /// <summary>
-        /// Represents a message in the TDS protocol.
-        /// A message consists of a of packets.
-        /// </summary>
-        internal class TdsMessage
-        {
-            private int _negotiatedPacketSize;
-
-            public int Spid { get; private set; }
-
-            private byte _messageType;
-
-            public byte[] Payload { get; }
-
-            private ArrayList _packets = new ArrayList();
-
-            public TdsMessage(int negotiatedPacketSize, byte[] payload, byte messageType, int spid)
-            {
-                Payload = payload;
-                Assert.True(negotiatedPacketSize > TdsEnums.HEADER_LEN, "Negotiated packet size must be greater than header length.");
-                _negotiatedPacketSize = negotiatedPacketSize;
-                Spid = spid;
-                _messageType = messageType;
-
-                CreatePackets();
-            }
-
-            public byte[] GetBytes()
-            {
-                MemoryStream stream = new();
-                foreach (TdsServerPacket packet in _packets)
-                {
-                    byte[] packetBytes = packet.GetBytes();
-                    stream.Write(packetBytes.AsSpan());
-                }
-                return stream.ToArray();
-            }
-
-            /// <summary>
-            /// Takes the payload and breaks it into packets of the negotiated size, with the packet header populated.
-            /// </summary>
-            /// <returns></returns>
-            private void CreatePackets()
-            {
-                int offset = 0;
-
-                // From the _data take _negotiatedPacketSize bytes - Header_len and create a packet
-                // Do this till all the data is consumed and added to packets.
-
-                while (offset < Payload.Length)
-                {
-                    int bytesLeftToPacketize = Payload.Length - offset;
-                    // The amount of data to be copied into the packet.
-                    int maxDataInPacket = _negotiatedPacketSize - TdsEnums.HEADER_LEN;
-                    int copyLength = Math.Min(maxDataInPacket, bytesLeftToPacketize);
-                    byte[] packetPayload = Payload.AsSpan(offset, copyLength).ToArray();
-                    offset += copyLength;
-                    byte status = offset < Payload.Length ? TdsEnums.ST_BATCH : TdsEnums.ST_EOM;
-                    TdsServerPacket packet = new(_messageType, status, copyLength, Spid, packetPayload);
-                    _packets.Add(packet);
-                }
-            }
-        }
-
-        private class TdsServerPacket
-        {
-            byte PacketHeaderType;
-            byte PacketStatus;
-            int PacketDataLength;
-            int Spid;
-            byte[] Content;
-
-            public TdsServerPacket(byte packetHeaderType, byte packetStatus, int packetDataLength, int spid, byte[] content)
-            {
-                PacketHeaderType = packetHeaderType;
-                PacketStatus = packetStatus;
-                PacketDataLength = packetDataLength + TdsEnums.HEADER_LEN;
-                Spid = spid;
-                Content = content;
-            }
-
-            /// <summary>
-            /// Convert the packet to a byte array with 8 byte header and the content.
-            /// Header is 8 bytes long with the following format:
-            /// PacketHeaderType (1 byte)
-            /// PacketStatus (1 byte)
-            /// PacketDataLength in Big Endian format (2 bytes)
-            /// SPID in Big Endian format (2 bytes)
-            /// Reserved (2 bytes)
-            /// </summary>
-            /// <returns></returns>
-            public byte[] GetBytes()
-            {
-                byte[] bytes = new byte[8 + Content.Length];
-                bytes[0] = PacketHeaderType;
-                bytes[1] = PacketStatus;
-                bytes[2] = (byte)(PacketDataLength >> 8);
-                bytes[3] = (byte)(PacketDataLength & 0xFF);
-                bytes[4] = (byte)(Spid >> 8);
-                bytes[5] = (byte)(Spid & 0xFF);
-                bytes[6] = 0;
-                bytes[7] = 0;
-                Content.CopyTo(bytes, 8);
-                return bytes;
-            }
         }
     }
 }
