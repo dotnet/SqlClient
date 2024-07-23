@@ -441,6 +441,10 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                         await conn.OpenAsync();
                     else
                         conn.Open();
+
+                    //TODO: Remove this when SqlConnector is hooked up.
+                    //We need this sleep to simulate doing work. Avoids race conditions that exhaust the pool.
+                    Thread.Sleep(200);
                 }
             })).ToArray();
 
