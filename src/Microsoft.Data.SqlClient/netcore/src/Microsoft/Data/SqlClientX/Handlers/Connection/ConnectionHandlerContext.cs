@@ -7,6 +7,7 @@ using System.IO;
 using System.Net.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.IO;
@@ -17,12 +18,17 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
      /// </summary>
     internal class ConnectionHandlerContext : HandlerRequest, ICloneable
     {
-
         // TODO: Decide if we need a default constructor depending on the latest design 
         /// <summary>
         /// Stream used by readers.
         /// </summary>
         public Stream ConnectionStream { get; set; }
+
+        /// <summary>
+        /// A timer representing the timeout for the connection.
+        /// TODO: This might require rethinking.
+        /// </summary>
+        internal TimeoutTimer TimeoutTimer { get; set; }
 
         /// <summary>
         /// Class that contains data required to handle a connection request.
@@ -68,7 +74,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// <summary>
         /// Indicates if fed auth needed for this connection.
         /// </summary>
-        public bool FedAuthRequired { get; internal set; }
+        public bool FedAuthNegotiatedInPrelogin { get; internal set; }
 
         /// <summary>
         /// The access token in bytes.
@@ -101,6 +107,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback { get; set; }
 
         /// <summary>
+        /// Represents a password change request on this connection.
+        /// </summary>
+        public PasswordChangeRequest PasswordChangeRequest { get; internal set; }
+
+        /// <summary>
         /// Clone <see cref="ConnectionHandlerContext"/> as part of history along the chain.
         /// </summary>
         /// <returns>A new instance of ConnectionHandlerContext with copied values.</returns>
@@ -117,7 +128,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 SslOverTdsStream = this.SslOverTdsStream, 
                 TdsStream = this.TdsStream, 
                 MarsCapable = this.MarsCapable,
-                FedAuthRequired = this.FedAuthRequired,
+                FedAuthNegotiatedInPrelogin = this.FedAuthNegotiatedInPrelogin,
                 AccessTokenInBytes = this.AccessTokenInBytes,
                 ServerInfo = this.ServerInfo, 
                 ErrorCollection = this.ErrorCollection, 
