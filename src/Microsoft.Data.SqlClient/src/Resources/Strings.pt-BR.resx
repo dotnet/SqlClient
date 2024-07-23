@@ -4738,6 +4738,6 @@
     <value>Certificado não disponível durante a validação do certificado.</value>
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
-    <value>The certificate provided by the server does not match the certificate provided by the ServerCertificate option.</value>
+    <value>O certificado fornecido pelo servidor não corresponde ao certificado fornecido pela opção ServerCertificate.</value>
   </data>
 </root>
