@@ -418,6 +418,8 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         //[TestCase(10, 20, 30, false)]
         public static object[][] PoolExerciseCases = new object[][]
         {
+            new object[] {10, 10, 30, false },
+            new object[] {10, 10, 30, true },
             new object[] {10, 20, 30, false },
             new object[] {10, 20, 30, true }
         };
@@ -436,13 +438,20 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                 {
                     await using (var conn = dataSource.CreateConnection())
                     {
-                        Console.WriteLine($"${i}: open");
-                        if (async)
-                            await conn.OpenAsync();
-                        else
-                            conn.Open();
+                        try
+                        {
+                            if (async)
+                                await conn.OpenAsync();
+                            else
+                                conn.Open();
+                            Thread.Sleep(200);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"caught error: {ex.ToString()}, pool stats: {dataSource.Statistics}");
+                        }
                     }
-                    Console.WriteLine($"${i}: close");
+                    
                 }
             })).ToArray();
 
