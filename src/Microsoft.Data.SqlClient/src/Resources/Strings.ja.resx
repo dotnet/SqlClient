@@ -4738,6 +4738,6 @@
     <value>証明書の検証中は証明書を使用できません。</value>
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
-    <value>The certificate provided by the server does not match the certificate provided by the ServerCertificate option.</value>
+    <value>サーバーによって提供された証明書が、ServerCertificate オプションで指定された証明書と一致しません。</value>
   </data>
 </root>
