@@ -5271,10 +5271,13 @@ namespace Microsoft.Data.SqlClient
             if (fColMD && IsColumnEncryptionSupported && col.isEncrypted)
             {
                 // If the column is encrypted, we should have a valid cipherTable
-                result = TryProcessTceCryptoMetadata(stateObj, col, cipherTable, columnEncryptionSetting, isReturnValue: false);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
+                if (cipherTable != null)
+                {    
+                    result = TryProcessTceCryptoMetadata(stateObj, col, cipherTable, columnEncryptionSetting, isReturnValue: false);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
                 }
             }
 
