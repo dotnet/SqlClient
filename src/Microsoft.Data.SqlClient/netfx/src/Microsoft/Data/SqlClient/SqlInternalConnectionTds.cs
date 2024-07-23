@@ -212,6 +212,9 @@ namespace Microsoft.Data.SqlClient
 
         internal SQLDNSInfo pendingSQLDNSObject = null;
 
+        // Json Support Flag
+        internal bool IsJsonSupportEnabled = false;
+
         // TCE flags
         internal byte _tceVersionSupported;
 
@@ -3249,13 +3252,13 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for JSONSUPPORT", ObjectID);
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
-                        byte JsonSupportVersion = data[0];
-                        if (JsonSupportVersion == 0 || JsonSupportVersion > 1)
+                        byte jsonSupportVersion = data[0];
+                        if (jsonSupportVersion == 0 || jsonSupportVersion > 1)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for JSONSUPPORT", ObjectID);
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
-                        _parser.IsJsonSupportEnabled = true;
+                        IsJsonSupportEnabled = true;
                         break;
                     }
 

@@ -194,8 +194,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal int DataClassificationVersion { get; set; }
 
-        internal bool IsJsonSupportEnabled = false;
-
         private SqlCollation _cachedCollation;
 
         internal TdsParser(bool MARS, bool fAsynchronous)
