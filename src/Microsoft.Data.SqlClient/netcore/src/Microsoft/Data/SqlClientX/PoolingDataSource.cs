@@ -24,14 +24,12 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal sealed class PoolingDataSource : SqlDataSource
     {
-        #region private static
         // Prevents synchronous operations from blocking on all available threads,
         // which would stop async tasks from being scheduled and cause deadlocks.
         // Use ProcessorCount/2 as a balance between sync and async tasks.
         private static SemaphoreSlim SyncOverAsyncSemaphore { get; } = new(Math.Max(1, Environment.ProcessorCount / 2));
 
         private static int _objectTypeCount; // EventSource counter
-        #endregion
 
         #region private readonly
         private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
@@ -53,30 +51,11 @@ namespace Microsoft.Data.SqlClientX
         private readonly ChannelWriter<SqlConnector?> _idleConnectorWriter;
         #endregion
 
-        #region private modifiable
         // Counts the total number of open connectors tracked by the pool.
         private volatile int _numConnectors;
 
         // Counts the number of connectors currently sitting idle in the pool.
         private volatile int _idleCount;
-        #endregion
-
-        #region internal properties
-        internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
-        internal int MaxPoolSize => _connectionPoolGroupOptions.MaxPoolSize;
-        internal int ObjectID => _objectID;
-        #endregion
-
-
-        internal sealed override (int Total, int Idle, int Busy) Statistics
-        {
-            get
-            {
-                var numConnectors = _numConnectors;
-                var idleCount = _idleCount;
-                return (numConnectors, idleCount, numConnectors - idleCount);
-            }
-        }
 
         /// <summary>
         /// Initializes a new PoolingDataSource.
@@ -101,6 +80,22 @@ namespace Microsoft.Data.SqlClientX
 
             //TODO: initiate idle lifetime and pruning fields
         }
+
+        #region properties
+        internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
+        internal int MaxPoolSize => _connectionPoolGroupOptions.MaxPoolSize;
+        internal int ObjectID => _objectID;
+
+        internal sealed override (int Total, int Idle, int Busy) Statistics
+        {
+            get
+            {
+                var numConnectors = _numConnectors;
+                var idleCount = _idleCount;
+                return (numConnectors, idleCount, numConnectors - idleCount);
+            }
+        }
+        #endregion
 
         /// <inheritdoc/>
         internal override async ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)

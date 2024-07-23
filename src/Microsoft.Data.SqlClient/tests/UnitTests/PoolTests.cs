@@ -13,7 +13,7 @@ using Microsoft.Data.SqlClient.NetCore.UnitTests.Util;
 using Microsoft.Data.SqlClientX;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
+namespace Microsoft.Data.SqlClient.NetCore.UnitTests
 {
     public class PoolTests
     {
@@ -58,13 +58,9 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
             Assert.Equal(conn.InternalConnection!.ServerProcessId, backendId);
         }
 
-        public static readonly object[][] AsyncParams = new object[][] { 
-            new object[] { true }, 
-            new object[] { false } 
-        };
-
         [Theory]
-        [MemberData(nameof(AsyncParams))]
+        [InlineData(true)]
+        [InlineData(false)]
         public async Task Get_connector_from_exhausted_pool(bool async)
         {
             await using var dataSource = testBase.CreateDataSource(csb =>
@@ -91,7 +87,8 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         }
         
         [Theory]
-        [MemberData(nameof(AsyncParams))]
+        [InlineData(true)]
+        [InlineData(false)]
         public async Task Timeout_getting_connector_from_exhausted_pool(bool async)
         {
             await using var dataSource = testBase.CreateDataSource(csb =>
@@ -416,16 +413,12 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
         //[TestCase(10, 10, 30, false)]
         //[TestCase(10, 20, 30, true)]
         //[TestCase(10, 20, 30, false)]
-        public static object[][] PoolExerciseCases = new object[][]
-        {
-            new object[] {10, 10, 30, true},
-            new object[] {10, 10, 30, false},
-            new object[] {10, 20, 30, true},
-            new object[] {10, 20, 30, false }
-        };
 
         [Theory]
-        [MemberData(nameof(PoolExerciseCases))]
+        [InlineData(10, 10, 30, true)]
+        [InlineData(10, 10, 30, false)]
+        [InlineData(10, 20, 30, true)]
+        [InlineData(10, 20, 30, false)]
         public async Task Exercise_pool(int maxPoolSize, int numTasks, int seconds, bool async)
         {
             await using var dataSource = testBase.CreateDataSource(csb => csb.MaxPoolSize = maxPoolSize);

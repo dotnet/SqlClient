@@ -18,18 +18,14 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal class SqlConnector
     {
-        #region private
         private static int SpoofedServerProcessId = 1;
-        #endregion
 
-        #region constructors
         internal SqlConnector(SqlConnectionX owningConnection, SqlDataSource dataSource)
         {
             OwningConnection = owningConnection;
             DataSource = dataSource;
             ServerProcessId = Interlocked.Increment(ref SpoofedServerProcessId);
         }
-        #endregion
 
         #region properties
         internal SqlConnectionX? OwningConnection { get; set; }
