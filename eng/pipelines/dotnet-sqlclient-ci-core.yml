@@ -152,7 +152,7 @@ stages:
         windows_sql_22: 
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22: ADO-MMS22-SQL22 
+            Win22_Sql22: ADO-MMS22-SQL22-Net9.0 
           TargetFrameworks: ${{parameters.targetFrameworks }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
