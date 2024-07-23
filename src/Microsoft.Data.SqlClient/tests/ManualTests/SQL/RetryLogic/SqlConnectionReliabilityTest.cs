@@ -100,7 +100,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(currentRetries > 0);
         }
 
-        [Theory]
+        // Test relies on AggregateException but SqlException is thrown for Azure auth (Address in #31453)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
         {
