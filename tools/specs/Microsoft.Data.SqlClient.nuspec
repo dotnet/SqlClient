@@ -9,7 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
-    <repository type="git" url="https://github.com/dotnet/sqlclient" />
+    <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$"/>
     <description>The current data provider for SQL Server and Azure SQL databases. This has replaced System.Data.SqlClient. These classes provide access to SQL and encapsulate database-specific protocols, including tabular data stream (TDS).
 
 Commonly Used Types:
