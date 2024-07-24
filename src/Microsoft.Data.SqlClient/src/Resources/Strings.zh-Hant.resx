@@ -4737,7 +4737,7 @@
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>驗證在進行憑證驗證時無法使用。</value>
   </data>
-  <data name="AAD_FIC_Invalid_Setup" xml:space="preserve">
-    <value>聯合身份憑証騐証不可用。所需環境變量配置不全。</value>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>伺服器提供的憑證不符合 ServerCertificate 選項所提供的憑證。</value>
   </data>
 </root>

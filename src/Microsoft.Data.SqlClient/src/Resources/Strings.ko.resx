@@ -4737,7 +4737,7 @@
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>인증서의 유효성을 검사하는 동안에는 인증서를 사용할 수 없습니다.</value>
   </data>
-  <data name="AAD_FIC_Invalid_Setup" xml:space="preserve">
-    <value>페더레이션 ID 자격 증명 인증을 사용할 수 없습니다. 필수 환경 변수가 완전히 구성되지 않았습니다.</value>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>서버에서 제공하는 인증서가 ServerCertificate 옵션에서 제공하는 인증서와 일치하지 않습니다.</value>
   </data>
 </root>

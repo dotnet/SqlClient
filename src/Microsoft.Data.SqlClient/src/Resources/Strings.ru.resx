@@ -4737,7 +4737,7 @@
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>Сертификат недоступен при проверке сертификата.</value>
   </data>
-  <data name="AAD_FIC_Invalid_Setup" xml:space="preserve">
-    <value>Недоступна аутентификация Federated Identity Credentials. Необходимые переменные среды настроены не полностью.</value>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>Сертификат, предоставленный сервером, не совпадает с сертификатом, указанным в параметре ServerCertificate.</value>
   </data>
 </root>

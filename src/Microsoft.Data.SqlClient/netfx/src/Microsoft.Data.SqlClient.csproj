@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.Net.Sdk">
   <PropertyGroup>
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
-    <RootNamespace>Microsoft.Data.SqlClient</RootNamespace>
+    <RootNamespace></RootNamespace>
     <TargetFramework>net462</TargetFramework>
     <EnableLocalAppContext>true</EnableLocalAppContext>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
@@ -17,6 +17,15 @@
     <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
+  </PropertyGroup>
+  <!--Generating Strong Name-->
+  <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
+    <SignAssembly>true</SignAssembly>
+    <KeyFile>$(SigningKeyPath)</KeyFile>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(CDP_BUILD_TYPE)!=Official">
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <!-- Override debugtype=portable in Directory.Build.props for netfx -->
   <PropertyGroup>
@@ -197,6 +206,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs</Link>
@@ -438,6 +450,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCollation.cs">
       <Link>Microsoft\Data\SqlClient\SqlCollation.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs</Link>
     </Compile>
@@ -630,6 +645,9 @@
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
       <Link>Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
+      <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\src\Microsoft\Data\Common\NameValuePermission.cs" />
@@ -652,7 +670,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolCounters.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\RelationshipConverter.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.Cng.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBConfig.cs" />
@@ -675,7 +692,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlClientPermission.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStreamChars.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
@@ -721,6 +737,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="$(CommonSourceRoot)Resources\$(ResxFileName).*.resx">
       <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <LogicalName>Microsoft.Data.SqlClient.Resources.%(Filename).resources</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
@@ -750,9 +767,6 @@
     </PackageReference>
     <PackageReference Include="Azure.Identity">
       <Version>$(AzureIdentityVersion)</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Identity.Client">
-      <Version>$(MicrosoftIdentityClientVersion)</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect">
       <version>$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)</version>
