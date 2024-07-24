@@ -19,6 +19,7 @@ using Microsoft.Data.SqlClientX.RateLimiters;
 
 namespace Microsoft.Data.SqlClientX
 {
+    //TODO: metrics reporting
     /// <summary>
     /// A pooling implementation of SqlDataSource. Connections are recycled upon return to be reused by another operation.
     /// </summary>
@@ -122,7 +123,6 @@ namespace Microsoft.Data.SqlClientX
             CancellationToken finalToken = linkedSource.Token;
             linkedSource.CancelAfter(timeout);
             //TODO: respect remaining time, linkedSource.CancelAfter(timeout.CheckAndGetTimeLeft());
-            //TODO: MetricsReporter.ReportPendingConnectionRequestStart();
 
             try
             {
@@ -164,16 +164,12 @@ namespace Microsoft.Data.SqlClientX
                         cancellationToken.ThrowIfCancellationRequested();
                         Debug.Assert(finalToken.IsCancellationRequested);
 
-                        //TODO: MetricsReporter.ReportConnectionPoolTimeout();
-                        /*TODO: throw new NpgsqlException(
-                            $"The connection pool has been exhausted, either raise 'Max Pool Size' (currently {MaxConnections}) " +
-                            $"or 'Timeout' (currently {Settings.Timeout} seconds) in your connection string.",
-                            new TimeoutException());*/
+                        //TODO: exceptions from resource file
                         throw new Exception("Pool exhausted", new TimeoutException());
                     }
                     catch (ChannelClosedException)
                     {
-                        //throw new NpgsqlException("The connection pool has been shut down.");
+                        //TODO: exceptions from resource file
                         throw new Exception("The connection pool has been shut down.");
                     }
 
@@ -193,10 +189,10 @@ namespace Microsoft.Data.SqlClientX
                         return connector;
                     }
                 }
-            }
+            } 
             finally
             {
-                //TODO: MetricsReporter.ReportPendingConnectionRequestStop();
+                //TODO: log error
             }
         }
 
@@ -251,24 +247,9 @@ namespace Microsoft.Data.SqlClientX
             /* TODO: enforce connection lifetime
             if (_connectionLifetime != TimeSpan.Zero && DateTime.UtcNow > connector.OpenTimestamp + _connectionLifetime)
             {
-                LogMessages.ConnectionExceededMaximumLifetime(_logger, _connectionLifetime, connector.Id);
                 CloseConnector(connector);
                 return false;
             }
-
-            // The connector directly references the data source type mapper into the connector, to protect it against changes by a concurrent
-            // ReloadTypes. We update them here before returning the connector from the pool.
-            Debug.Assert(SerializerOptions is not null);
-            Debug.Assert(DatabaseInfo is not null);
-            connector.SerializerOptions = SerializerOptions;
-            connector.DatabaseInfo = DatabaseInfo;
-
-            Debug.Assert(connector.State == ConnectorState.Ready,
-                $"Got idle connector but {nameof(connector.State)} is {connector.State}");
-            Debug.Assert(connector.CommandsInFlightCount == 0,
-                $"Got idle connector but {nameof(connector.CommandsInFlightCount)} is {connector.CommandsInFlightCount}");
-            Debug.Assert(connector.MultiplexAsyncWritingLock == 0,
-                $"Got idle connector but {nameof(connector.MultiplexAsyncWritingLock)} is 1");
             */
             return true;
         }
@@ -285,7 +266,7 @@ namespace Microsoft.Data.SqlClientX
             }
             catch
             {
-                //TODO: LogMessages.ExceptionWhenClosingPhysicalConnection(_logger, connector.Id, exception);
+                //TODO: log error
             }
 
 
@@ -316,8 +297,6 @@ namespace Microsoft.Data.SqlClientX
 
             // Only turn off the timer one time, when it was this Close that brought Open back to _min.
             //TODO: pruning
-            //if (numConnectors == MinPoolSize)
-            //  UpdatePruningTimer();
         }
 
         /// <summary>
@@ -358,18 +337,13 @@ namespace Microsoft.Data.SqlClientX
 
                     try
                     {
-                        // We've managed to increase the open counter, open a physical connections.
-#if NET7_0_OR_GREATER
+                        // We've managed to increase the open counter, open a physical connection.
                         var startTime = Stopwatch.GetTimestamp();
-#endif
                         SqlConnector? connector = new SqlConnector(state._owningConnection, this);
                         //TODO: set clear counter on connector
 
                         //TODO: actually open the connector
                         //await connector.Open(timeout, async, cancellationToken).ConfigureAwait(false);
-#if NET7_0_OR_GREATER
-                        //TODO: MetricsReporter.ReportConnectionCreateTime(Stopwatch.GetElapsedTime(startTime));
-#endif
 
                         int i;
                         for (i = 0; i < MaxPoolSize; i++)
@@ -389,7 +363,7 @@ namespace Microsoft.Data.SqlClientX
 
                         // Only start pruning if we've incremented open count past _min.
                         // Note that we don't do it only once, on equality, because the thread which incremented open count past _min might get exception
-                        // on NpgsqlConnector.Open due to timeout, CancellationToken or other reasons.
+                        // on SqlConnector.Open due to timeout, CancellationToken or other reasons.
                         //TODO:
                         //if (numConnectors >= MinConnections)
                         //  UpdatePruningTimer();
@@ -421,16 +395,12 @@ namespace Microsoft.Data.SqlClientX
         internal override void ReturnInternalConnection(SqlConnector connector)
         {
 
-            /*TODO: verify transaction state
-            Debug.Assert(!connector.InTransaction);
-            Debug.Assert(connector.MultiplexAsyncWritingLock == 0 || connector.IsBroken || connector.IsClosed,
-                $"About to return multiplexing connector to the pool, but {nameof(connector.MultiplexAsyncWritingLock)} is {connector.MultiplexAsyncWritingLock}");
-            */
+            //TODO: verify transaction state
 
             // If Clear/ClearAll has been been called since this connector was first opened,
             // throw it away. The same if it's broken (in which case CloseConnector is only
             // used to update state/perf counter).
-            //TODO: connector.ClearCounter != _clearCounter
+            //TODO: check clear counter
             if (connector.IsBroken)
             {
                 CloseConnector(connector);
@@ -470,31 +440,7 @@ namespace Microsoft.Data.SqlClientX
             _connectionRateLimiter?.Dispose();
         }
 
-        /* TODO: implement clear
-        internal override void Clear()
-        {
-            Interlocked.Increment(ref _clearCounter);
-
-            if (Interlocked.CompareExchange(ref _isClearing, 1, 0) == 1)
-                return;
-
-            try
-            {
-                var count = _idleCount;
-                while (count > 0 && _idleConnectorReader.TryRead(out var connector))
-                {
-                    if (CheckIdleConnector(connector))
-                    {
-                        CloseConnector(connector);
-                        count--;
-                    }
-                }
-            }
-            finally
-            {
-                _isClearing = 0;
-            }
-        }*/
+        // TODO: override clear method
     }
 }
 
