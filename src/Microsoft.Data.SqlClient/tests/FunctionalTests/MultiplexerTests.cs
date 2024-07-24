@@ -3,9 +3,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -176,7 +174,6 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<Exception>(
                 () => MultiplexPacketList(isAsync, maxDataSize, input)
             );
-
         }
 
 
@@ -207,7 +204,6 @@ namespace Microsoft.Data.SqlClient.Tests
                     }
                 }
             }
-
 
             if (!isAsync)
             {
@@ -337,7 +333,6 @@ namespace Microsoft.Data.SqlClient.Tests
             int sourceOffset = 0;
             int sourceIndex = 0;
 
-
             do
             {
                 Span<byte> targetSpan = Span<byte>.Empty;
@@ -371,8 +366,6 @@ namespace Microsoft.Data.SqlClient.Tests
                     sourceOffset += copy;
                     sourceSpan.Slice(0, copy).CopyTo(targetSpan.Slice(0, copy));
                 }
-
-
             } while (sourceIndex < packets.Count && targetIndex < arrays.Length);
 
             foreach (var array in arrays)
@@ -382,7 +375,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             return list;
         }
-
 
         public static int PacketSizeFromDataSize(int dataSize) => TdsEnums.HEADER_LEN + dataSize;
 
@@ -465,7 +457,6 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             return buffer.ToString();
         }
-
     }
 
     [DebuggerStepThrough]

@@ -2761,7 +2761,6 @@ namespace Microsoft.Data.SqlClient
                             result = stateObj.TryPeekByte(out peekedToken);
                             if (result != TdsOperationStatus.Done)
                             {
-                                // temporarily cache next byte
                                 return result;
                             }
 
@@ -4614,12 +4613,14 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
             }
-            byte len; // Length of parameter name
+
+            byte len;
             result = stateObj.TryReadByte(out len);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
             }
+
             rec.parameter = null;
             if (len > 0)
             {
