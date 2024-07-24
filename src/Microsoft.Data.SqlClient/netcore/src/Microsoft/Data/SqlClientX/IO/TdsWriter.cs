@@ -12,9 +12,9 @@ namespace Microsoft.Data.SqlClientX.IO
 {
     /// <summary>
     /// This class provides helper methods for writing bytes using <see cref="TdsStream"/>
-    /// It extends <see cref="TdsBufferAlloc"/> that manages allocations of bytes buffer for better memory management.
+    /// It extends <see cref="TdsBufferManager"/> that manages allocations of bytes buffer for better memory management.
     /// </summary>
-    internal class TdsWriter : TdsBufferAlloc
+    internal sealed class TdsWriter : TdsBufferManager
     {
         private readonly TdsStream _tdsStream;
 
@@ -37,9 +37,9 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct">Cancellation token.</param>
         public ValueTask WriteShortAsync(short value, bool isAsync, CancellationToken ct)
         {
-            const int len = sizeof(short);
-            BinaryPrimitives.WriteInt16LittleEndian(GetBuffer(len), value);
-            return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
+            var buffer = GetBuffer(sizeof(short));
+            BinaryPrimitives.WriteInt16LittleEndian(buffer.Span, value);
+            return WriteBytesAsync(buffer, isAsync, ct);
         }
 
         /// <summary>
@@ -50,9 +50,9 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct">Cancellation token.</param>
         public ValueTask WriteIntAsync(int value, bool isAsync, CancellationToken ct)
         {
-            const int len = sizeof(int);
-            BinaryPrimitives.WriteInt32LittleEndian(GetBuffer(len), value);
-            return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
+            var buffer = GetBuffer(sizeof(int));
+            BinaryPrimitives.WriteInt32LittleEndian(buffer.Span, value);
+            return WriteBytesAsync(buffer, isAsync, ct);
         }
 
         /// <summary>
@@ -81,9 +81,9 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct">Cancellation token.</param>
         public ValueTask WriteLongAsync(long value, bool isAsync, CancellationToken ct)
         {
-            const int len = sizeof(long);
-            BinaryPrimitives.WriteInt64LittleEndian(GetBuffer(len), value);
-            return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
+            var buffer = GetBuffer(sizeof(long));
+            BinaryPrimitives.WriteInt64LittleEndian(buffer.Span, value);
+            return WriteBytesAsync(buffer, isAsync, ct);
         }
 
         /// <summary>
@@ -105,9 +105,9 @@ namespace Microsoft.Data.SqlClientX.IO
         {
             Debug.Assert(float.IsFinite(value), "Float value is out of range.");
 
-            const int len = sizeof(float);
-            BinaryPrimitives.WriteInt32LittleEndian(GetBuffer(len), BitConverter.SingleToInt32Bits(value));
-            return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
+            var buffer = GetBuffer(sizeof(float));
+            BinaryPrimitives.WriteInt64LittleEndian(buffer.Span, BitConverter.SingleToInt32Bits(value));
+            return WriteBytesAsync(buffer, isAsync, ct);
         }
 
         /// <summary>
@@ -120,9 +120,9 @@ namespace Microsoft.Data.SqlClientX.IO
         {
             Debug.Assert(double.IsFinite(value), "Double value is out of range.");
 
-            const int len = sizeof(double);
-            BinaryPrimitives.WriteInt64LittleEndian(GetBuffer(len), BitConverter.DoubleToInt64Bits(value));
-            return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
+            var buffer = GetBuffer(sizeof(double));
+            BinaryPrimitives.WriteInt64LittleEndian(buffer.Span, BitConverter.DoubleToInt64Bits(value));
+            return WriteBytesAsync(buffer, isAsync, ct);
         }
 
         /// <summary>
@@ -138,13 +138,12 @@ namespace Microsoft.Data.SqlClientX.IO
             Debug.Assert(length >= 0, "Length should not be negative");
             Debug.Assert(length <= 8, "Length specified is longer than the size of a long");
 
-            const int len = sizeof(long);
-            Span<byte> buffer = GetBuffer(len);
+            var buffer = GetBuffer(sizeof(long));
             for (int i = 0; i < length; i++)
             {
-                buffer[i] = (byte)((value >> (i * 8)) & 0xFF);
+                buffer.Span[i] = (byte)((value >> (i * 8)) & 0xFF);
             }
-            return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
+            return WriteBytesAsync(buffer, isAsync, ct);
         }
 
         /// <summary>
@@ -154,18 +153,18 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
         /// <param name="ct">Cancellation token.</param>
         /// <returns></returns>
-        public async ValueTask WriteBytesAsync(byte[] data, bool isAsync, CancellationToken ct)
+        public async ValueTask WriteBytesAsync(Memory<byte> data, bool isAsync, CancellationToken ct)
         {
             // Throw operation canceled exception before write.
             ct.ThrowIfCancellationRequested();
 
             if (isAsync)
             {
-                await _tdsStream.WriteAsync(data.AsMemory(), ct).ConfigureAwait(false);
+                await _tdsStream.WriteAsync(data, ct).ConfigureAwait(false);
             }
             else
             {
-                _tdsStream.Write(data.AsSpan());
+                _tdsStream.Write(data.Span);
             }
         }
 
@@ -173,42 +172,46 @@ namespace Microsoft.Data.SqlClientX.IO
         /// Serializes .NET Decimal to `SqlDecimal` represented by byte arrays for TDS writing.
         /// </summary>
         /// <param name="value">Decimal value,</param>
+        /// <param name="buffer">Buffer</param>
         /// <returns>Span of bytes for the TDS decimal type.</returns>
-        public Span<byte> SerializeDecimal(decimal value)
+        public static Span<byte> SerializeDecimal(decimal value, Span<byte> buffer)
         {
-            int[] decimalBits = decimal.GetBits(value);
-            Span<byte> buffer = GetBuffer(17);
-            int current = 0;
+            if (buffer.Length < 17)
+            {
+                return Span<byte>.Empty;
+            }
+
+            Span<int> decimalBits =
+#if !NET5_0_OR_GREATER
+                stackalloc int[4];
+                decimal.TryGetBits(value, decimalBits, out int valuesWritten);
+#else
+                decimal.GetBits(value);
+#endif
 
             /*
-             Returns a binary representation of a Decimal. The return value is an integer
-             array with four elements. Elements 0, 1, and 2 contain the low, middle, and
-             high 32 bits of the 96-bit integer part of the Decimal. Element 3 contains
-             the scale factor and sign of the Decimal: bits 0-15 (the lower word) are
-             unused; bits 16-23 contain a value between 0 and 28, indicating the power of
-             10 to divide the 96-bit integer part by to produce the Decimal value; bits 24-
-             30 are unused; and finally bit 31 indicates the sign of the Decimal value, 0
-             meaning positive and 1 meaning negative.
-
-             SQLDECIMAL/SQLNUMERIC has a byte stream of:
-             struct {
-                 BYTE sign; // 1 if positive, 0 if negative
-                 BYTE data[]; // 16 bits = int [4]
-             }
-
-             For TDS 7.0 and above, there are always 17 bytes of data
+                Returns a binary representation of a Decimal. The return value is an integer
+                array with four elements. Elements 0, 1, and 2 contain the low, middle, and
+                high 32 bits of the 96-bit integer part of the Decimal. Element 3 contains
+                the scale factor and sign of the Decimal: bits 0-15 (the lower word) are
+                unused; bits 16-23 contain a value between 0 and 28, indicating the power of
+                10 to divide the 96-bit integer part by to produce the Decimal value; bits 24-
+                30 are unused; and finally bit 31 indicates the sign of the Decimal value, 0
+                meaning positive and 1 meaning negative.
+                SQLDECIMAL/SQLNUMERIC has a byte stream of:
+                struct {
+                    BYTE sign; // 1 if positive, 0 if negative
+                    BYTE data[]; // 16 bits = int [4]
+                }
+                For TDS 7.0 and above, there are always 17 bytes of data
             */
-
             // write the sign (note that COM and SQL are opposite)
-            buffer[current++] = (byte)((((uint)decimalBits[3]) ^ 0x80000000) >> 31);
+            buffer[0] = (uint)decimalBits[3] != 0u ? (byte)1 : (byte)0;
 
-            BinaryPrimitives.TryWriteInt32LittleEndian(buffer[current..(4 + current)], decimalBits[0]);
-            current += 4;
-            BinaryPrimitives.TryWriteInt32LittleEndian(buffer[current..(4 + current)], decimalBits[1]);
-            current += 4;
-            BinaryPrimitives.TryWriteInt32LittleEndian(buffer[current..(4 + current)], decimalBits[2]);
-            current += 4;
-            BinaryPrimitives.TryWriteInt32LittleEndian(buffer[current..(4 + current)], 0);
+            BinaryPrimitives.TryWriteInt32LittleEndian(buffer.Slice(1, 4), decimalBits[0]);
+            BinaryPrimitives.TryWriteInt32LittleEndian(buffer.Slice(5, 4), decimalBits[1]);
+            BinaryPrimitives.TryWriteInt32LittleEndian(buffer.Slice(9, 4), decimalBits[2]);
+            BinaryPrimitives.TryWriteInt32LittleEndian(buffer.Slice(13, 4), 0);
 
             return buffer;
         }

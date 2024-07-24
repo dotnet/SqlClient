@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClient.UnitTests.IO;
+using Microsoft.Data.SqlClient.UnitTests.IO.TdsHelpers;
 using Microsoft.Data.SqlClientX.Handlers;
 using Microsoft.Data.SqlClientX.Handlers.Connection;
 using Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers;
@@ -169,7 +170,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                     255,
                     12, 0, 20, 229, 0, 0, (byte)EncryptionOptions.REQ, 0, 0, 1
                 };
-            TdsReadStreamTest.TdsMessage tdsMessage = TdsReadStreamTest.PrepareTdsMessage(100, preloginResponse, TdsEnums.MT_PRELOGIN);
+            TdsMessage tdsMessage = TdsReadStreamTest.PrepareTdsMessage(100, preloginResponse, TdsEnums.MT_PRELOGIN);
             SplittableStream splitStream = new(tdsMessage.GetBytes());
             TdsStream tdsStream = new(new TdsWriteStream(splitStream), new TdsReadStream(splitStream));
 
