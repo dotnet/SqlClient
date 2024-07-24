@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
@@ -33,9 +37,6 @@ namespace Microsoft.Data.SqlClient
 
                 if (usePartialPacket && _snapshot == null && _partialPacket != null && _partialPacket.IsComplete)
                 {
-                    //Debug.Assert(_snapshot == null, "_snapshot must be null when processing partial packet instead of network read");
-                    //Debug.Assert(_partialPacket != null, "_partialPacket must not be null when usePartialPacket is true");
-                    //Debug.Assert(_partialPacket.IsComplete, "_partialPacket.IsComplete must be true to use it in place of a real read");
                     SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength);
                     ClearPartialPacket();
                     getDataError = TdsEnums.SNI_SUCCESS;
@@ -147,12 +148,6 @@ namespace Microsoft.Data.SqlClient
                         if (_snapshotStatus != SnapshotStatus.NotActive && appended)
                         {
                             _snapshot.MoveNext();
-#if DEBUG
-                            // multiple packets can be appended by demuxing but we should only move 
-                            // forward by a single packet so we can no longer assert that we are on
-                            // the last packet at this time
-                            //_snapshot.AssertCurrent();
-#endif
                         }
                     }
 
@@ -216,10 +211,10 @@ namespace Microsoft.Data.SqlClient
                 if (!partialPacket.HasDataLength)
                 {
                     // we need to get enough bytes to read the packet header
-                    int headeBytesNeeded = Math.Max(0, TdsEnums.HEADER_LEN - partialPacket.CurrentLength);
-                    if (headeBytesNeeded > 0)
+                    int headerBytesNeeded = Math.Max(0, TdsEnums.HEADER_LEN - partialPacket.CurrentLength);
+                    if (headerBytesNeeded > 0)
                     {
-                        int headerBytesAvailable = Math.Min(data.Length, headeBytesNeeded);
+                        int headerBytesAvailable = Math.Min(data.Length, headerBytesNeeded);
 
                         Span<byte> headerTarget = partialPacket.Buffer.AsSpan(partialPacket.CurrentLength, headerBytesAvailable);
                         ReadOnlySpan<byte> headerSource = data.Slice(0, headerBytesAvailable);
@@ -255,7 +250,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (partialPacket.CurrentLength > partialPacket.RequiredLength)
                     {
-                        // the partial packet contains a complete packet of data and then and also contains
+                        // the partial packet contains a complete packet of data and also contains
                         // data from a following packet
 
                         // the TDS spec requires that all packets be of the defined packet size apart from
@@ -334,8 +329,8 @@ namespace Microsoft.Data.SqlClient
                                 CurrentLength = data.Length
                             };
                             consumeRemainderPacket = true;
-                            //Debug.Assert(remainderPacket.HasHeader); // precondition of entering this block
-                            //Debug.Assert(remainderPacket.HasDataLength); // must have been set at construction
+                            Debug.Assert(remainderPacket.HasHeader); // precondition of entering this block
+                            Debug.Assert(remainderPacket.HasDataLength); // must have been set at construction
                             if (remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
                             {
                                 // the remainder packet contains more data than the packet so we need
@@ -359,9 +354,9 @@ namespace Microsoft.Data.SqlClient
                     }
                     else // implied: current length > required length
                     {
-                        //// more data than required so need to split it out but we can't do that
-                        //// here so we need to tell the caller to take the remainer packet and then
-                        //// call this function again
+                        // more data than required so need to split it out but we can't do that
+                        // here so we need to tell the caller to take the remainder packet and then
+                        // call this function again
 
                         int remainderLength = data.Length - (TdsEnums.HEADER_LEN + packetDataLength);
                         remainderPacket = new Packet
