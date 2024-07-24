@@ -14,7 +14,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
 
 #nullable enable
@@ -29,7 +28,7 @@ namespace Microsoft.Data.SqlClientX
     internal sealed class SqlConnectionX : DbConnection, ICloneable
     {
         #region private
-        private static readonly SqlConnectionStringBuilder DefaultSettings = new();
+        private static readonly SqlConnectionString DefaultSettings = new SqlConnectionString("");
 
         private SqlCredential? _credential;
         private SqlDataSource? _dataSource;
@@ -131,6 +130,8 @@ namespace Microsoft.Data.SqlClientX
                 _connectionString = value ?? string.Empty;
 
                 //TODO: build new data source or find existing data source based on connection string
+
+                //TODO: use data source settings, if found (don't override pool settings, etc.)
             }
         }
 
@@ -148,7 +149,7 @@ namespace Microsoft.Data.SqlClientX
 
         internal SqlConnector? InternalConnection => _internalConnection;
 
-        internal SqlConnectionStringBuilder Settings { get; private set; } = DefaultSettings;
+        internal SqlConnectionString Settings { get; private set; } = DefaultSettings;
 
         #endregion
 
@@ -247,6 +248,7 @@ namespace Microsoft.Data.SqlClientX
             await CloseAsync().ConfigureAwait(false);
             _disposed = true;
         }
+
         /// <inheritdoc/>
         public override void EnlistTransaction(Transaction? transaction)
             => throw new NotImplementedException();
