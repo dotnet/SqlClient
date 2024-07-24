@@ -19,8 +19,8 @@ namespace Microsoft.Data.SqlClient
 
             // read SSPI data received from server
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            bool result = _physicalStateObj.TryReadByteArray(receivedBuff, receivedLength);
-            if (!result)
+            TdsOperationStatus result = _physicalStateObj.TryReadByteArray(receivedBuff, receivedLength);
+            if (result != TdsOperationStatus.Done)
             {
                 throw SQL.SynchronousCallMayNotPend();
             }
