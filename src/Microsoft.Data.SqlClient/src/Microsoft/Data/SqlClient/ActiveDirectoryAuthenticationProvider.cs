@@ -634,12 +634,8 @@ namespace Microsoft.Data.SqlClient
                 string tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
                 tenantId = string.IsNullOrWhiteSpace(tenantId) ? null : tenantId;
 
-                string clientId = tokenCredentialKey._clientId;
-                if (clientId is null)
-                {
-                    clientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
-                    clientId = string.IsNullOrWhiteSpace(clientId) ? null : clientId;
-                }
+                string clientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
+                clientId = string.IsNullOrWhiteSpace(clientId) ? null : clientId;
 
                 string managedIdentityClientId = Environment.GetEnvironmentVariable("AZURE_MSI_CLIENT_ID");
                 managedIdentityClientId = string.IsNullOrWhiteSpace(managedIdentityClientId) ? null : managedIdentityClientId;
@@ -654,9 +650,17 @@ namespace Microsoft.Data.SqlClient
                         clientId,
                         async (cancellationToken) =>
                         {
-                            ManagedIdentityCredential miCredential = new ManagedIdentityCredential(managedIdentityClientId);
-                            AccessToken token = await miCredential.GetTokenAsync(
-                                new TokenRequestContext(new string[] { $"api://AzureADTokenExchange/.default" }),
+                            string tokenExchangeScope = "api://AzureADTokenExchange/.default";
+                            TokenCredentialKey miCredentialKey = new(
+                                typeof(ManagedIdentityCredential),
+                                tokenCredentialKey._authority,
+                                tokenExchangeScope,
+                                string.Empty,
+                                managedIdentityClientId);
+                            AccessToken token = await GetTokenAsync(
+                                miCredentialKey,
+                                string.Empty,
+                                new TokenRequestContext(new string[] { tokenExchangeScope }),
                                 cancellationToken).ConfigureAwait(false);
                             return token.Token;
                         });
@@ -667,7 +671,7 @@ namespace Microsoft.Data.SqlClient
                     throw new CredentialUnavailableException(Strings.AAD_FIC_Invalid_Setup);
                 }
 
-                return new TokenCredentialData(clientAssertionCredential, GetHash(secret));
+                return new TokenCredentialData(clientAssertionCredential, null);
             }
 
             // This should never be reached, but if it is, throw an exception that will be noticed during development
