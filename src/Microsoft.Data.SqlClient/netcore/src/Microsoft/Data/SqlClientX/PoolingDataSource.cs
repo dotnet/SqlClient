@@ -324,7 +324,7 @@ namespace Microsoft.Data.SqlClientX
                 cancellationToken
             );
 
-            ValueTask<SqlConnector?> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
+            async ValueTask<SqlConnector?> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
             {
                 // As long as we're under max capacity, attempt to increase the connector count and open a new connection.
                 for (var numConnectors = _numConnectors; numConnectors < MaxPoolSize; numConnectors = _numConnectors)
@@ -342,8 +342,7 @@ namespace Microsoft.Data.SqlClientX
                         SqlConnector? connector = new SqlConnector(state._owningConnection, this);
                         //TODO: set clear counter on connector
 
-                        //TODO: actually open the connector
-                        //await connector.Open(timeout, async, cancellationToken).ConfigureAwait(false);
+                        await connector.Open(timeout, async, cancellationToken).ConfigureAwait(false);
 
                         int i;
                         for (i = 0; i < MaxPoolSize; i++)
@@ -368,7 +367,7 @@ namespace Microsoft.Data.SqlClientX
                         //if (numConnectors >= MinConnections)
                         //  UpdatePruningTimer();
 
-                        return ValueTask.FromResult<SqlConnector?>(connector);
+                        return connector;
                     }
                     catch
                     {
@@ -387,7 +386,7 @@ namespace Microsoft.Data.SqlClientX
                     }
                 }
 
-                return ValueTask.FromResult<SqlConnector?>(null);
+                return null;
             }
         }
 

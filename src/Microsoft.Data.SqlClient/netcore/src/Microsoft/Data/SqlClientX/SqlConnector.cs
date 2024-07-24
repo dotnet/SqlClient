@@ -24,6 +24,8 @@ namespace Microsoft.Data.SqlClientX
         {
             OwningConnection = owningConnection;
             DataSource = dataSource;
+            //TODO: Set this based on the real server process id.
+            //We only set this in client code right now to simulate different processes and to differentiate internal connections.
             ServerProcessId = Interlocked.Increment(ref SpoofedServerProcessId);
         }
 
@@ -74,7 +76,19 @@ namespace Microsoft.Data.SqlClientX
         /// <exception cref="NotImplementedException"></exception>
         internal ValueTask Open(TimeSpan timeout, bool isAsync, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            //TODO: Simulates the work that will be done to open the connection.
+            //Remove when open is implemented.
+
+            if (isAsync)
+            {
+                Task WaitTask = Task.Delay(200);
+                return new ValueTask(WaitTask);
+            }
+            else
+            {
+                Thread.Sleep(200);
+                return ValueTask.CompletedTask;
+            }
         }
 
         /// <summary>
