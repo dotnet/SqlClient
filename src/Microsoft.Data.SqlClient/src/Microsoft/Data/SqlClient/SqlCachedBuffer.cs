@@ -30,12 +30,12 @@ namespace Microsoft.Data.SqlClient
             _cachedBytes = cachedBytes;
         }
 
-        internal List<byte[]> CachedBytes =>_cachedBytes;
+        internal List<byte[]> CachedBytes => _cachedBytes;
 
         /// <summary>
         /// Reads off from the network buffer and caches bytes. Only reads one column value in the current row.
         /// </summary>
-        internal static bool TryCreate(SqlMetaDataPriv metadata, TdsParser parser, TdsParserStateObject stateObj, out SqlCachedBuffer buffer)
+        internal static TdsOperationStatus TryCreate(SqlMetaDataPriv metadata, TdsParser parser, TdsParserStateObject stateObj, out SqlCachedBuffer buffer)
         {
             byte[] byteArr;
 
@@ -43,10 +43,12 @@ namespace Microsoft.Data.SqlClient
             buffer = null;
 
             // the very first length is already read.
-            if (!parser.TryPlpBytesLeft(stateObj, out ulong plplength))
+            TdsOperationStatus result = parser.TryPlpBytesLeft(stateObj, out ulong plplength);
+            if (result != TdsOperationStatus.Done)
             {
-                return false;
+                return result;
             }
+
             // For now we  only handle Plp data from the parser directly.
             Debug.Assert(metadata.metaType.IsPlp, "SqlCachedBuffer call on a non-plp data");
             do
@@ -59,9 +61,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     int cb = (plplength > (ulong)MaxChunkSize) ? MaxChunkSize : (int)plplength;
                     byteArr = new byte[cb];
-                    if (!stateObj.TryReadPlpBytes(ref byteArr, 0, cb, out cb))
+                    result = stateObj.TryReadPlpBytes(ref byteArr, 0, cb, out cb);
+                    if (result != TdsOperationStatus.Done)
                     {
-                        return false;
+                        return result;
                     }
                     Debug.Assert(cb == byteArr.Length);
                     if (cachedBytes.Count == 0)
@@ -72,15 +75,17 @@ namespace Microsoft.Data.SqlClient
                     cachedBytes.Add(byteArr);
                     plplength -= (ulong)cb;
                 } while (plplength > 0);
-                if (!parser.TryPlpBytesLeft(stateObj, out plplength))
+
+                result = parser.TryPlpBytesLeft(stateObj, out plplength);
+                if (result != TdsOperationStatus.Done)
                 {
-                    return false;
+                    return result;
                 }
             } while (plplength > 0);
             Debug.Assert(stateObj._longlen == 0 && stateObj._longlenleft == 0);
 
             buffer = new SqlCachedBuffer(cachedBytes);
-            return true;
+            return TdsOperationStatus.Done;
         }
 
         private static void AddByteOrderMark(byte[] byteArr, List<byte[]> cachedBytes)

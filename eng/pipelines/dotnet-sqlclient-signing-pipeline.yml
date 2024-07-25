@@ -125,6 +125,7 @@ extends:
         disableLegacyManifest: true
     stages:
     - stage: buildAKV
+      displayName: 'Build AKV Provider'
       jobs:
       - template: eng/pipelines/common/templates/jobs/build-signed-akv-package-job.yml@self
         parameters:
@@ -133,6 +134,7 @@ extends:
           publishSymbols: ${{ parameters['publishSymbols'] }}
 
     - stage: buildMDS
+      displayName: 'Build MDS'
       jobs:
       - template: eng/pipelines/common/templates/jobs/build-signed-package-job.yml@self
         parameters:
@@ -140,7 +142,8 @@ extends:
           softwareFolder: $(softwareFolder)
           publishSymbols: ${{ parameters['publishSymbols'] }}
 
-    - stage: package_validation
+    - stage: mds_package_validation
+      displayName: 'MDS Package Validation'
       dependsOn: buildMDS
       jobs:
       - template: eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self

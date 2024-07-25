@@ -19,7 +19,19 @@ parameters:
   - name: Configuration
     type: string
     default: '$(Configuration)'
-  
+
+  - name: generateSymbolsPackage
+    type: boolean
+    default: true
+
+  - name: displayName
+    type: string
+    default: 'NuGet pack with snupkg'
+
+  - name: installNuget
+    type: boolean
+    default: true
+
   - name: referenceType
     default: project
     values:
@@ -27,16 +39,22 @@ parameters:
     - package
 
 steps:
-- task: NuGetToolInstaller@1
-  displayName: 'Install Latest Nuget'
-  inputs:
-    checkLatest: true
+- ${{ if parameters.installNuget }}:
+  - task: NuGetToolInstaller@1
+    displayName: 'Install Latest Nuget'
+    inputs:
+      checkLatest: true
+
 - powershell: |
     $Commit=git rev-parse HEAD
     Write-Host "##vso[task.setvariable variable=CommitHead;]$Commit"
   displayName: CommitHead
+ 
 - task: NuGetCommand@2
-  displayName: 'NuGet pack with snupkg'
+  displayName: ${{parameters.displayName }}
   inputs:
     command: custom
-    arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+    ${{ if parameters.generateSymbolsPackage }}:
+      arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+    ${{else }}:
+      arguments: 'pack ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'

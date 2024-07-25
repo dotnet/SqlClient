@@ -4737,4 +4737,7 @@
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>証明書の検証中は証明書を使用できません。</value>
   </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>サーバーによって提供された証明書が、ServerCertificate オプションで指定された証明書と一致しません。</value>
+  </data>
 </root>
