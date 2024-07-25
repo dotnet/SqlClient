@@ -5,8 +5,6 @@
 #if NET8_0_OR_GREATER
 
 using System;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
@@ -18,6 +16,10 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal sealed class UnpooledDataSource : SqlDataSource
     {
+        volatile int _numConnectors;
+
+        internal override (int Total, int Idle, int Busy) Statistics => (_numConnectors, 0, _numConnectors);
+
         /// <summary>
         /// Initializes a new instance of UnpooledDataSource.
         /// </summary>
@@ -30,9 +32,11 @@ namespace Microsoft.Data.SqlClientX
 
 
         /// <inheritdoc/>
-        internal override ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        internal override async ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
-            return OpenNewInternalConnection(owningConnection, timeout, async, cancellationToken);
+            SqlConnector connector = await OpenNewInternalConnection(owningConnection, timeout, async, cancellationToken).ConfigureAwait(false);
+            Interlocked.Increment(ref _numConnectors);
+            return connector;
         }
 
         /// <inheritdoc/>
@@ -44,9 +48,10 @@ namespace Microsoft.Data.SqlClientX
         }
 
         /// <inheritdoc/>
-        internal override async ValueTask ReturnInternalConnection(bool async, SqlConnector connection)
+        internal override void ReturnInternalConnection(SqlConnector connection)
         {
-            await connection.Close(async).ConfigureAwait(false);
+            Interlocked.Decrement(ref _numConnectors);
+            connection.Close();
         }
     }
 }
