@@ -5178,7 +5178,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // read the collation for 7.x servers
-            if (col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE))
+            if (col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE) && ((tdsType != TdsEnums.SQLJSON)))
             {
                 result = TryProcessCollation(stateObj, out col.collation);
                 if (result != TdsOperationStatus.Done)
@@ -5958,6 +5958,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVARCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
+                case TdsEnums.SQLJSON:
                     // If bigvarchar(max), we only read the first chunk here,
                     // expecting the caller to read the rest
                     if (encoding == null)
@@ -6427,6 +6428,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNCHAR:
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
+                case TdsEnums.SQLJSON:
                     result = TryReadSqlStringValue(value, tdsType, length, md.encoding, isPlp, stateObj);
                     if (result != TdsOperationStatus.Done)
                     {
@@ -7964,6 +7966,7 @@ namespace Microsoft.Data.SqlClient
                              colmeta.tdsType == TdsEnums.SQLBIGVARCHAR ||
                              colmeta.tdsType == TdsEnums.SQLBIGVARBINARY ||
                              colmeta.tdsType == TdsEnums.SQLNVARCHAR ||
+                             colmeta.tdsType == TdsEnums.SQLJSON ||
                              // Large UDTs is WinFS-only
                              colmeta.tdsType == TdsEnums.SQLUDT,
                              "GetDataLength:Invalid streaming datatype");
@@ -9905,7 +9908,7 @@ namespace Microsoft.Data.SqlClient
                     stateObj.WriteByte(0);       // No schema
                 }
             }
-            else if (mt.IsCharType)
+            else if (mt.IsCharType && mt.SqlDbType != SqlDbTypeExtensions.Json)
             {
                 // if it is not supplied, simply write out our default collation, otherwise, write out the one attached to the parameter
                 SqlCollation outCollation = (param.Collation != null) ? param.Collation : _defaultCollation;
