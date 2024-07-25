@@ -576,7 +576,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 await stream.WriteStringAsync(clientInterfaceName, isAsync, ct).ConfigureAwait(false);
                 await stream.WriteStringAsync(rec.language, isAsync, ct).ConfigureAwait(false);
                 await stream.WriteStringAsync(rec.database, isAsync, ct).ConfigureAwait(false);
-
+                
                 // send over SSPI data if we are using SSPI
                 if (rec.useSSPI)
                 { 

@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClientX.IO
         {
             const int len = sizeof(short);
             short int16Value = (short)(value & 0xFFFF);
-            BinaryPrimitives.WriteInt16LittleEndian(GetBuffer(len), int16Value);
+            BinaryPrimitives.WriteInt16LittleEndian(GetBuffer(len).Span, int16Value);
             return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
         }
 
