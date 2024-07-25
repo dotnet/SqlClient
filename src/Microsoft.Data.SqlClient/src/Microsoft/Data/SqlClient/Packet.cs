@@ -6,6 +6,12 @@ using System;
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <summary>
+    /// Contains a buffer for a partial or full packet and methods to get information about the status of
+    /// the packet that the buffer represents.<br /> 
+    /// This class is used to contain partial packet data and helps ensure that the packet data is completely
+    /// received before a full packet is made available to the rest of the library
+    /// </summary>
     internal sealed class Packet
     {
         public const int UnknownDataLength = -1;
@@ -21,6 +27,11 @@ namespace Microsoft.Data.SqlClient
             _dataLength = UnknownDataLength;
         }
 
+        /// <summary>
+        /// If the packet data has enough bytes available to determine the length amount of data that should be present
+        /// in the packet then this property will be set to the count of data bytes in the packet.<br />
+        /// Otherwise this will be -1
+        /// </summary>
         public int DataLength
         {
             get
@@ -34,6 +45,10 @@ namespace Microsoft.Data.SqlClient
                 _dataLength = value;
             }
         }
+
+        /// <summary>
+        /// A byte array containing <see cref="CurrentLength"/> bytes of data or 
+        /// </summary>
         public byte[] Buffer
         {
             get
@@ -47,6 +62,10 @@ namespace Microsoft.Data.SqlClient
                 _buffer = value;
             }
         }
+
+        /// <summary>
+        /// The total count of bytes currently in the <see cref="Buffer"/> array including the tds header bytes
+        /// </summary>
         public int CurrentLength
         {
             get
@@ -61,6 +80,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// If the packet data has enough bytes available to determine the length amount of data that should be present
+        /// in the packet then this property will return the count of data bytes that are expected to be in the packet.<br />
+        /// If there are not enough bytes to determine the data byte count then this property will throw an exception.<br />
+        /// <br />
+        /// Call <see cref="HasDataLength"/> to check if there will be a value before using this property.
+        /// </summary>
         public int RequiredLength
         {
             get
@@ -74,12 +100,30 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// returns a boolean value indicating if there are enough total bytes availble in the <see cref="Buffer"/> to read the tds header
+        /// </summary>
         public bool HasHeader => _totalLength >= TdsEnums.HEADER_LEN;
 
+        /// <summary>
+        /// returns a boolean value indicating if the <see cref="DataLength"/> value has been set.
+        /// </summary>
         public bool HasDataLength => _dataLength >= 0;
 
+        /// <summary>
+        /// returns a boolean value indicating whether the <see cref="Buffer"/> contains enough
+        /// data for a valid tds header, has a <see cref="DataLength"/> set and that the 
+        /// <see cref="CurrentLength"/> is equal to the <see cref="DataLength"/> + tds header length.<br /> 
+        /// </summary>
         public bool IsComplete => _dataLength != UnknownDataLength && (TdsEnums.HEADER_LEN + _dataLength) == _totalLength;
 
+        /// <summary>
+        /// returns a <seealso href="ReadOnlySpan&lt;byte&gt;"/> containing the first 8 bytes of the <see cref="Buffer"/> array which will
+        /// contain the TDS header bytes. This can be passed to static functions on <see cref="Packet"/> to extract information from the
+        /// tds packet header.<br />
+        /// Call <see cref="HasHeader "/> before using this function.
+        /// </summary>
+        /// <returns></returns>
         public ReadOnlySpan<byte> GetHeaderSpan() => _buffer.AsSpan(0, TdsEnums.HEADER_LEN);
 
         public void Dispose()
