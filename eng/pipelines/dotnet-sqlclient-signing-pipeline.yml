@@ -38,23 +38,32 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   displayName: 'Enable debug output'
   type: boolean
   default: false
+
+- name: publishSymbols
+  type: boolean
+  default: false
+
+- name: MDS_PackageRef_Version
+  displayName: 'MDS package version of AKV Provider (build AKV)'
+  type: string
+  default: 3.0.0
+
+- name: CurrentNetFxVersion
+  displayName: 'Lowest supported .NET Framework version (MDS validation)'
+  type: string
+  default: 'net461'
+
+- name: enableAllSdlTools
+  displayName: 'Enable all SDL tools'
+  type: boolean
+  default: true
+
 - name: oneBranchType
   displayName: 'Select OneBranch template'
   default: Official
   values:
   - NonOfficial
   - Official
-- name: publishSymbols
-  type: boolean
-  default: false
-- name: MDS_PackageRef_Version
-  displayName: 'MDS package version of AKV Provider (build AKV)'
-  type: string
-  default: 3.0.0
-- name: CurrentNetFxVersion
-  displayName: 'Lowest supported .NET Framework version (MDS validation)'
-  type: string
-  default: 'net461'
 
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
@@ -77,45 +86,45 @@ resources:
       ref: refs/heads/main
 
 extends:
-  template: v2/OneBranch.${{ parameters['oneBranchType'] }}.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  template: v2/OneBranch.${{parameters.oneBranchType }}.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
   parameters:
     globalSdl: # https://aka.ms/obpipelines/sdl
       apiscan:
-        enabled: true
+        enabled: ${{parameters.enableAllSdlTools }}
         softwareFolder: $(softwareFolder)
         symbolsFolder: $(symbolsFolder)
         softwarename: Microsoft.Data.SqlClient
         versionNumber: $(AssemblyFileVersion)
       tsa:
-        enabled: true # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
+        enabled: ${{parameters.enableAllSdlTools }} # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
       codeql:
         compiled:
           enabled: false #[warning]Consider running CodeQL on the default branch only.
       sbom:
-        enabled: true
+        enabled: ${{parameters.enableAllSdlTools }}
         packageName: Microsoft.Data.SqlClient
         packageVersion: $(NugetPackageVersion)
       policheck:
-        enabled: true
+        enabled: ${{parameters.enableAllSdlTools }}
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
         exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
         enabled: false
         credscan:
-          enabled: true
+          enabled: ${{parameters.enableAllSdlTools }}
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
         binskim:
-          enabled: true
+          enabled: ${{parameters.enableAllSdlTools }}
         armory:
-          enabled: true
+          enabled: ${{parameters.enableAllSdlTools }}
           break: true
         eslint: # TypeScript and JavaScript
           enabled: false
         roslyn:
-          enabled: true
+          enabled: ${{parameters.enableAllSdlTools }}
           break: true
         publishLogs:
-          enabled: true
+          enabled: ${{parameters.enableAllSdlTools }}
         tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
