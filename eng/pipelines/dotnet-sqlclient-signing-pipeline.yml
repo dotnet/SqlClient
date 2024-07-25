@@ -58,6 +58,13 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: boolean
   default: true
 
+- name: oneBranchType
+  displayName: 'Select OneBranch template'
+  default: Official
+  values:
+  - NonOfficial
+  - Official
+
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
   - name: packageFolderName
@@ -79,7 +86,7 @@ resources:
       ref: refs/heads/main
 
 extends:
-  template: v2/OneBranch.Official.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
+  template: v2/OneBranch.${{parameters.oneBranchType }}.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
   parameters:
     featureFlags:
       WindowsHostVersion: 1ESWindows2022
