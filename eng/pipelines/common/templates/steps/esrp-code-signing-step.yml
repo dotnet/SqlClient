@@ -17,19 +17,37 @@ parameters:
     type: string
     default: $(artifactDirectory)
 
+  - name: appRegistrationClientId
+    type: string
+    default: $(appRegistrationClientId)
+
+  - name: appRegistrationTenantId
+    type: string
+    default: $(appRegistrationTenantId)
+
 steps:
 - ${{ if eq(parameters.artifactType, 'dll') }}:
-  - task: SFP.build-tasks.custom-build-task-2.EsrpMalwareScanning@4
+  - task: EsrpMalwareScanning@5
     displayName: 'ESRP MalwareScanning'
     inputs:
-      ConnectedServiceName: 'SqlClient ESRP Malware Scanning'
+      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
+      AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
+      AuthAKVName: SqlClientDrivers
+      AuthCertName: 'ESRP-Release-Auth'
       FolderPath: '${{parameters.sourceRoot }}'
       Pattern: '*.dll'
-      Region: US
-  - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
+      CleanupTempStorage: 1
+      VerboseLogin: 1
+  - task: EsrpCodeSigning@5
     displayName: 'ESRP CodeSigning'
     inputs:
-      ConnectedServiceName: 'SqlClient ESRP Code Signing'
+      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
+      AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
+      AuthAKVName: SqlClientDrivers
+      AuthCertName: 'ESRP-Release-Auth'
+      AuthSignCertName: 'ESRP-Release-Sign2'
       FolderPath: '${{parameters.sourceRoot }}'
       Pattern: '*.dll'
       signConfigType: inlineSignParams
@@ -73,17 +91,28 @@ steps:
           ] 
 
 - ${{ if eq(parameters.artifactType, 'pkg') }}:
-  - task: SFP.build-tasks.custom-build-task-2.EsrpMalwareScanning@4
+  - task: EsrpMalwareScanning@5
     displayName: 'ESRP MalwareScanning Nuget Package'
     inputs:
-      ConnectedServiceName: 'SqlClient ESRP Malware Scanning'
+      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
+      AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
+      AuthAKVName: SqlClientDrivers
+      AuthCertName: 'ESRP-Release-Auth'
       FolderPath: '${{parameters.artifactDirectory }}'
       Pattern: '*.*nupkg'
-      Region: US
-  - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
+      CleanupTempStorage: 1
+      VerboseLogin: 1
+  - task: EsrpCodeSigning@5
     displayName: 'ESRP CodeSigning Nuget Package'
     inputs:
-      ConnectedServiceName: 'SqlClient ESRP Code Signing'
+      inputs:
+      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
+      AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
+      AuthAKVName: SqlClientDrivers
+      AuthCertName: 'ESRP-Release-Auth'
+      AuthSignCertName: 'ESRP-Release-Sign2'
       FolderPath: '${{parameters.artifactDirectory }}'
       Pattern: '*.*nupkg'
       signConfigType: inlineSignParams
