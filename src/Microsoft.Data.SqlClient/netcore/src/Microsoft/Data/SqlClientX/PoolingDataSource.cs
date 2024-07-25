@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// The design of this pool is attributed to the npgsql driver. See PoolingDataSource:
+// https://github.com/npgsql/npgsql/blob/main/src/Npgsql/PoolingDataSource.cs
+
 #if NET8_0_OR_GREATER
 
 using System;
