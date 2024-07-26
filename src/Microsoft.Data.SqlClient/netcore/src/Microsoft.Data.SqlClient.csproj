@@ -928,7 +928,7 @@
     <Compile Include="Microsoft\Data\SqlClientX\IO\TdsWriter.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\ConnectionHandlerContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\DataSourceParsingHandler.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreLoginHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\PreloginHandlerContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\PreloginPacketHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\Tds8TlsHandler.cs" />
@@ -946,9 +946,8 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\NoSuitableHandlerFoundException.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ReturningHandlerChain.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ReturningHandlerChainExceptionBehavior.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerOrchestrator.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\InternalConnectionContext.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\SqlUtilsX.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\ConnectionHandlerOrchestrator.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\SqlUtilsX.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsReadStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsWriteStream.cs" />

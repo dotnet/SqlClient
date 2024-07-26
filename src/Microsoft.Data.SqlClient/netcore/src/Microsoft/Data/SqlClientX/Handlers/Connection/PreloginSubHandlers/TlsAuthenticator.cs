@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
             try
             {
                 SqlClientEventSource.Log.TryTraceEvent("PreloginHandler.AuthenticateClient | Info | Session Id {0}", context.ConnectionContext.ConnectionId);
-                using (TrySNIEventScope.Create(nameof(PreloginHandler)))
+                using (TrySNIEventScope.Create(nameof(PreLoginHandler)))
                 {
                     Guid connectionId = context.ConnectionContext.ConnectionId;
                     SslOverTdsStream sslOverTdsStream = context.ConnectionContext.SslOverTdsStream;

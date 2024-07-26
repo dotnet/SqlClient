@@ -16,7 +16,7 @@ using Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers;
 using Microsoft.Data.SqlClientX.IO;
 using Moq;
 using Xunit;
-using static Microsoft.Data.SqlClientX.Handlers.Connection.PreloginHandler;
+using static Microsoft.Data.SqlClientX.Handlers.Connection.PreLoginHandler;
 
 namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
 {
@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.Prelogin
                     mockHandler.Object
                 );
 
-            PreloginHandler handler = new(authenticator, mockPreloginSubHandlerBuilder.Object);
+            PreLoginHandler handler = new(authenticator, mockPreloginSubHandlerBuilder.Object);
 
             await handler.Handle(connectionContext, isAsync, default);
 

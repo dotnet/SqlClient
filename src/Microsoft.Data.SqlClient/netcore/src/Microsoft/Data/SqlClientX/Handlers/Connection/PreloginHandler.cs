@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
     /// This handler will send the prelogin based on the features requested in the connection string.
     /// It will consume the prelogin handshake and pass the control to the next handler.
     /// </summary>
-    internal class PreloginHandler : IHandler<ConnectionHandlerContext>
+    internal class PreLoginHandler : IHandler<ConnectionHandlerContext>
     {
         /// <summary>
         /// The Helper object to perform TLS authentication.
@@ -32,9 +32,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         private readonly PreloginSubHandlerBuilder _subHandlerChainBuilder;
 
         /// <summary>
-        /// Paraemter-less constructor which creates an authenticator for TLS.
+        /// Parameter-less constructor which creates an authenticator for TLS.
         /// </summary>
-        public PreloginHandler() : this(new TlsAuthenticator(), new PreloginSubHandlerBuilder())
+        public PreLoginHandler() : this(new TlsAuthenticator(), new PreloginSubHandlerBuilder())
         {
         }
 
@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// </summary>
         /// <param name="tlsAuthenticator">The Tls authenticator to use.</param>
         /// <param name="subHandlerChainBuilder">Chain builder.</param>
-        public PreloginHandler(TlsAuthenticator tlsAuthenticator, PreloginSubHandlerBuilder subHandlerChainBuilder)
+        public PreLoginHandler(TlsAuthenticator tlsAuthenticator, PreloginSubHandlerBuilder subHandlerChainBuilder)
         {
             _tlsAuthenticator = tlsAuthenticator;
             _subHandlerChainBuilder = subHandlerChainBuilder;
@@ -104,11 +104,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 Guid connectionId = preloginContext.ConnectionContext.ConnectionId;
                 if (!preloginContext.ShouldValidateCertificate())
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(PreloginHandler), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: connectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(PreLoginHandler), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: connectionId);
                     return true;
                 }
 
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(PreloginHandler), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: connectionId);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(PreLoginHandler), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: connectionId);
 
                 return SNICommon.ValidateSslServerCertificate(connectionId,
                     preloginContext.ConnectionContext.DataSource.ServerName,
