@@ -409,9 +409,8 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                SecurityToken validatedToken;
                 JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
-                var token = handler.ValidateToken(attestationToken, validationParameters, out validatedToken);
+                var token = handler.ValidateToken(attestationToken, validationParameters, out SecurityToken _);
                 isSignatureValid = true;
             }
             catch (SecurityTokenExpiredException securityException)

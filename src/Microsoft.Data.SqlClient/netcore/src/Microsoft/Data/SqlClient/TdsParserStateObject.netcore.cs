@@ -1258,9 +1258,8 @@ namespace Microsoft.Data.SqlClient
                                 return;
                             }
 
-                            uint sniError;
                             _parser._asyncWrite = false; // stop async write
-                            SNIWritePacket(attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false, asyncClose);
+                            SNIWritePacket(attnPacket, out uint _, canAccumulate: false, callerHasConnectionLock: false, asyncClose);
                             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.SendAttention | Info | State Object Id {0}, Sent Attention.", _objectID);
                         }
                         finally

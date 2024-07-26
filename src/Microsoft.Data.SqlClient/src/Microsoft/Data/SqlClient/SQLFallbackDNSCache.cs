@@ -42,8 +42,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool DeleteDNSInfo(string FQDN)
         {
-            SQLDNSInfo value;
-            return DNSInfoCache.TryRemove(FQDN, out value);
+            return DNSInfoCache.TryRemove(FQDN, out SQLDNSInfo _);
         }
 
         internal bool GetDNSInfo(string FQDN, out SQLDNSInfo result)

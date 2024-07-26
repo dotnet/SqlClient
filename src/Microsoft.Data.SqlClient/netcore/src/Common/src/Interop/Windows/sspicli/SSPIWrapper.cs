@@ -406,8 +406,7 @@ namespace System.Net
 
         public static object QueryContextAttributes(SSPIInterface secModule, SafeDeleteContext securityContext, Interop.SspiCli.ContextAttribute contextAttribute)
         {
-            int errorCode;
-            return QueryContextAttributes(secModule, securityContext, contextAttribute, out errorCode);
+            return QueryContextAttributes(secModule, securityContext, contextAttribute, out int _);
         }
 
         public static object QueryContextAttributes(SSPIInterface secModule, SafeDeleteContext securityContext, Interop.SspiCli.ContextAttribute contextAttribute, out int errorCode)

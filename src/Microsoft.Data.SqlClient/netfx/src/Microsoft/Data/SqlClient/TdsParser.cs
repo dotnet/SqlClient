@@ -4720,9 +4720,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // read status and ignore
-            byte ignored;
-            result = stateObj.TryReadByte(out ignored);
+            // read status
+            result = stateObj.TryReadByte(out _);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -5302,8 +5301,7 @@ namespace Microsoft.Data.SqlClient
                                     {
                                         if (stateObj._longlen != 0)
                                         {
-                                            ulong ignored;
-                                            TdsOperationStatus result = TrySkipPlpValue(UInt64.MaxValue, stateObj, out ignored);
+                                            TdsOperationStatus result = TrySkipPlpValue(UInt64.MaxValue, stateObj, out _);
                                             if (result != TdsOperationStatus.Done)
                                             {
                                                 throw SQL.SynchronousCallMayNotPend();
@@ -6309,9 +6307,8 @@ namespace Microsoft.Data.SqlClient
             for (int i = 0; i < columns.Length; i++)
             {
                 _SqlMetaData col = columns[i];
-
-                byte ignored;// colnum, ignore
-                result = stateObj.TryReadByte(out ignored);
+                
+                result = stateObj.TryReadByte(out _);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -6712,8 +6709,7 @@ namespace Microsoft.Data.SqlClient
 
             if (md.metaType.IsPlp)
             {
-                ulong ignored;
-                result = TrySkipPlpValue(UInt64.MaxValue, stateObj, out ignored);
+                result = TrySkipPlpValue(UInt64.MaxValue, stateObj, out _);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -13761,9 +13757,7 @@ namespace Microsoft.Data.SqlClient
 
             if (stateObj._longlenleft == 0)
             {
-                ulong ignored;
-
-                result = stateObj.TryReadPlpLength(false, out ignored);
+                result = stateObj.TryReadPlpLength(false, out _);
                 if (result != TdsOperationStatus.Done)
                 {
                     totalCharsRead = 0;
@@ -13812,8 +13806,7 @@ namespace Microsoft.Data.SqlClient
                         return result;
                     }
                     stateObj._longlenleft--;
-                    ulong ignored;
-                    result = stateObj.TryReadPlpLength(false, out ignored);
+                    result = stateObj.TryReadPlpLength(false, out _);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
@@ -13835,8 +13828,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (stateObj._longlenleft == 0)
                 { // Read the next chunk or cleanup state if hit the end
-                    ulong ignored;
-                    result = stateObj.TryReadPlpLength(false, out ignored);
+                    result = stateObj.TryReadPlpLength(false, out _);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
@@ -13944,8 +13936,7 @@ namespace Microsoft.Data.SqlClient
 
             if (stateObj._longlenleft == 0)
             {
-                ulong ignored;
-                result = stateObj.TryReadPlpLength(false, out ignored);
+                result = stateObj.TryReadPlpLength(false, out _);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -13971,8 +13962,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (stateObj._longlenleft == 0)
                 {
-                    ulong ignored;
-                    result = stateObj.TryReadPlpLength(false, out ignored);
+                    result = stateObj.TryReadPlpLength(false, out _);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;

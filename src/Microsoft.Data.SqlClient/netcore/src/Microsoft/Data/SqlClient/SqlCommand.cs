@@ -1605,10 +1605,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        bool dataReady;
                         Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                        TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj,
-                            out dataReady);
+                        TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
                         if (result != TdsOperationStatus.Done)
                         {
                             throw SQL.SynchronousCallMayNotPend();
@@ -3680,9 +3678,8 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
                     if (result != TdsOperationStatus.Done)
                     {
                         throw SQL.SynchronousCallMayNotPend();
@@ -5298,9 +5295,8 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out dataReady);
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out _);
                     if (result != TdsOperationStatus.Done)
                     {
                         throw SQL.SynchronousCallMayNotPend();

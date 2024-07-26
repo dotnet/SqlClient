@@ -214,7 +214,6 @@ namespace System.Net.Security
                 NetEventSource.Enter(null, package, intent);
 
             int errorCode = -1;
-            long timeStamp;
 
             outCredential = new SafeFreeCredential_SECURITY();
 
@@ -227,7 +226,7 @@ namespace System.Net.Security
                             null,
                             null,
                             ref outCredential._handle,
-                            out timeStamp);
+                            out long _);
 
 #if TRACE_VERBOSE
             if (NetEventSource.IsEnabled) NetEventSource.Info(null, $"{nameof(Interop.SspiCli.AcquireCredentialsHandleW)} returns 0x{errorCode:x}, handle = {outCredential}");
@@ -248,7 +247,6 @@ namespace System.Net.Security
             out SafeFreeCredentials outCredential)
         {
             int errorCode = -1;
-            long timeStamp;
 
             outCredential = new SafeFreeCredential_SECURITY();
             errorCode = Interop.SspiCli.AcquireCredentialsHandleW(
@@ -260,7 +258,7 @@ namespace System.Net.Security
                             null,
                             null,
                             ref outCredential._handle,
-                            out timeStamp);
+                            out long _);
 
             if (errorCode != 0)
             {
@@ -280,7 +278,6 @@ namespace System.Net.Security
                 NetEventSource.Enter(null, package, intent, authdata);
 
             int errorCode = -1;
-            long timeStamp;
 
 
             // If there is a certificate, wrap it into an array.
@@ -305,7 +302,7 @@ namespace System.Net.Security
                                 null,
                                 null,
                                 ref outCredential._handle,
-                                out timeStamp);
+                                out long _);
             }
             finally
             {
@@ -632,8 +629,6 @@ namespace System.Net.Security
 
                 Interop.SspiCli.CredHandle credentialHandle = inCredentials._handle;
 
-                long timeStamp;
-
                 errorCode = Interop.SspiCli.InitializeSecurityContextW(
                                 ref credentialHandle,
                                 inContextPtr,
@@ -646,7 +641,7 @@ namespace System.Net.Security
                                 ref outContext._handle,
                                 ref outputBuffer,
                                 ref attributes,
-                                out timeStamp);
+                                out long _);
             }
             finally
             {
@@ -919,7 +914,6 @@ namespace System.Net.Security
                 outContext.DangerousAddRef(ref ignore);
 
                 Interop.SspiCli.CredHandle credentialHandle = inCredentials._handle;
-                long timeStamp;
 
                 errorCode = Interop.SspiCli.AcceptSecurityContext(
                                 ref credentialHandle,
@@ -930,7 +924,7 @@ namespace System.Net.Security
                                 ref outContext._handle,
                                 ref outputBuffer,
                                 ref outFlags,
-                                out timeStamp);
+                                out long _);
             }
             finally
             {

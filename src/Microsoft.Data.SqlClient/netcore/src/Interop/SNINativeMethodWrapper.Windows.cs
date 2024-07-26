@@ -476,14 +476,13 @@ namespace Microsoft.Data.SqlClient
             fixed (byte* pin_serverUserName = &serverUserName[0])
             fixed (byte* pInBuff = inBuff)
             {
-                bool local_fDone;
                 return SNISecGenClientContextWrapper(
                     pConnectionObject,
                     pInBuff,
                     (uint)inBuff.Length,
                     OutBuff,
                     ref sendLength,
-                    out local_fDone,
+                    out bool _,
                     pin_serverUserName,
                     (uint)serverUserName.Length,
                     null,

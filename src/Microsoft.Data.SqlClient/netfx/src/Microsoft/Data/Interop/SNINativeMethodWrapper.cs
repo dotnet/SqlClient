@@ -1201,8 +1201,7 @@ namespace Microsoft.Data.SqlClient
             if (ret == ERROR_SUCCESS)
             {
                 // added a provider, need to requery for sync over async support
-                bool fSupportsSyncOverAsync;
-                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out fSupportsSyncOverAsync);
+                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
                 Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
             }
 
@@ -1230,8 +1229,7 @@ namespace Microsoft.Data.SqlClient
             if (ret == ERROR_SUCCESS)
             {
                 // added a provider, need to requery for sync over async support
-                bool fSupportsSyncOverAsync;
-                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out fSupportsSyncOverAsync);
+                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
                 Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
             }
 
@@ -1384,13 +1382,12 @@ namespace Microsoft.Data.SqlClient
         {
             fixed (byte* pin_serverUserName = &serverUserName[0])
             {
-                bool local_fDone;
                 return SNISecGenClientContextWrapper(
                     pConnectionObject,
                     inBuff,
                     OutBuff,
                     ref sendLength,
-                    out local_fDone,
+                    out bool _,
                     pin_serverUserName,
                     (uint)serverUserName.Length,
                     null,

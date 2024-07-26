@@ -1535,14 +1535,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
                     WriteBeginExecuteEvent();
-                    bool usedCache;
                     if (IsProviderRetriable)
                     {
-                        InternalExecuteNonQueryWithRetry(nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out usedCache, asyncWrite: false, inRetry: false);
+                        InternalExecuteNonQueryWithRetry(nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out _, asyncWrite: false, inRetry: false);
                     }
                     else
                     {
-                        InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out usedCache);
+                        InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out _);
                     }
                     success = true;
                     return _rowsAffected;
@@ -1577,8 +1576,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    bool usedCache;
-                    InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), true, CommandTimeout, out usedCache);
+                    InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), true, CommandTimeout, out _);
                 }
                 finally
                 {
@@ -1968,9 +1966,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             try
                             {
-                                bool dataReady;
                                 Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                                TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
+                                TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
                                 if (result != TdsOperationStatus.Done)
                                 {
                                     throw SQL.SynchronousCallMayNotPend();
@@ -4000,9 +3997,8 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
                     if (result != TdsOperationStatus.Done)
                     {
                         throw SQL.SynchronousCallMayNotPend();
@@ -5131,8 +5127,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlDataReader RunExecuteReader(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, string method)
         {
             Task unused; // sync execution 
-            bool usedCache;
-            SqlDataReader reader = RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, completion: null, timeout: CommandTimeout, task: out unused, usedCache: out usedCache);
+            SqlDataReader reader = RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, completion: null, timeout: CommandTimeout, task: out unused, out _);
             Debug.Assert(unused == null, "returned task during synchronous execution");
             return reader;
         }
@@ -5615,9 +5610,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         Task executeTask = _stateObj.Parser.TdsExecuteSQLBatch(optionSettings, timeout, this.Notification, _stateObj, sync: true);
                         Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
-                        bool dataReady;
                         Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                        TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
+                        TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
                         if (result != TdsOperationStatus.Done)
                         {
                             throw SQL.SynchronousCallMayNotPend();
@@ -5822,9 +5816,8 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out dataReady);
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out _);
                     if (result != TdsOperationStatus.Done)
                     {
                         throw SQL.SynchronousCallMayNotPend();
