@@ -97,4 +97,6 @@
   <!-- Provides Build properties -->
   <Import Project="$(ToolsDir)props\AssemblyInfo.props" /> 
   <Import Project="$(ToolsDir)props\AssemblyRef.props" />  
+  <Import Project="$(ToolsDir)targets\RepositoryInfo.targets" />
+
 </Project>
