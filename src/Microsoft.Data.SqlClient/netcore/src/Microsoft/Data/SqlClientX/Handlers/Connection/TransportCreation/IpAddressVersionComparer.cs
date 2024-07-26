@@ -47,7 +47,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.TransportCreation
                 return 0;
             }
 
-            return x.AddressFamily == _preferredAddressFamily ? 1 : -1;
+            // If the address family is the preferred one, it should come first.
+            return x.AddressFamily == _preferredAddressFamily ? -1 : 1;
         }
     }
 }
