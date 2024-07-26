@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -25,7 +26,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
         ///  Datasource to use for connection test. This may be changed locally to test against a different server.
         ///  TODO: Migrate to config when we enable CI.
         /// </summary>
-        private string _dataSource = "tcp:localhost,1446";
+        private string _dataSource = "tcp:localhost,1433";
 
         [Fact]
         public async void TestConnectivity()
@@ -48,6 +49,8 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
             chc.ServerInfo = serverInfo;
             dspHandler.NextHandler = tcHandler;
             tcHandler.NextHandler = plHandler;
+            LoginHandler loginHandler = new();
+            plHandler.NextHandler = loginHandler;
             await Assert.ThrowsAsync<SocketException>(async () => await dspHandler.Handle(chc, true, default));
         }
     }

@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
     /// <summary>
     /// A handler for Sql Server login. 
     /// </summary>
-    internal class LoginHandler : IHandler<ConnectionHandlerContext>
+    internal class LoginHandler : ContextHandler<ConnectionHandlerContext>
     {
         // NIC address caching
         private static byte[] s_nicAddress;             // cache the NIC address from the registry
@@ -30,8 +30,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         private readonly SessionRecoveryFeature _sessionRecoveryFeature;
         private readonly FedAuthFeature _fedAuthFeature;
         private readonly TceFeature _tceFeature;
-
-        public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
 
         /// <summary>
         /// Parameterless constructor for the login handler.
@@ -48,7 +46,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             _sqlDnsCachingFeature = new SqlDnsCachingFeature();
         }
 
-        public async ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
+        public override async ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
         {
             LoginHandlerContext loginHandlerContext = new LoginHandlerContext(context);
             await SendLogin(loginHandlerContext, isAsync, ct).ConfigureAwait(false);
@@ -70,36 +68,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
             string currentLanguage = context.ConnectionOptions.CurrentLanguage;
 
-            TimeoutTimer timeout = context.ConnectionContext.TimeoutTimer;
-
-            // If a timeout tick value is specified, compute the timeout based
-            // upon the amount of time left in seconds.
-
-            // TODO: Rethink timeout handling.
-
-            int timeoutInSeconds = 0;
-
-            if (!timeout.IsInfinite)
-            {
-                long t = timeout.MillisecondsRemaining / 1000;
-
-                // This change was done because the timeout 0 being sent to SNI led to infinite timeout.
-                // TODO: is this really needed for Managed code? 
-                if (t == 0 && LocalAppContextSwitches.UseMinimumLoginTimeout)
-                {
-                    // Take 1 as the minimum value, since 0 is treated as an infinite timeout
-                    // to allow 1 second more for login to complete, since it should take only a few milliseconds.
-                    t = 1;
-                }
-
-                if (int.MaxValue > t)
-                {
-                    timeoutInSeconds = (int)t;
-                }
-            }
+            // TODO: Timeout handling needs to be taken care of.
 
             login.authentication = context.ConnectionOptions.Authentication;
-            login.timeout = timeoutInSeconds;
             login.userInstance = context.ConnectionOptions.UserInstance;
             login.hostName = context.ConnectionOptions.ObtainWorkstationId();
             login.userName = context.ConnectionOptions.UserID;
@@ -201,13 +172,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
         private async ValueTask TdsLogin(LoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            // TODO: Set the timeout
-            _ = context.Login.timeout;
-
-            // TODO: Add debug asserts.
-
-            // TODO: Add timeout internal details.
-
             // TODO: Password Change
 
             context.ConnectionContext.TdsStream.PacketHeaderType = TdsStreamPacketType.Login7;
@@ -239,8 +203,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             int encryptedPasswordLengthInBytes = encryptedPassword != null ? encryptedPassword.Length : 0;
             
             PasswordChangeRequest passwordChangeRequest = context.ConnectionContext.PasswordChangeRequest;
-            byte[] encryptedChangePassword = passwordChangeRequest?.NewSecurePassword != null ? null: TdsParserStaticMethods.ObfuscatePassword(passwordChangeRequest.NewPassword);
-            int encryptedChangePasswordLengthInBytes = passwordChangeRequest?.NewSecurePassword != null ? passwordChangeRequest.NewSecurePassword.Length : encryptedChangePassword.Length;
+            byte[] encryptedChangePassword = passwordChangeRequest?.NewSecurePassword == null ? null: TdsParserStaticMethods.ObfuscatePassword(passwordChangeRequest.NewPassword);
+            int encryptedChangePasswordLength = encryptedChangePassword != null ? encryptedChangePassword.Length : 0;
+            int encryptedChangePasswordLengthInBytes = passwordChangeRequest?.NewSecurePassword != null ? passwordChangeRequest.NewSecurePassword.Length : encryptedChangePasswordLength;
 
             byte[] rentedSSPIBuff = null;
             byte[] outSSPIBuff = null; // track the rented buffer as a separate variable in case it is updated via the ref parameter

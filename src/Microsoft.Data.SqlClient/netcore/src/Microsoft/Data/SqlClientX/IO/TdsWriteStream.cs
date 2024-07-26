@@ -218,14 +218,13 @@ namespace Microsoft.Data.SqlClientX.IO
 
         /// <inheritdoc />
         public async ValueTask WriteStringAsync(string value, bool isAsync, CancellationToken ct)
-        {
-            int cBytes = ADP.CharSize * value.Length;
-            
+        {            
+            int byteCount = Encoding.Unicode.GetByteCount(value.AsSpan());
             // There is enough space in the buffer.
-            if (cBytes > _writeBuffer.Length - _writeBufferOffset)
+            if (byteCount < _writeBuffer.Length - _writeBufferOffset)
             {
-                Encoding.Unicode.GetBytes(value.AsSpan(), _writeBuffer.AsSpan(_writeBufferOffset, value.Length));
-                _writeBufferOffset += cBytes;
+                int writtenBytes = Encoding.Unicode.GetBytes(value.AsSpan(), _writeBuffer.AsSpan(_writeBufferOffset));
+                _writeBufferOffset += byteCount;
             }
             else
             {
@@ -233,7 +232,7 @@ namespace Microsoft.Data.SqlClientX.IO
                 Encoding.Unicode.GetBytes(value.AsSpan(0, spaceLeft), _writeBuffer.AsSpan(_writeBufferOffset, spaceLeft));
                 await FlushPacketAsync(false, isAsync, ct).ConfigureAwait(false);
                 // Write the rest of the string.
-                Encoding.Unicode.GetBytes(value.AsSpan(spaceLeft), _writeBuffer.AsSpan(_writeBufferOffset, cBytes - spaceLeft));
+                Encoding.Unicode.GetBytes(value.AsSpan(spaceLeft), _writeBuffer.AsSpan(_writeBufferOffset, byteCount - spaceLeft));
             }
         }
 

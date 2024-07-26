@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
         /// <param name="featureIdentifier"></param>
         protected VersionConfigurableFeature(TdsEnums.FeatureExtension featureExtension, byte featureIdentifier) : base(featureExtension)
         {
-            Debug.Assert(_tdsFeatureIdentifier != 0x0, "Feature identifier should not be 0x0");
+            Debug.Assert(featureIdentifier != 0x0, "Feature identifier should not be 0x0");
             _tdsFeatureIdentifier = featureIdentifier;
         }
 
