@@ -41,11 +41,17 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
                 TrustServerCertificate = true,
                 UserID = "sa",
-                Password = Environment.GetEnvironmentVariable("PASSWORD"),
+                Password =  Environment.GetEnvironmentVariable("PASSWORD"),
+                ConnectRetryCount = 0,
             };
 
             SqlConnectionString scs = new(csb.ConnectionString);
             chc.ConnectionString = scs;
+
+            // MDS connectivity 
+            using (SqlConnection connection = new SqlConnection(csb.ConnectionString))
+                connection.Open();
+
             var serverInfo = new ServerInfo(scs);
             serverInfo.SetDerivedNames(null, serverInfo.UserServerName);
             chc.ServerInfo = serverInfo;
