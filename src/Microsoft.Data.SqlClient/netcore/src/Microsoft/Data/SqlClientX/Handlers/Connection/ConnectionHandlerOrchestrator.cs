@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             {
                 NextHandler = new TransportCreationHandler()
                 {
-                    NextHandler = new PreLoginHandler()
+                    NextHandler = new PreloginHandler()
                 }
             };
             return dataSourceParsingHandler.Handle(context, isAsync, ct);
