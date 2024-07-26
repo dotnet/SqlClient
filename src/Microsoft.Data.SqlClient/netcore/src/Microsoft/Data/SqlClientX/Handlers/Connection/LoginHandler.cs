@@ -684,46 +684,4 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             return log7Flags;
         }
     }
-
-    internal class LoginHandlerContext : HandlerRequest
-    {
-
-        public LoginHandlerContext(ConnectionHandlerContext context)
-        {
-            this.ConnectionContext = context;
-            this.ServerInfo = context.ServerInfo;
-            this.ConnectionOptions = context.ConnectionString;
-        }
-
-        private ConnectionHandlerContext ConnectionContext { get; }
-
-        public ServerInfo ServerInfo { get; }
-
-        public SqlConnectionString ConnectionOptions { get; }
-
-        /// <summary>
-        /// Features in the login request.
-        /// </summary>
-        public FeatureExtensions Features { get; } = new();
-
-        /// <summary>
-        /// The login record.
-        /// </summary>
-        public SqlLogin Login { get; internal set; }
-
-        /// <summary>
-        /// If feature extensions being used.
-        /// </summary>
-        public bool UseFeatureExt => Features.RequestedFeatures != TdsEnums.FeatureExtension.None;
-
-        public PasswordChangeRequest PasswordChangeRequest => ConnectionContext.PasswordChangeRequest;
-
-        public TdsStream TdsStream => TdsStream;
-
-        public Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback => ConnectionContext.AccessTokenCallback;
-
-        public byte[] AccessTokenInBytes => ConnectionContext.AccessTokenInBytes;
-
-        public bool FedAuthNegotiatedInPrelogin => ConnectionContext.FedAuthNegotiatedInPrelogin;
-    }
 }

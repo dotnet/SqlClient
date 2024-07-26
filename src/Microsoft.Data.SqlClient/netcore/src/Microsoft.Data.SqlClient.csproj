@@ -930,6 +930,7 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\DataSourceParsingHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginHandler.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\LoginHandler.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\Login\LoginHandlerContext.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\PasswordChangeRequest.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\Login\FeatureExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\PreloginSubHandlers\PreloginHandlerContext.cs" />
