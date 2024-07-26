@@ -372,7 +372,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData = context.Features.FedAuthFeatureExtensionData;
                 TdsWriter writer = stream.TdsWriter;
                 await writer.WriteIntAsync(length, isAsync, ct).ConfigureAwait(false);
-                await writer.WriteIntAsync(length, isAsync, ct).ConfigureAwait(false);
+
                 if (recoverySessionData == null)
                 {
                     int protocolVersion = encrypt == SqlConnectionEncryptOption.Strict

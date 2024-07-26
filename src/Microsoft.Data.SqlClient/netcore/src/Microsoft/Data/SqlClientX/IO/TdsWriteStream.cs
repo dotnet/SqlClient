@@ -224,10 +224,11 @@ namespace Microsoft.Data.SqlClientX.IO
             if (byteCount < _writeBuffer.Length - _writeBufferOffset)
             {
                 int writtenBytes = Encoding.Unicode.GetBytes(value.AsSpan(), _writeBuffer.AsSpan(_writeBufferOffset));
-                _writeBufferOffset += byteCount;
+                _writeBufferOffset += writtenBytes;
             }
             else
             {
+                //TODO : This requires validation.
                 int spaceLeft = _writeBuffer.Length - _writeBufferOffset;
                 Encoding.Unicode.GetBytes(value.AsSpan(0, spaceLeft), _writeBuffer.AsSpan(_writeBufferOffset, spaceLeft));
                 await FlushPacketAsync(false, isAsync, ct).ConfigureAwait(false);

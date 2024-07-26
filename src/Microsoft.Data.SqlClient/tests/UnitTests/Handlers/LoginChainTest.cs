@@ -39,7 +39,9 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
             {
                 DataSource = _dataSource,
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
-                TrustServerCertificate = true
+                TrustServerCertificate = true,
+                UserID = "sa",
+                Password = Environment.GetEnvironmentVariable("PASSWORD"),
             };
 
             SqlConnectionString scs = new(csb.ConnectionString);
