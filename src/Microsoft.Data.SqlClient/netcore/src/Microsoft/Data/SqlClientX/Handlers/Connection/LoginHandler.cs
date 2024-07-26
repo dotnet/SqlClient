@@ -7,9 +7,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClientX.Handlers.Connection.Login;
 using Microsoft.Data.SqlClientX.IO;
@@ -60,7 +58,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         {
             SqlLogin login = new SqlLogin();
 
-            PasswordChangeRequest passwordChangeRequest = context.ConnectionContext.PasswordChangeRequest;
+            PasswordChangeRequest passwordChangeRequest = context.PasswordChangeRequest;
 
             // gather all the settings the user set in the connection string or
             // properties and do the login
@@ -93,7 +91,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             login.useReplication = context.ConnectionOptions.Replication;
             login.useSSPI = context.ConnectionOptions.IntegratedSecurity  // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
                                      || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated 
-                                     && !context.ConnectionContext.FedAuthNegotiatedInPrelogin);
+                                     && !context.FedAuthNegotiatedInPrelogin);
             login.packetSize = context.ConnectionOptions.PacketSize;
             login.newPassword = passwordChangeRequest?.NewPassword;
             login.readOnlyIntent = context.ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
@@ -121,18 +119,18 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     {
                         libraryType = TdsEnums.FedAuthLibrary.MSAL,
                         authentication = context.ConnectionOptions.Authentication,
-                        fedAuthRequiredPreLoginResponse = context.ConnectionContext.FedAuthNegotiatedInPrelogin
+                        fedAuthRequiredPreLoginResponse = context.FedAuthNegotiatedInPrelogin
                     };
             }
 
-            if (context.ConnectionContext.AccessTokenInBytes != null)
+            if (context.AccessTokenInBytes != null)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 features.FedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
                 {
                     libraryType = TdsEnums.FedAuthLibrary.SecurityToken,
-                    fedAuthRequiredPreLoginResponse = context.ConnectionContext.FedAuthNegotiatedInPrelogin,
-                    accessToken = context.ConnectionContext.AccessTokenInBytes
+                    fedAuthRequiredPreLoginResponse = context.FedAuthNegotiatedInPrelogin,
+                    accessToken = context.AccessTokenInBytes
                 };
                 // No need any further info from the server for token based authentication. So set _federatedAuthenticationRequested to true
                 features.FederatedAuthenticationRequested = true;
@@ -165,8 +163,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                                                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                                                 || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated);
 
-                return IsEntraIdAuthInConnectionString && context.ConnectionContext.FedAuthNegotiatedInPrelogin
-                                || context.ConnectionContext.AccessTokenCallback != null;
+                return IsEntraIdAuthInConnectionString && context.FedAuthNegotiatedInPrelogin
+                                || context.AccessTokenCallback != null;
             }
         }
 
@@ -174,7 +172,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         {
             // TODO: Password Change
 
-            context.ConnectionContext.TdsStream.PacketHeaderType = TdsStreamPacketType.Login7;
+            context.TdsStream.PacketHeaderType = TdsStreamPacketType.Login7;
 
             // Fixed length of the login record
             int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
@@ -202,7 +200,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             byte[] encryptedPassword = rec.credential != null ? null : TdsParserStaticMethods.ObfuscatePassword(rec.password);
             int encryptedPasswordLengthInBytes = encryptedPassword != null ? encryptedPassword.Length : 0;
             
-            PasswordChangeRequest passwordChangeRequest = context.ConnectionContext.PasswordChangeRequest;
+            PasswordChangeRequest passwordChangeRequest = context.PasswordChangeRequest;
             byte[] encryptedChangePassword = passwordChangeRequest?.NewSecurePassword == null ? null: TdsParserStaticMethods.ObfuscatePassword(passwordChangeRequest.NewPassword);
             int encryptedChangePasswordLength = encryptedChangePassword != null ? encryptedChangePassword.Length : 0;
             int encryptedChangePasswordLengthInBytes = passwordChangeRequest?.NewSecurePassword != null ? passwordChangeRequest.NewSecurePassword.Length : encryptedChangePasswordLength;
@@ -225,28 +223,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 if (rec.useSSPI)
                 {
                     throw new NotImplementedException("SSPI is not implemented");
-                    // now allocate proper length of buffer, and set length
-                    //outSSPILength = _authenticationProvider.MaxSSPILength;
-                    //rentedSSPIBuff = ArrayPool<byte>.Shared.Rent((int)outSSPILength);
-                    //outSSPIBuff = rentedSSPIBuff;
-
-                    //// Call helper function for SSPI data and actual length.
-                    //// Since we don't have SSPI data from the server, send null for the
-                    //// byte[] buffer and 0 for the int length.
-                    //Debug.Assert(SniContext.Snix_Login == _physicalStateObj.SniContext, $"Unexpected SniContext. Expecting Snix_Login, actual value is '{_physicalStateObj.SniContext}'");
-                    //_physicalStateObj.SniContext = SniContext.Snix_LoginSspi;
-                    //_authenticationProvider.SSPIData(ReadOnlyMemory<byte>.Empty, ref outSSPIBuff, ref outSSPILength, _sniSpnBuffer);
-
-                    //if (outSSPILength > int.MaxValue)
-                    //{
-                    //    throw SQL.InvalidSSPIPacketSize();  // SqlBu 332503
-                    //}
-                    //_physicalStateObj.SniContext = SniContext.Snix_Login;
-
-                    //checked
-                    //{
-                    //    length += (int)outSSPILength;
-                    //}
                 }
             }
 
@@ -256,7 +232,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             length = CalculateFeatureExtensionLength(context);
 
             length += feOffset;
-
 
             // TODO : Plumb Session recovery.
             SessionData recoverySessionData = null;
@@ -282,7 +257,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             }
 
 
-            TdsStream stream = context.ConnectionContext.TdsStream;
+            TdsStream stream = context.TdsStream;
             ct.ThrowIfCancellationRequested();
             
             if (isAsync)
@@ -293,10 +268,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             {
                 stream.Flush();
             }
-
-            //TODO: _physicalStateObj.ResetSecurePasswordsInformation();     // Password information is needed only from Login process; done with writing login packet and should clear information
-            //TODO:  _physicalStateObj.HasPendingData = true;
-            //TODO: _physicalStateObj._messageStatus = 0;
         }
 
 
@@ -340,7 +311,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 {
                     feLength += _sqlDnsCachingFeature.GetLengthInBytes(context);
                 }
-
                 // terminator
                 feLength++;
             }
@@ -367,7 +337,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             {
                 SqlLogin rec = context.Login;
                 TdsEnums.FeatureExtension requestedFeatures = context.Features.RequestedFeatures;
-                TdsStream stream = context.ConnectionContext.TdsStream;
+                TdsStream stream = context.TdsStream;
                 SqlConnectionEncryptOption encrypt = context.ConnectionOptions.Encrypt;
                 FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData = context.Features.FedAuthFeatureExtensionData;
                 TdsWriter writer = stream.TdsWriter;
@@ -588,7 +558,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 if (ADP.IsCatchableExceptionType(e))
                 {
                     // Reset the buffer if there was an exception.
-                    context.ConnectionContext.TdsStream.Reset();
+                    context.TdsStream.Reset();
                 }
 
                 throw;
@@ -637,7 +607,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 }
 
                 // terminator
-                await context.ConnectionContext.TdsStream.WriteByteAsync(0xFF, isAsync, ct).ConfigureAwait(false);
+                await context.TdsStream.WriteByteAsync(0xFF, isAsync, ct).ConfigureAwait(false);
 
             }
         }
@@ -725,14 +695,16 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             this.ConnectionOptions = context.ConnectionString;
         }
 
-        public ConnectionHandlerContext ConnectionContext { get; }
+        private ConnectionHandlerContext ConnectionContext { get; }
+
         public ServerInfo ServerInfo { get; }
+
         public SqlConnectionString ConnectionOptions { get; }
 
         /// <summary>
         /// Features in the login request.
         /// </summary>
-        public FeatureExtensions Features { get; internal set; } = new();
+        public FeatureExtensions Features { get; } = new();
 
         /// <summary>
         /// The login record.
@@ -743,5 +715,15 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// If feature extensions being used.
         /// </summary>
         public bool UseFeatureExt => Features.RequestedFeatures != TdsEnums.FeatureExtension.None;
+
+        public PasswordChangeRequest PasswordChangeRequest => ConnectionContext.PasswordChangeRequest;
+
+        public TdsStream TdsStream => TdsStream;
+
+        public Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback => ConnectionContext.AccessTokenCallback;
+
+        public byte[] AccessTokenInBytes => ConnectionContext.AccessTokenInBytes;
+
+        public bool FedAuthNegotiatedInPrelogin => ConnectionContext.FedAuthNegotiatedInPrelogin;
     }
 }

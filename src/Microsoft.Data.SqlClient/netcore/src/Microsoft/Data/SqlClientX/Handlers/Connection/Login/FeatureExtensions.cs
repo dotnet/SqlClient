@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
 
         public override async ValueTask WriteFeatureData(LoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            TdsStream stream = context.ConnectionContext.TdsStream;
+            TdsStream stream = context.TdsStream;
             await stream.WriteByteAsync(_tdsFeatureIdentifier, isAsync, ct).ConfigureAwait(false);
             if (_maxSupportedFeatureVersion != 0x0)
             {
@@ -210,7 +210,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
         {
             Debug.Assert(context.Features.SessionRecoveryRequested == true, "SessionRecoveryRequested should be true");
 
-            TdsStream stream = context.ConnectionContext.TdsStream;
+            TdsStream stream = context.TdsStream;
 
             await stream.WriteByteAsync(TdsEnums.FEATUREEXT_SRECOVERY, isAsync, ct).ConfigureAwait(false);
             SessionData reconnectData = context.Features.ReconnectData;
@@ -328,7 +328,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
 
         private async ValueTask WriteCollationAsync(LoginHandlerContext context, SqlCollation collation, bool isAsync, CancellationToken ct)
         {
-            TdsStream stream = context.ConnectionContext.TdsStream;
+            TdsStream stream = context.TdsStream;
 
             if (collation == null)
             {
@@ -344,7 +344,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
 
         private async ValueTask WriteIdentifierAsync(LoginHandlerContext context, string s, bool isAsync, CancellationToken ct)
         {
-            TdsStream stream = context.ConnectionContext.TdsStream;
+            TdsStream stream = context.TdsStream;
             if (null != s)
             {
                 await stream.WriteByteAsync(checked((byte)s.Length), isAsync, ct).ConfigureAwait(false);
@@ -416,7 +416,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
                     break;
             }
 
-            TdsStream stream = context.ConnectionContext.TdsStream;
+            TdsStream stream = context.TdsStream;
             
             await stream.WriteByteAsync(TdsEnums.FEATUREEXT_FEDAUTH, isAsync, ct).ConfigureAwait(false);
 
@@ -478,7 +478,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
                             workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYWORKLOADIDENTITY;
                             break;
                         default:
-                            if (context.ConnectionContext.AccessTokenCallback != null)
+                            if (context.AccessTokenCallback != null)
                             {
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYTOKENCREDENTIAL;
                             }
