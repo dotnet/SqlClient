@@ -1,0 +1,40 @@
+<!-- Licensed to the .NET Foundation under one or more agreements. The .NET Foundation licenses this
+file to you under the MIT license. -->
+<Project>
+
+    <!-- Opt-in switch to disable source link (i.e. for local builds). -->
+    <PropertyGroup Condition="'$(DisableSourceLink)' == 'true'">
+        <EnableSourceLink>false</EnableSourceLink>
+        <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+        <DeterministicSourcePaths>false</DeterministicSourcePaths>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <SourceRoot Include="$(RepoRoot)" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <_TranslateUrlPattern>https://[^/]+/ADO.Net/_git/([^/-]+)-(.+)</_TranslateUrlPattern>
+        <_TranslateUrlReplacement>https://github.com/dotnet/SqlClient</_TranslateUrlReplacement>
+    </PropertyGroup>
+
+    <Target Name="_TranslateAzureDevOpsUrlToGitHubUrl"
+        Condition="'$(DisableSourceLinkTranslation)' == 'false'"
+        DependsOnTargets="$(SourceControlManagerUrlTranslationTargets)"
+        BeforeTargets="SourceControlManagerPublishTranslatedUrls">
+
+        <PropertyGroup>
+            <ScmRepositoryUrl>$([System.Text.RegularExpressions.Regex]::Replace($(ScmRepositoryUrl), $(_TranslateUrlPattern), $(_TranslateUrlReplacement)))</ScmRepositoryUrl>
+        </PropertyGroup>
+
+        <ItemGroup>
+            <SourceRoot Update="@(SourceRoot)">
+            </SourceRoot>
+            <SourceRoot Update="@(SourceRoot)">
+                <ScmRepositoryUrl>$([System.Text.RegularExpressions.Regex]::Replace(%(SourceRoot.ScmRepositoryUrl),
+                    $(_TranslateUrlPattern), $(_TranslateUrlReplacement)))</ScmRepositoryUrl>
+            </SourceRoot>
+        </ItemGroup>
+        <Message Text="Final Translated ScmRepositoryUrl to $(ScmRepositoryUrl)" Importance="high" />    
+    </Target>
+</Project>
