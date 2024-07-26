@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
     /// This handler will send the prelogin based on the features requested in the connection string.
     /// It will consume the prelogin handshake and pass the control to the next handler.
     /// </summary>
-    internal class PreLoginHandler : IHandler<ConnectionHandlerContext>
+    internal class PreLoginHandler : ContextHandler<ConnectionHandlerContext>
     {
         /// <summary>
         /// The Helper object to perform TLS authentication.
@@ -50,10 +50,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         }
 
         /// <inheritdoc />
-        public IHandler<ConnectionHandlerContext> NextHandler { get; set; }
-
-        /// <inheritdoc />
-        public async ValueTask Handle(ConnectionHandlerContext connectionContext, bool isAsync, CancellationToken ct)
+        public override async ValueTask Handle(ConnectionHandlerContext connectionContext, bool isAsync, CancellationToken ct)
         {
             PreloginHandlerContext context = new PreloginHandlerContext(connectionContext);
 

@@ -36,11 +36,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         public DataSource DataSource { get; set; }
 
         /// <summary>
-        /// Class used by orchestrator while chaining handlers.
-        /// </summary>
-        public Exception Error { get; set; }
-
-        /// <summary>
         /// The Guid of the Connection.
         /// </summary>
         public Guid ConnectionId { get; internal set; } = Guid.Empty;
@@ -124,7 +119,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 ConnectionStream = this.ConnectionStream, 
                 ConnectionString = this.ConnectionString, 
                 DataSource = this.DataSource, 
-                Error = this.Error, 
                 ConnectionId = this.ConnectionId,
                 SslStream = this.SslStream, 
                 SslOverTdsStream = this.SslOverTdsStream, 
