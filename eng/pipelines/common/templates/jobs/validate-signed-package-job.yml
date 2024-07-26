@@ -35,6 +35,7 @@ parameters:
 
 jobs:
 - job: validate_signed_package
+  displayName: 'Verify signed package'
   ${{ if ne(parameters.dependsOn, '')}}:
     dependsOn: '${{parameters.dependsOn }}'
   pool:

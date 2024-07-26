@@ -17,6 +17,7 @@ parameters:
 
 jobs:
 - job: build_signed_akv_package
+  displayName: 'Build Signed AKV Provider Package'
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
     
@@ -59,20 +60,11 @@ jobs:
       product: AKV
       referenceType: package
 
-  # Publish symbols to private server
+  # Publish symbols to servers
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
-      SymAccount: $(PrivateSymAccount)
       referenceType: package
       symbolsVersion: ${{variables.AKVNuGetPackageVersion }}
       product: AKV
       publishSymbols: ${{ parameters['PublishSymbols'] }}
-
-  # Publish symbols to public server
-  - template: ../steps/publish-symbols-step.yml@self
-    parameters:
-      SymAccount: $(PublicSymAccount)
-      referenceType: package
-      symbolsVersion: ${{variables.AKVNuGetPackageVersion }}
-      product: AKV
-      publishSymbols: ${{ parameters['PublishSymbols'] }}
+      symbolsArtifactName: akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NuGetPackageVersion)_$(System.TimelineId)
