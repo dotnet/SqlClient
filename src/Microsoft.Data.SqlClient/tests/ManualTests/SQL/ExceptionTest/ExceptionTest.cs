@@ -204,17 +204,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void VariousExceptionTests()
         {
-            SqlConnectionStringBuilder builder;
-            if (DataTestUtility.IsNotAzureServer())
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            if (!DataTestUtility.IsNotAzureServer())
             {
-                builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            }
-            else
-            {
-                // Strip the password in connection string as Authentication=Active Directory Managed Identity can not be used with a Password
-                string[] removeKeys = { "Password", "PWD" };
-                string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys);
-                builder = new SqlConnectionStringBuilder(connStr);
+                // Strip the password in connection string if Authentication=Active Directory Managed Identity as it can not be used with a Password
+                if (builder.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)
+                {
+                    string[] removeKeys = { "Password", "PWD" };
+                    string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys);
+                    builder = new SqlConnectionStringBuilder(connStr);
+                }
             }
 
             // Test 1 - A
