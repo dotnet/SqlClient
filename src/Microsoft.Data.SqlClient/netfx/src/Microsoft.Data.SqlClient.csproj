@@ -704,7 +704,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlJson.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStreamSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReaderSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
