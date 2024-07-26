@@ -17,16 +17,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// <param name="ct">Cancellation Token</param>
         /// <returns></returns>
         public static ValueTask ProcessRequestAsync(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
-        {
-            //TODO: replace with a static line of creating the chain
-            DataSourceParsingHandler dataSourceParsingHandler = new DataSourceParsingHandler()
+            => new DataSourceParsingHandler()
             {
                 NextHandler = new TransportCreationHandler()
                 {
                     NextHandler = new PreloginHandler()
                 }
-            };
-            return dataSourceParsingHandler.Handle(context, isAsync, ct);
-        }
+            }.Handle(context, isAsync, ct);
     }
 }

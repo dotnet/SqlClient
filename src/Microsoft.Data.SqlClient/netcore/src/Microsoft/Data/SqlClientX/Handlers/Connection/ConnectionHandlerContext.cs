@@ -67,18 +67,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         public bool IsFedAuthRequired { get; internal set; }
 
         /// <summary>
-        /// Get if data classification is enabled by the server.
-        /// </summary>
-        public bool IsDataClassificationEnabled =>
-                (DataClassificationVersion != TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED);
-
-        /// <summary>
-        /// Get or set data classification version.
-        /// A value of 0 means that sensitivity classification is not enabled.
-        /// </summary>
-        public int DataClassificationVersion { get; set; }
-
-        /// <summary>
         /// The access token in bytes.
         /// </summary>
         public byte[] AccessTokenInBytes { get; internal set; }
@@ -125,7 +113,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 TdsStream = this.TdsStream, 
                 IsMarsCapable = this.IsMarsCapable,
                 IsFedAuthRequired = this.IsFedAuthRequired,
-                DataClassificationVersion = this.DataClassificationVersion,
                 AccessTokenInBytes = this.AccessTokenInBytes,
                 ServerInfo = this.ServerInfo, 
                 ErrorCollection = this.ErrorCollection, 
