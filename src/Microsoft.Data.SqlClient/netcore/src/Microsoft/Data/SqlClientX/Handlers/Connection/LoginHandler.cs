@@ -514,7 +514,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     {
                         if (isAsync)
                         { 
-                            await stream.WriteAsync(encryptedPassword.AsMemory(0, encryptedChangePasswordLengthInBytes), ct).ConfigureAwait(false);
+                            await stream.WriteAsync(encryptedPassword.AsMemory(0, encryptedPasswordLengthInBytes), ct).ConfigureAwait(false);
                         }
                         else
                         {
