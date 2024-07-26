@@ -26,8 +26,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 //TODO: populate other details for the SQLException
                 SqlErrorCollection collection = new SqlErrorCollection();
                 collection.Add(new SqlError(0,0,TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString("LocalDB_UnobtainableMessage"), null, 0));
-                request.Error = SqlException.CreateException(collection, null);
-                return;
+                throw SqlException.CreateException(collection, null);
             }
             
             // If a localDB Data source is available, we need to use it.
@@ -38,8 +37,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 //TODO: populate other details for the SQLException
                 SqlErrorCollection collection = new SqlErrorCollection();
                 collection.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString("LocalDB_UnobtainableMessage"), null, 0));
-                request.Error = SqlException.CreateException(collection, null);
-                return;
+                throw SqlException.CreateException(collection, null);
             }
             
             request.DataSource = details;

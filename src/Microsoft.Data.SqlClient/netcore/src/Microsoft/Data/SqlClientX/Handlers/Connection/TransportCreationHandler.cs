@@ -34,15 +34,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// <inheritdoc />
         public override async ValueTask Handle(ConnectionHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            try
-            {
-                context.ConnectionStream = await _streamCreationChain.Handle(context, isAsync, ct).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                context.Error = e;
-                return;
-            }
+            context.ConnectionStream = await _streamCreationChain.Handle(context, isAsync, ct).ConfigureAwait(false);
 
             // Every physical connection has a Unique ID which is used by the rest 
             // of the connection for tracing on the server side, to correlate with 
