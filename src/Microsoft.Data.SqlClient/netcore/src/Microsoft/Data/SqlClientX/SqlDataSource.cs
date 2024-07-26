@@ -3,28 +3,54 @@
 // See the LICENSE file in the project root for more information.
 
 #if NET8_0_OR_GREATER 
+#nullable enable
 
 using System;
 using System.Data.Common;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
+using System.Security.AccessControl;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlClientX
 {
+    //TODO: update this whole class to return SqlConnection after it is changed to wrap SqlConnectionX 
+
     /// <summary>
     /// Represents a data source that can be used to obtain SqlConnections. 
     /// SqlDataSource can also create and open SqlConnectors, which are the internal/physical connections wrapped by SqlConnection.
     /// </summary>
     internal abstract class SqlDataSource : DbDataSource
     {
+        #region private
         private readonly SqlConnectionStringBuilder _connectionStringBuilder;
+        private protected volatile int _isDisposed;
+        #endregion
+
+        #region constructors
+        /// <summary>
+        /// Initializes a new instance of SqlDataSource.
+        /// </summary>
+        /// <param name="connectionStringBuilder">The connection string that connections produced by this data source should use.</param>
+        /// <param name="credential">The credentials that connections produced by this data source should use.</param>
+        internal SqlDataSource(
+            SqlConnectionStringBuilder connectionStringBuilder,
+            SqlCredential credential)
+        {
+            _connectionStringBuilder = connectionStringBuilder;
+            Credential = credential;
+        }
+        #endregion
+
+        #region properties
+        /// <inheritdoc />
+        public override string ConnectionString => _connectionStringBuilder.ConnectionString;
 
         internal SqlCredential Credential { get; }
 
-        //TODO: return SqlConnection after it is updated to wrap SqlConnectionX 
+        internal abstract (int Total, int Idle, int Busy) Statistics { get; }
+        #endregion
+
         /// <summary>
         /// Creates a new, unopened SqlConnection.
         /// </summary>
@@ -34,47 +60,34 @@ namespace Microsoft.Data.SqlClientX
             return SqlConnectionX.FromDataSource(this);
         }
 
-        internal SqlDataSource(
-            SqlConnectionStringBuilder connectionStringBuilder,
-            SqlCredential credential)
-        {
-            _connectionStringBuilder = connectionStringBuilder;
-            Credential = credential;
-        }
-
-        /// <inheritdoc />
-        public override string ConnectionString => _connectionStringBuilder.ConnectionString;
-
-
         /// <summary>
         /// Creates a new <see cref="SqlConnection"/> object.
         /// </summary>
-        public new SqlConnection CreateConnection()
+        public new SqlConnectionX CreateConnection()
         {
-            throw new NotImplementedException();
-            // TODO: return (SqlConnection)CreateDbConnection();
+            return CreateDbConnection();
         }
 
         /// <summary>
         /// Opens a new <see cref="SqlConnection"/>.
         /// </summary>
-        public new SqlConnection OpenConnection()
+        public new SqlConnectionX OpenConnection()
         {
-            return (SqlConnection)base.OpenConnection();
+            return (SqlConnectionX)base.OpenConnection();
         }
 
         /// <summary>
         /// Asynchronously opens a new <see cref="SqlConnection"/>.
         /// </summary>
-        public new async ValueTask<SqlConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)
+        public new async ValueTask<SqlConnectionX> OpenConnectionAsync(CancellationToken cancellationToken = default)
         {
-            return (SqlConnection)await base.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+            return (SqlConnectionX)await base.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
         /// Creates a new <see cref="SqlCommand"/> object.
         /// </summary>
-        public new SqlCommand CreateCommand(string commandText = null)
+        public new SqlCommand CreateCommand(string? commandText = null)
         {
             return (SqlCommand)CreateDbCommand(commandText);
         }
@@ -87,7 +100,6 @@ namespace Microsoft.Data.SqlClientX
             return (SqlBatch)CreateDbBatch();
         }
 
-        // TODO: make abstract
         /// <summary>
         /// Returns an opened SqlConnector.
         /// </summary>
@@ -98,12 +110,12 @@ namespace Microsoft.Data.SqlClientX
         /// <returns></returns>
         internal abstract ValueTask<SqlConnector> GetInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken);
 
+
         /// <summary>
         /// Returns a SqlConnector to the data source for recycling or finalization.
         /// </summary>
-        /// <param name="async">Whether this method should be run asynchronously.</param>
-        /// <param name="connection">The connection returned to the data source.</param>
-        internal abstract ValueTask ReturnInternalConnection(bool async, SqlConnector connection);
+        /// <param name="connector">The connection returned to the data source.</param>
+        internal abstract void ReturnInternalConnection(SqlConnector connector);
 
         /// <summary>
         /// Opens a new SqlConnector.
@@ -113,7 +125,16 @@ namespace Microsoft.Data.SqlClientX
         /// <param name="async">Whether this method should be run asynchronously.</param>
         /// <param name="cancellationToken">Cancels an outstanding asynchronous operation.</param>
         /// <returns></returns>
-        internal abstract ValueTask<SqlConnector> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken);
+        internal abstract ValueTask<SqlConnector?> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken);
+
+        private protected void CheckDisposed()
+        {
+            //TODO: implement disposal
+            if (_isDisposed == 1)
+            {
+                throw new ObjectDisposedException(GetType().FullName);
+            }
+        }
     }
 }
 

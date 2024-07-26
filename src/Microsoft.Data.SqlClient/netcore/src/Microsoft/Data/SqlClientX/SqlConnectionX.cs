@@ -14,7 +14,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
 
 #nullable enable
@@ -28,13 +27,20 @@ namespace Microsoft.Data.SqlClientX
     [DesignerCategory("")]
     internal sealed class SqlConnectionX : DbConnection, ICloneable
     {
+        #region private
+        private static readonly SqlConnectionString DefaultSettings = new SqlConnectionString("");
+
         private SqlCredential? _credential;
         private SqlDataSource? _dataSource;
         private SqlConnector? _internalConnection;
 
+        private bool _disposed;
+
         //TODO: Investigate if we can just use dataSource.ConnectionString. Do this when this class can resolve its own data source.
         private string _connectionString = string.Empty;
+        
         private ConnectionState _connectionState = ConnectionState.Closed;
+        #endregion
 
         #region constructors
 
@@ -49,6 +55,7 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         internal SqlConnectionX(string connectionString) : this()
         {
+            _connectionState = ConnectionState.Connecting;
             _connectionString = connectionString;
         }
 
@@ -97,8 +104,7 @@ namespace Microsoft.Data.SqlClientX
             => throw new NotImplementedException();
 
         /// <inheritdoc/>
-        public override int ConnectionTimeout
-            => throw new NotImplementedException();
+        public override int ConnectionTimeout => Settings.ConnectTimeout;
 
         /// <summary>
         /// Gets or sets the connection string used to connect to the database.
@@ -124,6 +130,8 @@ namespace Microsoft.Data.SqlClientX
                 _connectionString = value ?? string.Empty;
 
                 //TODO: build new data source or find existing data source based on connection string
+
+                //TODO: use data source settings, if found (don't override pool settings, etc.)
             }
         }
 
@@ -138,6 +146,10 @@ namespace Microsoft.Data.SqlClientX
         /// <inheritdoc/>
         protected override DbProviderFactory? DbProviderFactory
             => throw new NotImplementedException();
+
+        internal SqlConnector? InternalConnection => _internalConnection;
+
+        internal SqlConnectionString Settings { get; private set; } = DefaultSettings;
 
         #endregion
 
@@ -182,7 +194,7 @@ namespace Microsoft.Data.SqlClientX
 
             return CloseAsync(async);
 
-            async Task CloseAsync(bool async)
+            Task CloseAsync(bool async)
             {
                 Debug.Assert(_internalConnection != null);
                 Debug.Assert(_dataSource != null);
@@ -195,19 +207,47 @@ namespace Microsoft.Data.SqlClientX
                     //TODO: if pooling, reset the connector
 
                     internalConnection.OwningConnection = null;
-                    await internalConnection.Return(async).ConfigureAwait(false);
+                    internalConnection.Return();
                     _internalConnection = null;
                 }
 
                 _connectionState = ConnectionState.Closed;
+                return Task.CompletedTask;
             }
         }
 
         #endregion
 
+        /// <summary>
+        /// Releases all resources used by the <see cref="SqlConnectionX"/>.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> when called from <see cref="Dispose"/>;
+        /// <see langword="false"/> when being called from the finalizer.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+            if (disposing)
+            {
+                Close();
+            }
+            
+            _disposed = true;
+        }
+
         /// <inheritdoc/>
-        public override ValueTask DisposeAsync()
-            => throw new NotImplementedException();
+        public override async ValueTask DisposeAsync()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            await CloseAsync().ConfigureAwait(false);
+            _disposed = true;
+        }
 
         /// <inheritdoc/>
         public override void EnlistTransaction(Transaction? transaction)
@@ -253,6 +293,7 @@ namespace Microsoft.Data.SqlClientX
             }
 
             _internalConnection = await _dataSource.GetInternalConnection(this, TimeSpan.FromSeconds(ConnectionTimeout), async, cancellationToken).ConfigureAwait(false);
+            _connectionState = ConnectionState.Open;
         }
 
         #endregion

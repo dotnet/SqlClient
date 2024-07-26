@@ -6,7 +6,6 @@
 
 using System;
 using System.Data;
-using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,6 +18,18 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal class SqlConnector
     {
+        private static int SpoofedServerProcessId = 1;
+
+        internal SqlConnector(SqlConnectionX owningConnection, SqlDataSource dataSource)
+        {
+            OwningConnection = owningConnection;
+            DataSource = dataSource;
+            //TODO: Set this based on the real server process id.
+            //We only set this in client code right now to simulate different processes and to differentiate internal connections.
+            ServerProcessId = Interlocked.Increment(ref SpoofedServerProcessId);
+        }
+
+        #region properties
         internal SqlConnectionX? OwningConnection { get; set; }
 
         /// <summary>
@@ -34,21 +45,23 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Represents the current state of this connection.
         /// </summary>
-        internal ConnectionState State => throw new NotImplementedException();
+        /// TODO: set and change state appropriately
+        internal ConnectionState State = ConnectionState.Open;
 
-        internal SqlConnector(SqlConnectionX owningConnection, SqlDataSource dataSource)
-        {
-            OwningConnection = owningConnection;
-            DataSource = dataSource;
-        }
+        internal bool IsOpen => State == ConnectionState.Open;
+        internal bool IsClosed => State == ConnectionState.Closed;
+        internal bool IsBroken => State == ConnectionState.Broken;
+
+        //TODO: set this based on login info
+        internal int ServerProcessId { get; private set; }
+        #endregion
 
         /// <summary>
         /// Closes this connection. If this connection is pooled, it is cleaned and returned to the pool.
         /// </summary>
-        /// <param name = "async" > Whether this method should run asynchronously.</param>
         /// <returns>A Task indicating the result of the operation.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        internal ValueTask Close(bool async)
+        internal void Close()
         {
             throw new NotImplementedException();
         }
@@ -57,21 +70,31 @@ namespace Microsoft.Data.SqlClientX
         /// Opens this connection.
         /// </summary>
         /// <param name = "timeout">The connection timeout for this operation.</param>
-        /// <param name = "async">Whether this method should run asynchronously.</param>
+        /// <param name = "isAsync">Whether this method should run asynchronously.</param>
         /// <param name = "cancellationToken">The token used to cancel an ongoing asynchronous call.</param>
         /// <returns>A Task indicating the result of the operation.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        internal ValueTask Open(TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        internal ValueTask Open(TimeSpan timeout, bool isAsync, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            //TODO: Simulates the work that will be done to open the connection.
+            //Remove when open is implemented.
+
+            if (isAsync)
+            {
+                Task WaitTask = Task.Delay(200);
+                return new ValueTask(WaitTask);
+            }
+            else
+            {
+                Thread.Sleep(200);
+                return ValueTask.CompletedTask;
+            }
         }
 
         /// <summary>
         /// Returns this connection to the data source that generated it.
         /// </summary>
-        /// <param name="async">Whether this method should run asynchronously.</param>
-        /// <returns></returns>
-        internal ValueTask Return(bool async) => DataSource.ReturnInternalConnection(async, this);
+        internal void Return() => DataSource.ReturnInternalConnection(this);
     }
 }
 

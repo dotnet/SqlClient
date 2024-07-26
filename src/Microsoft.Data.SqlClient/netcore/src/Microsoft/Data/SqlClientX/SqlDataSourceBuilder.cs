@@ -35,10 +35,17 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Constructs a new <see cref="SqlDataSourceBuilder" />, optionally starting out from the given <paramref name="connectionString"/>.
         /// </summary>
-        public SqlDataSourceBuilder(string connectionString = null, SqlCredential credential = null)
+        public SqlDataSourceBuilder(string connectionString = null, SqlCredential credential = null) 
+            : this(new SqlConnectionStringBuilder(connectionString), credential)
+        {}
+
+        /// <summary>
+        /// Constructs a new <see cref="SqlDataSourceBuilder" /> starting out from the given <paramref name="connectionStringBuilder"/>.
+        /// </summary>
+        public SqlDataSourceBuilder(SqlConnectionStringBuilder connectionStringBuilder, SqlCredential sqlCredential = null)
         {
-            ConnectionStringBuilder = new SqlConnectionStringBuilder(connectionString);
-            Credential = credential;
+            ConnectionStringBuilder = connectionStringBuilder;
+            Credential = sqlCredential;
         }
 
         /// <summary>
