@@ -226,6 +226,8 @@ namespace Microsoft.Data.SqlClient
                     return MetaXml;
                 case SqlDbType.Udt:
                     return MetaUdt;
+                case SqlDbTypeExtensions.Json:
+                    return s_MetaJson;
                 case SqlDbType.Structured:
                     if (isMultiValued)
                     {
