@@ -9,8 +9,6 @@
     <IsPackable>true</IsPackable>
     <NoWarn>$(NoWarn);0436</NoWarn>
     <OutputPath>$(ToolsArtifactsDir)</OutputPath>
-    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
-    <Deterministic>False</Deterministic>
   </PropertyGroup>
 
   <ItemGroup>
