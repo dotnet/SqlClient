@@ -18,8 +18,8 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.TransportCreation
             get => new TheoryData<IPAddress, IPAddress, int>
             {
                 { Ipv4, Ipv4, 0 },
-                { Ipv4, Ipv6, 1 },
-                { Ipv6, Ipv4, -1 },
+                { Ipv4, Ipv6, -1 },
+                { Ipv6, Ipv4, 1 },
                 { Ipv6, Ipv6, 0 },
             };
         }
@@ -40,8 +40,8 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers.TransportCreation
             get => new TheoryData<IPAddress, IPAddress, int>
             {
                 { Ipv4, Ipv4, 0 },
-                { Ipv4, Ipv6, -1 },
-                { Ipv6, Ipv4, 1 },
+                { Ipv4, Ipv6, 1 },
+                { Ipv6, Ipv4, -1 },
                 { Ipv6, Ipv6, 0 },
             };
         }
