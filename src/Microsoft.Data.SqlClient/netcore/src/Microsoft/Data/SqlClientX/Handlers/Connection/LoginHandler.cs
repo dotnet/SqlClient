@@ -49,57 +49,14 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             LoginHandlerContext loginHandlerContext = new LoginHandlerContext(context);
             await SendLogin(loginHandlerContext, isAsync, ct).ConfigureAwait(false);
 
-            bool enlistInDistributedTransaction = !context.ConnectionString.Pooling; 
             // TODO: Complete the login by reading data. 
             // This requires parsing by reading token stream from TDS.
         }
 
         private async ValueTask SendLogin(LoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            //SqlLogin login = new SqlLogin();
 
             PasswordChangeRequest passwordChangeRequest = context.PasswordChangeRequest;
-
-            // gather all the settings the user set in the connection string or
-            // properties and do the login
-            string currentDatabase = context.ServerInfo.ResolvedDatabaseName;
-
-            string currentLanguage = context.ConnectionOptions.CurrentLanguage;
-
-            // TODO: Timeout handling needs to be taken care of.
-
-            login.authentication = context.ConnectionOptions.Authentication;
-            login.userInstance = context.ConnectionOptions.UserInstance;
-            login.hostName = context.ConnectionOptions.ObtainWorkstationId();
-            login.userName = context.ConnectionOptions.UserID;
-            login.password = context.ConnectionOptions.Password;
-            login.applicationName = context.ConnectionOptions.ApplicationName;
-
-            login.language = currentLanguage;
-            if (!login.userInstance)
-            {
-                // Do not send attachdbfilename or database to SSE primary instance
-                login.database = currentDatabase;
-                login.attachDBFilename = context.ConnectionOptions.AttachDBFilename;
-            }
-
-            // VSTS#795621 - Ensure ServerName is Sent During TdsLogin To Enable Sql Azure Connectivity.
-            // Using server.UserServerName (versus ConnectionOptions.DataSource) since TdsLogin requires
-            // serverName to always be non-null.
-            login.serverName = context.ServerInfo.UserServerName;
-
-            login.useReplication = context.ConnectionOptions.Replication;
-            login.useSSPI = context.ConnectionOptions.IntegratedSecurity  // Treat AD Integrated like Windows integrated when against a non-FedAuth endpoint
-                                     || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated 
-                                     && !context.FedAuthNegotiatedInPrelogin);
-            login.packetSize = context.ConnectionOptions.PacketSize;
-            login.newPassword = passwordChangeRequest?.NewPassword;
-            login.readOnlyIntent = context.ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
-            login.credential = passwordChangeRequest?.Credential;
-            if (passwordChangeRequest?.NewSecurePassword != null)
-            {
-                login.newSecurePassword = passwordChangeRequest?.NewSecurePassword;
-            }
 
             TdsEnums.FeatureExtension requestedFeatures = TdsEnums.FeatureExtension.None;
             FeatureExtensions features = context.Features;
@@ -143,7 +100,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
             features.RequestedFeatures = requestedFeatures;
-            context.Login = login;
 
             await TdsLogin(context, isAsync, ct).ConfigureAwait(false);
 
@@ -177,26 +133,20 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             // Fixed length of the login record
             int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
-            string clientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
-            Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= clientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
-
-            //SqlLogin rec = context.Login;
+            Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= context.ClientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
 
             // Calculate the fixed length
             checked
             {
-                length += (rec.hostName.Length + rec.applicationName.Length +
-                            rec.serverName.Length + clientInterfaceName.Length +
-                            rec.language.Length + rec.database.Length +
-                            rec.attachDBFilename.Length) * 2;
+                length += context.CalculateLoginRecordLength() * 2;
                 if (context.UseFeatureExt)
                 {
                     length += 4;
                 }
             }
 
-            string userName = rec.credential != null ? rec.credential.UserId : rec.userName;
-            byte[] encryptedPassword = rec.credential != null ? null : TdsParserStaticMethods.ObfuscatePassword(rec.password);
+            string userName = context.UserName;
+            byte[] encryptedPassword = context.EncryptedPassword;
             int encryptedPasswordLengthInBytes = encryptedPassword != null ? encryptedPassword.Length : 0;
             
             PasswordChangeRequest passwordChangeRequest = context.PasswordChangeRequest;
@@ -209,7 +159,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             uint outSSPILength = 0;
 
             // only add lengths of password and username if not using SSPI or requesting federated authentication info
-            if (!rec.useSSPI && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
+            if (!context.UseSspi && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
             {
                 checked
                 {
@@ -219,7 +169,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             }
             else
             {
-                if (rec.useSSPI)
+                if (context.UseSspi)
                 {
                     throw new NotImplementedException("SSPI is not implemented");
                 }
@@ -244,7 +194,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                            userName,
                            length,
                            feOffset,
-                           clientInterfaceName,
+                           context.ClientInterfaceName,
                            outSSPIBuff,
                            outSSPILength,
                            isAsync,
@@ -331,9 +281,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                                      bool isAsync,
                                      CancellationToken ct)
         {
+            // TODO: Tackle small writes in a more effective way. 
+            // Complete the discussion on https://github.com/dotnet/SqlClient/discussions/2689 and then refactor/change this code
+            // to get to the optimization.
             try
             {
-                SqlLogin rec = context.Login;
                 TdsEnums.FeatureExtension requestedFeatures = context.Features.RequestedFeatures;
                 TdsStream stream = context.TdsStream;
                 SqlConnectionEncryptOption encrypt = context.ConnectionOptions.Encrypt;
@@ -353,7 +305,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     await writer.WriteUnsignedIntAsync(recoverySessionData._tdsVersion, isAsync, ct).ConfigureAwait(false);
                 }
 
-                await writer.WriteIntAsync(rec.packetSize, isAsync, ct).ConfigureAwait(false);
+                await writer.WriteIntAsync(context.PacketSize, isAsync, ct).ConfigureAwait(false);
                 await writer.WriteIntAsync(TdsEnums.CLIENT_PROG_VER, isAsync, ct).ConfigureAwait(false);
                 await writer.WriteIntAsync(TdsParserStaticMethods.GetCurrentProcessIdForTdsLoginOnly(), isAsync, ct).ConfigureAwait(false);
                 await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false); // connectionID is unused
@@ -375,12 +327,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
                 // note that you must always set ibHostName since it indicates the beginning of the variable length section of the login record
                 await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // host name offset
-                await writer.WriteShortAsync(rec.hostName.Length, isAsync, ct).ConfigureAwait(false);
-                offset += rec.hostName.Length * 2;
+                await writer.WriteShortAsync(context.HostName.Length, isAsync, ct).ConfigureAwait(false);
+                offset += context.HostName.Length * 2;
 
                 // Only send user/password over if not fSSPI...  If both user/password and SSPI are in login
                 // rec, only SSPI is used.  Confirmed same behavior as in luxor.
-                if (!rec.useSSPI && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
+                if (!context.UseSspi && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
                 {
                     await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);  // userName offset
                     await writer.WriteShortAsync(userName.Length, isAsync, ct).ConfigureAwait(false);
@@ -401,12 +353,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 }
 
                 await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // app name offset
-                await writer.WriteShortAsync(rec.applicationName.Length, isAsync, ct).ConfigureAwait(false);
-                offset += rec.applicationName.Length * 2;
+                await writer.WriteShortAsync(context.ApplicationName.Length, isAsync, ct).ConfigureAwait(false);
+                offset += context.ApplicationName.Length * 2;
 
                 await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // server name offset
-                await writer.WriteShortAsync(rec.serverName.Length, isAsync, ct).ConfigureAwait(false);
-                offset += rec.serverName.Length * 2;
+                await writer.WriteShortAsync(context.ServerName.Length, isAsync, ct).ConfigureAwait(false);
+                offset += context.ServerName.Length * 2;
 
                 await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false);
                 if (context.UseFeatureExt)
@@ -424,12 +376,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 offset += clientInterfaceName.Length * 2;
 
                 await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // language name offset
-                await writer.WriteShortAsync(rec.language.Length, isAsync, ct).ConfigureAwait(false);
-                offset += rec.language.Length * 2;
+                await writer.WriteShortAsync(context.Language.Length, isAsync, ct).ConfigureAwait(false);
+                offset += context.Language.Length * 2;
 
                 await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // database name offset
-                await writer.WriteShortAsync(rec.database.Length, isAsync, ct).ConfigureAwait(false);
-                offset += rec.database.Length * 2;
+                await writer.WriteShortAsync(context.Database.Length, isAsync, ct).ConfigureAwait(false);
+                offset += context.Database.Length * 2;
 
                 if (null == s_nicAddress)
                     s_nicAddress = TdsParserStaticMethods.GetNetworkPhysicalAddressForTdsLoginOnly();
@@ -444,7 +396,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 }
 
                 await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // ibSSPI offset
-                if (rec.useSSPI)
+                if (context.UseSspi)
                 {
                     await writer.WriteShortAsync((int)outSSPILength, isAsync, ct).ConfigureAwait(false);
                     offset += (int)outSSPILength;
@@ -455,8 +407,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 }
 
                 await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // DB filename offset
-                await writer.WriteShortAsync(rec.attachDBFilename.Length, isAsync, ct).ConfigureAwait(false);
-                offset += rec.attachDBFilename.Length * 2;
+                await writer.WriteShortAsync(context.AttachedDbFileName.Length, isAsync, ct).ConfigureAwait(false);
+                offset += context.AttachedDbFileName.Length * 2;
 
                 await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // reset password offset
                 await writer.WriteShortAsync(encryptedChangePasswordLengthInBytes / 2, isAsync, ct).ConfigureAwait(false);
@@ -464,15 +416,15 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);        // reserved for chSSPI
 
                 // write variable length portion
-                await stream.WriteStringAsync(rec.hostName, isAsync, ct).ConfigureAwait(false);
+                await stream.WriteStringAsync(context.HostName, isAsync, ct).ConfigureAwait(false);
 
                 // if we are using SSPI, do not send over username/password, since we will use SSPI instead
                 // same behavior as Luxor
-                if (!rec.useSSPI && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
+                if (!context.UseSspi && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
                 {
                     await stream.WriteStringAsync(userName, isAsync, ct).ConfigureAwait(false);
 
-                    if (rec.credential != null)
+                    if (context.Credential != null)
                     {
                         // TODO: Implement secure string save.
                         throw new NotImplementedException();
@@ -491,9 +443,9 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     }
                 }
 
-                await stream.WriteStringAsync(rec.applicationName, isAsync, ct).ConfigureAwait(false);
+                await stream.WriteStringAsync(context.ApplicationName, isAsync, ct).ConfigureAwait(false);
 
-                await stream.WriteStringAsync(rec.serverName, isAsync, ct).ConfigureAwait(false);
+                await stream.WriteStringAsync(context.ServerName, isAsync, ct).ConfigureAwait(false);
 
                 // write ibFeatureExtLong
                 if (context.UseFeatureExt)
@@ -507,11 +459,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 }
 
                 await stream.WriteStringAsync(clientInterfaceName, isAsync, ct).ConfigureAwait(false);
-                await stream.WriteStringAsync(rec.language, isAsync, ct).ConfigureAwait(false);
-                await stream.WriteStringAsync(rec.database, isAsync, ct).ConfigureAwait(false);
+                await stream.WriteStringAsync(context.Language, isAsync, ct).ConfigureAwait(false);
+                await stream.WriteStringAsync(context.Database, isAsync, ct).ConfigureAwait(false);
                 
                 // send over SSPI data if we are using SSPI
-                if (rec.useSSPI)
+                if (context.UseSspi)
                 { 
                     if (isAsync)
                     {
@@ -522,10 +474,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                         stream.Write(outSSPIBuff.AsSpan(0, (int)outSSPILength));
                     }
                 }
-                await stream.WriteStringAsync(rec.attachDBFilename, isAsync, ct).ConfigureAwait(false);
-                if (!rec.useSSPI && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
+                await stream.WriteStringAsync(context.AttachedDbFileName, isAsync, ct).ConfigureAwait(false);
+                if (!context.UseSspi && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
                 {
-                    if (rec.newSecurePassword != null)
+                    if (context.PasswordChangeRequest?.NewSecurePassword != null)
                     {
                         // TODO : implement saving secure string.
                         throw new NotImplementedException();
@@ -612,7 +564,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
         private static int CreateLogin7Flags(LoginHandlerContext context)
         {
-            SqlLogin rec = context.Login;
             bool useFeatureExt = context.UseFeatureExt;
 
             int log7Flags = 0;
@@ -650,27 +601,27 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             // second byte
             log7Flags |= TdsEnums.INIT_LANG_FATAL << 8;
             log7Flags |= TdsEnums.ODBC_ON << 9;
-            if (rec.useReplication)
+            if (context.UseReplication)
             {
                 log7Flags |= TdsEnums.REPL_ON << 12;
             }
-            if (rec.useSSPI)
+            if (context.UseSspi)
             {
                 log7Flags |= TdsEnums.SSPI_ON << 15;
             }
 
             // third byte
-            if (rec.readOnlyIntent)
+            if (context.ReadOnlyIntent)
             {
                 log7Flags |= TdsEnums.READONLY_INTENT_ON << 21; // read-only intent flag is a first bit of fSpare1
             }
 
             // 4th one
-            if (!string.IsNullOrEmpty(rec.newPassword) || (rec.newSecurePassword != null && rec.newSecurePassword.Length != 0))
+            if (!string.IsNullOrEmpty(context.NewPassword) || (context.NewSecurePassword != null && context.NewSecurePassword.Length != 0))
             {
                 log7Flags |= 1 << 24;
             }
-            if (rec.userInstance)
+            if (context.ConnectionOptions.UserInstance)
             {
                 log7Flags |= 1 << 26;
             }

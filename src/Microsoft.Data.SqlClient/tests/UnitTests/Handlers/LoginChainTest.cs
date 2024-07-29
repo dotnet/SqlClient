@@ -3,13 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Data.SqlClientX.Handlers.Connection;
 using Xunit;
 
@@ -26,9 +19,11 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
         ///  Datasource to use for connection test. This may be changed locally to test against a different server.
         ///  TODO: Migrate to config when we enable CI.
         /// </summary>
-        private string _dataSource = "tcp:localhost,1444";
+        private string _dataSource = "tcp:localhost,1433";
 
-        [Fact]
+        // TODO: This test needs to be enabled conditionally. This can be used to test the handlers E2E.
+        // For now, uncomment the [Fact] attribute to run the test.
+        //[Fact]
         public async void TestConnectivity()
         {
             DataSourceParsingHandler dspHandler = new();
@@ -41,16 +36,12 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
                 TrustServerCertificate = true,
                 UserID = "sa",
-                Password = "HappyPass1234",// Environment.GetEnvironmentVariable("PASSWORD"),
+                Password = Environment.GetEnvironmentVariable("PASSWORD"),
                 ConnectRetryCount = 0,
             };
 
             SqlConnectionString scs = new(csb.ConnectionString);
             chc.ConnectionString = scs;
-
-            // MDS connectivity 
-            using (SqlConnection connection = new SqlConnection(csb.ConnectionString))
-                connection.Open();
 
             var serverInfo = new ServerInfo(scs);
             serverInfo.SetDerivedNames(null, serverInfo.UserServerName);
