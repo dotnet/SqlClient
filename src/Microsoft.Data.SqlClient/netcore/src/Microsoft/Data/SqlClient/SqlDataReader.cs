@@ -1001,8 +1001,7 @@ namespace Microsoft.Data.SqlClient
 #endif
 
 
-                        bool ignored;
-                        result = parser.TryRun(RunBehavior.Clean, _command, this, null, stateObj, out ignored);
+                        result = parser.TryRun(RunBehavior.Clean, _command, this, null, stateObj, out _);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -3208,8 +3207,7 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.ClosedConnectionError();
                     }
 
-                    bool ignored;
-                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out ignored);
+                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _);
                     if (result != TdsOperationStatus.Done)
                     {
                         moreResults = false;
@@ -3279,8 +3277,7 @@ namespace Microsoft.Data.SqlClient
                             throw ADP.ClosedConnectionError();
                         }
 
-                        bool ignored;
-                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out ignored);
+                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _);
                         if (result != TdsOperationStatus.Done)
                         {
                             moreRows = false;
@@ -4116,8 +4113,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_stateObj._longlen != 0)
                     {
-                        ulong ignored;
-                        result = _stateObj.Parser.TrySkipPlpValue(ulong.MaxValue, _stateObj, out ignored);
+                        result = _stateObj.Parser.TrySkipPlpValue(ulong.MaxValue, _stateObj, out _);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -4212,8 +4208,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (TdsEnums.SQLORDER == b)
                 {
-                    bool ignored;
-                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out ignored);
+                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
@@ -4229,8 +4224,7 @@ namespace Microsoft.Data.SqlClient
                     try
                     {
                         _stateObj._accumulateInfoEvents = true;
-                        bool ignored;
-                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, null, null, _stateObj, out ignored);
+                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, null, null, _stateObj, out _);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -4308,9 +4302,9 @@ namespace Microsoft.Data.SqlClient
 
                         // simply rip the order token off the wire
                         if (b == TdsEnums.SQLORDER)
-                        {                     //  same logic as SetAltMetaDataSet
-                            bool ignored;
-                            result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out ignored);
+                        {
+                            //  same logic as SetAltMetaDataSet
+                            result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
@@ -4329,8 +4323,7 @@ namespace Microsoft.Data.SqlClient
                             try
                             {
                                 _stateObj._accumulateInfoEvents = true;
-                                bool ignored;
-                                result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out ignored);
+                                result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
                                 if (result != TdsOperationStatus.Done)
                                 {
                                     return result;

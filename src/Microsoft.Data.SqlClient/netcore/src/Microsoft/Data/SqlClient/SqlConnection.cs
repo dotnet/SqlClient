@@ -2165,8 +2165,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent)
         {
-            bool notified;
-            OnInfoMessage(imevent, out notified);
+            OnInfoMessage(imevent, out _);
         }
 
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
