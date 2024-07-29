@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
         private async ValueTask SendLogin(LoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            SqlLogin login = new SqlLogin();
+            //SqlLogin login = new SqlLogin();
 
             PasswordChangeRequest passwordChangeRequest = context.PasswordChangeRequest;
 
@@ -177,11 +177,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             // Fixed length of the login record
             int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
-
             string clientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
             Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= clientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
 
-            SqlLogin rec = context.Login;
+            //SqlLogin rec = context.Login;
 
             // Calculate the fixed length
             checked
@@ -255,7 +254,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             {
                 ArrayPool<byte>.Shared.Return(rentedSSPIBuff, clearArray: true);
             }
-
 
             TdsStream stream = context.TdsStream;
             ct.ThrowIfCancellationRequested();

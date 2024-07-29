@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
         ///  Datasource to use for connection test. This may be changed locally to test against a different server.
         ///  TODO: Migrate to config when we enable CI.
         /// </summary>
-        private string _dataSource = "tcp:localhost,1433";
+        private string _dataSource = "tcp:localhost,1444";
 
         [Fact]
         public async void TestConnectivity()
@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
                 TrustServerCertificate = true,
                 UserID = "sa",
-                Password =  Environment.GetEnvironmentVariable("PASSWORD"),
+                Password = "HappyPass1234",// Environment.GetEnvironmentVariable("PASSWORD"),
                 ConnectRetryCount = 0,
             };
 
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
             tcHandler.NextHandler = plHandler;
             LoginHandler loginHandler = new();
             plHandler.NextHandler = loginHandler;
-            await Assert.ThrowsAsync<SocketException>(async () => await dspHandler.Handle(chc, true, default));
+            await dspHandler.Handle(chc, true, default);
         }
     }
 }
