@@ -226,7 +226,7 @@ namespace System.Net.Security
                             null,
                             null,
                             ref outCredential._handle,
-                            out long _);
+                            out _);
 
 #if TRACE_VERBOSE
             if (NetEventSource.IsEnabled) NetEventSource.Info(null, $"{nameof(Interop.SspiCli.AcquireCredentialsHandleW)} returns 0x{errorCode:x}, handle = {outCredential}");
@@ -258,7 +258,7 @@ namespace System.Net.Security
                             null,
                             null,
                             ref outCredential._handle,
-                            out long _);
+                            out _);
 
             if (errorCode != 0)
             {
@@ -302,7 +302,7 @@ namespace System.Net.Security
                                 null,
                                 null,
                                 ref outCredential._handle,
-                                out long _);
+                                out _);
             }
             finally
             {
@@ -641,7 +641,7 @@ namespace System.Net.Security
                                 ref outContext._handle,
                                 ref outputBuffer,
                                 ref attributes,
-                                out long _);
+                                out _);
             }
             finally
             {
@@ -924,7 +924,7 @@ namespace System.Net.Security
                                 ref outContext._handle,
                                 ref outputBuffer,
                                 ref outFlags,
-                                out long _);
+                                out _);
             }
             finally
             {

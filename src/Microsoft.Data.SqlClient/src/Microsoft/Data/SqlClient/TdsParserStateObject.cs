@@ -411,7 +411,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool HasOwner => _owner.TryGetTarget(out object _);
+        internal bool HasOwner => _owner.TryGetTarget(out _);
 
         internal TdsParser Parser => _parser;
 

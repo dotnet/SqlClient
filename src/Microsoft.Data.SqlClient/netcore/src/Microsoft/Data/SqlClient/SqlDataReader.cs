@@ -1001,7 +1001,7 @@ namespace Microsoft.Data.SqlClient
 #endif
 
 
-                        result = parser.TryRun(RunBehavior.Clean, _command, this, null, stateObj, out bool _);
+                        result = parser.TryRun(RunBehavior.Clean, _command, this, null, stateObj, out _);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -3207,7 +3207,7 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.ClosedConnectionError();
                     }
 
-                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out bool _);
+                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _);
                     if (result != TdsOperationStatus.Done)
                     {
                         moreResults = false;
@@ -3277,7 +3277,7 @@ namespace Microsoft.Data.SqlClient
                             throw ADP.ClosedConnectionError();
                         }
 
-                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out bool _);
+                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _);
                         if (result != TdsOperationStatus.Done)
                         {
                             moreRows = false;
@@ -4113,7 +4113,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_stateObj._longlen != 0)
                     {
-                        result = _stateObj.Parser.TrySkipPlpValue(ulong.MaxValue, _stateObj, out ulong _);
+                        result = _stateObj.Parser.TrySkipPlpValue(ulong.MaxValue, _stateObj, out _);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -4208,7 +4208,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (TdsEnums.SQLORDER == b)
                 {
-                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out bool _);
+                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
@@ -4224,7 +4224,7 @@ namespace Microsoft.Data.SqlClient
                     try
                     {
                         _stateObj._accumulateInfoEvents = true;
-                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, null, null, _stateObj, out bool _);
+                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, null, null, _stateObj, out _);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -4304,7 +4304,7 @@ namespace Microsoft.Data.SqlClient
                         if (b == TdsEnums.SQLORDER)
                         {
                             //  same logic as SetAltMetaDataSet
-                            result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out bool _);
+                            result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
@@ -4323,7 +4323,7 @@ namespace Microsoft.Data.SqlClient
                             try
                             {
                                 _stateObj._accumulateInfoEvents = true;
-                                result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out bool _);
+                                result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
                                 if (result != TdsOperationStatus.Done)
                                 {
                                     return result;

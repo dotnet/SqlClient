@@ -360,7 +360,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 pool.PutObjectFromTransactedPool(this);
             }
-            else if (-1 == _pooledCount && !_owningObject.TryGetTarget(out DbConnection _))
+            else if (-1 == _pooledCount && !_owningObject.TryGetTarget(out _))
             {
                 // When _pooledCount is -1 and the owning object no longer exists,
                 // it indicates a closed (or leaked), non-pooled connection so 

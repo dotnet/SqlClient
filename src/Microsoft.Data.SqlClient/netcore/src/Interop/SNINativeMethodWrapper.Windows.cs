@@ -482,7 +482,7 @@ namespace Microsoft.Data.SqlClient
                     (uint)inBuff.Length,
                     OutBuff,
                     ref sendLength,
-                    out bool _,
+                    out _,
                     pin_serverUserName,
                     (uint)serverUserName.Length,
                     null,

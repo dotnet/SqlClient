@@ -495,7 +495,7 @@ namespace Microsoft.Data.Common
                 int startPosition = nextStartPosition;
 
                 string keyname; // since parsing restrictions ignores values, it doesn't matter if we use ODBC rules or OLEDB rules
-                nextStartPosition = DbConnectionOptions.GetKeyValuePair(restrictions, startPosition, buffer, false, out keyname, out string _);
+                nextStartPosition = DbConnectionOptions.GetKeyValuePair(restrictions, startPosition, buffer, false, out keyname, out _);
                 if (!ADP.IsEmpty(keyname))
                 {
 #if DEBUG
