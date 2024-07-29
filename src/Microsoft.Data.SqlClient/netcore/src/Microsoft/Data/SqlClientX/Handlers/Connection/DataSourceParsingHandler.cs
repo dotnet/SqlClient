@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
     internal class DataSourceParsingHandler : ContextHandler<ConnectionHandlerContext>
     {
         /// <inheritdoc />
-        public override async ValueTask Handle(ConnectionHandlerContext request, bool isAsync, CancellationToken ct)
+        public override ValueTask Handle(ConnectionHandlerContext request, bool isAsync, CancellationToken ct)
         {
             ServerInfo serverInfo = request.ServerInfo;
             string fullServerName = serverInfo.ExtendedServerName;
@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 collection.Add(new SqlError(0,0,TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString("LocalDB_UnobtainableMessage"), null, 0));
                 throw SqlException.CreateException(collection, null);
             }
-            
+
             // If a localDB Data source is available, we need to use it.
             fullServerName = localDBDataSource ?? fullServerName;
             DataSource details = DataSource.ParseServerName(fullServerName);
@@ -39,13 +39,15 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 collection.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString("LocalDB_UnobtainableMessage"), null, 0));
                 throw SqlException.CreateException(collection, null);
             }
-            
+
             request.DataSource = details;
-            
+
             if (NextHandler is not null)
             {
-                await NextHandler.Handle(request, isAsync, ct).ConfigureAwait(false);
+                return NextHandler.Handle(request, isAsync, ct);
             }
+
+            return ValueTask.CompletedTask;
         }
 
         //TODO: Refactor function for better handling of error flag and return params
@@ -72,7 +74,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     return null;
                 }
             }
-            
+
             error = false;
             return localDBConnectionString;
         }
