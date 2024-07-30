@@ -53,6 +53,8 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         private readonly ChannelReader<SqlConnector?> _idleConnectorReader;
         private readonly ChannelWriter<SqlConnector?> _idleConnectorWriter;
+
+        private readonly WaitCallback _warmupCallback;
         #endregion
 
         // Counts the total number of open connectors tracked by the pool.
@@ -83,6 +85,8 @@ namespace Microsoft.Data.SqlClientX
             _idleConnectorWriter = idleChannel.Writer;
 
             //TODO: initiate idle lifetime and pruning fields
+            _warmupCallback = new WaitCallback(WarmupCallback);
+            QueueWarmupTask();
         }
 
         #region properties
@@ -424,11 +428,17 @@ namespace Microsoft.Data.SqlClientX
             throw new NotImplementedException();
         }
 
+        private void QueueWarmupTask()
+        {
+            // Make sure we're at quota by posting a callback to the threadpool.
+            ThreadPool.QueueUserWorkItem(_warmupCallback);
+        }
+
         /// <summary>
         /// Warms up the pool to bring it up to min pool size.
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
-        internal async ValueTask WarmUp()
+        private async void WarmupCallback(object? state)
         {
             /* Best effort, we may create at most one unneeded connection.
              * 
@@ -444,9 +454,11 @@ namespace Microsoft.Data.SqlClientX
                     null,
                     TimeSpan.FromSeconds(Settings.ConnectTimeout),
                     true,
-                    CancellationToken.None);
+                    CancellationToken.None
+                ).ConfigureAwait(false);
 
-                // If connector is null, then we hit the max pool size
+                // If connector is null, then we hit the max pool size and can stop
+                // warming up the pool.
                 if (connector == null)
                 {
                     break; 

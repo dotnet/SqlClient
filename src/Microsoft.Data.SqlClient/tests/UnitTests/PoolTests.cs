@@ -32,6 +32,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
                 csb.MinPoolSize = 30;
                 csb.MaxPoolSize = 30;
             });
+            Thread.Sleep(1000);
             await using var conn = await dataSource.OpenConnectionAsync();
         }
 
