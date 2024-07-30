@@ -65,11 +65,11 @@ namespace Microsoft.Data.SqlClientX
         /// Initializes a new PoolingDataSource.
         /// </summary>
         //TODO: support auth contexts and provider info
-        internal PoolingDataSource(SqlConnectionStringBuilder connectionStringBuilder,
+        internal PoolingDataSource(SqlConnectionString connectionString,
             SqlCredential credential,
             DbConnectionPoolGroupOptions options,
             RateLimiterBase connectionRateLimiter)
-            : base(connectionStringBuilder, credential)
+            : base(connectionString, credential)
         {
             _connectionPoolGroupOptions = options;
             _connectionRateLimiter = connectionRateLimiter;
@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClientX
                         return connector;
                     }
                 }
-            } 
+            }
             finally
             {
                 //TODO: log error
@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClientX
             }
 
 
-            int i; 
+            int i;
             for (i = 0; i < MaxPoolSize; i++)
             {
                 if (Interlocked.CompareExchange(ref _connectors[i], null, connector) == connector)
@@ -307,10 +307,10 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         internal readonly struct OpenInternalConnectionState
         {
-            internal readonly SqlConnectionX _owningConnection;
+            internal readonly SqlConnectionX? _owningConnection;
             internal readonly TimeSpan _timeout;
 
-            internal OpenInternalConnectionState(SqlConnectionX owningConnection, TimeSpan timeout)
+            internal OpenInternalConnectionState(SqlConnectionX? owningConnection, TimeSpan timeout)
             {
                 _owningConnection = owningConnection;
                 _timeout = timeout;
@@ -318,7 +318,7 @@ namespace Microsoft.Data.SqlClientX
         }
 
         /// <inheritdoc/>
-        internal override ValueTask<SqlConnector?> OpenNewInternalConnection(SqlConnectionX owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        internal override ValueTask<SqlConnector?> OpenNewInternalConnection(SqlConnectionX? owningConnection, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
             return _connectionRateLimiter.Execute(
                 RateLimitedOpen,
@@ -428,9 +428,34 @@ namespace Microsoft.Data.SqlClientX
         /// Warms up the pool to bring it up to min pool size.
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
-        internal void WarmUp()
+        internal async ValueTask WarmUp()
         {
-            throw new NotImplementedException();
+            /* Best effort, we may create at most one unneeded connection.
+             * 
+             * Open new connections slowly. If many connections are needed immediately 
+             * upon pool creation they can always be created via user-initiated requests as fast
+             * as a parallel, pool-initiated approach could.
+             */
+            while (_numConnectors < MinPoolSize)
+            {
+                // Obey the same rate limit as user-initiated opens.
+                // Ensures that pool-initiated opens are queued properly and don't 
+                SqlConnector? connector = await OpenNewInternalConnection(
+                    null,
+                    TimeSpan.FromSeconds(Settings.ConnectTimeout),
+                    true,
+                    CancellationToken.None);
+
+                // If connector is null, then we hit the max pool size
+                if (connector == null)
+                {
+                    break; 
+                }
+
+                // The connector has never been used, so it's safe to immediately return it to the
+                // pool without resetting it.
+                ReturnInternalConnection(connector);
+            }
         }
 
         /// <summary>

@@ -7,7 +7,6 @@
 
 using System;
 using System.Data.Common;
-using System.Security.AccessControl;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
@@ -22,29 +21,30 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     internal abstract class SqlDataSource : DbDataSource
     {
-        #region private
-        private readonly SqlConnectionStringBuilder _connectionStringBuilder;
         private protected volatile int _isDisposed;
-        #endregion
 
         #region constructors
         /// <summary>
         /// Initializes a new instance of SqlDataSource.
         /// </summary>
-        /// <param name="connectionStringBuilder">The connection string that connections produced by this data source should use.</param>
+        /// <param name="connectionString">The connection string that connections produced by this data source should use.</param>
         /// <param name="credential">The credentials that connections produced by this data source should use.</param>
         internal SqlDataSource(
-            SqlConnectionStringBuilder connectionStringBuilder,
+            SqlConnectionString connectionString,
             SqlCredential credential)
         {
-            _connectionStringBuilder = connectionStringBuilder;
+            Settings = connectionString;
+            var hidePassword = !connectionString.PersistSecurityInfo;
+            ConnectionString = connectionString.UsersConnectionString(hidePassword);
             Credential = credential;
         }
         #endregion
 
         #region properties
         /// <inheritdoc />
-        public override string ConnectionString => _connectionStringBuilder.ConnectionString;
+        public override string ConnectionString { get; }
+
+        internal SqlConnectionString Settings { get; }
 
         internal SqlCredential Credential { get; }
 
