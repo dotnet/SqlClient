@@ -19,7 +19,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
     /// </summary>
     internal class LoginHandler : ContextHandler<ConnectionHandlerContext>
     {
-        private const int FeatureTerminator = 0xFF;
 
         // NIC address caching
         private static byte[] s_nicAddress;             // cache the NIC address from the registry
@@ -76,14 +75,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= context.ClientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
 
             // Calculate the fixed length
-            checked
-            {
-                length += context.CalculateLoginRecordLength() * 2;
-                if (context.UseFeatureExt)
-                {
-                    length += 4;
-                }
-            }
+            
+            length += context.CalculateLoginRecordLength();    
 
             string userName = context.UserName;
             byte[] encryptedPassword = context.EncryptedPassword;
@@ -403,9 +396,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 }
 
                 await SendFeatureExtensionData(context, 
-                    requestedFeatures, 
-                    recoverySessionData, 
-                    fedAuthFeatureExtensionData, 
                     isAsync, 
                     ct).ConfigureAwait(false);
             }
@@ -422,12 +412,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         }
 
         private async ValueTask SendFeatureExtensionData(LoginHandlerContext context,
-                                        TdsEnums.FeatureExtension requestedFeatures,
-                                        SessionData recoverySessionData,
-                                        FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
                                         bool isAsync,
                                         CancellationToken ct)
         {
+            TdsEnums.FeatureExtension requestedFeatures = context.Features.RequestedFeatures;
             if (context.UseFeatureExt)
             {
                 if (_sessionRecoveryFeature.ShouldUseFeature(requestedFeatures))
@@ -436,8 +424,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 }
                 if (_fedAuthFeature.ShouldUseFeature(requestedFeatures))
                 {
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request");
-                    Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
                     await _fedAuthFeature.WriteFeatureData(context, isAsync, ct).ConfigureAwait(false);
                 }
                 if (_tceFeature.ShouldUseFeature(requestedFeatures))
@@ -463,7 +449,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 }
 
                 // terminator
-                await context.TdsStream.WriteByteAsync(FeatureTerminator, isAsync, ct).ConfigureAwait(false);
+                await context.TdsStream.WriteByteAsync(FeatureExtensions.FeatureTerminator, isAsync, ct).ConfigureAwait(false);
 
             }
         }

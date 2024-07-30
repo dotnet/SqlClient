@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
         /// <summary>
         /// Features in the login request.
         /// </summary>
-        public FeatureExtensions Features { get; } = new();
+        public FeatureExtensions Features => this.ConnectionContext.Features;
 
         /// <summary>
         /// If feature extensions being used.
@@ -166,13 +166,25 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
 
         public int CalculateLoginRecordLength()
         {
-            return HostName.Length + 
-                ConnectionOptions.ApplicationName.Length +
-                ServerInfo.UserServerName.Length + 
-                ClientInterfaceName.Length +
-                ConnectionOptions.CurrentLanguage.Length + 
-                Database.Length +
-                ConnectionOptions.AttachDBFilename.Length;
+            checked
+            { 
+                int loginRecordLength = HostName.Length + 
+                    ConnectionOptions.ApplicationName.Length +
+                    ServerInfo.UserServerName.Length + 
+                    ClientInterfaceName.Length +
+                    ConnectionOptions.CurrentLanguage.Length + 
+                    Database.Length +
+                    ConnectionOptions.AttachDBFilename.Length;
+
+                loginRecordLength *= 2;
+
+                if (UseFeatureExt)
+                {
+                    loginRecordLength += 4;
+                }
+
+                return loginRecordLength;
+            }
         }
     }
 }

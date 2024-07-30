@@ -13,6 +13,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
 {
     internal class FeatureExtensions
     {
+        public const int FeatureTerminator = 0xFF;
+
         public bool SessionRecoveryRequested { get; internal set; }
         public bool FederatedAuthenticationInfoRequested { get; internal set; }
         public FederatedAuthenticationFeatureExtensionData FedAuthFeatureExtensionData { get; internal set; }

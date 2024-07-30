@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
+using Microsoft.Data.SqlClientX.Handlers.Connection.Login;
 using Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection
@@ -107,6 +108,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         public PasswordChangeRequest PasswordChangeRequest { get; internal set; }
 
         /// <summary>
+        /// Features in the login request.
+        /// This needn't be cloned, since after routing, the feature extensions need to be 
+        /// re-requested like it was for a fresh connection.
+        /// </summary>
+        public FeatureExtensions Features { get; } = new();
+
+        /// <summary>
         /// Clone <see cref="ConnectionHandlerContext"/> as part of history along the chain.
         /// </summary>
         /// <returns>A new instance of ConnectionHandlerContext with copied values.</returns>
@@ -126,7 +134,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 AccessTokenInBytes = this.AccessTokenInBytes,
                 ServerInfo = this.ServerInfo, 
                 ErrorCollection = this.ErrorCollection, 
-                AccessTokenCallback = this.AccessTokenCallback // Assuming delegate cloning is not required
+                AccessTokenCallback = this.AccessTokenCallback, // Assuming delegate cloning is not required
+                PasswordChangeRequest = this.PasswordChangeRequest,
             };
         }
 
