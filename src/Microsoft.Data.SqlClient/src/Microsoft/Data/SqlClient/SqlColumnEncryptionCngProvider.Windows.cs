@@ -6,15 +6,14 @@ using System;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Win32;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SqlColumnEncryptionCspProvider/*' />
-    public class SqlColumnEncryptionCspProvider : SqlColumnEncryptionKeyStoreProvider
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/SqlColumnEncryptionCngProvider/*' />
+    public class SqlColumnEncryptionCngProvider : SqlColumnEncryptionKeyStoreProvider
     {
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/ProviderName/*' />
-        public const string ProviderName = @"MSSQL_CSP_PROVIDER";
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/ProviderName/*' />
+        public const string ProviderName = @"MSSQL_CNG_STORE";
 
         /// <summary>
         /// RSA_OAEP is the only algorithm supported for encrypting/decrypting column encryption keys using this provider.
@@ -22,19 +21,16 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private const string RSAEncryptionAlgorithmWithOAEP = @"RSA_OAEP";
 
-
-        private const string HashingAlgorithm = @"SHA256";
-
         /// <summary>
         /// Algorithm version
         /// </summary>
         private readonly byte[] _version = new byte[] { 0x01 };
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/DecryptColumnEncryptionKey/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/DecryptColumnEncryptionKey/*' />
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
         {
             // Validate the input parameters
-            ValidateNonEmptyCSPKeyPath(masterKeyPath, isSystemOp: true);
+            ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: true);
 
             if (null == encryptedColumnEncryptionKey)
             {
@@ -49,11 +45,11 @@ namespace Microsoft.Data.SqlClient
             // Validate encryptionAlgorithm
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
 
-            // Create RSA Provider with the given CSP name and key name
-            RSACryptoServiceProvider rsaProvider = CreateRSACryptoProvider(masterKeyPath, isSystemOp: true);
+            // Create RSA Provider with the given CNG name and key name
+            RSACng rsaCngProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: true);
 
             // Validate whether the key is RSA one or not and then get the key size
-            int keySizeInBytes = GetKeySize(rsaProvider);
+            int keySizeInBytes = GetKeySize(rsaCngProvider);
 
             // Validate and decrypt the EncryptedColumnEncryptionKey
             // Format is 
@@ -84,7 +80,7 @@ namespace Microsoft.Data.SqlClient
             // validate the ciphertext length
             if (cipherTextLength != keySizeInBytes)
             {
-                throw SQL.InvalidCiphertextLengthInEncryptedCEKCsp(cipherTextLength, keySizeInBytes, masterKeyPath);
+                throw SQL.InvalidCiphertextLengthInEncryptedCEKCng(cipherTextLength, keySizeInBytes, masterKeyPath);
             }
 
             // Validate the signature length
@@ -92,7 +88,7 @@ namespace Microsoft.Data.SqlClient
             int signatureLength = encryptedColumnEncryptionKey.Length - currentIndex - cipherTextLength;
             if (signatureLength != keySizeInBytes)
             {
-                throw SQL.InvalidSignatureInEncryptedCEKCsp(signatureLength, keySizeInBytes, masterKeyPath);
+                throw SQL.InvalidSignatureInEncryptedCEKCng(signatureLength, keySizeInBytes, masterKeyPath);
             }
 
             // Get ciphertext
@@ -106,7 +102,7 @@ namespace Microsoft.Data.SqlClient
 
             // Compute the hash to validate the signature
             byte[] hash;
-            using (SHA256Cng sha256 = new SHA256Cng())
+            using (SHA256 sha256 = SHA256.Create())
             {
                 sha256.TransformFinalBlock(encryptedColumnEncryptionKey, 0, encryptedColumnEncryptionKey.Length - signature.Length);
                 hash = sha256.Hash;
@@ -115,20 +111,20 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(hash != null, @"hash should not be null while decrypting encrypted column encryption key.");
 
             // Validate the signature
-            if (!RSAVerifySignature(hash, signature, rsaProvider))
+            if (!RSAVerifySignature(hash, signature, rsaCngProvider))
             {
                 throw SQL.InvalidSignature(masterKeyPath);
             }
 
             // Decrypt the CEK
-            return RSADecrypt(rsaProvider, cipherText);
+            return RSADecrypt(rsaCngProvider, cipherText);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/EncryptColumnEncryptionKey/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/EncryptColumnEncryptionKey/*' />
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {
             // Validate the input parameters
-            ValidateNonEmptyCSPKeyPath(masterKeyPath, isSystemOp: false);
+            ValidateNonEmptyKeyPath(masterKeyPath, isSystemOp: false);
 
             if (null == columnEncryptionKey)
             {
@@ -142,11 +138,11 @@ namespace Microsoft.Data.SqlClient
             // Validate encryptionAlgorithm
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: false);
 
-            // Create RSA Provider with the given CSP name and key name
-            RSACryptoServiceProvider rsaProvider = CreateRSACryptoProvider(masterKeyPath, isSystemOp: false);
+            // CreateCNGProviderWithKey
+            RSACng rsaCngProvider = CreateRSACngProvider(masterKeyPath, isSystemOp: false);
 
             // Validate whether the key is RSA one or not and then get the key size
-            int keySizeInBytes = GetKeySize(rsaProvider);
+            int keySizeInBytes = GetKeySize(rsaCngProvider);
 
             // Construct the encryptedColumnEncryptionKey
             // Format is 
@@ -160,14 +156,14 @@ namespace Microsoft.Data.SqlClient
             byte[] keyPathLength = BitConverter.GetBytes((Int16)masterKeyPathBytes.Length);
 
             // Encrypt the plain text
-            byte[] cipherText = RSAEncrypt(rsaProvider, columnEncryptionKey);
+            byte[] cipherText = RSAEncrypt(rsaCngProvider, columnEncryptionKey);
             byte[] cipherTextLength = BitConverter.GetBytes((Int16)cipherText.Length);
             Debug.Assert(cipherText.Length == keySizeInBytes, @"cipherText length does not match the RSA key size");
 
             // Compute hash
             // SHA-2-256(version + keyPathLength + ciphertextLength + keyPath + ciphertext) 
             byte[] hash;
-            using (SHA256Cng sha256 = new SHA256Cng())
+            using (SHA256 sha256 = SHA256.Create())
             {
                 sha256.TransformBlock(version, 0, version.Length, version, 0);
                 sha256.TransformBlock(keyPathLength, 0, keyPathLength.Length, keyPathLength, 0);
@@ -178,9 +174,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Sign the hash
-            byte[] signedHash = RSASignHashedData(hash, rsaProvider);
+            byte[] signedHash = RSASignHashedData(hash, rsaCngProvider);
             Debug.Assert(signedHash.Length == keySizeInBytes, @"signed hash length does not match the RSA key size");
-            Debug.Assert(RSAVerifySignature(hash, signedHash, rsaProvider), @"Invalid signature of the encrypted column encryption key computed.");
+            Debug.Assert(RSAVerifySignature(hash, signedHash, rsaCngProvider), @"Invalid signature of the encrypted column encryption key computed.");
 
             // Construct the encrypted column encryption key
             // EncryptedColumnEncryptionKey = version + keyPathLength + ciphertextLength + keyPath + ciphertext +  signature
@@ -214,13 +210,13 @@ namespace Microsoft.Data.SqlClient
             return encryptedColumnEncryptionKey;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SignColumnMasterKeyMetadata/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/SignColumnMasterKeyMetadata/*' />
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
         {
             throw new NotSupportedException();
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/VerifyColumnMasterKeyMetadata/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/VerifyColumnMasterKeyMetadata/*' />
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
             throw new NotSupportedException();
@@ -240,73 +236,72 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.NullKeyEncryptionAlgorithm(isSystemOp);
             }
 
-            if (string.Equals(encryptionAlgorithm, RSAEncryptionAlgorithmWithOAEP, StringComparison.OrdinalIgnoreCase) != true)
+            if (!string.Equals(encryptionAlgorithm, RSAEncryptionAlgorithmWithOAEP, StringComparison.OrdinalIgnoreCase))
             {
                 throw SQL.InvalidKeyEncryptionAlgorithm(encryptionAlgorithm, RSAEncryptionAlgorithmWithOAEP, isSystemOp);
             }
         }
 
-
         /// <summary>
-        /// Checks if the CSP key path is Empty or Null (and raises exception if they are).
+        /// Checks if the CNG key path is Empty or Null (and raises exception if they are).
         /// </summary>
-        /// <param name="masterKeyPath">CSP key path.</param>
+        /// <param name="masterKeyPath">keypath containing the CNG provider name and key name</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
-        private void ValidateNonEmptyCSPKeyPath(string masterKeyPath, bool isSystemOp)
+        private void ValidateNonEmptyKeyPath(string masterKeyPath, bool isSystemOp)
         {
             if (string.IsNullOrWhiteSpace(masterKeyPath))
             {
                 if (null == masterKeyPath)
                 {
-                    throw SQL.NullCspKeyPath(isSystemOp);
+                    throw SQL.NullCngKeyPath(isSystemOp);
                 }
                 else
                 {
-                    throw SQL.InvalidCspPath(masterKeyPath, isSystemOp);
+                    throw SQL.InvalidCngPath(masterKeyPath, isSystemOp);
                 }
             }
         }
 
         /// <summary>
-        /// Encrypt the text using specified CSP key.
+        /// Encrypt the text using specified CNG key.
         /// </summary>
-        /// <param name="rscp">RSACryptoServiceProvider</param>
+        /// <param name="rsaCngProvider">RSA CNG Provider.</param>
         /// <param name="columnEncryptionKey">Plain text Column Encryption Key.</param>
         /// <returns>Returns an encrypted blob or throws an exception if there are any errors.</returns>
-        private byte[] RSAEncrypt(RSACryptoServiceProvider rscp, byte[] columnEncryptionKey)
+        private byte[] RSAEncrypt(RSACng rsaCngProvider, byte[] columnEncryptionKey)
         {
             Debug.Assert(columnEncryptionKey != null);
-            Debug.Assert(rscp != null);
+            Debug.Assert(rsaCngProvider != null);
 
-            return rscp.Encrypt(columnEncryptionKey, fOAEP: true);
+            return rsaCngProvider.Encrypt(columnEncryptionKey, RSAEncryptionPadding.OaepSHA1);
         }
 
         /// <summary>
-        /// Decrypt the text using specified CSP key.
+        /// Decrypt the text using the specified CNG key.
         /// </summary>
-        /// <param name="rscp">RSACryptoServiceProvider</param>
+        /// <param name="rsaCngProvider">RSA CNG Provider.</param>
         /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key.</param>
         /// <returns>Returns the decrypted plaintext Column Encryption Key or throws an exception if there are any errors.</returns>
-        private byte[] RSADecrypt(RSACryptoServiceProvider rscp, byte[] encryptedColumnEncryptionKey)
+        private byte[] RSADecrypt(RSACng rsaCngProvider, byte[] encryptedColumnEncryptionKey)
         {
             Debug.Assert((encryptedColumnEncryptionKey != null) && (encryptedColumnEncryptionKey.Length != 0));
-            Debug.Assert(rscp != null);
+            Debug.Assert(rsaCngProvider != null);
 
-            return rscp.Decrypt(encryptedColumnEncryptionKey, fOAEP: true);
+            return rsaCngProvider.Decrypt(encryptedColumnEncryptionKey, RSAEncryptionPadding.OaepSHA1);
         }
 
         /// <summary>
-        /// Generates signature based on RSA PKCS#v1.5 scheme using a specified CSP Key URL. 
+        /// Generates signature based on RSA PKCS#v1.5 scheme using a specified CNG Key. 
         /// </summary>
         /// <param name="dataToSign">Text to sign.</param>
-        /// <param name="rscp">RSA Provider with a given key</param>
+        /// <param name="rsaCngProvider">RSA CNG Provider.</param>
         /// <returns>Signature</returns>
-        private byte[] RSASignHashedData(byte[] dataToSign, RSACryptoServiceProvider rscp)
+        private byte[] RSASignHashedData(byte[] dataToSign, RSACng rsaCngProvider)
         {
             Debug.Assert((dataToSign != null) && (dataToSign.Length != 0));
-            Debug.Assert(rscp != null);
+            Debug.Assert(rsaCngProvider != null);
 
-            return rscp.SignData(dataToSign, HashingAlgorithm);
+            return rsaCngProvider.SignData(dataToSign, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         }
 
         /// <summary>
@@ -314,123 +309,84 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="dataToVerify"></param>
         /// <param name="signature"></param>
-        /// <param name="rscp">RSA Provider with a given key</param>
+        /// <param name="rsaCngProvider">RSA CNG Provider.</param>
         /// <returns>true if signature is valid, false if it is not valid</returns>
-        private bool RSAVerifySignature(byte[] dataToVerify, byte[] signature, RSACryptoServiceProvider rscp)
+        private bool RSAVerifySignature(byte[] dataToVerify, byte[] signature, RSACng rsaCngProvider)
         {
             Debug.Assert((dataToVerify != null) && (dataToVerify.Length != 0));
             Debug.Assert((signature != null) && (signature.Length != 0));
-            Debug.Assert(rscp != null);
+            Debug.Assert(rsaCngProvider != null);
 
-            return rscp.VerifyData(dataToVerify, HashingAlgorithm, signature);
+            return rsaCngProvider.VerifyData(dataToVerify, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         }
 
         /// <summary>
         /// Gets the public Key size in bytes
         /// </summary>
-        /// <param name="rscp">RSA Provider with a given key</param>
+        /// <param name="rsaCngProvider">RSA CNG Provider.</param>
         /// <returns>Key size in bytes</returns>
-        private int GetKeySize(RSACryptoServiceProvider rscp)
+        private int GetKeySize(RSACng rsaCngProvider)
         {
-            Debug.Assert(rscp != null);
+            Debug.Assert(rsaCngProvider != null);
 
-            return rscp.KeySize / 8;
+            return rsaCngProvider.KeySize / 8; // Convert from bits to byte
         }
 
         /// <summary>
-        /// Creates a RSACryptoServiceProvider from the given key path which contains both CSP name and key name
+        /// Creates a RSACng object from the given keyName
         /// </summary>
-        /// <param name="keyPath">key path in the format of [CAPI provider name]\[key name]</param>
+        /// <param name="keyPath"></param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
         /// <returns></returns>
-        private RSACryptoServiceProvider CreateRSACryptoProvider(string keyPath, bool isSystemOp)
+        private RSACng CreateRSACngProvider(string keyPath, bool isSystemOp)
         {
             // Get CNGProvider and the KeyID
-            string cspProviderName;
-            string keyName;
-            GetCspProviderAndKeyName(keyPath, isSystemOp, out cspProviderName, out keyName);
+            string cngProviderName;
+            string keyIdentifier;
+            GetCngProviderAndKeyId(keyPath, isSystemOp, out cngProviderName, out keyIdentifier);
 
-            // Verify the existence of CSP and then get the provider type
-            int providerType = GetProviderType(cspProviderName, keyPath, isSystemOp);
-
-            // Create a new instance of CspParameters for an RSA container.
-            CspParameters cspParams = new CspParameters(providerType, cspProviderName, keyName);
-            cspParams.Flags = CspProviderFlags.UseExistingKey;
-
-            RSACryptoServiceProvider rscp = null;
+            CngProvider cngProvider = new CngProvider(cngProviderName);
+            CngKey cngKey;
 
             try
             {
-                //Create a new instance of RSACryptoServiceProvider
-                rscp = new RSACryptoServiceProvider(cspParams);
+                cngKey = CngKey.Open(keyIdentifier, cngProvider);
             }
-            catch (CryptographicException e)
+            catch (CryptographicException)
             {
-                const int KEYSETDOESNOTEXIST = -2146893802;
-                if (e.HResult == KEYSETDOESNOTEXIST)
-                {
-                    // Key does not exist
-                    throw SQL.InvalidCspKeyIdentifier(keyName, keyPath, isSystemOp);
-                }
-                else
-                {
-                    // bubble up the exception
-                    throw;
-                }
+                throw SQL.InvalidCngKey(keyPath, cngProviderName, keyIdentifier, isSystemOp);
             }
 
-            return rscp;
+            return new RSACng(cngKey);
         }
 
         /// <summary>
-        /// Extracts the CSP provider name and key name from the given key path
+        /// Extracts the CNG provider and key name from the key path
         /// </summary>
-        /// <param name="keyPath">key path in the format of [CSP provider name]\[key name]</param>
+        /// <param name="keyPath">keypath in the format [CNG Provider]/[KeyName]</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
-        /// <param name="cspProviderName">output containing the CSP provider name</param>
-        /// <param name="keyIdentifier">output containing the key name</param>
-        private void GetCspProviderAndKeyName(string keyPath, bool isSystemOp, out string cspProviderName, out string keyIdentifier)
+        /// <param name="cngProvider">CNG Provider</param>
+        /// <param name="keyIdentifier">Key identifier inside the CNG provider</param>
+        private void GetCngProviderAndKeyId(string keyPath, bool isSystemOp, out string cngProvider, out string keyIdentifier)
         {
-            int indexOfSlash = keyPath.IndexOf(@"/");
+            int indexOfSlash = keyPath.IndexOf(@"/", StringComparison.Ordinal);
             if (indexOfSlash == -1)
             {
-                throw SQL.InvalidCspPath(keyPath, isSystemOp);
+                throw SQL.InvalidCngPath(keyPath, isSystemOp);
             }
 
-            cspProviderName = keyPath.Substring(0, indexOfSlash);
+            cngProvider = keyPath.Substring(0, indexOfSlash);
             keyIdentifier = keyPath.Substring(indexOfSlash + 1, keyPath.Length - (indexOfSlash + 1));
 
-            if (cspProviderName.Length == 0)
+            if (cngProvider.Length == 0)
             {
-                throw SQL.EmptyCspName(keyPath, isSystemOp);
+                throw SQL.EmptyCngName(keyPath, isSystemOp);
             }
 
             if (keyIdentifier.Length == 0)
             {
-                throw SQL.EmptyCspKeyId(keyPath, isSystemOp);
+                throw SQL.EmptyCngKeyId(keyPath, isSystemOp);
             }
-        }
-
-        /// <summary>
-        /// Gets the provider type from a given CAPI provider name
-        /// </summary>
-        /// <param name="providerName">CAPI provider name</param>
-        /// <param name="keyPath">key path in the format of [CSP provider name]\[key name]</param>
-        /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
-        /// <returns></returns>
-        private int GetProviderType(string providerName, string keyPath, bool isSystemOp)
-        {
-            string keyName = String.Format(@"SOFTWARE\Microsoft\Cryptography\Defaults\Provider\{0}", providerName);
-            RegistryKey key = Registry.LocalMachine.OpenSubKey(keyName);
-            if (key == null)
-            {
-                throw SQL.InvalidCspName(providerName, keyPath, isSystemOp);
-            }
-
-            int providerType = (int)key.GetValue(@"Type");
-            key.Close();
-
-            return providerType;
         }
     }
 }
