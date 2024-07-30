@@ -231,9 +231,9 @@ namespace Microsoft.Data.SqlClientX.IO
             base.Dispose(disposing);
         }
 
-        public async ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct)
+        public ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct)
         {
-            await _writeStream.WriteByteAsync(value, isAsync, ct).ConfigureAwait(false);
+            return _writeStream.WriteByteAsync(value, isAsync, ct);
         }
 
         /// <inheritdocs />

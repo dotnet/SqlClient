@@ -161,6 +161,15 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
+        /// Writes a byte to the stream.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="isAsync"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        public ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct) => _tdsStream.WriteByteAsync(value, isAsync, ct);
+
+        /// <summary>
         /// Writes bytes directly to TdsSteam associated with writer.
         /// </summary>
         /// <param name="data">Data in byte array.</param>

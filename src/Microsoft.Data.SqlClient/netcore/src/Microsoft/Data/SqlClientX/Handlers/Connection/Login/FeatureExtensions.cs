@@ -111,25 +111,55 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
         }
     }
 
+    /// <summary>
+    /// Base class for feature extensions that can be requested during login.
+    /// </summary>
     internal abstract class FeatureExtensionFeatures
     {
+        /// <summary>
+        /// The feature extension flag.
+        /// </summary>
         public TdsEnums.FeatureExtension FeatureExtensionFlag { get; private set; }
 
+        /// <summary>
+        /// Constructor which accepts the Feature extension flag for the feature.
+        /// </summary>
+        /// <param name="featureExtensionFlags">The featur extension flag for this feature.</param>
         public FeatureExtensionFeatures(TdsEnums.FeatureExtension featureExtensionFlags)
         {
             FeatureExtensionFlag = featureExtensionFlags;
         }
 
+        /// <summary>
+        /// Whether the feature should be used based on the requested features.
+        /// </summary>
+        /// <param name="requestedFeatures"></param>
+        /// <returns></returns>
         public virtual bool ShouldUseFeature(TdsEnums.FeatureExtension requestedFeatures)
         {
             return (requestedFeatures & FeatureExtensionFlag) != 0;
         }
 
+        /// <summary>
+        /// Get the length of the feature data including the feature id in bytes.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
         public abstract int GetLengthInBytes(LoginHandlerContext context);
 
+        /// <summary>
+        /// Writes the feature data to the stream, passed with the login handler.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="isAsync"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
         public abstract ValueTask WriteFeatureData(LoginHandlerContext context, bool isAsync, CancellationToken ct);
     }
 
+    /// <summary>
+    /// Base class representing the features which are versioned.
+    /// </summary>
     internal abstract class VersionConfigurableFeature : FeatureExtensionFeatures
     {
         private readonly byte _tdsFeatureIdentifier;
@@ -152,7 +182,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
         /// <param name="featureExtension"></param>
         /// <param name="tdsFeatureIdentifier"></param>
         /// <param name="maxSupportedVersion"></param>
-        public VersionConfigurableFeature(TdsEnums.FeatureExtension featureExtension, byte tdsFeatureIdentifier, byte maxSupportedVersion) : base(featureExtension)
+        protected VersionConfigurableFeature(TdsEnums.FeatureExtension featureExtension, byte tdsFeatureIdentifier, byte maxSupportedVersion) : base(featureExtension)
         {
             _tdsFeatureIdentifier = tdsFeatureIdentifier;
             _maxSupportedFeatureVersion = maxSupportedVersion;
@@ -291,7 +321,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
 
             TdsStream stream = context.TdsStream;
 
-            await stream.WriteByteAsync(TdsEnums.FEATUREEXT_SRECOVERY, isAsync, ct).ConfigureAwait(false);
+            await stream.TdsWriter.WriteByteAsync(TdsEnums.FEATUREEXT_SRECOVERY, isAsync, ct).ConfigureAwait(false);
             SessionData reconnectData = context.Features.ReconnectData;
             if (reconnectData == null)
             {
@@ -354,21 +384,14 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
                         await stream.WriteByteAsync((byte)i, isAsync, ct).ConfigureAwait(false);
                         if (reconnectData._initialState[i].Length < 0xFF)
                         {
-                            await stream.WriteByteAsync((byte)reconnectData._initialState[i].Length, isAsync, ct).ConfigureAwait(false);
+                            await writer.WriteByteAsync((byte)reconnectData._initialState[i].Length, isAsync, ct).ConfigureAwait(false);
                         }
                         else
                         {
-                            await stream.WriteByteAsync(0xFF, isAsync, ct).ConfigureAwait(false);
+                            await writer.WriteByteAsync(0xFF, isAsync, ct).ConfigureAwait(false);
                             await writer.WriteIntAsync(reconnectData._initialState[i].Length, isAsync, ct).ConfigureAwait(false);
                         }
-                        if (isAsync)
-                        { 
-                            await stream.WriteAsync(reconnectData._initialState[i].AsMemory(0, reconnectData._initialState[i].Length), ct).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            stream.Write(reconnectData._initialState[i].AsSpan(0, reconnectData._initialState[i].Length));
-                        }
+                        await writer.WriteBytesAsync(reconnectData._initialState[i].AsMemory(0, reconnectData._initialState[i].Length), isAsync, ct).ConfigureAwait(false);
                     }
                 }
                 await writer.WriteIntAsync(currentLength, isAsync, ct);
@@ -379,29 +402,19 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
                 {
                     if (writeState[i])
                     {
-                        await stream.WriteByteAsync((byte)i, isAsync, ct).ConfigureAwait(false);
+                        await writer.WriteByteAsync((byte)i, isAsync, ct).ConfigureAwait(false);
                         if (reconnectData._delta[i]._dataLength < 0xFF)
                         {
-                            await stream.WriteByteAsync((byte)reconnectData._delta[i]._dataLength, isAsync, ct).ConfigureAwait(false);
+                            await writer.WriteByteAsync((byte)reconnectData._delta[i]._dataLength, isAsync, ct).ConfigureAwait(false);
                         }
                         else
                         {
-                            await stream.WriteByteAsync(0xFF, isAsync, ct).ConfigureAwait(false);
+                            await writer.WriteByteAsync(0xFF, isAsync, ct).ConfigureAwait(false);
                             await writer.WriteIntAsync(reconnectData._delta[i]._dataLength, isAsync, ct).ConfigureAwait(false);
                         }
-
-                        if (isAsync)
-                        {
-                            await stream.WriteAsync(reconnectData._delta[i]._data.AsMemory(0, reconnectData._delta[i]._dataLength), ct).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            stream.Write(reconnectData._delta[i]._data.AsSpan(0, reconnectData._delta[i]._dataLength));
-                        }
+                        await writer.WriteBytesAsync(reconnectData._delta[i]._data.AsMemory(0, reconnectData._delta[i]._dataLength), isAsync, ct).ConfigureAwait(false);
                     }
                 }
-                
-
             }
         }
 
@@ -418,22 +431,22 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
 
             if (collation == null)
             {
-                await stream.WriteByteAsync(0, isAsync, ct).ConfigureAwait(false);
+                await stream.TdsWriter.WriteByteAsync(0, isAsync, ct).ConfigureAwait(false);
             }
             else
             {
-                await stream.WriteByteAsync(sizeof(uint) + sizeof(byte), isAsync, ct).ConfigureAwait(false);
+                await stream.TdsWriter.WriteByteAsync(sizeof(uint) + sizeof(byte), isAsync, ct).ConfigureAwait(false);
                 await stream.TdsWriter.WriteUnsignedIntAsync(collation._info, isAsync, ct).ConfigureAwait(false);
-                await stream.WriteByteAsync(collation._sortId, isAsync, ct).ConfigureAwait(false);
+                await stream.TdsWriter.WriteByteAsync(collation._sortId, isAsync, ct).ConfigureAwait(false);
             }
         }
 
-        private async ValueTask WriteIdentifierAsync(LoginHandlerContext context, string s, bool isAsync, CancellationToken ct)
+        private static async ValueTask WriteIdentifierAsync(LoginHandlerContext context, string s, bool isAsync, CancellationToken ct)
         {
             TdsStream stream = context.TdsStream;
             if (null != s)
             {
-                await stream.WriteByteAsync(checked((byte)s.Length), isAsync, ct).ConfigureAwait(false);
+                await stream.TdsWriter.WriteByteAsync(checked((byte)s.Length), isAsync, ct).ConfigureAwait(false);
                 await stream.WriteStringAsync(s, isAsync, ct).ConfigureAwait(false);
             }
             else
@@ -504,7 +517,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
 
             TdsStream stream = context.TdsStream;
             
-            await stream.WriteByteAsync(TdsEnums.FEATUREEXT_FEDAUTH, isAsync, ct).ConfigureAwait(false);
+            await stream.TdsWriter.WriteByteAsync(TdsEnums.FEATUREEXT_FEDAUTH, isAsync, ct).ConfigureAwait(false);
 
             // set options
             byte options = 0x00;
@@ -580,14 +593,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
                 case TdsEnums.FedAuthLibrary.SecurityToken:
                     await stream.TdsWriter.WriteIntAsync(fedAuthFeatureData.accessToken.Length, isAsync, ct).ConfigureAwait(false);
                     ct.ThrowIfCancellationRequested();
-                    if (isAsync)
-                    {
-                        await stream.WriteAsync(fedAuthFeatureData.accessToken.AsMemory(), ct).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        stream.Write(fedAuthFeatureData.accessToken);
-                    }
+                    await stream.TdsWriter.WriteBytesAsync(fedAuthFeatureData.accessToken.AsMemory(), isAsync, ct).ConfigureAwait(false);
                     break;
                 default:
                     Debug.Fail("Unrecognized FedAuthLibrary type for feature extension request");
@@ -613,7 +619,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
                                                 || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                                                 || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
                                                 || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
-                                                // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                                                 || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated);
 
             return IsEntraIdAuthInConnectionString && context.FedAuthNegotiatedInPrelogin
