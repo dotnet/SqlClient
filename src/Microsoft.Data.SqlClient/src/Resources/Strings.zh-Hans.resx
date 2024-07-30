@@ -4738,6 +4738,6 @@
     <value>验证证书时证书不可用。</value>
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
-    <value>The certificate provided by the server does not match the certificate provided by the ServerCertificate option.</value>
+    <value>服务器提供的证书与 ServerCertificate 选项提供的证书不匹配。</value>
   </data>
 </root>

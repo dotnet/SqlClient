@@ -79,7 +79,7 @@ namespace Microsoft.Data.ProviderBase
         {
             get
             {
-                return (!_connectionIsDoomed && !_cannotBePooled && !_owningObject.TryGetTarget(out DbConnection _));
+                return (!_connectionIsDoomed && !_cannotBePooled && !_owningObject.TryGetTarget(out _));
             }
         }
 
@@ -286,7 +286,7 @@ namespace Microsoft.Data.ProviderBase
                 // of the pool and it's owning object is no longer around to
                 // return it.
 
-                return !IsTxRootWaitingForTxEnd && (_pooledCount < 1) && !_owningObject.TryGetTarget(out DbConnection _);
+                return !IsTxRootWaitingForTxEnd && (_pooledCount < 1) && !_owningObject.TryGetTarget(out _);
             }
         }
 
@@ -621,7 +621,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 pool.PutObjectFromTransactedPool(this);
             }
-            else if (-1 == _pooledCount && !_owningObject.TryGetTarget(out DbConnection _))
+            else if (-1 == _pooledCount && !_owningObject.TryGetTarget(out _))
             {
                 // When _pooledCount is -1 and the owning object no longer exists,
                 // it indicates a closed (or leaked), non-pooled connection so 
@@ -829,7 +829,7 @@ namespace Microsoft.Data.ProviderBase
             // IMPORTANT NOTE: You must have taken a lock on the object before
             // you call this method to prevent race conditions with Clear and
             // ReclaimEmancipatedObjects.
-            if (_owningObject.TryGetTarget(out DbConnection _))
+            if (_owningObject.TryGetTarget(out _))
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.PooledObjectHasOwner);        // pooled connection already has an owner!
             }

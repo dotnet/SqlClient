@@ -1535,14 +1535,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
                     WriteBeginExecuteEvent();
-                    bool usedCache;
                     if (IsProviderRetriable)
                     {
-                        InternalExecuteNonQueryWithRetry(nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out usedCache, asyncWrite: false, inRetry: false);
+                        InternalExecuteNonQueryWithRetry(nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out _, asyncWrite: false, inRetry: false);
                     }
                     else
                     {
-                        InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out usedCache);
+                        InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out _);
                     }
                     success = true;
                     return _rowsAffected;
@@ -1577,8 +1576,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    bool usedCache;
-                    InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), true, CommandTimeout, out usedCache);
+                    InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), true, CommandTimeout, out _);
                 }
                 finally
                 {
@@ -1968,11 +1966,12 @@ namespace Microsoft.Data.SqlClient
                         {
                             try
                             {
-                                bool dataReady;
                                 Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                                bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
-                                if (!result)
-                                { throw SQL.SynchronousCallMayNotPend(); }
+                                TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
+                                if (result != TdsOperationStatus.Done)
+                                {
+                                    throw SQL.SynchronousCallMayNotPend();
+                                }
                             }
                             finally
                             {
@@ -3998,11 +3997,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
-                    if (!result)
-                    { throw SQL.SynchronousCallMayNotPend(); }
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        throw SQL.SynchronousCallMayNotPend();
+                    }
                 }
             }
             catch (Exception e)
@@ -4742,18 +4742,18 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlParameter param = originalRpcRequest.userParams[i];
                         SqlParameter paramCopy = new SqlParameter(
-                            param.ParameterName, 
-                            param.SqlDbType, 
-                            param.Size, 
-                            param.Direction, 
-                            param.Precision, 
-                            param.Scale, 
-                            param.SourceColumn, 
+                            param.ParameterName,
+                            param.SqlDbType,
+                            param.Size,
+                            param.Direction,
+                            param.Precision,
+                            param.Scale,
+                            param.SourceColumn,
                             param.SourceVersion,
-                            param.SourceColumnNullMapping, 
-                            param.Value, 
-                            param.XmlSchemaCollectionDatabase, 
-                            param.XmlSchemaCollectionOwningSchema, 
+                            param.SourceColumnNullMapping,
+                            param.Value,
+                            param.XmlSchemaCollectionDatabase,
+                            param.XmlSchemaCollectionOwningSchema,
                             param.XmlSchemaCollectionName
                         );
                         paramCopy.CompareInfo = param.CompareInfo;
@@ -5127,8 +5127,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlDataReader RunExecuteReader(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, string method)
         {
             Task unused; // sync execution 
-            bool usedCache;
-            SqlDataReader reader = RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, completion: null, timeout: CommandTimeout, task: out unused, usedCache: out usedCache);
+            SqlDataReader reader = RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, completion: null, timeout: CommandTimeout, task: out unused, out _);
             Debug.Assert(unused == null, "returned task during synchronous execution");
             return reader;
         }
@@ -5611,11 +5610,12 @@ namespace Microsoft.Data.SqlClient
                     {
                         Task executeTask = _stateObj.Parser.TdsExecuteSQLBatch(optionSettings, timeout, this.Notification, _stateObj, sync: true);
                         Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
-                        bool dataReady;
                         Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                        bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
-                        if (!result)
-                        { throw SQL.SynchronousCallMayNotPend(); }
+                        TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            throw SQL.SynchronousCallMayNotPend();
+                        }
                         // and turn OFF when the ds exhausts the stream on Close()
                         optionSettings = GetResetOptionsString(cmdBehavior);
                     }
@@ -5816,11 +5816,12 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out dataReady);
-                    if (!result)
-                    { throw SQL.SynchronousCallMayNotPend(); }
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out _);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        throw SQL.SynchronousCallMayNotPend();
+                    }
                 }
                 catch (Exception e)
                 {
@@ -6553,9 +6554,9 @@ namespace Microsoft.Data.SqlClient
                     thisParam = parameters[i];
                     // searching for Output or InputOutput or ReturnValue with matching name
                     if (
-                        thisParam.Direction != ParameterDirection.Input && 
-                        thisParam.Direction != ParameterDirection.ReturnValue && 
-                        SqlParameter.ParameterNamesEqual(paramName, thisParam.ParameterName,StringComparison.Ordinal)
+                        thisParam.Direction != ParameterDirection.Input &&
+                        thisParam.Direction != ParameterDirection.ReturnValue &&
+                        SqlParameter.ParameterNamesEqual(paramName, thisParam.ParameterName, StringComparison.Ordinal)
                     )
                     {
                         foundParam = true;

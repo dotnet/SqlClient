@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_transactionType == TransactionType.LocalFromTSQL, "invalid state");
                     result = false;
                 }
-                else if (!_parent.TryGetTarget(out SqlTransaction _))
+                else if (!_parent.TryGetTarget(out _))
                 {
                     // We had a parent, but parent was GC'ed.
                     result = true;
