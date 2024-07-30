@@ -205,15 +205,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void VariousExceptionTests()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            if (!DataTestUtility.IsNotAzureServer())
+            // Strip the password in connection string if Authentication=Active Directory Managed Identity as it can not be used with a Password
+            if (builder.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)
             {
-                // Strip the password in connection string if Authentication=Active Directory Managed Identity as it can not be used with a Password
-                if (builder.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)
-                {
-                    string[] removeKeys = { "Password", "PWD" };
-                    string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys);
-                    builder = new SqlConnectionStringBuilder(connStr);
-                }
+                string[] removeKeys = { "Password", "PWD" };
+                string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys);
+                builder = new SqlConnectionStringBuilder(connStr);
             }
 
             // Test 1 - A
