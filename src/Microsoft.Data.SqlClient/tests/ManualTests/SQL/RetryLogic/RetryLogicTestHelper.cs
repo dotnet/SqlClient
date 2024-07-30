@@ -79,7 +79,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     20,
                     0,
                     -2,     // Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.
-                    207    // invalid column name
+                    207,    // invalid column name
+                    18456   // Using managed identity in Azure Sql Server throws 18456 for non-existent database instead of 4060. 
                };
 
         internal static readonly string s_ExceedErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryExceeded;
@@ -134,7 +135,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyInvalidCatalog(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(1), FilterSqlStatements.None, null, 250, false);
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(1), FilterSqlStatements.None, null, 250, true);
         }
 
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyInvalidCommand(int numberOfRetries)
