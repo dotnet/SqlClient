@@ -5876,7 +5876,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // read the collation for 7.x servers
-            if (_is2000 && col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE))
+            if (_is2000 && col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE) && (tdsType != TdsEnums.SQLJSON))
             {
                 result = TryProcessCollation(stateObj, out col.collation);
                 if (result != TdsOperationStatus.Done)
@@ -6805,6 +6805,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVARCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
+                case TdsEnums.SQLJSON:
                     // If bigvarchar(max), we only read the first chunk here,
                     // expecting the caller to read the rest
                     if (encoding == null)
@@ -7255,6 +7256,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNCHAR:
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
+                case TdsEnums.SQLJSON:
                     result = TryReadSqlStringValue(value, tdsType, length, md.encoding, isPlp, stateObj);
                     if (result != TdsOperationStatus.Done)
                     {
@@ -8777,6 +8779,7 @@ namespace Microsoft.Data.SqlClient
                              colmeta.tdsType == TdsEnums.SQLBIGVARCHAR ||
                              colmeta.tdsType == TdsEnums.SQLBIGVARBINARY ||
                              colmeta.tdsType == TdsEnums.SQLNVARCHAR ||
+                             colmeta.tdsType == TdsEnums.SQLJSON ||
                              // Large UDTs is WinFS-only
                              colmeta.tdsType == TdsEnums.SQLUDT,
                              "GetDataLength:Invalid streaming datatype");
@@ -10570,7 +10573,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else if (mt.IsPlp)
                                 {
-                                    if (mt.SqlDbType != SqlDbType.Xml)
+                                    if (mt.SqlDbType != SqlDbType.Xml && mt.SqlDbType != SqlDbTypeExtensions.Json)
                                         WriteShort(TdsEnums.SQL_USHORTVARMAXLEN, stateObj);
                                 }
                                 else if ((!mt.IsVarTime) && (mt.SqlDbType != SqlDbType.Date))
@@ -10611,53 +10614,56 @@ namespace Microsoft.Data.SqlClient
 
                             // write out collation or xml metadata
 
-                            if (_is2005 && (mt.SqlDbType == SqlDbType.Xml))
+                            if ((mt.SqlDbType == SqlDbType.Xml || mt.SqlDbType == SqlDbTypeExtensions.Json))
                             {
-                                if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase) ||
-                                    !string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema) ||
-                                    !string.IsNullOrEmpty(param.XmlSchemaCollectionName))
+                                if (mt.SqlDbType == SqlDbType.Xml)
                                 {
-                                    stateObj.WriteByte(1);   //Schema present flag
-
-                                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase))
+                                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase) ||
+                                        !string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema) ||
+                                        !string.IsNullOrEmpty(param.XmlSchemaCollectionName))
                                     {
-                                        tempLen = (param.XmlSchemaCollectionDatabase).Length;
-                                        stateObj.WriteByte((byte)(tempLen));
-                                        WriteString(param.XmlSchemaCollectionDatabase, tempLen, 0, stateObj);
+                                        stateObj.WriteByte(1);   //Schema present flag
+
+                                        if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase))
+                                        {
+                                            tempLen = (param.XmlSchemaCollectionDatabase).Length;
+                                            stateObj.WriteByte((byte)(tempLen));
+                                            WriteString(param.XmlSchemaCollectionDatabase, tempLen, 0, stateObj);
+                                        }
+                                        else
+                                        {
+                                            stateObj.WriteByte(0);       // No dbname
+                                        }
+
+                                        if (!string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema))
+                                        {
+                                            tempLen = (param.XmlSchemaCollectionOwningSchema).Length;
+                                            stateObj.WriteByte((byte)(tempLen));
+                                            WriteString(param.XmlSchemaCollectionOwningSchema, tempLen, 0, stateObj);
+                                        }
+                                        else
+                                        {
+                                            stateObj.WriteByte(0);      // no xml schema name
+                                        }
+                                        if (!string.IsNullOrEmpty(param.XmlSchemaCollectionName))
+                                        {
+                                            tempLen = (param.XmlSchemaCollectionName).Length;
+                                            WriteShort((short)(tempLen), stateObj);
+                                            WriteString(param.XmlSchemaCollectionName, tempLen, 0, stateObj);
+                                        }
+                                        else
+                                        {
+                                            WriteShort(0, stateObj);       // No xml schema collection name
+                                        }
+
                                     }
                                     else
                                     {
-                                        stateObj.WriteByte(0);       // No dbname
+                                        stateObj.WriteByte(0);       // No schema
                                     }
-
-                                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema))
-                                    {
-                                        tempLen = (param.XmlSchemaCollectionOwningSchema).Length;
-                                        stateObj.WriteByte((byte)(tempLen));
-                                        WriteString(param.XmlSchemaCollectionOwningSchema, tempLen, 0, stateObj);
-                                    }
-                                    else
-                                    {
-                                        stateObj.WriteByte(0);      // no xml schema name
-                                    }
-                                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionName))
-                                    {
-                                        tempLen = (param.XmlSchemaCollectionName).Length;
-                                        WriteShort((short)(tempLen), stateObj);
-                                        WriteString(param.XmlSchemaCollectionName, tempLen, 0, stateObj);
-                                    }
-                                    else
-                                    {
-                                        WriteShort(0, stateObj);       // No xml schema collection name
-                                    }
-
-                                }
-                                else
-                                {
-                                    stateObj.WriteByte(0);       // No schema
                                 }
                             }
-                            else if (_is2000 && mt.IsCharType)
+                            else if (mt.IsCharType && mt.SqlDbType != SqlDbTypeExtensions.Json)
                             {
                                 // if it is not supplied, simply write out our default collation, otherwise, write out the one attached to the parameter
                                 SqlCollation outCollation = (param.Collation != null) ? param.Collation : _defaultCollation;
@@ -12432,10 +12438,18 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
+                case TdsEnums.SQLJSON:
 
                     if (type.IsPlp)
                     {
-                        if (IsBOMNeeded(type, value))
+                        if (type.NullableType == TdsEnums.SQLJSON)
+                        {
+                            // TODO : Performance and BOM check. Saurabh 
+                            byte[] jsonAsBytes = Encoding.UTF8.GetBytes(value.ToString());
+                            WriteInt(jsonAsBytes.Length, stateObj);
+                            return stateObj.WriteByteArray(jsonAsBytes, jsonAsBytes.Length, 0, canAccumulate: false);
+                        }
+                        else if (IsBOMNeeded(type, value))
                         {
                             WriteInt(actualLength + 2, stateObj);               // chunk length
                             WriteShort(TdsEnums.XMLUNICODEBOM, stateObj);
@@ -13124,6 +13138,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
+                case TdsEnums.SQLJSON:
                     {
                         Debug.Assert(!isDataFeed || (value is TextDataFeed || value is XmlDataFeed), "Value must be a TextReader or XmlReader");
                         Debug.Assert(isDataFeed || (value is string || value is byte[]), "Value is a byte array or string");
@@ -13145,7 +13160,14 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (type.IsPlp)
                             {
-                                if (IsBOMNeeded(type, value))
+                                if (type.NullableType == TdsEnums.SQLJSON)
+                                {
+                                    // TODO : Performance and BOM check. Saurabh 
+                                    byte[] jsonAsBytes = Encoding.UTF8.GetBytes((string)value);
+                                    WriteInt(jsonAsBytes.Length, stateObj);
+                                    return stateObj.WriteByteArray(jsonAsBytes, jsonAsBytes.Length, 0, canAccumulate: false);
+                                }
+                                else if (IsBOMNeeded(type, value))
                                 {
                                     WriteInt(actualLength + 2, stateObj);               // chunk length
                                     WriteShort(TdsEnums.XMLUNICODEBOM, stateObj);
@@ -13652,7 +13674,7 @@ namespace Microsoft.Data.SqlClient
                         WriteInt(unchecked((int)TdsEnums.VARLONGNULL), stateObj);
                     }
                 }
-                else if (type.NullableType == TdsEnums.SQLXMLTYPE || unknownLength)
+                else if (type.NullableType is TdsEnums.SQLXMLTYPE or TdsEnums.SQLJSON || unknownLength)
                 {
                     WriteUnsignedLong(TdsEnums.SQL_PLP_UNKNOWNLEN, stateObj);
                 }

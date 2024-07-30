@@ -490,6 +490,8 @@ namespace Microsoft.Data.SqlClient
         public const int SQLDATETIME2 = 0x2a;
         public const int SQLDATETIMEOFFSET = 0x2b;
 
+        public const int SQLJSON = 0xF4;
+
         public const int DEFAULT_VARTIME_SCALE = 7;
 
         //Partially length prefixed datatypes constants. These apply to XMLTYPE, BIGVARCHRTYPE,
