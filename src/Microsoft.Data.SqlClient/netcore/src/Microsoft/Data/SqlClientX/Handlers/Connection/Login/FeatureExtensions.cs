@@ -30,6 +30,85 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
         /// This is set while processing the Login acknowledgement.
         /// </summary>
         public bool FederatedAuthenticationInfoReceived { get; internal set; }
+
+        internal FeatureExtensions()
+        {
+            AppendDefaultFeatures();
+        }
+        
+        /// <summary>
+        /// Append a feature to the list of features to be requested.
+        /// </summary>
+        /// <param name="featureExtension"></param>
+        internal void AppendFeature(TdsEnums.FeatureExtension featureExtension)
+        {
+            RequestedFeatures |= featureExtension;
+        }
+
+        /// <summary>
+        /// Add the default features to the list of requested features.
+        /// </summary>
+        private void AppendDefaultFeatures()
+        {
+            // The GLOBALTRANSACTIONS, DATACLASSIFICATION, TCE, and UTF8 support features are implicitly requested
+            RequestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions
+                | TdsEnums.FeatureExtension.DataClassification
+                | TdsEnums.FeatureExtension.Tce
+                | TdsEnums.FeatureExtension.UTF8Support
+                | TdsEnums.FeatureExtension.SQLDNSCaching;
+        }
+
+        /// <summary>
+        /// Add any optional features needed for the connection, based on connection string
+        /// or APIs.
+        /// </summary>
+        /// <param name="context"></param>
+        internal void AppendOptionalFeatures(LoginHandlerContext context)
+        {
+            AddSessionRecoveryIfNeeded(context);
+
+            AddFedAuthFeatureIfNeeded(context);
+        }
+
+        private void AddFedAuthFeatureIfNeeded(LoginHandlerContext context)
+        {
+            if (FedAuthFeature.ShouldRequest(context))
+            {
+                AppendFeature(TdsEnums.FeatureExtension.FedAuth);
+                FederatedAuthenticationRequested = true;
+
+                if (context.AccessTokenInBytes != null)
+                {
+                    AppendFeature(TdsEnums.FeatureExtension.FedAuth);
+                    FedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
+                    {
+                        libraryType = TdsEnums.FedAuthLibrary.SecurityToken,
+                        fedAuthRequiredPreLoginResponse = context.FedAuthNegotiatedInPrelogin,
+                        accessToken = context.AccessTokenInBytes
+                    };
+                }
+                else
+                {
+                    FederatedAuthenticationInfoRequested = true;
+                    FedAuthFeatureExtensionData =
+                        new FederatedAuthenticationFeatureExtensionData
+                        {
+                            libraryType = TdsEnums.FedAuthLibrary.MSAL,
+                            authentication = context.ConnectionOptions.Authentication,
+                            fedAuthRequiredPreLoginResponse = context.FedAuthNegotiatedInPrelogin
+                        };
+                }
+            }
+        }
+
+        private void AddSessionRecoveryIfNeeded(LoginHandlerContext context)
+        {
+            if (SessionRecoveryFeature.ShouldRequest(context))
+            {
+                AppendFeature(TdsEnums.FeatureExtension.SessionRecovery);
+                SessionRecoveryRequested = true;
+            }
+        }
     }
 
     internal abstract class FeatureExtensionFeatures
@@ -326,6 +405,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
             }
         }
 
+        /// <summary>
+        /// Whether to request session recovery.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public static bool ShouldRequest(LoginHandlerContext context) => context.ConnectionOptions.ConnectRetryCount > 0;
+
         private async ValueTask WriteCollationAsync(LoginHandlerContext context, SqlCollation collation, bool isAsync, CancellationToken ct)
         {
             TdsStream stream = context.TdsStream;
@@ -508,6 +594,31 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
                     break;
             }
             
+        }
+
+        /// <summary>
+        /// Whether FedAuth should be requested.
+        /// </summary>
+        /// <param name="context"></param>
+        internal static bool ShouldRequest(LoginHandlerContext context)
+        {
+            // If the workflow being used is Active Directory Authentication and server's prelogin response
+            // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
+            // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
+            bool IsEntraIdAuthInConnectionString = context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
+                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
+                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
+                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
+                                                // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
+                                                || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated);
+
+            return IsEntraIdAuthInConnectionString && context.FedAuthNegotiatedInPrelogin
+                            || context.AccessTokenCallback != null
+                            || context.AccessTokenInBytes != null;
         }
     }
 }

@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
         public Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback => ConnectionContext.AccessTokenCallback;
 
         /// <summary>
-        /// The access token in bytes, from teh SqlConnection API.
+        /// The access token in bytes, from the SqlConnection API.
         /// </summary>
         public byte[] AccessTokenInBytes => ConnectionContext.AccessTokenInBytes;
 

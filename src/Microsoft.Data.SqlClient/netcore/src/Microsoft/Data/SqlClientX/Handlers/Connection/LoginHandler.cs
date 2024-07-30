@@ -19,6 +19,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
     /// </summary>
     internal class LoginHandler : ContextHandler<ConnectionHandlerContext>
     {
+        private const int FeatureTerminator = 0xFF;
+
         // NIC address caching
         private static byte[] s_nicAddress;             // cache the NIC address from the registry
         private readonly GlobalTransactionsFeature _globalTransactionsFeature;
@@ -55,73 +57,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
         private async ValueTask SendLogin(LoginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-
-            PasswordChangeRequest passwordChangeRequest = context.PasswordChangeRequest;
-
-            TdsEnums.FeatureExtension requestedFeatures = TdsEnums.FeatureExtension.None;
             FeatureExtensions features = context.Features;
-            if (context.ConnectionOptions.ConnectRetryCount > 0)
-            {
-                requestedFeatures |= TdsEnums.FeatureExtension.SessionRecovery;
-                features.SessionRecoveryRequested = true;
-            }
 
-            
-            if (ShouldRequestFedAuth(context))
-            {
-                requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
-                features.FederatedAuthenticationInfoRequested = true;
-                features.FedAuthFeatureExtensionData =
-                    new FederatedAuthenticationFeatureExtensionData
-                    {
-                        libraryType = TdsEnums.FedAuthLibrary.MSAL,
-                        authentication = context.ConnectionOptions.Authentication,
-                        fedAuthRequiredPreLoginResponse = context.FedAuthNegotiatedInPrelogin
-                    };
-            }
-
-            if (context.AccessTokenInBytes != null)
-            {
-                requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
-                features.FedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
-                {
-                    libraryType = TdsEnums.FedAuthLibrary.SecurityToken,
-                    fedAuthRequiredPreLoginResponse = context.FedAuthNegotiatedInPrelogin,
-                    accessToken = context.AccessTokenInBytes
-                };
-                // No need any further info from the server for token based authentication. So set _federatedAuthenticationRequested to true
-                features.FederatedAuthenticationRequested = true;
-            }
-
-            // The GLOBALTRANSACTIONS, DATACLASSIFICATION, TCE, and UTF8 support features are implicitly requested
-            requestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions | TdsEnums.FeatureExtension.DataClassification | TdsEnums.FeatureExtension.Tce | TdsEnums.FeatureExtension.UTF8Support;
-
-            // The SQLDNSCaching feature is implicitly set
-            requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
-
-            features.RequestedFeatures = requestedFeatures;
+            features.AppendOptionalFeatures(context);
 
             await TdsLogin(context, isAsync, ct).ConfigureAwait(false);
-
-            // If the workflow being used is Active Directory Authentication and server's prelogin response
-            // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
-            // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
-            static bool ShouldRequestFedAuth(LoginHandlerContext context)
-            {
-                bool IsEntraIdAuthInConnectionString = context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
-                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
-                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
-                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
-                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
-                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
-                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
-                                                || context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
-                                                // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
-                                                || (context.ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated);
-
-                return IsEntraIdAuthInConnectionString && context.FedAuthNegotiatedInPrelogin
-                                || context.AccessTokenCallback != null;
-            }
         }
 
         private async ValueTask TdsLogin(LoginHandlerContext context, bool isAsync, CancellationToken ct)
@@ -315,8 +255,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 int log7Flags = CreateLogin7Flags(context);
                 await writer.WriteIntAsync(log7Flags, isAsync, ct).ConfigureAwait(false);
                 
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.LoginHandler.WriteLoginData|ADV> TDS Login7 flags = {0}:", log7Flags);
-
                 await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);  // ClientTimeZone is not used
                 await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);  // LCID is unused by server
 
@@ -386,15 +324,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 if (null == s_nicAddress)
                     s_nicAddress = TdsParserStaticMethods.GetNetworkPhysicalAddressForTdsLoginOnly();
 
-                if (isAsync)
-                {
-                    await stream.WriteAsync(s_nicAddress.AsMemory(), ct).ConfigureAwait(false);
-                }
-                else
-                {
-                    stream.Write(s_nicAddress.AsSpan());
-                }
-
+                await stream.TdsWriter.WriteBytesAsync(s_nicAddress.AsMemory(), isAsync, ct).ConfigureAwait(false);
+                
                 await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // ibSSPI offset
                 if (context.UseSspi)
                 {
@@ -432,14 +363,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     }
                     else
                     {
-                        if (isAsync)
-                        { 
-                            await stream.WriteAsync(encryptedPassword.AsMemory(0, encryptedPasswordLengthInBytes), ct).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            stream.Write(encryptedPassword.AsSpan(0, encryptedPasswordLengthInBytes));
-                        }
+                        await stream.TdsWriter.WriteBytesAsync(encryptedPassword.AsMemory(0, encryptedPasswordLengthInBytes), isAsync, ct).ConfigureAwait(false);
                     }
                 }
 
@@ -450,11 +374,6 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 // write ibFeatureExtLong
                 if (context.UseFeatureExt)
                 {
-                    if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.LoginHandler.WriteLoginData|SEC> Sending federated authentication feature request");
-                    }
-
                     await writer.WriteIntAsync(featureExOffset, isAsync, ct).ConfigureAwait(false);
                 }
 
@@ -464,16 +383,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 
                 // send over SSPI data if we are using SSPI
                 if (context.UseSspi)
-                { 
-                    if (isAsync)
-                    {
-                        await stream.WriteAsync(outSSPIBuff.AsMemory(0, (int)outSSPILength), ct).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        stream.Write(outSSPIBuff.AsSpan(0, (int)outSSPILength));
-                    }
+                {
+                    await stream.TdsWriter.WriteBytesAsync(outSSPIBuff.AsMemory(0, (int)outSSPILength), isAsync, ct).ConfigureAwait(false);
                 }
+
                 await stream.WriteStringAsync(context.AttachedDbFileName, isAsync, ct).ConfigureAwait(false);
                 if (!context.UseSspi && !(context.Features.FederatedAuthenticationInfoRequested || context.Features.FederatedAuthenticationRequested))
                 {
@@ -485,14 +398,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     }
                     else
                     {
-                        if (isAsync)
-                        {
-                            await stream.WriteAsync(encryptedChangePassword.AsMemory(0, encryptedChangePasswordLengthInBytes), ct).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            stream.Write(encryptedChangePassword.AsSpan(0, encryptedChangePasswordLengthInBytes));
-                        }
+                        await stream.TdsWriter.WriteBytesAsync(encryptedChangePassword.AsMemory(0, encryptedChangePasswordLengthInBytes), isAsync, ct).ConfigureAwait(false);
                     }
                 }
 
@@ -557,7 +463,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 }
 
                 // terminator
-                await context.TdsStream.WriteByteAsync(0xFF, isAsync, ct).ConfigureAwait(false);
+                await context.TdsStream.WriteByteAsync(FeatureTerminator, isAsync, ct).ConfigureAwait(false);
 
             }
         }
