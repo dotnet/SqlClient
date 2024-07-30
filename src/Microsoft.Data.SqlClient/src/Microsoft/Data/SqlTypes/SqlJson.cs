@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlTypes
             _isNull = true;
         }
 
-        static void ValidateJson(string jsonString)
+        private static void ValidateJson(string jsonString)
         {
             // Convert the JSON string to a UTF-8 byte array
             byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonString);
