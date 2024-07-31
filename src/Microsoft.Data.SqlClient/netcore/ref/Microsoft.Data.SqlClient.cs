@@ -6,6 +6,7 @@
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 
 using System;
+using System.Data;
 
 [assembly: System.CLSCompliant(true)]
 namespace Microsoft.Data
@@ -15,7 +16,19 @@ namespace Microsoft.Data
     {
         internal OperationAbortedException() { }
     }
+
+    /// <summary>
+    /// Extensions for SqlDbType enum to enable its usage.
+    /// </summary>
+    public static class SqlDbTypeExtensions
+    {
+        /// <summary>
+        /// Represents the JSON Data type in SQL Server.
+        /// </summary>
+        public const SqlDbType Json = (SqlDbType)35;
+    }
 }
+
 namespace Microsoft.Data.Sql
 {
     /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/SqlNotificationRequest/*' />

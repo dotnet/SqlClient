@@ -5,6 +5,8 @@
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 
+using System.Data;
+
 [assembly: System.CLSCompliant(true)]
 [assembly: System.Resources.NeutralResourcesLanguageAttribute("en-US")]
 namespace Microsoft.Data
@@ -18,7 +20,19 @@ namespace Microsoft.Data
         private OperationAbortedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
 
     }
+
+    /// <summary>
+    /// Extensions for SqlDbType enum to enable its usage.
+    /// </summary>
+    public static class SqlDbTypeExtensions
+    {
+        /// <summary>
+        /// Represents the JSON Data type in SQL Server.
+        /// </summary>
+        public const SqlDbType Json = (SqlDbType)35;
+    }
 }
+
 namespace Microsoft.Data.Sql
 {
     /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/SqlNotificationRequest/*' />
