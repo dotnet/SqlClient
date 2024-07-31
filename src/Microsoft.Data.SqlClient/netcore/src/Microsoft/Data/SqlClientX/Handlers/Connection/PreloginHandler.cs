@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         private readonly PreloginSubHandlerBuilder _subHandlerChainBuilder;
 
         /// <summary>
-        /// Paraemter-less constructor which creates an authenticator for TLS.
+        /// Parameter-less constructor which creates an authenticator for TLS.
         /// </summary>
         public PreloginHandler() : this(new TlsAuthenticator(), new PreloginSubHandlerBuilder())
         {

@@ -946,9 +946,8 @@
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\NoSuitableHandlerFoundException.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ReturningHandlerChain.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\Handlers\ReturningHandlerChainExceptionBehavior.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\HandlerOrchestrator.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\InternalConnectionContext.cs" />
-    <Compile Include="Microsoft\Data\SqlClientX\Handlers\SqlUtilsX.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\Handlers\Connection\ConnectionHandlerOrchestrator.cs" />
+    <Compile Include="Microsoft\Data\SqlClientX\SqlUtilsX.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsReadStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClientX\IO\ITdsWriteStream.cs" />
