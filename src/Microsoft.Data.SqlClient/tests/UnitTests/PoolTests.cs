@@ -32,7 +32,6 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
                 csb.MinPoolSize = 30;
                 csb.MaxPoolSize = 30;
             });
-            Thread.Sleep(1000);
             await using var conn = await dataSource.OpenConnectionAsync();
         }
 
@@ -460,6 +459,19 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             Assert.That(conn.ProcessID, Is.Not.EqualTo(processId));
         }
         */
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(5)]
+        public async Task Warmup_OpenedConnectionsEqualsMinPoolSize(int minPoolSize)
+        {
+            await using var dataSource = testBase.CreateDataSource(csb => csb.MinPoolSize = minPoolSize);
+            Thread.Sleep(500*minPoolSize);
+            Assert.Equal(minPoolSize, dataSource.Statistics.Total);
+            Assert.Equal(minPoolSize, dataSource.Statistics.Idle);
+        }
+
         #region Support
 
         volatile int StopFlag;
