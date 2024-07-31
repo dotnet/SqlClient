@@ -3,12 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Data.SqlClientX.Handlers.Connection;
 using Xunit;
 
@@ -25,9 +19,11 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
         ///  Datasource to use for connection test. This may be changed locally to test against a different server.
         ///  TODO: Migrate to config when we enable CI.
         /// </summary>
-        private string _dataSource = "tcp:localhost,1446";
+        private string _dataSource = "tcp:localhost,1433";
 
-        [Fact]
+        // TODO: This test needs to be enabled conditionally. This can be used to test the handlers E2E.
+        // For now, uncomment the [Fact] attribute to run the test.
+        //[Fact]
         public async void TestConnectivity()
         {
             DataSourceParsingHandler dspHandler = new();
@@ -38,17 +34,23 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
             {
                 DataSource = _dataSource,
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
-                TrustServerCertificate = true
+                TrustServerCertificate = true,
+                UserID = "sa",
+                Password = Environment.GetEnvironmentVariable("PASSWORD"),
+                ConnectRetryCount = 0,
             };
 
             SqlConnectionString scs = new(csb.ConnectionString);
             chc.ConnectionString = scs;
+
             var serverInfo = new ServerInfo(scs);
             serverInfo.SetDerivedNames(null, serverInfo.UserServerName);
             chc.ServerInfo = serverInfo;
             dspHandler.NextHandler = tcHandler;
             tcHandler.NextHandler = plHandler;
-            await Assert.ThrowsAsync<SocketException>(async () => await dspHandler.Handle(chc, true, default));
+            LoginHandler loginHandler = new();
+            plHandler.NextHandler = loginHandler;
+            await dspHandler.Handle(chc, true, default);
         }
     }
 }

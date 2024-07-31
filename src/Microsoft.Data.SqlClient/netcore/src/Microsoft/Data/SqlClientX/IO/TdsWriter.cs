@@ -43,6 +43,20 @@ namespace Microsoft.Data.SqlClientX.IO
         }
 
         /// <summary>
+        /// Writes the least significant 2 bytes as short value to the stream, as little-endian.
+        /// </summary>
+        /// <param name="value">Value to write.</param>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
+        /// <param name="ct">Cancellation token.</param>
+        public ValueTask WriteShortAsync(int value, bool isAsync, CancellationToken ct)
+        {
+            const int len = sizeof(short);
+            short int16Value = (short)(value & 0xFFFF);
+            BinaryPrimitives.WriteInt16LittleEndian(GetBuffer(len).Span, int16Value);
+            return WriteBytesAsync(GetBuffer(len).ToArray(), isAsync, ct);
+        }
+
+        /// <summary>
         /// Writes int value to out buffer, as little-endian.
         /// </summary>
         /// <param name="value">Value to write.</param>
@@ -145,6 +159,15 @@ namespace Microsoft.Data.SqlClientX.IO
             }
             return WriteBytesAsync(buffer, isAsync, ct);
         }
+
+        /// <summary>
+        /// Writes a byte to the stream.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="isAsync"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        public ValueTask WriteByteAsync(byte value, bool isAsync, CancellationToken ct) => _tdsStream.WriteByteAsync(value, isAsync, ct);
 
         /// <summary>
         /// Writes bytes directly to TdsSteam associated with writer.

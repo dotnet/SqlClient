@@ -8,8 +8,10 @@ using System.IO;
 using System.Net.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
+using Microsoft.Data.SqlClientX.Handlers.Connection.Login;
 using Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection
@@ -18,12 +20,17 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
      /// </summary>
     internal class ConnectionHandlerContext : HandlerRequest, ICloneable
     {
-
         // TODO: Decide if we need a default constructor depending on the latest design 
         /// <summary>
         /// Stream used by readers.
         /// </summary>
         public Stream ConnectionStream { get; set; }
+
+        /// <summary>
+        /// A timer representing the timeout for the connection.
+        /// TODO: This might require rethinking.
+        /// </summary>
+        internal TimeoutTimer TimeoutTimer { get; set; }
 
         /// <summary>
         /// Class that contains data required to handle a connection request.
@@ -64,7 +71,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// <summary>
         /// Indicates if fed auth needed for this connection.
         /// </summary>
-        public bool IsFedAuthRequired { get; internal set; }
+        public bool IsFedAuthNegotiatedInPrelogin { get; internal set; }
 
         /// <summary>
         /// The access token in bytes.
@@ -97,6 +104,18 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         internal Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback { get; set; }
 
         /// <summary>
+        /// Represents a password change request on this connection.
+        /// </summary>
+        public PasswordChangeRequest PasswordChangeRequest { get; internal set; }
+
+        /// <summary>
+        /// Features in the login request.
+        /// This needn't be cloned, since after routing, the feature extensions need to be 
+        /// re-requested like it was for a fresh connection.
+        /// </summary>
+        public FeatureExtensions Features { get; } = new();
+
+        /// <summary>
         /// Clone <see cref="ConnectionHandlerContext"/> as part of history along the chain.
         /// </summary>
         /// <returns>A new instance of ConnectionHandlerContext with copied values.</returns>
@@ -112,11 +131,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 SslOverTdsStream = this.SslOverTdsStream, 
                 TdsStream = this.TdsStream, 
                 IsMarsCapable = this.IsMarsCapable,
-                IsFedAuthRequired = this.IsFedAuthRequired,
+                IsFedAuthNegotiatedInPrelogin = this.IsFedAuthNegotiatedInPrelogin,
                 AccessTokenInBytes = this.AccessTokenInBytes,
                 ServerInfo = this.ServerInfo, 
                 ErrorCollection = this.ErrorCollection, 
-                AccessTokenCallback = this.AccessTokenCallback // Assuming delegate cloning is not required
+                AccessTokenCallback = this.AccessTokenCallback, // Assuming delegate cloning is not required
+                PasswordChangeRequest = this.PasswordChangeRequest,
             };
         }
 
