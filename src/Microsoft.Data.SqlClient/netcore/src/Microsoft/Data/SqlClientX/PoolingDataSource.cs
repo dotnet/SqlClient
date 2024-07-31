@@ -449,7 +449,7 @@ namespace Microsoft.Data.SqlClientX
             while (_numConnectors < MinPoolSize)
             {
                 // Obey the same rate limit as user-initiated opens.
-                // Ensures that pool-initiated opens are queued properly and don't 
+                // Ensures that pool-initiated opens are queued properly alongside user requests.
                 SqlConnector? connector = await OpenNewInternalConnection(
                     null,
                     TimeSpan.FromSeconds(Settings.ConnectTimeout),
