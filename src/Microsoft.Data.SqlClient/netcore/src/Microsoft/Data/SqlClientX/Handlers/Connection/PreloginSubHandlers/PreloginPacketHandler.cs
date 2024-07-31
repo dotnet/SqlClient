@@ -75,8 +75,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         /// <returns></returns>
         private async Task ReadPreloginResponse(PreloginHandlerContext context, bool isAsync, CancellationToken ct)
         {
-            context.ConnectionContext.MarsCapable = context.ConnectionContext.ConnectionString.MARS; // Assign default value
-            context.ConnectionContext.FedAuthNegotiatedInPrelogin = false;
+            context.ConnectionContext.IsMarsCapable = context.ConnectionContext.ConnectionString.MARS; // Assign default value
+            context.ConnectionContext.IsFedAuthNegotiatedInPrelogin = false;
 
             TdsStream tdsStream = context.ConnectionContext.TdsStream;
 
@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                         payloadOffset = BinaryPrimitives.ReadUInt16BigEndian(preloginPayload.AsSpan(offset, 2));
                         offset += PAYLOAD_OFFSET_AND_LENGTH_SIZE_IN_BYTES;
 
-                        context.ConnectionContext.MarsCapable = (preloginPayload[payloadOffset] != 0);
+                        context.ConnectionContext.IsMarsCapable = (preloginPayload[payloadOffset] != 0);
                         Debug.Assert(preloginPayload[payloadOffset] == 0 || preloginPayload[payloadOffset] == 1, "Value for Mars PreLoginHandshake option not equal to 1 or 0!");
                         break;
 
@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
                             && context.ConnectionContext.ConnectionString.Authentication != SqlAuthenticationMethod.NotSpecified)
                             || context.ConnectionContext.AccessTokenInBytes != null || context.ConnectionContext.AccessTokenCallback != null)
                         {
-                            context.ConnectionContext.FedAuthNegotiatedInPrelogin = preloginPayload[payloadOffset] == 0x01;
+                            context.ConnectionContext.IsFedAuthNegotiatedInPrelogin = preloginPayload[payloadOffset] == 0x01;
                         }
                         break;
 

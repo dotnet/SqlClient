@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.Login
         /// <summary>
         /// If fed auth is negotiated in prelogin.
         /// </summary>
-        public bool FedAuthNegotiatedInPrelogin => ConnectionContext.FedAuthNegotiatedInPrelogin;
+        public bool FedAuthNegotiatedInPrelogin => ConnectionContext.IsFedAuthNegotiatedInPrelogin;
 
         /// <summary>
         /// The interface name for this driver.

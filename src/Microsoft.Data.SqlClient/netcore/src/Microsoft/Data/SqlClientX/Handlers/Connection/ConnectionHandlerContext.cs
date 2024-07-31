@@ -1,6 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -65,12 +66,12 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         /// Whether the connection is capable of MARS
         /// This is negotiated after pre-login.
         /// </summary>
-        public bool MarsCapable { get; internal set; }
+        public bool IsMarsCapable { get; internal set; }
 
         /// <summary>
         /// Indicates if fed auth needed for this connection.
         /// </summary>
-        public bool FedAuthNegotiatedInPrelogin { get; internal set; }
+        public bool IsFedAuthNegotiatedInPrelogin { get; internal set; }
 
         /// <summary>
         /// The access token in bytes.
@@ -129,8 +130,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 SslStream = this.SslStream, 
                 SslOverTdsStream = this.SslOverTdsStream, 
                 TdsStream = this.TdsStream, 
-                MarsCapable = this.MarsCapable,
-                FedAuthNegotiatedInPrelogin = this.FedAuthNegotiatedInPrelogin,
+                IsMarsCapable = this.IsMarsCapable,
+                IsFedAuthNegotiatedInPrelogin = this.IsFedAuthNegotiatedInPrelogin,
                 AccessTokenInBytes = this.AccessTokenInBytes,
                 ServerInfo = this.ServerInfo, 
                 ErrorCollection = this.ErrorCollection, 
