@@ -570,7 +570,7 @@ namespace Microsoft.Data.Common
 
         internal static SqlAuthenticationMethod ConvertToAuthenticationType(string keyword, object value)
         {
-            if (null == value)
+            if (value == null)
             {
                 return DbConnectionStringDefaults.Authentication;
             }
@@ -644,7 +644,7 @@ namespace Microsoft.Data.Common
         /// <returns></returns>
         internal static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value)
         {
-            if (null == value)
+            if (value == null)
             {
                 return DbConnectionStringDefaults.ColumnEncryptionSetting;
             }
@@ -765,7 +765,7 @@ namespace Microsoft.Data.Common
 
         internal static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
         {
-            if (null == value)
+            if (value == null)
             {
                 return DbConnectionStringDefaults.AttestationProtocol;
             }

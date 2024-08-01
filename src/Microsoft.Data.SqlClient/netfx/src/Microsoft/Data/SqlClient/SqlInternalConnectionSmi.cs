@@ -237,7 +237,7 @@ namespace Microsoft.Data.SqlClient
                 //   This works for now only because we can't unenlist from the context transaction
                 Transaction tx = EnlistedTransaction;
 
-                if (null == tx)
+                if (tx == null)
                 {
                     tx = ContextTransaction;
                 }
@@ -282,7 +282,7 @@ namespace Microsoft.Data.SqlClient
                 _currentTransaction = new SqlInternalTransaction(this, TransactionType.Context, null, contextTransactionId);
                 ContextTransaction = contextTransaction;
             }
-            else if (null == currentSystemTransaction)
+            else if (currentSystemTransaction == null)
             {
                 _currentTransaction = null;  // there really isn't a transaction.
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}, no transaction.", ObjectID);
@@ -535,7 +535,7 @@ namespace Microsoft.Data.SqlClient
             // the current transaction, then we store the token in it.
             // if there isn't a pending transaction, then it's either
             // a TSQL transaction or a distributed transaction.
-            Debug.Assert(null == _currentTransaction, "non-null current transaction with an env change");
+            Debug.Assert(_currentTransaction == null, "non-null current transaction with an env change");
             _currentTransaction = _pendingTransaction;
             _pendingTransaction = null;
 

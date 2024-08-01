@@ -431,7 +431,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(null != stateObj, "null stateobject");
 
-            Debug.Assert(null == _snapshot, "Should not change during execution of asynchronous command");
+            Debug.Assert(_snapshot == null, "Should not change during execution of asynchronous command");
 
             stateObj.Owner = this;
             _stateObj = stateObj;
@@ -1446,7 +1446,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                if (null == _fieldNameLookup)
+                if (_fieldNameLookup == null)
                 {
                     CheckMetaDataIsReady();
                     _fieldNameLookup = new FieldNameLookup(this, _defaultLCID);
@@ -1480,7 +1480,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    if (null == _metaData || null == _metaData.schemaTable)
+                    if (_metaData == null || _metaData.schemaTable == null)
                     {
                         if (null != this.MetaData)
                         {
@@ -1696,7 +1696,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // if no buffer is passed in, return the number total of bytes, or -1
-                if (null == buffer)
+                if (buffer == null)
                 {
                     if (_metaData[i].metaType.IsPlp)
                     {
@@ -1807,7 +1807,7 @@ namespace Microsoft.Data.SqlClient
             cbytes = data.Length;
 
             // if no buffer is passed in, return the number of characters we have
-            if (null == buffer)
+            if (buffer == null)
             {
                 remaining = cbytes;
                 return TdsOperationStatus.Done;
@@ -2147,8 +2147,10 @@ namespace Microsoft.Data.SqlClient
                 int ndataIndex = (int)dataIndex;
 
                 // if no buffer is passed in, return the number of characters we have
-                if (null == buffer)
+                if (buffer == null)
+                {
                     return cchars;
+                }
 
                 // if dataIndex outside of data range, return 0
                 if (ndataIndex < 0 || ndataIndex >= cchars)
@@ -2252,7 +2254,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // if no buffer is passed in, return the total number of characters or -1
-            if (null == buffer)
+            if (buffer == null)
             {
                 cch = (long)_parser.PlpBytesTotalLength(_stateObj);
                 return (isUnicode && (cch > 0)) ? cch >> 1 : cch;
@@ -2631,7 +2633,7 @@ namespace Microsoft.Data.SqlClient
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
                 CheckDataIsReady();
-                if (null == values)
+                if (values == null)
                 {
                     throw ADP.ArgumentNull(nameof(values));
                 }
@@ -3045,7 +3047,7 @@ namespace Microsoft.Data.SqlClient
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
 
-                if (null == values)
+                if (values == null)
                 {
                     throw ADP.ArgumentNull(nameof(values));
                 }
@@ -5826,7 +5828,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                if (null == _metaData || null == _metaData.dbColumnSchema)
+                if (_metaData == null || _metaData.dbColumnSchema == null)
                 {
                     if (null != this.MetaData)
                     {

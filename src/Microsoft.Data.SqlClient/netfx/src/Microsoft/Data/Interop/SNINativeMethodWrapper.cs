@@ -126,7 +126,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 Trace.Assert(1 == thelock); // Now that we have the lock, lock should be equal to 1.
 
-                if (null == data)
+                if (data == null)
                 {
                     data = Marshal.AllocHGlobal(passedSize).ToPointer();
 

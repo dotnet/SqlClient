@@ -913,7 +913,7 @@ namespace Microsoft.Data.SqlClient.Server
                 throw SQL.InvalidSqlDbTypeForConstructor(dbType);
             }
 
-            if (null == userDefinedType)
+            if (userDefinedType == null)
             {
                 throw ADP.ArgumentNull(nameof(userDefinedType));
             }
@@ -954,7 +954,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             if (null != database || null != owningSchema)
             {
-                if (null == objectName)
+                if (objectName == null)
                 {
                     throw ADP.ArgumentNull(nameof(objectName));
                 }
@@ -974,7 +974,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         private void AssertNameIsValid(string name)
         {
-            if (null == name)
+            if (name == null)
             {
                 throw ADP.ArgumentNull(nameof(name));
             }
@@ -1078,7 +1078,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             // Handle null values after type check
-            if (null == value)
+            if (value == null)
             {
                 return null;
             }
@@ -1389,7 +1389,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             // Handle null values after type check.
-            if (null == value || value.IsNull)
+            if (value == null || value.IsNull)
             {
                 return value;
             }
@@ -1438,7 +1438,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             // Handle null values after type check.
-            if (null == value || value.IsNull)
+            if (value == null || value.IsNull)
             {
                 return value;
             }
@@ -1487,7 +1487,7 @@ namespace Microsoft.Data.SqlClient.Server
         public object Adjust(object value)
         {
             // Pass null references through
-            if (null == value)
+            if (value == null)
             {
                 return null;
             }
@@ -1961,7 +1961,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             // Handle null values after type check
-            if (null == value)
+            if (value == null)
             {
                 return null;
             }
@@ -2032,7 +2032,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             // Handle null values after type check
-            if (null == value)
+            if (value == null)
             {
                 return null;
             }

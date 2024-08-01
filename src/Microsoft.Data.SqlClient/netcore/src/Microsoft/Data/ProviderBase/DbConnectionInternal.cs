@@ -37,7 +37,7 @@ namespace Microsoft.Data.ProviderBase
             set
             {
                 Transaction currentEnlistedTransaction = _enlistedTransaction;
-                if (((null == currentEnlistedTransaction) && (null != value))
+                if ((currentEnlistedTransaction == null && (null != value))
                     || ((null != currentEnlistedTransaction) && !currentEnlistedTransaction.Equals(value)))
                 {  // WebData 20000024
 
@@ -354,7 +354,7 @@ namespace Microsoft.Data.ProviderBase
 
                 DbConnectionPool pool = Pool;
 
-                if (null == pool)
+                if (pool == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.PooledObjectWithoutPool);      // pooled connection does not have a pool
                 }

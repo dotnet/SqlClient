@@ -199,7 +199,7 @@ namespace Microsoft.Data.SqlClient.Server
             ExtendedClrTypeCode extendedCode = ExtendedClrTypeCode.Invalid;
 
             // fast-track null, which is valid for all types
-            if (null == value)
+            if (value == null)
             {
                 extendedCode = ExtendedClrTypeCode.Empty;
             }
@@ -343,7 +343,7 @@ namespace Microsoft.Data.SqlClient.Server
                         break;
                     case SqlDbType.Udt:
                         // Validate UDT type if caller gave us a type to validate against
-                        if (null == udtType || value.GetType() == udtType)
+                        if (udtType == null || value.GetType() == udtType)
                         {
                             extendedCode = ExtendedClrTypeCode.Object;
                         }

@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient
 
                 bool result = false;
 
-                if (null == temp)
+                if (temp == null)
                 { // If passed value null - false.
                     result = false;
                 }
@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient
 
                 bool result = false;
 
-                if (null == temp)
+                if (temp == null)
                 { // If passed value null - false.
                     result = false;
                 }
@@ -158,7 +158,7 @@ namespace Microsoft.Data.SqlClient
 
                 bool result = false;
 
-                if (null == temp)
+                if (temp == null)
                 { // If passed value null - false.
                     result = false;
                 }
@@ -577,7 +577,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
-                    if (null == connectionString)
+                    if (connectionString == null)
                     {
                         throw ADP.ArgumentNull(nameof(connectionString));
                     }
@@ -612,7 +612,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        if (null == s_processDispatcher)
+                        if (s_processDispatcher == null)
                         { // Ensure _processDispatcher reference is present - inside lock.
 #if NETFRAMEWORK
                             ObtainProcessDispatcher();
@@ -730,7 +730,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
-                    if (null == connectionString)
+                    if (connectionString == null)
                     {
                         throw ADP.ArgumentNull(nameof(connectionString));
                     }

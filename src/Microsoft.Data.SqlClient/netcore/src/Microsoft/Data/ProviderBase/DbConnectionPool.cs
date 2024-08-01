@@ -729,7 +729,7 @@ namespace Microsoft.Data.ProviderBase
             try
             {
                 newObj = _connectionFactory.CreatePooledConnection(this, owningObject, _connectionPoolGroup.ConnectionOptions, _connectionPoolGroup.PoolKey, userOptions);
-                if (null == newObj)
+                if (newObj == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);    // CreateObject succeeded, but null object
                 }
@@ -1172,7 +1172,7 @@ namespace Microsoft.Data.ProviderBase
                 obj = GetFromTransactedPool(out transaction);
             }
 
-            if (null == obj)
+            if (obj == null)
             {
                 Interlocked.Increment(ref _waitCount);
 
@@ -1217,7 +1217,7 @@ namespace Microsoft.Data.ProviderBase
                                 }
                                 catch
                                 {
-                                    if (null == obj)
+                                    if (obj == null)
                                     {
                                         Interlocked.Decrement(ref _waitCount);
                                     }
@@ -1233,7 +1233,7 @@ namespace Microsoft.Data.ProviderBase
                                     }
                                 }
 
-                                if (null == obj)
+                                if (obj == null)
                                 {
                                     // If we were not able to create an object, check to see if
                                     // we reached MaxPoolSize.  If so, we will no longer wait on
@@ -1309,7 +1309,7 @@ namespace Microsoft.Data.ProviderBase
                         DestroyObject(obj);
                         obj = null;
                     }
-                } while (null == obj);
+                } while (obj == null);
             }
 
             if (null != obj)

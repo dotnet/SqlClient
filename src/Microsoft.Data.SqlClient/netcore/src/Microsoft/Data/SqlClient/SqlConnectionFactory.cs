@@ -85,8 +85,7 @@ namespace Microsoft.Data.SqlClient
                 redirectedUserInstance = true;
                 string instanceName;
 
-                if ((null == pool) ||
-                     (null != pool && pool.Count <= 0))
+                if (pool == null || (null != pool && pool.Count <= 0))
                 { // Non-pooled or pooled and no connections in the pool.
                     SqlInternalConnectionTds sseConnection = null;
                     try
@@ -208,7 +207,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlConnectionString FindSqlConnectionOptions(SqlConnectionPoolKey key)
         {
             SqlConnectionString connectionOptions = (SqlConnectionString)SingletonInstance.FindConnectionOptions(key);
-            if (null == connectionOptions)
+            if (connectionOptions == null)
             {
                 connectionOptions = new SqlConnectionString(key.ConnectionString);
             }

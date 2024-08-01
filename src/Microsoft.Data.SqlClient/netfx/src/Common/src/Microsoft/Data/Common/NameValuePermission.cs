@@ -74,7 +74,7 @@ namespace Microsoft.Data.Common
                     NameValuePermission kv;
 
                     kv = kvtree.CheckKeyForValue(keychain.Name);
-                    if (null == kv)
+                    if (kv == null)
                     {
                         kv = new NameValuePermission(keychain.Name);
                         kvtree.Add(kv); // add directly into live tree
@@ -82,7 +82,7 @@ namespace Microsoft.Data.Common
                     kvtree = kv;
 
                     kv = kvtree.CheckKeyForValue(keychain.Value);
-                    if (null == kv)
+                    if (kv == null)
                     {
                         DBConnectionString insertValue = ((null != keychain.Next) ? null : entry);
                         kv = new NameValuePermission(keychain.Value, insertValue);
@@ -92,7 +92,7 @@ namespace Microsoft.Data.Common
                             entries.Add(insertValue);
                         }
                     }
-                    else if (null == keychain.Next)
+                    else if (keychain.Next == null)
                     { // shorter chain potential
                         if (null != kv._entry)
                         {
@@ -128,7 +128,7 @@ namespace Microsoft.Data.Common
 
         internal void Intersect(ArrayList entries, NameValuePermission target)
         {
-            if (null == target)
+            if (target == null)
             {
                 _tree = null;
                 _entry = null;
@@ -199,7 +199,7 @@ namespace Microsoft.Data.Common
 
         internal bool CheckValueForKeyPermit(DBConnectionString parsetable)
         {
-            if (null == parsetable)
+            if (parsetable == null)
             {
                 return false;
             }
@@ -219,7 +219,7 @@ namespace Microsoft.Data.Common
                         {
                             string keyword = permitKey._value;
 #if DEBUG
-                            Debug.Assert(null == permitKey._entry, "key member has no restrictions");
+                            Debug.Assert(permitKey._entry == null, "key member has no restrictions");
 #endif
                             if (parsetable.ContainsKey(keyword))
                             {
@@ -252,7 +252,7 @@ namespace Microsoft.Data.Common
                         // else try next keyword
                     }
                 }
-                // partial chain match, either leaf-node by shorter chain or fail mid-chain if (null == _restrictions)
+                // partial chain match, either leaf-node by shorter chain or fail mid-chain if ( _restrictions == null)
             }
 
             DBConnectionString entry = _entry;

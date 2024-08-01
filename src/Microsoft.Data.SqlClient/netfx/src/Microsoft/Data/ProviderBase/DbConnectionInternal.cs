@@ -92,7 +92,7 @@ namespace Microsoft.Data.ProviderBase
             set
             {
                 Transaction currentEnlistedTransaction = _enlistedTransaction;
-                if (((null == currentEnlistedTransaction) && (null != value))
+                if ((currentEnlistedTransaction == null && (null != value))
                     || ((null != currentEnlistedTransaction) && !currentEnlistedTransaction.Equals(value)))
                 {  // WebData 20000024
 
@@ -404,10 +404,10 @@ namespace Microsoft.Data.ProviderBase
 
         internal void AddWeakReference(object value, int tag)
         {
-            if (null == _referenceCollection)
+            if (_referenceCollection == null)
             {
                 _referenceCollection = CreateReferenceCollection();
-                if (null == _referenceCollection)
+                if (_referenceCollection == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.CreateReferenceCollectionReturnedNull);
                 }
@@ -615,7 +615,7 @@ namespace Microsoft.Data.ProviderBase
 
                 DbConnectionPool pool = Pool;
 
-                if (null == pool)
+                if (pool == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.PooledObjectWithoutPool);      // pooled connection does not have a pool
                 }
@@ -768,7 +768,7 @@ namespace Microsoft.Data.ProviderBase
                     connectionFactory.SetInnerConnectionTo(outerConnection, this);
                     throw;
                 }
-                if (null == openConnection)
+                if (openConnection == null)
                 {
                     connectionFactory.SetInnerConnectionTo(outerConnection, this);
                     throw ADP.InternalConnectionError(ADP.ConnectionError.GetConnectionReturnsNull);
@@ -790,7 +790,7 @@ namespace Microsoft.Data.ProviderBase
 
             //3 // The following tests are retail assertions of things we can't allow to happen.
             bool isAlive = _owningObject.TryGetTarget(out DbConnection connection);
-            if (null == expectedOwner)
+            if (expectedOwner == null)
             {
                 if (isAlive)
                 {

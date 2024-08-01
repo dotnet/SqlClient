@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             get
             {
-                return null == _stream;
+                return _stream == null;
             }
         }
 

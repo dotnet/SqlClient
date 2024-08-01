@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                Debug.Assert(null == _warnings || 0 != _warnings.Count, "empty warning collection?");// must be something in the collection
+                Debug.Assert(_warnings == null || 0 != _warnings.Count, "empty warning collection?");// must be something in the collection
 
                 if (!ignoreWarnings)
                 {

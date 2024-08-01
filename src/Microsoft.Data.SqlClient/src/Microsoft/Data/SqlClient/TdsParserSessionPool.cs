@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return (null == _freeStateObjects);
+                return _freeStateObjects == null;
             }
         }
 
@@ -212,7 +212,7 @@ namespace Microsoft.Data.SqlClient
             return string.Format(/*IFormatProvider*/ null,
                         "(ObjID={0}, free={1}, cached={2}, total={3})",
                         _objectID,
-                        null == _freeStateObjects ? "(null)" : _freeStateObjectCount.ToString((IFormatProvider)null),
+                        _freeStateObjects == null ? "(null)" : _freeStateObjectCount.ToString((IFormatProvider)null),
                         _cachedCount,
                         _cache.Count);
         }

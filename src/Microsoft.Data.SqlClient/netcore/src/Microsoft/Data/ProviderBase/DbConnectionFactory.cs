@@ -43,7 +43,7 @@ namespace Microsoft.Data.ProviderBase
                 poolGroup = GetConnectionPoolGroup(owningConnection);
                 // Doing this on the callers thread is important because it looks up the WindowsIdentity from the thread.
                 connectionPool = GetConnectionPool(owningConnection, poolGroup);
-                if (null == connectionPool)
+                if (connectionPool == null)
                 {
                     // If GetConnectionPool returns null, we can be certain that
                     // this connection should not be pooled via DbConnectionPool

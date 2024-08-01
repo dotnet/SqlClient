@@ -88,7 +88,7 @@ namespace Microsoft.Data.Common
             ADP.CheckArgumentNull(builder, nameof(builder));
             ADP.CheckArgumentLength(keyName, nameof(keyName));
 
-            if ((null == keyName) || !s_connectionStringValidKeyRegex.IsMatch(keyName))
+            if (keyName == null || !s_connectionStringValidKeyRegex.IsMatch(keyName))
             {
                 throw ADP.InvalidKeyname(keyName);
             }
@@ -169,12 +169,12 @@ namespace Microsoft.Data.Common
             {
 
                 string rootFolderPath = datadir;
-                if (null == rootFolderPath)
+                if (rootFolderPath == null)
                 {
                     // find the replacement path
                     object rootFolderObject = AppDomain.CurrentDomain.GetData("DataDirectory");
                     rootFolderPath = (rootFolderObject as string);
-                    if ((null != rootFolderObject) && (null == rootFolderPath))
+                    if ((null != rootFolderObject) && rootFolderPath == null)
                     {
                         throw ADP.InvalidDataDirectory();
                     }
@@ -182,7 +182,7 @@ namespace Microsoft.Data.Common
                     {
                         rootFolderPath = AppDomain.CurrentDomain.BaseDirectory;
                     }
-                    if (null == rootFolderPath)
+                    if (rootFolderPath == null)
                     {
                         rootFolderPath = "";
                     }

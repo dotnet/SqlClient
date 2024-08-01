@@ -1643,7 +1643,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 return;
             }
-            if (null == value)
+            if (value == null)
             {
                 textBuilder.Append("DEFAULT");
             }
@@ -1847,7 +1847,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 if (property.CanRead)
                                 {
                                     ParameterInfo[] parameters = property.GetIndexParameters();
-                                    if ((null == parameters) || (0 == parameters.Length))
+                                    if (parameters == null || (0 == parameters.Length))
                                     {
                                         AppendNewLineIndent(textBuilder, indent + 1);
                                         textBuilder.Append(property.Name);

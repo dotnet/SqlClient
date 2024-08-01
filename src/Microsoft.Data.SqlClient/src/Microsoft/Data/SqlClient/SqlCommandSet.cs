@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlCommand command = _batchCommand;
-                if (null == command)
+                if (command == null)
                 {
                     throw ADP.ObjectDisposed(this);
                 }
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 List<SqlBatchCommand> commandList = _commandList;
-                if (null == commandList)
+                if (commandList == null)
                 {
                     throw ADP.ObjectDisposed(this);
                 }

@@ -214,12 +214,12 @@ namespace Microsoft.Data.ProviderBase
                 // new pool entry and add it to our collection.
 
                 DbConnectionOptions connectionOptions = CreateConnectionOptions(key.ConnectionString, userConnectionOptions);
-                if (null == connectionOptions)
+                if (connectionOptions == null)
                 {
                     throw ADP.InternalConnectionError(ADP.ConnectionError.ConnectionOptionsMissing);
                 }
 
-                if (null == userConnectionOptions)
+                if (userConnectionOptions == null)
                 { // we only allow one expansion on the connection string
 
                     userConnectionOptions = connectionOptions;
@@ -236,7 +236,7 @@ namespace Microsoft.Data.ProviderBase
                 }
 
                 // We don't support connection pooling on Win9x
-                if (null == poolOptions)
+                if (poolOptions == null)
                 {
                     if (null != connectionPoolGroup)
                     {
@@ -279,7 +279,7 @@ namespace Microsoft.Data.ProviderBase
                 Debug.Assert(null != connectionPoolGroup, "how did we not create a pool entry?");
                 Debug.Assert(null != userConnectionOptions, "how did we not have user connection options?");
             }
-            else if (null == userConnectionOptions)
+            else if (userConnectionOptions == null)
             {
                 userConnectionOptions = connectionPoolGroup.ConnectionOptions;
             }

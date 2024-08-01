@@ -782,7 +782,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // so tdsparser.connect can determine if SqlConnection.UserConnectionOptions
                 // needs to enforce local host after datasource alias lookup
-                return (null != _expandedAttachDBFilename) && (null == _localDBInstance);
+                return (null != _expandedAttachDBFilename) && _localDBInstance == null;
             }
         }
 
@@ -831,7 +831,7 @@ namespace Microsoft.Data.SqlClient
         internal static Dictionary<string, string> GetParseSynonyms()
         {
             Dictionary<string, string> synonyms = s_sqlClientSynonyms;
-            if (null == synonyms)
+            if (synonyms == null)
             {
 
                 int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
@@ -936,7 +936,7 @@ namespace Microsoft.Data.SqlClient
             // Note: In Longhorn you'll be able to rename a machine without
             // rebooting.  Therefore, don't cache this machine name.
             string result = WorkstationId;
-            if (null == result)
+            if (result == null)
             {
                 // permission to obtain Environment.MachineName is Asserted
                 // since permission to open the connection has been granted
@@ -1172,7 +1172,7 @@ namespace Microsoft.Data.SqlClient
             const int NetLibCount = 8;
 
             Hashtable hash = s_netlibMapping;
-            if (null == hash)
+            if (hash == null)
             {
                 hash = new Hashtable(NetLibCount)
                 {

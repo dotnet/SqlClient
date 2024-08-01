@@ -430,7 +430,7 @@ namespace Microsoft.Data.SqlClient
             // Sys.Tx keeps the connection alive until the transaction is completed.
             Debug.Assert(!IsNonPoolableTransactionRoot, "cannot defect an active delegated transaction!");  // potential race condition, but it's an assert
 
-            if (null == tx)
+            if (tx == null)
             {
                 if (IsEnlistedInTransaction)
                 {
@@ -581,7 +581,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    if (null == _whereAbouts)
+                    if (_whereAbouts == null)
                     {
                         byte[] dtcAddress = GetDTCAddress();
                         _whereAbouts = dtcAddress ?? throw SQL.CannotGetDTCAddress();
@@ -644,7 +644,7 @@ namespace Microsoft.Data.SqlClient
             // In either case, when we're working with a 2005 or newer server
             // we better not have a current transaction at this point.
 
-            Debug.Assert(null == CurrentTransaction, "unenlisted transaction with non-null current transaction?");   // verify it!
+            Debug.Assert(CurrentTransaction == null, "unenlisted transaction with non-null current transaction?");   // verify it!
         }
 
         override public void EnlistTransaction(Transaction transaction)

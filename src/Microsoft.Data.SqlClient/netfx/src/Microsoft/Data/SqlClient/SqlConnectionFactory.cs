@@ -92,8 +92,7 @@ namespace Microsoft.Data.SqlClient
                     redirectedUserInstance = true;
                     string instanceName;
 
-                    if ((null == pool) ||
-                         (null != pool && pool.Count <= 0))
+                    if (pool == null || (null != pool && pool.Count <= 0))
                     { // Non-pooled or pooled and no connections in the pool.
 
                         SqlInternalConnectionTds sseConnection = null;
@@ -229,7 +228,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlConnectionString FindSqlConnectionOptions(SqlConnectionPoolKey key)
         {
             SqlConnectionString connectionOptions = (SqlConnectionString)SingletonInstance.FindConnectionOptions(key);
-            if (null == connectionOptions)
+            if (connectionOptions == null)
             {
                 connectionOptions = new SqlConnectionString(key.ConnectionString);
             }
@@ -247,7 +246,7 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnectionSmi result = (SqlInternalConnectionSmi)smiContext.GetContextValue((int)SmiContextFactory.ContextKey.Connection);
 
             // context connections are automatically re-useable if they exist unless they've been doomed.
-            if (null == result || result.IsConnectionDoomed)
+            if (result == null || result.IsConnectionDoomed)
             {
                 if (null != result)
                 {

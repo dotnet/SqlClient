@@ -468,7 +468,7 @@ namespace Microsoft.Data.SqlClient
                         // start
                         if (ConnectionState.Open == State)
                         {
-                            if (null == _statistics)
+                            if (_statistics == null)
                             {
                                 _statistics = new SqlStatistics();
                                 _statistics._openTimestamp = ADP.TimerCurrent();
@@ -1883,7 +1883,7 @@ namespace Microsoft.Data.SqlClient
                 s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name) ||
                 s_diagnosticListener.IsEnabled(SqlClientConnectionOpenAfter.Name))
             {
-                if (null == _statistics)
+                if (_statistics == null)
                 {
                     _statistics = new SqlStatistics();
                 }
@@ -2146,7 +2146,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalConnectionTds GetOpenTdsConnection()
         {
             SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
-            if (null == innerConnection)
+            if (innerConnection == null)
             {
                 throw ADP.ClosedConnectionError();
             }
@@ -2156,7 +2156,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalConnectionTds GetOpenTdsConnection(string method)
         {
             SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
-            if (null == innerConnection)
+            if (innerConnection == null)
             {
                 throw ADP.OpenConnectionRequired(method, InnerConnection.State);
             }

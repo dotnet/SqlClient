@@ -147,7 +147,7 @@ namespace Microsoft.Data.Common
 
         internal bool IsEmpty
         {
-            get { return (null == _keychain); }
+            get { return _keychain == null; }
         }
 
         internal NameValuePair KeyChain
@@ -160,7 +160,7 @@ namespace Microsoft.Data.Common
             get
             {
                 string restrictions = _restrictions;
-                if (null == restrictions)
+                if (restrictions == null)
                 {
                     string[] restrictionValues = _restrictionValues;
                     if ((null != restrictionValues) && (0 < restrictionValues.Length))
@@ -202,7 +202,7 @@ namespace Microsoft.Data.Common
             KeyRestrictionBehavior behavior = _behavior;
             string[] restrictionValues = null;
 
-            if (null == entry)
+            if (entry == null)
             {
                 //Debug.WriteLine("0 entry AllowNothing");
                 behavior = KeyRestrictionBehavior.AllowOnly;
@@ -287,7 +287,7 @@ namespace Microsoft.Data.Common
 
             // verify _hasPassword & _parsetable are in sync between Everett/Whidbey
             Debug.Assert(!_hasPassword || ContainsKey(KEY.Password) || ContainsKey(KEY.Pwd), "OnDeserialized password mismatch this");
-            Debug.Assert(null == entry || !entry._hasPassword || entry.ContainsKey(KEY.Password) || entry.ContainsKey(KEY.Pwd), "OnDeserialized password mismatch entry");
+            Debug.Assert(entry == null || !entry._hasPassword || entry.ContainsKey(KEY.Password) || entry.ContainsKey(KEY.Pwd), "OnDeserialized password mismatch entry");
 
             DBConnectionString value = new DBConnectionString(this, restrictionValues, behavior);
             ValidateCombinedSet(this, value);
@@ -367,7 +367,7 @@ namespace Microsoft.Data.Common
         private bool IsRestrictedKeyword(string key)
         {
             // restricted if not found
-            return ((null == _restrictionValues) || (0 > Array.BinarySearch(_restrictionValues, key, StringComparer.Ordinal)));
+            return (_restrictionValues == null || (0 > Array.BinarySearch(_restrictionValues, key, StringComparer.Ordinal)));
         }
 
         internal bool IsSupersetOf(DBConnectionString entry)
@@ -415,7 +415,7 @@ namespace Microsoft.Data.Common
             {
                 if (0 > Array.BinarySearch(preventusage, allowonly[i], StringComparer.Ordinal))
                 {
-                    if (null == newlist)
+                    if (newlist == null)
                     {
                         newlist = new List<string>();
                     }
@@ -438,7 +438,7 @@ namespace Microsoft.Data.Common
             {
                 if (0 <= Array.BinarySearch(b, a[i], StringComparer.Ordinal))
                 {
-                    if (null == newlist)
+                    if (newlist == null)
                     {
                         newlist = new List<string>();
                     }

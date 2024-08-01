@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             ThrowIfITypedGettersIsNull(sink, getters, ordinal);
             object obj = GetValue(sink, getters, ordinal, metaData);
-            if (null == obj)
+            if (obj == null)
             {
                 throw ADP.InvalidCast();
             }

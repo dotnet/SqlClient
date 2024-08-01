@@ -193,13 +193,13 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("SqlDataAdapter.InitializeBatching | API | Object Id {0}", ObjectID);
             _commandSet = new SqlCommandSet();
             SqlCommand command = SelectCommand;
-            if (null == command)
+            if (command == null)
             {
                 command = InsertCommand;
-                if (null == command)
+                if (command == null)
                 {
                     command = UpdateCommand;
-                    if (null == command)
+                    if (command == null)
                     {
                         command = DeleteCommand;
                     }
