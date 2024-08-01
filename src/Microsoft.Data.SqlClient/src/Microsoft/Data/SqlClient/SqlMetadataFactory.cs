@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient
                 "on assemblies.assembly_id = types.assembly_id ";
 
             // pre 9.0/2005 servers do not have UDTs
-            if (0 > string.Compare(ServerVersion, ServerVersionNormalized90, StringComparison.OrdinalIgnoreCase))
+            if (string.Compare(ServerVersion, ServerVersionNormalized90, StringComparison.OrdinalIgnoreCase) < 0)
             {
                 return;
             }
@@ -190,7 +190,7 @@ namespace Microsoft.Data.SqlClient
 
             // TODO: update this check once the server upgrades major version number!!!
             // pre 9.0/2005 servers do not have Table types
-            if (0 > string.Compare(ServerVersion, ServerVersionNormalized10, StringComparison.OrdinalIgnoreCase))
+            if (string.Compare(ServerVersion, ServerVersionNormalized10, StringComparison.OrdinalIgnoreCase) < 0)
             {
                 return;
             }

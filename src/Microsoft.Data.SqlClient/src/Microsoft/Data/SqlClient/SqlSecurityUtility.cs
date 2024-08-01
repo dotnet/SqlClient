@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(md.IsAlgorithmInitialized(), "Encryption Algorithm is not initialized");
             byte[] cipherText = md.CipherAlgorithm.EncryptData(plainText); // this call succeeds or throws.
-            if (cipherText == null || 0 == cipherText.Length)
+            if (cipherText == null || cipherText.Length == 0)
             {
                 throw SQL.NullCipherText();
             }

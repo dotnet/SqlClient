@@ -264,7 +264,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int readerRand = rand.NextIntInclusive(0, maxValueInclusive: 256);
             CommandBehavior readerBehavior = CommandBehavior.Default;
             if (readerRand % 10 == 0)
+            {
                 readerBehavior = CommandBehavior.SequentialAccess;
+            }
             try
             {
                 using (SqlDataReader reader = cmd.ExecuteReader(readerBehavior))

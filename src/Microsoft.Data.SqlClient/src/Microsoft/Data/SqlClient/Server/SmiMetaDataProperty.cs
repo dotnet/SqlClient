@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.Server
         [Conditional("DEBUG")]
         internal void CheckCount(int countToMatch)
         {
-            Debug.Assert(0 == _columns.Count || countToMatch == _columns.Count,
+            Debug.Assert(_columns.Count == 0 || countToMatch == _columns.Count,
                     "SmiDefaultFieldsProperty.CheckCount: DefaultFieldsProperty size (" + _columns.Count +
                     ") not equal to checked size (" + countToMatch + ")");
         }
@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient.Server
         [Conditional("DEBUG")]
         internal void CheckCount(int countToMatch)
         {
-            Debug.Assert(0 == _columns.Count || countToMatch == _columns.Count,
+            Debug.Assert(_columns.Count == 0 || countToMatch == _columns.Count,
                     "SmiDefaultFieldsProperty.CheckCount: DefaultFieldsProperty size (" + _columns.Count +
                     ") not equal to checked size (" + countToMatch + ")");
         }
@@ -243,7 +243,7 @@ namespace Microsoft.Data.SqlClient.Server
         [Conditional("DEBUG")]
         internal void CheckCount(int countToMatch)
         {
-            Debug.Assert(0 == _defaults.Count || countToMatch == _defaults.Count,
+            Debug.Assert(_defaults.Count == 0 || countToMatch == _defaults.Count,
                     "SmiDefaultFieldsProperty.CheckCount: DefaultFieldsProperty size (" + _defaults.Count +
                     ") not equal to checked size (" + countToMatch + ")");
         }

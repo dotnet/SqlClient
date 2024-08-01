@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient
                 while (count > 0)
                 {
                     // if no bytes were read, get the next row
-                    if (_advanceReader && (0 == _bytesCol))
+                    if (_advanceReader && _bytesCol == 0)
                     {
                         gotData = false;
 

@@ -106,7 +106,7 @@ namespace Microsoft.Data.ProviderBase
             // walk the field names from the end to the beginning so that if a name exists
             // multiple times the first (from beginning to end) index of it is stored
             // in the hash table
-            for (int index = length - 1; 0 <= index; --index)
+            for (int index = length - 1; index >= 0; --index)
             {
                 string fieldName = _fieldNames[index];
                 lookup[fieldName] = index;

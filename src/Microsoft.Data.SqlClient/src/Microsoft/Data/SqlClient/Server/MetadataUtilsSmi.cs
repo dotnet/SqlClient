@@ -496,16 +496,16 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     string[] names = SqlParameter.ParseTypeName(typeName, true /* isUdtTypeName */);
 
-                    if (1 == names.Length)
+                    if (names.Length == 1)
                     {
                         typeSpecificNamePart3 = names[0];
                     }
-                    else if (2 == names.Length)
+                    else if (names.Length == 2)
                     {
                         typeSpecificNamePart2 = names[0];
                         typeSpecificNamePart3 = names[1];
                     }
-                    else if (3 == names.Length)
+                    else if (names.Length == 3)
                     {
                         typeSpecificNamePart1 = names[0];
                         typeSpecificNamePart2 = names[1];
@@ -603,7 +603,7 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     throw SQL.InvalidTableDerivedPrecisionForTvp(column.ColumnName, precision);
                 }
-                else if (0 == precision)
+                else if (precision == 0)
                 {
                     precision = 1;
                 }
@@ -645,7 +645,7 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     throw SQL.InvalidTableDerivedPrecisionForTvp(column.ColumnName, precision);
                 }
-                else if (0 == precision)
+                else if (precision == 0)
                 {
                     precision = 1;
                 }

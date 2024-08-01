@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient
         internal void Activate()
         {
             int wasInUse = System.Threading.Interlocked.Exchange(ref _isInUse, 1);
-            if (0 != wasInUse)
+            if (wasInUse != 0)
             {
                 throw SQL.ContextConnectionIsInUse();
             }
@@ -448,7 +448,7 @@ namespace Microsoft.Data.SqlClient
             {
                 transactionId = CurrentTransaction != null ? CurrentTransaction.TransactionId : 0;
                 transaction = null;
-                if (0 != transactionId)
+                if (transactionId != 0)
                 {
                     transaction = InternalEnlistedTransaction;
                 }
@@ -469,7 +469,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                if (owningObject != null && 1 == _isInUse)
+                if (owningObject != null && _isInUse == 1)
                 {
                     // SQLBU 369953
                     //  for various reasons, the owning object may no longer be connection to this
@@ -529,7 +529,7 @@ namespace Microsoft.Data.SqlClient
             {
 #if DEBUG
                 // Check null for case where Begin and Rollback obtained in the same message.
-                if (0 != _currentTransaction.TransactionId)
+                if (_currentTransaction.TransactionId != 0)
                 {
                     Debug.Assert(_currentTransaction.TransactionId == transactionId, "transaction id's are not equal!");
                 }

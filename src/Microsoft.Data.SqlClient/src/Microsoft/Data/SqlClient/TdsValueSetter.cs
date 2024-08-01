@@ -185,7 +185,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Non-plp data must be sent in one chunk for now.
 #if DEBUG
-                Debug.Assert(0 == _currentOffset, "SetBytes doesn't yet support chunking for non-plp data: " + _currentOffset);
+                Debug.Assert(_currentOffset == 0, "SetBytes doesn't yet support chunking for non-plp data: " + _currentOffset);
 
 #endif
                 Debug.Assert(!MetaType.GetMetaTypeFromSqlDbType(_metaData.SqlDbType, _metaData.IsMultiValued).IsLong,
@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient
                 SmiXetterAccessMap.IsSetterAccessValid(_metaData, SmiXetterTypeCode.XetBytes));
             CheckSettingOffset(length);
 
-            if (0 == length)
+            if (length == 0)
             {
                 if (_isPlp)
                 {
@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Non-plp data must be sent in one chunk for now.
 #if DEBUG
-                    Debug.Assert(0 == _currentOffset, "SetChars doesn't yet support chunking for non-plp data: " + _currentOffset);
+                    Debug.Assert(_currentOffset == 0, "SetChars doesn't yet support chunking for non-plp data: " + _currentOffset);
 #endif
 
                     if (SqlDbType.Variant == _metaData.SqlDbType)
@@ -308,7 +308,7 @@ namespace Microsoft.Data.SqlClient
                 SmiXetterAccessMap.IsSetterAccessValid(_metaData, SmiXetterTypeCode.XetChars));
             CheckSettingOffset(length);
 
-            if (0 == length)
+            if (length == 0)
             {
                 if (_isPlp)
                 {
@@ -570,7 +570,7 @@ namespace Microsoft.Data.SqlClient
                 if (SqlDbType.SmallDateTime == _metaData.SqlDbType)
                 {
                     TdsDateTime dt = MetaType.FromDateTime(value, (byte)_metaData.MaxLength);
-                    Debug.Assert(0 <= dt.days && dt.days <= ushort.MaxValue, "Invalid DateTime '" + value + "' for SmallDateTime");
+                    Debug.Assert(dt.days >= 0 && dt.days <= ushort.MaxValue, "Invalid DateTime '" + value + "' for SmallDateTime");
 
                     _stateObj.Parser.WriteShort(dt.days, _stateObj);
                     _stateObj.Parser.WriteShort(dt.time, _stateObj);

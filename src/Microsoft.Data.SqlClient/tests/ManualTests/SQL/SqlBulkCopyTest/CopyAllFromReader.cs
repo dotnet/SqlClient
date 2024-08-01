@@ -50,8 +50,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             }
                             Helpers.VerifyResults(dstConn, dstTable, 3, 5);
 
-                            Assert.True(0 < (long)stats["BytesReceived"], "BytesReceived is non-positive.");
-                            Assert.True(0 < (long)stats["BytesSent"], "BytesSent is non-positive.");
+                            Assert.True((long)stats["BytesReceived"] > 0, "BytesReceived is non-positive.");
+                            Assert.True((long)stats["BytesSent"] > 0, "BytesSent is non-positive.");
                             Assert.True((long)stats["ConnectionTime"] >= (long)stats["ExecutionTime"], "Connection Time is less than Execution Time.");
                             Assert.True((long)stats["ExecutionTime"] >= (long)stats["NetworkServerTime"], "Execution Time is less than Network Server Time.");
                             DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["UnpreparedExecs"], "Non-zero UnpreparedExecs value: " + (long)stats["UnpreparedExecs"]);

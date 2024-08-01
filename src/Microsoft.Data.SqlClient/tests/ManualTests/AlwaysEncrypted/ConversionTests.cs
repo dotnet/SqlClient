@@ -1055,7 +1055,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         count--;
                     }
 
-                    millisecond = (0 == strBuilder.Length) ? 0 : rand.Next(0, Int32.Parse(strBuilder.ToString()));
+                    millisecond = strBuilder.Length == 0 ? 0 : rand.Next(0, Int32.Parse(strBuilder.ToString()));
 
                     if (SqlDbType.DateTime2 == columnInfo.ColumnType)
                     {
@@ -1073,7 +1073,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     count = columnInfo.Scale;
 
-                    if (0 == count)
+                    if (count == 0)
                     {
                         strBuilder.Append(@"hh\:mm\:ss");
                     }

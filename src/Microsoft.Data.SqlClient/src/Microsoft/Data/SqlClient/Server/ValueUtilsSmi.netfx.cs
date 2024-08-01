@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             byte[] copyBuffer = new byte[chunkSize];
             int bytesRead;
-            while (0 != (bytesRead = source.Read(copyBuffer, 0, chunkSize)))
+            while ((bytesRead = source.Read(copyBuffer, 0, chunkSize)) != 0)
             {
                 dest.Write(copyBuffer, 0, bytesRead);
             }

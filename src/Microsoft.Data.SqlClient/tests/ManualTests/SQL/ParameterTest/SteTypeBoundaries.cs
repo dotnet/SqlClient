@@ -330,7 +330,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     result[i] = 0;
                 }
-                else if (3 == cycleStep)
+                else if (cycleStep == 3)
                 {
                     result[i] = (byte)cycleCount;
                 }
@@ -419,7 +419,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // set up rowcount column
                 _rowCountColumn = new StePermutation();
-                if (0 <= _metaDataKeysOfInterest.IndexOf(SteAttributeKey.SqlDbType))
+                if (_metaDataKeysOfInterest.IndexOf(SteAttributeKey.SqlDbType) >= 0)
                 {
                     _rowCountColumn.Add(SteAttributeKey.SqlDbType, SqlDbType.Int);
                 }
@@ -519,7 +519,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
 
-                if (0 < _fieldEnumerators.Count)
+                if (_fieldEnumerators.Count > 0)
                 {
                     _logicalPosition = LogicalPosition.BeforeElements;
                     _completed = new bool[_fieldEnumerators.Count];
@@ -599,33 +599,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             private StePermutation CreateTopLevelPermutation(IList<StePermutation> fields)
             {
                 StePermutation perm = new();
-                if (0 <= _metaDataKeysOfInterest.IndexOf(SteAttributeKey.SqlDbType))
+                if (_metaDataKeysOfInterest.IndexOf(SteAttributeKey.SqlDbType) >= 0)
                 {
                     perm.Add(SteAttributeKey.SqlDbType, SqlDbType.Structured);
                 }
 
-                if (0 <= _metaDataKeysOfInterest.IndexOf(SteAttributeKey.MultiValued))
+                if (_metaDataKeysOfInterest.IndexOf(SteAttributeKey.MultiValued) >= 0)
                 {
                     perm.Add(SteAttributeKey.MultiValued, _isMultiValued);
                 }
 
-                if (0 <= _metaDataKeysOfInterest.IndexOf(SteAttributeKey.MaxLength))
+                if (_metaDataKeysOfInterest.IndexOf(SteAttributeKey.MaxLength) >= 0)
                 {
                     perm.Add(SteAttributeKey.MaxLength, -1);
                 }
 
-                if (0 <= _metaDataKeysOfInterest.IndexOf(SteAttributeKey.TypeName))
+                if (_metaDataKeysOfInterest.IndexOf(SteAttributeKey.TypeName) >= 0)
                 {
                     perm.Add(SteAttributeKey.TypeName, _typeNameBase + _typeNumber);
                     _typeNumber++;
                 }
 
-                if (0 <= _metaDataKeysOfInterest.IndexOf(SteAttributeKey.Fields))
+                if (_metaDataKeysOfInterest.IndexOf(SteAttributeKey.Fields) >= 0)
                 {
                     perm.Add(SteAttributeKey.Fields, fields);
                 }
 
-                if (0 <= _metaDataKeysOfInterest.IndexOf(SteAttributeKey.Value))
+                if (_metaDataKeysOfInterest.IndexOf(SteAttributeKey.Value) >= 0)
                 {
                     if (!UseSeparateValueList)
                     {
@@ -686,30 +686,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     foreach (SteAttributeKey columnKey in column.DefaultKeys)
                     {
-                        if (0 > result.IndexOf(columnKey))
+                        if (result.IndexOf(columnKey) < 0)
                         {
                             result.Add(columnKey);
                         }
                     }
                 }
 
-                if (0 > result.IndexOf(SteAttributeKey.SqlDbType))
+                if (result.IndexOf(SteAttributeKey.SqlDbType) < 0)
                 {
                     result.Add(SteAttributeKey.SqlDbType);
                 }
-                if (0 > result.IndexOf(SteAttributeKey.Value))
+                if (result.IndexOf(SteAttributeKey.Value) < 0)
                 {
                     result.Add(SteAttributeKey.Value);
                 }
-                if (0 > result.IndexOf(SteAttributeKey.MaxLength))
+                if (result.IndexOf(SteAttributeKey.MaxLength) < 0)
                 {
                     result.Add(SteAttributeKey.MaxLength);
                 }
-                if (0 > result.IndexOf(SteAttributeKey.TypeName))
+                if (result.IndexOf(SteAttributeKey.TypeName) < 0)
                 {
                     result.Add(SteAttributeKey.TypeName);
                 }
-                if (0 > result.IndexOf(SteAttributeKey.Fields))
+                if (result.IndexOf(SteAttributeKey.Fields) < 0)
                 {
                     result.Add(SteAttributeKey.Fields);
                 }

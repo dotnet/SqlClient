@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         // Again expect int
                         Assert.True(value1 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
                         Assert.True(value2 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
-                        Assert.True(10 == ((System.Data.SqlTypes.SqlInt32)value2).Value, "Unexpected Value");
+                        Assert.True(((System.Data.SqlTypes.SqlInt32)value2).Value == 10, "Unexpected Value");
                         if (SqlCommandColumnEncryptionSetting.ResultSetOnly == commandSetting)
                         {
                             // For ResultSetOnly we don't expect to see plaintext for return values
@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             // Expect int
                             Assert.True(value1 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
                             Assert.True(value2 is System.Data.SqlTypes.SqlInt32, "Unexpected type");
-                            Assert.True(10 == ((System.Data.SqlTypes.SqlInt32)value2).Value, "Unexpected Value");
+                            Assert.True(((System.Data.SqlTypes.SqlInt32)value2).Value == 10, "Unexpected Value");
                             Assert.True(param.Value is System.Data.SqlTypes.SqlInt32, "Unexpected Return value");
                         }
                         else

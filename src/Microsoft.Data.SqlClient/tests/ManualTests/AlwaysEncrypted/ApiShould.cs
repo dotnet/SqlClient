@@ -682,8 +682,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             }
 
                             Assert.True(rowsAffected == numberOfRows, "no: of rows returned by EndExecuteReader is unexpected.");
-                            Assert.True(3 == sqlDataReader.VisibleFieldCount);
-                            Assert.True(3 == sqlDataReader.FieldCount);
+                            Assert.True(sqlDataReader.VisibleFieldCount == 3);
+                            Assert.True(sqlDataReader.FieldCount == 3);
                         }
                     }
                 }
@@ -827,8 +827,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                 }
                             }
 
-                            Assert.True(3 == sqlDataReader.VisibleFieldCount, "value returned by sqlDataReader.VisibleFieldCount is unexpected.");
-                            Assert.True(3 == sqlDataReader.FieldCount, "value returned by sqlDataReader.FieldCount is unexpected.");
+                            Assert.True(sqlDataReader.VisibleFieldCount == 3, "value returned by sqlDataReader.VisibleFieldCount is unexpected.");
+                            Assert.True(sqlDataReader.FieldCount == 3, "value returned by sqlDataReader.FieldCount is unexpected.");
                         }
                     }
 
@@ -1329,8 +1329,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             Assert.True(isDbNullTask.Result == false, @"IsDBNullAsync unexpectedly returned false.");
                         }
 
-                        Assert.True(3 == sqlDataReader.VisibleFieldCount, "value returned by sqlDataReader.VisibleFieldCount is unexpected.");
-                        Assert.True(3 == sqlDataReader.FieldCount, "value returned by sqlDataReader.FieldCount is unexpected.");
+                        Assert.True(sqlDataReader.VisibleFieldCount == 3, "value returned by sqlDataReader.VisibleFieldCount is unexpected.");
+                        Assert.True(sqlDataReader.FieldCount == 3, "value returned by sqlDataReader.FieldCount is unexpected.");
                     }
                 }
 
@@ -2873,8 +2873,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         Assert.True(sqlDataReader.GetString(2) == (string)testAsyncCallBackStateObject.Values[2], "LastName value read from the table was incorrect.");
                     }
 
-                    Assert.True(3 == sqlDataReader.VisibleFieldCount, "value returned by sqlDataReader.VisibleFieldCount is unexpected.");
-                    Assert.True(3 == sqlDataReader.FieldCount, "value returned by sqlDataReader.FieldCount is unexpected.");
+                    Assert.True(sqlDataReader.VisibleFieldCount == 3, "value returned by sqlDataReader.VisibleFieldCount is unexpected.");
+                    Assert.True(sqlDataReader.FieldCount == 3, "value returned by sqlDataReader.FieldCount is unexpected.");
                 }
 
                 // Based on the command behavior, verify the appropriate outcome.
@@ -3087,8 +3087,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     Assert.True(sqlDataReader.GetString(2) == (string)values[2], "LastName value read from the table was incorrect.");
                 }
 
-                Assert.True(3 == sqlDataReader.VisibleFieldCount, "value returned by sqlDataReader.VisibleFieldCount is unexpected.");
-                Assert.True(3 == sqlDataReader.FieldCount, "value returned by sqlDataReader.FieldCount is unexpected.");
+                Assert.True(sqlDataReader.VisibleFieldCount == 3, "value returned by sqlDataReader.VisibleFieldCount is unexpected.");
+                Assert.True(sqlDataReader.FieldCount == 3, "value returned by sqlDataReader.FieldCount is unexpected.");
             }
 
             VerifySqlCommandStateAfterCompletionOrCancel(sqlCommand);

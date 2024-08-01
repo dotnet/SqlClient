@@ -250,7 +250,7 @@ namespace Microsoft.Data.SqlClient
 
         protected override void FreeGcHandle(int remaining, bool release)
         {
-            if ((0 == remaining || release) && _gcHandle.IsAllocated)
+            if ((remaining == 0 || release) && _gcHandle.IsAllocated)
             {
                 _gcHandle.Free();
             }

@@ -163,7 +163,7 @@ namespace Microsoft.Data.Common
                             --count;
                         }
                     }
-                    if (0 == count)
+                    if (count == 0)
                     {
                         _tree = null;
                     }

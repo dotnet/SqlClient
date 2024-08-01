@@ -728,7 +728,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 CommandType cmdType = _commandType;
-                return ((0 != cmdType) ? cmdType : CommandType.Text);
+                return cmdType != 0 ? cmdType : CommandType.Text;
             }
             set
             {
@@ -846,7 +846,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnStatementCompleted(int recordCount)
         {
-            if (0 <= recordCount)
+            if (recordCount >= 0)
             {
                 StatementCompletedEventHandler handler = _statementCompletedEventHandler;
                 if (handler != null)
@@ -890,8 +890,7 @@ namespace Microsoft.Data.SqlClient
                     // only prepare if batch with parameters
                     if (this.IsPrepared && !this.IsDirty
                         || (this.CommandType == CommandType.StoredProcedure)
-                        || ((System.Data.CommandType.Text == this.CommandType)
-                                && (0 == GetParameterCount(_parameters))))
+                        || ((System.Data.CommandType.Text == this.CommandType) && GetParameterCount(_parameters) == 0))
                     {
                         if (Statistics != null)
                         {
@@ -1600,7 +1599,7 @@ namespace Microsoft.Data.SqlClient
                 CheckThrowSNIException();
 
                 // only send over SQL Batch command if we are not a stored proc and have no parameters
-                if ((System.Data.CommandType.Text == this.CommandType) && (0 == GetParameterCount(_parameters)))
+                if ((System.Data.CommandType.Text == this.CommandType) && GetParameterCount(_parameters) == 0)
                 {
                     try
                     {
@@ -1670,7 +1669,7 @@ namespace Microsoft.Data.SqlClient
 
             // Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
             // We skip this block for enclave based always encrypted so that we can make a call to SQL Server to get the encryption information
-            if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && (CommandType.Text == CommandType) && (0 == GetParameterCount(_parameters)))
+            if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && (CommandType.Text == CommandType) && GetParameterCount(_parameters) == 0)
             {
                 Debug.Assert(!sendToPipe, "Trying to send non-context command to pipe");
 
@@ -3177,7 +3176,7 @@ namespace Microsoft.Data.SqlClient
         // with the function below, ideally we should have support from the server for this.
         private static string UnquoteProcedurePart(string part)
         {
-            if (part != null && (2 <= part.Length))
+            if (part != null && part.Length >= 2)
             {
                 if ('[' == part[0] && ']' == part[part.Length - 1])
                 {
@@ -3434,13 +3433,14 @@ namespace Microsoft.Data.SqlClient
                         // Map MAX sizes correctly.  The 2008 server-side proc sends 0 for these instead of -1.
                         //  Should be fixed on the 2008 side, but would likely hold up the RI, and is safer to fix here.
                         //  If we can get the server-side fixed before shipping 2008, we can remove this mapping.
-                        if (0 == size &&
-                                (p.SqlDbType == SqlDbType.NVarChar ||
-                                 p.SqlDbType == SqlDbType.VarBinary ||
-                                 p.SqlDbType == SqlDbType.VarChar))
+                        if (size == 0 &&
+                            (p.SqlDbType == SqlDbType.NVarChar ||
+                             p.SqlDbType == SqlDbType.VarBinary ||
+                             p.SqlDbType == SqlDbType.VarChar))
                         {
                             size = -1;
                         }
+
                         p.Size = size;
                     }
 
@@ -4207,7 +4207,7 @@ namespace Microsoft.Data.SqlClient
                                 "The number of decribe parameter encryption RPC requests is more than the number of original RPC requests.");
             }
             //Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
-            else if (ShouldUseEnclaveBasedWorkflow || (0 != GetParameterCount(_parameters)))
+            else if (ShouldUseEnclaveBasedWorkflow || GetParameterCount(_parameters) != 0)
             {
                 // Fetch params for a single batch
                 inputParameterEncryptionNeeded = true;
@@ -4739,7 +4739,7 @@ namespace Microsoft.Data.SqlClient
             _rowsAffected = -1;
             _rowsAffectedBySpDescribeParameterEncryption = -1;
 
-            if (0 != (CommandBehavior.SingleRow & cmdBehavior))
+            if ((CommandBehavior.SingleRow & cmdBehavior) != 0)
             {
                 // CommandBehavior.SingleRow implies CommandBehavior.SingleResult
                 cmdBehavior |= CommandBehavior.SingleResult;
@@ -4991,7 +4991,7 @@ namespace Microsoft.Data.SqlClient
             // execute
             Debug.Assert(_activeConnection.Parser != null, "TdsParser class should not be null in Command.Execute!");
 
-            bool inSchema = (0 != (cmdBehavior & CommandBehavior.SchemaOnly));
+            bool inSchema = (cmdBehavior & CommandBehavior.SchemaOnly) != 0;
 
             // create a new RPC
             _SqlRPC rpc = null;
@@ -5038,7 +5038,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_RPCList != null, "RunExecuteReader rpc array not provided");
                     writeTask = _stateObj.Parser.TdsExecuteRPC(this, _RPCList, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
                 }
-                else if ((CommandType.Text == this.CommandType) && (0 == GetParameterCount(_parameters)))
+                else if ((CommandType.Text == this.CommandType) && GetParameterCount(_parameters) == 0)
                 {
                     // Send over SQL Batch command if we are not a stored proc and have no parameters
                     Debug.Assert(!IsUserPrepared, "CommandType.Text with no params should not be prepared!");
@@ -5586,10 +5586,9 @@ namespace Microsoft.Data.SqlClient
             // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
             current.cumulativeRecordsAffected = rowsAffected;
 
-            current.recordsAffected =
-                (((previous != null) && (0 <= rowsAffected))
-                    ? (rowsAffected - Math.Max(previous.cumulativeRecordsAffected, 0))
-                    : rowsAffected);
+            current.recordsAffected = (((previous != null) && rowsAffected >= 0)
+                ? (rowsAffected - Math.Max(previous.cumulativeRecordsAffected, 0))
+                : rowsAffected);
 
             if (current.batchCommand != null)
             {
@@ -6209,7 +6208,7 @@ namespace Microsoft.Data.SqlClient
                 sqlParam.Value = paramList;
                 sqlParam.Direction = ParameterDirection.Input;
 
-                bool inSchema = (0 != (behavior & CommandBehavior.SchemaOnly));
+                bool inSchema = (behavior & CommandBehavior.SchemaOnly) != 0;
                 SetUpRPCParameters(rpc, inSchema, parameters);
             }
         }
@@ -6405,7 +6404,7 @@ namespace Microsoft.Data.SqlClient
 
                     paramList.Append('(');
 
-                    if (0 == precision)
+                    if (precision == 0)
                     {
                         precision = TdsEnums.DEFAULT_NUMERIC_PRECISION;
                     }
@@ -6460,8 +6459,10 @@ namespace Microsoft.Data.SqlClient
 
                     // If the user specifies a 0-sized parameter for a variable len field
                     // pass over max size (8000 bytes or 4000 characters for wide types)
-                    if (0 == size)
+                    if (size == 0)
+                    {
                         size = mt.IsSizeInCharacters ? (TdsEnums.MAXSIZE >> 1) : TdsEnums.MAXSIZE;
+                    }
 
                     paramList.Append(size);
                     paramList.Append(')');
@@ -6497,11 +6498,11 @@ namespace Microsoft.Data.SqlClient
             //  null/empty, to maintain proper location of the parts.
             for (int i = 0; i < strings.Length; i++)
             {
-                if (0 < bld.Length)
+                if (bld.Length > 0)
                 {
                     bld.Append('.');
                 }
-                if (strings[i] != null && 0 != strings[i].Length)
+                if (strings[i] != null && strings[i].Length != 0)
                 {
                     ADP.AppendQuotedString(bld, "[", "]", strings[i]);
                 }
@@ -6640,11 +6641,11 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (-1 == _rowsAffectedBySpDescribeParameterEncryption)
+                if (_rowsAffectedBySpDescribeParameterEncryption == -1)
                 {
                     _rowsAffectedBySpDescribeParameterEncryption = value;
                 }
-                else if (0 < value)
+                else if (value > 0)
                 {
                     _rowsAffectedBySpDescribeParameterEncryption += value;
                 }
@@ -6659,11 +6660,11 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (-1 == _rowsAffected)
+                if (_rowsAffected == -1)
                 {
                     _rowsAffected = value;
                 }
-                else if (0 < value)
+                else if (value > 0)
                 {
                     _rowsAffected += value;
                 }
@@ -6797,7 +6798,7 @@ namespace Microsoft.Data.SqlClient
             SqlException result = null;
             _SqlRPC rpc = _RPCList[commandIndex];
             int length = (rpc.errorsIndexEnd - rpc.errorsIndexStart);
-            if (0 < length)
+            if (length > 0)
             {
                 SqlErrorCollection errors = new SqlErrorCollection();
                 for (int i = rpc.errorsIndexStart; i < rpc.errorsIndexEnd; ++i)

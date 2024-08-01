@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NullEncryptedColumnEncryptionKey();
             }
-            else if (0 == encryptedColumnEncryptionKey.Length)
+            else if (encryptedColumnEncryptionKey.Length == 0)
             {
                 throw SQL.EmptyEncryptedColumnEncryptionKey();
             }
@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NullColumnEncryptionKey();
             }
-            else if (0 == columnEncryptionKey.Length)
+            else if (columnEncryptionKey.Length == 0)
             {
                 throw SQL.EmptyColumnEncryptionKey();
             }

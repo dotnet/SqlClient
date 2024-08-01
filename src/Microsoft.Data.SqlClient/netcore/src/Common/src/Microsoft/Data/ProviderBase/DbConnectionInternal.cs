@@ -28,7 +28,7 @@ namespace Microsoft.Data.ProviderBase
 
         private DbConnectionPool _connectionPool;           // the pooler that the connection came from (Pooled connections only)
         private DbReferenceCollection _referenceCollection;      // collection of objects that we need to notify in some way when we're being deactivated
-        private int _pooledCount;              // [usage must be thread safe] the number of times this object has been pushed into the pool less the number of times it's been popped (0 != inPool)
+        private int _pooledCount;              // [usage must be thread safe] the number of times this object has been pushed into the pool less the number of times it's been popped (inPool != 0)
 
         private bool _connectionIsDoomed;       // true when the connection should no longer be used.
         private bool _cannotBePooled;           // true when the connection should no longer be pooled.
@@ -382,7 +382,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.UnpooledObjectHasWrongOwner); // unpooled object has incorrect owner
             }
-            if (0 != _pooledCount)
+            if (_pooledCount != 0)
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.PushingObjectSecondTime);         // pushing object onto stack a second time
             }
@@ -420,12 +420,12 @@ namespace Microsoft.Data.ProviderBase
             //3 // The following tests are retail assertions of things we can't allow to happen.
             if (Pool != null)
             {
-                if (0 != _pooledCount)
+                if (_pooledCount != 0)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.PooledObjectInPoolMoreThanOnce);  // popping object off stack with multiple pooledCount
                 }
             }
-            else if (-1 != _pooledCount)
+            else if (_pooledCount != -1)
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.NonPooledObjectUsedMoreThanOnce); // popping object off stack with multiple pooledCount
             }

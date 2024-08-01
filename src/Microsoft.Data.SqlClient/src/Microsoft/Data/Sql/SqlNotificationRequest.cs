@@ -52,7 +52,7 @@ namespace Microsoft.Data.Sql
             }
             set
             {
-                if (0 > value)
+                if (value < 0)
                 {
                     throw ADP.ArgumentOutOfRange(string.Empty, nameof(Timeout));
                 }

@@ -160,7 +160,7 @@ namespace Microsoft.Data.SqlClient
             };
             _columnEncryptionKeyValues.Add(encryptionKey);
 
-            if (0 == _databaseId)
+            if (_databaseId == 0)
             {
                 _databaseId = databaseId;
                 _cekId = cekId;
@@ -202,7 +202,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlTceCipherInfoTable(int tabSize)
         {
-            Debug.Assert(0 < tabSize, "Invalid Table Size");
+            Debug.Assert(tabSize > 0, "Invalid Table Size");
             keyList = new SqlTceCipherInfoEntry[tabSize];
         }
 

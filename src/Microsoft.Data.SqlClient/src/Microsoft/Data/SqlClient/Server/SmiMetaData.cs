@@ -352,7 +352,7 @@ namespace Microsoft.Data.SqlClient.Server
                 case SqlDbType.Udt:
                     // For SqlParameter, both userDefinedType and udtAssemblyQualifiedName can be NULL,
                     // so we are checking only maxLength if it will be used (i.e. userDefinedType is NULL)
-                    Debug.Assert((userDefinedType != null) || (0 <= maxLength || UnlimitedMaxLengthIndicator == maxLength),
+                    Debug.Assert((userDefinedType != null) || (maxLength >= 0 || UnlimitedMaxLengthIndicator == maxLength),
                              $"SmiMetaData.ctor: Udt name={udtAssemblyQualifiedName}, maxLength={maxLength}");
                     // Type not validated until matched to a server.  Could be null if extended metadata supplies three-part name!
                     _clrType = userDefinedType;
@@ -445,22 +445,22 @@ namespace Microsoft.Data.SqlClient.Server
                 case SqlDbType.DateTimeOffset:
                     break;
                 case SqlDbType.Binary:
-                    result = 0 < maxLength && MaxBinaryLength >= maxLength;
+                    result = maxLength > 0 && MaxBinaryLength >= maxLength;
                     break;
                 case SqlDbType.VarBinary:
-                    result = UnlimitedMaxLengthIndicator == maxLength || (0 < maxLength && MaxBinaryLength >= maxLength);
+                    result = UnlimitedMaxLengthIndicator == maxLength || (maxLength > 0 && MaxBinaryLength >= maxLength);
                     break;
                 case SqlDbType.Char:
-                    result = 0 < maxLength && MaxANSICharacters >= maxLength;
+                    result = maxLength > 0 && MaxANSICharacters >= maxLength;
                     break;
                 case SqlDbType.NChar:
-                    result = 0 < maxLength && MaxUnicodeCharacters >= maxLength;
+                    result = maxLength > 0 && MaxUnicodeCharacters >= maxLength;
                     break;
                 case SqlDbType.NVarChar:
-                    result = UnlimitedMaxLengthIndicator == maxLength || (0 < maxLength && MaxUnicodeCharacters >= maxLength);
+                    result = UnlimitedMaxLengthIndicator == maxLength || (maxLength > 0 && MaxUnicodeCharacters >= maxLength);
                     break;
                 case SqlDbType.VarChar:
-                    result = UnlimitedMaxLengthIndicator == maxLength || (0 < maxLength && MaxANSICharacters >= maxLength);
+                    result = UnlimitedMaxLengthIndicator == maxLength || (maxLength > 0 && MaxANSICharacters >= maxLength);
                     break;
                 default:
                     Debug.Fail("How in the world did we get here? :" + dbType);

@@ -390,7 +390,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             while (reader.Read())
                             {
                                 byte[] columnValue = (byte[])reader[0];
-                                Assert.True(3000 == columnValue.Length, "Unexpected array length!");
+                                Assert.True(columnValue.Length == 3000, "Unexpected array length!");
 
                                 foreach (byte b in columnValue)
                                 {
@@ -459,7 +459,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             while (reader.Read())
                             {
                                 byte[] columnValue = (byte[])reader[0];
-                                Assert.True(3000 == columnValue.Length, "Unexpected length for varbinary TabSmallBinaryMaxTarget!");
+                                Assert.True(columnValue.Length == 3000, "Unexpected length for varbinary TabSmallBinaryMaxTarget!");
                                 foreach (byte b in columnValue)
                                 {
                                     Assert.True(0xee == b, "unexpected element read!");

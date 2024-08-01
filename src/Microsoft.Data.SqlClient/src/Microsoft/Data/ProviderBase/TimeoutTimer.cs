@@ -54,7 +54,7 @@ namespace Microsoft.Data.ProviderBase
         {
             //--------------------
             // Preconditions
-            Debug.Assert(0 <= milliseconds);
+            Debug.Assert(milliseconds >= 0);
 
             //--------------------
             // Method body
@@ -78,7 +78,7 @@ namespace Microsoft.Data.ProviderBase
         {
             //--------------------
             // Preconditions
-            Debug.Assert(0 <= seconds || InfiniteTimeout == seconds);  // no need to support negative seconds at present
+            Debug.Assert(seconds >= 0 || InfiniteTimeout == seconds);  // no need to support negative seconds at present
 
             //--------------------
             // Method body
@@ -167,7 +167,7 @@ namespace Microsoft.Data.ProviderBase
                 else
                 {
                     milliseconds = ADP.TimerRemainingMilliseconds(_timerExpire);
-                    if (0 > milliseconds)
+                    if (milliseconds < 0)
                     {
                         milliseconds = 0;
                     }
@@ -175,7 +175,7 @@ namespace Microsoft.Data.ProviderBase
 
                 //--------------------
                 // Postconditions
-                Debug.Assert(0 <= milliseconds); // This property guarantees no negative return values
+                Debug.Assert(milliseconds >= 0); // This property guarantees no negative return values
 
                 return milliseconds;
             }
@@ -196,7 +196,7 @@ namespace Microsoft.Data.ProviderBase
                 else
                 {
                     long longMilliseconds = ADP.TimerRemainingMilliseconds(_timerExpire);
-                    if (0 > longMilliseconds)
+                    if (longMilliseconds < 0)
                     {
                         milliseconds = 0;
                     }
@@ -212,7 +212,7 @@ namespace Microsoft.Data.ProviderBase
 
                 //--------------------
                 // Postconditions
-                Debug.Assert(0 <= milliseconds);
+                Debug.Assert(milliseconds >= 0);
 
                 return milliseconds;
             }

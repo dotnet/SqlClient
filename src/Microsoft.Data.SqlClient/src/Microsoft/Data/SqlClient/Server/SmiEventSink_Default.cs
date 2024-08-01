@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             if (_errors != null)
             {
-                Debug.Assert(0 != _errors.Count, "empty error collection?"); // must be something in the collection
+                Debug.Assert(_errors.Count != 0, "empty error collection?"); // must be something in the collection
 #if NETFRAMEWORK
                 if (ignoreNonFatalMessages)
                 {
@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                Debug.Assert(_warnings == null || 0 != _warnings.Count, "empty warning collection?");// must be something in the collection
+                Debug.Assert(_warnings == null || _warnings.Count != 0, "empty warning collection?");// must be something in the collection
 
                 if (!ignoreWarnings)
                 {

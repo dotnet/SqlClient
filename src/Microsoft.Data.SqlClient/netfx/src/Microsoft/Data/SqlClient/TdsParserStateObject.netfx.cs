@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
 
-            if ((0 == remaining || release) && _gcHandle.IsAllocated)
+            if ((remaining == 0 || release) && _gcHandle.IsAllocated)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, FREEING HANDLE!", ObjectID);
                 _gcHandle.Free();
@@ -313,7 +313,7 @@ namespace Microsoft.Data.SqlClient
 
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
-            Debug.Assert((remaining == -1 && _sessionHandle == null) || (0 <= remaining && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
+            Debug.Assert((remaining == -1 && _sessionHandle == null) || (remaining >= 0 && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
             return remaining;
         }
 
@@ -380,7 +380,7 @@ namespace Microsoft.Data.SqlClient
             int remaining = Interlocked.Increment(ref _pendingCallbacks);
 
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
-            Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
+            Debug.Assert(remaining > 0 && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
             return remaining;
         }
 
@@ -1350,7 +1350,7 @@ namespace Microsoft.Data.SqlClient
             Task task = SNIWritePacket(Handle, packet, out _, canAccumulate, callerHasConnectionLock: true);
 
             // Check to see if the timeout has occurred.  This time out code is special case code to allow BCP writes to timeout. Eventually we should make all writes timeout.
-            if (_bulkCopyOpperationInProgress && 0 == GetTimeoutRemaining())
+            if (_bulkCopyOpperationInProgress && GetTimeoutRemaining() == 0)
             {
                 _parser.Connection.ThreadHasParserLockForClose = true;
                 try

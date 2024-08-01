@@ -613,7 +613,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 int index = 1;
                 xmlWriter.WriteStartElement("root");
-                while (buffer.Length / 2 < (packetSize * forcedPacketCount))
+                while (buffer.Length / 2 < packetSize * forcedPacketCount)
                 {
                     xmlWriter.WriteStartElement("block");
                     {

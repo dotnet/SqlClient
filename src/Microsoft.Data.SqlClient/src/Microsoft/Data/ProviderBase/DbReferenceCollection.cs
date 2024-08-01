@@ -85,7 +85,7 @@ namespace Microsoft.Data.ProviderBase
 
         protected void AddItem(object value, int refInfo)
         {
-            Debug.Assert(value != null && 0 != refInfo, "AddItem with null value or 0 reference info");
+            Debug.Assert(value != null && refInfo != 0, "AddItem with null value or 0 reference info");
             bool itemAdded = false;
 
             lock (_itemLock)

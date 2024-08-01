@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
         //  This method called for both get and set.
         internal override SmiTypedGetterSetter GetTypedGetterSetter(SmiEventSink sink, int ordinal)
         {
-            Debug.Assert(0 == ordinal, "TdsParameterSetter only supports 0 for ordinal.  Actual = " + ordinal);
+            Debug.Assert(ordinal == 0, "TdsParameterSetter only supports 0 for ordinal.  Actual = " + ordinal);
             return _target;
         }
 
@@ -57,8 +57,7 @@ namespace Microsoft.Data.SqlClient
         //  valid for all types
         public override void SetDBNull(SmiEventSink sink, int ordinal)
         {
-            Debug.Assert(0 == ordinal, "TdsParameterSetter only supports 0 for ordinal.  Actual = " + ordinal);
-
+            Debug.Assert(ordinal == 0, "TdsParameterSetter only supports 0 for ordinal.  Actual = " + ordinal);
             _target.EndElements(sink);
         }
         #endregion

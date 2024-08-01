@@ -364,7 +364,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             set
             {
-                if (0 == value)
+                if (value == 0)
                 {
                     _value._int64 = value;
                     _object = Array.Empty<byte>();
@@ -393,7 +393,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             set
             {
-                if (0 == value)
+                if (value == 0)
                 {
                     _value._int64 = value;
                     _object = Array.Empty<char>();

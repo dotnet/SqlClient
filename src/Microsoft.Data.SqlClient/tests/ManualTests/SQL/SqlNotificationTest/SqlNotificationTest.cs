@@ -334,7 +334,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     cmd.CommandText = stmt;
                     int tmp = cmd.ExecuteNonQuery();
-                    count = ((0 <= tmp) ? ((0 <= count) ? count + tmp : tmp) : count);
+                    count = tmp >= 0
+                        ? count >= 0 ? count + tmp : tmp
+                        : count;
                 }
             }
             return count;

@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NullArgumentInConstructorInternal(_sessionKeyName, _className);
             }
-            if (0 == sessionKey.Length)
+            if (sessionKey.Length == 0)
             {
                 throw SQL.EmptyArgumentInConstructorInternal(_sessionKeyName, _className);
             }

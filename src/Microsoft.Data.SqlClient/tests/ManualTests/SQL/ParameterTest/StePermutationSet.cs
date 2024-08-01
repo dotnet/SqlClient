@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
 
-                if (0 < _position.Length)
+                if (_position.Length > 0)
                 {
                     _logicalPosition = LogicalPosition.BeforeElements;
                 }

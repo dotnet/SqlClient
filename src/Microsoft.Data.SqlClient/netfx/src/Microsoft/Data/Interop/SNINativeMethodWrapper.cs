@@ -120,11 +120,11 @@ namespace Microsoft.Data.SqlClient
             {
                 bool success = false;
 
-                while (0 != Interlocked.CompareExchange(ref thelock, 1, 0))
+                while (Interlocked.CompareExchange(ref thelock, 1, 0) != 0)
                 { // Spin until we have the lock.
                     Thread.Sleep(50); // Sleep with short-timeout to prevent starvation.
                 }
-                Trace.Assert(1 == thelock); // Now that we have the lock, lock should be equal to 1.
+                Trace.Assert(thelock == 1); // Now that we have the lock, lock should be equal to 1.
 
                 if (data == null)
                 {
@@ -134,13 +134,13 @@ namespace Microsoft.Data.SqlClient
 
                     System.Buffer.MemoryCopy(passedData, data, passedSize, passedSize);
 
-                    Trace.Assert(0 == size); // Size should still be zero at this point.
+                    Trace.Assert(size == 0); // Size should still be zero at this point.
                     size = passedSize;
                     success = true;
                 }
 
                 int result = Interlocked.CompareExchange(ref thelock, 0, 1);
-                Trace.Assert(1 == result); // The release of the lock should have been successful.  
+                Trace.Assert(result == 1); // The release of the lock should have been successful.
 
                 return success;
             }
@@ -978,13 +978,13 @@ namespace Microsoft.Data.SqlClient
 
                 ret = SNIGetInfoWrapper(pConnectionObject, QTypes.SNI_QUERY_CONN_SSL_SECCTXTHANDLE, ref secHandlePtr);
                 //ERROR_SUCCESS
-                if (0 == ret)
+                if (ret == 0)
                 {
                     // Cast an unmanaged block to pSecHandle;
                     pSecHandle = Marshal.PtrToStructure<CredHandle>(secHandlePtr);
 
                     // SEC_E_OK
-                    if (0 == (ret = QueryContextAttributes(ref pSecHandle, ContextAttribute.SECPKG_ATTR_REMOTE_CERT_CONTEXT, pCertContext.Handle)))
+                    if ((ret = QueryContextAttributes(ref pSecHandle, ContextAttribute.SECPKG_ATTR_REMOTE_CERT_CONTEXT, pCertContext.Handle)) == 0)
                     {
                         certificate = new X509Certificate2(pCertContext.Handle);
                     }

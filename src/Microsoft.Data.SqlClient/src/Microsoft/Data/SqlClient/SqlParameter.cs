@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient
                         ctorValues = new object[] { p.ParameterName, p.Value };
                         break;
                     default:
-                        if (0 == (32 & flags))
+                        if ((32 & flags) == 0)
                         { // v1.0 everything
                             ctorParams = new Type[] {
                                                     typeof(string), typeof(SqlDbType), typeof(int), typeof(ParameterDirection),
@@ -962,7 +962,7 @@ namespace Microsoft.Data.SqlClient
             {
                 byte precision = _precision;
                 SqlDbType dbtype = GetMetaSqlDbTypeOnly();
-                if ((0 == precision) && (SqlDbType.Decimal == dbtype))
+                if (precision == 0 && (SqlDbType.Decimal == dbtype))
                 {
                     precision = ValuePrecision(SqlValue);
                 }
@@ -1051,7 +1051,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool SizeInferred => 0 == _size;
+        internal bool SizeInferred => _size == 0;
 
         internal INullable ValueAsINullable => _valueAsINullable;
 
@@ -1215,7 +1215,7 @@ namespace Microsoft.Data.SqlClient
 
                 // set up primary key as unique key list
                 //  do this prior to general metadata loop to favor the primary key
-                if (dt.PrimaryKey != null && 0 < dt.PrimaryKey.Length)
+                if (dt.PrimaryKey != null && dt.PrimaryKey.Length > 0)
                 {
                     foreach (DataColumn col in dt.PrimaryKey)
                     {
@@ -1282,7 +1282,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         firstRecord = enumerator.Current;
                         int fieldCount = firstRecord.FieldCount;
-                        if (0 < fieldCount)
+                        if (fieldCount > 0)
                         {
                             // It's valid!  Grab those fields.
                             bool[] keyCols = new bool[fieldCount];
@@ -1354,7 +1354,7 @@ namespace Microsoft.Data.SqlClient
                                 props[SmiPropertySelector.DefaultFields] = new SmiDefaultFieldsProperty(new List<bool>(defaultFields));
                             }
 
-                            if (0 < sortCount)
+                            if (sortCount > 0)
                             {
                                 // validate monotonically increasing sort order.
                                 //  Since we already checked for duplicates, we just need

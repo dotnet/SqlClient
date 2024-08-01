@@ -489,7 +489,7 @@ namespace Microsoft.Data.SqlClient
 #endif // NETFRAMEWORK
             if (_expandedAttachDBFilename != null)
             {
-                if (0 <= _expandedAttachDBFilename.IndexOf('|'))
+                if (_expandedAttachDBFilename.IndexOf('|') >= 0)
                 {
                     throw ADP.InvalidConnectionOptionValue(KEY.AttachDBFilename);
                 }
@@ -506,7 +506,7 @@ namespace Microsoft.Data.SqlClient
                     VerifyLocalHostAndFixup(ref host, true, false /*don't fix-up*/);
                 }
             }
-            else if (0 <= _attachDBFileName.IndexOf('|'))
+            else if (_attachDBFileName.IndexOf('|') >= 0)
             {
                 throw ADP.InvalidConnectionOptionValue(KEY.AttachDBFilename);
             }

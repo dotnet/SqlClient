@@ -413,7 +413,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal void ThrowIfInvalidOrdinal(int ordinal)
         {
-            if (0 > ordinal || FieldCount <= ordinal)
+            if (ordinal < 0 || ordinal >= FieldCount)
             {
                 throw ADP.IndexOutOfRange(ordinal);
             }

@@ -1290,7 +1290,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             foreach (object[] row in values)
             {
                 DataTable targetTable = null;
-                if (0 < dtList.Count)
+                if (dtList.Count > 0)
                 {
                     // shortcut for matching last table (most common scenario)
                     if (DoesRowMatchMetadata(row, dtList[dtList.Count - 1]))
