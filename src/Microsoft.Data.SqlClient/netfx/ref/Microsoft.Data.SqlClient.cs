@@ -18,7 +18,15 @@ namespace Microsoft.Data
         private OperationAbortedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
 
     }
+
+    /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlDbTypeExtensions/*' />
+    public static class SqlDbTypeExtensions
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlJson[@name="default"]' />
+        public const System.Data.SqlDbType Json = (System.Data.SqlDbType)35;
+    }
 }
+
 namespace Microsoft.Data.Sql
 {
     /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/SqlNotificationRequest/*' />

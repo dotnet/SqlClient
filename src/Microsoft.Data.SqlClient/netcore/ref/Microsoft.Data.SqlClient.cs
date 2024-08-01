@@ -5,8 +5,6 @@
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 
-using System;
-
 [assembly: System.CLSCompliant(true)]
 namespace Microsoft.Data
 {
@@ -15,7 +13,15 @@ namespace Microsoft.Data
     {
         internal OperationAbortedException() { }
     }
+
+    /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlDbTypeExtensions/*' />
+    public static class SqlDbTypeExtensions
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlJson[@name="default"]' />
+        public const System.Data.SqlDbType Json = (System.Data.SqlDbType)35;
+    }
 }
+
 namespace Microsoft.Data.Sql
 {
     /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/SqlNotificationRequest/*' />
