@@ -21,14 +21,10 @@ namespace Microsoft.Data
 
     }
 
-    /// <summary>
-    /// Extensions for SqlDbType enum to enable its usage.
-    /// </summary>
+    /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlDbTypeExtensions/*' />
     public static class SqlDbTypeExtensions
     {
-        /// <summary>
-        /// Represents the JSON Data type in SQL Server.
-        /// </summary>
+        /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlJson/*' />
         public const SqlDbType Json = (SqlDbType)35;
     }
 }
