@@ -22,7 +22,7 @@ namespace Microsoft.Data
     /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlDbTypeExtensions/*' />
     public static class SqlDbTypeExtensions
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlJson/*' />
+        /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlJson[@name="default"]' />
         public const System.Data.SqlDbType Json = (System.Data.SqlDbType)35;
     }
 }
