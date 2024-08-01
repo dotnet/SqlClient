@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             else
                 conn2.Open();
         }
-        
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             // conn1 should now be back in the pool as idle
             await using var conn3 = await dataSource.OpenConnectionAsync();
         }
-        
+
         [Fact]
         //[Explicit("Timing-based")]
         public async Task OpenAsync_cancel()
@@ -466,8 +466,8 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
         [InlineData(5)]
         public async Task Warmup_OpenedConnectionsEqualsMinPoolSize(int minPoolSize)
         {
-            await using var dataSource = testBase.CreateDataSource(csb => csb.MinPoolSize = minPoolSize);
-            Thread.Sleep(500*minPoolSize);
+            await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = minPoolSize);
+            await dataSource.Warmup(CancellationToken.None);
             Assert.Equal(minPoolSize, dataSource.Statistics.Total);
             Assert.Equal(minPoolSize, dataSource.Statistics.Idle);
         }

@@ -54,7 +54,9 @@ namespace Microsoft.Data.SqlClientX
         private readonly ChannelReader<SqlConnector?> _idleConnectorReader;
         private readonly ChannelWriter<SqlConnector?> _idleConnectorWriter;
 
-        private readonly WaitCallback _warmupCallback;
+        private Task _warmupTask;
+        private CancellationTokenSource _warmupCTS;
+        private Mutex _warmupMutex;
         #endregion
 
         // Counts the total number of open connectors tracked by the pool.
@@ -67,7 +69,8 @@ namespace Microsoft.Data.SqlClientX
         /// Initializes a new PoolingDataSource.
         /// </summary>
         //TODO: support auth contexts and provider info
-        internal PoolingDataSource(SqlConnectionString connectionString,
+        internal PoolingDataSource(
+            SqlConnectionString connectionString,
             SqlCredential credential,
             DbConnectionPoolGroupOptions options,
             RateLimiterBase connectionRateLimiter)
@@ -85,8 +88,10 @@ namespace Microsoft.Data.SqlClientX
             _idleConnectorWriter = idleChannel.Writer;
 
             //TODO: initiate idle lifetime and pruning fields
-            _warmupCallback = new WaitCallback(WarmupCallback);
-            QueueWarmupTask();
+
+            _warmupTask = Task.CompletedTask;
+            _warmupCTS = new CancellationTokenSource();
+            _warmupMutex = new Mutex();
         }
 
         #region properties
@@ -311,14 +316,8 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         internal readonly struct OpenInternalConnectionState
         {
-            internal readonly SqlConnectionX? _owningConnection;
-            internal readonly TimeSpan _timeout;
-
-            internal OpenInternalConnectionState(SqlConnectionX? owningConnection, TimeSpan timeout)
-            {
-                _owningConnection = owningConnection;
-                _timeout = timeout;
-            }
+            internal SqlConnectionX? OwningConnection { get; init; }
+            internal TimeSpan Timeout { get; init; }
         }
 
         /// <inheritdoc/>
@@ -326,75 +325,75 @@ namespace Microsoft.Data.SqlClientX
         {
             return _connectionRateLimiter.Execute(
                 RateLimitedOpen,
-                new OpenInternalConnectionState(owningConnection, timeout),
+                new OpenInternalConnectionState { OwningConnection = owningConnection, Timeout = timeout },
                 async,
                 cancellationToken
             );
+        }
 
-            async ValueTask<SqlConnector?> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
+        private async ValueTask<SqlConnector?> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
+        {
+            // As long as we're under max capacity, attempt to increase the connector count and open a new connection.
+            for (var numConnectors = _numConnectors; numConnectors < MaxPoolSize; numConnectors = _numConnectors)
             {
-                // As long as we're under max capacity, attempt to increase the connector count and open a new connection.
-                for (var numConnectors = _numConnectors; numConnectors < MaxPoolSize; numConnectors = _numConnectors)
+                // Note that we purposefully don't use SpinWait for this: https://github.com/dotnet/coreclr/pull/21437
+                if (Interlocked.CompareExchange(ref _numConnectors, numConnectors + 1, numConnectors) != numConnectors)
                 {
-                    // Note that we purposefully don't use SpinWait for this: https://github.com/dotnet/coreclr/pull/21437
-                    if (Interlocked.CompareExchange(ref _numConnectors, numConnectors + 1, numConnectors) != numConnectors)
-                    {
-                        continue;
-                    }
-
-                    try
-                    {
-                        // We've managed to increase the open counter, open a physical connection.
-                        var startTime = Stopwatch.GetTimestamp();
-                        SqlConnector? connector = new SqlConnector(state._owningConnection, this);
-                        //TODO: set clear counter on connector
-
-                        await connector.Open(timeout, async, cancellationToken).ConfigureAwait(false);
-
-                        int i;
-                        for (i = 0; i < MaxPoolSize; i++)
-                        {
-                            if (Interlocked.CompareExchange(ref _connectors[i], connector, null) == null)
-                            {
-                                break;
-                            }
-                        }
-
-                        Debug.Assert(i < MaxPoolSize, $"Could not find free slot in {_connectors} when opening.");
-                        if (i == MaxPoolSize)
-                        {
-                            //TODO: generic exception?
-                            throw new Exception($"Could not find free slot in {_connectors} when opening. Please report a bug.");
-                        }
-
-                        // Only start pruning if we've incremented open count past _min.
-                        // Note that we don't do it only once, on equality, because the thread which incremented open count past _min might get exception
-                        // on SqlConnector.Open due to timeout, CancellationToken or other reasons.
-                        //TODO:
-                        //if (numConnectors >= MinConnections)
-                        //  UpdatePruningTimer();
-
-                        return connector;
-                    }
-                    catch
-                    {
-                        // Physical open failed, decrement the open and busy counter back down.
-                        Interlocked.Decrement(ref _numConnectors);
-
-                        // In case there's a waiting attempt on the channel, we write a null to the idle connector channel
-                        // to wake it up, so it will try opening (and probably throw immediately)
-                        // Statement order is important since we have synchronous completions on the channel.
-                        _idleConnectorWriter.TryWrite(null);
-
-                        // Just in case we always call UpdatePruningTimer for failed physical open
-                        //TODO: UpdatePruningTimer();
-
-                        throw;
-                    }
+                    continue;
                 }
 
-                return null;
+                try
+                {
+                    // We've managed to increase the open counter, open a physical connection.
+                    var startTime = Stopwatch.GetTimestamp();
+                    SqlConnector? connector = new SqlConnector(state.OwningConnection, this);
+                    //TODO: set clear counter on connector
+
+                    await connector.Open(state.Timeout, async, cancellationToken).ConfigureAwait(false);
+
+                    int i;
+                    for (i = 0; i < MaxPoolSize; i++)
+                    {
+                        if (Interlocked.CompareExchange(ref _connectors[i], connector, null) == null)
+                        {
+                            break;
+                        }
+                    }
+
+                    Debug.Assert(i < MaxPoolSize, $"Could not find free slot in {_connectors} when opening.");
+                    if (i == MaxPoolSize)
+                    {
+                        //TODO: generic exception?
+                        throw new Exception($"Could not find free slot in {_connectors} when opening. Please report a bug.");
+                    }
+
+                    // Only start pruning if we've incremented open count past _min.
+                    // Note that we don't do it only once, on equality, because the thread which incremented open count past _min might get exception
+                    // on SqlConnector.Open due to timeout, CancellationToken or other reasons.
+                    //TODO:
+                    //if (numConnectors >= MinConnections)
+                    //  UpdatePruningTimer();
+
+                    return connector;
+                }
+                catch
+                {
+                    // Physical open failed, decrement the open and busy counter back down.
+                    Interlocked.Decrement(ref _numConnectors);
+
+                    // In case there's a waiting attempt on the channel, we write a null to the idle connector channel
+                    // to wake it up, so it will try opening (and probably throw immediately)
+                    // Statement order is important since we have synchronous completions on the channel.
+                    _idleConnectorWriter.TryWrite(null);
+
+                    // Just in case we always call UpdatePruningTimer for failed physical open
+                    //TODO: UpdatePruningTimer();
+
+                    throw;
+                }
             }
+
+            return null;
         }
 
         /// <inheritdoc/>
@@ -428,18 +427,21 @@ namespace Microsoft.Data.SqlClientX
             throw new NotImplementedException();
         }
 
-        private void QueueWarmupTask()
+        internal void QueueWarmupTask()
         {
-            // Make sure we're at quota by posting a callback to the threadpool.
-            ThreadPool.QueueUserWorkItem(_warmupCallback);
+            _warmupTask = Task.Run(() => Warmup(_warmupCTS.Token));
         }
 
         /// <summary>
         /// Warms up the pool to bring it up to min pool size.
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
-        private async void WarmupCallback(object? state)
+        internal async ValueTask Warmup(CancellationToken ct)
         {
+            //TODO: need early exit/synchronization when 
+
+            ct.ThrowIfCancellationRequested();
+
             /* Best effort, we may create at most one unneeded connection.
              * 
              * Open new connections slowly. If many connections are needed immediately 
@@ -448,20 +450,22 @@ namespace Microsoft.Data.SqlClientX
              */
             while (_numConnectors < MinPoolSize)
             {
+                ct.ThrowIfCancellationRequested();
+
                 // Obey the same rate limit as user-initiated opens.
                 // Ensures that pool-initiated opens are queued properly alongside user requests.
                 SqlConnector? connector = await OpenNewInternalConnection(
                     null,
                     TimeSpan.FromSeconds(Settings.ConnectTimeout),
                     true,
-                    CancellationToken.None
+                    ct
                 ).ConfigureAwait(false);
 
                 // If connector is null, then we hit the max pool size and can stop
                 // warming up the pool.
                 if (connector == null)
                 {
-                    break; 
+                    return;
                 }
 
                 // The connector has never been used, so it's safe to immediately return it to the
@@ -476,6 +480,8 @@ namespace Microsoft.Data.SqlClientX
         internal void Shutdown()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", ObjectID);
+            _warmupTask.Dispose();
+            _warmupCTS.Dispose();
             _connectionRateLimiter?.Dispose();
         }
 
