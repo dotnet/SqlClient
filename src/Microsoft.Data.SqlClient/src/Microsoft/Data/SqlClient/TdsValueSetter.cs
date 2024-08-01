@@ -362,7 +362,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (SqlDbType.Variant == _metaData.SqlDbType)
             {
-                Debug.Assert(null != _variantType && SqlDbType.NVarChar == _variantType.SqlDbType, "Invalid variant type");
+                Debug.Assert(_variantType != null && SqlDbType.NVarChar == _variantType.SqlDbType, "Invalid variant type");
 
                 SqlCollation collation = SqlCollation.FromLCIDAndSort(checked((int)_variantType.LocaleId), _variantType.CompareOptions);
 

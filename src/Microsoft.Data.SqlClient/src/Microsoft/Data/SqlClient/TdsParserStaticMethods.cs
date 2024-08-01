@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient
                             else
                             {
                                 protocol = (string)SqlConnectionString.NetlibMapping()[parsedProtocol];
-                                if (null != protocol)
+                                if (protocol != null)
                                 {
                                     host = parsedAliasName;
                                 }

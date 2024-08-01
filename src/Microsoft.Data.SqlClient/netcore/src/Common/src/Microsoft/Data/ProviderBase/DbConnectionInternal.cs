@@ -300,7 +300,7 @@ namespace Microsoft.Data.ProviderBase
         internal void NotifyWeakReference(int message)
         {
             DbReferenceCollection referenceCollection = ReferenceCollection;
-            if (null != referenceCollection)
+            if (referenceCollection != null)
             {
                 referenceCollection.Notify(message);
             }
@@ -418,7 +418,7 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.PostPop|RES|CPOOL> {0}, Preparing to pop from pool,  owning connection {1}, pooledCount={2}", ObjectID, 0, _pooledCount);
 
             //3 // The following tests are retail assertions of things we can't allow to happen.
-            if (null != Pool)
+            if (Pool != null)
             {
                 if (0 != _pooledCount)
                 {
@@ -434,7 +434,7 @@ namespace Microsoft.Data.ProviderBase
         internal void RemoveWeakReference(object value)
         {
             DbReferenceCollection referenceCollection = ReferenceCollection;
-            if (null != referenceCollection)
+            if (referenceCollection != null)
             {
                 referenceCollection.Remove(value);
             }

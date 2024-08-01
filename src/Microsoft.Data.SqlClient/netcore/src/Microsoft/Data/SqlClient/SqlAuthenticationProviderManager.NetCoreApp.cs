@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient
         {
             Type t = typeof(T);
             object section = ConfigurationManager.GetSection(name);
-            if (null != section)
+            if (section != null)
             {
                 if (section is ConfigurationSection configSection && configSection.GetType() == t)
                 {

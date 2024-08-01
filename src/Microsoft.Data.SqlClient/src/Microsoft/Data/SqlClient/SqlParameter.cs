@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     flags |= 4;
                 }
-                if (null != p.Value)
+                if (p.Value != null)
                 {
                     flags |= 8;
                 }
@@ -395,7 +395,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlCollation collation = _collation;
-                if (null != collation)
+                if (collation != null)
                 {
                     return collation.SqlCompareOptions;
                 }
@@ -513,7 +513,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlCollation collation = _collation;
-                if (null != collation)
+                if (collation != null)
                 {
                     return collation.LCID;
                 }
@@ -950,7 +950,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                Debug.Assert(null != _internalMetaType, "null InternalMetaType");
+                Debug.Assert(_internalMetaType != null, "null InternalMetaType");
                 return _internalMetaType;
             }
             set => _internalMetaType = value;
@@ -1215,7 +1215,7 @@ namespace Microsoft.Data.SqlClient
 
                 // set up primary key as unique key list
                 //  do this prior to general metadata loop to favor the primary key
-                if (null != dt.PrimaryKey && 0 < dt.PrimaryKey.Length)
+                if (dt.PrimaryKey != null && 0 < dt.PrimaryKey.Length)
                 {
                     foreach (DataColumn col in dt.PrimaryKey)
                     {
@@ -1489,7 +1489,7 @@ namespace Microsoft.Data.SqlClient
                 // But assert no holes to be sure.
                 foreach (SmiExtendedMetaData md in fields)
                 {
-                    Debug.Assert(null != md, "Shouldn't be able to have holes, since original loop algorithm prevents such.");
+                    Debug.Assert(md != null, "Shouldn't be able to have holes, since original loop algorithm prevents such.");
                 }
 #endif
 
@@ -1892,7 +1892,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return _metaType;
             }
-            if (null != _value && DBNull.Value != _value)
+            if (_value != null && DBNull.Value != _value)
             {
                 // We have a value set by the user then just use that value
                 // char and char[] are not directly supported so we convert those values to string
@@ -2220,7 +2220,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!(value is DataFeed), "Value provided should not already be a data feed");
             Debug.Assert(!ADP.IsNull(value), "Value provided should not be null");
-            Debug.Assert(null != destinationType, "null destinationType");
+            Debug.Assert(destinationType != null, "null destinationType");
 
             coercedToDataFeed = false;
             typeChanged = false;
@@ -2422,7 +2422,7 @@ namespace Microsoft.Data.SqlClient
         // of this and use a simple regex to do the parsing
         internal static string[] ParseTypeName(string typeName, bool isUdtTypeName)
         {
-            Debug.Assert(null != typeName, "null typename passed to ParseTypeName");
+            Debug.Assert(typeName != null, "null typename passed to ParseTypeName");
 
             try
             {

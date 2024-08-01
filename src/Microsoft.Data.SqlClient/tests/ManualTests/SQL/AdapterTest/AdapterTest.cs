@@ -1442,7 +1442,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Utility_Methods
         private void CheckParameters(SqlCommand cmd, string expectedResults)
         {
-            Debug.Assert(null != cmd, "DumpParameters: null SqlCommand");
+            Debug.Assert(cmd != null, "DumpParameters: null SqlCommand");
 
             string actualResults = "";
             StringBuilder builder = new StringBuilder();
@@ -1655,7 +1655,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Type valuetype = value.GetType();
 
-                if ((null != used) && (!valuetype.IsPrimitive))
+                if (used != null && (!valuetype.IsPrimitive))
                 {
                     if (used.Contains(value))
                     {
@@ -1814,7 +1814,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         PropertyInfo[] properties = valuetype.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
                         bool hasinfo = false;
-                        if ((null != fields) && (0 < fields.Length))
+                        if (fields != null && (0 < fields.Length))
                         {
                             textBuilder.Append(fullName);
                             fullName = null;
@@ -1832,9 +1832,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             }
                             hasinfo = true;
                         }
-                        if ((null != properties) && (0 < properties.Length))
+                        if (properties != null && (0 < properties.Length))
                         {
-                            if (null != fullName)
+                            if (fullName != null)
                             {
                                 textBuilder.Append(fullName);
                                 fullName = null;
@@ -1879,7 +1879,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             textBuilder.Append(valuetype.Name);
                             textBuilder.Append('<');
                             MethodInfo method = valuetype.GetMethod("ToString", new Type[] { typeof(IFormatProvider) });
-                            if (null != method)
+                            if (method != null)
                             {
                                 textBuilder.Append((string)method.Invoke(value, new object[] { cultureInfo }));
                             }

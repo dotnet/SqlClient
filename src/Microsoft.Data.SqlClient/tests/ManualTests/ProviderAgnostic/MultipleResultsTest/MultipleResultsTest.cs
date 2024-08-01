@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                Debug.Assert(null != e, "PrintException: null exception");
+                Debug.Assert(e != null, "PrintException: null exception");
 
                 _globalBuilder.Length = 0;
                 _globalBuilder.Append(e.GetType().Name).Append(": ");
@@ -195,14 +195,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Console.WriteLine(e.StackTrace);
                 }
-                if (null != values)
+                if (values != null)
                 {
                     foreach (string value in values)
                     {
                         Console.WriteLine(value);
                     }
                 }
-                if (null != e.InnerException)
+                if (e.InnerException != null)
                 {
                     PrintException(e.InnerException.GetType(), e.InnerException);
                 }

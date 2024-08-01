@@ -293,7 +293,7 @@ namespace Microsoft.Data.SqlClient
                     catch (System.OutOfMemoryException e)
                     {
                         _isClosed = true;
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -302,7 +302,7 @@ namespace Microsoft.Data.SqlClient
                     catch (System.StackOverflowException e)
                     {
                         _isClosed = true;
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -311,7 +311,7 @@ namespace Microsoft.Data.SqlClient
                     catch (System.Threading.ThreadAbortException e)
                     {
                         _isClosed = true;
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient
             SmiExtendedMetaData[] metaDataReturn = null;
             _SqlMetaDataSet metaData = this.MetaData;
 
-            if (null != metaData && 0 < metaData.Length)
+            if (metaData != null && 0 < metaData.Length)
             {
                 metaDataReturn = new SmiExtendedMetaData[metaData.VisibleColumnCount];
                 int returnIndex = 0;
@@ -374,8 +374,8 @@ namespace Microsoft.Data.SqlClient
                                                         length,
                                                         colMetaData.precision,
                                                         colMetaData.scale,
-                                                        (null != collation) ? collation.LCID : _defaultLCID,
-                                                        (null != collation) ? collation.SqlCompareOptions : SqlCompareOptions.None,
+                                                        collation != null ? collation.LCID : _defaultLCID,
+                                                        collation != null ? collation.SqlCompareOptions : SqlCompareOptions.None,
                                                         colMetaData.udt?.Type,
                                                         false,  // isMultiValued
                                                         null,   // fieldmetadata
@@ -410,8 +410,10 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null != _command)
+                if (_command != null)
+                {
                     return _command.InternalRecordsAffected;
+                }
 
                 // cached locally for after Close() when command is nulled out
                 return _recordsAffected;
@@ -484,7 +486,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Bind(TdsParserStateObject stateObj)
         {
-            Debug.Assert(null != stateObj, "null stateobject");
+            Debug.Assert(stateObj != null, "null stateobject");
             Debug.Assert(_snapshot == null, "Should not change during execution of asynchronous command");
 
             stateObj.Owner = this;
@@ -499,7 +501,7 @@ namespace Microsoft.Data.SqlClient
         internal DataTable BuildSchemaTable()
         {
             _SqlMetaDataSet md = this.MetaData;
-            Debug.Assert(null != md, "BuildSchemaTable - unexpected null metadata information");
+            Debug.Assert(md != null, "BuildSchemaTable - unexpected null metadata information");
 
             DataTable schemaTable = new DataTable("SchemaTable");
             schemaTable.Locale = CultureInfo.InvariantCulture;
@@ -799,7 +801,7 @@ namespace Microsoft.Data.SqlClient
         internal void Cancel(int objectID)
         {
             TdsParserStateObject stateObj = _stateObj;
-            if (null != stateObj)
+            if (stateObj != null)
             {
                 stateObj.Cancel(objectID);
             }
@@ -1139,7 +1141,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _isClosed = true;
                 aborting = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -1149,7 +1151,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _isClosed = true;
                 aborting = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -1159,7 +1161,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _isClosed = true;
                 aborting = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -1218,7 +1220,7 @@ namespace Microsoft.Data.SqlClient
                         {
 #endif //DEBUG
                             // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
-                            if ((!wasClosed) && (null != stateObj))
+                            if (!wasClosed && stateObj != null)
                             {
                                 if (!cleanDataFailed)
                                 {
@@ -1246,7 +1248,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (System.OutOfMemoryException e)
                     {
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -1254,7 +1256,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (System.StackOverflowException e)
                     {
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -1262,7 +1264,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (System.Threading.ThreadAbortException e)
                     {
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -1436,7 +1438,7 @@ namespace Microsoft.Data.SqlClient
 
         virtual internal SqlBuffer.StorageType GetVariantInternalStorageType(int i)
         {
-            Debug.Assert(null != _data, "Attempting to get variant internal storage type");
+            Debug.Assert(_data != null, "Attempting to get variant internal storage type");
             Debug.Assert(i < _data.Length, "Reading beyond data length?");
 
             return _data[i].VariantInternalStorageType;
@@ -1556,7 +1558,7 @@ namespace Microsoft.Data.SqlClient
         {
             CheckMetaDataIsReady(columnIndex: i);
 
-            Debug.Assert(null != _metaData[i].column, "MDAC 66681");
+            Debug.Assert(_metaData[i].column != null, "MDAC 66681");
             return _metaData[i].column;
         }
 
@@ -1676,10 +1678,10 @@ namespace Microsoft.Data.SqlClient
                     statistics = SqlStatistics.StartTimer(Statistics);
                     if (_metaData == null || _metaData._schemaTable == null)
                     {
-                        if (null != this.MetaData)
+                        if (this.MetaData != null)
                         {
                             _metaData._schemaTable = BuildSchemaTable();
-                            Debug.Assert(null != _metaData._schemaTable, "No schema information yet!");
+                            Debug.Assert(_metaData._schemaTable != null, "No schema information yet!");
                         }
                     }
                     return _metaData?._schemaTable;
@@ -2074,7 +2076,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.OutOfMemoryException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2083,7 +2085,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.StackOverflowException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2092,7 +2094,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2211,7 +2213,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.OutOfMemoryException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2220,7 +2222,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.StackOverflowException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2229,7 +2231,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2608,7 +2610,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.OutOfMemoryException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2617,7 +2619,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.StackOverflowException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2626,7 +2628,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -3485,7 +3487,7 @@ namespace Microsoft.Data.SqlClient
 
         private TdsOperationStatus TryHasMoreResults(out bool moreResults)
         {
-            if (null != _parser)
+            if (_parser != null)
             {
                 bool moreRows;
                 TdsOperationStatus result = TryHasMoreRows(out moreRows);
@@ -3501,7 +3503,7 @@ namespace Microsoft.Data.SqlClient
                     return TdsOperationStatus.Done;
                 }
 
-                Debug.Assert(null != _command, "unexpected null command from the data reader!");
+                Debug.Assert(_command != null, "unexpected null command from the data reader!");
 
                 while (_stateObj.HasPendingData)
                 {
@@ -3576,7 +3578,7 @@ namespace Microsoft.Data.SqlClient
 
         private TdsOperationStatus TryHasMoreRows(out bool moreRows)
         {
-            if (null != _parser)
+            if (_parser != null)
             {
                 if (_sharedState._dataReady)
                 {
@@ -3789,7 +3791,7 @@ namespace Microsoft.Data.SqlClient
                             return TdsOperationStatus.Done;
                         }
 
-                        if (null != _parser)
+                        if (_parser != null)
                         {
                             // if there are more rows, then skip them, the user wants the next result
                             bool moreRows = true;
@@ -3806,7 +3808,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         // we may be done, so continue only if we have not detached ourselves from the parser
-                        if (null != _parser)
+                        if (_parser != null)
                         {
                             bool moreResults;
                             result = TryHasMoreResults(out moreResults);
@@ -3902,7 +3904,7 @@ namespace Microsoft.Data.SqlClient
                 catch (System.OutOfMemoryException e)
                 {
                     _isClosed = true;
-                    if (null != _connection)
+                    if (_connection != null)
                     {
                         _connection.Abort(e);
                     }
@@ -3911,7 +3913,7 @@ namespace Microsoft.Data.SqlClient
                 catch (System.StackOverflowException e)
                 {
                     _isClosed = true;
-                    if (null != _connection)
+                    if (_connection != null)
                     {
                         _connection.Abort(e);
                     }
@@ -3920,7 +3922,7 @@ namespace Microsoft.Data.SqlClient
                 catch (System.Threading.ThreadAbortException e)
                 {
                     _isClosed = true;
-                    if (null != _connection)
+                    if (_connection != null)
                     {
                         _connection.Abort(e);
                     }
@@ -3977,7 +3979,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                         statistics = SqlStatistics.StartTimer(Statistics);
 
-                        if (null != _parser)
+                        if (_parser != null)
                         {
                             if (setTimeout)
                             {
@@ -4221,7 +4223,7 @@ namespace Microsoft.Data.SqlClient
                         return result;
                     }
 
-                    Debug.Assert(null != _data[i], " data buffer is null?");
+                    Debug.Assert(_data[i] != null, " data buffer is null?");
                 }
 #if DEBUG
                 finally
@@ -4233,7 +4235,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.OutOfMemoryException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -4242,7 +4244,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.StackOverflowException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -4251,7 +4253,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -4322,7 +4324,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.OutOfMemoryException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -4331,7 +4333,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.StackOverflowException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -4340,7 +4342,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -4648,7 +4650,7 @@ namespace Microsoft.Data.SqlClient
         // clean remainder bytes for the column off the wire
         private TdsOperationStatus TryResetBlobState()
         {
-            Debug.Assert(null != _stateObj, "null state object"); // _parser may be null at this point
+            Debug.Assert(_stateObj != null, "null state object"); // _parser may be null at this point
             AssertReaderState(requireData: true, permitAsync: true);
             Debug.Assert(_sharedState._nextColumnHeaderToRead <= _metaData.Length, "_sharedState._nextColumnHeaderToRead too large");
             TdsOperationStatus result;
@@ -4715,7 +4717,7 @@ namespace Microsoft.Data.SqlClient
         private void RestoreServerSettings(TdsParser parser, TdsParserStateObject stateObj)
         {
             // turn off any set options
-            if (null != parser && null != _resetOptionsString)
+            if (parser != null && _resetOptionsString != null)
             {
                 // It is possible for this to be called during connection close on a
                 // broken connection, so check state first.
@@ -4744,7 +4746,7 @@ namespace Microsoft.Data.SqlClient
             }
             _altMetaDataSetCollection.SetAltMetaData(metaDataSet);
             _metaDataConsumed = metaDataConsumed;
-            if (_metaDataConsumed && null != _parser)
+            if (_metaDataConsumed && _parser != null)
             {
                 byte b;
                 TdsOperationStatus result = _stateObj.TryPeekByte(out b);
@@ -4827,7 +4829,7 @@ namespace Microsoft.Data.SqlClient
 
             _fieldNameLookup = null;
 
-            if (null != metaData)
+            if (metaData != null)
             {
                 // we are done consuming metadata only if there is no moreInfo
                 if (!moreInfo)
@@ -4912,7 +4914,7 @@ namespace Microsoft.Data.SqlClient
             // WebData 111653,112003 -- we now set timeouts per operation, not
             // per command (it's not supposed to be a cumulative per command).
             TdsParserStateObject stateObj = _stateObj;
-            if (null != stateObj)
+            if (stateObj != null)
             {
                 stateObj.SetTimeoutMilliseconds(timeoutMilliseconds);
             }

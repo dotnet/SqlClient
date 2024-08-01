@@ -233,14 +233,14 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(value == _currentTransaction
                           || _currentTransaction == null
                           || value == null
-                          || (null != _currentTransaction && !_currentTransaction.IsLocal), "attempting to change current transaction?");
+                          || (_currentTransaction != null && !_currentTransaction.IsLocal), "attempting to change current transaction?");
 
                 // If there is currently a transaction active, we don't want to
                 // change it; this can occur when there is a delegated transaction
                 // and the user attempts to do an API begin transaction; in these
                 // cases, it's safe to ignore the set.
-                if ((_currentTransaction == null && null != value)
-                    || (null != _currentTransaction && value == null))
+                if ((_currentTransaction == null && value != null)
+                    || (_currentTransaction != null && value == null))
                 {
                     _currentTransaction = value;
                 }
@@ -293,7 +293,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                Debug.Assert(null != value, "setting a non-null PendingTransaction?");
+                Debug.Assert(value != null, "setting a non-null PendingTransaction?");
                 _pendingTransaction = value;
             }
         }
@@ -486,7 +486,7 @@ namespace Microsoft.Data.SqlClient
 
             _server = serverInfo.ResolvedServerName;
 
-            if (null != connHandler.PoolGroupProviderInfo)
+            if (connHandler.PoolGroupProviderInfo != null)
             {
                 // If we are pooling, check to see if we were processing an
                 // alias which has changed, which means we need to clean out
@@ -1185,7 +1185,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(connectionIsDoomed || _pendingTransaction == null, "pending transaction at disconnect?");
 
-            if (!connectionIsDoomed && null != _physicalStateObj)
+            if (!connectionIsDoomed && _physicalStateObj != null)
             {
                 if (_physicalStateObj.HasPendingData)
                 {
@@ -1208,7 +1208,7 @@ namespace Microsoft.Data.SqlClient
             // transaction manager completes the transaction.
             SqlInternalTransaction currentTransaction = CurrentTransaction;
 
-            if (null != currentTransaction && currentTransaction.HasParentTransaction)
+            if (currentTransaction != null && currentTransaction.HasParentTransaction)
             {
                 currentTransaction.CloseFromConnection();
                 Debug.Assert(CurrentTransaction == null, "rollback didn't clear current transaction?");
@@ -1220,7 +1220,7 @@ namespace Microsoft.Data.SqlClient
         // Used to close the connection and then free the memory allocated for the netlib connection.
         internal void Disconnect()
         {
-            if (null != _sessionPool)
+            if (_sessionPool != null)
             {
                 // MARSOn may be true, but _sessionPool not yet created
                 _sessionPool.Dispose();
@@ -1252,7 +1252,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // Not allocated until MARS is actually enabled in SNI.
-                    if (null != _pMarsPhysicalConObj)
+                    if (_pMarsPhysicalConObj != null)
                     {
                         _pMarsPhysicalConObj.Dispose();
                     }
@@ -1313,7 +1313,7 @@ namespace Microsoft.Data.SqlClient
             // Any active, non-distributed transaction must be rolled back.
             SqlInternalTransaction currentTransaction = CurrentTransaction;
 
-            if (null != currentTransaction && currentTransaction.HasParentTransaction && currentTransaction.IsOrphaned)
+            if (currentTransaction != null && currentTransaction.HasParentTransaction && currentTransaction.IsOrphaned)
             {
                 currentTransaction.CloseFromConnection();
                 Debug.Assert(CurrentTransaction == null, "rollback didn't clear current transaction?");
@@ -2138,7 +2138,7 @@ namespace Microsoft.Data.SqlClient
                                         // a reader we need to throw the error but not halt further processing.  We used to
                                         // halt processing.
 
-                                        if (null != dataStream)
+                                        if (dataStream != null)
                                         {
                                             if (!dataStream.IsInitialized)
                                             {
@@ -2166,7 +2166,7 @@ namespace Microsoft.Data.SqlClient
 
                     case TdsEnums.SQLCOLINFO:
                         {
-                            if (null != dataStream)
+                            if (dataStream != null)
                             {
                                 _SqlMetaDataSet metaDataSet;
                                 result = TryProcessColInfo(dataStream.MetaData, dataStream, stateObj, out metaDataSet);
@@ -2260,7 +2260,7 @@ namespace Microsoft.Data.SqlClient
                                             _currentTransaction = _pendingTransaction;
                                             _pendingTransaction = null;
 
-                                            if (null != _currentTransaction)
+                                            if (_currentTransaction != null)
                                             {
                                                 _currentTransaction.TransactionId = env._newLongValue;   // this is defined as a ULongLong in the server and in the TDS Spec.
                                             }
@@ -2269,7 +2269,7 @@ namespace Microsoft.Data.SqlClient
                                                 TransactionType transactionType = (TdsEnums.ENV_BEGINTRAN == env._type) ? TransactionType.LocalFromTSQL : TransactionType.Distributed;
                                                 _currentTransaction = new SqlInternalTransaction(_connHandler, transactionType, null, env._newLongValue);
                                             }
-                                            if (null != _statistics && !_statisticsIsInTransaction)
+                                            if (_statistics != null && !_statisticsIsInTransaction)
                                             {
                                                 _statistics.SafeIncrement(ref _statistics._transactions);
                                             }
@@ -2286,7 +2286,7 @@ namespace Microsoft.Data.SqlClient
                                         case TdsEnums.ENV_ROLLBACKTRAN:
                                             // When we get notification of a completed transaction
                                             // we null out the current transaction.
-                                            if (null != _currentTransaction)
+                                            if (_currentTransaction != null)
                                             {
 #if DEBUG
                                                 // Check null for case where Begin and Rollback obtained in the same message.
@@ -2419,7 +2419,7 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     return result;
                                 }
-                                if (null != dataStream)
+                                if (dataStream != null)
                                 {
                                     result = dataStream.TrySetSensitivityClassification(sensitivityClassification);
                                     if (result != TdsOperationStatus.Done)
@@ -2436,7 +2436,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 
-                            if (null != dataStream)
+                            if (dataStream != null)
                             {
                                 result = dataStream.TrySetMetaData(stateObj._cleanupMetaData, (TdsEnums.SQLTABNAME == peekedToken || TdsEnums.SQLCOLINFO == peekedToken));
                                 if (result != TdsOperationStatus.Done)
@@ -2444,7 +2444,7 @@ namespace Microsoft.Data.SqlClient
                                     return result;
                                 }
                             }
-                            else if (null != bulkCopyHandler)
+                            else if (bulkCopyHandler != null)
                             {
                                 bulkCopyHandler.SetMetaData(stateObj._cleanupMetaData);
                             }
@@ -2472,7 +2472,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 
-                            if (null != bulkCopyHandler)
+                            if (bulkCopyHandler != null)
                             {
                                 result = TryProcessRow(stateObj._cleanupMetaData, bulkCopyHandler.CreateRowBuffer(), bulkCopyHandler.CreateIndexMap(), stateObj);
                                 if (result != TdsOperationStatus.Done)
@@ -2537,7 +2537,7 @@ namespace Microsoft.Data.SqlClient
                         }
                     case TdsEnums.SQLTABNAME:
                         {
-                            if (null != dataStream)
+                            if (dataStream != null)
                             {
                                 MultiPartTableName[] tableNames;
                                 result = TryProcessTableName(tokenLength, stateObj, out tableNames);
@@ -2586,7 +2586,7 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             stateObj._cleanupAltMetaDataSetArray.SetAltMetaData(cleanupAltMetaDataSet);
-                            if (null != dataStream)
+                            if (dataStream != null)
                             {
                                 byte metadataConsumedByte;
                                 result = stateObj.TryPeekByte(out metadataConsumedByte);
@@ -2665,7 +2665,7 @@ namespace Microsoft.Data.SqlClient
 
             if (!stateObj.HasPendingData)
             {
-                if (null != CurrentTransaction)
+                if (CurrentTransaction != null)
                 {
                     CurrentTransaction.Activate();
                 }
@@ -3153,7 +3153,7 @@ namespace Microsoft.Data.SqlClient
                 stateObj.HasReceivedAttention = true;
                 Debug.Assert(stateObj._inBytesUsed == stateObj._inBytesRead && stateObj._inBytesPacket == 0, "DONE_ATTN received with more data left on wire");
             }
-            if ((null != cmd) && (TdsEnums.DONE_COUNT == (status & TdsEnums.DONE_COUNT)))
+            if (cmd != null && (TdsEnums.DONE_COUNT == (status & TdsEnums.DONE_COUNT)))
             {
                 if (curCmd != TdsEnums.SELECT)
                 {
@@ -3187,7 +3187,7 @@ namespace Microsoft.Data.SqlClient
             {
                 stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0, exception: null, batchIndex: cmd?.GetCurrentBatchIndex() ?? -1));
 
-                if (null != reader)
+                if (reader != null)
                 {
                     if (!reader.IsInitialized)
                     {
@@ -3203,7 +3203,7 @@ namespace Microsoft.Data.SqlClient
             {
                 stateObj.AddError(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0, exception: null, batchIndex: cmd?.GetCurrentBatchIndex() ?? -1));
 
-                if (null != reader)
+                if (reader != null)
                 {
                     if (!reader.IsInitialized)
                     {
@@ -3246,7 +3246,7 @@ namespace Microsoft.Data.SqlClient
         {
             // SqlStatistics bookkeeping stuff
             //
-            if (null != _statistics)
+            if (_statistics != null)
             {
                 // any done after row(s) counts as a resultset
                 if (_statistics.WaitForDoneAfterRow)
@@ -4733,7 +4733,7 @@ namespace Microsoft.Data.SqlClient
         {
             stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.CultureIdError(), "", 0));
 
-            if (null != stateObj)
+            if (stateObj != null)
             {
                 DrainData(stateObj);
 
@@ -7711,7 +7711,7 @@ namespace Microsoft.Data.SqlClient
         private void WriteDecimal(decimal value, TdsParserStateObject stateObj)
         {
             stateObj._decimalBits = decimal.GetBits(value);
-            Debug.Assert(null != stateObj._decimalBits, "decimalBits should be filled in at TdsExecuteRPC time");
+            Debug.Assert(stateObj._decimalBits != null, "decimalBits should be filled in at TdsExecuteRPC time");
 
             /*
              Returns a binary representation of a Decimal. The return value is an integer
@@ -7746,7 +7746,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteIdentifier(string s, TdsParserStateObject stateObj)
         {
-            if (null != s)
+            if (s != null)
             {
                 stateObj.WriteByte(checked((byte)s.Length));
                 WriteString(s, stateObj);
@@ -7759,7 +7759,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteIdentifierWithShortLength(string s, TdsParserStateObject stateObj)
         {
-            if (null != s)
+            if (s != null)
             {
                 WriteShort(checked((short)s.Length), stateObj);
                 WriteString(s, stateObj);
@@ -8779,7 +8779,7 @@ namespace Microsoft.Data.SqlClient
             {
 
                 Debug.Assert(SniContext.Snix_Read == stateObj.SniContext, $"The SniContext should be Snix_Read but it actually is {stateObj.SniContext}");
-                if (null != dtcReader && dtcReader.Read())
+                if (dtcReader != null && dtcReader.Read())
                 {
                     Debug.Assert(dtcReader.GetName(0) == "TM Address", "TdsParser: GetDTCAddress did not return 'TM Address'");
 
@@ -8895,7 +8895,7 @@ namespace Microsoft.Data.SqlClient
                         returnReader = true;
                         break;
                     case TdsEnums.TransactionManagerRequestType.Propagate:
-                        if (null != buffer)
+                        if (buffer != null)
                         {
                             WriteShort(buffer.Length, stateObj);
                             stateObj.WriteByteArray(buffer, buffer.Length, 0);
@@ -8906,7 +8906,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         break;
                     case TdsEnums.TransactionManagerRequestType.Begin:
-                        Debug.Assert(null != transaction, "Should have specified an internalTransaction when doing a BeginTransaction request!");
+                        Debug.Assert(transaction != null, "Should have specified an internalTransaction when doing a BeginTransaction request!");
 
                         // Only assign the passed in transaction if it is not equal to the current transaction.
                         // And, if it is not equal, the current actually should be null.  Anything else
@@ -9749,7 +9749,7 @@ namespace Microsoft.Data.SqlClient
                             udtVal = _connHandler.Connection.GetBytes(value, out format, out maxsize);
                         }
 
-                        Debug.Assert(null != udtVal, "GetBytes returned null instance. Make sure that it always returns non-null value");
+                        Debug.Assert(udtVal != null, "GetBytes returned null instance. Make sure that it always returns non-null value");
                         size = udtVal.Length;
 
                         if (size >= maxSupportedSize && maxsize != -1)
@@ -10480,7 +10480,7 @@ namespace Microsoft.Data.SqlClient
             {
                 for (int col = 0; col < metadataCollection.Length; col++)
                 {
-                    if (null != metadataCollection[col])
+                    if (metadataCollection[col] != null)
                     {
                         _SqlMetaData md = metadataCollection[col];
                         if (md.isEncrypted)
@@ -10720,8 +10720,8 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal bool ShouldEncryptValuesForBulkCopy()
         {
-            if (null != _connHandler &&
-                null != _connHandler.ConnectionOptions &&
+            if (_connHandler != null &&
+                _connHandler.ConnectionOptions != null &&
                 SqlConnectionColumnEncryptionSetting.Enabled == _connHandler.ConnectionOptions.ColumnEncryptionSetting)
             {
                 return true;
@@ -11048,16 +11048,11 @@ namespace Microsoft.Data.SqlClient
         private void WriteMarsHeaderData(TdsParserStateObject stateObj, SqlInternalTransaction transaction)
         {
             // Function to send over additional payload header data for 2005 and beyond only.
-
-            // These are not necessary - can have local started in distributed.
-            // Debug.Assert(!(null != sqlTransaction && null != distributedTransaction), "Error to have local (api started) and distributed transaction at the same time!");
-            // Debug.Assert(!(null != _userStartedLocalTransaction && null != distributedTransaction), "Error to have local (started outside of the api) and distributed transaction at the same time!");
-
             // We may need to update the mars header length if mars header is changed in the future
 
             WriteShort(TdsEnums.HEADERTYPE_MARS, stateObj);
 
-            if (null != transaction && SqlInternalTransaction.NullTransactionId != transaction.TransactionId)
+            if (transaction != null && SqlInternalTransaction.NullTransactionId != transaction.TransactionId)
             {
                 WriteLong(transaction.TransactionId, stateObj);
                 WriteInt(stateObj.IncrementAndObtainOpenResultCount(transaction), stateObj);
@@ -11072,7 +11067,7 @@ namespace Microsoft.Data.SqlClient
 
         private int GetNotificationHeaderSize(SqlNotificationRequest notificationRequest)
         {
-            if (null != notificationRequest)
+            if (notificationRequest != null)
             {
                 string callbackId = notificationRequest.UserData;
                 string service = notificationRequest.Options;
@@ -11128,16 +11123,16 @@ namespace Microsoft.Data.SqlClient
 
             // We may need to update the notification header length if the header is changed in the future
 
-            Debug.Assert(null != notificationRequest, "notificationRequest is null");
+            Debug.Assert(notificationRequest != null, "notificationRequest is null");
 
             string callbackId = notificationRequest.UserData;
             string service = notificationRequest.Options;
             int timeout = notificationRequest.Timeout;
 
             // we did verification in GetNotificationHeaderSize, so just assert here.
-            Debug.Assert(null != callbackId, "CallbackId is null");
+            Debug.Assert(callbackId != null, "CallbackId is null");
             Debug.Assert(ushort.MaxValue >= callbackId.Length, "CallbackId length is out of range");
-            Debug.Assert(null != service, "Service is null");
+            Debug.Assert(service != null, "Service is null");
             Debug.Assert(ushort.MaxValue >= service.Length, "Service length is out of range");
             Debug.Assert(-1 <= timeout, "Timeout");
 
@@ -11995,7 +11990,7 @@ namespace Microsoft.Data.SqlClient
         // chunk writes needed, please use WritePlpBytes/WritePlpChars
         private Task WriteUnterminatedValue(object value, MetaType type, byte scale, int actualLength, int encodingByteSize, int offset, TdsParserStateObject stateObj, int paramSize, bool isDataFeed)
         {
-            Debug.Assert((null != value) && (DBNull.Value != value), "unexpected missing or empty object");
+            Debug.Assert(value != null && (DBNull.Value != value), "unexpected missing or empty object");
 
             // parameters are always sent over as BIG or N types
             switch (type.NullableType)
@@ -12264,7 +12259,7 @@ namespace Microsoft.Data.SqlClient
         // chunk writes needed, please use WritePlpBytes/WritePlpChars
         private byte[] SerializeUnencryptedValue(object value, MetaType type, byte scale, int actualLength, int offset, bool isDataFeed, byte normalizationVersion, TdsParserStateObject stateObj)
         {
-            Debug.Assert((null != value) && (DBNull.Value != value), "unexpected missing or empty object");
+            Debug.Assert(value != null && (DBNull.Value != value), "unexpected missing or empty object");
 
             if (normalizationVersion != 0x01)
             {

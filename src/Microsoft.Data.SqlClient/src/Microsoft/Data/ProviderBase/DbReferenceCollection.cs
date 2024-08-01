@@ -226,7 +226,7 @@ namespace Microsoft.Data.ProviderBase
 
         protected void RemoveItem(object value)
         {
-            Debug.Assert(null != value, "RemoveItem with null");
+            Debug.Assert(value != null, "RemoveItem with null");
 
             bool lockObtained = false;
             try
