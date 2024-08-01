@@ -1,0 +1,24 @@
+﻿<?xml version="1.0"?>
+<docs>
+  <members name="SqlDbTypeExtensions">
+    <SqlDbTypeExtensions>
+      <summary>Extensions for SqlDbType.</summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+
+## Remarks  
+The SqlDbTypeExtensions class provides new SqlDbType enums. These are meant to be used for applications which cannot leverage the enums in SqlDbType, which are available in newer .NET runtime versions.
+
+]]>
+        </format>
+      </remarks>
+    </SqlDbTypeExtensions>
+    <SqlJson name="default">
+      <summary>Gets the SqlDbType enum value for JSON datatype.</summary>
+      <returns>
+        <see cref="T:System.Data.SqlDbType" /> enum value for JSON datatype.
+      </returns>
+    </SqlJson>
+  </members>
+</docs>
