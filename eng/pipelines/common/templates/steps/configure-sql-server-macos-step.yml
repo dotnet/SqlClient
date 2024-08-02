@@ -1,0 +1,56 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: password
+    type: string
+    default: $(password)
+
+  - name: condition
+    type: string
+    default: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
+
+steps:
+# Linux only steps
+- bash: |
+    brew install colima
+    brew install --cask docker
+    colima start
+    docker --version
+    docker pull mcr.microsoft.com/mssql/server:2022-latest
+    
+    # Password for the SA user (required)
+    MSSQL_SA_PW=${{parameters.password }}
+    if [ "$MSSQL_SA_PW" = "generated_placeholder" ]; then
+      exit 0
+    fi
+    
+    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
+
+    # Connect to server and get the version:
+    counter=1
+    errstatus=1
+    while [ $counter -le 5 ] && [ $errstatus = 1 ]
+    do
+      echo Waiting for SQL Server to start...
+      sleep 3s
+      /opt/mssql-tools18/bin/sqlcmd \
+        -S localhost \
+        -No \
+        -U sa \
+        -P $MSSQL_SA_PW\
+        -Q "SELECT @@VERSION" 2>/dev/null
+      errstatus=$?
+      ((counter++))
+    done
+    
+    # Display error if connection failed:
+    if [ $errstatus = 1 ]
+    then
+      echo Cannot connect to SQL Server, installation aborted
+      exit $errstatus
+    fi
+  displayName: 'Configure SQL Server [macOS]'
+  condition: ${{parameters.condition }}

@@ -95,6 +95,12 @@ steps:
       password: ${{parameters.password}}
       targetNetCoreVersion: ${{parameters.targetNetCoreVersion}}
 
+- ${{ elseif eq(parameters.operatingSystem, 'Mac') }}:
+  # macOS only steps
+  - template: configure-sql-server-macos-step.yml@self
+    parameters:
+      password: ${{parameters.password}}
+
 # Common steps
 - task: DotNetCoreCLI@2
   displayName: 'Build Ext Utilities'
