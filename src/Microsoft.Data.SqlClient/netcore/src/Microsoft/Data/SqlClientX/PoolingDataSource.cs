@@ -54,9 +54,9 @@ namespace Microsoft.Data.SqlClientX
         private readonly ChannelReader<SqlConnector?> _idleConnectorReader;
         private readonly ChannelWriter<SqlConnector?> _idleConnectorWriter;
 
-        private Task _warmupTask;
+        private Task<ValueTask> _warmupTask;
         private CancellationTokenSource _warmupCTS;
-        private Mutex _warmupMutex;
+        private Mutex _warmupLock;
         #endregion
 
         // Counts the total number of open connectors tracked by the pool.
@@ -89,9 +89,9 @@ namespace Microsoft.Data.SqlClientX
 
             //TODO: initiate idle lifetime and pruning fields
 
-            _warmupTask = Task.CompletedTask;
+            _warmupTask = Task.FromResult(ValueTask.CompletedTask);
             _warmupCTS = new CancellationTokenSource();
-            _warmupMutex = new Mutex();
+            _warmupLock = new Mutex();
         }
 
         #region properties
@@ -427,27 +427,39 @@ namespace Microsoft.Data.SqlClientX
             throw new NotImplementedException();
         }
 
-        internal void QueueWarmupTask()
+        internal Task<ValueTask> QueueWarmupTask(CancellationToken ct)
         {
-            _warmupTask = Task.Run(() => Warmup(_warmupCTS.Token));
+            var oldTask = _warmupTask;
+            if (oldTask.IsCompleted)
+            {
+                Task<ValueTask> newTask = new Task<ValueTask>(() => Warmup(), ct);
+                if (oldTask == Interlocked.CompareExchange(ref _warmupTask, newTask, oldTask))
+                {
+                    newTask.Start();
+                    oldTask.Dispose();
+                }
+                else
+                {
+                    newTask.Dispose();
+                }
+            }
+
+            return _warmupTask;
         }
 
         /// <summary>
         /// Warms up the pool to bring it up to min pool size.
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
-        internal async ValueTask Warmup(CancellationToken ct)
+        private async ValueTask Warmup()
         {
-            //TODO: need early exit/synchronization when 
-
+            CancellationToken ct = _warmupCTS.Token;
             ct.ThrowIfCancellationRequested();
 
-            /* Best effort, we may create at most one unneeded connection.
-             * 
-             * Open new connections slowly. If many connections are needed immediately 
-             * upon pool creation they can always be created via user-initiated requests as fast
-             * as a parallel, pool-initiated approach could.
-             */
+            // Best effort, we may create at most one unneeded connection. 
+            // Open new connections slowly. If many connections are needed immediately 
+            // upon pool creation they can always be created via user-initiated requests as fast
+            // as a parallel, pool-initiated approach could.
             while (_numConnectors < MinPoolSize)
             {
                 ct.ThrowIfCancellationRequested();
