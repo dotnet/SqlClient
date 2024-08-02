@@ -309,6 +309,9 @@ namespace Microsoft.Data.SqlClientX
 
             // Only turn off the timer one time, when it was this Close that brought Open back to _min.
             //TODO: pruning
+
+            // Ensure that we return to min pool size if closing this connector brought us below min pool size.
+            WarmUp();
         }
 
         /// <summary>
@@ -316,6 +319,7 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         internal readonly struct OpenInternalConnectionState
         {
+            internal PoolingDataSource Pool { get; init; }
             internal SqlConnectionX? OwningConnection { get; init; }
             internal TimeSpan Timeout { get; init; }
         }
@@ -325,75 +329,81 @@ namespace Microsoft.Data.SqlClientX
         {
             return _connectionRateLimiter.Execute(
                 RateLimitedOpen,
-                new OpenInternalConnectionState { OwningConnection = owningConnection, Timeout = timeout },
+                new OpenInternalConnectionState
+                {
+                    Pool = this,
+                    OwningConnection = owningConnection,
+                    Timeout = timeout
+                },
                 async,
                 cancellationToken
             );
-        }
 
-        private async ValueTask<SqlConnector?> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
-        {
-            // As long as we're under max capacity, attempt to increase the connector count and open a new connection.
-            for (var numConnectors = _numConnectors; numConnectors < MaxPoolSize; numConnectors = _numConnectors)
+
+            static async ValueTask<SqlConnector?> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
             {
-                // Note that we purposefully don't use SpinWait for this: https://github.com/dotnet/coreclr/pull/21437
-                if (Interlocked.CompareExchange(ref _numConnectors, numConnectors + 1, numConnectors) != numConnectors)
+                // As long as we're under max capacity, attempt to increase the connector count and open a new connection.
+                for (var numConnectors = state.Pool._numConnectors; numConnectors < state.Pool.MaxPoolSize; numConnectors = state.Pool._numConnectors)
                 {
-                    continue;
-                }
-
-                try
-                {
-                    // We've managed to increase the open counter, open a physical connection.
-                    var startTime = Stopwatch.GetTimestamp();
-                    SqlConnector? connector = new SqlConnector(state.OwningConnection, this);
-                    //TODO: set clear counter on connector
-
-                    await connector.Open(state.Timeout, async, cancellationToken).ConfigureAwait(false);
-
-                    int i;
-                    for (i = 0; i < MaxPoolSize; i++)
+                    // Note that we purposefully don't use SpinWait for this: https://github.com/dotnet/coreclr/pull/21437
+                    if (Interlocked.CompareExchange(ref state.Pool._numConnectors, numConnectors + 1, numConnectors) != numConnectors)
                     {
-                        if (Interlocked.CompareExchange(ref _connectors[i], connector, null) == null)
+                        continue;
+                    }
+
+                    try
+                    {
+                        // We've managed to increase the open counter, open a physical connection.
+                        var startTime = Stopwatch.GetTimestamp();
+                        SqlConnector? connector = new SqlConnector(state.OwningConnection, state.Pool);
+                        //TODO: set clear counter on connector
+
+                        await connector.Open(state.Timeout, async, cancellationToken).ConfigureAwait(false);
+
+                        int i;
+                        for (i = 0; i < state.Pool.MaxPoolSize; i++)
                         {
-                            break;
+                            if (Interlocked.CompareExchange(ref state.Pool._connectors[i], connector, null) == null)
+                            {
+                                break;
+                            }
                         }
-                    }
 
-                    Debug.Assert(i < MaxPoolSize, $"Could not find free slot in {_connectors} when opening.");
-                    if (i == MaxPoolSize)
+                        Debug.Assert(i < state.Pool.MaxPoolSize, $"Could not find free slot in {state.Pool._connectors} when opening.");
+                        if (i == state.Pool.MaxPoolSize)
+                        {
+                            //TODO: generic exception?
+                            throw new Exception($"Could not find free slot in {state.Pool._connectors} when opening. Please report a bug.");
+                        }
+
+                        // Only start pruning if we've incremented open count past _min.
+                        // Note that we don't do it only once, on equality, because the thread which incremented open count past _min might get exception
+                        // on SqlConnector.Open due to timeout, CancellationToken or other reasons.
+                        //TODO:
+                        //if (numConnectors >= MinConnections)
+                        //  UpdatePruningTimer();
+
+                        return connector;
+                    }
+                    catch
                     {
-                        //TODO: generic exception?
-                        throw new Exception($"Could not find free slot in {_connectors} when opening. Please report a bug.");
+                        // Physical open failed, decrement the open and busy counter back down.
+                        Interlocked.Decrement(ref state.Pool._numConnectors);
+
+                        // In case there's a waiting attempt on the channel, we write a null to the idle connector channel
+                        // to wake it up, so it will try opening (and probably throw immediately)
+                        // Statement order is important since we have synchronous completions on the channel.
+                        state.Pool._idleConnectorWriter.TryWrite(null);
+
+                        // Just in case we always call UpdatePruningTimer for failed physical open
+                        //TODO: UpdatePruningTimer();
+
+                        throw;
                     }
-
-                    // Only start pruning if we've incremented open count past _min.
-                    // Note that we don't do it only once, on equality, because the thread which incremented open count past _min might get exception
-                    // on SqlConnector.Open due to timeout, CancellationToken or other reasons.
-                    //TODO:
-                    //if (numConnectors >= MinConnections)
-                    //  UpdatePruningTimer();
-
-                    return connector;
                 }
-                catch
-                {
-                    // Physical open failed, decrement the open and busy counter back down.
-                    Interlocked.Decrement(ref _numConnectors);
 
-                    // In case there's a waiting attempt on the channel, we write a null to the idle connector channel
-                    // to wake it up, so it will try opening (and probably throw immediately)
-                    // Statement order is important since we have synchronous completions on the channel.
-                    _idleConnectorWriter.TryWrite(null);
-
-                    // Just in case we always call UpdatePruningTimer for failed physical open
-                    //TODO: UpdatePruningTimer();
-
-                    throw;
-                }
+                return null;
             }
-
-            return null;
         }
 
         /// <inheritdoc/>
@@ -427,55 +437,55 @@ namespace Microsoft.Data.SqlClientX
             throw new NotImplementedException();
         }
 
-        internal ValueTask QueueWarmupTask(CancellationToken ct)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        internal ValueTask WarmUp()
         {
             lock (_warmupLock)
             {
                 if (_warmupTask.IsCompleted)
                 {
-                    _warmupTask = Warmup();
+                    _warmupTask = _WarmUp();
                 }
             }
 
             return _warmupTask;
-        }
 
-        /// <summary>
-        /// Warms up the pool to bring it up to min pool size.
-        /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
-        private async ValueTask Warmup()
-        {
-            CancellationToken ct = _warmupCTS.Token;
-            ct.ThrowIfCancellationRequested();
-
-            // Best effort, we may create at most one unneeded connection. 
-            // Open new connections slowly. If many connections are needed immediately 
-            // upon pool creation they can always be created via user-initiated requests as fast
-            // as a parallel, pool-initiated approach could.
-            while (_numConnectors < MinPoolSize)
+            async ValueTask _WarmUp()
             {
+                CancellationToken ct = _warmupCTS.Token;
                 ct.ThrowIfCancellationRequested();
 
-                // Obey the same rate limit as user-initiated opens.
-                // Ensures that pool-initiated opens are queued properly alongside user requests.
-                SqlConnector? connector = await OpenNewInternalConnection(
-                    null,
-                    TimeSpan.FromSeconds(Settings.ConnectTimeout),
-                    true,
-                    ct
-                ).ConfigureAwait(false);
-
-                // If connector is null, then we hit the max pool size and can stop
-                // warming up the pool.
-                if (connector == null)
+                // Best effort, we may over or under create due to race conditions.
+                // Open new connections slowly. If many connections are needed immediately 
+                // upon pool creation they can always be created via user-initiated requests as fast
+                // as a parallel, pool-initiated approach could.
+                while (_numConnectors < MinPoolSize)
                 {
-                    return;
-                }
+                    ct.ThrowIfCancellationRequested();
 
-                // The connector has never been used, so it's safe to immediately return it to the
-                // pool without resetting it.
-                ReturnInternalConnection(connector);
+                    // Obey the same rate limit as user-initiated opens.
+                    // Ensures that pool-initiated opens are queued properly alongside user requests.
+                    SqlConnector? connector = await OpenNewInternalConnection(
+                        null,
+                        TimeSpan.FromSeconds(Settings.ConnectTimeout),
+                        true,
+                        ct)
+                        .ConfigureAwait(false);
+
+                    // If connector is null, then we hit the max pool size and can stop
+                    // warming up the pool.
+                    if (connector == null)
+                    {
+                        return;
+                    }
+
+                    // The connector has never been used, so it's safe to immediately return it to the
+                    // pool without resetting it.
+                    ReturnInternalConnection(connector);
+                }
             }
         }
 
