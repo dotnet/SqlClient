@@ -13880,7 +13880,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Encoding enc = metadata.encoding;
 
-                if (null == enc)
+                if (enc == null)
                 {
                     if (_defaultEncoding == null)
                     {
