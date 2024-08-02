@@ -366,11 +366,11 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
     # Self hosted SQL Server on Mac
-        mac_azure_sql:
+        mac_sql_22:
           pool: $(defaultHostedPoolName)
           hostedPool: true
           images:
-            MacOS12_Azure_Sql: macOS-12
+            MacOS12_Sql22: macOS-12
           TargetFrameworks: ${{parameters.targetFrameworksLinux }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}

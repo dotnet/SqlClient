@@ -17,6 +17,9 @@ steps:
 - bash: |
     brew install colima
     brew install --cask docker
+    brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
+    brew update
+    HOMEBREW_ACCEPT_EULA=Y brew install mssql-tools18
     colima start
     docker --version
     docker pull mcr.microsoft.com/mssql/server:2022-latest
@@ -36,7 +39,7 @@ steps:
     do
       echo Waiting for SQL Server to start...
       sleep 3
-      /opt/mssql-tools18/bin/sqlcmd \
+      sqlcmd \
         -S localhost \
         -No \
         -U sa \
@@ -51,6 +54,13 @@ steps:
     then
       echo Cannot connect to SQL Server, installation aborted
       exit $errstatus
+    else
+      sqlcmd \
+        -S localhost \
+        -No \
+        -U sa \
+        -P $MSSQL_SA_PW\
+        -Q "SELECT @@VERSION"
     fi
   displayName: 'Configure SQL Server [macOS]'
   condition: ${{parameters.condition }}
