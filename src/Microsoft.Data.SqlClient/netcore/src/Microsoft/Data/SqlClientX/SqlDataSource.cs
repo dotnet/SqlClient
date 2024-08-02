@@ -44,10 +44,20 @@ namespace Microsoft.Data.SqlClientX
         /// <inheritdoc />
         public override string ConnectionString { get; }
 
+        /// <summary>
+        /// Stores settings for the data source. 
+        /// Do not expose publicly.
+        /// </summary>
         internal SqlConnectionString Settings { get; }
 
+        /// <summary>
+        /// Credentials to use for new connections created by this data source.
+        /// </summary>
         internal SqlCredential Credential { get; }
 
+        /// <summary>
+        /// Gives pool statistics for total, idle, and busy connections.
+        /// </summary>
         internal abstract (int Total, int Idle, int Busy) Statistics { get; }
         #endregion
 
