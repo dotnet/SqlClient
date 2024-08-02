@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClientX
 
         private ValueTask _warmupTask;
         private CancellationTokenSource _warmupCTS;
-        private readonly object _warmupLock = new object();
+        private readonly object _warmupLock;
         #endregion
 
         // Counts the total number of open connectors tracked by the pool.
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClientX
 
             _warmupTask = ValueTask.CompletedTask;
             _warmupCTS = new CancellationTokenSource();
-            _warmupLock = new Mutex();
+            _warmupLock = new object();
         }
 
         #region properties
@@ -438,9 +438,9 @@ namespace Microsoft.Data.SqlClientX
         }
 
         /// <summary>
-        /// 
+        /// Warms up the pool by bringing it up to min pool size.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A ValueTask representing the warmup process.</returns>
         internal ValueTask WarmUp()
         {
             lock (_warmupLock)
