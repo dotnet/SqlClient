@@ -466,8 +466,13 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
         [InlineData(5)]
         public async Task Warmup_OpenedConnectionsEqualsMinPoolSize(int minPoolSize)
         {
+            // Arrange
             await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = minPoolSize);
-            await dataSource.QueueWarmupTask(CancellationToken.None);
+
+            // Act
+            await dataSource.WarmUp();
+
+            // Assert
             Assert.Equal(minPoolSize, dataSource.Statistics.Total);
             Assert.Equal(minPoolSize, dataSource.Statistics.Idle);
         }
@@ -475,19 +480,29 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
         [Fact]
         public async Task Warmup_ConcurrentWarmupCalls_OnlyOneExecuted()
         {
+            // Arrange
             await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = 10);
-            ValueTask t1 = dataSource.QueueWarmupTask(CancellationToken.None);
-            ValueTask t2 = dataSource.QueueWarmupTask(CancellationToken.None);
+
+            // Act
+            ValueTask t1 = dataSource.WarmUp();
+            ValueTask t2 = dataSource.WarmUp();
+
+            // Assert
             Assert.Equal(t1, t2);
         }
 
         [Fact]
         public async Task Warmup_SequentialWarmupCalls_BothExecuted()
         {
+            // Arrange
             await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = 10);
-            ValueTask t1 = dataSource.QueueWarmupTask(CancellationToken.None);
+
+            // Act
+            ValueTask t1 = dataSource.WarmUp();
             await t1;
-            ValueTask t2 = dataSource.QueueWarmupTask(CancellationToken.None);
+            ValueTask t2 = dataSource.WarmUp();
+
+            // Assert
             Assert.NotEqual(t1, t2);
         }
 
