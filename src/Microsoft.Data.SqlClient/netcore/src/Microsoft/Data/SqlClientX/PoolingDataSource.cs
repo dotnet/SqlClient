@@ -54,9 +54,9 @@ namespace Microsoft.Data.SqlClientX
         private readonly ChannelReader<SqlConnector?> _idleConnectorReader;
         private readonly ChannelWriter<SqlConnector?> _idleConnectorWriter;
 
-        private Task<ValueTask> _warmupTask;
+        private ValueTask _warmupTask;
         private CancellationTokenSource _warmupCTS;
-        private Mutex _warmupLock;
+        private readonly object _warmupLock = new object();
         #endregion
 
         // Counts the total number of open connectors tracked by the pool.
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClientX
 
             //TODO: initiate idle lifetime and pruning fields
 
-            _warmupTask = Task.FromResult(ValueTask.CompletedTask);
+            _warmupTask = ValueTask.CompletedTask;
             _warmupCTS = new CancellationTokenSource();
             _warmupLock = new Mutex();
         }
@@ -427,20 +427,13 @@ namespace Microsoft.Data.SqlClientX
             throw new NotImplementedException();
         }
 
-        internal Task<ValueTask> QueueWarmupTask(CancellationToken ct)
+        internal ValueTask QueueWarmupTask(CancellationToken ct)
         {
-            var oldTask = _warmupTask;
-            if (oldTask.IsCompleted)
+            lock (_warmupLock)
             {
-                Task<ValueTask> newTask = new Task<ValueTask>(() => Warmup(), ct);
-                if (oldTask == Interlocked.CompareExchange(ref _warmupTask, newTask, oldTask))
+                if (_warmupTask.IsCompleted)
                 {
-                    newTask.Start();
-                    oldTask.Dispose();
-                }
-                else
-                {
-                    newTask.Dispose();
+                    _warmupTask = Warmup();
                 }
             }
 
@@ -492,7 +485,6 @@ namespace Microsoft.Data.SqlClientX
         internal void Shutdown()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", ObjectID);
-            _warmupTask.Dispose();
             _warmupCTS.Dispose();
             _connectionRateLimiter?.Dispose();
         }
