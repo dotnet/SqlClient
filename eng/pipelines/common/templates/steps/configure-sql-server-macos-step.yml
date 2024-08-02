@@ -35,7 +35,7 @@ steps:
     while [ $counter -le 5 ] && [ $errstatus = 1 ]
     do
       echo Waiting for SQL Server to start...
-      sleep 3s
+      sleep 3
       /opt/mssql-tools18/bin/sqlcmd \
         -S localhost \
         -No \
