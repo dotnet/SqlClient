@@ -361,7 +361,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                Debug.Assert(null == value, "used only by SqlBulkCopy");
+                Debug.Assert(value == null, "used only by SqlBulkCopy");
                 _metaDataArray[index] = value;
             }
         }

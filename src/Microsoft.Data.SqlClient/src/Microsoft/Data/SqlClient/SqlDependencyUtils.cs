@@ -351,7 +351,7 @@ namespace Microsoft.Data.SqlClient
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP> {0}, Key: '{1}'", ObjectID, id);
             try
             {
-                if (null == id)
+                if (id == null)
                 {
                     throw ADP.ArgumentNull(nameof(id));
                 }

@@ -738,7 +738,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return IsTransactionRoot && (!Is2008OrNewer || null == Pool);
+                return IsTransactionRoot && (!Is2008OrNewer || Pool == null);
             }
         }
 
@@ -803,7 +803,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 // TODO: probably need to use a different method, but that's a different bug
-                bool result = (null == FindLiveReader(null)); // can't prepare with a live data reader...
+                bool result = FindLiveReader(null) == null; // can't prepare with a live data reader...
                 return result;
             }
         }
@@ -1173,7 +1173,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            string transactionName = (null == name) ? String.Empty : name;
+            string transactionName = name == null ? String.Empty : name;
 
             if (!_parser.Is2005OrNewer)
             {
@@ -1914,7 +1914,7 @@ namespace Microsoft.Data.SqlClient
                         continue;
                     }
 
-                    if (null == _parser
+                    if (_parser == null
                         || TdsParserState.Closed != _parser.State
                         || IsDoNotRetryConnectError(sqlex)
                         || timeout.IsExpired)
@@ -2060,7 +2060,7 @@ namespace Microsoft.Data.SqlClient
             ServerInfo failoverServerInfo = new ServerInfo(connectionOptions, failoverHost, connectionOptions.FailoverPartnerSPN);
 
             ResolveExtendedServerName(primaryServerInfo, !redirectedUserInstance, connectionOptions);
-            if (null == ServerProvidedFailOverPartner)
+            if (ServerProvidedFailOverPartner == null)
             {// No point in resolving the failover partner when we're going to override it below
              // Don't resolve aliases if failover == primary // UNDONE: WHY?  Previous code in TdsParser.Connect did this, but the reason is not clear
                 ResolveExtendedServerName(failoverServerInfo, !redirectedUserInstance && failoverHost != primaryServerInfo.UserServerName, connectionOptions);
@@ -2233,7 +2233,7 @@ namespace Microsoft.Data.SqlClient
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
             // if connected to failover host, but said host doesn't have DbMirroring set up, throw an error
-            if (useFailoverHost && null == ServerProvidedFailOverPartner)
+            if (useFailoverHost && ServerProvidedFailOverPartner == null)
             {
                 throw SQL.InvalidPartnerConfiguration(failoverHost, CurrentDatabase);
             }

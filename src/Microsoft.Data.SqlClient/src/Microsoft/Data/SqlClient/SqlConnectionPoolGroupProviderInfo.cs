@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
             {
                 lock (this)
                 {
-                    if (null == _alias)
+                    if (_alias == null)
                     {
                         _alias = server;
                     }
@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient
             //       in the original connection string.
 
             if (userConnectionOptions.ContainsKey(SqlConnectionString.KEY.FailoverPartner) &&
-                null == userConnectionOptions[SqlConnectionString.KEY.FailoverPartner])
+                userConnectionOptions[SqlConnectionString.KEY.FailoverPartner] == null)
             {
                 keywordToReplace = SqlConnectionString.KEY.Data_Source;
             }

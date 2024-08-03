@@ -499,7 +499,7 @@ namespace Microsoft.Data.SqlClient
                         // start
                         if (ConnectionState.Open == State)
                         {
-                            if (null == _statistics)
+                            if (_statistics == null)
                             {
                                 _statistics = new SqlStatistics();
                                 _statistics._openTimestamp = ADP.TimerCurrent();
@@ -1124,7 +1124,7 @@ namespace Microsoft.Data.SqlClient
                 // rebooting.  Therefore, don't cache this machine name.
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
                 string result = ((null != constr) ? constr.WorkstationId : null);
-                if (null == result)
+                if (result == null)
                 {
                     // getting machine name requires Environment.Permission
                     // user must have that permission in order to retrieve this
@@ -1719,7 +1719,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (StatisticsEnabled)
                 {
-                    if (null == _statistics)
+                    if (_statistics == null)
                     {
                         _statistics = new SqlStatistics();
                     }
@@ -1988,7 +1988,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (StatisticsEnabled)
                 {
-                    if (null == _statistics)
+                    if (_statistics == null)
                     {
                         _statistics = new SqlStatistics();
                     }
@@ -2351,7 +2351,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlInternalConnectionTds tdsConnection = (GetOpenConnection() as SqlInternalConnectionTds);
-                if (null == tdsConnection)
+                if (tdsConnection == null)
                 {
                     throw SQL.NotAvailableOnContextConnection();
                 }
@@ -2496,7 +2496,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalConnection GetOpenConnection()
         {
             SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
-            if (null == innerConnection)
+            if (innerConnection == null)
             {
                 throw ADP.ClosedConnectionError();
             }
@@ -2507,7 +2507,7 @@ namespace Microsoft.Data.SqlClient
         {
             DbConnectionInternal innerConnection = InnerConnection;
             SqlInternalConnection innerSqlConnection = (innerConnection as SqlInternalConnection);
-            if (null == innerSqlConnection)
+            if (innerSqlConnection == null)
             {
                 throw ADP.OpenConnectionRequired(method, innerConnection.State);
             }
@@ -2517,7 +2517,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalConnectionTds GetOpenTdsConnection()
         {
             SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
-            if (null == innerConnection)
+            if (innerConnection == null)
             {
                 throw ADP.ClosedConnectionError();
             }
@@ -2527,7 +2527,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalConnectionTds GetOpenTdsConnection(string method)
         {
             SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
-            if (null == innerConnection)
+            if (innerConnection == null)
             {
                 throw ADP.OpenConnectionRequired(method, InnerConnection.State);
             }
@@ -3278,12 +3278,16 @@ namespace Microsoft.Data.SqlClient
             IntPtr pDacl = IntPtr.Zero;
 
             // validate the structure
-            if (null == pszMachineName || null == pszSDIDLLName)
+            if (pszMachineName == null || pszSDIDLLName == null)
+            {
                 return false;
+            }
 
             if (pszMachineName.Length > TdsEnums.SDCI_MAX_MACHINENAME ||
-            pszSDIDLLName.Length > TdsEnums.SDCI_MAX_DLLNAME)
+                pszSDIDLLName.Length > TdsEnums.SDCI_MAX_DLLNAME)
+            {
                 return false;
+            }
 
             // note that these are ansi strings
             Encoding cp = System.Text.Encoding.GetEncoding(TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_VALUE);

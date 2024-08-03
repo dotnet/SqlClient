@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
                 AllowBlankPassword = constr.HasBlankPassword; // MDAC 84563
                 AddPermissionEntry(new DBConnectionString(constr));
             }
-            if ((null == constr) || constr.IsEmpty)
+            if (constr == null || constr.IsEmpty)
             {
                 base.Add("", "", KeyRestrictionBehavior.AllowOnly);
             }
@@ -81,11 +81,11 @@ namespace Microsoft.Data.SqlClient
 
         internal void AddPermissionEntry(DBConnectionString entry)
         {
-            if (null == _keyvaluetree)
+            if (_keyvaluetree == null)
             {
                 _keyvaluetree = new NameValuePermission();
             }
-            if (null == _keyvalues)
+            if (_keyvalues == null)
             {
                 _keyvalues = new ArrayList();
             }
@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Intersect/*' />
         override public IPermission Intersect(IPermission target)
         { // used during Deny actions
-            if (null == target)
+            if (target == null)
             {
                 return null;
             }
@@ -175,7 +175,7 @@ namespace Microsoft.Data.SqlClient
         private bool IsEmpty()
         { // MDAC 84804
             ArrayList keyvalues = _keyvalues;
-            bool flag = (!IsUnrestricted() && !AllowBlankPassword && ((null == keyvalues) || (0 == keyvalues.Count)));
+            bool flag = !IsUnrestricted() && !AllowBlankPassword && (keyvalues == null || (0 == keyvalues.Count));
             return flag;
         }
 
@@ -198,7 +198,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!IsUnrestricted() &&
                     (!AllowBlankPassword || superset.AllowBlankPassword) &&
-                    ((null == _keyvalues) || (null != superset._keyvaluetree)))
+                    (_keyvalues == null || (null != superset._keyvaluetree)))
                 {
 
                     subset = true;
@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Union/*' />
         override public IPermission Union(IPermission target)
         {
-            if (null == target)
+            if (target == null)
             {
                 return this.Copy();
             }
@@ -285,7 +285,7 @@ namespace Microsoft.Data.SqlClient
         override public void FromXml(SecurityElement securityElement)
         {
             // code derived from CodeAccessPermission.ValidateElement
-            if (null == securityElement)
+            if (securityElement == null)
             {
                 throw ADP.ArgumentNull("securityElement");
             }
@@ -375,8 +375,10 @@ namespace Microsoft.Data.SqlClient
                         }
                         tmp = value.Restrictions;
                         tmp = EncodeXmlValue(tmp);
-                        if (null == tmp)
-                        { tmp = ""; }
+                        if (tmp == null)
+                        {
+                            tmp = "";
+                        }
                         valueElement.AddAttribute(XmlStr._KeyRestrictions, tmp);
 
                         tmp = value.Behavior.ToString();

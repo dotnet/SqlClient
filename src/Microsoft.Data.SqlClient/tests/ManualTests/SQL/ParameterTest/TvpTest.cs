@@ -1034,7 +1034,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 object value = row[i];
                 Type t;
-                if ((null == value || DBNull.Value == value))
+                if (value == null || DBNull.Value == value)
                 {
                     if (lastRowTypes[i] == null)
                     {
@@ -1310,7 +1310,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
 
-                if (null == targetTable)
+                if (targetTable == null)
                 {
                     targetTable = CreateNewTable(row, ref valueTypes);
                     if (null != targetTable)
@@ -1345,10 +1345,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private bool IsNull(object value)
         {
-            return null == value ||
-                    DBNull.Value == value ||
-                    (value is INullable nullable &&
-                     nullable.IsNull);
+            return value == null ||
+                   DBNull.Value == value ||
+                   (value is INullable nullable && nullable.IsNull);
         }
 
         private SqlMetaData PermToSqlMetaData(StePermutation perm)
@@ -1417,11 +1416,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void ReportMismatch(object source, object result, StePermutation perm)
         {
-            if (null == source)
+            if (source == null)
             {
                 source = "(null)";
             }
-            if (null == result)
+            if (result == null)
             {
                 result = "(null)";
             }

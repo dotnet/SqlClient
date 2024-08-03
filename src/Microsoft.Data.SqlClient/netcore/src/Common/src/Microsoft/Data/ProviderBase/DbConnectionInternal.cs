@@ -178,10 +178,10 @@ namespace Microsoft.Data.ProviderBase
 
         internal void AddWeakReference(object value, int tag)
         {
-            if (null == _referenceCollection)
+            if (_referenceCollection == null)
             {
                 _referenceCollection = CreateReferenceCollection();
-                if (null == _referenceCollection)
+                if (_referenceCollection == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.CreateReferenceCollectionReturnedNull);
                 }
@@ -349,7 +349,7 @@ namespace Microsoft.Data.ProviderBase
                     connectionFactory.SetInnerConnectionTo(outerConnection, this);
                     throw;
                 }
-                if (null == openConnection)
+                if (openConnection == null)
                 {
                     connectionFactory.SetInnerConnectionTo(outerConnection, this);
                     throw ADP.InternalConnectionError(ADP.ConnectionError.GetConnectionReturnsNull);

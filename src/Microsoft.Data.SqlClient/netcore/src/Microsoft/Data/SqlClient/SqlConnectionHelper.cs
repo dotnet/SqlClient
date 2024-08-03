@@ -227,7 +227,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
             DbConnectionPoolGroup poolGroup = PoolGroup;
             DbConnectionOptions connectionOptions = ((null != poolGroup) ? poolGroup.ConnectionOptions : null);
-            if ((null == connectionOptions) || connectionOptions.IsEmpty)
+            if (connectionOptions == null || connectionOptions.IsEmpty)
             {
                 throw ADP.NoConnectionString();
             }

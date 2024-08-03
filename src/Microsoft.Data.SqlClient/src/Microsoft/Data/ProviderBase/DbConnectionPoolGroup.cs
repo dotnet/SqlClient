@@ -53,7 +53,7 @@ namespace Microsoft.Data.ProviderBase
         {
             Debug.Assert(null != connectionOptions, "null connection options");
 #if NETFRAMEWORK
-            Debug.Assert(null == poolGroupOptions || ADP.s_isWindowsNT, "should not have pooling options on Win9x");
+            Debug.Assert(poolGroupOptions == null || ADP.s_isWindowsNT, "should not have pooling options on Win9x");
 #endif
 
             _connectionOptions = connectionOptions;
@@ -224,7 +224,7 @@ namespace Microsoft.Data.ProviderBase
                 }
             }
 
-            if (null == pool)
+            if (pool == null)
             {
                 lock (this)
                 {

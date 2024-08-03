@@ -465,7 +465,7 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 MetaType metatype = _metaType;
-                if ((null == metatype) || (metatype.DbType != value))
+                if (metatype == null || (metatype.DbType != value))
                 {
                     PropertyTypeChanging();
                     _metaType = MetaType.GetMetaTypeFromDbType(value);
@@ -608,7 +608,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.InvalidSqlDbType(value);
                 }
-                if ((null == metatype) || (metatype.SqlDbType != value))
+                if (metatype == null || (metatype.SqlDbType != value))
                 {
                     PropertyTypeChanging();
                     _metaType = MetaType.GetMetaTypeFromSqlDbType(value, value == SqlDbType.Structured);
@@ -741,7 +741,7 @@ namespace Microsoft.Data.SqlClient
                 _coercedValue = null;
                 _valueAsINullable = _value as INullable;
                 SetFlag(SqlParameterFlags.IsSqlParameterSqlType, _valueAsINullable != null);
-                SetFlag(SqlParameterFlags.IsNull, (null == _value) || (_value == DBNull.Value) || (HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull));
+                SetFlag(SqlParameterFlags.IsNull, _value == null || (_value == DBNull.Value) || (HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull));
                 _udtLoadError = null;
                 _actualSize = -1;
             }
@@ -897,7 +897,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null == _coercedValue)
+                if (_coercedValue == null)
                 {
                     GetCoercedValue();
                 }
@@ -1346,7 +1346,7 @@ namespace Microsoft.Data.SqlClient
                             if (hasDefault)
                             {
                                 // May have already created props list in unique key handling
-                                if (null == props)
+                                if (props == null)
                                 {
                                     props = new SmiMetaDataPropertyCollection();
                                 }
@@ -1375,7 +1375,7 @@ namespace Microsoft.Data.SqlClient
                                 }
 
                                 // May have already created props list
-                                if (null == props)
+                                if (props == null)
                                 {
                                     props = new SmiMetaDataPropertyCollection();
                                 }
@@ -1877,7 +1877,7 @@ namespace Microsoft.Data.SqlClient
         private SqlDbType GetMetaSqlDbTypeOnly()
         {
             MetaType metaType = _metaType;
-            if (null == metaType)
+            if (metaType == null)
             { // infer the type from the value
                 metaType = MetaType.GetDefaultMetaType();
             }
@@ -1977,7 +1977,7 @@ namespace Microsoft.Data.SqlClient
                 !ADP.IsDirection(this, ParameterDirection.ReturnValue) &&
                 (!metaType.IsFixed) &&
                 !ShouldSerializeSize() &&
-                ((null == _value) || Convert.IsDBNull(_value)) &&
+                (_value == null || Convert.IsDBNull(_value)) &&
                 (SqlDbType != SqlDbType.Timestamp) &&
                 (SqlDbType != SqlDbType.Udt) &&
                 // BUG: (VSTFDevDiv - 479609): Output parameter with size 0 throws for XML, TEXT, NTEXT, IMAGE.

@@ -641,7 +641,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return IsTransactionRoot && (!Is2008OrNewer || null == Pool);
+                return IsTransactionRoot && (!Is2008OrNewer || Pool == null);
             }
         }
 
@@ -689,7 +689,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                bool result = (null == FindLiveReader(null)); // can't prepare with a live data reader...
+                bool result = FindLiveReader(null) == null; // can't prepare with a live data reader...
                 return result;
             }
         }
@@ -1004,7 +1004,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            string transactionName = (null == name) ? string.Empty : name;
+            string transactionName = name == null ? string.Empty : name;
 
             ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
         }
@@ -1591,12 +1591,13 @@ namespace Microsoft.Data.SqlClient
                         continue;
                     }
 
-                    if (null == _parser
-                            || TdsParserState.Closed != _parser.State
-                            || IsDoNotRetryConnectError(sqlex)
-                            || timeout.IsExpired)
-                    {       // no more time to try again
-                        throw;  // Caller will call LoginFailure()
+                    if (_parser == null
+                        || TdsParserState.Closed != _parser.State
+                        || IsDoNotRetryConnectError(sqlex)
+                        || timeout.IsExpired)
+                    {
+                        // no more time to try again
+                        throw; // Caller will call LoginFailure()
                     }
 
                     // Check sleep interval to make sure we won't exceed the timeout
@@ -1710,7 +1711,7 @@ namespace Microsoft.Data.SqlClient
             ServerInfo failoverServerInfo = new ServerInfo(connectionOptions, failoverHost, connectionOptions.FailoverPartnerSPN);
 
             ResolveExtendedServerName(primaryServerInfo, !redirectedUserInstance, connectionOptions);
-            if (null == ServerProvidedFailOverPartner)
+            if (ServerProvidedFailOverPartner == null)
             {
                 ResolveExtendedServerName(failoverServerInfo, !redirectedUserInstance && failoverHost != primaryServerInfo.UserServerName, connectionOptions);
             }
@@ -1844,7 +1845,7 @@ namespace Microsoft.Data.SqlClient
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
             // if connected to failover host, but said host doesn't have DbMirroring set up, throw an error
-            if (useFailoverHost && null == ServerProvidedFailOverPartner)
+            if (useFailoverHost && ServerProvidedFailOverPartner == null)
             {
                 throw SQL.InvalidPartnerConfiguration(failoverHost, CurrentDatabase);
             }

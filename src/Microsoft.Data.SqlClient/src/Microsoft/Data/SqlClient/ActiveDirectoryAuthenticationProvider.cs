@@ -218,7 +218,7 @@ namespace Microsoft.Data.SqlClient
             {
                 result = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
 
-                if (null == result)
+                if (result == null)
                 {
                     if (!string.IsNullOrEmpty(parameters.UserId))
                     {
@@ -252,7 +252,7 @@ namespace Microsoft.Data.SqlClient
                     result = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
                 }
 
-                if (null == result)
+                if (result == null)
                 {
                     result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
                        .WithCorrelationId(parameters.ConnectionId)
@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                 }
 
-                if (null == result)
+                if (result == null)
                 {
                     // If no existing 'account' is found, we request user to sign in interactively.
                     result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);

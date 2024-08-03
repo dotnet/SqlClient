@@ -220,7 +220,7 @@ namespace Microsoft.Data.ProviderBase
                 poolGroup = GetConnectionPoolGroup(owningConnection);
                 // Doing this on the callers thread is important because it looks up the WindowsIdentity from the thread.
                 connectionPool = GetConnectionPool(owningConnection, poolGroup);
-                if (null == connectionPool)
+                if (connectionPool == null)
                 {
                     // If GetConnectionPool returns null, we can be certain that
                     // this connection should not be pooled via DbConnectionPool
@@ -426,13 +426,13 @@ namespace Microsoft.Data.ProviderBase
                 // new pool entry and add it to our collection.
 
                 DbConnectionOptions connectionOptions = CreateConnectionOptions(key.ConnectionString, userConnectionOptions);
-                if (null == connectionOptions)
+                if (connectionOptions == null)
                 {
                     throw ADP.InternalConnectionError(ADP.ConnectionError.ConnectionOptionsMissing);
                 }
 
                 string expandedConnectionString = key.ConnectionString;
-                if (null == userConnectionOptions)
+                if (userConnectionOptions == null)
                 { // we only allow one expansion on the connection string
 
                     userConnectionOptions = connectionOptions;
@@ -449,7 +449,7 @@ namespace Microsoft.Data.ProviderBase
                 }
 
                 // We don't support connection pooling on Win9x; it lacks too many of the APIs we require.
-                if ((null == poolOptions) && ADP.s_isWindowsNT)
+                if (poolOptions == null && ADP.s_isWindowsNT)
                 {
                     if (null != connectionPoolGroup)
                     {
@@ -492,7 +492,7 @@ namespace Microsoft.Data.ProviderBase
                 Debug.Assert(null != connectionPoolGroup, "how did we not create a pool entry?");
                 Debug.Assert(null != userConnectionOptions, "how did we not have user connection options?");
             }
-            else if (null == userConnectionOptions)
+            else if (userConnectionOptions == null)
             {
                 userConnectionOptions = connectionPoolGroup.ConnectionOptions;
             }

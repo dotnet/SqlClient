@@ -231,16 +231,16 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 Debug.Assert(value == _currentTransaction
-                          || null == _currentTransaction
-                          || null == value
+                          || _currentTransaction == null
+                          || value == null
                           || (null != _currentTransaction && !_currentTransaction.IsLocal), "attempting to change current transaction?");
 
                 // If there is currently a transaction active, we don't want to
                 // change it; this can occur when there is a delegated transaction
                 // and the user attempts to do an API begin transaction; in these
                 // cases, it's safe to ignore the set.
-                if ((null == _currentTransaction && null != value)
-                  || (null != _currentTransaction && null == value))
+                if ((_currentTransaction == null && null != value)
+                    || (null != _currentTransaction && value == null))
                 {
                     _currentTransaction = value;
                 }
@@ -508,7 +508,7 @@ namespace Microsoft.Data.SqlClient
             uint result = _physicalStateObj.SniGetConnectionId(ref _connHandler._clientConnectionId);
             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
 
-            if (null == _connHandler.pendingSQLDNSObject)
+            if (_connHandler.pendingSQLDNSObject == null)
             {
                 // for DNS Caching phase 1
                 _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
@@ -581,7 +581,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(retCode == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
 
-                if (null == _connHandler.pendingSQLDNSObject)
+                if (_connHandler.pendingSQLDNSObject == null)
                 {
                     // for DNS Caching phase 1
                     _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
@@ -1183,7 +1183,7 @@ namespace Microsoft.Data.SqlClient
                 _sessionPool.Deactivate();
             }
 
-            Debug.Assert(connectionIsDoomed || null == _pendingTransaction, "pending transaction at disconnect?");
+            Debug.Assert(connectionIsDoomed || _pendingTransaction == null, "pending transaction at disconnect?");
 
             if (!connectionIsDoomed && null != _physicalStateObj)
             {
@@ -1211,7 +1211,7 @@ namespace Microsoft.Data.SqlClient
             if (null != currentTransaction && currentTransaction.HasParentTransaction)
             {
                 currentTransaction.CloseFromConnection();
-                Debug.Assert(null == CurrentTransaction, "rollback didn't clear current transaction?");
+                Debug.Assert(CurrentTransaction == null, "rollback didn't clear current transaction?");
             }
 
             Statistics = null; // must come after CleanWire or we won't count the stuff that happens there...
@@ -1316,7 +1316,7 @@ namespace Microsoft.Data.SqlClient
             if (null != currentTransaction && currentTransaction.HasParentTransaction && currentTransaction.IsOrphaned)
             {
                 currentTransaction.CloseFromConnection();
-                Debug.Assert(null == CurrentTransaction, "rollback didn't clear current transaction?");
+                Debug.Assert(CurrentTransaction == null, "rollback didn't clear current transaction?");
             }
         }
 
@@ -1680,7 +1680,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal byte[] SerializeShort(int v, TdsParserStateObject stateObj)
         {
-            if (null == stateObj._bShortBytes)
+            if (stateObj._bShortBytes == null)
             {
                 stateObj._bShortBytes = new byte[2];
             }
@@ -1739,7 +1739,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal byte[] SerializeInt(int v, TdsParserStateObject stateObj)
         {
-            if (null == stateObj._bIntBytes)
+            if (stateObj._bIntBytes == null)
             {
                 stateObj._bIntBytes = new byte[sizeof(int)];
             }
@@ -1812,7 +1812,7 @@ namespace Microsoft.Data.SqlClient
         internal byte[] SerializeLong(long v, TdsParserStateObject stateObj)
         {
             int current = 0;
-            if (null == stateObj._bLongBytes)
+            if (stateObj._bLongBytes == null)
             {
                 stateObj._bLongBytes = new byte[8];
             }
@@ -2256,7 +2256,7 @@ namespace Microsoft.Data.SqlClient
                                             // the current transaction, then we store the token in it.
                                             // if there isn't a pending transaction, then it's either
                                             // a TSQL transaction or a distributed transaction.
-                                            Debug.Assert(null == _currentTransaction, "non-null current transaction with an ENV Change");
+                                            Debug.Assert(_currentTransaction == null, "non-null current transaction with an ENV Change");
                                             _currentTransaction = _pendingTransaction;
                                             _pendingTransaction = null;
 
@@ -6235,12 +6235,12 @@ namespace Microsoft.Data.SqlClient
                     {
                         System.Text.Encoding encoding = md.baseTI.encoding;
 
-                        if (null == encoding)
+                        if (encoding == null)
                         {
                             encoding = _defaultEncoding;
                         }
 
-                        if (null == encoding)
+                        if (encoding == null)
                         {
                             ThrowUnsupportedCollationEncountered(stateObj);
                         }
@@ -7134,7 +7134,7 @@ namespace Microsoft.Data.SqlClient
         internal Task WriteSqlVariantDataRowValue(object value, TdsParserStateObject stateObj, bool canAccumulate = true)
         {
             // handle null values
-            if ((null == value) || (DBNull.Value == value))
+            if (value == null || (DBNull.Value == value))
             {
                 WriteInt(TdsEnums.FIXEDNULL, stateObj);
                 return null;
@@ -7369,7 +7369,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(8 == length, "invalid length in SerializeCurrency");
-            if (null == stateObj._bLongBytes)
+            if (stateObj._bLongBytes == null)
             {
                 stateObj._bLongBytes = new byte[8];
             }
@@ -7543,7 +7543,7 @@ namespace Microsoft.Data.SqlClient
             bits = stateObj._decimalBits; // used alloc'd array if we have one already
             int i;
 
-            if (null == bits)
+            if (bits == null)
             {
                 bits = new int[4];
                 stateObj._decimalBits = bits;
@@ -7601,7 +7601,7 @@ namespace Microsoft.Data.SqlClient
 
         internal byte[] SerializeSqlDecimal(SqlDecimal d, TdsParserStateObject stateObj)
         {
-            if (null == stateObj._bDecimalBytes)
+            if (stateObj._bDecimalBytes == null)
             {
                 stateObj._bDecimalBytes = new byte[17];
             }
@@ -7660,7 +7660,7 @@ namespace Microsoft.Data.SqlClient
         private byte[] SerializeDecimal(decimal value, TdsParserStateObject stateObj)
         {
             int[] decimalBits = Decimal.GetBits(value);
-            if (null == stateObj._bDecimalBytes)
+            if (stateObj._bDecimalBytes == null)
             {
                 stateObj._bDecimalBytes = new byte[17];
             }
@@ -7931,7 +7931,7 @@ namespace Microsoft.Data.SqlClient
             // 7.0 has no support for multiple code pages in data - single code page support only
             if (encoding == null)
             {
-                if (null == _defaultEncoding)
+                if (_defaultEncoding == null)
                 {
                     ThrowUnsupportedCollationEncountered(null);
                 }
@@ -8586,8 +8586,10 @@ namespace Microsoft.Data.SqlClient
                 WriteShort(rec.database.Length, _physicalStateObj);
                 offset += rec.database.Length * 2;
 
-                if (null == s_nicAddress)
+                if (s_nicAddress == null)
+                {
                     s_nicAddress = TdsParserStaticMethods.GetNetworkPhysicalAddressForTdsLoginOnly();
+                }
 
                 _physicalStateObj.WriteByteArray(s_nicAddress, s_nicAddress.Length, 0);
 
@@ -10772,7 +10774,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBIGCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
-                    if (null == _defaultEncoding)
+                    if (_defaultEncoding == null)
                     {
                         ThrowUnsupportedCollationEncountered(null); // stateObject only when reading
                     }
@@ -10910,7 +10912,7 @@ namespace Microsoft.Data.SqlClient
                         case TdsEnums.SQLBIGCHAR:
                         case TdsEnums.SQLBIGVARCHAR:
                         case TdsEnums.SQLTEXT:
-                            if (null == _defaultEncoding)
+                            if (_defaultEncoding == null)
                             {
                                 ThrowUnsupportedCollationEncountered(null); // stateObject only when reading
                             }
@@ -11076,7 +11078,7 @@ namespace Microsoft.Data.SqlClient
                 string service = notificationRequest.Options;
                 int timeout = notificationRequest.Timeout;
 
-                if (null == callbackId)
+                if (callbackId == null)
                 {
                     throw ADP.ArgumentNull(nameof(callbackId));
                 }
@@ -11085,7 +11087,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.ArgumentOutOfRange(nameof(callbackId));
                 }
 
-                if (null == service)
+                if (service == null)
                 {
                     throw ADP.ArgumentNull(nameof(service));
                 }
@@ -12376,7 +12378,7 @@ namespace Microsoft.Data.SqlClient
                         if (0 > dt.days || dt.days > UInt16.MaxValue)
                             throw SQL.SmallDateTimeOverflow(MetaType.ToDateTime(dt.days, dt.time, 4).ToString(CultureInfo.InvariantCulture));
 
-                        if (null == stateObj._bIntBytes)
+                        if (stateObj._bIntBytes == null)
                         {
                             stateObj._bIntBytes = new byte[4];
                         }
@@ -12395,7 +12397,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        if (null == stateObj._bLongBytes)
+                        if (stateObj._bLongBytes == null)
                         {
                             stateObj._bLongBytes = new byte[8];
                         }
@@ -12569,7 +12571,7 @@ namespace Microsoft.Data.SqlClient
                         if (0 > dt.DayTicks || dt.DayTicks > UInt16.MaxValue)
                             throw SQL.SmallDateTimeOverflow(dt.ToString());
 
-                        if (null == stateObj._bIntBytes)
+                        if (stateObj._bIntBytes == null)
                         {
                             stateObj._bIntBytes = new byte[4];
                         }
@@ -12588,7 +12590,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        if (null == stateObj._bLongBytes)
+                        if (stateObj._bLongBytes == null)
                         {
                             stateObj._bLongBytes = new byte[8];
                         }
@@ -12909,7 +12911,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (enc == null)
                 {
-                    if (null == _defaultEncoding)
+                    if (_defaultEncoding == null)
                     {
                         ThrowUnsupportedCollationEncountered(stateObj);
                     }
@@ -13153,38 +13155,38 @@ namespace Microsoft.Data.SqlClient
         {
             return string.Format(/*IFormatProvider*/ null,
                            StateTraceFormatString,
-                           null == _physicalStateObj ? "(null)" : _physicalStateObj.ObjectID.ToString((IFormatProvider)null),
-                           null == _pMarsPhysicalConObj ? "(null)" : _pMarsPhysicalConObj.ObjectID.ToString((IFormatProvider)null),
+                           _physicalStateObj == null ? "(null)" : _physicalStateObj.ObjectID.ToString((IFormatProvider)null),
+                           _pMarsPhysicalConObj == null ? "(null)" : _pMarsPhysicalConObj.ObjectID.ToString((IFormatProvider)null),
                            _state,
                            _server,
                            _fResetConnection ? bool.TrueString : bool.FalseString,
-                           null == _defaultCollation ? "(null)" : _defaultCollation.TraceString(),
+                           _defaultCollation == null ? "(null)" : _defaultCollation.TraceString(),
                            _defaultCodePage,
                            _defaultLCID,
                            TraceObjectClass(_defaultEncoding),
                            _encryptionOption,
-                           null == _currentTransaction ? "(null)" : _currentTransaction.TraceString(),
-                           null == _pendingTransaction ? "(null)" : _pendingTransaction.TraceString(),
+                           _currentTransaction == null ? "(null)" : _currentTransaction.TraceString(),
+                           _pendingTransaction == null ? "(null)" : _pendingTransaction.TraceString(),
                            _retainedTransactionId,
                            _nonTransactedOpenResultCount,
-                           null == _connHandler ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
+                           _connHandler == null ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
                            _fMARS ? bool.TrueString : bool.FalseString,
-                           null == _sessionPool ? "(null)" : _sessionPool.TraceString(),
+                           _sessionPool == null ? "(null)" : _sessionPool.TraceString(),
                            _is2005 ? bool.TrueString : bool.FalseString,
-                           null == _sniSpnBuffer ? "(null)" : _sniSpnBuffer.Length.ToString((IFormatProvider)null),
+                           _sniSpnBuffer == null ? "(null)" : _sniSpnBuffer.Length.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionErrorCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionWarningCount.ToString((IFormatProvider)null),
-                           null == _statistics ? bool.TrueString : bool.FalseString,
+                           _statistics == null ? bool.TrueString : bool.FalseString,
                            _statisticsIsInTransaction ? bool.TrueString : bool.FalseString,
                            _fPreserveTransaction ? bool.TrueString : bool.FalseString,
-                           null == _connHandler ? "(null)" : _connHandler.ConnectionOptions.MultiSubnetFailover.ToString((IFormatProvider)null));
+                           _connHandler == null ? "(null)" : _connHandler.ConnectionOptions.MultiSubnetFailover.ToString((IFormatProvider)null));
         }
 
         private string TraceObjectClass(object instance)
         {
-            if (null == instance)
+            if (instance == null)
             {
                 return "(null)";
             }

@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient
                 connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Begin, null, _isolationLevel, _internalTransaction, true);
 
                 // Handle case where ExecuteTran didn't produce a new transaction, but also didn't throw.
-                if (null == connection.CurrentTransaction)
+                if (connection.CurrentTransaction == null)
                 {
                     connection.DoomThisConnection();
                     throw ADP.InternalError(ADP.InternalErrorCode.UnknownTransactionFailure);
@@ -485,7 +485,7 @@ namespace Microsoft.Data.SqlClient
         private SqlInternalConnection GetValidConnection()
         {
             SqlInternalConnection connection = _connection;
-            if (null == connection && Transaction.TransactionInformation.Status != TransactionStatus.Aborted)
+            if (connection == null && Transaction.TransactionInformation.Status != TransactionStatus.Aborted)
             {
                 throw ADP.ObjectDisposed(this);
             }

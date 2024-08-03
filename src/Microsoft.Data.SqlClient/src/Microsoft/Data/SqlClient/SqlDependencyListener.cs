@@ -426,7 +426,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                             }
                         }
 
-                        if (null == trans)
+                        if (trans == null)
                         { // Create a new transaction for next operations.
                             trans = _con.BeginTransaction();
                             com.Transaction = trans;
@@ -1281,7 +1281,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
             // Ignore SqlConnectionStringBuilder, since it is present largely for debug purposes.
 
-            if (null == temp)
+            if (temp == null)
             { // If passed value null - false.
                 result = false;
             }
@@ -1363,7 +1363,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     // Private constructor - only called by public constructor for static initialization.
     private SqlDependencyProcessDispatcher(object dummyVariable)
     {
-        Debug.Assert(null == s_staticInstance, "Real constructor called with static instance already created!");
+        Debug.Assert(s_staticInstance == null, "Real constructor called with static instance already created!");
         long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher|DEP> {0}", ObjectID);
         try
         {

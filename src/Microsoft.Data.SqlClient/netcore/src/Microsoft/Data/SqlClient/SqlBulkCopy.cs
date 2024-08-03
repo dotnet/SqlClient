@@ -540,7 +540,7 @@ namespace Microsoft.Data.SqlClient
 
             isInTransaction = _connection.HasLocalTransaction;
             // Throw if there is a transaction but no flag is set
-            if (isInTransaction && null == _externalTransaction && null == _internalTransaction && (_connection.Parser != null && _connection.Parser.CurrentTransaction != null && _connection.Parser.CurrentTransaction.IsLocal))
+            if (isInTransaction && _externalTransaction == null && _internalTransaction == null && (_connection.Parser != null && _connection.Parser.CurrentTransaction != null && _connection.Parser.CurrentTransaction.IsLocal))
             {
                 throw SQL.BulkLoadExistingTransaction();
             }
@@ -1281,7 +1281,7 @@ namespace Microsoft.Data.SqlClient
 
         private void CreateOrValidateConnection(string method)
         {
-            if (null == _connection)
+            if (_connection == null)
             {
                 throw ADP.ConnectionRequired(method);
             }

@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private string AssemblyFilter(StreamWriter writer)
         {
-            if (null == _outputBuilder)
+            if (_outputBuilder == null)
             {
                 _outputBuilder = new StringBuilder();
             }
@@ -279,7 +279,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void AssemblyFilter(StringBuilder builder)
         {
             string[] filter = _outputFilter;
-            if (null == filter)
+            if (filter == null)
             {
                 filter = new string[5];
                 string tmp = typeof(System.Guid).AssemblyQualifiedName;

@@ -29,7 +29,7 @@ namespace Microsoft.Data.Common
 
         internal static object MicrosoftDataSqlClientSqlProviderServices_Instance()
         {
-            if (null == MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo)
+            if (MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo == null)
             {
                 Type t = Type.GetType(MicrosoftDataSqlClientSqlProviderServices_TypeName, false);
 
