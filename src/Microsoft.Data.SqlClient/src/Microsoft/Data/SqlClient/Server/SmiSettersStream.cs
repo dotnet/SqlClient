@@ -18,10 +18,10 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal SmiSettersStream(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData)
         {
-            Debug.Assert(null != sink);
-            Debug.Assert(null != setters);
+            Debug.Assert(sink != null);
+            Debug.Assert(setters != null);
             Debug.Assert(0 <= ordinal);
-            Debug.Assert(null != metaData);
+            Debug.Assert(metaData != null);
 
             _sink = sink;
             _setters = setters;

@@ -159,7 +159,7 @@ namespace Microsoft.Data.ProviderBase
             offset += BaseOffset;
             Validate(offset, length);
             Debug.Assert(0 == offset % ADP.s_ptrSize, "invalid alignment");
-            Debug.Assert(null != destination, "null destination");
+            Debug.Assert(destination != null, "null destination");
             Debug.Assert(startIndex + length <= destination.Length, "destination too small");
 
             bool mustRelease = false;
@@ -192,7 +192,7 @@ namespace Microsoft.Data.ProviderBase
             offset += BaseOffset;
             Validate(offset, 2 * length);
             Debug.Assert(0 == offset % ADP.s_ptrSize, "invalid alignment");
-            Debug.Assert(null != destination, "null destination");
+            Debug.Assert(destination != null, "null destination");
             Debug.Assert(startIndex + length <= destination.Length, "destination too small");
 
             bool mustRelease = false;
@@ -251,7 +251,7 @@ namespace Microsoft.Data.ProviderBase
             offset += BaseOffset;
             Validate(offset, 2 * length);
             Debug.Assert(0 == offset % ADP.s_ptrSize, "invalid alignment");
-            Debug.Assert(null != destination, "null destination");
+            Debug.Assert(destination != null, "null destination");
             Debug.Assert(startIndex + length <= destination.Length, "destination too small");
 
             bool mustRelease = false;
@@ -303,7 +303,7 @@ namespace Microsoft.Data.ProviderBase
             offset += BaseOffset;
             Validate(offset, 4 * length);
             Debug.Assert(0 == offset % ADP.s_ptrSize, "invalid alignment");
-            Debug.Assert(null != destination, "null destination");
+            Debug.Assert(destination != null, "null destination");
             Debug.Assert(startIndex + length <= destination.Length, "destination too small");
 
             bool mustRelease = false;
@@ -396,7 +396,7 @@ namespace Microsoft.Data.ProviderBase
 
         private void StructureToPtr(int offset, object structure)
         {
-            Debug.Assert(null != structure, "null structure");
+            Debug.Assert(structure != null, "null structure");
             offset += BaseOffset;
             ValidateCheck(offset, Marshal.SizeOf(structure.GetType()));
             Debug.Assert(0 == offset % ADP.s_ptrSize, "invalid alignment");
@@ -448,7 +448,7 @@ namespace Microsoft.Data.ProviderBase
             offset += BaseOffset;
             Validate(offset, length);
             Debug.Assert(0 == offset % ADP.s_ptrSize, "invalid alignment");
-            Debug.Assert(null != source, "null source");
+            Debug.Assert(source != null, "null source");
             Debug.Assert(startIndex + length <= source.Length, "source too small");
 
             bool mustRelease = false;
@@ -474,7 +474,7 @@ namespace Microsoft.Data.ProviderBase
             offset += BaseOffset;
             Validate(offset, 2 * length);
             Debug.Assert(0 == offset % ADP.s_ptrSize, "invalid alignment");
-            Debug.Assert(null != source, "null source");
+            Debug.Assert(source != null, "null source");
             Debug.Assert(startIndex + length <= source.Length, "source too small");
 
             bool mustRelease = false;
@@ -529,7 +529,7 @@ namespace Microsoft.Data.ProviderBase
             offset += BaseOffset;
             Validate(offset, 2 * length);
             Debug.Assert(0 == offset % ADP.s_ptrSize, "invalid alignment");
-            Debug.Assert(null != source, "null source");
+            Debug.Assert(source != null, "null source");
             Debug.Assert(startIndex + length <= source.Length, "source too small");
 
             bool mustRelease = false;
@@ -579,7 +579,7 @@ namespace Microsoft.Data.ProviderBase
             offset += BaseOffset;
             Validate(offset, 4 * length);
             Debug.Assert(0 == offset % ADP.s_ptrSize, "invalid alignment");
-            Debug.Assert(null != source, "null source");
+            Debug.Assert(source != null, "null source");
             Debug.Assert(startIndex + length <= source.Length, "source too small");
 
             bool mustRelease = false;

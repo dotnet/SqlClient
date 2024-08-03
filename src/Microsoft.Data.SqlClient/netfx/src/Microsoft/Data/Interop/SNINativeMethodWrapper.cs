@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     data = Marshal.AllocHGlobal(passedSize).ToPointer();
 
-                    Trace.Assert(null != data);
+                    Trace.Assert(data != null);
 
                     System.Buffer.MemoryCopy(passedData, data, passedSize, passedSize);
 
@@ -1410,10 +1410,10 @@ namespace Microsoft.Data.SqlClient
         private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref Sni_Consumer_Info native_consumerInfo)
         {
             native_consumerInfo.DefaultUserDataLength = consumerInfo.defaultBufferSize;
-            native_consumerInfo.fnReadComp = null != consumerInfo.readDelegate
+            native_consumerInfo.fnReadComp = consumerInfo.readDelegate != null
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.readDelegate)
                 : IntPtr.Zero;
-            native_consumerInfo.fnWriteComp = null != consumerInfo.writeDelegate
+            native_consumerInfo.fnWriteComp = consumerInfo.writeDelegate != null
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.writeDelegate)
                 : IntPtr.Zero;
             native_consumerInfo.ConsumerKey = consumerInfo.key;

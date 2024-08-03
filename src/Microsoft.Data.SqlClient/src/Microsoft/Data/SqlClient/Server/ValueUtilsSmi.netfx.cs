@@ -356,7 +356,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             for (int i = 0; i < metaData.Length; ++i)
             {
-                if (null != useDefaultValues && useDefaultValues[i])
+                if (useDefaultValues != null && useDefaultValues[i])
                 {
                     continue;
                 }

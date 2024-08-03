@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null != _connection)
+                if (_connection != null)
                 {
                     if (_connection.StatisticsEnabled)
                     {
@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient
             //                 Of course, if the connection is already closed,
             //                 then we're free to zombify...
             SqlInternalConnection internalConnection = (_connection.InnerConnection as SqlInternalConnection);
-            if (null != internalConnection
+            if (internalConnection != null
 #if NETFRAMEWORK
                 && internalConnection.Is2005OrNewer
 #endif

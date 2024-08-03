@@ -20,7 +20,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal bool TryGetConnection(DbConnection owningConnection, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, DbConnectionInternal oldConnection, out DbConnectionInternal connection)
         {
-            Debug.Assert(null != owningConnection, "null owningConnection?");
+            Debug.Assert(owningConnection != null, "null owningConnection?");
 
             DbConnectionPoolGroup poolGroup;
             DbConnectionPool connectionPool;

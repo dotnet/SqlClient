@@ -17,7 +17,7 @@ namespace Microsoft.Data.Common
         // value nodes link to key nodes
         private string _value;
 
-        // value node with (null != _restrictions) are allowed to match connection strings
+        // value node with (_restrictions != null) are allowed to match connection strings
         private DBConnectionString _entry;
 
         private NameValuePermission[] _tree; // with branches
@@ -44,12 +44,12 @@ namespace Microsoft.Data.Common
             _value = permit._value;
             _entry = permit._entry;
             _tree = permit._tree;
-            if (null != _tree)
+            if (_tree != null)
             {
                 NameValuePermission[] tree = (_tree.Clone() as NameValuePermission[]);
                 for (int i = 0; i < tree.Length; ++i)
                 {
-                    if (null != tree[i])
+                    if (tree[i] != null)
                     { // WebData 98488
                         tree[i] = tree[i].CopyNameValue(); // deep copy
                     }
@@ -65,11 +65,11 @@ namespace Microsoft.Data.Common
 
         static internal void AddEntry(NameValuePermission kvtree, ArrayList entries, DBConnectionString entry)
         {
-            Debug.Assert(null != entry, "null DBConnectionString");
+            Debug.Assert(entry != null, "null DBConnectionString");
 
-            if (null != entry.KeyChain)
+            if (entry.KeyChain != null)
             {
-                for (NameValuePair keychain = entry.KeyChain; null != keychain; keychain = keychain.Next)
+                for (NameValuePair keychain = entry.KeyChain; keychain != null; keychain = keychain.Next)
                 {
                     NameValuePermission kv;
 
@@ -84,17 +84,17 @@ namespace Microsoft.Data.Common
                     kv = kvtree.CheckKeyForValue(keychain.Value);
                     if (kv == null)
                     {
-                        DBConnectionString insertValue = ((null != keychain.Next) ? null : entry);
+                        DBConnectionString insertValue = keychain.Next != null ? null : entry;
                         kv = new NameValuePermission(keychain.Value, insertValue);
                         kvtree.Add(kv); // add directly into live tree
-                        if (null != insertValue)
+                        if (insertValue != null)
                         {
                             entries.Add(insertValue);
                         }
                     }
                     else if (keychain.Next == null)
                     { // shorter chain potential
-                        if (null != kv._entry)
+                        if (kv._entry != null)
                         {
                             Debug.Assert(entries.Contains(kv._entry), "entries doesn't contain entry");
                             entries.Remove(kv._entry);
@@ -112,7 +112,7 @@ namespace Microsoft.Data.Common
             else
             { // global restrictions, MDAC 84443
                 DBConnectionString kentry = kvtree._entry;
-                if (null != kentry)
+                if (kentry != null)
                 {
                     Debug.Assert(entries.Contains(kentry), "entries doesn't contain entry");
                     entries.Remove(kentry);
@@ -135,25 +135,25 @@ namespace Microsoft.Data.Common
             }
             else
             {
-                if (null != _entry)
+                if (_entry != null)
                 {
                     entries.Remove(_entry);
                     _entry = _entry.Intersect(target._entry);
                     entries.Add(_entry);
                 }
-                else if (null != target._entry)
+                else if (target._entry != null)
                 {
                     _entry = target._entry.Intersect(null);
                     entries.Add(_entry);
                 }
 
-                if (null != _tree)
+                if (_tree != null)
                 {
                     int count = _tree.Length;
                     for (int i = 0; i < _tree.Length; ++i)
                     {
                         NameValuePermission kvtree = target.CheckKeyForValue(_tree[i]._value);
-                        if (null != kvtree)
+                        if (kvtree != null)
                         { // does target tree contain our value
                             _tree[i].Intersect(entries, kvtree);
                         }
@@ -172,7 +172,7 @@ namespace Microsoft.Data.Common
                         NameValuePermission[] kvtree = new NameValuePermission[count];
                         for (int i = 0, j = 0; i < _tree.Length; ++i)
                         {
-                            if (null != _tree[i])
+                            if (_tree[i] != null)
                             {
                                 kvtree[j++] = _tree[i];
                             }
@@ -186,7 +186,7 @@ namespace Microsoft.Data.Common
         private void Add(NameValuePermission permit)
         {
             NameValuePermission[] tree = _tree;
-            int length = ((null != tree) ? tree.Length : 0);
+            int length = tree != null ? tree.Length : 0;
             NameValuePermission[] newtree = new NameValuePermission[1 + length];
             for (int i = 0; i < newtree.Length - 1; ++i)
             {
@@ -205,7 +205,7 @@ namespace Microsoft.Data.Common
             }
             bool hasMatch = false;
             NameValuePermission[] keytree = _tree; // _tree won't mutate but Add will replace it
-            if (null != keytree)
+            if (keytree != null)
             {
                 hasMatch = parsetable.IsEmpty; // MDAC 86773
                 if (!hasMatch)
@@ -215,7 +215,7 @@ namespace Microsoft.Data.Common
                     for (int i = 0; i < keytree.Length; ++i)
                     {
                         NameValuePermission permitKey = keytree[i];
-                        if (null != permitKey)
+                        if (permitKey != null)
                         {
                             string keyword = permitKey._value;
 #if DEBUG
@@ -227,7 +227,7 @@ namespace Microsoft.Data.Common
 
                                 // keyword is restricted to certain values
                                 NameValuePermission permitValue = permitKey.CheckKeyForValue(valueInQuestion);
-                                if (null != permitValue)
+                                if (permitValue != null)
                                 {
                                     //value does match - continue the chain down that branch
                                     if (permitValue.CheckValueForKeyPermit(parsetable))
@@ -256,7 +256,7 @@ namespace Microsoft.Data.Common
             }
 
             DBConnectionString entry = _entry;
-            if (null != entry)
+            if (entry != null)
             {
                 // also checking !hasMatch is tempting, but wrong
                 // user can safely extend their restrictions for current rule to include missing keyword
@@ -271,7 +271,7 @@ namespace Microsoft.Data.Common
         private NameValuePermission CheckKeyForValue(string keyInQuestion)
         {
             NameValuePermission[] valuetree = _tree; // _tree won't mutate but Add will replace it
-            if (null != valuetree)
+            if (valuetree != null)
             {
                 for (int i = 0; i < valuetree.Length; ++i)
                 {

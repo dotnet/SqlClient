@@ -244,7 +244,7 @@ namespace Microsoft.Data.SqlClient
                 object previousPw = s_accountPwCache.Get(pwCacheKey);
                 byte[] currPwHash = GetHash(parameters.Password);
 
-                if (null != previousPw &&
+                if (previousPw != null &&
                     previousPw is byte[] previousPwBytes &&
                     // Only get the cached token if the current password hash matches the previously used password hash
                     AreEqual(currPwHash, previousPwBytes))
@@ -334,7 +334,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (null != account)
+            if (account != null)
             {
                 // If 'account' is available in 'app', we use the same to acquire token silently.
                 // Read More on API docs: https://docs.microsoft.com/dotnet/api/microsoft.identity.client.clientapplicationbase.acquiretokensilent

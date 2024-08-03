@@ -168,7 +168,7 @@ namespace Microsoft.Data.SqlClient
 
         override internal SqlBuffer.StorageType GetVariantInternalStorageType(int ordinal)
         {
-            Debug.Assert(null != _currentColumnValuesV3, "Attempting to get variant internal storage type without calling GetValue first");
+            Debug.Assert(_currentColumnValuesV3 != null, "Attempting to get variant internal storage type without calling GetValue first");
             if (IsDBNull(ordinal))
             {
                 return SqlBuffer.StorageType.Empty;

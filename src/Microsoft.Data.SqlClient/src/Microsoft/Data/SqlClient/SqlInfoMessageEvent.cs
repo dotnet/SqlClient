@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient
         public SqlErrorCollection Errors => _exception.Errors;
 
         // MDAC 65548
-        private bool ShouldSerializeErrors() => (null != _exception) && (0 < _exception.Errors.Count);
+        private bool ShouldSerializeErrors() => _exception != null && (0 < _exception.Errors.Count);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Message/*' />
         public string Message => _exception.Message;

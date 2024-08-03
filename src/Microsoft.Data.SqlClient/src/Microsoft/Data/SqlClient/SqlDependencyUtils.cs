@@ -243,7 +243,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     dependencyList = LookupCommandEntryWithRemove(sqlNotification.Key);
 
-                    if (null != dependencyList)
+                    if (dependencyList != null)
                     {
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> commandHash found in hashtable.");
                         foreach (SqlDependency dependency in dependencyList)
@@ -261,7 +261,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                if (null != dependencyList)
+                if (dependencyList != null)
                 {
                     // After removal from hashtables, invalidate.
                     foreach (SqlDependency dependency in dependencyList)
@@ -612,7 +612,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     for (int i = 0; i < dependencies.Length; i++)
                     {
-                        if (null != dependencies[i])
+                        if (dependencies[i] != null)
                         {
                             SingletonInstance._dependencyIdToDependencyHash.Remove(dependencies[i].Id);
                         }

@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient
 
             DisposeCounters();
 
-            if (null != sessionHandle || null != packetHandle)
+            if (sessionHandle != null || packetHandle != null)
             {
                 packetHandle?.Dispose();
                 asyncAttnPacket?.Dispose();

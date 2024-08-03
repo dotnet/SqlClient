@@ -113,7 +113,7 @@ namespace Microsoft.Data.Common
         public DbConnectionOptions(string connectionString, Dictionary<string, string> synonyms)
         {
             _parsetable = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-            _usersConnectionString = ((null != connectionString) ? connectionString : "");
+            _usersConnectionString = connectionString != null ? connectionString : "";
 
             // first pass on parsing, initial syntax check
             if (0 < _usersConnectionString.Length)
@@ -248,13 +248,13 @@ namespace Microsoft.Data.Common
             if (SqlClientEventSource.Log.IsAdvancedTraceOn())
             {
                 Debug.Assert(string.Equals(keyname, keyname?.ToLower(), StringComparison.InvariantCulture), "missing ToLower");
-                string realkeyname = ((null != synonyms) ? synonyms[keyname] : keyname);
+                string realkeyname = synonyms != null ? synonyms[keyname] : keyname;
 
                 if (!string.Equals(KEY.Password, realkeyname, StringComparison.InvariantCultureIgnoreCase) &&
                    !string.Equals(SYNONYM.Pwd, realkeyname, StringComparison.InvariantCultureIgnoreCase))
                 {
                     // don't trace passwords ever!
-                    if (null != keyvalue)
+                    if (keyvalue != null)
                     {
                         SqlClientEventSource.Log.AdvancedTraceEvent("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}', KeyValue='{1}'", keyname, keyvalue);
                     }
@@ -518,7 +518,7 @@ namespace Microsoft.Data.Common
 
         private static bool IsValueValidInternal(string keyvalue)
         {
-            if (null != keyvalue)
+            if (keyvalue != null)
             {
 #if DEBUG
                 bool compValue = s_connectionStringValidValueRegex.IsMatch(keyvalue);
@@ -531,7 +531,7 @@ namespace Microsoft.Data.Common
 
         private static bool IsKeyNameValid(string keyname)
         {
-            if (null != keyname)
+            if (keyname != null)
             {
 #if DEBUG
                 bool compValue = s_connectionStringValidKeyRegex.IsMatch(keyname);
@@ -552,7 +552,7 @@ namespace Microsoft.Data.Common
             Debug.Assert(KeyIndex == parser.GroupNumberFromName("key"), "wrong key index");
             Debug.Assert(ValueIndex == parser.GroupNumberFromName("value"), "wrong value index");
 
-            if (null != connectionString)
+            if (connectionString != null)
             {
                 Match match = parser.Match(connectionString);
                 if (!match.Success || (match.Length != connectionString.Length))
@@ -588,8 +588,9 @@ namespace Microsoft.Data.Common
                     }
                     DebugTraceKeyValuePair(keyname, keyvalue, synonyms);
                     string synonym;
-                    string realkeyname = null != synonyms ?
-                        (synonyms.TryGetValue(keyname, out synonym) ? synonym : null) : keyname;
+                    string realkeyname = synonyms != null
+                        ? (synonyms.TryGetValue(keyname, out synonym) ? synonym : null)
+                        : keyname;
 
                     if (!IsKeyNameValid(realkeyname))
                     {
@@ -621,7 +622,7 @@ namespace Microsoft.Data.Common
             }
             catch (ArgumentException f)
             {
-                if (null != e)
+                if (e != null)
                 {
                     string msg1 = e.Message;
                     string msg2 = f.Message;
@@ -649,7 +650,7 @@ namespace Microsoft.Data.Common
                 }
                 e = null;
             }
-            if (null != e)
+            if (e != null)
             {
                 Debug.Fail("ParseInternal code threw exception vs regex mismatch");
             }
@@ -658,7 +659,7 @@ namespace Microsoft.Data.Common
 
         private static NameValuePair ParseInternal(Dictionary<string, string> parsetable, string connectionString, bool buildChain, Dictionary<string, string> synonyms, bool firstKey)
         {
-            Debug.Assert(null != connectionString, "null connectionstring");
+            Debug.Assert(connectionString != null, "null connectionstring");
             StringBuilder buffer = new StringBuilder();
             NameValuePair localKeychain = null, keychain = null;
 #if DEBUG
@@ -697,7 +698,7 @@ namespace Microsoft.Data.Common
                         parsetable[realkeyname] = keyvalue; // last key-value pair wins (or first)
                     }
 
-                    if (null != localKeychain)
+                    if (localKeychain != null)
                     {
                         localKeychain = localKeychain.Next = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
                     }
@@ -724,7 +725,7 @@ namespace Microsoft.Data.Common
             int copyPosition = 0;
             NameValuePair head = null, tail = null, next = null;
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
-            for (NameValuePair current = _keyChain; null != current; current = current.Next)
+            for (NameValuePair current = _keyChain; current != null; current = current.Next)
             {
                 if (!string.Equals(KEY.Password, current.Name, StringComparison.InvariantCultureIgnoreCase) &&
                    !string.Equals(SYNONYM.Pwd, current.Name, StringComparison.InvariantCultureIgnoreCase))
@@ -751,7 +752,7 @@ namespace Microsoft.Data.Common
 
                 if (fakePassword)
                 {
-                    if (null != tail)
+                    if (tail != null)
                     {
                         tail = tail.Next = next;
                     }

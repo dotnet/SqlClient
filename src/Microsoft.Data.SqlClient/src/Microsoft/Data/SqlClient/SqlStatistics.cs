@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
     {
         internal static SqlStatistics StartTimer(SqlStatistics statistics)
         {
-            if ((null != statistics) && !statistics.RequestExecutionTimer())
+            if (statistics != null && !statistics.RequestExecutionTimer())
             {
                 // we're re-entrant -- don't bother.
                 statistics = null;
@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void StopTimer(SqlStatistics statistics)
         {
-            if (null != statistics)
+            if (statistics != null)
             {
                 statistics.ReleaseAndUpdateExecutionTimer();
             }

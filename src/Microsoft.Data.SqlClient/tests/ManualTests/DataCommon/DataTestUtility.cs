@@ -650,7 +650,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);
             }
             // Creates a new Object Reference of Access Token - See GitHub Issue 438
-            return (null != AADAccessToken) ? new string(AADAccessToken.ToCharArray()) : null;
+            return AADAccessToken != null ? new string(AADAccessToken.ToCharArray()) : null;
         }
 
         public static string GetSystemIdentityAccessToken()
@@ -663,7 +663,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     ManagedIdentitySupported = false;
                 }
             }
-            return (null != AADSystemIdentityAccessToken) ? new string(AADSystemIdentityAccessToken.ToCharArray()) : null;
+            return AADSystemIdentityAccessToken != null ? new string(AADSystemIdentityAccessToken.ToCharArray()) : null;
         }
 
         public static string GetUserIdentityAccessToken()
@@ -677,7 +677,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     ManagedIdentitySupported = false;
                 }
             }
-            return (null != AADUserIdentityAccessToken) ? new string(AADUserIdentityAccessToken.ToCharArray()) : null;
+            return AADUserIdentityAccessToken != null ? new string(AADUserIdentityAccessToken.ToCharArray()) : null;
         }
 
         public static bool IsAccessTokenSetup() => !string.IsNullOrEmpty(GetAccessToken());

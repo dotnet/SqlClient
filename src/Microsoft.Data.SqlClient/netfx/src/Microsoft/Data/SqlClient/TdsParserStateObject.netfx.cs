@@ -67,14 +67,14 @@ namespace Microsoft.Data.SqlClient
         internal TdsParserStateObject(TdsParser parser, SNIHandle physicalConnection, bool async)
         {
             // Construct a MARS session
-            Debug.Assert(null != parser, "no parser?");
+            Debug.Assert(parser != null, "no parser?");
             _parser = parser;
             _onTimeoutAsync = OnTimeoutAsync;
             SniContext = SniContext.Snix_GetMarsSession;
 
-            Debug.Assert(null != _parser._physicalStateObj, "no physical session?");
-            Debug.Assert(null != _parser._physicalStateObj._inBuff, "no in buffer?");
-            Debug.Assert(null != _parser._physicalStateObj._outBuff, "no out buffer?");
+            Debug.Assert(_parser._physicalStateObj != null, "no physical session?");
+            Debug.Assert(_parser._physicalStateObj._inBuff != null, "no in buffer?");
+            Debug.Assert(_parser._physicalStateObj._outBuff != null, "no out buffer?");
             Debug.Assert(_parser._physicalStateObj._outBuff.Length ==
                          _parser._physicalStateObj._inBuff.Length, "Unexpected unequal buffers.");
 
@@ -329,7 +329,7 @@ namespace Microsoft.Data.SqlClient
 
             DisposeCounters();
 
-            if (null != sessionHandle || null != packetHandle)
+            if (sessionHandle != null || packetHandle != null)
             {
                 // Comment CloseMARSSession
                 // UNDONE - if there are pending reads or writes on logical connections, we need to block
@@ -1466,7 +1466,7 @@ namespace Microsoft.Data.SqlClient
         private void SniReadStatisticsAndTracing()
         {
             SqlStatistics statistics = Parser.Statistics;
-            if (null != statistics)
+            if (statistics != null)
             {
                 if (statistics.WaitForReply)
                 {
@@ -1482,7 +1482,7 @@ namespace Microsoft.Data.SqlClient
         private void SniWriteStatisticsAndTracing()
         {
             SqlStatistics statistics = _parser.Statistics;
-            if (null != statistics)
+            if (statistics != null)
             {
                 statistics.SafeIncrement(ref statistics._buffersSent);
                 statistics.SafeAdd(ref statistics._bytesSent, _outBytesUsed);

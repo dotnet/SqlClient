@@ -14,20 +14,28 @@ namespace Microsoft.Data.Common
     {
         internal static bool ConvertToBoolean(object value)
         {
-            Debug.Assert(null != value, "ConvertToBoolean(null)");
+            Debug.Assert(value != null, "ConvertToBoolean(null)");
             if (value is string svalue)
             {
                 if (StringComparer.OrdinalIgnoreCase.Equals(svalue, "true") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "yes"))
+                {
                     return true;
+                }
                 else if (StringComparer.OrdinalIgnoreCase.Equals(svalue, "false") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "no"))
+                {
                     return false;
+                }
                 else
                 {
                     string tmp = svalue.Trim();  // Remove leading & trailing white space.
                     if (StringComparer.OrdinalIgnoreCase.Equals(tmp, "true") || StringComparer.OrdinalIgnoreCase.Equals(tmp, "yes"))
+                    {
                         return true;
+                    }
                     else if (StringComparer.OrdinalIgnoreCase.Equals(tmp, "false") || StringComparer.OrdinalIgnoreCase.Equals(tmp, "no"))
+                    {
                         return false;
+                    }
                 }
                 return bool.Parse(svalue);
             }
@@ -43,7 +51,7 @@ namespace Microsoft.Data.Common
 
         internal static bool ConvertToIntegratedSecurity(object value)
         {
-            Debug.Assert(null != value, "ConvertToIntegratedSecurity(null)");
+            Debug.Assert(value != null, "ConvertToIntegratedSecurity(null)");
             if (value is string svalue)
             {
                 if (StringComparer.OrdinalIgnoreCase.Equals(svalue, "sspi") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "true") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "yes"))
@@ -98,7 +106,7 @@ namespace Microsoft.Data.Common
         internal static bool TryConvertToPoolBlockingPeriod(string value, out PoolBlockingPeriod result)
         {
             Debug.Assert(Enum.GetNames(typeof(PoolBlockingPeriod)).Length == 3, "PoolBlockingPeriod enum has changed, update needed");
-            Debug.Assert(null != value, "TryConvertToPoolBlockingPeriod(null,...)");
+            Debug.Assert(value != null, "TryConvertToPoolBlockingPeriod(null,...)");
 
             if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(PoolBlockingPeriod.Auto)))
             {
@@ -152,7 +160,7 @@ namespace Microsoft.Data.Common
         /// <returns>PoolBlockingPeriod value in the valid range</returns>
         internal static PoolBlockingPeriod ConvertToPoolBlockingPeriod(string keyword, object value)
         {
-            Debug.Assert(null != value, "ConvertToPoolBlockingPeriod(null)");
+            Debug.Assert(value != null, "ConvertToPoolBlockingPeriod(null)");
             if (value is string sValue)
             {
                 // We could use Enum.TryParse<PoolBlockingPeriod> here, but it accepts value combinations like
@@ -222,7 +230,7 @@ namespace Microsoft.Data.Common
         internal static bool TryConvertToApplicationIntent(string value, out ApplicationIntent result)
         {
             Debug.Assert(Enum.GetNames(typeof(ApplicationIntent)).Length == 2, "ApplicationIntent enum has changed, update needed");
-            Debug.Assert(null != value, "TryConvertToApplicationIntent(null,...)");
+            Debug.Assert(value != null, "TryConvertToApplicationIntent(null,...)");
 
             if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(ApplicationIntent.ReadOnly)))
             {
@@ -272,7 +280,7 @@ namespace Microsoft.Data.Common
         /// <returns>application intent value in the valid range</returns>
         internal static ApplicationIntent ConvertToApplicationIntent(string keyword, object value)
         {
-            Debug.Assert(null != value, "ConvertToApplicationIntent(null)");
+            Debug.Assert(value != null, "ConvertToApplicationIntent(null)");
             if (value is string sValue)
             {
                 // We could use Enum.TryParse<ApplicationIntent> here, but it accepts value combinations like

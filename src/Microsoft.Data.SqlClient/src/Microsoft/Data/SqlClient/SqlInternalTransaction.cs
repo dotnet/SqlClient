@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient
             _innerConnection = innerConnection;
             _transactionType = type;
 
-            if (null != outerTransaction)
+            if (outerTransaction != null)
             {
                 _parent = new WeakReference<SqlTransaction>(outerTransaction);
             }
@@ -475,7 +475,7 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnection innerConnection = _innerConnection;
             _innerConnection = null;
 
-            if (null != innerConnection)
+            if (innerConnection != null)
             {
                 innerConnection.DisconnectTransaction(this);
             }

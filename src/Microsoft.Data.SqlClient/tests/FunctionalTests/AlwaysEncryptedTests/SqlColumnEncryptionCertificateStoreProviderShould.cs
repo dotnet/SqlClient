@@ -379,7 +379,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             // Certificate Store Location and Name.
             Assert.True(certificateStoreNameAndLocation != null);
 
-            if (null != location)
+            if (location != null)
             {
                 // Certificate Store Location.
                 certificateStoreLocation = (StoreLocation)location;

@@ -16,8 +16,8 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal SqlClientWrapperSmiStream(SmiEventSink_Default sink, SmiStream stream)
         {
-            Debug.Assert(null != sink);
-            Debug.Assert(null != stream);
+            Debug.Assert(sink != null);
+            Debug.Assert(stream != null);
             _sink = sink;
             _stream = stream;
         }

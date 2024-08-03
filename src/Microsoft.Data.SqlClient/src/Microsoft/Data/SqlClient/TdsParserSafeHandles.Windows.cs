@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient
                 GCHandle gcHandle = (GCHandle)key;
                 TdsParserStateObject stateObj = (TdsParserStateObject)gcHandle.Target;
 
-                if (null != stateObj)
+                if (stateObj != null)
                 {
 #if NETFRAMEWORK
                     stateObj.ReadAsyncCallback(IntPtr.Zero, packet, error);
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
                 GCHandle gcHandle = (GCHandle)key;
                 TdsParserStateObject stateObj = (TdsParserStateObject)gcHandle.Target;
 
-                if (null != stateObj)
+                if (stateObj != null)
                 {
 #if NETFRAMEWORK
                     stateObj.WriteAsyncCallback(IntPtr.Zero, packet, error);

@@ -298,7 +298,7 @@ namespace Microsoft.Data.SqlClient
         internal TdsParserStateObject(TdsParser parser)
         {
             // Construct a physical connection
-            Debug.Assert(null != parser, "no parser?");
+            Debug.Assert(parser != null, "no parser?");
             _parser = parser;
             _onTimeoutAsync = OnTimeoutAsync;
 

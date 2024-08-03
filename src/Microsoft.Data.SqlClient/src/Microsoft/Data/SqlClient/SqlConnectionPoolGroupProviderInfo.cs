@@ -125,7 +125,7 @@ namespace Microsoft.Data.SqlClient
                 // Note that we only demand when there is a permission set, which only
                 // happens once we've identified a failover situation in FailoverCheck
                 PermissionSet failoverPermissionSet = _failoverPermissionSet;
-                if (null != failoverPermissionSet)
+                if (failoverPermissionSet != null)
                 {
                     // demand on pooled failover connections
                     failoverPermissionSet.Demand();

@@ -291,7 +291,7 @@ namespace Microsoft.Data.SqlClient
             }
             internal bool PendingAsyncOperation
             {
-                get { return (null != _cachedAsyncResult); }
+                get { return _cachedAsyncResult != null; }
             }
             internal string EndMethodName
             {
@@ -496,7 +496,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Check to see if the currently set transaction has completed.  If so,
                 // null out our local reference.
-                if (null != _transaction && _transaction.Connection == null)
+                if (_transaction != null && _transaction.Connection == null)
                 {
                     _transaction = null;
                 }
@@ -594,7 +594,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null != _activeConnection)
+                if (_activeConnection != null)
                 {
                     if (_activeConnection.StatisticsEnabled ||
                         s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name))
@@ -615,7 +615,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 // if the transaction object has been zombied, just return null
-                if ((null != _transaction) && _transaction.Connection == null)
+                if (_transaction != null && _transaction.Connection == null)
                 {
                     _transaction = null;
                 }
@@ -849,7 +849,7 @@ namespace Microsoft.Data.SqlClient
             if (0 <= recordCount)
             {
                 StatementCompletedEventHandler handler = _statementCompletedEventHandler;
-                if (null != handler)
+                if (handler != null)
                 {
                     try
                     {
@@ -893,7 +893,7 @@ namespace Microsoft.Data.SqlClient
                         || ((System.Data.CommandType.Text == this.CommandType)
                                 && (0 == GetParameterCount(_parameters))))
                     {
-                        if (null != Statistics)
+                        if (Statistics != null)
                         {
                             Statistics.SafeIncrement(ref Statistics._prepares);
                         }
@@ -911,7 +911,7 @@ namespace Microsoft.Data.SqlClient
                             GetStateObject();
 
                             // Loop through parameters ensuring that we do not have unspecified types, sizes, scales, or precisions
-                            if (null != _parameters)
+                            if (_parameters != null)
                             {
                                 int count = _parameters.Count;
                                 for (int i = 0; i < count; ++i)
@@ -958,8 +958,8 @@ namespace Microsoft.Data.SqlClient
             }
             Debug.Assert(_execType != EXECTYPE.PREPARED, "Invalid attempt to Prepare already Prepared command!");
             Debug.Assert(_activeConnection != null, "must have an open connection to Prepare");
-            Debug.Assert(null != _stateObj, "TdsParserStateObject should not be null");
-            Debug.Assert(null != _stateObj.Parser, "TdsParser class should not be null in Command.Execute!");
+            Debug.Assert(_stateObj != null, "TdsParserStateObject should not be null");
+            Debug.Assert(_stateObj.Parser != null, "TdsParser class should not be null in Command.Execute!");
             Debug.Assert(_stateObj.Parser == _activeConnection.Parser, "stateobject parser not same as connection parser");
             Debug.Assert(false == _inPrepare, "Already in Prepare cycle, this.inPrepare should be false!");
 
@@ -969,7 +969,7 @@ namespace Microsoft.Data.SqlClient
             _preparedConnectionCloseCount = _activeConnection.CloseCount;
             _preparedConnectionReconnectCount = _activeConnection.ReconnectCount;
 
-            if (null != Statistics)
+            if (Statistics != null)
             {
                 Statistics.SafeIncrement(ref Statistics._prepares);
             }
@@ -1065,7 +1065,7 @@ namespace Microsoft.Data.SqlClient
                             _pendingCancel = true;
 
                             TdsParserStateObject stateObj = _stateObj;
-                            if (null != stateObj)
+                            if (stateObj != null)
                             {
                                 stateObj.Cancel(this);
                             }
@@ -1624,7 +1624,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // otherwise, use a full-fledged execute that can handle params and stored procs
                     SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
-                    if (null != reader)
+                    if (reader != null)
                     {
                         reader.Close();
                     }
@@ -1651,7 +1651,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | ObjectId {0}, Client Connection Id {1}, AsyncCommandInProgress={2}",
                                                         _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId, _activeConnection?.AsyncCommandInProgress);
-            bool isAsync = (null != completion);
+            bool isAsync = completion != null;
             usedCache = false;
 
             SqlStatistics statistics = Statistics;
@@ -1674,7 +1674,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(!sendToPipe, "Trying to send non-context command to pipe");
 
-                if (null != statistics)
+                if (statistics != null)
                 {
                     if (!IsDirty && IsPrepared)
                     {
@@ -1699,7 +1699,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | Object Id {0}, RPC execute method name {1}, isAsync {2}, inRetry {3}", ObjectID, methodName, isAsync, inRetry);
 
                 SqlDataReader reader = RunExecuteReader(0, RunBehavior.UntilDone, false, completion, timeout, out task, out usedCache, asyncWrite, inRetry, methodName);
-                if (null != reader)
+                if (reader != null)
                 {
                     if (task != null)
                     {
@@ -2000,9 +2000,9 @@ namespace Microsoft.Data.SqlClient
             XmlReader xr = null;
 
             SmiExtendedMetaData[] md = ds.GetInternalSmiMetaData();
-            bool isXmlCapable = (null != md && md.Length == 1 && (md[0].SqlDbType == SqlDbType.NText
-                                                         || md[0].SqlDbType == SqlDbType.NVarChar
-                                                         || md[0].SqlDbType == SqlDbType.Xml));
+            bool isXmlCapable = (md != null && md.Length == 1 && (md[0].SqlDbType == SqlDbType.NText
+                                                                  || md[0].SqlDbType == SqlDbType.NVarChar
+                                                                  || md[0].SqlDbType == SqlDbType.Xml));
 
             if (isXmlCapable)
             {
@@ -2440,7 +2440,7 @@ namespace Microsoft.Data.SqlClient
                         if (!shouldRetry)
                         {
                             // If we cannot retry, Reset the async state to make sure we leave a clean state.
-                            if (null != _cachedAsyncState)
+                            if (_cachedAsyncState != null)
                             {
                                 _cachedAsyncState.ResetAsyncState();
                             }
@@ -3177,7 +3177,7 @@ namespace Microsoft.Data.SqlClient
         // with the function below, ideally we should have support from the server for this.
         private static string UnquoteProcedurePart(string part)
         {
-            if ((null != part) && (2 <= part.Length))
+            if (part != null && (2 <= part.Length))
             {
                 if ('[' == part[0] && ']' == part[part.Length - 1])
                 {
@@ -3197,7 +3197,7 @@ namespace Microsoft.Data.SqlClient
             groupNumber = null; // Out param - initialize value to no value.
             string sproc = name;
 
-            if (null != sproc)
+            if (sproc != null)
             {
                 if (char.IsDigit(sproc[sproc.Length - 1]))
                 { // If last char is a digit, parse.
@@ -3361,7 +3361,7 @@ namespace Microsoft.Data.SqlClient
             paramsCmd.Parameters.Add(new SqlParameter("@procedure_name", SqlDbType.NVarChar, 255));
             paramsCmd.Parameters[0].Value = UnquoteProcedureName(parsedSProc[3], out groupNumber); // ProcedureName is 4rd element in parsed array
 
-            if (null != groupNumber)
+            if (groupNumber != null)
             {
                 SqlParameter param = paramsCmd.Parameters.Add(new SqlParameter("@group_number", SqlDbType.Int));
                 param.Value = groupNumber;
@@ -3585,7 +3585,7 @@ namespace Microsoft.Data.SqlClient
 
             // There is a variance in order between Start(), SqlDependency(), and Execute.  This is the
             // best way to solve that problem.
-            if (null != Notification)
+            if (Notification != null)
             {
                 if (_sqlDep != null)
                 {
@@ -3799,7 +3799,7 @@ namespace Microsoft.Data.SqlClient
             if (closeDataReader)
             {
                 // Close the data reader to reset the _stateObj
-                if (null != describeParameterEncryptionDataReader)
+                if (describeParameterEncryptionDataReader != null)
                 {
                     describeParameterEncryptionDataReader.Close();
                 }
@@ -4731,7 +4731,7 @@ namespace Microsoft.Data.SqlClient
         // task is created in case of pending asynchronous write, returned SqlDataReader should not be utilized until that task is complete
         internal SqlDataReader RunExecuteReader(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, TaskCompletionSource<object> completion, int timeout, out Task task, out bool usedCache, bool asyncWrite = false, bool inRetry = false, [CallerMemberName] string method = "")
         {
-            bool isAsync = (null != completion);
+            bool isAsync = completion != null;
             usedCache = false;
 
             task = null;
@@ -4755,7 +4755,7 @@ namespace Microsoft.Data.SqlClient
             CheckNotificationStateAndAutoEnlist(); // Only call after validate - requires non null connection!
 
             SqlStatistics statistics = Statistics;
-            if (null != statistics)
+            if (statistics != null)
             {
                 if ((!this.IsDirty && this.IsPrepared && !_hiddenPrepare)
                     || (this.IsPrepared && _execType == EXECTYPE.PREPAREPENDING))
@@ -4989,7 +4989,7 @@ namespace Microsoft.Data.SqlClient
             // make sure we have good parameter information
             // prepare the command
             // execute
-            Debug.Assert(null != _activeConnection.Parser, "TdsParser class should not be null in Command.Execute!");
+            Debug.Assert(_activeConnection.Parser != null, "TdsParser class should not be null in Command.Execute!");
 
             bool inSchema = (0 != (cmdBehavior & CommandBehavior.SchemaOnly));
 
@@ -5129,7 +5129,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // turn set options ON
-                    if (null != optionSettings)
+                    if (optionSettings != null)
                     {
                         Task executeTask = _stateObj.Parser.TdsExecuteSQLBatch(optionSettings, timeout, this.Notification, _stateObj, sync: true);
                         Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
@@ -5174,7 +5174,7 @@ namespace Microsoft.Data.SqlClient
                 if (decrementAsyncCountOnFailure)
                 {
                     SqlInternalConnectionTds innerConnectionTds = (_activeConnection.InnerConnection as SqlInternalConnectionTds);
-                    if (null != innerConnectionTds)
+                    if (innerConnectionTds != null)
                     { // it may be closed
                         innerConnectionTds.DecrementAsyncCount();
                     }
@@ -5315,7 +5315,7 @@ namespace Microsoft.Data.SqlClient
                             _execType = EXECTYPE.PREPAREPENDING; // reset execution type to pending
                         }
 
-                        if (null != ds)
+                        if (ds != null)
                         {
                             try
                             {
@@ -5419,8 +5419,8 @@ namespace Microsoft.Data.SqlClient
             // Ensure that if column encryption override was used then server supports its
             if (((SqlCommandColumnEncryptionSetting.UseConnectionSetting == ColumnEncryptionSetting && _activeConnection.IsColumnEncryptionSettingEnabled)
                  || (ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled || ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.ResultSetOnly))
-                && null != tdsConnection
-                && null != tdsConnection.Parser
+                && tdsConnection != null
+                && tdsConnection.Parser != null
                 && !tdsConnection.Parser.IsColumnEncryptionSupported)
             {
                 throw SQL.TceNotSupported();
@@ -5454,7 +5454,7 @@ namespace Microsoft.Data.SqlClient
             _activeConnection.ValidateConnectionForExecute(method, this);
             // Check to see if the currently set transaction has completed.  If so,
             // null out our local reference.
-            if (null != _transaction && _transaction.Connection == null)
+            if (_transaction != null && _transaction.Connection == null)
             {
                 _transaction = null;
             }
@@ -5469,7 +5469,7 @@ namespace Microsoft.Data.SqlClient
             // if we have a transaction, check to ensure that the active
             // connection property matches the connection associated with
             // the transaction
-            if (null != _transaction && _activeConnection != _transaction.Connection)
+            if (_transaction != null && _activeConnection != _transaction.Connection)
             {
                 throw ADP.TransactionConnectionMismatch();
             }
@@ -5499,7 +5499,7 @@ namespace Microsoft.Data.SqlClient
         private void GetStateObject(TdsParser parser = null)
         {
             Debug.Assert(_stateObj == null, "StateObject not null on GetStateObject");
-            Debug.Assert(null != _activeConnection, "no active connection?");
+            Debug.Assert(_activeConnection != null, "no active connection?");
 
             if (_pendingCancel)
             {
@@ -5550,7 +5550,7 @@ namespace Microsoft.Data.SqlClient
             TdsParserStateObject stateObj = _stateObj;
             _stateObj = null;
 
-            if (null != stateObj)
+            if (stateObj != null)
             {
                 stateObj.CloseSession();
             }
@@ -5640,7 +5640,7 @@ namespace Microsoft.Data.SqlClient
                     object v = parameter.Value;
 
                     // if the user bound a sqlint32 (the only valid one for status, use it)
-                    if ((null != v) && (v.GetType() == typeof(SqlInt32)))
+                    if (v != null && (v.GetType() == typeof(SqlInt32)))
                     {
                         parameter.Value = new SqlInt32(status); // value type
                     }
@@ -5686,7 +5686,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlParameter thisParam = GetParameterForOutputValueExtraction(parameters, rec.parameter, count);
 
-            if (null != thisParam)
+            if (thisParam != null)
             {
                 // If the parameter's direction is InputOutput, Output or ReturnValue and it needs to be transparently encrypted/decrypted
                 // then simply decrypt, deserialize and set the value.
@@ -5806,7 +5806,7 @@ namespace Microsoft.Data.SqlClient
                     else if (rec.type == SqlDbType.Xml)
                     {
                         SqlCachedBuffer cachedBuffer = (thisParam.Value as SqlCachedBuffer);
-                        if (null != cachedBuffer)
+                        if (cachedBuffer != null)
                         {
                             thisParam.Value = cachedBuffer.ToString();
                         }
@@ -6101,7 +6101,7 @@ namespace Microsoft.Data.SqlClient
         // Returns total number of parameters
         private static int GetParameterCount(SqlParameterCollection parameters)
         {
-            return (null != parameters) ? parameters.Count : 0;
+            return parameters != null ? parameters.Count : 0;
         }
 
         //
@@ -6436,7 +6436,7 @@ namespace Microsoft.Data.SqlClient
                         string s = null;
 
                         // deal with the sql types
-                        if ((null != val) && (DBNull.Value != val))
+                        if (val != null && (DBNull.Value != val))
                         {
                             s = (val as string);
                             if (s == null)
@@ -6449,7 +6449,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 
-                        if (null != s)
+                        if (s != null)
                         {
                             int actualBytes = parser.GetEncodingCharLength(s, sqlParam.GetActualSize(), sqlParam.Offset, null);
                             // if actual number of bytes is greater than the user given number of chars, use actual bytes
@@ -6501,7 +6501,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     bld.Append('.');
                 }
-                if (null != strings[i] && 0 != strings[i].Length)
+                if (strings[i] != null && 0 != strings[i].Length)
                 {
                     ADP.AppendQuotedString(bld, "[", "]", strings[i]);
                 }
@@ -6620,7 +6620,7 @@ namespace Microsoft.Data.SqlClient
                 // only mark the command as dirty if it is already prepared
                 // but always clear the value if it we are clearing the dirty flag
                 _dirty = value ? IsPrepared : false;
-                if (null != _parameters)
+                if (_parameters != null)
                 {
                     _parameters.IsDirty = _dirty;
                 }
