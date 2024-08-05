@@ -4740,4 +4740,7 @@
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>The certificate provided by the server does not match the certificate provided by the ServerCertificate option.</value>
   </data>
+  <data name="AAD_FIC_Invalid_Setup" xml:space="preserve">
+    <value>Federated Identity Credentials authentication unavailable. The required environment variables are not fully configured.</value>
+  </data>
 </root>

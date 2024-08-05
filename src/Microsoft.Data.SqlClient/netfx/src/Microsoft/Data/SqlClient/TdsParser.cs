@@ -594,6 +594,9 @@ namespace Microsoft.Data.SqlClient
                     case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Workload Identity authentication");
                         break;
+                    case SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials:
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Federated Identity Credentials authentication");
+                        break;
                     case SqlAuthenticationMethod.SqlPassword:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL Password authentication");
                         break;
@@ -9135,6 +9138,9 @@ namespace Microsoft.Data.SqlClient
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYWORKLOADIDENTITY;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYFEDERATEDIDENTITYCREDENTIALS;
                                 break;
                             default:
                                 if (_connHandler._accessTokenCallback != null)

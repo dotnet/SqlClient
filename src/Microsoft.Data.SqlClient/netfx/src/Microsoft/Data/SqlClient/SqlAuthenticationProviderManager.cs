@@ -23,6 +23,7 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryMSI = "active directory msi";
         private const string ActiveDirectoryDefault = "active directory default";
         private const string ActiveDirectoryWorkloadIdentity = "active directory workload identity";
+        private const string ActiveDirectoryFederatedIdentityCredentials = "active directory federated identity credentials";
 
         static SqlAuthenticationProviderManager()
         {
@@ -54,6 +55,7 @@ namespace Microsoft.Data.SqlClient
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials, activeDirectoryAuthProvider);
         }
         public static readonly SqlAuthenticationProviderManager Instance;
 
@@ -235,6 +237,8 @@ namespace Microsoft.Data.SqlClient
                     return SqlAuthenticationMethod.ActiveDirectoryDefault;
                 case ActiveDirectoryWorkloadIdentity:
                     return SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
+                case ActiveDirectoryFederatedIdentityCredentials:
+                    return SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }
