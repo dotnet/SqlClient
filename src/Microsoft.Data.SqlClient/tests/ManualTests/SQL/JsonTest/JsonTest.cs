@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Data.SqlTypes;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -24,24 +25,56 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
             
-            string jsonDataString = "[\r\n    {\r\n        \"name\": \"Dave\",\r\n        \"skills\": [ \"Python\" ]\r\n    },\r\n    {\r\n        \"name\": \"Ron\",\r\n        \"surname\": \"Peter\"\r\n    }\r\n]";
+            string jsonDataString = "[{\"name\":\"Dave\",\"skills\":[\"Python\"]},{\"name\":\"Ron\",\"surname\":\"Peter\"}]";
+
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
+            string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_WriteTest");
+           
+            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
+            string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
+            string spCreate = "CREATE PROCEDURE " + spName + " (@jsonData json) AS " + tableInsert;
 
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
 
-                string query = "INSERT INTO dbo.JsonTable VALUES (@jsonData)";
-                using (SqlCommand command = new SqlCommand(query, connection))
+                using (SqlCommand command = connection.CreateCommand())
                 {
-                    // Add the parameter and set its value
-                    var parameter = new SqlParameter("@jsonData", jsonDataString);
-                    parameter.SqlDbType = SqlDbTypeExtensions.Json;
+                    //Create Table
+                    command.CommandText = tableCreate;
+                    command.ExecuteNonQuery();
+
+                    //Create SP for writing json values
+                    command.CommandText = spCreate;
+                    command.ExecuteNonQuery();
+
+                    command.CommandText = tableInsert;
+                    var parameter = new SqlParameter("@jsonData", SqlDbTypeExtensions.Json);
                     command.Parameters.Add(parameter);
 
-                    for (int i = 0; i < 10; i++)
+                    //Test 1
+                    //Write json value using a parameterized query
+                    parameter.Value = jsonDataString;
+                    int rowsAffected = command.ExecuteNonQuery();
+                    _output.WriteLine($"Rows affected: {rowsAffected}");
+
+                    //Test 2 
+                    //Write a SqlString type as json
+                    parameter.Value = new SqlString(jsonDataString);
+                    int rowsAffected2 = command.ExecuteNonQuery();
+                    _output.WriteLine($"Rows affected: {rowsAffected2}");
+
+                    //Test 3
+                    //Write json value using SP
+                    using (SqlCommand command2 = connection.CreateCommand())
                     {
-                        int rowsAffected = command.ExecuteNonQuery();
-                        _output.WriteLine($"Rows affected: {rowsAffected}");
+                        command2.CommandText = spName;
+                        command2.CommandType = CommandType.StoredProcedure;
+                        var parameter2 = new SqlParameter("@jsonData", SqlDbTypeExtensions.Json);
+                        parameter2.Value = jsonDataString;
+                        command2.Parameters.Add(parameter2);
+                        int rowsAffected3 = command2.ExecuteNonQuery();
+                        _output.WriteLine($"Rows affected: {rowsAffected3}");
                     }
                 }
             }
@@ -51,28 +84,78 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void TestJsonRead()
         {
             AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
-            
-            SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
-            connection.Open();
-            SqlCommand command = connection.CreateCommand();
-            string commandText = "SELECT * FROM dbo.JsonTable";
-            command.CommandText = commandText;
-            SqlDataReader reader = command.ExecuteReader();
-            while (reader.Read())
+
+            string jsonDataString = "[{\"name\":\"Dave\",\"skills\":[\"Python\"]},{\"name\":\"Ron\",\"surname\":\"Peter\"}]";
+
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
+            string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_ReadTest");
+
+            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
+            string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
+            string tableRead = "SELECT * FROM " + tableName;
+            string spCreate = "CREATE PROCEDURE " + spName + "AS " + tableRead;
+
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
-                string jsonData = reader.GetString(0);
-                _output.WriteLine(jsonData);
-                Assert.NotNull(jsonData);
+                connection.Open();
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    //Create Table
+                    command.CommandText = tableCreate;
+                    command.ExecuteNonQuery();
+
+                    //Create SP for reading from json column
+                    command.CommandText = spCreate;
+                    command.ExecuteNonQuery();
+
+                    //Insert sample json data
+                    //This will be used for reading
+                    command.CommandText = tableInsert;
+                    var parameter = new SqlParameter("@jsonData", SqlDbTypeExtensions.Json);
+                    parameter.Value = jsonDataString;
+                    command.Parameters.Add(parameter);
+                    command.ExecuteNonQuery();
+
+                    //Test 1
+                    //Read json value using query
+                    command.CommandText = tableRead;
+                    SqlDataReader reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        string jsonData = reader.GetString(0);
+                        _output.WriteLine(jsonData);
+                        Assert.Equal(jsonDataString,jsonData);
+                    }
+
+                    //Test 2
+                    //Read the column metadata
+                    System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> schema = reader.GetColumnSchema();
+                    foreach (DbColumn column in schema)
+                    {
+                        _output.WriteLine("Column Name is " + column.ColumnName);
+                        _output.WriteLine("Column DataType is " + column?.DataType.ToString());
+                        _output.WriteLine("Column DataTypeName is " + column.DataTypeName);
+                        Assert.Equal("json",column.DataTypeName);
+                    }
+                    reader.Close();
+
+                    //Test 3
+                    //Read json value using SP
+                    using (SqlCommand command2 = connection.CreateCommand())
+                    {
+                        command2.CommandText = spName;
+                        command2.CommandType = CommandType.StoredProcedure;
+                        SqlDataReader reader2 = command2.ExecuteReader();
+                        while (reader2.Read())
+                        {
+                            string jsonData = reader2.GetString(0);
+                            _output.WriteLine(jsonData);
+                            Assert.NotNull(jsonData);
+                        }
+                        reader2.Close();
+                    }
+                }
             }
-            System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> schema = reader.GetColumnSchema();
-            foreach (DbColumn column in schema)
-            {
-                _output.WriteLine("Column Name is " + column.ColumnName);
-                _output.WriteLine("Column DataType is " + column?.DataType.ToString());
-                _output.WriteLine("Column DataTypeName is " + column.DataTypeName);
-            }
-            reader.Close();
-            connection.Close();
         }
     }
 }
