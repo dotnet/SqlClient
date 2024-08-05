@@ -33,7 +33,15 @@ steps:
       exit 0
     fi
     
-    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
+    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
+
+    docker exec -it sql1 /opt/mssql-tools18/bin/sqlcmd \
+    -S localhost -No -U SA -P $MSSQL_SA_PW \
+    -Q "SELECT @@VERSION"
+
+    docker exec -it sql1 /opt/mssql-tools/bin/sqlcmd \
+    -S localhost -U SA -P $MSSQL_SA_PW \
+    -Q "SELECT @@VERSION"
 
     ifconfig
 
