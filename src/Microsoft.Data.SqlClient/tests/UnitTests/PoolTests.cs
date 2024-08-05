@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             else
                 conn2.Open();
         }
-        
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             // conn1 should now be back in the pool as idle
             await using var conn3 = await dataSource.OpenConnectionAsync();
         }
-        
+
         [Fact]
         //[Explicit("Timing-based")]
         public async Task OpenAsync_cancel()
@@ -459,6 +459,53 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             Assert.That(conn.ProcessID, Is.Not.EqualTo(processId));
         }
         */
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(5)]
+        public async Task Warmup_OpenedConnectionsEqualsMinPoolSize(int minPoolSize)
+        {
+            // Arrange
+            await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = minPoolSize);
+
+            // Act
+            await await dataSource.WarmUp();
+
+            // Assert
+            Assert.Equal(minPoolSize, dataSource.Statistics.Total);
+            Assert.Equal(minPoolSize, dataSource.Statistics.Idle);
+        }
+
+        [Fact]
+        public async Task Warmup_ConcurrentWarmupCalls_OnlyOneExecuted()
+        {
+            // Arrange
+            await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = 10);
+
+            // Act
+            ValueTask t1 = await dataSource.WarmUp();
+            ValueTask t2 = await dataSource.WarmUp();
+
+            // Assert
+            Assert.Equal(t1, t2);
+        }
+
+        [Fact]
+        public async Task Warmup_SequentialWarmupCalls_BothExecuted()
+        {
+            // Arrange
+            await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = 10);
+
+            // Act
+            ValueTask t1 = await dataSource.WarmUp();
+            await t1;
+            ValueTask t2 = await dataSource.WarmUp();
+
+            // Assert
+            Assert.NotEqual(t1, t2);
+        }
+
         #region Support
 
         volatile int StopFlag;

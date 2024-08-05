@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClientX
     {
         private static int SpoofedServerProcessId = 1;
 
-        internal SqlConnector(SqlConnectionX owningConnection, SqlDataSource dataSource)
+        internal SqlConnector(SqlConnectionX? owningConnection, SqlDataSource dataSource)
         {
             OwningConnection = owningConnection;
             DataSource = dataSource;

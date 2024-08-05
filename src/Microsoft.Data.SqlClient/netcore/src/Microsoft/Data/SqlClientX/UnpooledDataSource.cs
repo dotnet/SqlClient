@@ -23,10 +23,10 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Initializes a new instance of UnpooledDataSource.
         /// </summary>
-        /// <param name="connectionStringBuilder"></param>
+        /// <param name="connectionString"></param>
         /// <param name="credential"></param>
-        internal UnpooledDataSource(SqlConnectionStringBuilder connectionStringBuilder, SqlCredential credential) :
-            base(connectionStringBuilder, credential)
+        internal UnpooledDataSource(SqlConnectionString connectionString, SqlCredential credential) :
+            base(connectionString, credential)
         {
         }
 
