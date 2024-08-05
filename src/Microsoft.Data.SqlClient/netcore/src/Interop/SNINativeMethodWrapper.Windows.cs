@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient
             [In] SNIHandle pConn,
             [In, Out] byte* pIn,
             uint cbIn,
-            [In, Out] byte[] pOut,
+            [In, Out] byte* pOut,
             [In] ref uint pcbOut,
             [MarshalAsAttribute(UnmanagedType.Bool)] out bool pfDone,
             byte* szServerInfo,
@@ -471,16 +471,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, ReadOnlySpan<byte> inBuff, byte[] OutBuff, ref uint sendLength, byte[] serverUserName)
+        internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, ReadOnlySpan<byte> inBuff, Span<byte> outBuff, out uint sendLength, byte[] serverUserName)
         {
+            sendLength = (uint)outBuff.Length;
+
             fixed (byte* pin_serverUserName = &serverUserName[0])
             fixed (byte* pInBuff = inBuff)
+            fixed (byte* pOutBuff = outBuff)
             {
                 return SNISecGenClientContextWrapper(
                     pConnectionObject,
                     pInBuff,
                     (uint)inBuff.Length,
-                    OutBuff,
+                    pOutBuff,
                     ref sendLength,
                     out _,
                     pin_serverUserName,
