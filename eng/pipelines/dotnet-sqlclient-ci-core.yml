@@ -70,4 +70,4 @@ jobs:
     steps:
     - template: configure-sql-server-macos-step.yml@self
       parameters:
-        password: ${{parameters.password}}
+        password: $(password)
