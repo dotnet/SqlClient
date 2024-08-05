@@ -508,6 +508,7 @@ namespace Microsoft.Data.SqlClientX
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", ObjectID);
             _warmupCTS.Dispose();
+            _warmupLock.Dispose();
             _connectionRateLimiter?.Dispose();
         }
 
