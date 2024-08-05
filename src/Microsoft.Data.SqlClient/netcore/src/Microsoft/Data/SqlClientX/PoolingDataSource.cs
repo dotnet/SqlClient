@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClientX
 
         private ValueTask _warmupTask;
         private CancellationTokenSource _warmupCTS;
-        private readonly object _warmupLock;
+        private readonly SemaphoreSlim _warmupLock;
         #endregion
 
         // Counts the total number of open connectors tracked by the pool.
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClientX
 
             _warmupTask = ValueTask.CompletedTask;
             _warmupCTS = new CancellationTokenSource();
-            _warmupLock = new object();
+            _warmupLock = new SemaphoreSlim(1);
         }
 
         #region properties
@@ -311,7 +311,7 @@ namespace Microsoft.Data.SqlClientX
             //TODO: pruning
 
             // Ensure that we return to min pool size if closing this connector brought us below min pool size.
-            WarmUp();
+            _ = WarmUp();
         }
 
         /// <summary>
@@ -440,24 +440,36 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Warms up the pool by bringing it up to min pool size.
         /// </summary>
-        /// <returns>A ValueTask representing the warmup process.</returns>
-        internal ValueTask WarmUp()
+        /// <returns>A ValueTask containing a ValueTask that represents the warmup process.</returns>
+        internal async ValueTask<ValueTask> WarmUp()
         {
-            lock (_warmupLock)
+            // Avoid semaphore wait if task is still running
+            if (!_warmupTask.IsCompleted)
             {
+                return _warmupTask;
+            }
+
+            // Prevent multiple threads from modifying the warmup task
+            await _warmupLock.WaitAsync();
+
+            try
+            {
+                // The task may have been started by another thread while we were
+                // waiting on the semaphore
                 if (_warmupTask.IsCompleted)
                 {
-                    _warmupTask = _WarmUp();
+                    _warmupTask = _WarmUp(_warmupCTS.Token);
                 }
+            }
+            finally
+            {
+                _warmupLock.Release();
             }
 
             return _warmupTask;
 
-            async ValueTask _WarmUp()
+            async ValueTask _WarmUp(CancellationToken ct)
             {
-                CancellationToken ct = _warmupCTS.Token;
-                ct.ThrowIfCancellationRequested();
-
                 // Best effort, we may over or under create due to race conditions.
                 // Open new connections slowly. If many connections are needed immediately 
                 // upon pool creation they can always be created via user-initiated requests as fast

@@ -470,7 +470,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = minPoolSize);
 
             // Act
-            await dataSource.WarmUp();
+            await await dataSource.WarmUp();
 
             // Assert
             Assert.Equal(minPoolSize, dataSource.Statistics.Total);
@@ -484,8 +484,8 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = 10);
 
             // Act
-            ValueTask t1 = dataSource.WarmUp();
-            ValueTask t2 = dataSource.WarmUp();
+            ValueTask t1 = await dataSource.WarmUp();
+            ValueTask t2 = await dataSource.WarmUp();
 
             // Assert
             Assert.Equal(t1, t2);
@@ -498,9 +498,9 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = 10);
 
             // Act
-            ValueTask t1 = dataSource.WarmUp();
+            ValueTask t1 = await dataSource.WarmUp();
             await t1;
-            ValueTask t2 = dataSource.WarmUp();
+            ValueTask t2 = await dataSource.WarmUp();
 
             // Assert
             Assert.NotEqual(t1, t2);
