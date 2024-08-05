@@ -61,11 +61,13 @@ variables:
   - name: defaultHostedPoolName
     value: 'Azure Pipelines'
 
-pool:
-  name: Azure Pipelines
-  vmImage: macOS-12
+jobs:
+  - job: macos
+    pool:
+      name: Azure Pipelines
+      vmImage: macOS-12
 
-steps:
-- template: configure-sql-server-macos-step.yml@self
-  parameters:
-    password: ${{parameters.password}}
+    steps:
+    - template: configure-sql-server-macos-step.yml@self
+      parameters:
+        password: ${{parameters.password}}
