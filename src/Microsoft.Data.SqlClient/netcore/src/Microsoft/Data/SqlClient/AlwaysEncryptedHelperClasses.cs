@@ -229,7 +229,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal partial class _SqlMetaDataSet
+    internal sealed partial class _SqlMetaDataSet
     {
         internal readonly SqlTceCipherInfoTable cekTable; // table of "column encryption keys" used for this metadataset
 
@@ -468,7 +468,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Class encapsulating additional information when sending encrypted input parameters.
     /// </summary>
-    sealed internal class SqlColumnEncryptionInputParameterInfo
+    internal sealed class SqlColumnEncryptionInputParameterInfo
     {
         /// <summary>
         /// Metadata of the parameter to write the TYPE_INFO of the unencrypted column data type.

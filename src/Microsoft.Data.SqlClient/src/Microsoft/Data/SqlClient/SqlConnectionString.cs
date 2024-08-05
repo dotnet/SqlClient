@@ -1167,7 +1167,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        static internal Hashtable NetlibMapping()
+        internal static Hashtable NetlibMapping()
         {
             const int NetLibCount = 8;
 
@@ -1190,7 +1190,7 @@ namespace Microsoft.Data.SqlClient
             }
             return hash;
         }
-        static internal bool ValidProtocol(string protocol)
+        internal static bool ValidProtocol(string protocol)
         {
             return protocol switch
             {

@@ -171,7 +171,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        virtual protected bool UnbindOnTransactionCompletion
+        protected virtual bool UnbindOnTransactionCompletion
         {
             get
             {
@@ -180,7 +180,7 @@ namespace Microsoft.Data.ProviderBase
         }
 
         // Is this a connection that must be put in stasis (or is already in stasis) pending the end of it's transaction?
-        virtual protected internal bool IsNonPoolableTransactionRoot
+        protected internal virtual bool IsNonPoolableTransactionRoot
         {
             get
             {
@@ -188,7 +188,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        virtual internal bool IsTransactionRoot
+        internal virtual bool IsTransactionRoot
         {
             get
             {
@@ -196,7 +196,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        virtual protected bool ReadyToPrepareTransaction
+        protected virtual bool ReadyToPrepareTransaction
         {
             get
             {
@@ -206,7 +206,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal virtual bool IsAccessTokenExpired => false;
 
-        abstract protected void Activate(Transaction transaction);
+        protected abstract void Activate(Transaction transaction);
 
         internal void ActivateConnection(Transaction transaction)
         {
@@ -331,7 +331,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        virtual internal void DelegatedTransactionEnded()
+        internal virtual void DelegatedTransactionEnded()
         {
             // Called by System.Transactions when the delegated transaction has
             // completed.  We need to make closed connections that are in stasis
@@ -399,12 +399,12 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        abstract public void EnlistTransaction(Transaction transaction);
+        public abstract void EnlistTransaction(Transaction transaction);
 
         // Cleanup connection's transaction-specific structures (currently used by Delegated transaction).
         //  This is a separate method because cleanup can be triggered in multiple ways for a delegated
         //  transaction.
-        virtual protected void CleanupTransactionOnCompletion(Transaction transaction)
+        protected virtual void CleanupTransactionOnCompletion(Transaction transaction)
         {
         }
 

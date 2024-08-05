@@ -11,7 +11,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal partial class SqlDelegatedTransaction : IPromotableSinglePhaseNotification
+    internal sealed partial class SqlDelegatedTransaction : IPromotableSinglePhaseNotification
     {
         private static int _objectTypeCount;
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);

@@ -9,7 +9,7 @@ using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class SqlSequentialTextReaderSmi : System.IO.TextReader
+    internal sealed class SqlSequentialTextReaderSmi : System.IO.TextReader
     {
         private SmiEventSink_Default _sink;
         private ITypedGettersV3 _getters;

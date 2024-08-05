@@ -477,7 +477,7 @@ namespace Microsoft.Data.SqlClient
         [DefaultValue(null)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescription(StringsHelper.ResourceNames.DbCommand_Connection)]
-        new public SqlConnection Connection
+        public new SqlConnection Connection
         {
             get
             {
@@ -610,7 +610,7 @@ namespace Microsoft.Data.SqlClient
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [ResDescription(StringsHelper.ResourceNames.DbCommand_Transaction)]
-        new public SqlTransaction Transaction
+        public new SqlTransaction Transaction
         {
             get
             {
@@ -779,7 +779,7 @@ namespace Microsoft.Data.SqlClient
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescription(StringsHelper.ResourceNames.DbCommand_Parameters)]
-        new public SqlParameterCollection Parameters
+        public new SqlParameterCollection Parameters
         {
             get
             {
@@ -1088,7 +1088,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateParameter/*'/>
-        new public SqlParameter CreateParameter()
+        public new SqlParameter CreateParameter()
         {
             return new SqlParameter();
         }
@@ -2052,7 +2052,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="default"]/*'/>
-        new public SqlDataReader ExecuteReader()
+        public new SqlDataReader ExecuteReader()
         {
             SqlStatistics statistics = null;
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteReader | API | Correlation | ObjectID {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
@@ -2068,7 +2068,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
-        new public SqlDataReader ExecuteReader(CommandBehavior behavior)
+        public new SqlDataReader ExecuteReader(CommandBehavior behavior)
         {
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
@@ -2680,25 +2680,25 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
-        new public Task<SqlDataReader> ExecuteReaderAsync()
+        public new Task<SqlDataReader> ExecuteReaderAsync()
         {
             return ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
-        new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior)
+        public new Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior)
         {
             return ExecuteReaderAsync(behavior, CancellationToken.None);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
-        new public Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
+        public new Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
         {
             return ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
-        new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+        public new Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
             => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(behavior, cancellationToken) :
                 InternalExecuteReaderAsync(behavior, cancellationToken);

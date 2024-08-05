@@ -104,21 +104,21 @@ namespace Microsoft.Data.Common
 
         [DllImport(ExternDll.Advapi32, CharSet = CharSet.Unicode)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern uint GetEffectiveRightsFromAclW(byte[] pAcl, ref Trustee pTrustee, out uint pAccessMask);
+        internal static extern uint GetEffectiveRightsFromAclW(byte[] pAcl, ref Trustee pTrustee, out uint pAccessMask);
 
         [DllImport(ExternDll.Advapi32, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        static internal extern bool CheckTokenMembership(IntPtr tokenHandle, byte[] sidToCheck, out bool isMember);
+        internal static extern bool CheckTokenMembership(IntPtr tokenHandle, byte[] sidToCheck, out bool isMember);
 
         [DllImport(ExternDll.Advapi32, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        static internal extern bool ConvertSidToStringSidW(IntPtr sid, out IntPtr stringSid);
+        internal static extern bool ConvertSidToStringSidW(IntPtr sid, out IntPtr stringSid);
 
         [DllImport(ExternDll.Advapi32, EntryPoint = "CreateWellKnownSid", SetLastError = true, CharSet = CharSet.Unicode)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern int CreateWellKnownSid(
+        internal static extern int CreateWellKnownSid(
             int sidType,
             byte[] domainSid,
             [Out] byte[] resultSid,
@@ -127,7 +127,7 @@ namespace Microsoft.Data.Common
         [DllImport(ExternDll.Advapi32, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        static internal extern bool GetTokenInformation(IntPtr tokenHandle, uint token_class, IntPtr tokenStruct, uint tokenInformationLength, ref uint tokenString);
+        internal static extern bool GetTokenInformation(IntPtr tokenHandle, uint token_class, IntPtr tokenStruct, uint tokenInformationLength, ref uint tokenString);
 
         [DllImport(ExternDll.Kernel32, CharSet = CharSet.Unicode)]
         [ResourceExposure(ResourceScope.None)]

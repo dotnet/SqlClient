@@ -51,9 +51,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// Algorithm version
         /// </summary>
-        private readonly static byte[] s_firstVersion = new byte[] { 0x01 };
+        private static readonly byte[] s_firstVersion = new byte[] { 0x01 };
 
-        private readonly static KeyWrapAlgorithm s_keyWrapAlgorithm = KeyWrapAlgorithm.RsaOaep;
+        private static readonly KeyWrapAlgorithm s_keyWrapAlgorithm = KeyWrapAlgorithm.RsaOaep;
 
         /// <summary>
         /// List of Trusted Endpoints

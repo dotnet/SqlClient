@@ -29,7 +29,7 @@ namespace Microsoft.Data.ProviderBase
     // and once no pools remain, change state from Active->Idle->Disabled
     // Once Disabled, factory can remove its reference to the pool entry
 
-    sealed internal class DbConnectionPoolGroup
+    internal sealed class DbConnectionPoolGroup
     {
         private readonly DbConnectionOptions _connectionOptions;
         private readonly DbConnectionPoolKey _poolKey;

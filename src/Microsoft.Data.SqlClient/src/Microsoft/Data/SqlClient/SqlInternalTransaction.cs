@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient
         Context = 5,     // only valid in proc.
     }
 
-    sealed internal class SqlInternalTransaction
+    internal sealed class SqlInternalTransaction
     {
         internal const long NullTransactionId = 0;
 

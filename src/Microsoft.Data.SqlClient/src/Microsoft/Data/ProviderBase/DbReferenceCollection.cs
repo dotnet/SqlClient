@@ -81,7 +81,7 @@ namespace Microsoft.Data.ProviderBase
             _lastItemIndex = 0;
         }
 
-        abstract public void Add(object value, int refInfo);
+        public abstract void Add(object value, int refInfo);
 
         protected void AddItem(object value, int refInfo)
         {
@@ -220,9 +220,9 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        abstract protected void NotifyItem(int message, int refInfo, object value);
+        protected abstract void NotifyItem(int message, int refInfo, object value);
 
-        abstract public void Remove(object value);
+        public abstract void Remove(object value);
 
         protected void RemoveItem(object value)
         {

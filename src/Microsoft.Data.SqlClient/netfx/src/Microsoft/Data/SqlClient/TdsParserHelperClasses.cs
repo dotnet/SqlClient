@@ -312,7 +312,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlLogin
+    internal sealed class SqlLogin
     {
         internal SqlAuthenticationMethod authentication = SqlAuthenticationMethod.NotSpecified;               // Authentication type
         internal int timeout;                                                       // login timeout
@@ -334,7 +334,7 @@ namespace Microsoft.Data.SqlClient
         internal SecureString newSecurePassword;                                    // new password in SecureString for resetting pasword
     }
 
-    sealed internal class SqlLoginAck
+    internal sealed class SqlLoginAck
     {
         internal string programName;
         internal byte majorVersion;
@@ -344,7 +344,7 @@ namespace Microsoft.Data.SqlClient
         internal UInt32 tdsVersion;
     }
 
-    sealed internal class SqlFedAuthInfo
+    internal sealed class SqlFedAuthInfo
     {
         internal string spn;
         internal string stsurl;
@@ -354,14 +354,14 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlFedAuthToken
+    internal sealed class SqlFedAuthToken
     {
         internal UInt32 dataLen;
         internal byte[] accessToken;
         internal long expirationFileTime;
     }
 
-    sealed internal class _SqlMetaData : SqlMetaDataPriv, ICloneable
+    internal sealed class _SqlMetaData : SqlMetaDataPriv, ICloneable
     {
         [Flags]
         private enum _SqlMetadataFlags : int
@@ -511,7 +511,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class _SqlMetaDataSet 
+    internal sealed class _SqlMetaDataSet 
     {
         internal ushort id;             // for altrow-columns only
         internal DataTable _schemaTable;
@@ -635,7 +635,7 @@ namespace Microsoft.Data.SqlClient
     }
 
 
-    sealed internal class _SqlMetaDataSetCollection : ICloneable
+    internal sealed class _SqlMetaDataSetCollection : ICloneable
     {
         private readonly List<_SqlMetaDataSet> altMetaDataSetArray;
         internal _SqlMetaDataSet metaDataSet;
@@ -986,7 +986,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlMetaDataXmlSchemaCollection
+    internal sealed class SqlMetaDataXmlSchemaCollection
     {
         internal string Database;
         internal string OwningSchema;
@@ -1003,7 +1003,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlMetaDataUdt
+    internal sealed class SqlMetaDataUdt
     {
         internal Type Type;
         internal string DatabaseName;
@@ -1027,7 +1027,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Class encapsulating additional information when sending encrypted input parameters.
     /// </summary>
-    sealed internal class SqlColumnEncryptionInputParameterInfo
+    internal sealed class SqlColumnEncryptionInputParameterInfo
     {
         /// <summary>
         /// Metadata of the parameter to write the TYPE_INFO of the unencrypted column data type.
@@ -1155,7 +1155,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class _SqlRPC
+    internal sealed class _SqlRPC
     {
         internal string rpcName;
         internal ushort ProcID;       // Used instead of name
@@ -1215,7 +1215,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlReturnValue : SqlMetaDataPriv
+    internal sealed class SqlReturnValue : SqlMetaDataPriv
     {
 
         internal ushort parmIndex;      //2005 or later only

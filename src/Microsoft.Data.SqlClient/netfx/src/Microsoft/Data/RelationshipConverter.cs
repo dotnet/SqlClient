@@ -8,7 +8,7 @@ namespace Microsoft.Data
     using System.ComponentModel;
     using System.ComponentModel.Design.Serialization;
 
-    sealed internal class RelationshipConverter : ExpandableObjectConverter
+    internal sealed class RelationshipConverter : ExpandableObjectConverter
     {
 
         // converter classes should have public ctor

@@ -637,7 +637,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal protected override bool IsNonPoolableTransactionRoot
+        protected internal override bool IsNonPoolableTransactionRoot
         {
             get
             {

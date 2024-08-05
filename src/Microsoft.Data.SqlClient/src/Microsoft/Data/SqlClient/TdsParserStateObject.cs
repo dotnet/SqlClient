@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
     using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
 #endif
 
-    sealed internal class LastIOTimer
+    internal sealed class LastIOTimer
     {
         internal long _value;
     }

@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient
         private static bool s_fSSPILoaded;
 
         // variable to hold max SSPI data size, keep for token from server
-        private volatile static uint s_maxSSPILength;
+        private static volatile uint s_maxSSPILength;
 
         internal override uint MaxSSPILength => s_maxSSPILength;
 

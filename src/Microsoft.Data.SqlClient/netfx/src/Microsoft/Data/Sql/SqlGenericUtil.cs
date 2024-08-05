@@ -8,7 +8,7 @@ namespace Microsoft.Data.Sql
     using Microsoft.Data;
     using Microsoft.Data.Common;
 
-    sealed internal class SqlGenericUtil
+    internal sealed class SqlGenericUtil
     {
 
         private SqlGenericUtil() { /* prevent utility class from being instantiated*/ }
@@ -21,11 +21,11 @@ namespace Microsoft.Data.Sql
         // Sql.Definition
         //
 
-        static internal Exception NullCommandText()
+        internal static Exception NullCommandText()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.Sql_NullCommandText));
         }
-        static internal Exception MismatchedMetaDataDirectionArrayLengths()
+        internal static Exception MismatchedMetaDataDirectionArrayLengths()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.Sql_MismatchedMetaDataDirectionArrayLengths));
         }

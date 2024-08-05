@@ -197,7 +197,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*' />
-        override protected DbCommand CreateDbCommand()
+        protected override DbCommand CreateDbCommand()
         {
             using (TryEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
             {
@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*' />
-        override protected void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
@@ -262,7 +262,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*' />
-        override public void EnlistTransaction(Transaction transaction)
+        public override void EnlistTransaction(Transaction transaction)
         {
             SqlConnection.ExecutePermission.Demand();
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.EnlistTransaction|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
@@ -312,19 +312,19 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchema2/*' />
-        override public DataTable GetSchema()
+        public override DataTable GetSchema()
         {
             return this.GetSchema(DbMetaDataCollectionNames.MetaDataCollections, null);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*' />
-        override public DataTable GetSchema(string collectionName)
+        public override DataTable GetSchema(string collectionName)
         {
             return this.GetSchema(collectionName, null);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*' />
-        override public DataTable GetSchema(string collectionName, string[] restrictionValues)
+        public override DataTable GetSchema(string collectionName, string[] restrictionValues)
         {
             // NOTE: This is virtual because not all providers may choose to support
             //       returning schema data

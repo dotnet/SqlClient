@@ -17,14 +17,14 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventArgs.xml' path='docs/members[@name="SqlRowUpdatingEventArgs"]/Command/*' />
-        new public SqlCommand Command
+        public new SqlCommand Command
         {
             get { return (base.Command as SqlCommand); }
             set { base.Command = value; }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventArgs.xml' path='docs/members[@name="SqlRowUpdatingEventArgs"]/BaseCommand/*' />
-        override protected IDbCommand BaseCommand
+        protected override IDbCommand BaseCommand
         {
             get { return base.BaseCommand; }
             set { base.BaseCommand = (value as SqlCommand); }

@@ -108,8 +108,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
     public sealed class ExceptionGenericErrorFixture : IDisposable
     {
-        static public string encryptedTableName;
-        static public string encryptedProcedureName;
+        public static string encryptedTableName;
+        public static string encryptedProcedureName;
 
         public ExceptionGenericErrorFixture()
         {

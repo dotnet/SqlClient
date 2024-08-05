@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool _suppressStateChangeForReconnection = false; // Do not use for anything else ! Value will be overwritten by CR process
 
-        static private readonly object EventInfoMessage = new object();
+        private static readonly object EventInfoMessage = new object();
 
         // System column encryption key store providers are added by default
         private static Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient
         /// Key to the dictionary is a SQL Server Name
         /// IList contains a list of trusted key paths.
         /// </summary>
-        static private readonly ConcurrentDictionary<string, IList<string>> _ColumnEncryptionTrustedMasterKeyPaths
+        private static readonly ConcurrentDictionary<string, IList<string>> _ColumnEncryptionTrustedMasterKeyPaths
             = new(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
                                                             capacity: 1,
                                                             comparer: StringComparer.OrdinalIgnoreCase);
@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Defines whether query metadata caching is enabled.
         /// </summary>
-        static private bool _ColumnEncryptionQueryMetadataCacheEnabled = true;
+        private static bool _ColumnEncryptionQueryMetadataCacheEnabled = true;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*' />
         [
@@ -108,7 +108,7 @@ namespace Microsoft.Data.SqlClient
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled),
         ]
-        static public bool ColumnEncryptionQueryMetadataCacheEnabled
+        public static bool ColumnEncryptionQueryMetadataCacheEnabled
         {
             get
             {
@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Defines whether query metadata caching is enabled.
         /// </summary>
-        static private TimeSpan _ColumnEncryptionKeyCacheTtl = TimeSpan.FromHours(2);
+        private static TimeSpan _ColumnEncryptionKeyCacheTtl = TimeSpan.FromHours(2);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         [
@@ -131,14 +131,14 @@ namespace Microsoft.Data.SqlClient
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionKeyCacheTtl),
         ]
-        static public TimeSpan ColumnEncryptionKeyCacheTtl
+        public static TimeSpan ColumnEncryptionKeyCacheTtl
         {
             get => _ColumnEncryptionKeyCacheTtl;
             set => _ColumnEncryptionKeyCacheTtl = value;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*' />
-        static public void RegisterColumnEncryptionKeyStoreProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
+        public static void RegisterColumnEncryptionKeyStoreProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
             ValidateCustomProviders(customProviders);
 
@@ -706,7 +706,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DbProviderFactory/*' />
-        override protected DbProviderFactory DbProviderFactory
+        protected override DbProviderFactory DbProviderFactory
         {
             get
             {
@@ -804,7 +804,7 @@ namespace Microsoft.Data.SqlClient
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionString),
         ]
-        override public string ConnectionString
+        public override string ConnectionString
         {
             get
             {
@@ -874,7 +874,7 @@ namespace Microsoft.Data.SqlClient
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout),
         ]
-        override public int ConnectionTimeout
+        public override int ConnectionTimeout
         {
             get
             {
@@ -888,7 +888,7 @@ namespace Microsoft.Data.SqlClient
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_Database),
         ]
-        override public string Database
+        public override string Database
         {
             // if the connection is open, we need to ask the inner connection what it's
             // current catalog is because it may have gotten changed, otherwise we can
@@ -965,7 +965,7 @@ namespace Microsoft.Data.SqlClient
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_DataSource),
         ]
-        override public string DataSource
+        public override string DataSource
         {
             get
             {
@@ -1056,7 +1056,7 @@ namespace Microsoft.Data.SqlClient
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ServerVersion),
         ]
-        override public string ServerVersion
+        public override string ServerVersion
         {
             get
             {
@@ -1082,7 +1082,7 @@ namespace Microsoft.Data.SqlClient
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnection_State),
         ]
-        override public ConnectionState State
+        public override ConnectionState State
         {
             get
             {
@@ -1386,14 +1386,14 @@ namespace Microsoft.Data.SqlClient
         // PUBLIC METHODS
         //
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransaction2/*' />
-        new public SqlTransaction BeginTransaction()
+        public new SqlTransaction BeginTransaction()
         {
             // this is just a delegate. The actual method tracks executiontime
             return BeginTransaction(IsolationLevel.Unspecified, null);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIso/*' />
-        new public SqlTransaction BeginTransaction(IsolationLevel iso)
+        public new SqlTransaction BeginTransaction(IsolationLevel iso)
         {
             // this is just a delegate. The actual method tracks executiontime
             return BeginTransaction(iso, null);
@@ -1412,7 +1412,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginDbTransaction/*' />
         // suppress this message - we cannot use SafeHandle here. Also, see notes in the code (VSTFDEVDIV# 560355)
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
-        override protected DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
+        protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
             using (TryEventScope.Create("<prov.SqlConnection.BeginDbTransaction|API> {0}, isolationLevel={1}", ObjectID, (int)isolationLevel))
             {
@@ -1468,7 +1468,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangeDatabase/*' />
-        override public void ChangeDatabase(string database)
+        public override void ChangeDatabase(string database)
         {
             SqlStatistics statistics = null;
             RepairInnerConnection();
@@ -1522,14 +1522,14 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearAllPools/*' />
-        static public void ClearAllPools()
+        public static void ClearAllPools()
         {
             (new SqlClientPermission(PermissionState.Unrestricted)).Demand();
             SqlConnectionFactory.SingletonInstance.ClearAllPools();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearPool/*' />
-        static public void ClearPool(SqlConnection connection)
+        public static void ClearPool(SqlConnection connection)
         {
             ADP.CheckArgumentNull(connection, "connection");
 
@@ -1564,7 +1564,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
-        override public void Close()
+        public override void Close()
         {
             using (TryEventScope.Create("<sc.SqlConnection.Close|API> {0}", ObjectID))
             {
@@ -1660,7 +1660,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateCommand/*' />
-        new public SqlCommand CreateCommand()
+        public new SqlCommand CreateCommand()
         {
             return new SqlCommand(null, this);
         }
@@ -1702,7 +1702,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
-        override public void Open()
+        public override void Open()
         {
             Open(SqlConnectionOverrides.None);
         }
@@ -2392,7 +2392,7 @@ namespace Microsoft.Data.SqlClient
         // Surround name in brackets and then escape any end bracket to protect against SQL Injection.
         // NOTE: if the user escapes it themselves it will not work, but this was the case in V1 as well
         // as native OleDb and Odbc.
-        static internal string FixupDatabaseTransactionName(string name)
+        internal static string FixupDatabaseTransactionName(string name)
         {
             if (!ADP.IsEmpty(name))
             {
@@ -2930,7 +2930,7 @@ namespace Microsoft.Data.SqlClient
 
 
         // updates our context with any changes made to the memory-mapped data by an external process
-        static private void RefreshMemoryMappedData(SqlDebugContext sdc)
+        private static void RefreshMemoryMappedData(SqlDebugContext sdc)
         {
             Debug.Assert(ADP.s_ptrZero != sdc.pMemMap, "SQL Debug: invalid null value for pMemMap!");
             // copy memory mapped file contents into managed types

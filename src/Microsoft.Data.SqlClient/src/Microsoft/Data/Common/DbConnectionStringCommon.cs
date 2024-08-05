@@ -860,7 +860,7 @@ namespace Microsoft.Data.Common
         /// <summary>
         /// IP Address Preference.
         /// </summary>
-        private readonly static Dictionary<string, SqlConnectionIPAddressPreference> s_preferenceNames = new(StringComparer.InvariantCultureIgnoreCase);
+        private static readonly Dictionary<string, SqlConnectionIPAddressPreference> s_preferenceNames = new(StringComparer.InvariantCultureIgnoreCase);
 
         static DbConnectionStringBuilderUtil()
         {

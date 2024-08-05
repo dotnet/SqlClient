@@ -12,7 +12,7 @@ using System.Transactions;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class SqlInternalConnectionSmi : SqlInternalConnection
+    internal sealed class SqlInternalConnectionSmi : SqlInternalConnection
     {
 
         private SmiContext _smiContext;
@@ -23,12 +23,12 @@ namespace Microsoft.Data.SqlClient
         private SqlInternalTransaction _pendingTransaction; // transaction awaiting event signalling that it is active
         private SqlInternalTransaction _currentTransaction; // currently active non-context transaction.
 
-        sealed private class EventSink : SmiEventSink_Default
+        private sealed class EventSink : SmiEventSink_Default
         {
 
             SqlInternalConnectionSmi _connection;
 
-            override internal string ServerVersion
+            internal override string ServerVersion
             {
                 get
                 {
@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            override protected void DispatchMessages(bool ignoreNonFatalMessages)
+            protected override void DispatchMessages(bool ignoreNonFatalMessages)
             {
                 // Override this on the Connection event sink, since we can deal
                 // with info messages here.
@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal SqlInternalTransaction CurrentTransaction
+        internal override SqlInternalTransaction CurrentTransaction
         {
             get
             {
@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool IsLockedForBulkCopy
+        internal override bool IsLockedForBulkCopy
         {
             get
             {
@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool Is2000
+        internal override bool Is2000
         {
             get
             {
@@ -170,7 +170,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool Is2005OrNewer
+        internal override bool Is2005OrNewer
         {
             get
             {
@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool Is2008OrNewer
+        internal override bool Is2008OrNewer
         {
             get
             {
@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal SqlInternalTransaction PendingTransaction
+        internal override SqlInternalTransaction PendingTransaction
         {
             get
             {
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override public string ServerVersion
+        public override string ServerVersion
         {
             get
             {
@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected void Activate(Transaction transaction)
+        protected override void Activate(Transaction transaction)
         {
             Debug.Assert(false, "Activating an internal SMI connection?"); // we should never be activating, because that would indicate we're being pooled.
         }
@@ -298,13 +298,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected void ChangeDatabaseInternal(string database)
+        protected override void ChangeDatabaseInternal(string database)
         {
             _smiConnection.SetCurrentDatabase(database, _smiEventSink);
             _smiEventSink.ProcessMessagesAndThrow();
         }
 
-        override protected void InternalDeactivate()
+        protected override void InternalDeactivate()
         {
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.Deactivate|ADV> {0}, Deactivating.", ObjectID);
 
@@ -332,14 +332,14 @@ namespace Microsoft.Data.SqlClient
             _isInUse = 0;  // don't need compare-exchange.
         }
 
-        override internal void DelegatedTransactionEnded()
+        internal override void DelegatedTransactionEnded()
         {
             base.DelegatedTransactionEnded();
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.DelegatedTransactionEnded|ADV> {0}, cleaning up after Delegated Transaction Completion", ObjectID);
             _currentTransaction = null;           // clean up our current transaction too
         }
 
-        override internal void DisconnectTransaction(SqlInternalTransaction internalTransaction)
+        internal override void DisconnectTransaction(SqlInternalTransaction internalTransaction)
         {
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.DisconnectTransaction|ADV> {0}, Disconnecting Transaction {1}.", ObjectID, internalTransaction.ObjectID);
 
@@ -352,13 +352,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override public void Dispose()
+        public override void Dispose()
         {
             _smiContext.OutOfScope -= new EventHandler(OnOutOfScope);
             base.Dispose();
         }
 
-        override internal void ExecuteTransaction(
+        internal override void ExecuteTransaction(
                     TransactionRequest transactionRequest,
                     string transactionName,
                     System.Data.IsolationLevel iso,
@@ -422,7 +422,7 @@ namespace Microsoft.Data.SqlClient
             _smiEventSink.ProcessMessagesAndThrow();
         }
 
-        override protected byte[] GetDTCAddress()
+        protected override byte[] GetDTCAddress()
         {
             byte[] whereAbouts = _smiConnection.GetDTCAddress(_smiEventSink);     // might want to store this on the SmiLink because it doesn't change, but we want to be compatible with TDS which doesn't have a link yet.
 
@@ -486,7 +486,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected void PropagateTransactionCookie(byte[] transactionCookie)
+        protected override void PropagateTransactionCookie(byte[] transactionCookie)
         {
 
             if (transactionCookie != null)
@@ -562,7 +562,7 @@ namespace Microsoft.Data.SqlClient
             _currentTransaction.Activate(); // SQLBUDT #376531 -- ensure this is activated to prevent asserts later.
         }
 
-        override internal void ValidateConnectionForExecute(SqlCommand command)
+        internal override void ValidateConnectionForExecute(SqlCommand command)
         {
             SqlDataReader reader = FindLiveReader(null);
             if (reader != null)

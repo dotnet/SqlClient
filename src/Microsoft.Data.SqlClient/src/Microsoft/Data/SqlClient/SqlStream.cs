@@ -13,7 +13,7 @@ using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class SqlStream : Stream
+    internal sealed class SqlStream : Stream
     {
         private SqlDataReader _reader; // reader we will stream off
         private readonly int _columnOrdinal;
@@ -267,7 +267,7 @@ namespace Microsoft.Data.SqlClient
     // case. This causes double buffering and is a perf hit, but this is not the high perf way for accessing this type of data.
     // In the case of sequential access, we do not have to do any buffering since the XmlTextReader we return can become 
     // invalid as soon as we move off the current column.
-    sealed internal class SqlCachedStream : Stream
+    internal sealed class SqlCachedStream : Stream
     {
         private int _currentPosition;   // Position within the current array byte
         private int _currentArrayIndex; // Index into the _cachedBytes List
@@ -468,7 +468,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlStreamingXml
+    internal sealed class SqlStreamingXml
     {
         private readonly int _columnOrdinal;
         private SqlDataReader _reader;

@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override public Type GetProviderSpecificFieldType(int ordinal)
+        public override Type GetProviderSpecificFieldType(int ordinal)
         {
             EnsureCanGetMetaData();
 
@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.CreatedTaskWithException<T>(ADP.ExceptionWithStackTrace(SQL.NotAvailableOnContextConnection()));
         }
 
-        override internal SqlBuffer.StorageType GetVariantInternalStorageType(int ordinal)
+        internal override SqlBuffer.StorageType GetVariantInternalStorageType(int ordinal)
         {
             Debug.Assert(_currentColumnValuesV3 != null, "Attempting to get variant internal storage type without calling GetValue first");
             if (IsDBNull(ordinal))
@@ -1060,7 +1060,7 @@ namespace Microsoft.Data.SqlClient
 
         //  Assumes that if there were any results, the first chunk of them are in the data stream
         //      (up to the first actual row or the end of the resultsets).
-        unsafe internal SqlDataReaderSmi(
+        internal unsafe SqlDataReaderSmi(
                 SmiEventStream eventStream,        // the event stream that receives the events from the execution engine
                 SqlCommand parent,             // command that owns reader
                 CommandBehavior behavior,           // behavior specified for this execution

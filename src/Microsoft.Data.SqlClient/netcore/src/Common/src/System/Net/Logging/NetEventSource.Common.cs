@@ -422,7 +422,7 @@ namespace System.Net
             Debug.Assert(IsEnabled || arg == null, $"Should not be formatting FormattableString \"{arg}\" if tracing isn't enabled");
         }
 
-        public static new bool IsEnabled =>
+        public new static bool IsEnabled =>
             Log.IsEnabled();
         //true; // uncomment for debugging only
 
