@@ -63,8 +63,7 @@ variables:
 
 pool:
   name: Azure Pipelines
-images:
-  MacOS12_Sql22: macOS-12
+  vmImage: macOS-12
 
 steps:
 - template: configure-sql-server-macos-step.yml@self
