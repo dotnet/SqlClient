@@ -43,7 +43,7 @@ steps:
       echo Waiting for SQL Server to start...
       sleep 3
       sqlcmd \
-        -S localhost \
+        -S localhost:1433 \
         -No \
         -U sa \
         -P $MSSQL_SA_PW\
@@ -59,7 +59,7 @@ steps:
       exit $errstatus
     else
       sqlcmd \
-        -S localhost \
+        -S localhost:1433 \
         -No \
         -U sa \
         -P $MSSQL_SA_PW\
