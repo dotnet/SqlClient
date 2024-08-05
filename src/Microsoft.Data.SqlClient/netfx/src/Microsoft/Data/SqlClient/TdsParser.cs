@@ -10349,7 +10349,8 @@ namespace Microsoft.Data.SqlClient
                                     mt.TDSType != TdsEnums.SQLXMLTYPE &&
                                     mt.TDSType != TdsEnums.SQLIMAGE &&
                                     mt.TDSType != TdsEnums.SQLTEXT &&
-                                    mt.TDSType != TdsEnums.SQLNTEXT, "Type unsupported for encryption");
+                                    mt.TDSType != TdsEnums.SQLNTEXT &&
+                                    mt.TDSType != TdsEnums.SQLJSON, "Type unsupported for encryption");
 
                                 byte[] serializedValue = null;
                                 byte[] encryptedValue = null;
