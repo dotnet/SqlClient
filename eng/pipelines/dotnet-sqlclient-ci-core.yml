@@ -68,6 +68,6 @@ jobs:
       vmImage: macOS-12
 
     steps:
-    - template: configure-sql-server-macos-step.yml@self
+    - template: common/templates/steps/configure-sql-server-macos-step.yml@self
       parameters:
         password: $(password)
