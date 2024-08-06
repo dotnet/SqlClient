@@ -55,12 +55,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     parameter.Value = jsonDataString;
                     int rowsAffected = command.ExecuteNonQuery();
                     _output.WriteLine($"Rows affected: {rowsAffected}");
+                    Assert.Equal(1, rowsAffected);
 
                     //Test 2 
                     //Write a SqlString type as json
                     parameter.Value = new SqlString(jsonDataString);
                     int rowsAffected2 = command.ExecuteNonQuery();
                     _output.WriteLine($"Rows affected: {rowsAffected2}");
+                    Assert.Equal(1, rowsAffected2);
 
                     //Test 3
                     //Write json value using SP
@@ -73,6 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         command2.Parameters.Add(parameter2);
                         int rowsAffected3 = command2.ExecuteNonQuery();
                         _output.WriteLine($"Rows affected: {rowsAffected3}");
+                        Assert.Equal(1, rowsAffected3);
                     }
                 }
             }
@@ -120,7 +123,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         string jsonData = reader.GetString(0);
                         _output.WriteLine(jsonData);
-                        Assert.Equal(jsonDataString,jsonData);
+                        Assert.Equal(jsonDataString, jsonData);
                     }
 
                     //Test 2
@@ -131,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         _output.WriteLine("Column Name is " + column.ColumnName);
                         _output.WriteLine("Column DataType is " + column?.DataType.ToString());
                         _output.WriteLine("Column DataTypeName is " + column.DataTypeName);
-                        Assert.Equal("json",column.DataTypeName);
+                        Assert.Equal("json", column.DataTypeName);
                     }
                     reader.Close();
 
@@ -141,14 +144,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         command2.CommandText = spName;
                         command2.CommandType = CommandType.StoredProcedure;
-                        SqlDataReader reader2 = command2.ExecuteReader();
-                        while (reader2.Read())
+                        using (SqlDataReader reader2 = command2.ExecuteReader())
                         {
-                            string jsonData = reader2.GetString(0);
-                            _output.WriteLine(jsonData);
-                            Assert.NotNull(jsonData);
+                            while (reader2.Read())
+                            {
+                                string jsonData = reader2.GetString(0);
+                                _output.WriteLine(jsonData);
+                                Assert.Equal(jsonDataString, jsonData);
+                            }
                         }
-                        reader2.Close();
                     }
                 }
             }
