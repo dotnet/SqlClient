@@ -5958,7 +5958,6 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVARCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
-                case TdsEnums.SQLJSON:
                     // If bigvarchar(max), we only read the first chunk here,
                     // expecting the caller to read the rest
                     if (encoding == null)
@@ -5974,6 +5973,17 @@ namespace Microsoft.Data.SqlClient
                         return result;
                     }
                     value.SetToString(stringValue);
+                    break;
+
+                case TdsEnums.SQLJSON:
+                    encoding = Encoding.UTF8;
+                    string jsonStringValue;
+                    result = stateObj.TryReadStringWithEncoding(length, encoding, isPlp, out jsonStringValue);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                    value.SetToJson(jsonStringValue);
                     break;
 
                 case TdsEnums.SQLNCHAR:
