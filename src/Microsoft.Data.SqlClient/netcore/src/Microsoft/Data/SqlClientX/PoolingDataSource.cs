@@ -37,7 +37,6 @@ namespace Microsoft.Data.SqlClientX
 
         #region private readonly
         private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
-        private readonly DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
         private readonly RateLimiterBase _connectionRateLimiter;
         //TODO: readonly TimeSpan _connectionLifetime;
 
@@ -72,11 +71,9 @@ namespace Microsoft.Data.SqlClientX
         internal PoolingDataSource(
             SqlConnectionString connectionString,
             SqlCredential credential,
-            DbConnectionPoolGroupOptions options,
             RateLimiterBase connectionRateLimiter)
             : base(connectionString, credential)
         {
-            _connectionPoolGroupOptions = options;
             _connectionRateLimiter = connectionRateLimiter;
             _connectors = new SqlConnector[MaxPoolSize];
 
@@ -95,8 +92,8 @@ namespace Microsoft.Data.SqlClientX
         }
 
         #region properties
-        internal int MinPoolSize => _connectionPoolGroupOptions.MinPoolSize;
-        internal int MaxPoolSize => _connectionPoolGroupOptions.MaxPoolSize;
+        internal int MinPoolSize => Settings.MinPoolSize;
+        internal int MaxPoolSize => Settings.MaxPoolSize;
         internal int ObjectID => _objectID;
 
         internal sealed override (int Total, int Idle, int Busy) Statistics

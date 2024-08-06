@@ -35,9 +35,9 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// Constructs a new <see cref="SqlDataSourceBuilder" />, optionally starting out from the given <paramref name="connectionString"/>.
         /// </summary>
-        public SqlDataSourceBuilder(string connectionString = null, SqlCredential credential = null) 
+        public SqlDataSourceBuilder(string connectionString = null, SqlCredential credential = null)
             : this(new SqlConnectionStringBuilder(connectionString), credential)
-        {}
+        { }
 
         /// <summary>
         /// Constructs a new <see cref="SqlDataSourceBuilder" /> starting out from the given <paramref name="connectionStringBuilder"/>.
@@ -57,21 +57,11 @@ namespace Microsoft.Data.SqlClientX
             {
                 //TODO: pool group layer
 
-                DbConnectionPoolGroupOptions poolGroupOptions = new DbConnectionPoolGroupOptions(
-                    ConnectionString.IntegratedSecurity,
-                    ConnectionString.MinPoolSize,
-                    ConnectionString.MaxPoolSize,
-                    //TODO: carry over connect timeout conversion logic from SqlConnectionFactory? if not, don't need an extra allocation for this object, just use connection string builder
-                    ConnectionString.ConnectTimeout,
-                    ConnectionString.LoadBalanceTimeout,
-                    ConnectionString.Enlist);
-
                 //TODO: evaluate app context switch for concurrency limit
                 RateLimiterBase rateLimiter = IsBlockingPeriodEnabled() ? new BlockingPeriodRateLimiter() : new PassthroughRateLimiter();
 
                 return new PoolingDataSource(ConnectionString,
                     Credential,
-                    poolGroupOptions,
                     rateLimiter);
             }
             else
