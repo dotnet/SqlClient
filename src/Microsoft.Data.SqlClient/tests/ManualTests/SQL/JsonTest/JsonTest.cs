@@ -22,9 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonWrite()
-        {
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
-            
+        {       
             string jsonDataString = "[{\"name\":\"Dave\",\"skills\":[\"Python\"]},{\"name\":\"Ron\",\"surname\":\"Peter\"}]";
 
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
@@ -83,8 +81,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonRead()
         {
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
-
             string jsonDataString = "[{\"name\":\"Dave\",\"skills\":[\"Python\"]},{\"name\":\"Ron\",\"surname\":\"Peter\"}]";
 
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
