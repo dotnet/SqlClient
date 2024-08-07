@@ -19,6 +19,7 @@ namespace Microsoft.Data.SqlClientX.IO
     {
         private readonly TdsStream _tdsStream;
         private readonly BinaryReader _reader;
+        private readonly BinaryReader _be_reader;
 
         /// <summary>
         /// Instantiate TdsReader with <see cref="TdsStream" />
@@ -28,6 +29,7 @@ namespace Microsoft.Data.SqlClientX.IO
         {
             _tdsStream = stream;
             _reader = new BinaryReader(stream, Encoding.Unicode);
+            _be_reader = new BinaryReader(stream, Encoding.BigEndianUnicode);
         }
 
         #region Public APIs
@@ -163,6 +165,17 @@ namespace Microsoft.Data.SqlClientX.IO
                 : new ValueTask<uint>(_reader.ReadUInt32());
 
         /// <summary>
+        /// Reads unsigned int value from Tds Stream asynchronously.
+        /// </summary>
+        /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>Async <see cref="ValueTask"/> that returns a <see cref="uint"/> value.</returns>
+        public ValueTask<uint> ReadUInt32BEAsync(bool isAsync, CancellationToken ct)
+            => isAsync
+                ? ReadUInt32BEInternalAsync(ct)
+                : new ValueTask<uint>(_be_reader.ReadUInt32());
+
+        /// <summary>
         /// Reads unsigned long value from Tds Stream asynchronously.
         /// </summary>
         /// <param name="isAsync">Whether caller method is executing asynchronously.</param>
@@ -226,6 +239,59 @@ namespace Microsoft.Data.SqlClientX.IO
         public ValueTask<string> ReadStringWithEncodingAsync(int length, System.Text.Encoding encoding, bool isPlp, bool isAsync, CancellationToken ct)
             // TODO Implement PLP reading support
             => throw new NotImplementedException();
+
+        /// <summary>
+        /// Reads buffer of desired length into result ByteBuffer instance.
+        /// </summary>
+        /// <param name="length"></param>
+        /// <param name="isAsync"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public ValueTask<ByteBuffer> ReadBufferAsync(int length, bool isAsync, CancellationToken ct)
+        {
+            // TODO Implement the same.
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Reads US varchar from Tds Stream 
+        /// </summary>
+        /// <param name="isAsync"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public ValueTask<string> ReadUsVarCharAsync(bool isAsync, CancellationToken ct)
+        {
+            // TODO Implement the same.
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Reads Binary varchar from Tds Stream 
+        /// </summary>
+        /// <param name="isAsync"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public ValueTask<string> ReadBVarCharAsync(bool isAsync, CancellationToken ct)
+        {
+            // TODO Implement the same.
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Reads Binary var byte from Tds Stream 
+        /// </summary>
+        /// <param name="isAsync"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public ValueTask<ByteBuffer> ReadBVarByteAsync(bool isAsync, CancellationToken ct)
+        {
+            // TODO Implement the same.
+            throw new NotImplementedException();
+        }
 
         #endregion
 
@@ -307,6 +373,18 @@ namespace Microsoft.Data.SqlClientX.IO
                 : new ValueTask<uint>(task.AsTask().ContinueWith((task) => doWork()));
 
             uint doWork() => BinaryPrimitives.ReadUInt32LittleEndian(buffer.Span);
+        }
+
+        private ValueTask<uint> ReadUInt32BEInternalAsync(CancellationToken ct)
+        {
+            Memory<byte> buffer = GetBuffer(sizeof(uint));
+            ValueTask<int> task = ReadBytesAsync(buffer, true, ct);
+
+            return task.IsCompleted
+                ? new ValueTask<uint>(doWork())
+                : new ValueTask<uint>(task.AsTask().ContinueWith((task) => doWork()));
+
+            uint doWork() => BinaryPrimitives.ReadUInt32BigEndian(buffer.Span);
         }
 
         private ValueTask<ulong> ReadUInt64InternalAsync(CancellationToken ct)

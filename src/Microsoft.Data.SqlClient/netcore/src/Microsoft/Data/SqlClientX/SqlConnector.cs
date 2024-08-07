@@ -8,6 +8,11 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClientX.Handlers.Connection;
+using Microsoft.Data.SqlClientX.Tds;
+using Microsoft.Data.SqlClientX.Tds.State;
 
 #nullable enable
 
@@ -16,17 +21,30 @@ namespace Microsoft.Data.SqlClientX
     /// <summary>
     /// Represents a physical connection with the database.
     /// </summary>
-    internal class SqlConnector
+    internal sealed class SqlConnector
     {
-        private static int SpoofedServerProcessId = 1;
+        private static int s_spoofedServerProcessId = 1;
 
-        internal SqlConnector(SqlConnectionX owningConnection, SqlDataSource dataSource)
+        private readonly TdsParserX _parser;
+        private readonly ConnectionHandlerContext _connectionHandlerContext;
+
+        internal SqlConnector(SqlConnectionX owningConnection, SqlConnectionString connectionOptions, SqlDataSource dataSource)
         {
             OwningConnection = owningConnection;
+            ConnectionOptions = connectionOptions;
             DataSource = dataSource;
+
             //TODO: Set this based on the real server process id.
             //We only set this in client code right now to simulate different processes and to differentiate internal connections.
-            ServerProcessId = Interlocked.Increment(ref SpoofedServerProcessId);
+            ServerProcessId = Interlocked.Increment(ref s_spoofedServerProcessId);
+
+            _connectionHandlerContext = new ConnectionHandlerContext()
+            {
+                // TODO initialize and pass SqlDataSource into connection handler context
+                // TODO initialize and pass ConnectionOptions into connection handler context
+            };
+
+            _parser = new TdsParserX(new TdsContext(this));
         }
 
         #region properties
@@ -36,6 +54,8 @@ namespace Microsoft.Data.SqlClientX
         /// The data source that generated this connector.
         /// </summary>
         internal SqlDataSource DataSource { get; }
+
+        internal DbConnectionOptions ConnectionOptions { get; set; }
 
         /// <summary>
         /// The server version this connector is connected to.
@@ -90,6 +110,9 @@ namespace Microsoft.Data.SqlClientX
                 return ValueTask.CompletedTask;
             }
         }
+
+        // TODO Implement Break Connection workflow.
+        internal void BreakConnection() => throw new NotImplementedException();
 
         /// <summary>
         /// Returns this connection to the data source that generated it.

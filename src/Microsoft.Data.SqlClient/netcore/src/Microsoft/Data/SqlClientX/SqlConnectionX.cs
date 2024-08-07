@@ -28,17 +28,20 @@ namespace Microsoft.Data.SqlClientX
     internal sealed class SqlConnectionX : DbConnection, ICloneable
     {
         #region private
-        private static readonly SqlConnectionString DefaultSettings = new SqlConnectionString("");
+        private static readonly SqlConnectionString DefaultSettings = new("");
 
         private SqlCredential? _credential;
         private SqlDataSource? _dataSource;
         private SqlConnector? _internalConnection;
 
         private bool _disposed;
+        private int _closeCount;
 
         //TODO: Investigate if we can just use dataSource.ConnectionString. Do this when this class can resolve its own data source.
         private string _connectionString = string.Empty;
-        
+
+        private bool _fireInfoMessageEventOnUserErrors; // False by default
+
         private ConnectionState _connectionState = ConnectionState.Closed;
         #endregion
 
@@ -138,6 +141,24 @@ namespace Microsoft.Data.SqlClientX
         /// <inheritdoc/>
         public override bool CanCreateBatch
             => throw new NotImplementedException();
+
+        #endregion
+
+        #region Public events
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/InfoMessage/*' />
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_InfoMessage)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnection_InfoMessage)]
+        // TODO Investigate if making InfoMessage nullable is safe for SqlConnection public API contract?
+        // Handle the nullable requirement alternatively if needed.
+        public event SqlInfoMessageEventHandler? InfoMessage;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/FireInfoMessageEventOnUserErrors/*' />
+        public bool FireInfoMessageEventOnUserErrors
+        {
+            get => _fireInfoMessageEventOnUserErrors;
+            set => _fireInfoMessageEventOnUserErrors = value;
+        }
 
         #endregion
 
@@ -313,6 +334,82 @@ namespace Microsoft.Data.SqlClientX
         /// <inheritdoc/>
         protected override DbCommand CreateDbCommand()
             => throw new NotImplementedException();
+
+        #region internal helpers
+
+        // If wrapCloseInAction is defined, then the action it defines will be run with the connection close action passed in as a parameter
+        // The close action also supports being run asynchronously
+        internal void OnError(SqlException exception, bool breakConnection, Action<Action> wrapCloseInAction)
+        {
+            Debug.Assert(exception != null && exception.Errors.Count != 0, "SqlConnection: OnError called with null or empty exception!");
+
+            if (breakConnection && (ConnectionState.Open == State))
+            {
+                if (wrapCloseInAction != null)
+                {
+                    int capturedCloseCount = _closeCount;
+
+                    Action closeAction = () =>
+                    {
+                        if (capturedCloseCount == _closeCount)
+                        {
+                            Close();
+                        }
+                    };
+
+                    wrapCloseInAction(closeAction);
+                }
+                else
+                {
+                    Close();
+                }
+            }
+
+            if (exception.Class >= TdsEnums.MIN_ERROR_CLASS)
+            {
+                // It is an error, and should be thrown.  Class of TdsEnums.MIN_ERROR_CLASS or above is an error,
+                // below TdsEnums.MIN_ERROR_CLASS denotes an info message.
+                throw exception;
+            }
+            else
+            {
+                // If it is a class < TdsEnums.MIN_ERROR_CLASS, it is a warning collection - so pass to handler
+                this.OnInfoMessage(new SqlInfoMessageEventArgs(exception));
+            }
+        }
+
+        internal void OnInfoMessage(SqlInfoMessageEventArgs imevent)
+        {
+            bool notified;
+            OnInfoMessage(imevent, out notified);
+        }
+
+        internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
+        {
+            // TODO review event source traces later
+            // SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OnInfoMessage | API | Info | Object Id {0}, Message '{1}'", ObjectID, imevent.Message);
+            SqlInfoMessageEventHandler? handler = InfoMessage;
+            if (null != handler)
+            {
+                notified = true;
+                try
+                {
+                    handler(this, imevent);
+                }
+                catch (Exception e)
+                {
+                    if (!ADP.IsCatchableOrSecurityExceptionType(e))
+                    {
+                        throw;
+                    }
+                }
+            }
+            else
+            {
+                notified = false;
+            }
+        }
+        #endregion
     }
 }
 
