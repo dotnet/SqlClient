@@ -521,7 +521,7 @@ namespace Microsoft.Data.SqlClientX
                 // waiting on the semaphore
                 if (_warmupTask.IsCompleted)
                 {
-                    _warmupTask = _WarmUp(_shutdownCTS.Token);
+                    _warmupTask = _WarmUp(_shutdownCT);
                 }
             }
             finally
