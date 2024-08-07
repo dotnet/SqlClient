@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClientX
     internal sealed class SqlConnectionX : DbConnection, ICloneable
     {
         #region private
-        private static readonly SqlConnectionString DefaultSettings = new SqlConnectionString("");
+        private static readonly SqlConnectionString DefaultSettings = new("");
 
         private SqlCredential? _credential;
         private SqlDataSource? _dataSource;
@@ -38,7 +38,9 @@ namespace Microsoft.Data.SqlClientX
 
         //TODO: Investigate if we can just use dataSource.ConnectionString. Do this when this class can resolve its own data source.
         private string _connectionString = string.Empty;
-        
+
+        private bool _fireInfoMessageEventOnUserErrors; // False by default
+
         private ConnectionState _connectionState = ConnectionState.Closed;
         #endregion
 
@@ -138,6 +140,24 @@ namespace Microsoft.Data.SqlClientX
         /// <inheritdoc/>
         public override bool CanCreateBatch
             => throw new NotImplementedException();
+
+        #endregion
+
+        #region Public events
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/InfoMessage/*' />
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_InfoMessage)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnection_InfoMessage)]
+        // TODO Investigate if making InfoMessage nullable is safe for SqlConnection public API contract?
+        // Handle the nullable requirement alternatively if needed.
+        public event SqlInfoMessageEventHandler? InfoMessage;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/FireInfoMessageEventOnUserErrors/*' />
+        public bool FireInfoMessageEventOnUserErrors
+        {
+            get => _fireInfoMessageEventOnUserErrors;
+            set => _fireInfoMessageEventOnUserErrors = value;
+        }
 
         #endregion
 
@@ -313,6 +333,35 @@ namespace Microsoft.Data.SqlClientX
         /// <inheritdoc/>
         protected override DbCommand CreateDbCommand()
             => throw new NotImplementedException();
+
+        #region internal helpers
+
+        internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
+        {
+            // TODO review event source traces later
+            // SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OnInfoMessage | API | Info | Object Id {0}, Message '{1}'", ObjectID, imevent.Message);
+            SqlInfoMessageEventHandler? handler = InfoMessage;
+            if (null != handler)
+            {
+                notified = true;
+                try
+                {
+                    handler(this, imevent);
+                }
+                catch (Exception e)
+                {
+                    if (!ADP.IsCatchableOrSecurityExceptionType(e))
+                    {
+                        throw;
+                    }
+                }
+            }
+            else
+            {
+                notified = false;
+            }
+        }
+        #endregion
     }
 }
 

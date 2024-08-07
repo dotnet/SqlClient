@@ -6,6 +6,8 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClientX.Tds.Tokens;
 
 namespace Microsoft.Data.SqlClientX.IO
 {
@@ -75,6 +77,16 @@ namespace Microsoft.Data.SqlClientX.IO
         public TdsReader TdsReader { get; private set; }
 
         /// <summary>
+        /// TDS Version in use in current stream
+        /// </summary>
+        public TdsVersion TdsVersion { get; set; }
+
+        /// <summary>
+        /// Get or set data classification version.  A value of 0 means that sensitivity classification is not enabled.
+        /// </summary>
+        public int DataClassificationVersion { get; set; }
+
+        /// <summary>
         /// Constructor for instantiating the TdsStream
         /// </summary>
         /// <param name="writeStream">The stream for outgoing TDS packets</param>
@@ -85,6 +97,7 @@ namespace Microsoft.Data.SqlClientX.IO
             _readStream = readStream;
             TdsWriter = new TdsWriter(this);
             TdsReader = new TdsReader(this);
+            DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
 
         /// <summary>
