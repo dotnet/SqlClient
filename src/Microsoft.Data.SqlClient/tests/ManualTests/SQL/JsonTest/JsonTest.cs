@@ -6,6 +6,8 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
+using System.Xml.Serialization;
+using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -20,11 +22,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _output = output;
         }
 
+        private static readonly string jsonDataString = "[{\"name\":\"Dave\",\"skills\":[\"Python\"]},{\"name\":\"Ron\",\"surname\":\"Peter\"}]";
+
+        private void ValidateRowsAffected(int rowsAffected)
+        {
+            _output.WriteLine($"Rows affected: {rowsAffected}");
+            Assert.Equal(1, rowsAffected);
+        }
+
+        private void ValidateRows(SqlDataReader reader)
+        {
+            while (reader.Read())
+            {
+                string jsonData = reader.GetString(0);
+                _output.WriteLine(jsonData);
+                Assert.Equal(jsonDataString, jsonData);
+            }
+        }
+
+        private void ValidateSchema(SqlDataReader reader)
+        {
+            System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> schema = reader.GetColumnSchema();
+            foreach (DbColumn column in schema)
+            {
+                _output.WriteLine("Column Name is " + column.ColumnName);
+                _output.WriteLine("Column DataType is " + column?.DataType.ToString());
+                _output.WriteLine("Column DataTypeName is " + column.DataTypeName);
+                Assert.Equal("json", column.DataTypeName);
+            }
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonWrite()
         {       
-            string jsonDataString = "[{\"name\":\"Dave\",\"skills\":[\"Python\"]},{\"name\":\"Ron\",\"surname\":\"Peter\"}]";
-
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
             string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_WriteTest");
            
@@ -54,15 +84,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     //Write json value using a parameterized query
                     parameter.Value = jsonDataString;
                     int rowsAffected = command.ExecuteNonQuery();
-                    _output.WriteLine($"Rows affected: {rowsAffected}");
-                    Assert.Equal(1, rowsAffected);
+                    ValidateRowsAffected(rowsAffected);
 
                     //Test 2 
                     //Write a SqlString type as json
                     parameter.Value = new SqlString(jsonDataString);
                     int rowsAffected2 = command.ExecuteNonQuery();
-                    _output.WriteLine($"Rows affected: {rowsAffected2}");
-                    Assert.Equal(1, rowsAffected2);
+                    ValidateRowsAffected(rowsAffected2);
 
                     //Test 3
                     //Write json value using SP
@@ -74,8 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         parameter2.Value = jsonDataString;
                         command2.Parameters.Add(parameter2);
                         int rowsAffected3 = command2.ExecuteNonQuery();
-                        _output.WriteLine($"Rows affected: {rowsAffected3}");
-                        Assert.Equal(1, rowsAffected3);
+                        ValidateRowsAffected(rowsAffected3);
                     }
                 }
             }
@@ -84,8 +111,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonRead()
         {
-            string jsonDataString = "[{\"name\":\"Dave\",\"skills\":[\"Python\"]},{\"name\":\"Ron\",\"surname\":\"Peter\"}]";
-
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
             string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_ReadTest");
 
@@ -118,24 +143,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     //Test 1
                     //Read json value using query
                     command.CommandText = tableRead;
-                    SqlDataReader reader = command.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        string jsonData = reader.GetString(0);
-                        _output.WriteLine(jsonData);
-                        Assert.Equal(jsonDataString, jsonData);
-                    }
+                    var reader = command.ExecuteReader();
+                    ValidateRows(reader);
 
                     //Test 2
                     //Read the column metadata
-                    System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> schema = reader.GetColumnSchema();
-                    foreach (DbColumn column in schema)
-                    {
-                        _output.WriteLine("Column Name is " + column.ColumnName);
-                        _output.WriteLine("Column DataType is " + column?.DataType.ToString());
-                        _output.WriteLine("Column DataTypeName is " + column.DataTypeName);
-                        Assert.Equal("json", column.DataTypeName);
-                    }
+                    ValidateSchema(reader);
                     reader.Close();
 
                     //Test 3
@@ -144,15 +157,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         command2.CommandText = spName;
                         command2.CommandType = CommandType.StoredProcedure;
-                        using (SqlDataReader reader2 = command2.ExecuteReader())
-                        {
-                            while (reader2.Read())
-                            {
-                                string jsonData = reader2.GetString(0);
-                                _output.WriteLine(jsonData);
-                                Assert.Equal(jsonDataString, jsonData);
-                            }
-                        }
+                        var reader2 = command2.ExecuteReader();
+                        ValidateRows(reader2);
+                        reader2.Close();
                     }
                 }
             }
