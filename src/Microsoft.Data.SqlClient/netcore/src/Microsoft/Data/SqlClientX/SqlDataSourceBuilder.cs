@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// A connection string builder that can be used to configure the connection string on the builder.
         /// </summary>
-        public SqlConnectionStringBuilder ConnectionStringBuilder { get; }
+        public SqlConnectionString ConnectionString { get; }
 
         // TODO: how does it interact with credentials specified in ConnectionStringBuilder?
         public SqlCredential Credential { get; set; }
@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         public SqlDataSourceBuilder(SqlConnectionStringBuilder connectionStringBuilder, SqlCredential sqlCredential = null)
         {
-            ConnectionStringBuilder = connectionStringBuilder;
+            ConnectionString = new SqlConnectionString(connectionStringBuilder.ConnectionString);
             Credential = sqlCredential;
         }
 
@@ -53,23 +53,23 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         public SqlDataSource Build()
         {
-            if (ConnectionStringBuilder.Pooling)
+            if (ConnectionString.Pooling)
             {
                 //TODO: pool group layer
 
                 DbConnectionPoolGroupOptions poolGroupOptions = new DbConnectionPoolGroupOptions(
-                    ConnectionStringBuilder.IntegratedSecurity,
-                    ConnectionStringBuilder.MinPoolSize,
-                    ConnectionStringBuilder.MaxPoolSize,
+                    ConnectionString.IntegratedSecurity,
+                    ConnectionString.MinPoolSize,
+                    ConnectionString.MaxPoolSize,
                     //TODO: carry over connect timeout conversion logic from SqlConnectionFactory? if not, don't need an extra allocation for this object, just use connection string builder
-                    ConnectionStringBuilder.ConnectTimeout,
-                    ConnectionStringBuilder.LoadBalanceTimeout,
-                    ConnectionStringBuilder.Enlist);
+                    ConnectionString.ConnectTimeout,
+                    ConnectionString.LoadBalanceTimeout,
+                    ConnectionString.Enlist);
 
                 //TODO: evaluate app context switch for concurrency limit
                 RateLimiterBase rateLimiter = IsBlockingPeriodEnabled() ? new BlockingPeriodRateLimiter() : new PassthroughRateLimiter();
 
-                return new PoolingDataSource(ConnectionStringBuilder,
+                return new PoolingDataSource(ConnectionString,
                     Credential,
                     poolGroupOptions,
                     rateLimiter);
@@ -77,20 +77,20 @@ namespace Microsoft.Data.SqlClientX
             else
             {
                 return new UnpooledDataSource(
-                    ConnectionStringBuilder,
+                    ConnectionString,
                     Credential);
             }
         }
 
         private bool IsBlockingPeriodEnabled()
         {
-            var policy = ConnectionStringBuilder.PoolBlockingPeriod;
+            var policy = ConnectionString.PoolBlockingPeriod;
 
             switch (policy)
             {
                 case PoolBlockingPeriod.Auto:
                     {
-                        if (ADP.IsAzureSqlServerEndpoint(ConnectionStringBuilder.DataSource))
+                        if (ADP.IsAzureSqlServerEndpoint(ConnectionString.DataSource))
                         {
                             return false; // in Azure it will be Disabled
                         }

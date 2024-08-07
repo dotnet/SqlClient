@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClientX
         private readonly TdsParserX _parser;
         private readonly ConnectionHandlerContext _connectionHandlerContext;
 
-        internal SqlConnector(SqlConnectionX owningConnection, SqlConnectionString connectionOptions, SqlDataSource dataSource)
+        internal SqlConnector(SqlConnectionX? owningConnection, SqlConnectionString connectionOptions, SqlDataSource dataSource)
         {
             OwningConnection = owningConnection;
             ConnectionOptions = connectionOptions;
