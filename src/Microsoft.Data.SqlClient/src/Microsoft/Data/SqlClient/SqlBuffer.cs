@@ -36,6 +36,7 @@ namespace Microsoft.Data.SqlClient
             DateTime2,
             DateTimeOffset,
             Time,
+            Json,
         }
 
         internal struct DateTimeInfo
@@ -486,7 +487,7 @@ namespace Microsoft.Data.SqlClient
             {
                 ThrowIfNull();
 
-                if (StorageType.String == _type)
+                if (StorageType.String == _type || StorageType.Json == _type)
                 {
                     return (string)_object;
                 }
@@ -916,7 +917,8 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (StorageType.String == _type)
+                // String and Json storage type are both strings.
+                if (StorageType.String == _type || StorageType.Json == _type)
                 {
                     if (IsNull)
                     {
@@ -934,6 +936,22 @@ namespace Microsoft.Data.SqlClient
                     return data.ToSqlString();
                 }
                 return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
+            }
+        }
+
+        internal SqlJson SqlJson 
+        {
+            get
+            {
+                if (StorageType.Json == _type)
+                {
+                    if (IsNull)
+                    { 
+                        return SqlTypes.SqlJson.Null;
+                    }
+                    return new SqlJson((string)_object);
+                }
+                return (SqlJson)SqlValue;
             }
         }
 
@@ -969,7 +987,8 @@ namespace Microsoft.Data.SqlClient
                         return SqlSingle;
                     case StorageType.String:
                         return SqlString;
-
+                    case StorageType.Json:
+                        return SqlJson;
                     case StorageType.SqlCachedBuffer:
                         {
                             SqlCachedBuffer data = (SqlCachedBuffer)(_object);
@@ -1087,6 +1106,8 @@ namespace Microsoft.Data.SqlClient
                         return DateTimeOffset;
                     case StorageType.Time:
                         return Time;
+                    case StorageType.Json:
+                        return String;
                 }
                 return null; // need to return the value as an object of some CLS type
             }
@@ -1132,6 +1153,8 @@ namespace Microsoft.Data.SqlClient
                         return typeof(SqlGuid);
                     case StorageType.SqlXml:
                         return typeof(SqlXml);
+                    case StorageType.Json:
+                        return typeof(SqlJson);
                         // Time Date DateTime2 and DateTimeOffset have no direct Sql type to contain them
                 }
             }
@@ -1179,6 +1202,8 @@ namespace Microsoft.Data.SqlClient
                         return typeof(DateTime);
                     case StorageType.DateTimeOffset:
                         return typeof(DateTimeOffset);
+                    case StorageType.Json:
+                        return typeof(string);
 #if NET6_0_OR_GREATER
                     case StorageType.Time:
                         return typeof(TimeOnly);
@@ -1271,6 +1296,14 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(IsEmpty, "setting value a second time?");
             _object = value;
             _type = StorageType.String;
+            _isNull = false;
+        }
+
+        internal void SetToJson(string value)
+        {
+            Debug.Assert(IsEmpty, "setting value a second time?");
+            _object = value;
+            _type = StorageType.Json;
             _isNull = false;
         }
 
