@@ -34,7 +34,8 @@ namespace Microsoft.Data.SqlClientX
         private static SemaphoreSlim SyncOverAsyncSemaphore { get; } = new(Math.Max(1, Environment.ProcessorCount / 2));
 
         private static int _objectTypeCount; // EventSource counter
-        private static int ConnectionPruningIntervalInSeconds = 10;
+        private static TimeSpan DefaultPruningPeriod = TimeSpan.FromMinutes(2);
+        private static TimeSpan MinIdleCountPeriod = TimeSpan.FromSeconds(1);
 
         #region private readonly
         private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
@@ -102,8 +103,10 @@ namespace Microsoft.Data.SqlClientX
             _warmupLock = new SemaphoreSlim(1);
 
             _minIdleCount = int.MaxValue;
-            _pruningTimer = new PeriodicTimer(TimeSpan.FromSeconds(Settings.LoadBalanceTimeout));
-            _minIdleCountTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+
+            // TODO: base this on a user provided param?
+            _pruningTimer = new PeriodicTimer(DefaultPruningPeriod);
+            _minIdleCountTimer = new PeriodicTimer(MinIdleCountPeriod);
             _pruningTask = PruneIdleConnections();
             _updateMinIdleCountTask = UpdateMinIdleCount();
         }
@@ -111,6 +114,7 @@ namespace Microsoft.Data.SqlClientX
         #region properties
         internal int MinPoolSize => Settings.MinPoolSize;
         internal int MaxPoolSize => Settings.MaxPoolSize;
+        internal TimeSpan ConnectionLifetime => TimeSpan.FromSeconds(Settings.LoadBalanceTimeout);
         internal int ObjectID => _objectID;
 
         internal sealed override (int Total, int Idle, int Busy) Statistics
@@ -262,6 +266,21 @@ namespace Microsoft.Data.SqlClientX
             // Only decrement when the connector has a value.
             Interlocked.Decrement(ref _idleCount);
 
+            return CheckConnector(connector);
+        }
+
+        /// <summary>
+        /// Checks the status of the connector and closes it if needed.
+        /// </summary>
+        /// <param name="connector"></param>
+        /// <returns>True indicates that the connector is still good. False indicates that the connector was closed.</returns>
+        private bool CheckConnector(SqlConnector connector)
+        {
+            // If Clear/ClearAll has been been called since this connector was first opened,
+            // throw it away. The same if it's broken (in which case CloseConnector is only
+            // used to update state/perf counter).
+            //TODO: check clear counter
+
             // An connector could be broken because of a keepalive that occurred while it was
             // idling in the pool
             // TODO: Consider removing the pool from the keepalive code. The following branch is simply irrelevant
@@ -272,13 +291,12 @@ namespace Microsoft.Data.SqlClientX
                 return false;
             }
 
-            /* TODO: enforce connection lifetime
-            if (_connectionLifetime != TimeSpan.Zero && DateTime.UtcNow > connector.OpenTimestamp + _connectionLifetime)
+            if (ConnectionLifetime != TimeSpan.Zero && DateTime.UtcNow > connector.OpenTimestamp + ConnectionLifetime)
             {
                 CloseConnector(connector);
                 return false;
             }
-            */
+
             return true;
         }
 
@@ -425,13 +443,8 @@ namespace Microsoft.Data.SqlClientX
 
             //TODO: verify transaction state
 
-            // If Clear/ClearAll has been been called since this connector was first opened,
-            // throw it away. The same if it's broken (in which case CloseConnector is only
-            // used to update state/perf counter).
-            //TODO: check clear counter
-            if (connector.IsBroken)
+            if (!CheckConnector(connector))
             {
-                CloseConnector(connector);
                 return;
             }
 
