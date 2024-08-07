@@ -4,6 +4,7 @@
 
 #if NET8_0_OR_GREATER
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -54,7 +55,7 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens
         {
             byte type = await context.TdsStream.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
 
-            if (!TdsUtils.IsValidTdsToken(type))
+            if (!Enum.IsDefined(typeof(TokenType), type))
             {
                 Debug.Fail($"unexpected token; token = {type-2:X2}");
                 context.ParserState = TdsParserState.Broken;

@@ -8,11 +8,7 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClientX.Handlers.Connection;
-using Microsoft.Data.SqlClientX.Tds;
-using Microsoft.Data.SqlClientX.Tds.State;
 
 #nullable enable
 
@@ -25,13 +21,12 @@ namespace Microsoft.Data.SqlClientX
     {
         private static int s_spoofedServerProcessId = 1;
 
-        private readonly TdsParserX _parser;
+        // private readonly TdsParserX _parser;
         private readonly ConnectionHandlerContext _connectionHandlerContext;
 
-        internal SqlConnector(SqlConnectionX? owningConnection, SqlConnectionString connectionOptions, SqlDataSource dataSource)
+        internal SqlConnector(SqlConnectionX? owningConnection, SqlDataSource dataSource)
         {
             OwningConnection = owningConnection;
-            ConnectionOptions = connectionOptions;
             DataSource = dataSource;
 
             //TODO: Set this based on the real server process id.
@@ -44,7 +39,8 @@ namespace Microsoft.Data.SqlClientX
                 // TODO initialize and pass ConnectionOptions into connection handler context
             };
 
-            _parser = new TdsParserX(new TdsContext(this));
+            // TODO enable parser registration with Parser introduction.
+            // _parser = new TdsParserX(new TdsContext(this));
         }
 
         #region properties
@@ -54,8 +50,6 @@ namespace Microsoft.Data.SqlClientX
         /// The data source that generated this connector.
         /// </summary>
         internal SqlDataSource DataSource { get; }
-
-        internal DbConnectionOptions ConnectionOptions { get; set; }
 
         /// <summary>
         /// The server version this connector is connected to.

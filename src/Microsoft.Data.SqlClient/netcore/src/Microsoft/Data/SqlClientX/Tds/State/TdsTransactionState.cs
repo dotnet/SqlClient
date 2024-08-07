@@ -28,6 +28,16 @@ namespace Microsoft.Data.SqlClientX.Tds.State
 
         internal SqlInternalTransaction PendingTransaction => _pendingTransaction;
 
+        internal void UpdateCurrentTransaction(SqlInternalTransaction transaction)
+        {
+            _currentTransaction = transaction;
+        }
+
+        internal void UpdatePendingTransaction(SqlInternalTransaction transaction)
+        {
+            _pendingTransaction = transaction;
+        }
+
         internal int IncrementNonTransactedOpenResultCount()
         {
             // IMPORTANT - this increments the connection wide open result count for all

@@ -35,7 +35,6 @@ namespace Microsoft.Data.SqlClientX
         private SqlConnector? _internalConnection;
 
         private bool _disposed;
-        private int _closeCount;
 
         //TODO: Investigate if we can just use dataSource.ConnectionString. Do this when this class can resolve its own data source.
         private string _connectionString = string.Empty;
@@ -336,53 +335,6 @@ namespace Microsoft.Data.SqlClientX
             => throw new NotImplementedException();
 
         #region internal helpers
-
-        // If wrapCloseInAction is defined, then the action it defines will be run with the connection close action passed in as a parameter
-        // The close action also supports being run asynchronously
-        internal void OnError(SqlException exception, bool breakConnection, Action<Action> wrapCloseInAction)
-        {
-            Debug.Assert(exception != null && exception.Errors.Count != 0, "SqlConnection: OnError called with null or empty exception!");
-
-            if (breakConnection && (ConnectionState.Open == State))
-            {
-                if (wrapCloseInAction != null)
-                {
-                    int capturedCloseCount = _closeCount;
-
-                    Action closeAction = () =>
-                    {
-                        if (capturedCloseCount == _closeCount)
-                        {
-                            Close();
-                        }
-                    };
-
-                    wrapCloseInAction(closeAction);
-                }
-                else
-                {
-                    Close();
-                }
-            }
-
-            if (exception.Class >= TdsEnums.MIN_ERROR_CLASS)
-            {
-                // It is an error, and should be thrown.  Class of TdsEnums.MIN_ERROR_CLASS or above is an error,
-                // below TdsEnums.MIN_ERROR_CLASS denotes an info message.
-                throw exception;
-            }
-            else
-            {
-                // If it is a class < TdsEnums.MIN_ERROR_CLASS, it is a warning collection - so pass to handler
-                this.OnInfoMessage(new SqlInfoMessageEventArgs(exception));
-            }
-        }
-
-        internal void OnInfoMessage(SqlInfoMessageEventArgs imevent)
-        {
-            bool notified;
-            OnInfoMessage(imevent, out notified);
-        }
 
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
         {
