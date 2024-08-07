@@ -8,6 +8,15 @@
     <Product>Framework $(BaseProduct)</Product>
     <Configurations>Debug;Release;net461-Release;net461-Debug</Configurations>
   </PropertyGroup>
+  <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>true</DelaySign>
+    <KeyFile>$(SigningKeyPath)</KeyFile>
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(CDP_BUILD_TYPE)!=Official">
+    <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="Microsoft.Data.SqlClient.cs" />
   </ItemGroup>
