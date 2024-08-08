@@ -19,6 +19,7 @@ parameters:
 
 jobs:
 - job: run_tests_package_reference
+  displayName: 'Run tests with package reference'
   ${{ if ne(parameters.dependsOn, 'empty')}}:
     dependsOn: '${{parameters.dependsOn }}'
   pool:
