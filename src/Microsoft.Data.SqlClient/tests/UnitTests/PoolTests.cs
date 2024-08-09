@@ -121,26 +121,27 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             await using var dataSource = testBase.CreateDataSource(csb => csb.MaxPoolSize = 1);
             await using var conn1 = await dataSource.OpenConnectionAsync();
 
-            AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
+            AssertPoolState(dataSource, expectedTotal: 1, expectedIdle: 0);
 
             // Pool is exhausted
             await using (var conn2 = dataSource.CreateConnection())
             {
                 var cts = new CancellationTokenSource(1000);
                 var openTask = conn2.OpenAsync(cts.Token);
-                AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
+                AssertPoolState(dataSource, expectedTotal: 1, expectedIdle: 0);
                 await Assert.ThrowsAsync<OperationCanceledException>(async () => await openTask);
             }
 
-            AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
+            AssertPoolState(dataSource, expectedTotal: 1, expectedIdle: 0);
             await using (var conn2 = dataSource.CreateConnection())
             await using (new Timer(o => conn1.Close(), null, 1000, Timeout.Infinite))
             {
                 await conn2.OpenAsync();
-                AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
+                AssertPoolState(dataSource, expectedTotal: 1, expectedIdle: 0);
             }
-            AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 1);
+            AssertPoolState(dataSource, expectedTotal: 1, expectedIdle: 1);
         }
+
         /*
         [Fact, Description("Makes sure that when a pooled connection is closed it's properly reset, and that parameter settings aren't leaked")]
         public async Task ResetOnClose()
@@ -155,72 +156,69 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             await conn.OpenAsync();
             Assert.That(conn.Connector.BackendProcessId, Is.EqualTo(backendId));
             Assert.That(await conn.ExecuteScalarAsync("SHOW search_path"), Is.EqualTo("public"));
-        }
-        
-        [Fact]
-        public void ConnectionPruningInterval_zero_throws()
-            => Assert.ThrowsAsync<ArgumentException>(async () =>
-            {
-                await using var dataSource = testBase.CreateDataSource(csb => csb.ConnectionPruningInterval = 0);
-            });
-        
-        [Fact]
-        public void ConnectionPruningInterval_bigger_than_ConnectionIdleLifetime_throws()
-            => Assert.ThrowsAsync<ArgumentException>(async () =>
-            {
-                await using var dataSource = testBase.CreateDataSource(csb =>
-                {
-                    csb.ConnectionIdleLifetime = 1;
-                    csb.ConnectionPruningInterval = 2;
-                });
-            });
+        }*/
 
-        [Theory, Explicit("Slow, and flaky under pressure, based on timing")]
-        [TestCase(0, 2, 1, 2)] // min pool size 0, sample twice
-        [TestCase(1, 2, 1, 2)] // min pool size 1, sample twice
-        [TestCase(2, 2, 1, 2)] // min pool size 2, sample twice
-        [TestCase(2, 3, 2, 2)] // test rounding up, should sample twice.
-        [TestCase(2, 1, 1, 1)] // test sample once.
-        [TestCase(2, 20, 3, 7)] // test high samples.
-        public async Task Prune_idle_connectors(int minPoolSize, int connectionIdleLifeTime, int connectionPruningInterval, int samples)
+        [Theory]
+        [InlineData(0, 2, 1, 0)] // min pool size 0
+        [InlineData(1, 2, 1, 0)] // min pool size 1
+        [InlineData(2, 2, 1, 0)] // min pool size 2
+        [InlineData(5, 2, 0, 3)]
+        [InlineData(5, 2, 3, 3)]
+        [InlineData(5, 5, 10, 0)]
+        public async Task Prune_idle_connectors(int minPoolSize, int rentedConnections, int idleConnections, int expectedIdle)
         {
-            await using var dataSource = testBase.CreateDataSource(csb =>
+            // Arrange
+            await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb =>
             {
                 csb.MinPoolSize = minPoolSize;
-                csb.ConnectionIdleLifetime = connectionIdleLifeTime;
-                csb.ConnectionPruningInterval = connectionPruningInterval;
             });
 
-            var connectionPruningIntervalMs = connectionPruningInterval * 1000;
+            CancellationTokenSource rentedCts = new CancellationTokenSource();
+            Task[] rentedConnectionTasks = new Task[rentedConnections];
 
-            await using var conn1 = await dataSource.OpenConnectionAsync();
-            await using var conn2 = await dataSource.OpenConnectionAsync();
-            await using var conn3 = await dataSource.OpenConnectionAsync();
-
-            await conn1.CloseAsync();
-            await conn2.CloseAsync();
-            AssertPoolState(dataSource!, open: 3, idle: 2);
-
-            var paddingMs = 100; // 100ms
-            var sleepInterval = connectionPruningIntervalMs + paddingMs;
-            var total = 0;
-
-            for (var i = 0; i < samples - 1; i++)
+            for (int i = 0; i < rentedConnections; i++)
             {
-                total += sleepInterval;
-                Thread.Sleep(sleepInterval);
-                // ConnectionIdleLifetime not yet reached.
-                AssertPoolState(dataSource, open: 3, idle: 2);
+                rentedConnectionTasks[i] = HoldConnectionUntilCancel(rentedCts.Token).AsTask();
             }
 
-            // final cycle to do pruning.
-            Thread.Sleep(Math.Max(sleepInterval, (connectionIdleLifeTime * 1000) - total));
+            CancellationTokenSource idleCts = new CancellationTokenSource();
+            Task[] idleConnectionTasks = new Task[idleConnections];
+            for (int i = 0; i < idleConnections; i++)
+            {
+                idleConnectionTasks[i] = HoldConnectionUntilCancel(idleCts.Token).AsTask();
+            }
 
-            // ConnectionIdleLifetime reached, we still have one connection open minimum,
-            // and as a result we have minPoolSize - 1 idle connections.
-            AssertPoolState(dataSource, open: Math.Max(1, minPoolSize), idle: Math.Max(0, minPoolSize - 1));
+            // Act
+            idleCts.Cancel();
+            Task.WaitAll(idleConnectionTasks);
+
+            // Wait twice to ensure we didn't pick up an in progress prune process
+            await await dataSource.PruneIdleConnections();
+            await await dataSource.PruneIdleConnections();
+            await await dataSource.WarmUp();
+
+            // Assert
+            AssertPoolState(dataSource,
+                expectedTotal: Math.Max(rentedConnections, minPoolSize),
+                expectedIdle: expectedIdle,
+                expectedBusy: rentedConnections);
+
+            async ValueTask HoldConnectionUntilCancel(CancellationToken ct)
+            {
+                var conn = dataSource.CreateConnection();
+                await conn.OpenAsync();
+
+                // Wait for cancellation, swallowing the exception when thrown
+                try
+                {
+                    await Task.Delay(Timeout.Infinite, ct);
+                }
+                catch (OperationCanceledException) { }
+
+                await conn.DisposeAsync();
+            }
         }
-
+        /*
         [Fact]
         [Explicit("Timing-based")]
         public async Task Prune_counts_max_lifetime_exceeded()
@@ -272,16 +270,16 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             await using var dataSource = testBase.CreateDataSource(csb => csb.MaxPoolSize = 1);
             await using var conn1 = await dataSource.OpenConnectionAsync(); // Pool is now exhausted
 
-            AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
+            AssertPoolState(dataSource, expectedTotal: 1, expectedIdle: 0);
 
             Func<Task<int>> asyncOpener = async () =>
             {
                 using (var conn2 = dataSource.CreateConnection())
                 {
                     await conn2.OpenAsync();
-                    AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 0);
+                    AssertPoolState(dataSource, expectedTotal: 1, expectedIdle: 0);
                 }
-                AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 1);
+                AssertPoolState(dataSource, expectedTotal: 1, expectedIdle: 1);
                 return Environment.CurrentManagedThreadId;
             };
 
@@ -289,7 +287,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             var asyncOpenerTask = asyncOpener();
             conn1.Close();  // Complete the async open by closing conn1
             var asyncOpenerThreadId = asyncOpenerTask.GetAwaiter().GetResult();
-            AssertPoolState(dataSource, expectedOpen: 1, expectedIdle: 1);
+            AssertPoolState(dataSource, expectedTotal: 1, expectedIdle: 1);
 
             Assert.NotEqual(Environment.CurrentManagedThreadId, asyncOpenerThreadId);
         }
@@ -348,7 +346,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
                     NpgsqlConnection.ClearPool(conn);
             }
         }
-        
+
         [Fact]
         public void ClearPool_with_busy()
         {
@@ -510,13 +508,14 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
 
         volatile int StopFlag;
 
-        void AssertPoolState(SqlDataSource? pool, int expectedOpen, int expectedIdle)
+        void AssertPoolState(SqlDataSource? pool, int expectedTotal, int expectedIdle, int expectedBusy = 0)
         {
             ArgumentNullException.ThrowIfNull(pool, nameof(pool));
 
-            var (openState, idleState, _) = pool.Statistics;
-            Assert.Equal(expectedOpen, openState);
+            var (openState, idleState, busyState) = pool.Statistics;
+            Assert.Equal(expectedTotal, openState);
             Assert.Equal(expectedIdle, idleState);
+            Assert.Equal(expectedBusy, busyState);
         }
         #endregion Support
         /*
