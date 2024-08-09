@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -36,9 +37,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void RunCancelAsyncConnections(SqlConnectionStringBuilder connectionStringBuilder)
         {
             SqlConnection.ClearAllPools();
-            _watch = Stopwatch.StartNew();
-            _random = new Random(4); // chosen via fair dice role.
+            
             ParallelLoopResult results = new ParallelLoopResult();
+            ConcurrentDictionary<int, bool> tracker = new ConcurrentDictionary<int, bool>();
+
+            _random = new Random(4); // chosen via fair dice roll.
+            _watch = Stopwatch.StartNew();
+
             try
             {
                 // Setup a timer so that we can see what is going on while our tasks run
@@ -47,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     results = Parallel.For(
                         fromInclusive: 0,
                         toExclusive: NumberOfTasks,
-                        (int i) => DoManyAsync(connectionStringBuilder).GetAwaiter().GetResult());
+                        (int i) => DoManyAsync(i, tracker, connectionStringBuilder).GetAwaiter().GetResult());
                 }
             }
             catch (Exception ex)
@@ -82,15 +87,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 count = _exceptionDetails.Count;
             }
-
             _output.WriteLine($"{_watch.Elapsed} {_continue} Started:{_start} Done:{_done} InFlight:{_inFlight} RowsRead:{_rowsRead} ResultRead:{_resultRead} PoisonedEnded:{_poisonedEnded} nonPoisonedExceptions:{_nonPoisonedExceptions} PoisonedCleanupExceptions:{_poisonCleanUpExceptions} Count:{count} Found:{_found}");
         }
 
         // This is the the main body that our Tasks run
-        private async Task DoManyAsync(SqlConnectionStringBuilder connectionStringBuilder)
+        private async Task DoManyAsync(int index, ConcurrentDictionary<int,bool> tracker, SqlConnectionStringBuilder connectionStringBuilder)
         {
             Interlocked.Increment(ref _start);
             Interlocked.Increment(ref _inFlight);
+            tracker[index] = true;
 
             using (SqlConnection marsConnection = new SqlConnection(connectionStringBuilder.ToString()))
             {
@@ -100,15 +105,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
 
                 // First poison
-                await DoOneAsync(marsConnection, connectionStringBuilder.ToString(), poison: true);
+                await DoOneAsync(marsConnection, connectionStringBuilder.ToString(), poison: true, index);
 
                 for (int i = 0; i < NumberOfNonPoisoned && _continue; i++)
                 {
                     // now run some without poisoning
-                    await DoOneAsync(marsConnection, connectionStringBuilder.ToString());
+                    await DoOneAsync(marsConnection, connectionStringBuilder.ToString(),false,index);
                 }
             }
-
+            tracker.TryRemove(index, out var _);
             Interlocked.Decrement(ref _inFlight);
             Interlocked.Increment(ref _done);
         }
@@ -117,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // if we are poisoning we will 
         //   1 - Interject some sleeps in the sql statement so that it will run long enough that we can cancel it
         //   2 - Setup a time bomb task that will cancel the command a random amount of time later
-        private async Task DoOneAsync(SqlConnection marsConnection, string connectionString, bool poison = false)
+        private async Task DoOneAsync(SqlConnection marsConnection, string connectionString, bool poison, int parent)
         {
             try
             {
@@ -135,12 +140,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     if (marsConnection != null && marsConnection.State == System.Data.ConnectionState.Open)
                     {
-                        await RunCommand(marsConnection, builder.ToString(), poison);
+                        await RunCommand(marsConnection, builder.ToString(), poison, parent);
                     }
                     else
                     {
                         await connection.OpenAsync();
-                        await RunCommand(connection, builder.ToString(), poison);
+                        await RunCommand(connection, builder.ToString(), poison, parent);
                     }
                 }
             }
@@ -176,7 +181,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private async Task RunCommand(SqlConnection connection, string commandText, bool poison)
+        private async Task RunCommand(SqlConnection connection, string commandText, bool poison, int parent)
         {
             int rowsRead = 0;
             int resultRead = 0;
@@ -211,7 +216,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 }
                                 while (await reader.NextResultAsync() && _continue);
                             }
-                            catch when (poison)
+                            catch (SqlException sqlException) when (poison && sqlException.Message.Contains("Operation cancelled by user."))
                             {
                                 //  This looks a little strange, we failed to read above so this should fail too
                                 //  But consider the case where this code is elsewhere (in the Dispose method of a class holding this logic)
@@ -227,6 +232,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 }
 
                                 throw;
+                            }
+                            catch (Exception ex)
+                            {
+                                Assert.Fail("unexpected exception: " + ex.GetType().Name + " " +ex.Message);
                             }
                         }
                     }

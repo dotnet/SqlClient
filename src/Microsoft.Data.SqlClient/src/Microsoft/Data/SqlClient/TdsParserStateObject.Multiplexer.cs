@@ -44,6 +44,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
+                    if (_inBytesRead != 0)
+                    {
+                        SetBuffer(new byte[_inBuff.Length], 0, 0);
+                    }
                     getDataError = GetSniPacket(packet, ref dataSize);
                 }
 
@@ -109,7 +113,6 @@ namespace Microsoft.Data.SqlClient
                             if (_snapshot != null)
                             {
                                 _snapshot.AppendPacketData(_inBuff, _inBytesRead);
-                                SetBuffer(new byte[_inBuff.Length], 0, 0);
                                 appended = true;
                             }
                             else
