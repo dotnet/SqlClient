@@ -59,7 +59,7 @@ namespace Microsoft.Data.Common
             int copyPosition = 0;
 
             StringBuilder builder = new(_usersConnectionString.Length);
-            for (NameValuePair current = _keyChain; null != current; current = current.Next)
+            for (NameValuePair current = _keyChain; current != null; current = current.Next)
             {
                 if ((current.Name == keyword) && (current.Value == this[keyword]))
                 {
@@ -92,7 +92,7 @@ namespace Microsoft.Data.Common
             {
                 throw ADP.InvalidKeyname(keyName);
             }
-            if ((null != keyValue) && !IsValueValidInternal(keyValue))
+            if (keyValue != null && !IsValueValidInternal(keyValue))
             {
                 throw ADP.InvalidValue(keyName);
             }
@@ -112,7 +112,7 @@ namespace Microsoft.Data.Common
             }
             builder.Append("=");
 
-            if (null != keyValue)
+            if (keyValue != null)
             { // else <keyword>=;
                 if (useOdbcRules)
                 {
@@ -165,7 +165,7 @@ namespace Microsoft.Data.Common
         internal static string ExpandDataDirectory(string keyword, string value, ref string datadir)
         {
             string fullPath = null;
-            if ((null != value) && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase))
+            if (value != null && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase))
             {
 
                 string rootFolderPath = datadir;
@@ -174,7 +174,7 @@ namespace Microsoft.Data.Common
                     // find the replacement path
                     object rootFolderObject = AppDomain.CurrentDomain.GetData("DataDirectory");
                     rootFolderPath = (rootFolderObject as string);
-                    if ((null != rootFolderObject) && rootFolderPath == null)
+                    if (rootFolderObject != null && rootFolderPath == null)
                     {
                         throw ADP.InvalidDataDirectory();
                     }

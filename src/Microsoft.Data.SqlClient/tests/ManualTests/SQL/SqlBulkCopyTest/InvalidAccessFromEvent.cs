@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                while (null != e.InnerException)
+                while (e.InnerException != null)
                 {
                     e = e.InnerException;
                 }

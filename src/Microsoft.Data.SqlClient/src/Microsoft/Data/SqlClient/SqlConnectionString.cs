@@ -425,7 +425,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (null != _networkLibrary)
+            if (_networkLibrary != null)
             { // MDAC 83525
                 string networkLibrary = _networkLibrary.Trim().ToLower(CultureInfo.InvariantCulture);
                 Hashtable netlib = NetlibMapping();
@@ -460,7 +460,7 @@ namespace Microsoft.Data.SqlClient
             ValidateValueLength(_initialCatalog, TdsEnums.MAXLEN_DATABASE, KEY.Initial_Catalog);
             ValidateValueLength(_password, TdsEnums.MAXLEN_CLIENTSECRET, KEY.Password);
             ValidateValueLength(_userID, TdsEnums.MAXLEN_CLIENTID, KEY.User_ID);
-            if (null != _workstationId)
+            if (_workstationId != null)
             {
                 ValidateValueLength(_workstationId, TdsEnums.MAXLEN_HOSTNAME, KEY.Workstation_Id);
             }
@@ -487,7 +487,7 @@ namespace Microsoft.Data.SqlClient
 #else
             _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName);
 #endif // NETFRAMEWORK
-            if (null != _expandedAttachDBFilename)
+            if (_expandedAttachDBFilename != null)
             {
                 if (0 <= _expandedAttachDBFilename.IndexOf('|'))
                 {
@@ -782,13 +782,13 @@ namespace Microsoft.Data.SqlClient
             {
                 // so tdsparser.connect can determine if SqlConnection.UserConnectionOptions
                 // needs to enforce local host after datasource alias lookup
-                return (null != _expandedAttachDBFilename) && _localDBInstance == null;
+                return _expandedAttachDBFilename != null && _localDBInstance == null;
             }
         }
 
         protected internal override string Expand()
         {
-            if (null != _expandedAttachDBFilename)
+            if (_expandedAttachDBFilename != null)
             {
 #if NETFRAMEWORK
                 return ExpandKeyword(KEY.AttachDBFilename, _expandedAttachDBFilename);

@@ -1226,7 +1226,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 for (int i = 0; i < row.Length; i++)
                 {
-                    if (null != row[i] && DBNull.Value != row[i] && row[i].GetType() != table.Columns[i].DataType)
+                    if (row[i] != null && DBNull.Value != row[i] && row[i].GetType() != table.Columns[i].DataType)
                     {
                         result = false;
                     }
@@ -1313,13 +1313,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (targetTable == null)
                 {
                     targetTable = CreateNewTable(row, ref valueTypes);
-                    if (null != targetTable)
+                    if (targetTable != null)
                     {
                         dtList.Add(targetTable);
                     }
                 }
 
-                if (null != targetTable)
+                if (targetTable != null)
                 {
                     targetTable.Rows.Add(row);
                 }
@@ -1445,7 +1445,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         value = rdr.GetValue(columnOrd);
                     }
-                    if (null != values)
+                    if (values != null)
                     {
                         if (CompareValue(value, values[rowOrd][columnOrd], fieldMetaData[columnOrd]))
                         {

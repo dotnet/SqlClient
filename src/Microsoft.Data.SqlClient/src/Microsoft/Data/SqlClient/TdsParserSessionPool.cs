@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         TdsParserStateObject session = _cache[i];
 
-                        if (null != session)
+                        if (session != null)
                         {
                             if (session.IsOrphaned)
                             {
@@ -164,8 +164,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void PutSession(TdsParserStateObject session)
         {
-            Debug.Assert(null != session, "null session?");
-            //Debug.Assert(null != session.Owner, "session without owner?");
+            Debug.Assert(session != null, "null session?");
 
             bool okToReuse = session.Deactivate();
 
@@ -224,7 +223,7 @@ namespace Microsoft.Data.SqlClient
             for (int i = 0; i < _cache.Count; i++)
             {
                 TdsParserStateObject session = _cache[i];
-                if (null != session)
+                if (session != null)
                 {
                     SNIHandle sessionHandle = session.Handle;
                     if (sessionHandle != null)

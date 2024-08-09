@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlDelegatedTransaction(SqlInternalConnection connection, Transaction tx)
         {
-            Debug.Assert(null != connection, "null connection?");
+            Debug.Assert(connection != null, "null connection?");
             _connection = connection;
             _atomicTransaction = tx;
             _active = false;
@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient
 
             Exception promoteException;
             byte[] returnValue = null;
-            if (null != connection)
+            if (connection != null)
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, promoting transaction.", ObjectID, connection.ObjectID);
@@ -288,10 +288,10 @@ namespace Microsoft.Data.SqlClient
         // Called by transaction to initiate abort sequence
         public void Rollback(SinglePhaseEnlistment enlistment)
         {
-            Debug.Assert(null != enlistment, "null enlistment?");
+            Debug.Assert(enlistment != null, "null enlistment?");
             SqlInternalConnection connection = GetValidConnection();
 
-            if (null != connection)
+            if (connection != null)
             {
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
@@ -383,10 +383,10 @@ namespace Microsoft.Data.SqlClient
         // Called by the transaction to initiate commit sequence
         public void SinglePhaseCommit(SinglePhaseEnlistment enlistment)
         {
-            Debug.Assert(null != enlistment, "null enlistment?");
+            Debug.Assert(enlistment != null, "null enlistment?");
             SqlInternalConnection connection = GetValidConnection();
 
-            if (null != connection)
+            if (connection != null)
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection {1}, committing transaction.", ObjectID, connection.ObjectID);
@@ -565,11 +565,11 @@ namespace Microsoft.Data.SqlClient
             {
                 // Invalid indicates something BAAAD happened (Commit after TransactionEnded, for instance)
                 //  Doom anything remotely involved.
-                if (null != connection)
+                if (connection != null)
                 {
                     connection.DoomThisConnection();
                 }
-                if (connection != _connection && null != _connection)
+                if (connection != _connection && _connection != null)
                 {
                     _connection.DoomThisConnection();
                 }

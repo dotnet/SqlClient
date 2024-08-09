@@ -142,7 +142,7 @@ namespace Microsoft.Data.SqlClient
                     // deep clone the parameter value if byte[] or char[]
                     object obj = p.Value;
                     byte[] byteValues = (obj as byte[]);
-                    if (null != byteValues)
+                    if (byteValues != null)
                     {
                         int offset = p.Offset;
                         int size = p.Size;
@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         char[] charValues = (obj as char[]);
-                        if (null != charValues)
+                        if (charValues != null)
                         {
                             int offset = p.Offset;
                             int size = p.Size;
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient
                         else
                         {
                             ICloneable cloneable = (obj as ICloneable);
-                            if (null != cloneable)
+                            if (cloneable != null)
                             {
                                 p.Value = cloneable.Clone();
                             }
@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void BuildStoredProcedureName(StringBuilder builder, string part)
         {
-            if ((null != part) && (0 < part.Length))
+            if (part != null && (0 < part.Length))
             {
                 if ('[' == part[0])
                 {
@@ -220,13 +220,13 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlCommandSet.Clear | API | Object Id {0}", ObjectID);
             DbCommand batchCommand = BatchCommand;
-            if (null != batchCommand)
+            if (batchCommand != null)
             {
                 batchCommand.Parameters.Clear();
                 batchCommand.CommandText = null;
             }
             List<SqlBatchCommand> commandList = _commandList;
-            if (null != commandList)
+            if (commandList != null)
             {
                 commandList.Clear();
             }
@@ -239,7 +239,7 @@ namespace Microsoft.Data.SqlClient
             _commandList = null;
             _batchCommand = null;
 
-            if (null != command)
+            if (command != null)
             {
                 command.Dispose();
             }

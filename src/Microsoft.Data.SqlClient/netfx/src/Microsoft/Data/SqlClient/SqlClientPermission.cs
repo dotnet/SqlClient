@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlClientPermission(SqlConnectionString constr) : base(PermissionState.None)
         { // for Open
-            if (null != constr)
+            if (constr != null)
             {
                 AllowBlankPassword = constr.HasBlankPassword; // MDAC 84563
                 AddPermissionEntry(new DBConnectionString(constr));
@@ -114,11 +114,11 @@ namespace Microsoft.Data.SqlClient
         {
             if (!_IsUnrestricted)
             {
-                if (null != permission._keyvalues)
+                if (permission._keyvalues != null)
                 {
                     _keyvalues = (ArrayList)permission._keyvalues.Clone();
 
-                    if (null != permission._keyvaluetree)
+                    if (permission._keyvaluetree != null)
                     {
                         _keyvaluetree = permission._keyvaluetree.CopyNameValue();
                     }
@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientPermission newPermission = (SqlClientPermission)operand.Copy();
             newPermission.AllowBlankPassword &= AllowBlankPassword;
 
-            if ((null != _keyvalues) && (null != newPermission._keyvalues))
+            if (_keyvalues != null && newPermission._keyvalues != null)
             {
                 newPermission._keyvalues.Clear();
 
@@ -198,11 +198,11 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!IsUnrestricted() &&
                     (!AllowBlankPassword || superset.AllowBlankPassword) &&
-                    (_keyvalues == null || (null != superset._keyvaluetree)))
+                    (_keyvalues == null || superset._keyvaluetree != null))
                 {
 
                     subset = true;
-                    if (null != _keyvalues)
+                    if (_keyvalues != null)
                     {
                         foreach (DBConnectionString kventry in _keyvalues)
                         {
@@ -239,7 +239,7 @@ namespace Microsoft.Data.SqlClient
             {
                 newPermission.AllowBlankPassword |= AllowBlankPassword;
 
-                if (null != _keyvalues)
+                if (_keyvalues != null)
                 {
                     foreach (DBConnectionString entry in _keyvalues)
                     {
@@ -252,7 +252,7 @@ namespace Microsoft.Data.SqlClient
 
         private string DecodeXmlValue(string value)
         {
-            if ((null != value) && (0 < value.Length))
+            if (value != null && (0 < value.Length))
             {
                 value = value.Replace("&quot;", "\"");
                 value = value.Replace("&apos;", "\'");
@@ -265,7 +265,7 @@ namespace Microsoft.Data.SqlClient
 
         private string EncodeXmlValue(string value)
         {
-            if ((null != value) && (0 < value.Length))
+            if (value != null && (0 < value.Length))
             {
                 value = value.Replace('\0', ' '); // assumption that '\0' will only be at end of string
                 value = value.Trim();
@@ -295,34 +295,34 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.NotAPermissionElement();
             }
             String version = securityElement.Attribute(XmlStr._Version);
-            if ((null != version) && !version.Equals(XmlStr._VersionNumber))
+            if (version != null && !version.Equals(XmlStr._VersionNumber))
             {
                 throw ADP.InvalidXMLBadVersion();
             }
 
             string unrestrictedValue = securityElement.Attribute(XmlStr._Unrestricted);
-            _IsUnrestricted = (null != unrestrictedValue) && Boolean.Parse(unrestrictedValue);
+            _IsUnrestricted = unrestrictedValue != null && Boolean.Parse(unrestrictedValue);
 
             Clear(); // MDAC 83105
             if (!_IsUnrestricted)
             {
                 string allowNull = securityElement.Attribute(XmlStr._AllowBlankPassword);
-                AllowBlankPassword = (null != allowNull) && Boolean.Parse(allowNull);
+                AllowBlankPassword = allowNull != null && Boolean.Parse(allowNull);
 
                 ArrayList children = securityElement.Children;
-                if (null != children)
+                if (children != null)
                 {
                     foreach (SecurityElement keyElement in children)
                     {
                         tag = keyElement.Tag;
-                        if ((XmlStr._add == tag) || ((null != tag) && (XmlStr._add == tag.ToLower(CultureInfo.InvariantCulture))))
+                        if (XmlStr._add == tag || (tag != null && XmlStr._add == tag.ToLower(CultureInfo.InvariantCulture)))
                         {
                             string constr = keyElement.Attribute(XmlStr._ConnectionString);
                             string restrt = keyElement.Attribute(XmlStr._KeyRestrictions);
                             string behavr = keyElement.Attribute(XmlStr._KeyRestrictionBehavior);
 
                             KeyRestrictionBehavior behavior = KeyRestrictionBehavior.AllowOnly;
-                            if (null != behavr)
+                            if (behavr != null)
                             {
                                 behavior = (KeyRestrictionBehavior)Enum.Parse(typeof(KeyRestrictionBehavior), behavr, true);
                             }
@@ -360,7 +360,7 @@ namespace Microsoft.Data.SqlClient
             {
                 root.AddAttribute(XmlStr._AllowBlankPassword, AllowBlankPassword.ToString(CultureInfo.InvariantCulture));
 
-                if (null != _keyvalues)
+                if (_keyvalues != null)
                 {
                     foreach (DBConnectionString value in _keyvalues)
                     {

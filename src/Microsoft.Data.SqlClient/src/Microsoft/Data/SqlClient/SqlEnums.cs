@@ -603,7 +603,7 @@ namespace Microsoft.Data.SqlClient
         internal static object GetSqlValueFromComVariant(object comVal)
         {
             object sqlVal = null;
-            if ((null != comVal) && (DBNull.Value != comVal))
+            if (comVal != null && (DBNull.Value != comVal))
             {
                 switch (comVal)
                 {

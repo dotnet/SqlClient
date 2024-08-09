@@ -385,7 +385,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null != _connection)
+                if (_connection != null)
                 {
                     if (_connection.StatisticsEnabled)
                     {
@@ -683,7 +683,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 updateBulkCommandText.Append(" COLLATE " + collation_name.Value);
                                 // Compare collations only if the collation value was set on the metadata
-                                if (null != _sqlDataReaderRowSource && metadata.collation != null)
+                                if (_sqlDataReaderRowSource != null && metadata.collation != null)
                                 {
                                     // On SqlDataReader we can verify the sourcecolumn collation!
                                     int sourceColumnId = _localColumnMappings[assocId]._internalSourceColumnOrdinal;
@@ -847,7 +847,7 @@ namespace Microsoft.Data.SqlClient
                     try
                     {
                         Debug.Assert(_internalTransaction == null, "Internal transaction exists during dispose");
-                        if (null != _internalTransaction)
+                        if (_internalTransaction != null)
                         {
                             _internalTransaction.Rollback();
                             _internalTransaction.Dispose();
@@ -922,7 +922,7 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                     // SqlDataReader-specific logic
-                    else if (null != _sqlDataReaderRowSource)
+                    else if (_sqlDataReaderRowSource != null)
                     {
                         if (_currentRowMetadata[destRowIndex].IsSqlType)
                         {
@@ -1297,7 +1297,7 @@ namespace Microsoft.Data.SqlClient
             // If we have a transaction, check to ensure that the active
             // connection property matches the connection associated with
             // the transaction.
-            if (null != _externalTransaction && _connection != _externalTransaction.Connection)
+            if (_externalTransaction != null && _connection != _externalTransaction.Connection)
             {
                 throw ADP.TransactionConnectionMismatch();
             }
@@ -1340,7 +1340,7 @@ namespace Microsoft.Data.SqlClient
 
         private void CommitTransaction()
         {
-            if (null != _internalTransaction)
+            if (_internalTransaction != null)
             {
                 SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
                 internalConnection.ThreadHasParserLockForClose = true; // In case of error, let the connection know that we have the lock
@@ -1744,7 +1744,7 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 ResetWriteToServerGlobalVariables();
                 DataTable table = rows[0].Table;
-                Debug.Assert(null != table, "How can we have rows without a table?");
+                Debug.Assert(table != null, "How can we have rows without a table?");
                 _rowStateToSkip = DataRowState.Deleted;      // Don't allow deleted rows
                 _rowSource = rows;
                 _dataTableSource = table;
@@ -1790,7 +1790,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 DataTable table = rows[0].Table;
-                Debug.Assert(null != table, "How can we have rows without a table?");
+                Debug.Assert(table != null, "How can we have rows without a table?");
                 _rowStateToSkip = DataRowState.Deleted; // Don't allow deleted rows
                 _rowSource = rows;
                 _dataTableSource = table;

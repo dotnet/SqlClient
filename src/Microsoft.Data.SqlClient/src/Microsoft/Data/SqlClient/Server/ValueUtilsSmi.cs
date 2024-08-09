@@ -3804,7 +3804,7 @@ namespace Microsoft.Data.SqlClient.Server
                 int recordNumber = 1;   // used only for reporting position when there are errors.
 
                 // obtain enumerator and handle any peekahead values
-                if (null != peekAhead && null != peekAhead.FirstRecord)
+                if (peekAhead != null && peekAhead.FirstRecord != null)
                 {
                     // hook up to enumerator
                     enumerator = peekAhead.Enumerator;

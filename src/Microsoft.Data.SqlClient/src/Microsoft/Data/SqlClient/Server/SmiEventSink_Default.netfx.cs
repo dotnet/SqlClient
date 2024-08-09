@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal void CleanMessages()
         {
             SmiEventSink_Default parent = (SmiEventSink_Default)_parent;
-            if (null != parent)
+            if (parent != null)
             {
                 parent.CleanMessages();
             }

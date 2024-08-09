@@ -726,7 +726,7 @@ namespace Microsoft.Data.SqlClient
 
         private void ParseMultipartName()
         {
-            if (null != _multipartName)
+            if (_multipartName != null)
             {
                 string[] parts = MultipartIdentifier.ParseMultipartIdentifier(_multipartName, "[\"", "]\"", Strings.SQL_TDSParserTableName, false);
                 _serverName = parts[0];

@@ -952,7 +952,7 @@ namespace Microsoft.Data.SqlClient.Server
                 throw SQL.InvalidSqlDbTypeForConstructor(dbType);
             }
 
-            if (null != database || null != owningSchema)
+            if (database != null || owningSchema != null)
             {
                 if (objectName == null)
                 {
@@ -1060,7 +1060,7 @@ namespace Microsoft.Data.SqlClient.Server
             if (SqlDbType.Char == SqlDbType || SqlDbType.NChar == SqlDbType)
             {
                 // Don't pad null values
-                if (null != value)
+                if (value != null)
                 {
                     // Pad if necessary
                     if (value.Length < MaxLength)
@@ -1352,7 +1352,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 //DBG.Assert(Max!=MaxLength, "SqlMetaData.Adjust(SqlChars): Fixed-length type with Max length!");
                 // Don't pad null values
-                if (null != value && !value.IsNull)
+                if (value != null && !value.IsNull)
                 {
                     // Pad fixed-length types
                     long oldLength = value.Length;
@@ -1410,7 +1410,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 //DBG.Assert(Max!=MaxLength, "SqlMetaData.Adjust(SqlBytes): Fixed-length type with Max length!");
                 // Don't pad null values
-                if (null != value && !value.IsNull)
+                if (value != null && !value.IsNull)
                 {
                     // Pad fixed-length types
                     int oldLength = (int)value.Length;
@@ -1943,7 +1943,7 @@ namespace Microsoft.Data.SqlClient.Server
             if (SqlDbType.Binary == SqlDbType || SqlDbType.Timestamp == SqlDbType)
             {
                 // Don't pad null values
-                if (null != value)
+                if (value != null)
                 {
                     // Pad fixed-length types
                     if (value.Length < MaxLength)
@@ -2003,7 +2003,7 @@ namespace Microsoft.Data.SqlClient.Server
             if (SqlDbType.Char == SqlDbType || SqlDbType.NChar == SqlDbType)
             {
                 // Don't pad null values
-                if (null != value)
+                if (value != null)
                 {
                     // Pad fixed-length types
                     long oldLength = value.Length;
