@@ -54,6 +54,11 @@ namespace Microsoft.Data.SqlClientX
 
         //TODO: set this based on login info
         internal int ServerProcessId { get; private set; }
+
+        /// <summary>
+        /// Contains the UTC timestamp when this connector was opened.
+        /// </summary>
+        internal DateTime OpenTimestamp { get; private set; }
         #endregion
 
         /// <summary>
