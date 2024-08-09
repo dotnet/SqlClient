@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClientX
         private static SemaphoreSlim SyncOverAsyncSemaphore { get; } = new(Math.Max(1, Environment.ProcessorCount / 2));
 
         private static int _objectTypeCount; // EventSource counter
-        private static TimeSpan DefaultPruningPeriod = TimeSpan.FromSeconds(10);
+        private static TimeSpan DefaultPruningPeriod = TimeSpan.FromMinutes(2);
         private static TimeSpan MinIdleCountPeriod = TimeSpan.FromSeconds(1);
 
         #region private readonly
@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClientX
         private readonly CancellationTokenSource _shutdownCTS;
         private readonly CancellationToken _shutdownCT;
 
-        private ValueTask _warmupTask;
+        private Task _warmupTask;
         private readonly SemaphoreSlim _warmupLock;
 
         private int _minIdleCount;
@@ -81,10 +81,10 @@ namespace Microsoft.Data.SqlClientX
         /// </summary>
         //TODO: support auth contexts and provider info
         internal PoolingDataSource(
-            SqlConnectionString connectionString,
-            SqlCredential credential,
-            RateLimiterBase connectionRateLimiter)
-            : base(connectionString, credential)
+        SqlConnectionString connectionString,
+        SqlCredential credential,
+        RateLimiterBase connectionRateLimiter)
+        : base(connectionString, credential)
         {
             _connectionRateLimiter = connectionRateLimiter;
             _connectors = new SqlConnector[MaxPoolSize];
@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClientX
             _shutdownCTS = new CancellationTokenSource();
             _shutdownCT = _shutdownCTS.Token;
 
-            _warmupTask = ValueTask.CompletedTask;
+            _warmupTask = Task.CompletedTask;
             _warmupLock = new SemaphoreSlim(1);
 
             _minIdleCount = int.MaxValue;
@@ -118,6 +118,8 @@ namespace Microsoft.Data.SqlClientX
         internal int MaxPoolSize => Settings.MaxPoolSize;
         internal TimeSpan ConnectionLifetime => TimeSpan.FromSeconds(Settings.LoadBalanceTimeout);
         internal int ObjectID => _objectID;
+        internal bool IsWarmupEnabled { get; set; } = true;
+
 
         internal sealed override (int Total, int Idle, int Busy) Statistics
         {
@@ -251,8 +253,8 @@ namespace Microsoft.Data.SqlClientX
         }
 
         /// <summary>
-        /// Checks that the provided connector is live and unexpired.
-        /// If true, indicates that the connector may be returned by the pool.
+        /// Checks that the provided connector is live and unexpired and closes it if needed.
+        /// Decrements the idle count as long as the connector is not null.
         /// </summary>
         /// <param name="connector">The connector to be checked.</param>
         /// <returns>Returns true if the connector is live and unexpired, otherwise returns false.</returns>
@@ -272,10 +274,10 @@ namespace Microsoft.Data.SqlClientX
         }
 
         /// <summary>
-        /// Checks the status of the connector and closes it if needed.
+        /// Checks that the provided connector is live and unexpired and closes it if needed.
         /// </summary>
         /// <param name="connector"></param>
-        /// <returns>True indicates that the connector is still good. False indicates that the connector was closed.</returns>
+        /// <returns>Returns true if the connector is live and unexpired, otherwise returns false.</returns>
         private bool CheckConnector(SqlConnector connector)
         {
             // If Clear/ClearAll has been been called since this connector was first opened,
@@ -447,9 +449,9 @@ namespace Microsoft.Data.SqlClientX
         }
 
         /// <summary>
-        /// Closes extra idle connections.
+        /// Initiates a task to wait on the pruning timer. Spins off child tasks to perform pruning
+        /// each time the timer ticks.
         /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
         internal async ValueTask InitiatePruningTimerListener()
         {
             _shutdownCT.ThrowIfCancellationRequested();
@@ -460,9 +462,13 @@ namespace Microsoft.Data.SqlClientX
             }
         }
 
-        // We may await this multiple times, so we need to use Task
-        // in place of ValueTask so that it cannot be recycled.
-        internal async Task<Task> PruneIdleConnections()
+        /// <summary>
+        /// Prunes idle connections from the pool.
+        /// We may await this operation multiple times, so we need to use Task
+        /// in place of ValueTask so that it cannot be recycled.
+        /// </summary>
+        /// <returns>A ValueTask containing a Task that represents the pruning operation.</returns>
+        internal async ValueTask<Task> PruneIdleConnections()
         {
             if (!_pruningTask.IsCompleted)
             {
@@ -563,10 +569,17 @@ namespace Microsoft.Data.SqlClientX
 
         /// <summary>
         /// Warms up the pool by bringing it up to min pool size.
+        /// We may await the underlying operation multiple times, so we need to use Task
+        /// in place of ValueTask so that it cannot be recycled.
         /// </summary>
-        /// <returns>A ValueTask containing a ValueTask that represents the warmup process.</returns>
-        internal async ValueTask<ValueTask> WarmUp()
+        /// <returns>A ValueTask containing a Task that represents the warmup process.</returns>
+        internal async ValueTask<Task> WarmUp()
         {
+            if (!IsWarmupEnabled)
+            {
+                return Task.CompletedTask;
+            }
+
             // Avoid semaphore wait if task is still running
             if (!_warmupTask.IsCompleted)
             {
@@ -592,7 +605,7 @@ namespace Microsoft.Data.SqlClientX
 
             return _warmupTask;
 
-            async ValueTask _WarmUp(CancellationToken ct)
+            async Task _WarmUp(CancellationToken ct)
             {
                 // Best effort, we may over or under create due to race conditions.
                 // Open new connections slowly. If many connections are needed immediately 
@@ -638,7 +651,7 @@ namespace Microsoft.Data.SqlClientX
                 _pruningTimerListener.AsTask(),
                 _pruningTask,
                 _updateMinIdleCountTask.AsTask(),
-                _warmupTask.AsTask());
+                _warmupTask);
 
             // Clean pool state
             //TODO: close all open connections

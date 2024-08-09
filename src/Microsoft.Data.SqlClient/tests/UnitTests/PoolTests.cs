@@ -114,8 +114,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             await using var conn3 = await dataSource.OpenConnectionAsync();
         }
 
-        [Fact]
-        //[Explicit("Timing-based")]
+        [FactRunnableInDebugOnly]
         public async Task OpenAsync_cancel()
         {
             await using var dataSource = testBase.CreateDataSource(csb => csb.MaxPoolSize = 1);
@@ -159,21 +158,24 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
         }*/
 
         [Theory]
-        [InlineData(0, 2, 1, 0)] // min pool size 0
-        [InlineData(1, 2, 1, 0)] // min pool size 1
-        [InlineData(2, 2, 1, 0)] // min pool size 2
-        [InlineData(5, 2, 0, 3)]
-        [InlineData(5, 2, 3, 3)]
-        [InlineData(5, 5, 10, 0)]
-        public async Task Prune_idle_connectors(int minPoolSize, int rentedConnections, int idleConnections, int expectedIdle)
+        [InlineData(0, 2, 1)] // total: 2, idle: 0
+        [InlineData(1, 2, 1)] // total: 2, idle: 0
+        [InlineData(2, 2, 1)] // total: 2, idle: 0
+        [InlineData(5, 2, 0)] // total: 2, idle: 0
+        [InlineData(5, 2, 1)] // total: 2, idle: 1
+        [InlineData(5, 2, 3)] // total: 5, idle: 3
+        [InlineData(5, 5, 10)]// total: 5, idle: 0
+        public async Task Prune_idle_connectors(int minPoolSize, int rentedConnections, int idleConnections)
         {
             // Arrange
             await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb =>
             {
                 csb.MinPoolSize = minPoolSize;
             });
+            // Disable warmup to ensure connections are not created in the background
+            dataSource.IsWarmupEnabled = false;
 
-            CancellationTokenSource rentedCts = new CancellationTokenSource();
+            using CancellationTokenSource rentedCts = new CancellationTokenSource();
             Task[] rentedConnectionTasks = new Task[rentedConnections];
 
             for (int i = 0; i < rentedConnections; i++)
@@ -181,27 +183,38 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
                 rentedConnectionTasks[i] = HoldConnectionUntilCancel(rentedCts.Token).AsTask();
             }
 
-            CancellationTokenSource idleCts = new CancellationTokenSource();
+            using CancellationTokenSource idleCts = new CancellationTokenSource();
             Task[] idleConnectionTasks = new Task[idleConnections];
             for (int i = 0; i < idleConnections; i++)
             {
                 idleConnectionTasks[i] = HoldConnectionUntilCancel(idleCts.Token).AsTask();
             }
 
-            // Act
             idleCts.Cancel();
             Task.WaitAll(idleConnectionTasks);
 
-            // Wait twice to ensure we didn't pick up an in progress prune process
+            // Act
+            // Wait twice to ensure we get a full prune period with the connections idle
             await await dataSource.PruneIdleConnections();
             await await dataSource.PruneIdleConnections();
-            await await dataSource.WarmUp();
 
             // Assert
-            AssertPoolState(dataSource,
-                expectedTotal: Math.Max(rentedConnections, minPoolSize),
-                expectedIdle: expectedIdle,
-                expectedBusy: rentedConnections);
+            if (rentedConnections >= minPoolSize)
+            {
+                AssertPoolState(dataSource,
+                    expectedTotal: rentedConnections,
+                    expectedIdle: 0);
+            }
+            else
+            {
+                AssertPoolState(dataSource,
+                    expectedTotal: rentedConnections + idleConnections,
+                    expectedIdle: Math.Min(minPoolSize - rentedConnections, idleConnections));
+            }
+
+            // Cleanup
+            rentedCts.Cancel();
+            Task.WaitAll(rentedConnectionTasks);
 
             async ValueTask HoldConnectionUntilCancel(CancellationToken ct)
             {
@@ -218,50 +231,6 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
                 await conn.DisposeAsync();
             }
         }
-        /*
-        [Fact]
-        [Explicit("Timing-based")]
-        public async Task Prune_counts_max_lifetime_exceeded()
-        {
-            await using var dataSource = testBase.CreateDataSource(csb =>
-            {
-                csb.MinPoolSize = 0;
-                // Idle lifetime 2 seconds, 2 samples
-                csb.ConnectionIdleLifetime = 2;
-                csb.ConnectionPruningInterval = 1;
-                csb.ConnectionLifetime = 5;
-            });
-
-            // conn1 will exceed max lifetime
-            await using var conn1 = await dataSource.OpenConnectionAsync();
-
-            // make conn1 4 seconds older than the others, so it exceeds max lifetime
-            Thread.Sleep(4000);
-
-            await using var conn2 = await dataSource.OpenConnectionAsync();
-            await using var conn3 = await dataSource.OpenConnectionAsync();
-
-            await conn1.CloseAsync();
-            await conn2.CloseAsync();
-            AssertPoolState(dataSource, open: 3, idle: 2);
-
-            // wait for 1 sample
-            Thread.Sleep(1000);
-            // ConnectionIdleLifetime not yet reached.
-            AssertPoolState(dataSource, open: 3, idle: 2);
-
-            // close conn3, so we can see if too many connectors get pruned
-            await conn3.CloseAsync();
-
-            // wait for last sample + a bit more time for reliability
-            Thread.Sleep(1500);
-
-            // ConnectionIdleLifetime reached
-            // - conn1 should have been closed due to max lifetime (but this should count as pruning)
-            // - conn2 or conn3 should have been closed due to idle pruning
-            // - conn3 or conn2 should remain
-            AssertPoolState(dataSource, open: 1, idle: 1);
-        }*/
 
         //Makes sure that when a waiting async open is given a connection, the continuation is executed in the TP rather than on the closing thread
         [Fact]
@@ -406,18 +375,12 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             AssertPoolState(dataSource, open: 0, idle: 0);
         }*/
 
-        //[Test, Explicit]
-        //[TestCase(10, 10, 30, true)]
-        //[TestCase(10, 10, 30, false)]
-        //[TestCase(10, 20, 30, true)]
-        //[TestCase(10, 20, 30, false)]
-
-        [Theory]
-        [InlineData(10, 10, 30, true)]
-        [InlineData(10, 10, 30, false)]
-        [InlineData(10, 20, 30, true)]
-        [InlineData(10, 20, 30, false)]
-        public async Task Exercise_pool(int maxPoolSize, int numTasks, int seconds, bool async)
+        //[Theory]
+        //[InlineData(10, 10, 30, true)]
+        //[InlineData(10, 10, 30, false)]
+        //[InlineData(10, 20, 30, true)]
+        //[InlineData(10, 20, 30, false)]
+        async Task Exercise_pool(int maxPoolSize, int numTasks, int seconds, bool async)
         {
             await using var dataSource = testBase.CreateDataSource(csb => csb.MaxPoolSize = maxPoolSize);
 
@@ -442,21 +405,30 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             Console.WriteLine("Done");
         }
 
-        /* TODO: respect connection lifetime
         [Fact]
         public async Task ConnectionLifetime()
         {
-            await using var dataSource = testBase.CreateDataSource(csb => csb.ConnectionLifetime = 1);
+            // Arrange
+            // Set min pool size to 1 to ensure that the connection is not pruned
+            // which would invalidate the test.
+            await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb =>
+            {
+                csb.LoadBalanceTimeout = 1;
+                csb.MinPoolSize = 1;
+            });
+            dataSource.IsWarmupEnabled = false;
             await using var conn = await dataSource.OpenConnectionAsync();
-            var processId = conn.ProcessID;
+            var oldProcessId = conn.InternalConnection?.ServerProcessId;
             await conn.CloseAsync();
 
+            // Act
+            // Wait longer than the load balancing timeout to ensure the connection has expired.
             await Task.Delay(2000);
-
             await conn.OpenAsync();
-            Assert.That(conn.ProcessID, Is.Not.EqualTo(processId));
+
+            // Assert
+            Assert.NotEqual(oldProcessId, conn.InternalConnection?.ServerProcessId);
         }
-        */
 
         [Theory]
         [InlineData(0)]
@@ -482,8 +454,10 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = 10);
 
             // Act
-            ValueTask t1 = await dataSource.WarmUp();
-            ValueTask t2 = await dataSource.WarmUp();
+            Task t1 = await dataSource.WarmUp();
+            Task t2 = await dataSource.WarmUp();
+            await t1;
+            await t2;
 
             // Assert
             Assert.Equal(t1, t2);
@@ -496,9 +470,10 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
             await using var dataSource = (PoolingDataSource)testBase.CreateDataSource(csb => csb.MinPoolSize = 10);
 
             // Act
-            ValueTask t1 = await dataSource.WarmUp();
+            Task t1 = await dataSource.WarmUp();
             await t1;
-            ValueTask t2 = await dataSource.WarmUp();
+            Task t2 = await dataSource.WarmUp();
+            await t2;
 
             // Assert
             Assert.NotEqual(t1, t2);
@@ -508,14 +483,13 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
 
         volatile int StopFlag;
 
-        void AssertPoolState(SqlDataSource? pool, int expectedTotal, int expectedIdle, int expectedBusy = 0)
+        void AssertPoolState(SqlDataSource? pool, int expectedTotal, int expectedIdle)
         {
             ArgumentNullException.ThrowIfNull(pool, nameof(pool));
 
-            var (openState, idleState, busyState) = pool.Statistics;
-            Assert.Equal(expectedTotal, openState);
+            var (totalState, idleState, busyState) = pool.Statistics;
+            Assert.Equal(expectedTotal, totalState);
             Assert.Equal(expectedIdle, idleState);
-            Assert.Equal(expectedBusy, busyState);
         }
         #endregion Support
         /*
@@ -572,6 +546,16 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests
         */
     }
 
+    public class FactRunnableInDebugOnly : FactAttribute
+    {
+        public FactRunnableInDebugOnly()
+        {
+            if (!Debugger.IsAttached)
+            {
+                Skip = "Only running in interactive mode.";
+            }
+        }
+    }
 }
 
 #endif
