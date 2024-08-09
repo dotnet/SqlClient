@@ -176,6 +176,33 @@ namespace Microsoft.Data.SqlClient.Tests
             );
         }
 
+        [Fact]
+        public static void BetweenAsyncAttentionPacket()
+        {
+            int dataSize = 120;
+            var normalPacket = CreatePacket(120, 5);
+            var attentionPacket = CreatePacket(13, 6);
+            var input = new List<PacketData> { normalPacket, attentionPacket };
+
+            var stateObject = new TdsParserStateObject(input, TdsEnums.HEADER_LEN + dataSize, true);
+
+            for (int index = 0; index < input.Count; index++)
+            {
+                stateObject.Current = input[index];
+                stateObject.ProcessSniPacket(default, 0, usePartialPacket: false);
+            }
+
+            // attention packet should be in the current buffer because the snapshot is not active
+            Assert.NotNull(stateObject._inBuff);
+            Assert.Equal(21, stateObject._inBytesRead);
+            Assert.Equal(0, stateObject._inBytesUsed);
+
+            // attention packet should be in the snapshot as well
+            Assert.NotNull(stateObject._snapshot);
+            Assert.NotNull(stateObject._snapshot.List);
+            Assert.Equal(2, stateObject._snapshot.List.Count); 
+        }
+
 
         private static List<PacketData> MultiplexPacketList(bool isAsync, int dataSize, List<PacketData> input)
         {
