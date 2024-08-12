@@ -18,6 +18,7 @@ using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -2246,6 +2247,10 @@ namespace Microsoft.Data.SqlClient
                         if (currentType == typeof(SqlXml))
                         {
                             value = MetaType.GetStringFromXml((XmlReader)(((SqlXml)value).CreateReader()));
+                        }
+                        else if (currentType == typeof(SqlJson))
+                        {
+                            value = (value as SqlJson).Value;
                         }
                         else if (currentType == typeof(SqlString))
                         {
