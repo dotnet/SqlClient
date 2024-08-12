@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 }
                                 while (await reader.NextResultAsync() && _continue);
                             }
-                            catch (SqlException sqlException) when (poison && sqlException.Message.Contains("Operation cancelled by user."))
+                            catch (SqlException) when (poison)
                             {
                                 //  This looks a little strange, we failed to read above so this should fail too
                                 //  But consider the case where this code is elsewhere (in the Dispose method of a class holding this logic)
