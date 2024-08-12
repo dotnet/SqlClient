@@ -6805,7 +6805,6 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVARCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
-                case TdsEnums.SQLJSON:
                     // If bigvarchar(max), we only read the first chunk here,
                     // expecting the caller to read the rest
                     if (encoding == null)
@@ -6821,6 +6820,16 @@ namespace Microsoft.Data.SqlClient
                         return result;
                     }
                     value.SetToString(stringValue);
+                    break;
+                case TdsEnums.SQLJSON:
+                    encoding = Encoding.UTF8;
+                    string jsonStringValue;
+                    result = stateObj.TryReadStringWithEncoding(length, encoding, isPlp, out jsonStringValue);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                    value.SetToJson(jsonStringValue);
                     break;
 
                 case TdsEnums.SQLNCHAR:
@@ -10349,7 +10358,8 @@ namespace Microsoft.Data.SqlClient
                                     mt.TDSType != TdsEnums.SQLXMLTYPE &&
                                     mt.TDSType != TdsEnums.SQLIMAGE &&
                                     mt.TDSType != TdsEnums.SQLTEXT &&
-                                    mt.TDSType != TdsEnums.SQLNTEXT, "Type unsupported for encryption");
+                                    mt.TDSType != TdsEnums.SQLNTEXT &&
+                                    mt.TDSType != TdsEnums.SQLJSON, "Type unsupported for encryption");
 
                                 byte[] serializedValue = null;
                                 byte[] encryptedValue = null;

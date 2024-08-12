@@ -987,6 +987,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_StreamNotSupportOnColumnType, columnName));
         }
 
+        internal static Exception JsonDocumentNotSupportedOnColumnType(string columnName)
+        {
+            return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_JsonDocumentNotSupportedOnColumnType, columnName));
+        }
+
         internal static Exception StreamNotSupportOnEncryptedColumn(string columnName)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_StreamNotSupportOnEncryptedColumn, columnName, "Stream"));
