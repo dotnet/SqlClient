@@ -65,7 +65,7 @@ jobs:
   - job: macos
     pool:
       name: Azure Pipelines
-      vmImage: macOS-12
+      vmImage: macOS-14
 
     steps:
     - template: common/templates/steps/configure-sql-server-macos-step.yml@self
