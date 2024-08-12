@@ -35,13 +35,11 @@ steps:
  
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
 
-    docker exec sql1 /opt/mssql-tools18/bin/sqlcmd \
-    -S localhost -No -U SA -P $MSSQL_SA_PW \
-    -Q "SELECT @@VERSION"
+    sleep 5
 
-    docker exec sql1 /opt/mssql-tools/bin/sqlcmd \
-    -S localhost -U SA -P $MSSQL_SA_PW \
-    -Q "SELECT @@VERSION"
+    docker ps -a
+    docker exec -t sql1 cat /var/opt/mssql/log/errorlog | grep connection
+    docker logs sql1
 
     # Connect to server and get the version:
     counter=1
@@ -59,7 +57,15 @@ steps:
       errstatus=$?
       ((counter++))
     done
-    
+
+    docker exec sql1 /opt/mssql-tools18/bin/sqlcmd \
+    -S localhost -No -U SA -P $MSSQL_SA_PW \
+    -Q "SELECT @@VERSION"
+
+    docker ps -a
+    docker exec -t sql1 cat /var/opt/mssql/log/errorlog | grep connection
+    docker logs sql1
+
     # Display error if connection failed:
     if [ $errstatus = 1 ]
     then
