@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens.Info
         /// <summary>
         /// Info number.
         /// </summary>
-        public uint Number { get; }
+        public int Number { get; }
 
         /// <summary>
         /// State.
@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens.Info
         /// <summary>
         /// Line number.
         /// </summary>
-        public uint LineNumber { get; }
+        public int LineNumber { get; }
 
         /// <summary>
         /// Creates a new instance of the token.
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens.Info
         /// <param name="serverName">Server name.</param>
         /// <param name="procName">Process name.</param>
         /// <param name="lineNumber">Line number.</param>
-        public InfoToken(uint number, byte state, byte severity, string message, string serverName, string procName, uint lineNumber)
+        public InfoToken(int number, byte state, byte severity, string message, string serverName, string procName, int lineNumber)
         {
             Number = number;
             State = state;

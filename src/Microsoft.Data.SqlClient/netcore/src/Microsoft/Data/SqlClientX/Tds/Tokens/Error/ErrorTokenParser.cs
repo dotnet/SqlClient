@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens.Error
         public override async ValueTask<Token> ParseAsync(TokenType tokenType, TdsStream tdsStream, bool isAsync, CancellationToken ct)
         {
             _ = await tdsStream.TdsReader.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
-            uint number = await tdsStream.TdsReader.ReadUInt32Async(isAsync, ct).ConfigureAwait(false);
+            int number = await tdsStream.TdsReader.ReadInt32Async(isAsync, ct).ConfigureAwait(false);
             byte state = await tdsStream.TdsReader.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
             byte severity = await tdsStream.TdsReader.ReadByteAsync(isAsync, ct).ConfigureAwait(false);
 
@@ -21,15 +21,8 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens.Error
             string serverName = await tdsStream.TdsReader.ReadBVarCharAsync(isAsync, ct).ConfigureAwait(false);
             string procName = await tdsStream.TdsReader.ReadBVarCharAsync(isAsync, ct).ConfigureAwait(false);
 
-            uint lineNumber;
-            if (tdsStream.TdsVersion < TdsVersion.V7_2)
-            {
-                lineNumber = await tdsStream.TdsReader.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
-            }
-            else
-            {
-                lineNumber = await tdsStream.TdsReader.ReadUInt32Async(isAsync, ct).ConfigureAwait(false);
-            }
+            int lineNumber = await tdsStream.TdsReader.ReadInt32Async(isAsync, ct).ConfigureAwait(false);
+
             return new ErrorToken(number, state, severity, message, serverName, procName, lineNumber);
         }
     }

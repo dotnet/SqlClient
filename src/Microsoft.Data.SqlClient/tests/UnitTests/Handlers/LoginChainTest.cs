@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
 
         // TODO: This test needs to be enabled conditionally. This can be used to test the handlers E2E.
         // For now, uncomment the [Fact] attribute to run the test.
-        //[Fact]
+        [Fact]
         public async void TestConnectivity()
         {
             DataSourceParsingHandler dspHandler = new();
@@ -42,7 +42,6 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
 
             SqlConnectionString scs = new(csb.ConnectionString);
             chc.ConnectionString = scs;
-
             var serverInfo = new ServerInfo(scs);
             serverInfo.SetDerivedNames(null, serverInfo.UserServerName);
             chc.ServerInfo = serverInfo;
@@ -51,6 +50,13 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
             LoginHandler loginHandler = new();
             plHandler.NextHandler = loginHandler;
             await dspHandler.Handle(chc, true, default);
+
+            Assert.NotEqual(Guid.Empty, chc.ConnectionId);
+            Assert.True(chc.Exception == null);
+            Assert.True(chc.TdsStream.Spid != 0);
+
+            // Validate all server response is processed successfully.
+            Assert.True(chc.TdsStream.PacketDataLeft == 0);
         }
     }
 }

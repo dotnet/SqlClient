@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient;
 
@@ -12,15 +13,41 @@ namespace Microsoft.Data.SqlClientX.Tds.State
     /// </summary>
     internal class TdsErrorWarningsState
     {
-        // local exceptions to cache warnings and errors
+        /// <summary>
+        /// Local exceptions to cache errors
+        /// </summary>
         internal SqlErrorCollection _errors;
+
+        /// <summary>
+        /// Local exceptions to cache warnings
+        /// </summary>
         internal SqlErrorCollection _warnings;
-        internal object _errorAndWarningsLock = new object();
+
+        /// <summary>
+        /// Local exceptions to cache errors that occurred prior to sending attention
+        /// </summary>
+        internal SqlErrorCollection _preAttentionErrors;
+
+        /// <summary>
+        /// Local exceptions to cache warnings that occurred prior to sending attention
+        /// </summary>
+        internal SqlErrorCollection _preAttentionWarnings;
+
+        /// <summary>
+        /// Whether or not parser has received an error or a warning.
+        /// </summary>
         internal bool _hasErrorOrWarning;
 
-        // local exceptions to cache warnings and errors that occurred prior to sending attention
-        internal SqlErrorCollection _preAttentionErrors;
-        internal SqlErrorCollection _preAttentionWarnings;
+        /// <summary>
+        /// TRUE - accumulate info messages during TdsParser operations, 
+        /// FALSE - fire them
+        /// </summary>
+        internal bool _accumulateInfoEvents;
+
+        /// <summary>
+        /// List of pending info events.
+        /// </summary>
+        internal List<SqlError> _pendingInfoEvents;
 
         /// <summary>
         /// True if there is at least one error or warning (not counting the pre-attention errors\warnings)
@@ -35,15 +62,9 @@ namespace Microsoft.Data.SqlClientX.Tds.State
         {
             Debug.Assert(error != null, "Trying to add a null error");
 
-            lock (_errorAndWarningsLock)
-            {
-                _hasErrorOrWarning = true;
-                if (_errors == null)
-                {
-                    _errors = new SqlErrorCollection();
-                }
-                _errors.Add(error);
-            }
+            _hasErrorOrWarning = true;
+            _errors ??= new SqlErrorCollection();
+            _errors.Add(error);
         }
 
         /// <summary>
@@ -54,12 +75,9 @@ namespace Microsoft.Data.SqlClientX.Tds.State
             get
             {
                 int count = 0;
-                lock (_errorAndWarningsLock)
+                if (_errors != null)
                 {
-                    if (_errors != null)
-                    {
-                        count = _errors.Count;
-                    }
+                    count = _errors.Count;
                 }
                 return count;
             }
@@ -73,15 +91,9 @@ namespace Microsoft.Data.SqlClientX.Tds.State
         {
             Debug.Assert(error != null, "Trying to add a null error");
 
-            lock (_errorAndWarningsLock)
-            {
-                _hasErrorOrWarning = true;
-                if (_warnings == null)
-                {
-                    _warnings = new SqlErrorCollection();
-                }
-                _warnings.Add(error);
-            }
+            _hasErrorOrWarning = true;
+            _warnings ??= new SqlErrorCollection();
+            _warnings.Add(error);
         }
 
         /// <summary>
@@ -92,14 +104,50 @@ namespace Microsoft.Data.SqlClientX.Tds.State
             get
             {
                 int count = 0;
-                lock (_errorAndWarningsLock)
+                if (_warnings != null)
                 {
-                    if (_warnings != null)
-                    {
-                        count = _warnings.Count;
-                    }
+                    count = _warnings.Count;
                 }
                 return count;
+            }
+        }
+
+        /// <summary>
+        /// Gets the full list of errors and warnings (including the pre-attention ones), then wipes all error and warning lists
+        /// </summary>
+        /// <param name="broken">If true, the connection should be broken</param>
+        /// <returns>An array containing all of the errors and warnings</returns>
+        internal SqlErrorCollection GetFullErrorAndWarningCollection(out bool broken)
+        {
+            SqlErrorCollection allErrors = new SqlErrorCollection();
+            broken = false;
+
+            _hasErrorOrWarning = false;
+
+            // Merge all error lists, then reset them
+            AddErrorsToCollection(_errors, ref allErrors, ref broken);
+            AddErrorsToCollection(_warnings, ref allErrors, ref broken);
+            _errors = null;
+            _warnings = null;
+
+            // We also process the pre-attention error lists here since, if we are here and they are populated, then an error occurred while sending attention so we should show the errors now (otherwise they'd be lost)
+            AddErrorsToCollection(_preAttentionErrors, ref allErrors, ref broken);
+            AddErrorsToCollection(_preAttentionWarnings, ref allErrors, ref broken);
+            _preAttentionErrors = null;
+            _preAttentionWarnings = null;
+
+            return allErrors;
+        }
+
+        private void AddErrorsToCollection(SqlErrorCollection inCollection, ref SqlErrorCollection collectionToAddTo, ref bool broken)
+        {
+            if (inCollection != null)
+            {
+                foreach (SqlError error in inCollection)
+                {
+                    collectionToAddTo.Add(error);
+                    broken |= (error.Class >= TdsEnums.FATAL_ERROR_CLASS);
+                }
             }
         }
     }

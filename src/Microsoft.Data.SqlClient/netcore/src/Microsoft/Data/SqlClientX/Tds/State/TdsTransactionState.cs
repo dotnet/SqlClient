@@ -28,6 +28,8 @@ namespace Microsoft.Data.SqlClientX.Tds.State
 
         internal SqlInternalTransaction PendingTransaction => _pendingTransaction;
 
+        public byte[] PromotedDtcToken { get; set; }
+
         internal void UpdateCurrentTransaction(SqlInternalTransaction transaction)
         {
             _currentTransaction = transaction;

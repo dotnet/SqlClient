@@ -47,22 +47,30 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens.EnvChange
                     oldValue: await tdsStream.TdsReader.ReadBVarByteAsync(isAsync, ct).ConfigureAwait(false)),
 
                 [EnvChangeTokenSubType.BeginTransaction] = async (tdsStream, isAsync, ct) =>
-                new BeginTransactionEnvChangeToken(
+                new TransactionEnvChangeToken(
+                    subtype: EnvChangeTokenSubType.BeginTransaction,
                     newValue: await tdsStream.TdsReader.ReadBVarByteAsync(isAsync, ct).ConfigureAwait(false),
                     oldValue: await tdsStream.TdsReader.ReadBVarByteAsync(isAsync, ct).ConfigureAwait(false)),
 
                 [EnvChangeTokenSubType.CommitTransaction] = async (tdsStream, isAsync, ct) =>
-                new CommitTransactionEnvChangeToken(
+                new TransactionEnvChangeToken(
+                    subtype: EnvChangeTokenSubType.CommitTransaction,
                     newValue: await tdsStream.TdsReader.ReadBVarByteAsync(isAsync, ct).ConfigureAwait(false),
                     oldValue: await tdsStream.TdsReader.ReadBVarByteAsync(isAsync, ct).ConfigureAwait(false)),
 
                 [EnvChangeTokenSubType.RollbackTransaction] = async (tdsStream, isAsync, ct) =>
-                new RollbackTransactionEnvChangeToken(
+                new TransactionEnvChangeToken(
+                    subtype: EnvChangeTokenSubType.RollbackTransaction,
                     newValue: await tdsStream.TdsReader.ReadBVarByteAsync(isAsync, ct).ConfigureAwait(false),
                     oldValue: await tdsStream.TdsReader.ReadBVarByteAsync(isAsync, ct).ConfigureAwait(false)),
 
                 [EnvChangeTokenSubType.ResetConnection] = async (tdsStream, isAsync, ct) =>
                 new ResetConnectionEnvChangeToken(
+                    newValue: await tdsStream.TdsReader.ReadBVarByteAsync(isAsync, ct).ConfigureAwait(false),
+                    oldValue: await tdsStream.TdsReader.ReadBVarByteAsync(isAsync, ct).ConfigureAwait(false)),
+
+                [EnvChangeTokenSubType.PromoteTransaction] = async (tdsStream, isAsync, ct) =>
+                new PromoteTransactionEnvChangeToken(
                     newValue: await tdsStream.TdsReader.ReadBVarByteAsync(isAsync, ct).ConfigureAwait(false),
                     oldValue: await tdsStream.TdsReader.ReadBVarByteAsync(isAsync, ct).ConfigureAwait(false)),
 
@@ -113,12 +121,12 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens.EnvChange
 
             EnvChangeTokenSubType tokenSubType = (EnvChangeTokenSubType)subType;
 
-            if (!subTypeParsers.ContainsKey(tokenSubType))
+            if (!subTypeParsers.TryGetValue(tokenSubType, out Func<TdsStream, bool, CancellationToken, ValueTask<Token>> value))
             {
                 throw new InvalidOperationException($"Unsupported EnvChange Token type: {tokenSubType}");
             }
 
-            return await subTypeParsers[tokenSubType](tdsStream, isAsync, ct).ConfigureAwait(false);
+            return await value(tdsStream, isAsync, ct).ConfigureAwait(false);
         }
     }
 }

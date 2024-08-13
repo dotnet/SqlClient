@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens
             {
                 Debug.Fail($"unexpected token; token = {type-2:X2}");
                 context.ParserState = TdsParserState.Broken;
-                context.SqlConnector.BreakConnection();
+                // context.SqlConnector.BreakConnection();
                 // TODO SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Run|ERR> Potential multi-threaded misuse of connection, unexpected TDS token found {0}", ObjectID);
                 throw SQL.ParsingError();
             }
@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens
             {
                 Debug.Fail($"unexpected token; token = {type - 2:X2}");
                 context.ParserState = TdsParserState.Broken;
-                context.SqlConnector.BreakConnection();
+                // context.SqlConnector.BreakConnection();
                 // TODO SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Run|ERR> Potential multi-threaded misuse of connection, unexpected TDS token found {0}", ObjectID);
                 throw SQL.ParsingError();
             }

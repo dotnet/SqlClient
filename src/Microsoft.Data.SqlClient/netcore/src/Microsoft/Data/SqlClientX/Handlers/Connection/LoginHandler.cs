@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET8_0_OR_GREATER
+
 using System;
 using System.Buffers;
 using System.Diagnostics;
@@ -50,8 +52,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             LoginHandlerContext loginHandlerContext = new LoginHandlerContext(context);
             await SendLogin(loginHandlerContext, isAsync, ct).ConfigureAwait(false);
 
-            // TODO: Complete the login by reading data. 
-            // This requires parsing by reading token stream from TDS.
+            await context.TdsParser.RunAsync(RunBehavior.UntilDone, isAsync, ct);
         }
 
         private async ValueTask SendLogin(LoginHandlerContext context, bool isAsync, CancellationToken ct)
@@ -75,15 +76,15 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
             Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= context.ClientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
 
             // Calculate the fixed length
-            
-            length += context.CalculateLoginRecordLength();    
+
+            length += context.CalculateLoginRecordLength();
 
             string userName = context.UserName;
             byte[] encryptedPassword = context.EncryptedPassword;
             int encryptedPasswordLengthInBytes = encryptedPassword != null ? encryptedPassword.Length : 0;
-            
+
             PasswordChangeRequest passwordChangeRequest = context.PasswordChangeRequest;
-            byte[] encryptedChangePassword = passwordChangeRequest?.NewSecurePassword == null ? null: TdsParserStaticMethods.ObfuscatePassword(passwordChangeRequest.NewPassword);
+            byte[] encryptedChangePassword = passwordChangeRequest?.NewSecurePassword == null ? null : TdsParserStaticMethods.ObfuscatePassword(passwordChangeRequest.NewPassword);
             int encryptedChangePasswordLength = encryptedChangePassword != null ? encryptedChangePassword.Length : 0;
             int encryptedChangePasswordLengthInBytes = passwordChangeRequest?.NewSecurePassword != null ? passwordChangeRequest.NewSecurePassword.Length : encryptedChangePasswordLength;
 
@@ -140,7 +141,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
             TdsStream stream = context.TdsStream;
             ct.ThrowIfCancellationRequested();
-            
+
             if (isAsync)
             {
                 await stream.FlushAsync(ct).ConfigureAwait(false);
@@ -199,7 +200,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         }
 
 
-        private async ValueTask WriteLoginData(LoginHandlerContext context, 
+        private async ValueTask WriteLoginData(LoginHandlerContext context,
                                      SessionData recoverySessionData,
                                      byte[] encryptedPassword,
                                      byte[] encryptedChangePassword,
@@ -229,7 +230,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 if (recoverySessionData == null)
                 {
                     int protocolVersion = encrypt == SqlConnectionEncryptOption.Strict
-                        ? (TdsEnums.TDS8_MAJOR << 24) | (TdsEnums.TDS8_INCREMENT << 16) | TdsEnums.TDS8_MINOR 
+                        ? (TdsEnums.TDS8_MAJOR << 24) | (TdsEnums.TDS8_INCREMENT << 16) | TdsEnums.TDS8_MINOR
                         : (TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR;
                     await writer.WriteIntAsync(protocolVersion, isAsync, ct).ConfigureAwait(false);
                 }
@@ -244,10 +245,10 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false); // connectionID is unused
 
                 // Log7Flags (DWORD)
-                 
+
                 int log7Flags = CreateLogin7Flags(context);
                 await writer.WriteIntAsync(log7Flags, isAsync, ct).ConfigureAwait(false);
-                
+
                 await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);  // ClientTimeZone is not used
                 await writer.WriteIntAsync(0, isAsync, ct).ConfigureAwait(false);  // LCID is unused by server
 
@@ -318,7 +319,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     s_nicAddress = TdsParserStaticMethods.GetNetworkPhysicalAddressForTdsLoginOnly();
 
                 await stream.TdsWriter.WriteBytesAsync(s_nicAddress.AsMemory(), isAsync, ct).ConfigureAwait(false);
-                
+
                 await writer.WriteShortAsync(offset, isAsync, ct).ConfigureAwait(false); // ibSSPI offset
                 if (context.UseSspi)
                 {
@@ -373,7 +374,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 await stream.WriteStringAsync(clientInterfaceName, isAsync, ct).ConfigureAwait(false);
                 await stream.WriteStringAsync(context.Language, isAsync, ct).ConfigureAwait(false);
                 await stream.WriteStringAsync(context.Database, isAsync, ct).ConfigureAwait(false);
-                
+
                 // send over SSPI data if we are using SSPI
                 if (context.UseSspi)
                 {
@@ -395,8 +396,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                     }
                 }
 
-                await SendFeatureExtensionData(context, 
-                    isAsync, 
+                await SendFeatureExtensionData(context,
+                    isAsync,
                     ct).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -526,3 +527,4 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         }
     }
 }
+#endif

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET8_0_OR_GREATER
+
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,7 +24,11 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 NextHandler = new TransportCreationHandler()
                 {
                     NextHandler = new PreloginHandler()
+                    {
+                        NextHandler = new LoginHandler()
+                    }
                 }
             }.Handle(context, isAsync, ct);
     }
 }
+#endif

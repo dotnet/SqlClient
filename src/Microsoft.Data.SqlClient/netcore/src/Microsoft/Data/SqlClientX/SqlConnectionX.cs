@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClientX.Tds.State;
 
 #nullable enable
 
@@ -25,7 +26,7 @@ namespace Microsoft.Data.SqlClientX
     /// </summary>
     [DefaultEvent("InfoMessage")]
     [DesignerCategory("")]
-    internal sealed class SqlConnectionX : DbConnection, ICloneable
+    internal sealed class SqlConnectionX : DbConnection, ICloneable, ITdsEventListener
     {
         #region private
         private static readonly SqlConnectionString DefaultSettings = new("");
@@ -305,14 +306,14 @@ namespace Microsoft.Data.SqlClientX
         /// <inheritdoc/>
         public override Task OpenAsync(CancellationToken cancellationToken) => Open(true, cancellationToken);
 
-        internal async Task Open(bool async, CancellationToken cancellationToken)
+        internal async Task Open(bool isAsync, CancellationToken cancellationToken)
         {
             if (_dataSource == null)
             {
                 throw ADP.NoConnectionString();
             }
 
-            _internalConnection = await _dataSource.GetInternalConnection(this, TimeSpan.FromSeconds(ConnectionTimeout), async, cancellationToken).ConfigureAwait(false);
+            _internalConnection = await _dataSource.GetInternalConnection(this, TimeSpan.FromSeconds(ConnectionTimeout), isAsync, cancellationToken).ConfigureAwait(false);
             _connectionState = ConnectionState.Open;
         }
 
@@ -336,17 +337,17 @@ namespace Microsoft.Data.SqlClientX
 
         #region internal helpers
 
-        internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
+        void ITdsEventListener.OnInfoMessage(SqlInfoMessageEventArgs sqlInfoMessageEventArgs, out bool notified)
         {
             // TODO review event source traces later
-            // SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OnInfoMessage | API | Info | Object Id {0}, Message '{1}'", ObjectID, imevent.Message);
+            // SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OnInfoMessage | API | Info | Object Id {0}, Message '{1}'", ObjectID, sqlInfoMessageEventArgs.Message);
             SqlInfoMessageEventHandler? handler = InfoMessage;
             if (null != handler)
             {
                 notified = true;
                 try
                 {
-                    handler(this, imevent);
+                    handler(this, sqlInfoMessageEventArgs);
                 }
                 catch (Exception e)
                 {

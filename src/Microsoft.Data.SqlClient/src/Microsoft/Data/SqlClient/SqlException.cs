@@ -10,7 +10,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Serialization;
 using System.Text;
-
+#if NET8_0_OR_GREATER
+using Microsoft.Data.SqlClientX.Tds.State;
+#endif
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/SqlException/*' />
@@ -199,7 +201,30 @@ namespace Microsoft.Data.SqlClient
 
             return exception;
         }
+#if NET8_0_OR_GREATER
 
+        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, TdsContext tdsContext, Exception innerException = null, SqlBatchCommand batchCommand = null)
+        {
+            Guid connectionId = (tdsContext == null) ? Guid.Empty : tdsContext.ConnectionState.ClientConnectionId;
+            SqlException exception = CreateException(errorCollection, serverVersion, connectionId, innerException, batchCommand);
+
+            if (tdsContext != null)
+            {
+                if ((tdsContext.ConnectionState.OriginalClientConnectionId != Guid.Empty) && (tdsContext.ConnectionState.OriginalClientConnectionId != tdsContext.ConnectionState.ClientConnectionId))
+                {
+                    exception.Data.Add(OriginalClientConnectionIdKey, tdsContext.ConnectionState.OriginalClientConnectionId);
+                }
+
+                if (!string.IsNullOrEmpty(tdsContext.ConnectionState.RoutingDestination))
+                {
+                    exception.Data.Add(RoutingDestinationKey, tdsContext.ConnectionState.RoutingDestination);
+                }
+            }
+
+            return exception;
+        }
+
+#endif
         internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null)
             => CreateException(errorCollection, serverVersion, conId, innerException, batchCommand: null);
 

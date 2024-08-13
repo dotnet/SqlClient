@@ -5,6 +5,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClientX.IO;
 
 namespace Microsoft.Data.SqlClientX.Tds.Tokens.LoginAck

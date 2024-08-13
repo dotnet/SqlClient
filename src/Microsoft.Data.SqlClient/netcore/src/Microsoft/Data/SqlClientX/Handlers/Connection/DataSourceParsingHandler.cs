@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET8_0_OR_GREATER
+
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
@@ -18,7 +20,7 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         public override ValueTask Handle(ConnectionHandlerContext request, bool isAsync, CancellationToken ct)
         {
             ServerInfo serverInfo = request.ServerInfo;
-            string fullServerName = serverInfo.ExtendedServerName;
+            string fullServerName = serverInfo.ExtendedServerName ?? serverInfo.UserServerName;
             string localDBDataSource = GetLocalDBDataSource(fullServerName, out bool errorWithLocalDBProcessing);
 
             if (errorWithLocalDBProcessing)
@@ -80,3 +82,4 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         }
     }
 }
+#endif

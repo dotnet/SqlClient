@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET8_0_OR_GREATER
+
 using System;
 using System.Net.Security;
 using System.Security.Authentication;
@@ -109,3 +111,4 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection.PreloginSubHandlers
         }
     }
 }
+#endif

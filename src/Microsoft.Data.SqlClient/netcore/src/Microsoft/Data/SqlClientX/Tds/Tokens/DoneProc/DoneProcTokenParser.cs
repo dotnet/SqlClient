@@ -18,15 +18,7 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens.DoneProc
 
             ushort currentCommand = await tdsStream.TdsReader.ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
 
-            ulong rowCount;
-            if (tdsStream.TdsVersion > TdsVersion.V7_2)
-            {
-                rowCount = await tdsStream.TdsReader.ReadUInt64Async(isAsync, ct).ConfigureAwait(false);
-            }
-            else
-            {
-                rowCount = await tdsStream.TdsReader.ReadUInt32Async(isAsync, ct).ConfigureAwait(false);
-            }
+            ulong rowCount = await tdsStream.TdsReader.ReadUInt64Async(isAsync, ct).ConfigureAwait(false);
 
             return new DoneProcToken(doneStatus, currentCommand, rowCount);
         }

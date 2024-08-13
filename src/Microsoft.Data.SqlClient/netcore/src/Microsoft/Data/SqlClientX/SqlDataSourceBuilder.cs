@@ -23,13 +23,22 @@ namespace Microsoft.Data.SqlClientX
         /// <summary>
         /// A connection string builder that can be used to configure the connection string on the builder.
         /// </summary>
-        public SqlConnectionString ConnectionString { get; }
+        internal SqlConnectionString ConnectionString { get; }
 
         // TODO: how does it interact with credentials specified in ConnectionStringBuilder?
+        /// <summary>
+        /// SQL Credential to be used for creating connection
+        /// </summary>
         public SqlCredential Credential { get; set; }
 
+        /// <summary>
+        /// User implemented Remote certificate validation callback
+        /// </summary>
         public RemoteCertificateValidationCallback UserCertificateValidationCallback { get; set; }
 
+        /// <summary>
+        /// Client certificate callback
+        /// </summary>
         public Action<X509CertificateCollection> ClientCertificatesCallback { get; set; }
 
         /// <summary>
@@ -67,7 +76,8 @@ namespace Microsoft.Data.SqlClientX
                     ConnectionString.Enlist);
 
                 //TODO: evaluate app context switch for concurrency limit
-                RateLimiterBase rateLimiter = IsBlockingPeriodEnabled() ? new BlockingPeriodRateLimiter() : new PassthroughRateLimiter();
+                RateLimiterBase rateLimiter = // IsBlockingPeriodEnabled() ? new BlockingPeriodRateLimiter() :
+                                              new PassthroughRateLimiter();
 
                 return new PoolingDataSource(ConnectionString,
                     Credential,

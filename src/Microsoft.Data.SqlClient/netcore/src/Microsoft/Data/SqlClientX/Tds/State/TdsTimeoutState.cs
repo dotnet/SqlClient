@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClientX.Tds.State
     /// </summary>
     internal class TdsTimeoutState
     {
-        private sealed class TimeoutState
+        internal sealed class TimeoutState
         {
             public const int Stopped = 0;
             public const int Running = 1;

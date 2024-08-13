@@ -248,10 +248,11 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public ValueTask<ByteBuffer> ReadBufferAsync(int length, bool isAsync, CancellationToken ct)
+        public async ValueTask<ByteBuffer> ReadBufferAsync(int length, bool isAsync, CancellationToken ct)
         {
-            // TODO Implement the same.
-            throw new NotImplementedException();
+            byte[] buffer = new byte[length];
+            await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
+            return new ByteBuffer(buffer);
         }
 
         /// <summary>
@@ -261,10 +262,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public ValueTask<string> ReadUsVarCharAsync(bool isAsync, CancellationToken ct)
+        public async ValueTask<string> ReadUsVarCharAsync(bool isAsync, CancellationToken ct)
         {
-            // TODO Implement the same.
-            throw new NotImplementedException();
+            ushort length = await ReadUInt16Async(isAsync, ct).ConfigureAwait(false);
+            return await ReadStringAsync(length, isAsync, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -274,10 +275,10 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public ValueTask<string> ReadBVarCharAsync(bool isAsync, CancellationToken ct)
+        public async ValueTask<string> ReadBVarCharAsync(bool isAsync, CancellationToken ct)
         {
-            // TODO Implement the same.
-            throw new NotImplementedException();
+            byte length = await ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+            return await ReadStringAsync(length, isAsync, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -287,10 +288,12 @@ namespace Microsoft.Data.SqlClientX.IO
         /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public ValueTask<ByteBuffer> ReadBVarByteAsync(bool isAsync, CancellationToken ct)
+        public async ValueTask<ByteBuffer> ReadBVarByteAsync(bool isAsync, CancellationToken ct)
         {
-            // TODO Implement the same.
-            throw new NotImplementedException();
+            byte length = await ReadByteAsync(isAsync, ct).ConfigureAwait(false);
+            byte[] buffer = new byte[length];
+            await ReadBytesAsync(buffer, isAsync, ct).ConfigureAwait(false);
+            return new ByteBuffer(buffer);
         }
 
         #endregion

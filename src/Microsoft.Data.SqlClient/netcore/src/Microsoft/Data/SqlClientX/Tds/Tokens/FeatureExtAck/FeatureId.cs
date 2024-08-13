@@ -35,6 +35,21 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens.FeatureExtAck
         AzureSqlSupport = 0x08,
 
         /// <summary>
+        /// Data Classification
+        /// </summary>
+        DataClassification = 0x09,
+
+        /// <summary>
+        /// UTF8 Support
+        /// </summary>
+        UTF8Support = 0x0A,
+
+        /// <summary>
+        /// Azure SQL DNS Caching
+        /// </summary>
+        AzureSQLDnsCaching = 0x0B,
+
+        /// <summary>
         /// Feature terminator.
         /// </summary>
         Terminator = 0xFF

@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClientX.Tds.Tokens.DataClassification
         /// <summary>
         /// Sensitivity Classification data received from server.
         /// </summary>
-        public SensitivityClassification SensitivityClassification;
+        public SensitivityClassification SensitivityClassification { get; }
 
         /// <summary>
         /// Create a new instance with sensitivity classification information received.

@@ -4,7 +4,8 @@
 
 #if NET8_0_OR_GREATER
 
-using System.Collections.Generic;
+#nullable enable
+
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClientX.IO;
 
@@ -17,32 +18,32 @@ namespace Microsoft.Data.SqlClientX.Tds.State
     {
         internal TdsStream TdsStream { get; set; }
 
-        internal SqlConnector SqlConnector { get; set; }
-
         internal TdsParserState ParserState { get; set; }
+
+        internal ITdsEventListener? TdsEventListener { get; set; }
 
         internal TdsConnectionState ConnectionState { get; set; }
 
         internal TdsTimeoutState TimeoutState { get; set; }
 
-        internal TdsSnapshotState TdsSnapshotState { get; set; }
+        internal TdsSnapshotState SnapshotState { get; set; }
 
-        internal TdsTransactionState TdsTransactionState { get; set; }
+        internal TdsTransactionState TransactionState { get; set; }
 
-        internal TdsErrorWarningsState TdsErrorWarningsState { get; set; }
+        internal TdsErrorWarningsState ErrorWarningsState { get; set; }
 
-        /// <summary>
-        /// TRUE - accumulate info messages during TdsParser operations, 
-        /// FALSE - fire them
-        /// </summary>
-        internal bool _accumulateInfoEvents;
-
-        internal List<SqlError> _pendingInfoEvents;
-
-        public TdsContext(SqlConnector sqlConnector)
+        public TdsContext(TdsStream tdsStream, ITdsEventListener tdsEventListener)
         {
-            SqlConnector = sqlConnector;
+            TdsStream = tdsStream;
+            TdsEventListener = tdsEventListener;
+            // Initialize States
+            ConnectionState = new TdsConnectionState();
+            TimeoutState = new TdsTimeoutState();
+            SnapshotState = new TdsSnapshotState();
+            TransactionState = new TdsTransactionState();
+            ErrorWarningsState = new TdsErrorWarningsState();
         }
     }
 }
+#nullable disable
 #endif

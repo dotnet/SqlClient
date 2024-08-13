@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET8_0_OR_GREATER
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,6 +15,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.SNI;
 using Microsoft.Data.SqlClientX.Handlers.Connection.Login;
 using Microsoft.Data.SqlClientX.IO;
+using Microsoft.Data.SqlClientX.Tds;
+using Microsoft.Data.SqlClientX.Tds.State;
 
 namespace Microsoft.Data.SqlClientX.Handlers.Connection
 {    /// <summary>
@@ -20,6 +24,13 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
      /// </summary>
     internal class ConnectionHandlerContext : HandlerRequest, ICloneable
     {
+        private TdsStream _tdsStream;
+
+        /// <summary>
+        /// Tds Parser to be used for parsing login response.
+        /// </summary>
+        internal TdsParserX TdsParser { get; private set; }
+
         // TODO: Decide if we need a default constructor depending on the latest design 
         /// <summary>
         /// Stream used by readers.
@@ -58,9 +69,21 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
         public SslOverTdsStream SslOverTdsStream { get; internal set; }
 
         /// <summary>
+        /// Event listener to capture Info and Error events
+        /// </summary>
+        public ITdsEventListener TdsEventListener { get; internal set; }
+
+        /// <summary>
         /// The TdsStream to write Tds Packets to.
         /// </summary>
-        public TdsStream TdsStream { get; internal set; }
+        public TdsStream TdsStream {
+            get => _tdsStream;
+            set
+            {
+                _tdsStream = value;
+                TdsParser = new TdsParserX(value, TdsEventListener);
+            }
+        }
 
         /// <summary>
         /// Whether the connection is capable of MARS
@@ -129,7 +152,8 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
                 ConnectionId = this.ConnectionId,
                 SslStream = this.SslStream, 
                 SslOverTdsStream = this.SslOverTdsStream, 
-                TdsStream = this.TdsStream, 
+                TdsStream = this.TdsStream,
+                TdsEventListener = this.TdsEventListener,
                 IsMarsCapable = this.IsMarsCapable,
                 IsFedAuthNegotiatedInPrelogin = this.IsFedAuthNegotiatedInPrelogin,
                 AccessTokenInBytes = this.AccessTokenInBytes,
@@ -157,3 +181,5 @@ namespace Microsoft.Data.SqlClientX.Handlers.Connection
 
     }
 }
+
+#endif

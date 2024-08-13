@@ -7,23 +7,25 @@ using Microsoft.Data.SqlClientX.IO;
 namespace Microsoft.Data.SqlClientX.Tds.Tokens.EnvChange
 {
     /// <summary>
-    /// Begin transaction token.
+    /// Commit transaction token.
     /// </summary>
-    internal sealed class BeginTransactionEnvChangeToken : EnvChangeToken<ByteBuffer>
+    internal sealed class TransactionEnvChangeToken : EnvChangeToken<ByteBuffer>
     {
-
+        private readonly EnvChangeTokenSubType _subtype;
         /// <summary>
         /// EnvChange token sub type.
         /// </summary>
-        public override EnvChangeTokenSubType SubType => EnvChangeTokenSubType.BeginTransaction;
+        public override EnvChangeTokenSubType SubType => _subtype;
 
         /// <summary>
         /// Create a new instance of this token.
         /// </summary>
+        /// <param name="subtype">Subtype of this token</param>
         /// <param name="oldValue">Old value./</param>
         /// <param name="newValue">New value.</param>
-        public BeginTransactionEnvChangeToken(ByteBuffer oldValue, ByteBuffer newValue) : base(oldValue, newValue)
+        public TransactionEnvChangeToken(EnvChangeTokenSubType subtype, ByteBuffer oldValue, ByteBuffer newValue) : base(oldValue, newValue)
         {
+            _subtype = subtype;
         }
 
     }
