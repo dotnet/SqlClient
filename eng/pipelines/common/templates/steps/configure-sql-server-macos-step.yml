@@ -50,8 +50,8 @@ steps:
 
     echo 0.0.0.0
     sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
-    echo ::
-    sqlcmd -S :: -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
+    echo ::1
+    sqlcmd -S ::1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
     echo localhost
     sqlcmd -S localhost -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
     echo "(default)"
@@ -62,8 +62,8 @@ steps:
 
     echo 0.0.0.0
     sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
-    echo ::
-    sqlcmd -S :: -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
+    echo ::1
+    sqlcmd -S ::1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
     echo localhost
     sqlcmd -S localhost -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
     echo "(default)"
