@@ -14,7 +14,6 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
     /// </summary>
     public sealed class LoginChainTest
     {
-
         /// <summary>
         ///  Datasource to use for connection test. This may be changed locally to test against a different server.
         ///  TODO: Migrate to config when we enable CI.
@@ -23,7 +22,8 @@ namespace Microsoft.Data.SqlClient.NetCore.UnitTests.Handlers
 
         // TODO: This test needs to be enabled conditionally. This can be used to test the handlers E2E.
         // For now, uncomment the [Fact] attribute to run the test.
-        [Fact]
+        // CI Pipelines need to support testing with standalone test servers.
+        // [Fact]
         public async void TestConnectivity()
         {
             DataSourceParsingHandler dspHandler = new();
