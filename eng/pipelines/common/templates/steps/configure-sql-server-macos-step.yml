@@ -57,7 +57,7 @@ steps:
     echo "(default)"
     sqlcmd -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
 
-    echo "0.0.0.0 localhost" >> /etc/hosts
+    sudo echo "0.0.0.0 localhost" >> /etc/hosts
     cat /etc/hosts
 
     echo 0.0.0.0
