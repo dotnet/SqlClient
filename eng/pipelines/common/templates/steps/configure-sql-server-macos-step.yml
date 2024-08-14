@@ -34,8 +34,7 @@ steps:
     fi
  
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
-    #docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" --network=host --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
-
+ 
     sleep 5
 
     docker ps -a
@@ -44,68 +43,5 @@ steps:
     -S localhost -No -U SA -P $MSSQL_SA_PW \
     -Q "SELECT @@VERSION"
 
-    ping -c 4 localhost
-
-    cat /etc/hosts
-
-    echo 0.0.0.0
-    sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
-    echo ::1
-    sqlcmd -S ::1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
-    echo localhost
-    sqlcmd -S localhost -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
-    echo "(default)"
-    sqlcmd -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
-
-    sudo echo "0.0.0.0 localhost" >> /etc/hosts
-    cat /etc/hosts
-
-    echo 0.0.0.0
-    sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
-    echo ::1
-    sqlcmd -S ::1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
-    echo localhost
-    sqlcmd -S localhost -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
-    echo "(default)"
-    sqlcmd -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
-
-    docker ps -a
-    docker exec -t sql1 cat /var/opt/mssql/log/errorlog | grep connection
-    docker logs sql1
-
-    # Connect to server and get the version:
-    counter=1
-    errstatus=1
-    while [ $counter -le 5 ] && [ $errstatus = 1 ]
-    do
-      echo Waiting for SQL Server to start...
-      sleep 3
-      sqlcmd \
-        -S localhost \
-        -No \
-        -U sa \
-        -P $MSSQL_SA_PW\
-        -Q "SELECT @@VERSION" # 2>/dev/null
-      errstatus=$?
-      ((counter++))
-    done
-
-    docker exec sql1 /opt/mssql-tools18/bin/sqlcmd \
-    -S localhost -No -U SA -P $MSSQL_SA_PW \
-    -Q "SELECT @@VERSION"
-
-    # Display error if connection failed:
-    if [ $errstatus = 1 ]
-    then
-      echo Cannot connect to SQL Server, installation aborted
-      exit $errstatus
-    else
-      sqlcmd \
-        -S localhost \
-        -No \
-        -U sa \
-        -P $MSSQL_SA_PW\
-        -Q "SELECT @@VERSION"
-    fi
   displayName: 'Configure SQL Server [macOS]'
   condition: ${{parameters.condition }}

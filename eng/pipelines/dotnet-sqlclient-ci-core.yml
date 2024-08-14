@@ -61,13 +61,66 @@ variables:
   - name: defaultHostedPoolName
     value: 'Azure Pipelines'
 
-jobs:
-  - job: macos
-    pool:
-      name: Azure Pipelines
-      vmImage: macOS-14
-
-    steps:
-    - template: common/templates/steps/configure-sql-server-macos-step.yml@self
+stages:
+  - stage: build_nugets
+    displayName: 'Build NuGet Packages'
+    jobs:
+    - template: common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
-        password: $(password)
+        artifactName: $(artifactName)
+
+  - template: common/templates/stages/ci-run-tests-stage.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+      buildType: ${{ parameters.buildType }}
+      ${{ if eq(parameters.buildType, 'Package') }}:
+        dependsOn: build_nugets
+
+      prebuildSteps: # steps to run prior to building and running tests on each job
+      - template: common/templates/steps/ci-prebuild-step.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          artifactName: $(artifactName)
+          buildType: ${{ parameters.buildType }}
+
+      ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
+        postTestJobs: # jobs to run after the tests are done
+        - template: common/templates/jobs/ci-code-coverage-job.yml@self
+          parameters:
+            debug: ${{ parameters.debug }}
+            downloadArtifactsSteps:
+              - ${{ each targetFramework in parameters.codeCovTargetFrameworks }}:
+                - task: DownloadPipelineArtifact@2
+                  displayName: 'Download Coverage Reports [${{ targetFramework }}]'
+                  inputs:
+                    itemPattern: '**\${{ targetFramework }}*'
+                    ${{ if contains(targetFramework, 'net4') }}:
+                      targetPath: '$(Build.SourcesDirectory)\coverageNetFx'
+                    ${{ else }}:
+                      targetPath: '$(Build.SourcesDirectory)\coverageNetCore'
+
+# test stages configurations
+  # self hosted SQL Server on Windows
+      testConfigurations:
+
+        # Self hosted SQL Server on Mac
+        mac_sql_22:
+          pool: $(defaultHostedPoolName)
+          hostedPool: true
+          images:
+            MacOS12_Sql22: macOS-12
+          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          buildPlatforms: [AnyCPU]
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: [true]
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+          configSqlFor: local
+          operatingSystem: Mac
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            SupportsIntegratedSecurity: false
+            ManagedIdentitySupported: false
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
