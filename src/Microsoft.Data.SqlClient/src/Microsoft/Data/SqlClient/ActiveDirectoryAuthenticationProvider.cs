@@ -210,7 +210,6 @@ namespace Microsoft.Data.SqlClient
 #endif
                 );
 
-            AuthenticationResult result = null;
             IPublicClientApplication app = await GetPublicClientAppInstanceAsync(pcaKey, cts.Token).ConfigureAwait(false);
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
