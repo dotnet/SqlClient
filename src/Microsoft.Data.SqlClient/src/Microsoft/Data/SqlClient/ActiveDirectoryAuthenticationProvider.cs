@@ -363,7 +363,7 @@ namespace Microsoft.Data.SqlClient
                 if (authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive)
                 {
                     CancellationTokenSource ctsInteractive = new();
-#if NET6_0_OR_GREATER
+#if NETCOREAPP
                     /*
                      * On .NET Core, MSAL will start the system browser as a separate process. MSAL does not have control over this browser,
                      * but once the user finishes authentication, the web page is redirected in such a way that MSAL can intercept the Uri.
