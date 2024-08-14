@@ -292,20 +292,14 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal static IPAddress[] GetDnsIpAddresses(string serverName, TimeoutTimer timeout)
         {
-            using (TrySNIEventScope.Create(nameof(SNICommon)))
+            IPAddress[] ipAddresses = GetDnsIpAddresses(serverName);
+
+            // We cannot timeout accurately in sync code above, so throe TimeoutException if we've now exceeded the timeout.
+            if (timeout.IsExpired)
             {
-                int remainingTimeout = timeout.MillisecondsRemainingInt;
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.INFO,
-                                                          "Getting DNS host entries for serverName {0} within {1} milliseconds.",
-                                                          args0: serverName,
-                                                          args1: remainingTimeout);
-                using CancellationTokenSource cts = new CancellationTokenSource(remainingTimeout);
-                // using this overload to support netstandard
-                Task<IPAddress[]> task = Dns.GetHostAddressesAsync(serverName);
-                task.ConfigureAwait(false);
-                task.Wait(cts.Token);
-                return task.Result;
+                throw new TimeoutException();
             }
+            return ipAddresses;
         }
 
         internal static IPAddress[] GetDnsIpAddresses(string serverName)
