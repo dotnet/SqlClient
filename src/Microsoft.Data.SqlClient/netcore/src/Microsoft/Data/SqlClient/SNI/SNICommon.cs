@@ -294,7 +294,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             IPAddress[] ipAddresses = GetDnsIpAddresses(serverName);
 
-            // We cannot timeout accurately in sync code above, so throe TimeoutException if we've now exceeded the timeout.
+            // We cannot timeout accurately in sync code above, so throw TimeoutException if we've now exceeded the timeout.
             if (timeout.IsExpired)
             {
                 throw new TimeoutException();
