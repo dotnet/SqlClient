@@ -35,8 +35,7 @@ steps:
       exit 0
     fi
  
-    #docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
-    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 127.0.0.1:1433:1433 -p 127.0.0.1:1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
+    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
  
     sleep 5
 
@@ -49,8 +48,7 @@ steps:
     do
       echo Waiting for SQL Server to start...
       sleep 3
-      #sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" 2>$SQLCMD_ERRORS
-      sqlcmd -S localhost -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" 2>$SQLCMD_ERRORS
+      sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" 2>$SQLCMD_ERRORS
       errstatus=$?
       ((counter++))
     done
