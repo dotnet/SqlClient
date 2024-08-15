@@ -17,6 +17,8 @@ steps:
 - bash: |
     # The "user" pipeline variable conflicts with homebrew, causing errors during install. Set it back to the pipeline user.
     USER=`whoami`
+    SQLCMD_ERRORS=$(Agent.TempDirectory)/sqlcmd_err.log
+    echo $SQLCMD_ERRORS
 
     brew install colima
     brew install --cask docker
@@ -33,24 +35,22 @@ steps:
       exit 0
     fi
  
-    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
+    #docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
+    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 127.0.0.1:1433:1433 -p 127.0.0.1:1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
  
-    sleep 10
+    sleep 5
 
     docker ps -a
-
-    docker exec sql1 /opt/mssql-tools18/bin/sqlcmd \
-    -S localhost -No -U SA -P $MSSQL_SA_PW \
-    -Q "SELECT @@VERSION"
 
     # Connect to server and get the version:
     counter=1
     errstatus=1
-    while [ $counter -le 5 ] && [ $errstatus = 1 ]
+    while [ $counter -le 20 ] && [ $errstatus = 1 ]
     do
       echo Waiting for SQL Server to start...
       sleep 3
-      sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" 2>/dev/null
+      #sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" 2>$SQLCMD_ERRORS
+      sqlcmd -S localhost -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" 2>$SQLCMD_ERRORS
       errstatus=$?
       ((counter++))
     done
@@ -59,9 +59,11 @@ steps:
     if [ $errstatus = 1 ]
     then
       echo Cannot connect to SQL Server, installation aborted
+      cat $SQLCMD_ERRORS
+      rm -f $SQLCMD_ERRORS
       exit $errstatus
     else
-      sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
+      rm -f $SQLCMD_ERRORS
     fi
 
   displayName: 'Configure SQL Server [macOS]'
