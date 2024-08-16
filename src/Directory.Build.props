@@ -65,6 +65,19 @@
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
   </PropertyGroup>
 
+  <!-- Packaging  for source link-->
+  <PropertyGroup>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
+    <DisableSourceLinkTranslation Condition="'$(DisableSourceLinkTranslation)' == ''">false</DisableSourceLinkTranslation>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+  
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
   <!-- Provides Tool properties -->
@@ -72,4 +85,6 @@
   <!-- Provides Build properties -->
   <Import Project="$(ToolsDir)props\AssemblyInfo.props" /> 
   <Import Project="$(ToolsDir)props\AssemblyRef.props" />  
+  <Import Project="$(ToolsDir)targets\RepositoryInfo.targets" />
+
 </Project>
