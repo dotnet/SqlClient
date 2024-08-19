@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - Fixed `AcquireTokenAsync` timeout handling for edge cases in `ActiveDirectoryAuthenticationProvider`. [#2650](https://github.com/dotnet/SqlClient/pull/2650)
 - Fixed issue with `Socket.Connect` in managed SNI. [#2779](https://github.com/dotnet/SqlClient/pull/2779)
+- Fixed path for `AssemblyAttributes` in obj folder causing NET 8.0 assembly to appear in in NET 6.0 dll. [#2789](https://github.com/dotnet/SqlClient/pull/2789)
 
 ## [Stable release 5.2.1] - 2024-05-31
 
