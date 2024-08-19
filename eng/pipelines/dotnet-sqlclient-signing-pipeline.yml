@@ -4,7 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-name: $(Year:YY)$(DayOfYear)$(Rev:.rr)
+name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 trigger:
   branches:
     include:
@@ -44,20 +44,28 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   displayName: 'Publish symbols'
   type: boolean
   default: false
+
 - name: MDS_PackageRef_Version
   displayName: 'MDS package version of AKV Provider (build AKV)'
   type: string
   default: 5.1.5
+
 - name: CurrentNetFxVersion
   displayName: 'Lowest supported .NET Framework version (MDS validation)'
   type: string
   default: 'net462'
+
 - name: oneBranchType
   displayName: 'Select OneBranch template'
   default: Official
   values:
   - NonOfficial
   - Official
+
+- name: isPreview
+  displayName: 'Is this a preview build?'
+  type: boolean
+  default: false
 
 variables:
   - template: /eng/pipelines/libraries/variables.yml@self
@@ -86,41 +94,41 @@ extends:
       WindowsHostVersion: 1ESWindows2022
     globalSdl: # https://aka.ms/obpipelines/sdl
       apiscan:
-        enabled: true
+        enabled: ${{ not(parameters['isPreview']) }}
         softwareFolder: $(softwareFolder)
         symbolsFolder: $(symbolsFolder)
         softwarename: Microsoft.Data.SqlClient
         versionNumber: $(AssemblyFileVersion)
       tsa:
-        enabled: true # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
+        enabled: ${{ not(parameters['isPreview']) }} # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
       codeql:
         compiled:
-        enabled: true
+        enabled: ${{ not(parameters['isPreview']) }}
       sbom:
-        enabled: true
+        enabled: ${{ not(parameters['isPreview']) }}
         packageName: Microsoft.Data.SqlClient
         packageVersion: $(NugetPackageVersion)
       policheck:
-        enabled: true
+        enabled: ${{ not(parameters['isPreview']) }}
         break: true # always break the build on policheck issues. You can disable it by setting to 'false'
         exclusionsFile: $(REPOROOT)\.config\PolicheckExclusions.xml
       asyncSdl:
         enabled: false        
         credscan:
-          enabled: true
+          enabled: ${{ not(parameters['isPreview']) }}
           suppressionsFile: $(REPOROOT)/.config/CredScanSuppressions.json
         binskim:
-          enabled: true
+          enabled: ${{ not(parameters['isPreview']) }}
         armory:
-          enabled: true
+          enabled: ${{ not(parameters['isPreview']) }}
           break: true
         eslint: # TypeScript and JavaScript
           enabled: false
         roslyn:
-          enabled: true
+          enabled: ${{ not(parameters['isPreview']) }}
           break: true
         publishLogs:
-          enabled: true
+          enabled: ${{ not(parameters['isPreview']) }}
         tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
@@ -141,6 +149,7 @@ extends:
           symbolsFolder: $(symbolsFolder)
           softwareFolder: $(softwareFolder)
           publishSymbols: ${{ parameters['publishSymbols'] }}
+          isPreview: ${{ parameters['isPreview'] }}
 
     - stage: mds_package_validation
       displayName: 'MDS Package Validation'
