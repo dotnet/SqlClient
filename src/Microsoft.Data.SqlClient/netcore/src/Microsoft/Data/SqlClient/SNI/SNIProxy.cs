@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sendWriter">Writer for send buffer</param>
         /// <param name="serverNames">Service Principal Name</param>
         /// <returns>SNI error code</returns>
-        internal static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> sendWriter, string[] serverNames)
+        internal static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> sendWriter, ReadOnlySpan<string> serverNames)
         {
             // TODO: this should use ReadOnlySpan all the way through
             byte[] array = null;
@@ -47,10 +47,10 @@ namespace Microsoft.Data.SqlClient.SNI
                 receivedBuff.CopyTo(array);
             }
 
-            GenSspiClientContext(sspiClientContextStatus, array, sendWriter, serverNames);
+            GenSspiClientContextInternal(sspiClientContextStatus, array, sendWriter, serverNames);
         }
 
-        private static void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, IBufferWriter<byte> sendWriter, string[] serverNames)
+        private static void GenSspiClientContextInternal(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, IBufferWriter<byte> sendWriter, ReadOnlySpan<string> serverNames)
         {
             SafeDeleteContext securityContext = sspiClientContextStatus.SecurityContext;
             ContextFlagsPal contextFlags = sspiClientContextStatus.ContextFlags;
