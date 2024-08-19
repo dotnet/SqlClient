@@ -23,9 +23,11 @@ namespace Microsoft.Data.SqlClient
                 // Log session id, status code and the actual SPN used in the negotiation
                 SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}, StatusCode={3}, SPN={4}", nameof(NegotiateSSPIContextProvider),
                     nameof(GenerateSspiClientContext), _physicalStateObj.SessionId, statusCode, negotiateAuth.TargetName);
+
                 if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
                 {
                     outgoingBlobWriter.Write(result);
+                    return;
                 }
             }
 
