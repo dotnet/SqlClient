@@ -26,24 +26,49 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        protected abstract void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, string[] _sniSpnBuffer);
+        protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SqlAuthenticationParameters authParams, ReadOnlySpan<string> serverNames);
 
-        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string sniSpnBuffer)
-            => SSPIData(receivedBuff, outgoingBlobWriter, new[] { sniSpnBuffer });
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string serverNames)
+            => SSPIData(receivedBuff, outgoingBlobWriter, new[] { serverNames });
 
-        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string[] sniSpnBuffer)
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string[] serverNames)
         {
             using (TrySNIEventScope.Create(nameof(SSPIContextProvider)))
             {
                 try
                 {
-                    GenerateSspiClientContext(receivedBuff, outgoingBlobWriter, sniSpnBuffer);
+                    if (GenerateSspiClientContext(receivedBuff, outgoingBlobWriter, CreateSqlAuthParams(_parser.Connection, serverNames[0]), serverNames))
+                    {
+                        return;
+                    }
                 }
                 catch (Exception e)
                 {
                     SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
                 }
             }
+        }
+
+        private static SqlAuthenticationParameters CreateSqlAuthParams(SqlInternalConnectionTds connection, string serverName)
+        {
+            var auth = new SqlAuthenticationParameters.Builder(
+                authenticationMethod: connection.ConnectionOptions.Authentication,
+                resource: null,
+                authority: null,
+                serverName: serverName,
+                connection.ConnectionOptions.InitialCatalog);
+
+            if (connection.ConnectionOptions.UserID is { } userId)
+            {
+                auth.WithUserId(userId);
+            }
+
+            if (connection.ConnectionOptions.Password is { } password)
+            {
+                auth.WithPassword(password);
+            }
+
+            return auth;
         }
 
         protected void SSPIError(string error, string procedure)

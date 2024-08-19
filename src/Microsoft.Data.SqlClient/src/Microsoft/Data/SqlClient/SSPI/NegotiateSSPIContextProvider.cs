@@ -1,9 +1,9 @@
 ﻿#if NET8_0_OR_GREATER
 
 using System;
-using System.Text;
-using System.Net.Security;
 using System.Buffers;
+using System.Net.Security;
+using System.Text;
 
 #nullable enable
 
@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class NegotiateSSPIContextProvider : SSPIContextProvider
     {
-        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, string[] serverNames)
+        protected override bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SqlAuthenticationParameters authParams, ReadOnlySpan<string> serverNames)
         {
             NegotiateAuthenticationStatusCode statusCode = default;
 
@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient
                 if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
                 {
                     outgoingBlobWriter.Write(result);
-                    return;
+                    return true;
                 }
             }
 
