@@ -504,7 +504,7 @@ This update brings the below changes over the previous release:
 
 - Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1419](https://github.com/dotnet/SqlClient/pull/1419) [#1425](https://github.com/dotnet/SqlClient/pull/1425)
 
-## [Stable release 4.0.6] - 2024-08-09
+## [Stable release 4.0.6] - 2024-08-19
 
 ### Fixed
 
