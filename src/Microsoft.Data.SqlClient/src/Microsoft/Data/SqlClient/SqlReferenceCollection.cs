@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (command is null)
             {
-                // if null == command, will find first live datareader
+                // if command is null, will find first live datareader
                 return FindItem(DataReaderTag, s_hasOpenReaderFunc);
             }
             else

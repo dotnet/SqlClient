@@ -63,7 +63,7 @@ namespace Microsoft.Data.ProviderBase
         {
             get
             {
-                return (!_connectionIsDoomed && !_cannotBePooled && !_owningObject.TryGetTarget(out DbConnection _));
+                return (!_connectionIsDoomed && !_cannotBePooled && !_owningObject.TryGetTarget(out _));
             }
         }
 
@@ -102,7 +102,7 @@ namespace Microsoft.Data.ProviderBase
                 // of the pool and it's owning object is no longer around to
                 // return it.
 
-                return (_pooledCount < 1) && !_owningObject.TryGetTarget(out DbConnection _);
+                return (_pooledCount < 1) && !_owningObject.TryGetTarget(out _);
             }
         }
 
@@ -178,10 +178,10 @@ namespace Microsoft.Data.ProviderBase
 
         internal void AddWeakReference(object value, int tag)
         {
-            if (null == _referenceCollection)
+            if (_referenceCollection == null)
             {
                 _referenceCollection = CreateReferenceCollection();
-                if (null == _referenceCollection)
+                if (_referenceCollection == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.CreateReferenceCollectionReturnedNull);
                 }
@@ -300,7 +300,7 @@ namespace Microsoft.Data.ProviderBase
         internal void NotifyWeakReference(int message)
         {
             DbReferenceCollection referenceCollection = ReferenceCollection;
-            if (null != referenceCollection)
+            if (referenceCollection != null)
             {
                 referenceCollection.Notify(message);
             }
@@ -349,7 +349,7 @@ namespace Microsoft.Data.ProviderBase
                     connectionFactory.SetInnerConnectionTo(outerConnection, this);
                     throw;
                 }
-                if (null == openConnection)
+                if (openConnection == null)
                 {
                     connectionFactory.SetInnerConnectionTo(outerConnection, this);
                     throw ADP.InternalConnectionError(ADP.ConnectionError.GetConnectionReturnsNull);
@@ -409,7 +409,7 @@ namespace Microsoft.Data.ProviderBase
             // IMPORTANT NOTE: You must have taken a lock on the object before
             // you call this method to prevent race conditions with Clear and
             // ReclaimEmancipatedObjects.
-            if (_owningObject.TryGetTarget(out DbConnection _))
+            if (_owningObject.TryGetTarget(out _))
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.PooledObjectHasOwner);        // pooled connection already has an owner!
             }
@@ -418,7 +418,7 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.PostPop|RES|CPOOL> {0}, Preparing to pop from pool,  owning connection {1}, pooledCount={2}", ObjectID, 0, _pooledCount);
 
             //3 // The following tests are retail assertions of things we can't allow to happen.
-            if (null != Pool)
+            if (Pool != null)
             {
                 if (0 != _pooledCount)
                 {
@@ -434,7 +434,7 @@ namespace Microsoft.Data.ProviderBase
         internal void RemoveWeakReference(object value)
         {
             DbReferenceCollection referenceCollection = ReferenceCollection;
-            if (null != referenceCollection)
+            if (referenceCollection != null)
             {
                 referenceCollection.Remove(value);
             }

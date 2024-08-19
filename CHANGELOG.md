@@ -660,6 +660,18 @@ This update brings the below changes over the previous release:
 - Optimized async method allocations in .NET Framework by porting changes from .NET Core. [#1084](https://github.com/dotnet/SqlClient/pull/1084)
 - Various code improvements [#902](https://github.com/dotnet/SqlClient/pull/902) [#925](https://github.com/dotnet/SqlClient/pull/925) [#933](https://github.com/dotnet/SqlClient/pull/933) [#934](https://github.com/dotnet/SqlClient/pull/934) [#1024](https://github.com/dotnet/SqlClient/pull/1024) [#1057](https://github.com/dotnet/SqlClient/pull/1057) [#1122](https://github.com/dotnet/SqlClient/pull/1122) [#1133](https://github.com/dotnet/SqlClient/pull/1133) [#1134](https://github.com/dotnet/SqlClient/pull/1134) [#1141](https://github.com/dotnet/SqlClient/pull/1141) [#1187](https://github.com/dotnet/SqlClient/pull/1187) [#1188](https://github.com/dotnet/SqlClient/pull/1188) [#1223](https://github.com/dotnet/SqlClient/pull/1223) [#1225](https://github.com/dotnet/SqlClient/pull/1225)  [#1226](https://github.com/dotnet/SqlClient/pull/1226)
 
+## [Stable release 3.1.6] - 2024-08-15
+
+### Fixed
+
+- Fixed connection to unsubscribe from transaction completion events before returning it to the connection pool. [#2301](https://github.com/dotnet/SqlClient/pull/2301) [#2434](https://github.com/dotnet/SqlClient/pull/2434)
+- Fixed `AcquireTokenAsync` timeout handling for edge cases in `ActiveDirectoryAuthenticationProvider`. [#2709](https://github.com/dotnet/SqlClient/pull/2709)
+
+### Changed
+
+- Updated Microsoft.Data.SqlClient.SNI version 3.0.1 to 3.0.2 [#2676](https://github.com/dotnet/SqlClient/pull/2676) which includes the fix for AppDomain crashing in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418) and various code refactors.
+- Code health improvements: [#2147](https://github.com/dotnet/SqlClient/pull/2147), [#2515](https://github.com/dotnet/SqlClient/pull/2515), [#2517](https://github.com/dotnet/SqlClient/pull/2517) addresses [CVE-2019-0545](https://github.com/advisories/GHSA-2xjx-v99w-gqf3), [#2539](https://github.com/dotnet/SqlClient/pull/2539)
+
 ## [Stable release 3.1.5] - 2024-01-09
 
 ### Fixed

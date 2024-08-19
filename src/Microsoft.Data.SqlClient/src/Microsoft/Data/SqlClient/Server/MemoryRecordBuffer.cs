@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal MemoryRecordBuffer(SmiMetaData[] metaData)
         {
-            Debug.Assert(null != metaData, "invalid attempt to instantiate MemoryRecordBuffer with null SmiMetaData[]");
+            Debug.Assert(metaData != null, "invalid attempt to instantiate MemoryRecordBuffer with null SmiMetaData[]");
 
             _buffer = new SqlRecordBuffer[metaData.Length];
 

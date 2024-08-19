@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlDelegatedTransaction(SqlInternalConnection connection, Transaction tx)
         {
-            Debug.Assert(null != connection, "null connection?");
+            Debug.Assert(connection != null, "null connection?");
             _connection = connection;
             _atomicTransaction = tx;
             _active = false;
@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient
                     connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Begin, null, _isolationLevel, _internalTransaction, true);
 
                     // Handle case where ExecuteTran didn't produce a new transaction, but also didn't throw.
-                    if (null == connection.CurrentTransaction)
+                    if (connection.CurrentTransaction == null)
                     {
                         connection.DoomThisConnection();
                         throw ADP.InternalError(ADP.InternalErrorCode.UnknownTransactionFailure);
@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient
 
             Exception promoteException;
             byte[] returnValue = null;
-            if (null != connection)
+            if (connection != null)
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, promoting transaction.", ObjectID, connection.ObjectID);
@@ -288,10 +288,10 @@ namespace Microsoft.Data.SqlClient
         // Called by transaction to initiate abort sequence
         public void Rollback(SinglePhaseEnlistment enlistment)
         {
-            Debug.Assert(null != enlistment, "null enlistment?");
+            Debug.Assert(enlistment != null, "null enlistment?");
             SqlInternalConnection connection = GetValidConnection();
 
-            if (null != connection)
+            if (connection != null)
             {
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
@@ -383,10 +383,10 @@ namespace Microsoft.Data.SqlClient
         // Called by the transaction to initiate commit sequence
         public void SinglePhaseCommit(SinglePhaseEnlistment enlistment)
         {
-            Debug.Assert(null != enlistment, "null enlistment?");
+            Debug.Assert(enlistment != null, "null enlistment?");
             SqlInternalConnection connection = GetValidConnection();
 
-            if (null != connection)
+            if (connection != null)
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection {1}, committing transaction.", ObjectID, connection.ObjectID);
@@ -546,7 +546,7 @@ namespace Microsoft.Data.SqlClient
         private SqlInternalConnection GetValidConnection()
         {
             SqlInternalConnection connection = _connection;
-            if (null == connection && _atomicTransaction.TransactionInformation.Status != TransactionStatus.Aborted)
+            if (connection == null && _atomicTransaction.TransactionInformation.Status != TransactionStatus.Aborted)
             {
                 throw ADP.ObjectDisposed(this);
             }
@@ -565,11 +565,11 @@ namespace Microsoft.Data.SqlClient
             {
                 // Invalid indicates something BAAAD happened (Commit after TransactionEnded, for instance)
                 //  Doom anything remotely involved.
-                if (null != connection)
+                if (connection != null)
                 {
                     connection.DoomThisConnection();
                 }
-                if (connection != _connection && null != _connection)
+                if (connection != _connection && _connection != null)
                 {
                     _connection.DoomThisConnection();
                 }

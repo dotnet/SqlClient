@@ -133,7 +133,6 @@ namespace Microsoft.Data.SqlClient
         internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
-        private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
 
         internal bool _cleanSQLDNSCaching = false;
         private bool _serverSupportsDNSCaching = false;
@@ -484,7 +483,6 @@ namespace Microsoft.Data.SqlClient
             _accessTokenCallback = accessTokenCallback;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
 
             _identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");
@@ -643,7 +641,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return IsTransactionRoot && (!Is2008OrNewer || null == Pool);
+                return IsTransactionRoot && (!Is2008OrNewer || Pool == null);
             }
         }
 
@@ -691,7 +689,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                bool result = (null == FindLiveReader(null)); // can't prepare with a live data reader...
+                bool result = FindLiveReader(null) == null; // can't prepare with a live data reader...
                 return result;
             }
         }
@@ -747,7 +745,7 @@ namespace Microsoft.Data.SqlClient
                 TdsParser parser = Interlocked.Exchange(ref _parser, null);  // guard against multiple concurrent dispose calls -- Delegated Transactions might cause this.
 
                 Debug.Assert(parser != null && _fConnectionOpen || parser == null && !_fConnectionOpen, "Unexpected state on dispose");
-                if (null != parser)
+                if (parser != null)
                 {
                     parser.Disconnect();
                 }
@@ -774,7 +772,7 @@ namespace Microsoft.Data.SqlClient
                 SqlDataReader reader = null;
                 if (parser.MARSOn)
                 {
-                    if (null != command)
+                    if (command != null)
                     { // command can't have datareader already associated with it
                         reader = FindLiveReader(command);
                     }
@@ -788,7 +786,7 @@ namespace Microsoft.Data.SqlClient
 
                     reader = FindLiveReader(null);
                 }
-                if (null != reader)
+                if (reader != null)
                 {
                     // if MARS is on, then a datareader associated with the command exists
                     // or if MARS is off, then a datareader exists
@@ -884,7 +882,7 @@ namespace Microsoft.Data.SqlClient
             // Regardless of whether we're required to automatically enlist,
             // when there is not a current transaction, we cannot leave the
             // connection enlisted in a transaction.
-            if (null != transaction)
+            if (transaction != null)
             {
                 if (ConnectionOptions.Enlist)
                 {
@@ -915,7 +913,7 @@ namespace Microsoft.Data.SqlClient
             // transaction is completed and we can do it all then.
             if (!IsNonPoolableTransactionRoot)
             {
-                Debug.Assert(null != _parser || IsConnectionDoomed, "Deactivating a disposed connection?");
+                Debug.Assert(_parser != null || IsConnectionDoomed, "Deactivating a disposed connection?");
                 if (_parser != null)
                 {
                     _parser.Deactivate(IsConnectionDoomed);
@@ -973,7 +971,7 @@ namespace Microsoft.Data.SqlClient
         {
             TdsParser parser = Parser;
 
-            if (null != parser)
+            if (parser != null)
             {
                 parser.DisconnectTransaction(internalTransaction);
             }
@@ -1006,7 +1004,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            string transactionName = (null == name) ? string.Empty : name;
+            string transactionName = name == null ? string.Empty : name;
 
             ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
         }
@@ -1122,7 +1120,7 @@ namespace Microsoft.Data.SqlClient
                 // an object that the ExecTMReq will also lock, but since we're on
                 // the same thread, the lock is a no-op.
 
-                if (null != internalTransaction && internalTransaction.IsDelegated)
+                if (internalTransaction != null && internalTransaction.IsDelegated)
                 {
                     if (_parser.MARSOn)
                     {
@@ -1171,7 +1169,7 @@ namespace Microsoft.Data.SqlClient
         protected override byte[] GetDTCAddress()
         {
             byte[] dtcAddress = _parser.GetDTCAddress(ConnectionOptions.ConnectTimeout, _parser.GetSession(this));
-            Debug.Assert(null != dtcAddress, "null dtcAddress?");
+            Debug.Assert(dtcAddress != null, "null dtcAddress?");
             return dtcAddress;
         }
 
@@ -1393,7 +1391,7 @@ namespace Microsoft.Data.SqlClient
             ServerInfo dataSource = new ServerInfo(connectionOptions);
             string failoverPartner;
 
-            if (null != PoolGroupProviderInfo)
+            if (PoolGroupProviderInfo != null)
             {
                 useFailoverPartner = PoolGroupProviderInfo.UseFailoverPartner;
                 failoverPartner = PoolGroupProviderInfo.FailoverPartner;
@@ -1546,7 +1544,7 @@ namespace Microsoft.Data.SqlClient
                                     newSecurePassword,
                                     connectionOptions.MultiSubnetFailover ? intervalTimer : timeout);
 
-                    if (connectionOptions.MultiSubnetFailover && null != ServerProvidedFailOverPartner)
+                    if (connectionOptions.MultiSubnetFailover && ServerProvidedFailOverPartner != null)
                     {
                         // connection succeeded: trigger exception if server sends failover partner and MultiSubnetFailover is used
                         throw SQL.MultiSubnetFailoverWithFailoverPartner(serverProvidedFailoverPartner: true, internalConnection: this);
@@ -1593,12 +1591,13 @@ namespace Microsoft.Data.SqlClient
                         continue;
                     }
 
-                    if (null == _parser
-                            || TdsParserState.Closed != _parser.State
-                            || IsDoNotRetryConnectError(sqlex)
-                            || timeout.IsExpired)
-                    {       // no more time to try again
-                        throw;  // Caller will call LoginFailure()
+                    if (_parser == null
+                        || TdsParserState.Closed != _parser.State
+                        || IsDoNotRetryConnectError(sqlex)
+                        || timeout.IsExpired)
+                    {
+                        // no more time to try again
+                        throw; // Caller will call LoginFailure()
                     }
 
                     // Check sleep interval to make sure we won't exceed the timeout
@@ -1612,7 +1611,7 @@ namespace Microsoft.Data.SqlClient
                 // We only get here when we failed to connect, but are going to re-try
 
                 // Switch to failover logic if the server provided a partner
-                if (null != ServerProvidedFailOverPartner)
+                if (ServerProvidedFailOverPartner != null)
                 {
                     if (connectionOptions.MultiSubnetFailover)
                     {
@@ -1646,7 +1645,7 @@ namespace Microsoft.Data.SqlClient
             }
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
-            if (null != PoolGroupProviderInfo)
+            if (PoolGroupProviderInfo != null)
             {
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
@@ -1712,7 +1711,7 @@ namespace Microsoft.Data.SqlClient
             ServerInfo failoverServerInfo = new ServerInfo(connectionOptions, failoverHost, connectionOptions.FailoverPartnerSPN);
 
             ResolveExtendedServerName(primaryServerInfo, !redirectedUserInstance, connectionOptions);
-            if (null == ServerProvidedFailOverPartner)
+            if (ServerProvidedFailOverPartner == null)
             {
                 ResolveExtendedServerName(failoverServerInfo, !redirectedUserInstance && failoverHost != primaryServerInfo.UserServerName, connectionOptions);
             }
@@ -1761,7 +1760,7 @@ namespace Microsoft.Data.SqlClient
                 if (useFailoverHost)
                 {
                     // Primary server may give us a different failover partner than the connection string indicates.  Update it
-                    if (null != ServerProvidedFailOverPartner && failoverServerInfo.ResolvedServerName != ServerProvidedFailOverPartner)
+                    if (ServerProvidedFailOverPartner != null && failoverServerInfo.ResolvedServerName != ServerProvidedFailOverPartner)
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, new failover partner={1}", ObjectID, ServerProvidedFailOverPartner);
                         failoverServerInfo.SetDerivedNames(string.Empty, ServerProvidedFailOverPartner);
@@ -1846,12 +1845,12 @@ namespace Microsoft.Data.SqlClient
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
             // if connected to failover host, but said host doesn't have DbMirroring set up, throw an error
-            if (useFailoverHost && null == ServerProvidedFailOverPartner)
+            if (useFailoverHost && ServerProvidedFailOverPartner == null)
             {
                 throw SQL.InvalidPartnerConfiguration(failoverHost, CurrentDatabase);
             }
 
-            if (null != PoolGroupProviderInfo)
+            if (PoolGroupProviderInfo != null)
             {
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
@@ -2012,7 +2011,7 @@ namespace Microsoft.Data.SqlClient
             var connection = Connection;
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.BreakConnection|RES|CPOOL> {0}, Breaking connection.", ObjectID);
             DoomThisConnection();   // Mark connection as unusable, so it will be destroyed
-            if (null != connection)
+            if (connection != null)
             {
                 connection.Close();
             }
@@ -2362,7 +2361,7 @@ namespace Microsoft.Data.SqlClient
             // Username to use in error messages.
             string username = null;
 
-            var authProvider = _sqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
+            var authProvider = SqlAuthenticationProvider.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
                 throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
 
@@ -2896,7 +2895,7 @@ namespace Microsoft.Data.SqlClient
         {
             //-----------------
             // Preconditions
-            Debug.Assert(null != userOptions);
+            Debug.Assert(userOptions != null);
 
             //-----------------
             //Method body
@@ -2915,7 +2914,7 @@ namespace Microsoft.Data.SqlClient
         {
             //-----------------
             // Preconditions
-            Debug.Assert(null != userOptions && null != routing);
+            Debug.Assert(userOptions != null && routing != null);
 
             //-----------------
             //Method body

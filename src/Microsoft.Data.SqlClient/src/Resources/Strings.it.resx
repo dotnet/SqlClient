@@ -4737,4 +4737,7 @@
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>Certificato non disponibile durante la convalida del certificato.</value>
   </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>Il certificato fornito dal server non corrisponde al certificato fornito dall'opzione ServerCertificate.</value>
+  </data>
 </root>

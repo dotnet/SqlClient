@@ -126,11 +126,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 Trace.Assert(1 == thelock); // Now that we have the lock, lock should be equal to 1.
 
-                if (null == data)
+                if (data == null)
                 {
                     data = Marshal.AllocHGlobal(passedSize).ToPointer();
 
-                    Trace.Assert(null != data);
+                    Trace.Assert(data != null);
 
                     System.Buffer.MemoryCopy(passedData, data, passedSize, passedSize);
 
@@ -1202,8 +1202,7 @@ namespace Microsoft.Data.SqlClient
             if (ret == ERROR_SUCCESS)
             {
                 // added a provider, need to requery for sync over async support
-                bool fSupportsSyncOverAsync;
-                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out fSupportsSyncOverAsync);
+                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
                 Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
             }
 
@@ -1231,8 +1230,7 @@ namespace Microsoft.Data.SqlClient
             if (ret == ERROR_SUCCESS)
             {
                 // added a provider, need to requery for sync over async support
-                bool fSupportsSyncOverAsync;
-                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out fSupportsSyncOverAsync);
+                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
                 Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
             }
 
@@ -1387,13 +1385,12 @@ namespace Microsoft.Data.SqlClient
 
             fixed (byte* pin_serverUserName = &serverUserName[0])
             {
-                bool local_fDone;
                 return SNISecGenClientContextWrapper(
                     pConnectionObject,
                     inBuff,
                     outBuff,
                     ref sendLength,
-                    out local_fDone,
+                    out bool _,
                     pin_serverUserName,
                     (uint)serverUserName.Length,
                     null,
@@ -1416,10 +1413,10 @@ namespace Microsoft.Data.SqlClient
         private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref Sni_Consumer_Info native_consumerInfo)
         {
             native_consumerInfo.DefaultUserDataLength = consumerInfo.defaultBufferSize;
-            native_consumerInfo.fnReadComp = null != consumerInfo.readDelegate
+            native_consumerInfo.fnReadComp = consumerInfo.readDelegate != null
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.readDelegate)
                 : IntPtr.Zero;
-            native_consumerInfo.fnWriteComp = null != consumerInfo.writeDelegate
+            native_consumerInfo.fnWriteComp = consumerInfo.writeDelegate != null
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.writeDelegate)
                 : IntPtr.Zero;
             native_consumerInfo.ConsumerKey = consumerInfo.key;

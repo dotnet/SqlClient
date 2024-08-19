@@ -705,8 +705,6 @@ namespace Microsoft.Data.SqlTypes
                 oa.securityQualityOfService = qos;
                 oa.objectName = objectName;
 
-                UnsafeNativeMethods.IO_STATUS_BLOCK ioStatusBlock;
-
                 uint oldMode;
                 uint retval = 0;
 
@@ -717,7 +715,7 @@ namespace Microsoft.Data.SqlTypes
                        "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{6}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
 
                     retval = UnsafeNativeMethods.NtCreateFile(out hFile, nDesiredAccess,
-                        ref oa, out ioStatusBlock, ref allocationSize,
+                        ref oa, out UnsafeNativeMethods.IO_STATUS_BLOCK _, ref allocationSize,
                         0, shareAccess, dwCreateDisposition, dwCreateOptions,
                         eaBuffer, (uint)eaBuffer.Length);
                 }

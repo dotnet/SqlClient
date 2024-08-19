@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (signature == null || signature.Length == 0)
             {
-                if (null == signature)
+                if (signature == null)
                 {
                     throw SQL.NullArgumentInternal(_signatureName, _className, methodName);
                 }
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (string.IsNullOrWhiteSpace(stringArgValue))
             {
-                if (null == stringArgValue)
+                if (stringArgValue == null)
                 {
                     throw SQL.NullArgumentInternal(stringArgName, _className, methodName);
                 }

@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient
             // Validate the input parameters
             ValidateNonEmptyCertificatePath(masterKeyPath, isSystemOp: true);
 
-            if (null == encryptedColumnEncryptionKey)
+            if (encryptedColumnEncryptionKey == null)
             {
                 throw SQL.NullEncryptedColumnEncryptionKey();
             }
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient
         {
             // Validate the input parameters
             ValidateNonEmptyCertificatePath(masterKeyPath, isSystemOp: false);
-            if (null == columnEncryptionKey)
+            if (columnEncryptionKey == null)
             {
                 throw SQL.NullColumnEncryptionKey();
             }
@@ -295,7 +295,7 @@ namespace Microsoft.Data.SqlClient
         private void ValidateEncryptionAlgorithm(string encryptionAlgorithm, bool isSystemOp)
         {
             // This validates that the encryption algorithm is RSA_OAEP
-            if (null == encryptionAlgorithm)
+            if (encryptionAlgorithm == null)
             {
                 throw SQL.NullKeyEncryptionAlgorithm(isSystemOp);
             }
@@ -334,7 +334,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (string.IsNullOrWhiteSpace(masterKeyPath))
             {
-                if (null == masterKeyPath)
+                if (masterKeyPath == null)
                 {
                     throw SQL.NullCertificatePath(GetValidCertificateLocations(), isSystemOp);
                 }
