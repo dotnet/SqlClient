@@ -12,10 +12,10 @@ namespace Microsoft.Data.SqlClient
     {
         private SspiClientContextStatus? _sspiClientContextStatus;
 
-        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, byte[][] _sniSpnBuffer)
+        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, string[] serverNames)
         {
             _sspiClientContextStatus ??= new SspiClientContextStatus();
-            SNIProxy.GenSspiClientContext(_sspiClientContextStatus, incomingBlob, outgoingBlobWriter, _sniSpnBuffer);
+            SNIProxy.GenSspiClientContext(_sspiClientContextStatus, incomingBlob, outgoingBlobWriter, serverNames);
             SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}", nameof(ManagedSSPIContextProvider), nameof(GenerateSspiClientContext), _physicalStateObj.SessionId);
         }
     }

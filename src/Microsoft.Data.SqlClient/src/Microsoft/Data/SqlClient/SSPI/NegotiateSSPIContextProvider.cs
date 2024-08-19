@@ -11,13 +11,13 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class NegotiateSSPIContextProvider : SSPIContextProvider
     {
-        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, byte[][] _sniSpnBuffer)
+        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, string[] serverNames)
         {
             NegotiateAuthenticationStatusCode statusCode = default;
 
-            for (int i = 0; i < _sniSpnBuffer.Length; i++)
+            for (int i = 0; i < serverNames.Length; i++)
             {
-                var negotiateAuth = new NegotiateAuthentication(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = Encoding.Unicode.GetString(_sniSpnBuffer[i]) });
+                var negotiateAuth = new NegotiateAuthentication(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = serverNames[i] });
                 var result = negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode);
 
                 // Log session id, status code and the actual SPN used in the negotiation

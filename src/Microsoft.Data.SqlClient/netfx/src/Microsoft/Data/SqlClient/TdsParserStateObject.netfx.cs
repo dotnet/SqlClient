@@ -256,7 +256,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            byte[] spnBuffer,
+            ref string spn,
             bool flushCache,
             bool async,
             bool fParallel,
@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClient
 
             _ = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, timeout.MillisecondsRemainingInt,
+            _sessionHandle = new SNIHandle(myInfo, serverName, ref spn, timeout.MillisecondsRemainingInt,
                 out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
                 ipPreference, cachedDNSInfo, hostNameInCertificate);
         }
