@@ -13,12 +13,10 @@ namespace Microsoft.Data.SqlClient
     {
         protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, byte[][] _sniSpnBuffer)
         {
-            NegotiateAuthenticationStatusCode statusCode = NegotiateAuthenticationStatusCode.UnknownCredentials;
-
             for (int i = 0; i < _sniSpnBuffer.Length; i++)
             {
                 var negotiateAuth = new NegotiateAuthentication(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = Encoding.Unicode.GetString(_sniSpnBuffer[i]) });
-                var sendBuff = negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode)!;
+                var sendBuff = negotiateAuth.GetOutgoingBlob(incomingBlob, out var statusCode)!;
 
                 // Log session id, status code and the actual SPN used in the negotiation
                 SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}, StatusCode={3}, SPN={4}", nameof(NegotiateSSPIContextProvider),
@@ -31,7 +29,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + Environment.NewLine + statusCode);
+            throw new InvalidOperationException(SQLMessage.SSPIGenerateError());
         }
     }
 }
