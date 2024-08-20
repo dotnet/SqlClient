@@ -590,7 +590,6 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All" />
     <PackageReference Include="System.Text.Encodings.Web">
       <Version>$(SystemTextEncodingsWebVersion)</Version>
     </PackageReference>
