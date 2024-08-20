@@ -16,6 +16,9 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFramework)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND !$(ReferenceType.Contains('Package'))" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND !$(ReferenceType.Contains('Package'))" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
