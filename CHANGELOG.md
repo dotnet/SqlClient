@@ -666,19 +666,7 @@ This update brings the below changes over the previous release:
 
 - Fixed connection to unsubscribe from transaction completion events before returning it to the connection pool. [#2301](https://github.com/dotnet/SqlClient/pull/2301) [#2434](https://github.com/dotnet/SqlClient/pull/2434)
 - Fixed `AcquireTokenAsync` timeout handling for edge cases in `ActiveDirectoryAuthenticationProvider`. [#2709](https://github.com/dotnet/SqlClient/pull/2709)
-- Fixed strong name validation error by removing delay sign from `Microsoft.Data.SqlClient` assembly. [#2789](https://github.com/dotnet/SqlClient/pull/2789)
-
-### Changed
-
-- Updated Microsoft.Data.SqlClient.SNI version 3.0.1 to 3.0.2 [#2676](https://github.com/dotnet/SqlClient/pull/2676) which includes the fix for AppDomain crashing in issue [#1418](https://github.com/dotnet/SqlClient/issues/1418) and various code refactors.
-- Code health improvements: [#2147](https://github.com/dotnet/SqlClient/pull/2147), [#2515](https://github.com/dotnet/SqlClient/pull/2515), [#2517](https://github.com/dotnet/SqlClient/pull/2517) addresses [CVE-2019-0545](https://github.com/advisories/GHSA-2xjx-v99w-gqf3), [#2539](https://github.com/dotnet/SqlClient/pull/2539)
-
-## [Stable release 3.1.6] - 2024-08-15
-
-### Fixed
-
-- Fixed connection to unsubscribe from transaction completion events before returning it to the connection pool. [#2301](https://github.com/dotnet/SqlClient/pull/2301) [#2434](https://github.com/dotnet/SqlClient/pull/2434)
-- Fixed `AcquireTokenAsync` timeout handling for edge cases in `ActiveDirectoryAuthenticationProvider`. [#2709](https://github.com/dotnet/SqlClient/pull/2709)
+- Fixed the signing issue with `Microsoft.Data.SqlClient` assembly. [#2789](https://github.com/dotnet/SqlClient/pull/2789)
 
 ### Changed
 
