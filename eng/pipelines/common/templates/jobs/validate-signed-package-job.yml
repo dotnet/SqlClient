@@ -125,7 +125,7 @@ jobs:
               $badDlls += $result[$result.Length-1]
             }
           }
-          if($badDlls.Count -gt 0 -gt 0)
+          if($badDlls.Count -gt 0)
           {
             Write-OutPut "Error: Invalid dlls are detected. Chek below list:"
             foreach($dll in $badDlls)
