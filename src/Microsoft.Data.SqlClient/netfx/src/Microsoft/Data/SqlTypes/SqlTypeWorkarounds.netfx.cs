@@ -292,7 +292,7 @@ namespace Microsoft.Data.SqlTypes
         {
             // Returns null if .ctor(TValue, TIgnored) cannot be found.
             // Caller should have fallback logic in place in case the API doesn't exist.
-            internal unsafe static Func<TValue, TInstance> CreateFactory<TInstance, TValue, TIgnored>() where TInstance : struct
+            internal static unsafe Func<TValue, TInstance> CreateFactory<TInstance, TValue, TIgnored>() where TInstance : struct
             {
                 try
                 {

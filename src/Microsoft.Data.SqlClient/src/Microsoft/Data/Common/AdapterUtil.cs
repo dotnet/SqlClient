@@ -84,7 +84,7 @@ namespace Microsoft.Data.Common
         }
         #endregion
 
-        static private void TraceException(string trace, Exception e)
+        private static void TraceException(string trace, Exception e)
         {
             Debug.Assert(e != null, "TraceException: null Exception");
             if (e is not null)
@@ -897,7 +897,7 @@ namespace Microsoft.Data.Common
 #region Stream
         internal static Exception StreamClosed([CallerMemberName] string method = "") => InvalidOperation(StringsHelper.GetString(Strings.ADP_StreamClosed, method));
 
-        static internal Exception InvalidSeekOrigin(string parameterName) => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_InvalidSeekOrigin), parameterName);
+        internal static Exception InvalidSeekOrigin(string parameterName) => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_InvalidSeekOrigin), parameterName);
 
         internal static IOException ErrorReadingFromStream(Exception internalException) => IO(StringsHelper.GetString(Strings.SqlMisc_StreamErrorMessage), internalException);
 #endregion
@@ -1029,7 +1029,7 @@ namespace Microsoft.Data.Common
 
 #region IDbCommand
         // IDbCommand.CommandType
-        static internal ArgumentOutOfRangeException InvalidCommandType(CommandType value)
+        internal static ArgumentOutOfRangeException InvalidCommandType(CommandType value)
         {
 #if DEBUG
             switch (value)
@@ -1293,16 +1293,16 @@ namespace Microsoft.Data.Common
         internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndIntegratedSecurity()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity));
 
-        static internal InvalidOperationException InvalidMixedUsageOfAccessTokenAndUserIDPassword()
+        internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndUserIDPassword()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword));
 
-        static internal InvalidOperationException InvalidMixedUsageOfAccessTokenAndAuthentication()
+        internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndAuthentication()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndAuthentication));
 
-        static internal Exception InvalidMixedUsageOfCredentialAndAccessToken()
+        internal static Exception InvalidMixedUsageOfCredentialAndAccessToken()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfCredentialAndAccessToken));
 
-        static internal Exception InvalidMixedUsageOfAccessTokenAndTokenCallback()
+        internal static Exception InvalidMixedUsageOfAccessTokenAndTokenCallback()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback));
 
         internal static Exception InvalidMixedUsageOfAccessTokenCallbackAndAuthentication()

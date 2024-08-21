@@ -10,7 +10,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class SqlSequentialStream : System.IO.Stream
+    internal sealed class SqlSequentialStream : System.IO.Stream
     {
         private SqlDataReader _reader;  // The SqlDataReader that we are reading data from
         private readonly int _columnIndex;       // The index of out column in the table

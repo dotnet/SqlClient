@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient
 
         [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        internal unsafe static byte[] GetData()
+        internal static unsafe byte[] GetData()
         {
             int size;
             IntPtr ptr = (IntPtr)(SqlDependencyProcessDispatcherStorage.NativeGetData(out size));
@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient
 
         [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        internal unsafe static void SetData(Byte[] data)
+        internal static unsafe void SetData(Byte[] data)
         {
             //cli::pin_ptr<System::Byte> pin_dispatcher = &data[0];
             fixed (byte* pin_dispatcher = &data[0])
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        unsafe internal class SqlDependencyProcessDispatcherStorage
+        internal unsafe class SqlDependencyProcessDispatcherStorage
         {
 
             static void* data;

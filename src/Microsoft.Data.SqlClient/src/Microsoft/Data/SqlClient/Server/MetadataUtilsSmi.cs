@@ -988,7 +988,7 @@ namespace Microsoft.Data.SqlClient.Server
 
 #if NETFRAMEWORK
 
-        static internal bool IsValidForSmiVersion(SmiExtendedMetaData md, ulong smiVersion)
+        internal static bool IsValidForSmiVersion(SmiExtendedMetaData md, ulong smiVersion)
         {
             if (SmiContextFactory.LatestVersion == smiVersion)
             {

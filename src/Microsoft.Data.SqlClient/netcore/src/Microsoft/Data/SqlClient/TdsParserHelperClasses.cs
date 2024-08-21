@@ -546,7 +546,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlMetaDataXmlSchemaCollection
+    internal sealed class SqlMetaDataXmlSchemaCollection
     {
         internal string Database;
         internal string OwningSchema;
@@ -563,7 +563,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlMetaDataUdt
+    internal sealed class SqlMetaDataUdt
     {
 #if NET6_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]

@@ -701,7 +701,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal string TraceString() => TraceString(0);
 
-        virtual internal string TraceString(int indent)
+        internal virtual string TraceString(int indent)
         {
             string indentStr = new string(' ', indent);
             string fields = string.Empty;

@@ -18,7 +18,7 @@ namespace Microsoft.Data.Sql
         public static SqlDataSourceEnumerator Instance => s_singletonInstance.Value;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/GetDataSources/*' />
-        override public DataTable GetDataSources() => GetDataSourcesInternal();
+        public override DataTable GetDataSources() => GetDataSourcesInternal();
 
         private partial DataTable GetDataSourcesInternal();
     }

@@ -8,7 +8,7 @@ using System.Diagnostics;
 namespace Microsoft.Data.SqlClient.Server
 {
 
-    sealed internal class SmiContextFactory
+    internal sealed class SmiContextFactory
     {
         public static readonly SmiContextFactory Instance = new SmiContextFactory();
 

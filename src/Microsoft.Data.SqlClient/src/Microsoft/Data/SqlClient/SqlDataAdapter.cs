@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient
         [DefaultValue(null)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_DeleteCommand)]
-        new public SqlCommand DeleteCommand
+        public new SqlCommand DeleteCommand
         {
             get { return _deleteCommand; }
             set { _deleteCommand = value; }
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient
         [DefaultValue(null)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_InsertCommand)]
-        new public SqlCommand InsertCommand
+        public new SqlCommand InsertCommand
         {
             get { return _insertCommand; }
             set { _insertCommand = value; }
@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient
         [DefaultValue(null)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Fill)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_SelectCommand)]
-        new public SqlCommand SelectCommand
+        public new SqlCommand SelectCommand
         {
             get { return _selectCommand; }
             set { _selectCommand = value; }
@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient
         [DefaultValue(null)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_UpdateCommand)]
-        new public SqlCommand UpdateCommand
+        public new SqlCommand UpdateCommand
         {
             get { return _updateCommand; }
             set { _updateCommand = value; }
@@ -284,7 +284,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdated/*' />
-        override protected void OnRowUpdated(RowUpdatedEventArgs value)
+        protected override void OnRowUpdated(RowUpdatedEventArgs value)
         {
             SqlRowUpdatedEventHandler handler = (SqlRowUpdatedEventHandler)Events[s_eventRowUpdated];
             if (handler != null && value is SqlRowUpdatedEventArgs args)
@@ -295,7 +295,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdating/*' />
-        override protected void OnRowUpdating(RowUpdatingEventArgs value)
+        protected override void OnRowUpdating(RowUpdatingEventArgs value)
         {
             SqlRowUpdatingEventHandler handler = (SqlRowUpdatingEventHandler)Events[s_eventRowUpdating];
             if (handler != null && value is SqlRowUpdatingEventArgs args)

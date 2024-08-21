@@ -9,7 +9,7 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class SqlReferenceCollection : DbReferenceCollection
+    internal sealed class SqlReferenceCollection : DbReferenceCollection
     {
         private sealed class FindLiveReaderContext
         {
@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient
         internal const int CommandTag = 2;
         internal const int BulkCopyTag = 3;
 
-        private readonly static Func<SqlDataReader, bool> s_hasOpenReaderFunc = HasOpenReaderPredicate;
+        private static readonly Func<SqlDataReader, bool> s_hasOpenReaderFunc = HasOpenReaderPredicate;
         private static FindLiveReaderContext s_cachedFindLiveReaderContext;
 
         public override void Add(object value, int tag)

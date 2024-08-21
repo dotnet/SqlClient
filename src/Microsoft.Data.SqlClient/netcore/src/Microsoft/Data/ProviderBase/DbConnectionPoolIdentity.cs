@@ -4,7 +4,7 @@
 
 namespace Microsoft.Data.ProviderBase
 {
-    sealed internal partial class DbConnectionPoolIdentity
+    internal sealed partial class DbConnectionPoolIdentity
     {
         public static readonly DbConnectionPoolIdentity NoIdentity = new DbConnectionPoolIdentity(string.Empty, false, true);
 
@@ -27,7 +27,7 @@ namespace Microsoft.Data.ProviderBase
         }
 
 
-        override public bool Equals(object value)
+        public override bool Equals(object value)
         {
             bool result = ((this == NoIdentity) || (this == value));
             if (!result && value != null)
@@ -38,7 +38,7 @@ namespace Microsoft.Data.ProviderBase
             return result;
         }
 
-        override public int GetHashCode()
+        public override int GetHashCode()
         {
             return _hashCode;
         }

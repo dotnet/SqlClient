@@ -347,7 +347,7 @@ namespace Microsoft.Data.SqlClient
         //
         //  Smi execution-specific stuff
         //
-        sealed private class CommandEventSink : SmiEventSink_Default
+        private sealed class CommandEventSink : SmiEventSink_Default
         {
             private SqlCommand _command;
 
@@ -499,7 +499,7 @@ namespace Microsoft.Data.SqlClient
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Connection),
         ]
-        new public SqlConnection Connection
+        public new SqlConnection Connection
         {
             get
             {
@@ -706,7 +706,7 @@ namespace Microsoft.Data.SqlClient
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Transaction),
         ]
-        new public SqlTransaction Transaction
+        public new SqlTransaction Transaction
         {
             get
             {
@@ -891,7 +891,7 @@ namespace Microsoft.Data.SqlClient
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Parameters),
         ]
-        new public SqlParameterCollection Parameters
+        public new SqlParameterCollection Parameters
         {
             get
             {
@@ -1330,7 +1330,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateParameter/*'/>
-        new public SqlParameter CreateParameter()
+        public new SqlParameter CreateParameter()
         {
             return new SqlParameter();
         }
@@ -2490,7 +2490,7 @@ namespace Microsoft.Data.SqlClient
             => RetryLogicProvider.Execute(this, () => ExecuteReader(behavior, method));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="default"]/*'/>
-        new public SqlDataReader ExecuteReader()
+        public new SqlDataReader ExecuteReader()
         {
             SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlCommand.ExecuteReader|API> {0}", ObjectID))
@@ -2511,7 +2511,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
-        new public SqlDataReader ExecuteReader(CommandBehavior behavior)
+        public new SqlDataReader ExecuteReader(CommandBehavior behavior)
         {
             using (TryEventScope.Create("<sc.SqlCommand.ExecuteReader|API> {0}, behavior={1}", ObjectID, (int)behavior))
             {
@@ -3130,25 +3130,25 @@ namespace Microsoft.Data.SqlClient
             => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteReaderAsync(behavior, cancellationToken), cancellationToken);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
-        new public Task<SqlDataReader> ExecuteReaderAsync()
+        public new Task<SqlDataReader> ExecuteReaderAsync()
             => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(CommandBehavior.Default, CancellationToken.None) :
                 InternalExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
-        new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior)
+        public new Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior)
             => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(behavior, CancellationToken.None) :
                 InternalExecuteReaderAsync(behavior, CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
-        new public Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
+        public new Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
             => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(CommandBehavior.Default, cancellationToken) :
                 InternalExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
-        new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+        public new Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
             => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(behavior, cancellationToken) :
                 InternalExecuteReaderAsync(behavior, cancellationToken);
@@ -3914,7 +3914,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [System.Security.Permissions.SecurityPermission(SecurityAction.Assert, Infrastructure = true)]
-        static internal string SqlNotificationContext()
+        internal static string SqlNotificationContext()
         {
             SqlConnection.VerifyExecutePermission();
 

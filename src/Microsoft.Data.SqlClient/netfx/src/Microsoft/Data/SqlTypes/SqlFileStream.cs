@@ -17,7 +17,7 @@ using Microsoft.Data.SqlClient;
 namespace Microsoft.Data.SqlTypes
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SqlFileStream/*' />
-    sealed public class SqlFileStream : System.IO.Stream
+    public sealed class SqlFileStream : System.IO.Stream
     {
         // NOTE: if we ever unseal this class, be sure to specify the Name, SafeFileHandle, and 
         //   TransactionContext accessors as virtual methods. Doing so now on a sealed class
@@ -439,7 +439,7 @@ namespace Microsoft.Data.SqlTypes
 
         #endregion
 
-        static private readonly char[] InvalidPathChars = Path.GetInvalidPathChars();
+        private static readonly char[] InvalidPathChars = Path.GetInvalidPathChars();
 
         // path length limitations:
         // 1. path length storage (in bytes) in UNICODE_STRING is limited to UInt16.MaxValue bytes = Int16.MaxValue chars
@@ -449,7 +449,7 @@ namespace Microsoft.Data.SqlTypes
         private const int MaxWin32PathLength = Int16.MaxValue - 1;
 
         [ConditionalAttribute("DEBUG")]
-        static private void AssertPathFormat(string path)
+        private static void AssertPathFormat(string path)
         {
             Debug.Assert(path != null);
             Debug.Assert(path == path.Trim());
@@ -467,7 +467,7 @@ namespace Microsoft.Data.SqlTypes
         // To overcome the above limitations we decided to use GetFullPathName function from kernel32.dll
         [ResourceExposure(ResourceScope.Machine)]
         [ResourceConsumption(ResourceScope.Machine)]
-        static private string GetFullPathInternal(string path)
+        private static string GetFullPathInternal(string path)
         {
             //-----------------------------------------------------------------
             // precondition validation
@@ -522,7 +522,7 @@ namespace Microsoft.Data.SqlTypes
             return path;
         }
 
-        static private void DemandAccessPermission
+        private static void DemandAccessPermission
             (
                 string path,
                 System.IO.FileAccess access
@@ -844,7 +844,7 @@ namespace Microsoft.Data.SqlTypes
         // This method exists to ensure that the requested path name is unique so that SMB/DNS is prevented
         //   from collapsing a file open request to a file handle opened previously. In the SQL FILESTREAM case,
         //   this would likely be a file open in another transaction, so this mechanism ensures isolation.
-        static private string InitializeNtPath(string path)
+        private static string InitializeNtPath(string path)
         {
             // ensure we have validated and normalized the path before
             AssertPathFormat(path);

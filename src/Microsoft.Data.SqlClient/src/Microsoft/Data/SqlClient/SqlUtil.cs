@@ -484,7 +484,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CannotGetDTCAddress));
         }
 
-        static internal Exception InvalidOptionLength(string key)
+        internal static Exception InvalidOptionLength(string key)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidOptionLength, key));
         }
@@ -504,20 +504,20 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidSSPIPacketSize));
         }
-        static internal Exception NullEmptyTransactionName()
+        internal static Exception NullEmptyTransactionName()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_NullEmptyTransactionName));
         }
 
-        static internal Exception UserInstanceFailoverNotCompatible()
+        internal static Exception UserInstanceFailoverNotCompatible()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_UserInstanceFailoverNotCompatible));
         }
-        static internal Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
+        internal static Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringBuilderUtil.AuthenticationTypeToString(auth)));
         }
-        static internal Exception InvalidCertAuth()
+        internal static Exception InvalidCertAuth()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_Certificate));
         }
@@ -1063,7 +1063,7 @@ namespace Microsoft.Data.SqlClient
         //
         // SQL.SqlDelegatedTransaction
         //
-        static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(SqlInternalConnectionTds internalConnection, bool marsOn)
+        internal static Exception CannotCompleteDelegatedTransactionWithOpenResults(SqlInternalConnectionTds internalConnection, bool marsOn)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, (StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection)), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
@@ -1082,7 +1082,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlNotify_SqlDepCannotBeCreatedInProc));
         }
 
-        static internal Exception SqlNotificationException(SqlNotificationEventArgs notify)
+        internal static Exception SqlNotificationException(SqlNotificationEventArgs notify)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQLNotify_ErrorFormat, notify.Type, notify.Info, notify.Source));
         }
@@ -1579,7 +1579,7 @@ namespace Microsoft.Data.SqlClient
         }
         // SQLBU 402363: Exception to prevent Parameter.Size data corruption case from working.
         //  This should be temporary until changing to correct behavior can be safely implemented.
-        static internal Exception ParameterSizeRestrictionFailure(int index)
+        internal static Exception ParameterSizeRestrictionFailure(int index)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.OleDb_CommandParameterError, index.ToString(CultureInfo.InvariantCulture), "SqlParameter.Size"));
         }
@@ -1955,7 +1955,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.ArgumentNull(StringsHelper.GetString(Strings.TCE_NullPlainText));
         }
 
-        static internal Exception VeryLargeCiphertext(long cipherTextLength, long maxCipherTextSize, long plainTextLength)
+        internal static Exception VeryLargeCiphertext(long cipherTextLength, long maxCipherTextSize, long plainTextLength)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_VeryLargeCiphertext, cipherTextLength, maxCipherTextSize, plainTextLength));
         }
@@ -2411,56 +2411,56 @@ namespace Microsoft.Data.SqlClient
         // Merged Provider
         //
 
-        static internal Exception ContextAllowsLimitedKeywords()
+        internal static Exception ContextAllowsLimitedKeywords()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextAllowsLimitedKeywords));
         }
-        static internal Exception ContextAllowsOnlyTypeSystem2005()
+        internal static Exception ContextAllowsOnlyTypeSystem2005()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextAllowsOnlyTypeSystem2005));
         }
-        static internal Exception ContextConnectionIsInUse()
+        internal static Exception ContextConnectionIsInUse()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextConnectionIsInUse));
         }
-        static internal Exception ContextUnavailableOutOfProc()
+        internal static Exception ContextUnavailableOutOfProc()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextUnavailableOutOfProc));
         }
-        static internal Exception ContextUnavailableWhileInProc()
+        internal static Exception ContextUnavailableWhileInProc()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextUnavailableWhileInProc));
         }
-        static internal Exception NestedTransactionScopesNotSupported()
+        internal static Exception NestedTransactionScopesNotSupported()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NestedTransactionScopesNotSupported));
         }
-        static internal Exception NotAvailableOnContextConnection()
+        internal static Exception NotAvailableOnContextConnection()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NotAvailableOnContextConnection));
         }
-        static internal Exception NotificationsNotAvailableOnContextConnection()
+        internal static Exception NotificationsNotAvailableOnContextConnection()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NotificationsNotAvailableOnContextConnection));
         }
 
-        static internal Exception UserInstanceNotAvailableInProc()
+        internal static Exception UserInstanceNotAvailableInProc()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UserInstanceNotAvailableInProc));
         }
-        static internal Exception ArgumentLengthMismatch(string arg1, string arg2)
+        internal static Exception ArgumentLengthMismatch(string arg1, string arg2)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_ArgumentLengthMismatch, arg1, arg2));
         }
-        static internal Exception InvalidSqlDbTypeOneAllowedType(SqlDbType invalidType, string method, SqlDbType allowedType)
+        internal static Exception InvalidSqlDbTypeOneAllowedType(SqlDbType invalidType, string method, SqlDbType allowedType)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidSqlDbTypeWithOneAllowedType, invalidType, method, allowedType));
         }
-        static internal Exception SqlPipeErrorRequiresSendEnd()
+        internal static Exception SqlPipeErrorRequiresSendEnd()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_PipeErrorRequiresSendEnd));
         }
-        static internal Exception TooManyValues(string arg)
+        internal static Exception TooManyValues(string arg)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_TooManyValues), arg);
         }
@@ -2513,11 +2513,11 @@ namespace Microsoft.Data.SqlClient
             return new InternalException(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
         }
 #else
-        static internal Exception SnapshotNotSupported(System.Data.IsolationLevel level)
+        internal static Exception SnapshotNotSupported(System.Data.IsolationLevel level)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_SnapshotNotSupported, typeof(System.Data.IsolationLevel), level.ToString()));
         }
-        static internal Exception UnexpectedSmiEvent(Microsoft.Data.SqlClient.Server.SmiEventSink_Default.UnexpectedEventType eventType)
+        internal static Exception UnexpectedSmiEvent(Microsoft.Data.SqlClient.Server.SmiEventSink_Default.UnexpectedEventType eventType)
         {
             Debug.Assert(false, "UnexpectedSmiEvent: " + eventType.ToString());    // Assert here, because these exceptions will most likely be eaten by the server.
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnexpectedSmiEvent, (int)eventType));
@@ -2526,7 +2526,7 @@ namespace Microsoft.Data.SqlClient
 
     }
 
-    sealed internal class SQLMessage
+    internal sealed class SQLMessage
     {
         private SQLMessage() { /* prevent utility class from being instantiated*/ }
 
@@ -2772,7 +2772,7 @@ namespace Microsoft.Data.SqlClient
     }
 
 #if NETFRAMEWORK
-    sealed internal class InOutOfProcHelper
+    internal sealed class InOutOfProcHelper
     {
         private static readonly InOutOfProcHelper SingletonInstance = new InOutOfProcHelper();
 

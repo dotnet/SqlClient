@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/SqlConfigurableRetryFactory/*' />
     public sealed class SqlConfigurableRetryFactory
     {
-        private readonly static object s_syncObject = new();
+        private static readonly object s_syncObject = new();
         /// Default known transient error numbers.
         private static readonly HashSet<int> s_defaultTransientErrors
             = new HashSet<int>

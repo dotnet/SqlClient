@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// <para> Implements a global directory of all the encryption algorithms registered with client.</para>
     /// </summary>
-    sealed internal class SqlClientEncryptionAlgorithmFactoryList
+    internal sealed class SqlClientEncryptionAlgorithmFactoryList
     {
         private readonly ConcurrentDictionary<string, SqlClientEncryptionAlgorithmFactory> _encryptionAlgoFactoryList;
         private static readonly SqlClientEncryptionAlgorithmFactoryList _singletonInstance = new SqlClientEncryptionAlgorithmFactoryList();

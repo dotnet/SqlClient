@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient
 
         public override bool IsInvalid => (IntPtr.Zero == base.handle);
 
-        override protected bool ReleaseHandle()
+        protected override bool ReleaseHandle()
         {
             if (base.handle != IntPtr.Zero)
             {
@@ -213,7 +213,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected bool ReleaseHandle()
+        protected override bool ReleaseHandle()
         {
             // NOTE: The SafeHandle class guarantees this will be called exactly once.
             IntPtr ptr = base.handle;
@@ -256,7 +256,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected bool ReleaseHandle()
+        protected override bool ReleaseHandle()
         {
             // NOTE: The SafeHandle class guarantees this will be called exactly once.
             IntPtr ptr = base.handle;

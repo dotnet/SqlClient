@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient
         // SxS: this method accesses registry to resolve the alias.
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        static internal void AliasRegistryLookup(ref string host, ref string protocol)
+        internal static void AliasRegistryLookup(ref string host, ref string protocol)
         {
             if (!ADP.IsEmpty(host))
             {
@@ -158,7 +158,7 @@ namespace Microsoft.Data.SqlClient
 
         [ResourceExposure(ResourceScope.None)] // SxS: we use MAC address for TDS login only
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        static internal byte[] GetNetworkPhysicalAddressForTdsLoginOnly()
+        internal static byte[] GetNetworkPhysicalAddressForTdsLoginOnly()
         {
             if (s_nicAddress != null)
             {

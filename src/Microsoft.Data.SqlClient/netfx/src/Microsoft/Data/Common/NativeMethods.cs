@@ -40,7 +40,7 @@ namespace Microsoft.Data.Common
 
         [DllImport(ExternDll.Kernel32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         [ResourceExposure(ResourceScope.Machine)]
-        static internal extern IntPtr MapViewOfFile(IntPtr hFileMappingObject, int dwDesiredAccess, int dwFileOffsetHigh, int dwFileOffsetLow, IntPtr dwNumberOfBytesToMap);
+        internal static extern IntPtr MapViewOfFile(IntPtr hFileMappingObject, int dwDesiredAccess, int dwFileOffsetHigh, int dwFileOffsetLow, IntPtr dwNumberOfBytesToMap);
 
         // OpenFileMappingA contains a security venerability, in the unicode->ansi conversion 
         // Its possible to spoof the directory and construct ../ sequences,  See FxCop Warning
@@ -48,7 +48,7 @@ namespace Microsoft.Data.Common
         [DllImport(ExternDll.Kernel32, CharSet = System.Runtime.InteropServices.CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         //        [DllImport(ExternDll.Kernel32, CharSet=System.Runtime.InteropServices.CharSet.Ansi)]
         [ResourceExposure(ResourceScope.Machine)]
-        static internal extern IntPtr OpenFileMappingA(int dwDesiredAccess, bool bInheritHandle, [MarshalAs(UnmanagedType.LPStr)] string lpName);
+        internal static extern IntPtr OpenFileMappingA(int dwDesiredAccess, bool bInheritHandle, [MarshalAs(UnmanagedType.LPStr)] string lpName);
 
         // CreateFileMappingA contains a security venerability, in the unicode->ansi conversion 
         // Its possible to spoof the directory and construct ../ sequences,  See FxCop Warning
@@ -56,19 +56,19 @@ namespace Microsoft.Data.Common
         [DllImport(ExternDll.Kernel32, CharSet = System.Runtime.InteropServices.CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         //        [DllImport(ExternDll.Kernel32, CharSet=System.Runtime.InteropServices.CharSet.Ansi)]
         [ResourceExposure(ResourceScope.Machine)]
-        static internal extern IntPtr CreateFileMappingA(IntPtr hFile, IntPtr pAttr, int flProtect, int dwMaximumSizeHigh, int dwMaximumSizeLow, [MarshalAs(UnmanagedType.LPStr)] string lpName);
+        internal static extern IntPtr CreateFileMappingA(IntPtr hFile, IntPtr pAttr, int flProtect, int dwMaximumSizeHigh, int dwMaximumSizeLow, [MarshalAs(UnmanagedType.LPStr)] string lpName);
 
         [DllImport(ExternDll.Kernel32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         [ResourceExposure(ResourceScope.Machine)]
-        static internal extern bool UnmapViewOfFile(IntPtr lpBaseAddress);
+        internal static extern bool UnmapViewOfFile(IntPtr lpBaseAddress);
 
         [DllImport(ExternDll.Kernel32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         [ResourceExposure(ResourceScope.Machine)]
-        static internal extern bool CloseHandle(IntPtr handle);
+        internal static extern bool CloseHandle(IntPtr handle);
 
         [DllImport(ExternDll.Advapi32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern bool AllocateAndInitializeSid(
+        internal static extern bool AllocateAndInitializeSid(
             IntPtr pIdentifierAuthority, // authority
             byte nSubAuthorityCount,                        // count of subauthorities
             int dwSubAuthority0,                          // subauthority 0
@@ -84,19 +84,19 @@ namespace Microsoft.Data.Common
 
         [DllImport(ExternDll.Advapi32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern int GetLengthSid(
+        internal static extern int GetLengthSid(
             IntPtr pSid);   // SID to query
 
         [DllImport(ExternDll.Advapi32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern bool InitializeAcl(
+        internal static extern bool InitializeAcl(
             IntPtr pAcl,            // ACL
             int nAclLength,     // size of ACL
             int dwAclRevision);  // revision level of ACL
 
         [DllImport(ExternDll.Advapi32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern bool AddAccessDeniedAce(
+        internal static extern bool AddAccessDeniedAce(
             IntPtr pAcl,            // access control list
             int dwAceRevision,  // ACL revision level
             int AccessMask,     // access mask
@@ -104,7 +104,7 @@ namespace Microsoft.Data.Common
 
         [DllImport(ExternDll.Advapi32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern bool AddAccessAllowedAce(
+        internal static extern bool AddAccessAllowedAce(
             IntPtr pAcl,            // access control list
             int dwAceRevision,  // ACL revision level
             uint AccessMask,     // access mask
@@ -112,12 +112,12 @@ namespace Microsoft.Data.Common
 
         [DllImport(ExternDll.Advapi32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern bool InitializeSecurityDescriptor(
+        internal static extern bool InitializeSecurityDescriptor(
             IntPtr pSecurityDescriptor, // SD
             int dwRevision);                         // revision level
         [DllImport(ExternDll.Advapi32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern bool SetSecurityDescriptorDacl(
+        internal static extern bool SetSecurityDescriptorDacl(
             IntPtr pSecurityDescriptor, // SD
             bool bDaclPresent,                        // DACL presence
             IntPtr pDacl,                               // DACL
@@ -125,7 +125,7 @@ namespace Microsoft.Data.Common
 
         [DllImport(ExternDll.Advapi32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern IntPtr FreeSid(
+        internal static extern IntPtr FreeSid(
             IntPtr pSid);   // SID to free
     }
 }

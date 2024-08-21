@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Copy/*' />
-        override public IPermission Copy()
+        public override IPermission Copy()
         {
             return new SqlClientPermission(this);
         }
@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Intersect/*' />
-        override public IPermission Intersect(IPermission target)
+        public override IPermission Intersect(IPermission target)
         { // used during Deny actions
             if (target == null)
             {
@@ -180,7 +180,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/IsSubsetOf/*' />
-        override public bool IsSubsetOf(IPermission target)
+        public override bool IsSubsetOf(IPermission target)
         {
             if (null == target)
             {
@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Union/*' />
-        override public IPermission Union(IPermission target)
+        public override IPermission Union(IPermission target)
         {
             if (target == null)
             {
@@ -282,7 +282,7 @@ namespace Microsoft.Data.SqlClient
         //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
         // </IPermission>
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/FromXml/*' />
-        override public void FromXml(SecurityElement securityElement)
+        public override void FromXml(SecurityElement securityElement)
         {
             // code derived from CodeAccessPermission.ValidateElement
             if (securityElement == null)
@@ -345,7 +345,7 @@ namespace Microsoft.Data.SqlClient
         //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
         // </IPermission>
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ToXml/*' />
-        override public SecurityElement ToXml()
+        public override SecurityElement ToXml()
         {
             Type type = this.GetType();
             SecurityElement root = new SecurityElement(XmlStr._IPermission);
@@ -424,7 +424,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/CreatePermission/*' />
-        override public IPermission CreatePermission()
+        public override IPermission CreatePermission()
         {
             return new SqlClientPermission(this);
         }

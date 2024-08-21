@@ -50,7 +50,7 @@ namespace Microsoft.Data.ProviderBase
             get { return _performanceCounters; }
         }
 
-        abstract public DbProviderFactory ProviderFactory
+        public abstract DbProviderFactory ProviderFactory
         {
             get;
         }
@@ -113,7 +113,7 @@ namespace Microsoft.Data.ProviderBase
             return null;
         }
 
-        virtual protected DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, out bool cacheMetaDataFactory)
+        protected virtual DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, out bool cacheMetaDataFactory)
         {
             // providers that support GetSchema must override this with a method that creates a meta data
             // factory appropriate for them.
@@ -156,7 +156,7 @@ namespace Microsoft.Data.ProviderBase
             return newConnection;
         }
 
-        virtual internal DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
+        internal virtual DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
         {
             return null;
         }
@@ -644,31 +644,31 @@ namespace Microsoft.Data.ProviderBase
             PerformanceCounters.NumberOfInactiveConnectionPoolGroups.Increment();
         }
 
-        virtual protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+        protected virtual DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
         {
             return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection);
         }
 
-        abstract protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection);
+        protected abstract DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection);
 
-        abstract protected DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous);
+        protected abstract DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous);
 
-        abstract protected DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions options);
+        protected abstract DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions options);
 
-        abstract internal DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection);
+        internal abstract DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection);
 
-        abstract internal DbConnectionInternal GetInnerConnection(DbConnection connection);
+        internal abstract DbConnectionInternal GetInnerConnection(DbConnection connection);
 
-        abstract protected int GetObjectId(DbConnection connection);
+        protected abstract int GetObjectId(DbConnection connection);
 
-        abstract internal void PermissionDemand(DbConnection outerConnection);
+        internal abstract void PermissionDemand(DbConnection outerConnection);
 
-        abstract internal void SetConnectionPoolGroup(DbConnection outerConnection, DbConnectionPoolGroup poolGroup);
+        internal abstract void SetConnectionPoolGroup(DbConnection outerConnection, DbConnectionPoolGroup poolGroup);
 
-        abstract internal void SetInnerConnectionEvent(DbConnection owningObject, DbConnectionInternal to);
+        internal abstract void SetInnerConnectionEvent(DbConnection owningObject, DbConnectionInternal to);
 
-        abstract internal bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from);
+        internal abstract bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from);
 
-        abstract internal void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to);
+        internal abstract void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to);
     }
 }

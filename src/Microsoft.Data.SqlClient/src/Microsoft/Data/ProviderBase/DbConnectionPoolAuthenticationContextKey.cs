@@ -11,7 +11,7 @@ namespace Microsoft.Data.ProviderBase
     /// Represents the key of dbConnectionPoolAuthenticationContext.
     /// All data members should be immutable and so, hashCode is pre-computed.
     /// </summary>
-    sealed internal class DbConnectionPoolAuthenticationContextKey
+    internal sealed class DbConnectionPoolAuthenticationContextKey
     {
         /// <summary>
         /// Security Token Service Authority.

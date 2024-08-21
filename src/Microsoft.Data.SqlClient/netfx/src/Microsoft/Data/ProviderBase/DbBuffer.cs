@@ -382,7 +382,7 @@ namespace Microsoft.Data.ProviderBase
             return *(Single*)&value;
         }
 
-        override protected bool ReleaseHandle()
+        protected override bool ReleaseHandle()
         {
             // NOTE: The SafeHandle class guarantees this will be called exactly once.
             IntPtr ptr = base.handle;

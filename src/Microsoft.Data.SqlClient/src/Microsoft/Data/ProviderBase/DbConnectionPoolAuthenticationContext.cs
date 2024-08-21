@@ -13,7 +13,7 @@ namespace Microsoft.Data.ProviderBase
     /// Represents the context of an authentication attempt when using the new active directory based authentication mechanisms.
     /// All data members, except_isUpdateInProgressCounter, should be immutable.
     /// </summary>
-    sealed internal class DbConnectionPoolAuthenticationContext
+    internal sealed class DbConnectionPoolAuthenticationContext
     {
         /// <summary>
         /// The value expected in _isUpdateInProgress if a thread has taken a lock on this context,

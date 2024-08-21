@@ -11,14 +11,14 @@ namespace Microsoft.Data.ProviderBase
     using Microsoft.Data.Common;
     using System.Transactions;
 
-    abstract internal class DbConnectionClosed : DbConnectionInternal
+    internal abstract class DbConnectionClosed : DbConnectionInternal
     {
         // Construct an "empty" connection
         protected DbConnectionClosed(ConnectionState state, bool hidePassword, bool allowSetConnectionString) : base(state, hidePassword, allowSetConnectionString)
         {
         }
 
-        override public string ServerVersion
+        public override string ServerVersion
         {
             get
             {
@@ -26,17 +26,17 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        override protected void Activate(Transaction transaction)
+        protected override void Activate(Transaction transaction)
         {
             throw ADP.ClosedConnectionError();
         }
 
-        override public DbTransaction BeginTransaction(System.Data.IsolationLevel il)
+        public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
         {
             throw ADP.ClosedConnectionError();
         }
 
-        override public void ChangeDatabase(string database)
+        public override void ChangeDatabase(string database)
         {
             throw ADP.ClosedConnectionError();
         }
@@ -46,17 +46,17 @@ namespace Microsoft.Data.ProviderBase
             // not much to do here...
         }
 
-        override protected void Deactivate()
+        protected override void Deactivate()
         {
             throw ADP.ClosedConnectionError();
         }
 
-        override public void EnlistTransaction(Transaction transaction)
+        public override void EnlistTransaction(Transaction transaction)
         {
             throw ADP.ClosedConnectionError();
         }
 
-        override protected internal DataTable GetSchema(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions)
+        protected internal override DataTable GetSchema(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions)
         {
             throw ADP.ClosedConnectionError();
         }
@@ -72,7 +72,7 @@ namespace Microsoft.Data.ProviderBase
         }
     }
 
-    abstract internal class DbConnectionBusy : DbConnectionClosed
+    internal abstract class DbConnectionBusy : DbConnectionClosed
     {
 
         protected DbConnectionBusy(ConnectionState state) : base(state, true, false)
@@ -85,7 +85,7 @@ namespace Microsoft.Data.ProviderBase
         }
     }
 
-    sealed internal class DbConnectionClosedBusy : DbConnectionBusy
+    internal sealed class DbConnectionClosedBusy : DbConnectionBusy
     {
         // Closed Connection, Currently Busy - changing connection string
         internal static readonly DbConnectionInternal SingletonInstance = new DbConnectionClosedBusy();   // singleton object
@@ -95,7 +95,7 @@ namespace Microsoft.Data.ProviderBase
         }
     }
 
-    sealed internal class DbConnectionOpenBusy : DbConnectionBusy
+    internal sealed class DbConnectionOpenBusy : DbConnectionBusy
     {
         // Open Connection, Currently Busy - closing connection
         internal static readonly DbConnectionInternal SingletonInstance = new DbConnectionOpenBusy();   // singleton object
@@ -105,7 +105,7 @@ namespace Microsoft.Data.ProviderBase
         }
     }
 
-    sealed internal class DbConnectionClosedConnecting : DbConnectionBusy
+    internal sealed class DbConnectionClosedConnecting : DbConnectionBusy
     {
         // Closed Connection, Currently Connecting
 
@@ -152,7 +152,7 @@ namespace Microsoft.Data.ProviderBase
         }
     }
 
-    sealed internal class DbConnectionClosedNeverOpened : DbConnectionClosed
+    internal sealed class DbConnectionClosedNeverOpened : DbConnectionClosed
     {
         // Closed Connection, Has Never Been Opened
 
@@ -163,7 +163,7 @@ namespace Microsoft.Data.ProviderBase
         }
     }
 
-    sealed internal class DbConnectionClosedPreviouslyOpened : DbConnectionClosed
+    internal sealed class DbConnectionClosedPreviouslyOpened : DbConnectionClosed
     {
         // Closed Connection, Has Previously Been Opened
         internal static readonly DbConnectionInternal SingletonInstance = new DbConnectionClosedPreviouslyOpened();   // singleton object
