@@ -1994,7 +1994,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     encoding = _metaData[i].encoding;
                 }
-
+                encoding = mt.SqlDbType == SqlDbTypeExtensions.Json ? System.Text.Encoding.UTF8 : encoding;
                 _currentTextReader = new SqlSequentialTextReader(this, i, encoding);
                 _lastColumnWithDataChunkRead = i;
                 return _currentTextReader;

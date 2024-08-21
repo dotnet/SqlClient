@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 records.Add(new Record
                 {
                     Id = i + 1,
-                    Name = "json" + random.Next(1, noOfRecords),
+                    Name = "𩸽json" + random.Next(1, noOfRecords),
                 });
             }
 
