@@ -111,6 +111,42 @@ jobs:
     displayName: 'Verify nuget signature'
 
   - powershell: |
+      if($env:CDP_BUILD_TYPE -eq 'Official')
+      {
+          # Recursively find all .dll files in TempFolder (installed nuget folder)
+          # Microsoft.Data.SqlClient.dll and Microsoft.Data.SqlClient.resources.dll (in localized folders) should have strong name
+          $dllFiles = Get-ChildItem -Path $(TempFolderName) -Recurse -Filter *.dll
+          $badDlls = @()
+          foreach ($file in $dllFiles) 
+          {
+            # Run sn.k to verify the strong name on each dll
+            $result = & "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe" -vf $file.FullName
+            Write-OutPut $result
+
+            # if thhe dll is not valid, it would be delay signed or test-signed which is not meant for production
+            if($result[$result.Length-1] -notlike "* is valid")
+            {
+              $badDlls += $result[$result.Length-1]
+            }
+          }
+          if($badDlls.Count -gt 0)
+          {
+            Write-OutPut "Error: Invalid dlls are detected. Chek below list:"
+            foreach($dll in $badDlls)
+            {
+              Write-Output $dll
+            }        
+            Exit -1
+        }
+        Write-Host "Strong name has been verified for all dlls"
+      }
+      else
+      {
+        Write-OutPut "Strong name verification is not required for non-official builds"
+      }
+    displayName: 'Verify strong name is generated for production'
+
+  - powershell: |
       # Checks the expected folder names such as lib, ref, runtimes
       Get-ChildItem -Path $(extractedNugetPath) -Directory  | select Name | foreach {
           if('$(expectedFolderNames)'.contains($_.Name)){
@@ -212,7 +248,6 @@ jobs:
         }
       }
     displayName: 'Verify all DLLs unzipped match "expected" hierarchy'
-
   - powershell: |
       # Verify all dlls status are Valid
       
