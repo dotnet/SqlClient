@@ -145,8 +145,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public State GetCurrentState()
         {
             byte[] binState = new byte[BinaryStateSize];
-            int offset;
-            Serialize(binState, out offset);
+            Serialize(binState, out _);
             return new State(GetType(), binState);
         }
 
@@ -187,8 +186,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (state._randomizerType != GetType())
                 throw new ArgumentException("Type mismatch!");
 
-            int offset;
-            Deserialize(state._binState, out offset);
+            Deserialize(state._binState, out _);
         }
 
         /// <summary>

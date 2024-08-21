@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>returns true if both the arrays have the same byte values else returns false</returns>
         internal static bool CompareBytes(byte[] buffer1, byte[] buffer2, int buffer2Index, int lengthToCompare)
         {
-            if (null == buffer1 || null == buffer2)
+            if (buffer1 == null || buffer2 == null)
             {
                 return false;
             }
@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (TdsEnums.CustomCipherAlgorithmId == cipherAlgorithmId)
             {
-                if (null == cipherAlgorithmName)
+                if (cipherAlgorithmName == null)
                 {
                     throw SQL.NullColumnEncryptionAlgorithm(SqlClientEncryptionAlgorithmFactoryList.GetInstance().GetRegisteredCipherAlgorithmNames());
                 }
@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(md.IsAlgorithmInitialized(), "Encryption Algorithm is not initialized");
             byte[] cipherText = md.CipherAlgorithm.EncryptData(plainText); // this call succeeds or throws.
-            if (null == cipherText || 0 == cipherText.Length)
+            if (cipherText == null || 0 == cipherText.Length)
             {
                 throw SQL.NullCipherText();
             }
@@ -217,7 +217,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 byte[] plainText = md.CipherAlgorithm.DecryptData(cipherText); // this call succeeds or throws.
-                if (null == plainText)
+                if (plainText == null)
                 {
                     throw SQL.NullPlainText();
                 }
@@ -374,8 +374,8 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    bool? signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
-                    if (signatureVerificationResult is null)
+                    bool signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
+                    if (signatureVerificationResult == false)
                     {
                         // We will simply bubble up the exception from VerifyColumnMasterKeyMetadata function.
                         isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled,
@@ -385,7 +385,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        isValidSignature = signatureVerificationResult.Value;
+                        isValidSignature = signatureVerificationResult;
                     }
                 }
             }

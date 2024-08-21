@@ -12,7 +12,7 @@ namespace Microsoft.Data.ProviderBase
 {
     partial class DbConnectionPoolIdentity
     {
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK
         [ResourceExposure(ResourceScope.None)] // SxS: this method does not create named objects
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         internal static DbConnectionPoolIdentity GetCurrent()

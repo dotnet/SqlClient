@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // New configuration section "SqlClientAuthenticationProviders" for Microsoft.Data.SqlClient accepted to avoid conflicts with older one.
                 configurationSection = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(SqlClientAuthenticationProviderConfigurationSection.Name);
-                if (null == configurationSection)
+                if (configurationSection == null)
                 {
                     // If configuration section is not yet found, try with old Configuration Section name for backwards compatibility
                     configurationSection = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(SqlAuthenticationProviderConfigurationSection.Name);
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient
         {
             Type t = typeof(T);
             object section = ConfigurationManager.GetSection(name);
-            if (null != section)
+            if (section != null)
             {
                 if (section is ConfigurationSection configSection && configSection.GetType() == t)
                 {

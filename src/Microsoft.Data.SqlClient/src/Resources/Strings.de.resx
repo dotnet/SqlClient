@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>Socket hat den erwarteten "{0}" nicht ausgelöst. Fehlercode: "{1}".</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>Wird in .NET Standard 2.0 nicht unterstützt.</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>Der Server versucht, ein Feature zu verwenden, das auf dieser Plattform nicht unterstützt wird.</value>
   </data>
@@ -4739,5 +4736,8 @@
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>Das Zertifikat ist während der Überprüfung des Zertifikats nicht verfügbar.</value>
+  </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>Das vom Server bereitgestellte Zertifikat stimmt nicht mit dem Zertifikat überein, das über die ServerCertificate-Option bereitgestellt wurde.</value>
   </data>
 </root>

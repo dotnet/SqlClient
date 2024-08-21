@@ -17,10 +17,10 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal SmiGettersStream(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
-            Debug.Assert(null != sink);
-            Debug.Assert(null != getters);
+            Debug.Assert(sink != null);
+            Debug.Assert(getters != null);
             Debug.Assert(0 <= ordinal);
-            Debug.Assert(null != metaData);
+            Debug.Assert(metaData != null);
 
             _sink = sink;
             _getters = getters;

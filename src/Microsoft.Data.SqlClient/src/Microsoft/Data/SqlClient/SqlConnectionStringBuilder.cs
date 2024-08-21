@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient
         private string _certificate = DbConnectionStringDefaults.Certificate;
 #endif
 #else
-        internal const int DeprecatedKeywordsCount = 3;
+        internal const int DeprecatedKeywordsCount = 5;
 #endif
         #endregion //Fields
 
@@ -363,7 +363,6 @@ namespace Microsoft.Data.SqlClient
                     return MinPoolSize;
                 case Keywords.MultiSubnetFailover:
                     return MultiSubnetFailover;
-                //          case Keywords.NamedConnection:          return NamedConnection;
                 case Keywords.PacketSize:
                     return PacketSize;
                 case Keywords.Password:
@@ -638,7 +637,7 @@ namespace Microsoft.Data.SqlClient
 
         private Exception UnsupportedKeyword(string keyword)
         {
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
             for (int index = 0; index < s_notSupportedKeywords.Length; index++)
             {
                 if (string.Equals(keyword, s_notSupportedKeywords[index], StringComparison.OrdinalIgnoreCase))
@@ -912,17 +911,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 #else    
-        private static readonly string[] s_notSupportedKeywords = new string[DeprecatedKeywordsCount] {
+        private static readonly string[] s_notSupportedKeywords = {
             DbConnectionStringKeywords.ConnectionReset,
             DbConnectionStringKeywords.ContextConnection,
             DbConnectionStringKeywords.TransactionBinding,
+            DbConnectionStringKeywords.TransparentNetworkIPResolution,
+            DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION,
         };
 
-        private static readonly string[] s_notSupportedNetworkLibraryKeywords = new string[] {
+        private static readonly string[] s_notSupportedNetworkLibraryKeywords = {
             DbConnectionStringKeywords.NetworkLibrary,
 
             DbConnectionStringSynonyms.NET,
-            DbConnectionStringSynonyms.NETWORK
+            DbConnectionStringSynonyms.NETWORK,
         };
 #endif
         #endregion //Private Methods

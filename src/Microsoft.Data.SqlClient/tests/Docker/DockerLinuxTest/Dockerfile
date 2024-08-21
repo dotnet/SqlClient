@@ -1,9 +1,9 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/runtime:8.0@sha256:bb9e61f07f93945ab97391b1dcbcc41136b03310583f36e52b3ec2815111e58a AS base
+FROM mcr.microsoft.com/dotnet/runtime:8.0@sha256:113324d7d68c23885ee6ce61f192f5cd2bed7a42d80a2038f26538b5653a1250 AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0@sha256:8e77ad6fb7c33c17f026424d3bef05ea2ee15d1621e28f312adeab4dc1005866 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0.101@sha256:1b99a629b4f55a496db835d9c3347737aa4a1d995d43ffe5ab92d04bee69adeb AS build
 WORKDIR /sqlclient
 COPY . .
 

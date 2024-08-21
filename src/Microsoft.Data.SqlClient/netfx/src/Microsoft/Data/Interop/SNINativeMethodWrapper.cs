@@ -126,11 +126,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 Trace.Assert(1 == thelock); // Now that we have the lock, lock should be equal to 1.
 
-                if (null == data)
+                if (data == null)
                 {
                     data = Marshal.AllocHGlobal(passedSize).ToPointer();
 
-                    Trace.Assert(null != data);
+                    Trace.Assert(data != null);
 
                     System.Buffer.MemoryCopy(passedData, data, passedSize, passedSize);
 
@@ -889,8 +889,7 @@ namespace Microsoft.Data.SqlClient
 
         private static unsafe uint SNISecGenClientContextWrapper(
             [In] SNIHandle pConn,
-            [In, Out] byte[] pIn,
-            uint cbIn,
+            [In, Out] ReadOnlySpan<byte> pIn,
             [In, Out] byte[] pOut,
             [In] ref uint pcbOut,
             [MarshalAsAttribute(UnmanagedType.Bool)] out bool pfDone,
@@ -899,16 +898,19 @@ namespace Microsoft.Data.SqlClient
             [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszUserName,
             [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszPassword)
         {
-            switch (s_architecture)
+            fixed (byte* pInPtr = pIn)
             {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return SNINativeManagedWrapperARM64.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
-                default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                switch (s_architecture)
+                {
+                    case System.Runtime.InteropServices.Architecture.Arm64:
+                        return SNINativeManagedWrapperARM64.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                    case System.Runtime.InteropServices.Architecture.X64:
+                        return SNINativeManagedWrapperX64.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                    case System.Runtime.InteropServices.Architecture.X86:
+                        return SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                    default:
+                        throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                }
             }
         }
 
@@ -1199,8 +1201,7 @@ namespace Microsoft.Data.SqlClient
             if (ret == ERROR_SUCCESS)
             {
                 // added a provider, need to requery for sync over async support
-                bool fSupportsSyncOverAsync;
-                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out fSupportsSyncOverAsync);
+                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
                 Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
             }
 
@@ -1228,8 +1229,7 @@ namespace Microsoft.Data.SqlClient
             if (ret == ERROR_SUCCESS)
             {
                 // added a provider, need to requery for sync over async support
-                bool fSupportsSyncOverAsync;
-                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out fSupportsSyncOverAsync);
+                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
                 Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
             }
 
@@ -1378,18 +1378,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, byte[] inBuff, uint receivedLength, byte[] OutBuff, ref uint sendLength, byte[] serverUserName)
+        internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, ReadOnlySpan<byte> inBuff, byte[] OutBuff, ref uint sendLength, byte[] serverUserName)
         {
             fixed (byte* pin_serverUserName = &serverUserName[0])
             {
-                bool local_fDone;
                 return SNISecGenClientContextWrapper(
                     pConnectionObject,
                     inBuff,
-                    receivedLength,
                     OutBuff,
                     ref sendLength,
-                    out local_fDone,
+                    out bool _,
                     pin_serverUserName,
                     (uint)serverUserName.Length,
                     null,
@@ -1412,10 +1410,10 @@ namespace Microsoft.Data.SqlClient
         private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref Sni_Consumer_Info native_consumerInfo)
         {
             native_consumerInfo.DefaultUserDataLength = consumerInfo.defaultBufferSize;
-            native_consumerInfo.fnReadComp = null != consumerInfo.readDelegate
+            native_consumerInfo.fnReadComp = consumerInfo.readDelegate != null
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.readDelegate)
                 : IntPtr.Zero;
-            native_consumerInfo.fnWriteComp = null != consumerInfo.writeDelegate
+            native_consumerInfo.fnWriteComp = consumerInfo.writeDelegate != null
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.writeDelegate)
                 : IntPtr.Zero;
             native_consumerInfo.ConsumerKey = consumerInfo.key;
