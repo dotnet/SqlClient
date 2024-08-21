@@ -76,7 +76,6 @@ namespace Microsoft.Data.ProviderBase
     internal sealed class DbConnectionClosedConnecting : DbConnectionBusy
     {
         // Closed Connection, Currently Connecting
-
         internal static readonly DbConnectionInternal SingletonInstance = new DbConnectionClosedConnecting();   // singleton object
 
         private DbConnectionClosedConnecting() : base(ConnectionState.Connecting)
@@ -106,7 +105,7 @@ namespace Microsoft.Data.ProviderBase
             // we are completing an asynchronous open
             Debug.Assert(retry.Task.Status == TaskStatus.RanToCompletion, "retry task must be completed successfully");
             DbConnectionInternal openConnection = retry.Task.Result;
-            if (null == openConnection)
+            if (openConnection == null)
             {
                 connectionFactory.SetInnerConnectionTo(outerConnection, this);
                 throw ADP.InternalConnectionError(ADP.ConnectionError.GetConnectionReturnsNull);
@@ -120,7 +119,6 @@ namespace Microsoft.Data.ProviderBase
     internal sealed class DbConnectionClosedNeverOpened : DbConnectionClosed
     {
         // Closed Connection, Has Never Been Opened
-
         internal static readonly DbConnectionInternal SingletonInstance = new DbConnectionClosedNeverOpened();   // singleton object
 
         private DbConnectionClosedNeverOpened() : base(ConnectionState.Closed, false, true)

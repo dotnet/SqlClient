@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ExecuteBatch/*' />
         protected override int ExecuteBatch()
         {
-            Debug.Assert(null != _commandSet && (0 < _commandSet.CommandCount), "no commands");
+            Debug.Assert(_commandSet != null && (0 < _commandSet.CommandCount), "no commands");
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlDataAdapter.ExecuteBatch | Info | Correlation | Object Id {0}, Activity Id {1}, Command Count {2}", ObjectID, ActivityCorrelator.Current, _commandSet.CommandCount);
             return _commandSet.ExecuteNonQuery();
         }
@@ -193,19 +193,19 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("SqlDataAdapter.InitializeBatching | API | Object Id {0}", ObjectID);
             _commandSet = new SqlCommandSet();
             SqlCommand command = SelectCommand;
-            if (null == command)
+            if (command == null)
             {
                 command = InsertCommand;
-                if (null == command)
+                if (command == null)
                 {
                     command = UpdateCommand;
-                    if (null == command)
+                    if (command == null)
                     {
                         command = DeleteCommand;
                     }
                 }
             }
-            if (null != command)
+            if (command != null)
             {
                 _commandSet.Connection = command.Connection;
                 _commandSet.Transaction = command.Transaction;
@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/TerminateBatching/*' />
         protected override void TerminateBatching()
         {
-            if (null != _commandSet)
+            if (_commandSet != null)
             {
                 _commandSet.Dispose();
                 _commandSet = null;
@@ -267,10 +267,10 @@ namespace Microsoft.Data.SqlClient
 
                 // Prevent someone from registering two different command builders on the adapter by
                 // silently removing the old one.
-                if ((null != handler) && (value.Target is DbCommandBuilder))
+                if (handler != null && value.Target is DbCommandBuilder)
                 {
                     SqlRowUpdatingEventHandler d = (SqlRowUpdatingEventHandler)ADP.FindBuilder(handler);
-                    if (null != d)
+                    if (d != null)
                     {
                         Events.RemoveHandler(s_eventRowUpdating, d);
                     }
@@ -287,7 +287,7 @@ namespace Microsoft.Data.SqlClient
         override protected void OnRowUpdated(RowUpdatedEventArgs value)
         {
             SqlRowUpdatedEventHandler handler = (SqlRowUpdatedEventHandler)Events[s_eventRowUpdated];
-            if ((null != handler) && (value is SqlRowUpdatedEventArgs args))
+            if (handler != null && value is SqlRowUpdatedEventArgs args)
             {
                 handler(this, args);
             }
@@ -298,7 +298,7 @@ namespace Microsoft.Data.SqlClient
         override protected void OnRowUpdating(RowUpdatingEventArgs value)
         {
             SqlRowUpdatingEventHandler handler = (SqlRowUpdatingEventHandler)Events[s_eventRowUpdating];
-            if ((null != handler) && (value is SqlRowUpdatingEventArgs args))
+            if (handler != null && value is SqlRowUpdatingEventArgs args)
             {
                 handler(this, args);
             }

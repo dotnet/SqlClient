@@ -35,14 +35,22 @@ namespace Microsoft.Data.SqlClient
         internal ColumnEncryptionKeyInfo(byte[] decryptedKey, int databaseId, byte[] keyMetadataVersion, int keyid)
         {
 
-            if (null == decryptedKey)
+            if (decryptedKey == null)
+            {
                 throw SQL.NullArgumentInConstructorInternal(_decryptedKeyName, _className);
+            }
             if (0 == decryptedKey.Length)
+            {
                 throw SQL.EmptyArgumentInConstructorInternal(_decryptedKeyName, _className);
-            if (null == keyMetadataVersion)
+            }
+            if (keyMetadataVersion == null)
+            {
                 throw SQL.NullArgumentInConstructorInternal(_keyMetadataVersionName, _className);
+            }
             if (0 == keyMetadataVersion.Length)
+            {
                 throw SQL.EmptyArgumentInConstructorInternal(_keyMetadataVersionName, _className);
+            }
 
             KeyId = keyid;
             DatabaseId = databaseId;

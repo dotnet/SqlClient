@@ -3,10 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Runtime.Caching;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
     {
         #region Members
 
-        private static readonly MemoryCache rootSigningCertificateCache = new MemoryCache("RootSigningCertificateCache");
+        private static readonly MemoryCache rootSigningCertificateCache = new MemoryCache(new MemoryCacheOptions());
 
         #endregion
 
@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient
         private X509Certificate2Collection GetSigningCertificate(string attestationUrl, bool forceUpdate)
         {
             attestationUrl = GetAttestationUrl(attestationUrl);
-            X509Certificate2Collection signingCertificates = (X509Certificate2Collection)rootSigningCertificateCache[attestationUrl];
+            X509Certificate2Collection signingCertificates = rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);
             if (forceUpdate || signingCertificates == null || AnyCertificatesExpired(signingCertificates))
             {
                 byte[] data = MakeRequest(attestationUrl);
@@ -207,10 +207,14 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
                 }
 
-                rootSigningCertificateCache.Add(attestationUrl, certificateCollection, DateTime.Now.AddDays(1));
+                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1)
+                };
+                rootSigningCertificateCache.Set<X509Certificate2Collection>(attestationUrl, certificateCollection, options);
             }
 
-            return (X509Certificate2Collection)rootSigningCertificateCache[attestationUrl];
+            return rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);
         }
 
         // Return the endpoint for given attestation url
@@ -252,7 +256,13 @@ namespace Microsoft.Data.SqlClient
                 chain.ChainPolicy.ExtraStore.Add(cert);
             }
 
+            // An Always Encrypted-enabled driver doesn't verify an expiration date or a certificate authority chain.
+            // A certificate is simply used as a key pair consisting of a public and private key. This is by design.
+
+            #pragma warning disable IA5352
+            // CodeQL [SM00395] By design. Always Encrypted certificates should not be checked.
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            #pragma warning restore IA5352
 
             if (!chain.Build(healthReportCert))
             {

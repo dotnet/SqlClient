@@ -37,7 +37,7 @@ namespace Microsoft.Data.ProviderBase
 
             internal void Dispose()
             {
-                if (null != _transaction)
+                if (_transaction != null)
                 {
                     _transaction.Dispose();
                 }
@@ -70,7 +70,7 @@ namespace Microsoft.Data.ProviderBase
 
             internal TransactedConnectionPool(DbConnectionPool pool)
             {
-                Debug.Assert(null != pool, "null pool?");
+                Debug.Assert(pool != null, "null pool?");
 
                 _pool = pool;
                 _transactedCxns = new Dictionary<Transaction, TransactedConnectionList>();
@@ -95,7 +95,7 @@ namespace Microsoft.Data.ProviderBase
 
             internal DbConnectionInternal GetTransactedObject(Transaction transaction)
             {
-                Debug.Assert(null != transaction, "null transaction?");
+                Debug.Assert(transaction != null, "null transaction?");
 
                 DbConnectionInternal transactedObject = null;
 
@@ -131,7 +131,7 @@ namespace Microsoft.Data.ProviderBase
                     }
                 }
 
-                if (null != transactedObject)
+                if (transactedObject != null)
                 {
                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.GetTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Popped.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
                 }
@@ -140,8 +140,8 @@ namespace Microsoft.Data.ProviderBase
 
             internal void PutTransactedObject(Transaction transaction, DbConnectionInternal transactedObject)
             {
-                Debug.Assert(null != transaction, "null transaction?");
-                Debug.Assert(null != transactedObject, "null transactedObject?");
+                Debug.Assert(transaction != null, "null transaction?");
+                Debug.Assert(transactedObject != null, "null transactedObject?");
 
                 TransactedConnectionList connections;
                 bool txnFound = false;
@@ -213,7 +213,7 @@ namespace Microsoft.Data.ProviderBase
                     }
                     finally
                     {
-                        if (null != transactionClone)
+                        if (transactionClone != null)
                         {
                             if (newConnections != null)
                             {
@@ -411,9 +411,9 @@ namespace Microsoft.Data.ProviderBase
                             DbConnectionPoolIdentity identity,
                             DbConnectionPoolProviderInfo connectionPoolProviderInfo)
         {
-            Debug.Assert(null != connectionPoolGroup, "null connectionPoolGroup");
+            Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup");
 
-            if ((null != identity) && identity.IsRestricted)
+            if (identity != null && identity.IsRestricted)
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.AttemptingToPoolOnRestrictedToken);
             }
@@ -565,7 +565,7 @@ namespace Microsoft.Data.ProviderBase
 
         private bool UsingIntegrateSecurity
         {
-            get { return (null != _identity && DbConnectionPoolIdentity.NoIdentity != _identity); }
+            get { return _identity != null && DbConnectionPoolIdentity.NoIdentity != _identity; }
         }
 
         private void CleanupCallback(object state)
@@ -688,7 +688,7 @@ namespace Microsoft.Data.ProviderBase
                 {
                     obj = _objectList[i];
 
-                    if (null != obj)
+                    if (obj != null)
                     {
                         obj.DoNotPoolThisConnection();
                     }
@@ -729,7 +729,7 @@ namespace Microsoft.Data.ProviderBase
             try
             {
                 newObj = _connectionFactory.CreatePooledConnection(this, owningObject, _connectionPoolGroup.ConnectionOptions, _connectionPoolGroup.PoolKey, userOptions);
-                if (null == newObj)
+                if (newObj == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);    // CreateObject succeeded, but null object
                 }
@@ -776,7 +776,7 @@ namespace Microsoft.Data.ProviderBase
                     throw;
                 }
 
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
                 if (!IsBlockingPeriodEnabled())
                 {
                     throw;
@@ -892,7 +892,7 @@ namespace Microsoft.Data.ProviderBase
                             // thread.
 
                             Transaction transaction = obj.EnlistedTransaction;
-                            if (null != transaction)
+                            if (transaction != null)
                             {
                                 // NOTE: we're not locking on _state, so it's possible that its
                                 //   value could change between the conditional check and here.
@@ -1172,7 +1172,7 @@ namespace Microsoft.Data.ProviderBase
                 obj = GetFromTransactedPool(out transaction);
             }
 
-            if (null == obj)
+            if (obj == null)
             {
                 Interlocked.Increment(ref _waitCount);
 
@@ -1217,7 +1217,7 @@ namespace Microsoft.Data.ProviderBase
                                 }
                                 catch
                                 {
-                                    if (null == obj)
+                                    if (obj == null)
                                     {
                                         Interlocked.Decrement(ref _waitCount);
                                     }
@@ -1227,13 +1227,13 @@ namespace Microsoft.Data.ProviderBase
                                 {
                                     // Ensure that we release this waiter, regardless
                                     // of any exceptions that may be thrown.
-                                    if (null != obj)
+                                    if (obj != null)
                                     {
                                         Interlocked.Decrement(ref _waitCount);
                                     }
                                 }
 
-                                if (null == obj)
+                                if (obj == null)
                                 {
                                     // If we were not able to create an object, check to see if
                                     // we reached MaxPoolSize.  If so, we will no longer wait on
@@ -1304,15 +1304,15 @@ namespace Microsoft.Data.ProviderBase
                     }
 
                     // Do not use this pooled connection if access token is about to expire soon before we can connect.
-                    if (null != obj && obj.IsAccessTokenExpired)
+                    if (obj != null && obj.IsAccessTokenExpired)
                     {
                         DestroyObject(obj);
                         obj = null;
                     }
-                } while (null == obj);
+                } while (obj == null);
             }
 
-            if (null != obj)
+            if (obj != null)
             {
                 PrepareConnection(owningObject, obj, transaction);
             }
@@ -1390,7 +1390,7 @@ namespace Microsoft.Data.ProviderBase
             // following assert to fire, which really mucks up stress against
             //  checked bits.
 
-            if (null != obj)
+            if (obj != null)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromGeneralPool|RES|CPOOL> {0}, Connection {1}, Popped from general pool.", ObjectID, obj.ObjectID);
                 SqlClientEventSource.Log.ExitFreeConnection();
@@ -1403,11 +1403,11 @@ namespace Microsoft.Data.ProviderBase
             transaction = ADP.GetCurrentTransaction();
             DbConnectionInternal obj = null;
 
-            if (null != transaction && null != _transactedConnectionPool)
+            if (transaction != null && _transactedConnectionPool != null)
             {
                 obj = _transactedConnectionPool.GetTransactedObject(transaction);
 
-                if (null != obj)
+                if (obj != null)
                 {
                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Popped from transacted pool.", ObjectID, obj.ObjectID);
                     SqlClientEventSource.Log.ExitFreeConnection();
@@ -1505,7 +1505,7 @@ namespace Microsoft.Data.ProviderBase
                                             }
                                             // We do not need to check error flag here, since we know if
                                             // CreateObject returned null, we are in error case.
-                                            if (null != newObj)
+                                            if (newObj != null)
                                             {
                                                 PutNewObject(newObj);
                                             }
@@ -1559,7 +1559,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void PutNewObject(DbConnectionInternal obj)
         {
-            Debug.Assert(null != obj, "why are we adding a null object to the pool?");
+            Debug.Assert(obj != null, "why are we adding a null object to the pool?");
             // Debug.Assert(obj.CanBePooled,    "non-poolable object in pool");
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutNewObject|RES|CPOOL> {0}, Connection {1}, Pushing to general pool.", ObjectID, obj.ObjectID);
 
@@ -1570,7 +1570,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void PutObject(DbConnectionInternal obj, object owningObject)
         {
-            Debug.Assert(null != obj, "null obj?");
+            Debug.Assert(obj != null, "null obj?");
             SqlClientEventSource.Log.SoftDisconnectRequest();
 
             // Once a connection is closing (which is the state that we're in at
@@ -1595,7 +1595,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void PutObjectFromTransactedPool(DbConnectionInternal obj)
         {
-            Debug.Assert(null != obj, "null pooledObject?");
+            Debug.Assert(obj != null, "null pooledObject?");
             Debug.Assert(obj.EnlistedTransaction == null, "pooledObject is still enlisted?");
 
             // called by the transacted connection pool , once it's removed the
@@ -1643,7 +1643,7 @@ namespace Microsoft.Data.ProviderBase
                 {
                     DbConnectionInternal obj = _objectList[i];
 
-                    if (null != obj)
+                    if (obj != null)
                     {
                         bool locked = false;
 
@@ -1712,7 +1712,7 @@ namespace Microsoft.Data.ProviderBase
             // deactivate timer callbacks
             Timer t = _cleanupTimer;
             _cleanupTimer = null;
-            if (null != t)
+            if (t != null)
             {
                 t.Dispose();
             }
@@ -1724,8 +1724,8 @@ namespace Microsoft.Data.ProviderBase
         //   other objects is unnecessary (hence the asymmetry of Ended but no Begin)
         internal void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
         {
-            Debug.Assert(null != transaction, "null transaction?");
-            Debug.Assert(null != transactedObject, "null transactedObject?");
+            Debug.Assert(transaction != null, "null transaction?");
+            Debug.Assert(transactedObject != null, "null transactedObject?");
 
             // Note: connection may still be associated with transaction due to Explicit Unbinding requirement.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
@@ -1735,7 +1735,7 @@ namespace Microsoft.Data.ProviderBase
             // the connection from it's list, then we put the connection back in
             // general circulation.
             TransactedConnectionPool transactedConnectionPool = _transactedConnectionPool;
-            if (null != transactedConnectionPool)
+            if (transactedConnectionPool != null)
             {
                 transactedConnectionPool.TransactionEnded(transaction, transactedObject);
             }

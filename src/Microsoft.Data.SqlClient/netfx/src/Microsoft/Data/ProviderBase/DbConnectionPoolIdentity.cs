@@ -70,7 +70,7 @@ namespace Microsoft.Data.ProviderBase
         override public bool Equals(object value)
         {
             bool result = ((this == NoIdentity) || (this == value));
-            if (!result && (null != value))
+            if (!result && value != null)
             {
                 DbConnectionPoolIdentity that = ((DbConnectionPoolIdentity)value);
                 result = ((this._sidString == that._sidString) && (this._isRestricted == that._isRestricted) && (this._isNetwork == that._isNetwork));

@@ -13,7 +13,7 @@ using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-#if net462
+#if NETFRAMEWORK
 using System.Security;
 #endif
 
@@ -45,7 +45,7 @@ namespace System.Net
     //   method that takes an object and optionally provides a string representation of it, in case a particular library wants to customize further.
 
     /// <summary>Provides logging facilities for System.Net libraries.</summary>
-#if net462
+#if NETFRAMEWORK
     [SecuritySafeCritical]
 #endif
     internal sealed partial class NetEventSource : EventSource

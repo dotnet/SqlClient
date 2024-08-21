@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>소켓이 오류 코드 '{1}'과(와) 예상되는 '{0}'을(를) throw하지 않았습니다.</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>.Net Standard 2.0에서는 지원되지 않습니다.</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>서버가 이 플랫폼에서 지원되지 않는 기능을 사용하려고 합니다.</value>
   </data>
@@ -4739,5 +4736,8 @@
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>인증서의 유효성을 검사하는 동안에는 인증서를 사용할 수 없습니다.</value>
+  </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>서버에서 제공하는 인증서가 ServerCertificate 옵션에서 제공하는 인증서와 일치하지 않습니다.</value>
   </data>
 </root>

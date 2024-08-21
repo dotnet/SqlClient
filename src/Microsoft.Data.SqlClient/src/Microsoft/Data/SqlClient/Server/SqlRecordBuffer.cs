@@ -291,7 +291,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             set
             {
-                Debug.Assert(null != value, "");
+                Debug.Assert(value != null, "");
 
                 _object = value;
                 _value._int64 = ((string)value).Length;
@@ -485,7 +485,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 Debug.Assert(StorageType.ByteArray == _type, "Wrong storage type: " + _type);
             }
-            Debug.Assert(null != buffer, "Null buffer");
+            Debug.Assert(buffer != null, "Null buffer");
             Debug.Assert(ndataIndex + length <= BytesLength, "Invalid fieldOffset or length");
 
             Buffer.BlockCopy((byte[])_object, ndataIndex, buffer, bufferOffset, length);
@@ -499,7 +499,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             Debug.Assert(!_isNull, "Null data type");
             Debug.Assert(StorageType.CharArray == _type || StorageType.String == _type, "Wrong storage type: " + _type);
-            Debug.Assert(null != buffer, "Null buffer");
+            Debug.Assert(buffer != null, "Null buffer");
             Debug.Assert(ndataIndex + length <= CharsLength, "Invalid fieldOffset or length");
 
             if (StorageType.CharArray == _type)

@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>ソケットは予期された '{0}' をスローしませんでした。エラー コード '{1}'。</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>.Net Standard 2.0 ではサポートされていません。</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>サーバーは、このプラットフォームでサポートされていない機能を使用しようとしています。</value>
   </data>
@@ -4739,5 +4736,8 @@
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>証明書の検証中は証明書を使用できません。</value>
+  </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>サーバーによって提供された証明書が、ServerCertificate オプションで指定された証明書と一致しません。</value>
   </data>
 </root>

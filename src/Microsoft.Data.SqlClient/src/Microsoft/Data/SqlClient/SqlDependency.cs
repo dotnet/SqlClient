@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient
 
                 bool result = false;
 
-                if (null == temp)
+                if (temp == null)
                 { // If passed value null - false.
                     result = false;
                 }
@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient
             public override int GetHashCode()
             {
                 int hashValue;
-                if (null != _identity)
+                if (_identity != null)
                 {
                     hashValue = _identity.GetHashCode();
                 }
@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient
 
                 bool result = false;
 
-                if (null == temp)
+                if (temp == null)
                 { // If passed value null - false.
                     result = false;
                 }
@@ -158,7 +158,7 @@ namespace Microsoft.Data.SqlClient
 
                 bool result = false;
 
-                if (null == temp)
+                if (temp == null)
                 { // If passed value null - false.
                     result = false;
                 }
@@ -296,7 +296,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 _timeout = timeout;
 
-                if (null != options)
+                if (options != null)
                 { // Ignore null value - will force to default.
                     _options = options;
                 }
@@ -357,7 +357,7 @@ namespace Microsoft.Data.SqlClient
                 long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.OnChange-Add|DEP> {0}", ObjectID);
                 try
                 {
-                    if (null != value)
+                    if (value != null)
                     {
                         SqlNotificationEventArgs sqlNotificationEvent = null;
 
@@ -383,7 +383,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 
-                        if (null != sqlNotificationEvent)
+                        if (sqlNotificationEvent != null)
                         { // Delay firing the event until outside of lock.
                             value(this, sqlNotificationEvent);
                         }
@@ -399,7 +399,7 @@ namespace Microsoft.Data.SqlClient
                 long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.OnChange-Remove|DEP> {0}", ObjectID);
                 try
                 {
-                    if (null != value)
+                    if (value != null)
                     {
                         EventContextPair pair = new(value, this);
                         lock (_eventHandlerLock)
@@ -474,15 +474,15 @@ namespace Microsoft.Data.SqlClient
 #endif // DEBUG
                 _AppDomain masterDomain = SNINativeMethodWrapper.GetDefaultAppDomain();
 
-                if (null != masterDomain)
+                if (masterDomain != null)
                 {
                     ObjectHandle handle = CreateProcessDispatcher(masterDomain);
 
-                    if (null != handle)
+                    if (handle != null)
                     {
                         SqlDependencyProcessDispatcher dependency = (SqlDependencyProcessDispatcher)handle.Unwrap();
 
-                        if (null != dependency)
+                        if (dependency != null)
                         {
                             s_processDispatcher = SqlDependencyProcessDispatcher.SingletonProcessDispatcher; // Set to static instance.
 
@@ -577,7 +577,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
-                    if (null == connectionString)
+                    if (connectionString == null)
                     {
                         throw ADP.ArgumentNull(nameof(connectionString));
                     }
@@ -612,7 +612,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        if (null == s_processDispatcher)
+                        if (s_processDispatcher == null)
                         { // Ensure _processDispatcher reference is present - inside lock.
 #if NETFRAMEWORK
                             ObtainProcessDispatcher();
@@ -629,7 +629,7 @@ namespace Microsoft.Data.SqlClient
                             string database = null;
                             string service = null;
                             bool appDomainStart = false;
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
                             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                             try
@@ -730,7 +730,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
-                    if (null == connectionString)
+                    if (connectionString == null)
                     {
                         throw ADP.ArgumentNull(nameof(connectionString));
                     }
@@ -762,7 +762,7 @@ namespace Microsoft.Data.SqlClient
 
                 lock (s_startStopLock)
                 {
-                    if (null != s_processDispatcher)
+                    if (s_processDispatcher != null)
                     { // If _processDispatcher null, no Start has been called.
                         try
                         {
@@ -775,7 +775,7 @@ namespace Microsoft.Data.SqlClient
                             if (useDefaults)
                             {
                                 bool appDomainStop = false;
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
                                 RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                                 try
@@ -1022,7 +1022,7 @@ namespace Microsoft.Data.SqlClient
                         resultingPair = databaseList[index];
                     }
 
-                    if (null != resultingPair)
+                    if (resultingPair != null)
                     { // Exact database match.
                         database = FixupServiceOrDatabaseName(resultingPair.Database); // Fixup in place.
                         string quotedService = FixupServiceOrDatabaseName(resultingPair.Service);
@@ -1234,7 +1234,7 @@ namespace Microsoft.Data.SqlClient
                                 };
 
                                 // Add the command - A dependency should always map to a set of commands which haven't fired.
-                                if (null != _options)
+                                if (_options != null)
                                 { // Assign options if user provided.
                                     cmd.Notification.Options = _options;
                                 }
