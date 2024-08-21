@@ -405,7 +405,7 @@ namespace Microsoft.Data.SqlClient
                         lock (_eventHandlerLock)
                         {
                             int index = _eventList.IndexOf(pair);
-                            if (0 <= index)
+                            if (index >= 0)
                             {
                                 _eventList.RemoveAt(index);
                             }
@@ -968,7 +968,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (!s_serverUserHash.ContainsKey(server))
                     {
-                        if (0 == s_serverUserHash.Count)
+                        if (s_serverUserHash.Count == 0)
                         {
                             // Special error for no calls to start.
                             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.GetDefaultComposedOptions|DEP|ERR> ERROR - no start calls have been made, about to throw.");
@@ -1071,7 +1071,7 @@ namespace Microsoft.Data.SqlClient
                 lock (_serverList)
                 {
                     int index = _serverList.BinarySearch(server, StringComparer.OrdinalIgnoreCase);
-                    if (0 > index)
+                    if (index < 0)
                     { // If less than 0, item was not found in list.
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.AddToServerList|DEP> Server not present in hashtable, adding server: '{0}'.", server);
                         index = ~index; // BinarySearch returns the 2's compliment of where the item should be inserted to preserver a sorted list after insertion.
@@ -1179,7 +1179,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.StartTimer|DEP> We've timed out, executing logic.");
                     int seconds = SQL.SqlDependencyServerTimeout;
-                    if (0 != _timeout)
+                    if (_timeout != 0)
                     {
                         seconds = _timeout;
                     }
@@ -1246,8 +1246,8 @@ namespace Microsoft.Data.SqlClient
                                 // We should never be able to enter this state, since if we've fired our event list is cleared
                                 // and the event method will immediately fire if a new event is added.  So, we should never have
                                 // an event to fire in the event list once we've fired.
-                                Debug.Assert(0 == _eventList.Count, "How can we have an event at this point?");
-                                if (0 == _eventList.Count)
+                                Debug.Assert(_eventList.Count == 0, "How can we have an event at this point?");
+                                if (_eventList.Count == 0)
                                 {
                                     // Keep logic just in case.
                                     SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.AddCommandInternal|DEP|ERR> ERROR - firing events, though it is unexpected we have events at this point.");

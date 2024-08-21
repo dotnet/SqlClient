@@ -387,10 +387,10 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 bool isAlive = _owner.TryGetTarget(out object target);
-                Debug.Assert((0 == _activateCount && !isAlive) // in pool
-                             || (1 == _activateCount && isAlive && target != null)
-                             || (1 == _activateCount && !isAlive), "Unknown state on TdsParserStateObject.IsOrphaned!");
-                return (0 != _activateCount && !isAlive);
+                Debug.Assert((_activateCount == 0 && !isAlive) // in pool
+                             || (_activateCount == 1 && isAlive && target != null)
+                             || (_activateCount == 1 && !isAlive), "Unknown state on TdsParserStateObject.IsOrphaned!");
+                return _activateCount != 0 && !isAlive;
             }
         }
 
@@ -434,7 +434,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                Debug.Assert(0 == _timeoutMilliseconds || 0 == _timeoutTime, "_timeoutTime hasn't been reset");
+                Debug.Assert(_timeoutMilliseconds == 0 || _timeoutTime == 0, "_timeoutTime hasn't been reset");
                 return TdsParserStaticMethods.TimeoutHasExpired(_timeoutTime);
             }
         }
@@ -443,7 +443,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (0 != _timeoutMilliseconds)
+                if (_timeoutMilliseconds != 0)
                 {
                     _timeoutTime = TdsParserStaticMethods.GetTimeout(_timeoutMilliseconds);
                     _timeoutMilliseconds = 0;
@@ -460,7 +460,7 @@ namespace Microsoft.Data.SqlClient
         internal int GetTimeoutRemaining()
         {
             int remaining;
-            if (0 != _timeoutMilliseconds)
+            if (_timeoutMilliseconds != 0)
             {
                 remaining = (int)Math.Min((long)int.MaxValue, _timeoutMilliseconds);
                 _timeoutTime = TdsParserStaticMethods.GetTimeout(_timeoutMilliseconds);
@@ -883,7 +883,7 @@ namespace Microsoft.Data.SqlClient
         {
             lock (this)
             {
-                if (_cancelled && 1 == _outputPacketNumber)
+                if (_cancelled && _outputPacketNumber == 1)
                 {
                     ResetBuffer();
                     _cancelled = false;

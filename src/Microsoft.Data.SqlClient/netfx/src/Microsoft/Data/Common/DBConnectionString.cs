@@ -163,7 +163,7 @@ namespace Microsoft.Data.Common
                 if (restrictions == null)
                 {
                     string[] restrictionValues = _restrictionValues;
-                    if (restrictionValues != null && (0 < restrictionValues.Length))
+                    if (restrictionValues != null && restrictionValues.Length > 0)
                     {
                         StringBuilder builder = new StringBuilder();
                         for (int i = 0; i < restrictionValues.Length; ++i)
@@ -367,7 +367,7 @@ namespace Microsoft.Data.Common
         private bool IsRestrictedKeyword(string key)
         {
             // restricted if not found
-            return (_restrictionValues == null || (0 > Array.BinarySearch(_restrictionValues, key, StringComparer.Ordinal)));
+            return _restrictionValues == null || Array.BinarySearch(_restrictionValues, key, StringComparer.Ordinal) < 0;
         }
 
         internal bool IsSupersetOf(DBConnectionString entry)
@@ -413,7 +413,7 @@ namespace Microsoft.Data.Common
             List<string> newlist = null;
             for (int i = 0; i < allowonly.Length; ++i)
             {
-                if (0 > Array.BinarySearch(preventusage, allowonly[i], StringComparer.Ordinal))
+                if (Array.BinarySearch(preventusage, allowonly[i], StringComparer.Ordinal) < 0)
                 {
                     if (newlist == null)
                     {
@@ -436,7 +436,7 @@ namespace Microsoft.Data.Common
             List<string> newlist = null;
             for (int i = 0; i < a.Length; ++i)
             {
-                if (0 <= Array.BinarySearch(b, a[i], StringComparer.Ordinal))
+                if (Array.BinarySearch(b, a[i], StringComparer.Ordinal) >= 0)
                 {
                     if (newlist == null)
                     {
@@ -457,8 +457,8 @@ namespace Microsoft.Data.Common
         static private string[] NoDuplicateUnion(string[] a, string[] b)
         {
 #if DEBUG
-            Debug.Assert(a != null && 0 < a.Length, "empty a");
-            Debug.Assert(b != null && 0 < b.Length, "empty b");
+            Debug.Assert(a != null && a.Length > 0, "empty a");
+            Debug.Assert(b != null && b.Length > 0, "empty b");
             Verify(a);
             Verify(b);
 #endif
@@ -469,7 +469,7 @@ namespace Microsoft.Data.Common
             }
             for (int i = 0; i < b.Length; ++i)
             { // find duplicates
-                if (0 > Array.BinarySearch(a, b[i], StringComparer.Ordinal))
+                if (Array.BinarySearch(a, b[i], StringComparer.Ordinal) < 0)
                 {
                     newlist.Add(b[i]);
                 }
@@ -516,20 +516,20 @@ namespace Microsoft.Data.Common
         static internal string[] RemoveDuplicates(string[] restrictions)
         {
             int count = restrictions.Length;
-            if (0 < count)
+            if (count > 0)
             {
                 Array.Sort(restrictions, StringComparer.Ordinal);
 
                 for (int i = 1; i < restrictions.Length; ++i)
                 {
                     string prev = restrictions[i - 1];
-                    if ((0 == prev.Length) || (prev == restrictions[i]))
+                    if (prev.Length == 0 || (prev == restrictions[i]))
                     {
                         restrictions[i - 1] = null;
                         count--;
                     }
                 }
-                if (0 == restrictions[restrictions.Length - 1].Length)
+                if (restrictions[restrictions.Length - 1].Length == 0)
                 {
                     restrictions[restrictions.Length - 1] = null;
                     count--;
@@ -561,7 +561,7 @@ namespace Microsoft.Data.Common
                 {
                     Debug.Assert(!ADP.IsEmpty(restrictionValues[i - 1]), "empty restriction");
                     Debug.Assert(!ADP.IsEmpty(restrictionValues[i]), "empty restriction");
-                    Debug.Assert(0 >= StringComparer.Ordinal.Compare(restrictionValues[i - 1], restrictionValues[i]));
+                    Debug.Assert(StringComparer.Ordinal.Compare(restrictionValues[i - 1], restrictionValues[i]) <= 0);
                 }
             }
         }

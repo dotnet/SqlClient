@@ -396,7 +396,7 @@ namespace Microsoft.Data.SqlClient
                         _dependencyIdToDependencyHash.Remove(id);
 
                         // if there are no more dependencies then we can dispose the timer.
-                        if (0 == _dependencyIdToDependencyHash.Count)
+                        if (_dependencyIdToDependencyHash.Count == 0)
                         {
                             _timeoutTimer.Change(Timeout.Infinite, Timeout.Infinite);
                             _sqlDependencyTimeOutTimerStarted = false;
@@ -545,7 +545,7 @@ namespace Microsoft.Data.SqlClient
                 // the lock.
                 lock (SingletonInstance._instanceLock)
                 {
-                    if (0 == SingletonInstance._dependencyIdToDependencyHash.Count)
+                    if (SingletonInstance._dependencyIdToDependencyHash.Count == 0)
                     {
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.TimeoutTimerCallback|DEP> No dependencies, exiting.");
 

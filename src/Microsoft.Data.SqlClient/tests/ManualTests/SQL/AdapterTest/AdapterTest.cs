@@ -519,19 +519,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 DataTestUtility.AssertEqualsWithDescription(_c_guid_val, (Guid)param.Value, "FAILED: " + procName + ", UniqueIdentifier parameter");
                                 break;
                             case SqlDbType.DateTime:
-                                Assert.True(0 == DateTime.Compare((DateTime)param.Value, _c_datetime_val), "FAILED: " + procName + ", DateTime parameter");
+                                Assert.True(DateTime.Compare((DateTime)param.Value, _c_datetime_val) == 0, "FAILED: " + procName + ", DateTime parameter");
                                 break;
                             case SqlDbType.SmallDateTime:
-                                Assert.True(0 == DateTime.Compare((DateTime)param.Value, _c_smalldatetime_val), "FAILED: " + procName + ", SmallDateTime parameter");
+                                Assert.True(DateTime.Compare((DateTime)param.Value, _c_smalldatetime_val) == 0, "FAILED: " + procName + ", SmallDateTime parameter");
                                 break;
                             case SqlDbType.Money:
                                 Assert.True(
-                                    0 == decimal.Compare((decimal)param.Value, _c_money_val),
+                                    decimal.Compare((decimal)param.Value, _c_money_val) == 0,
                                     string.Format("FAILED: " + procName + ", Money parameter. Expected: {0}. Actual: {1}.", _c_money_val, (decimal)param.Value));
                                 break;
                             case SqlDbType.SmallMoney:
                                 Assert.True(
-                                    0 == decimal.Compare((decimal)param.Value, _c_smallmoney_val),
+                                    decimal.Compare((decimal)param.Value, _c_smallmoney_val) == 0,
                                     string.Format("FAILED: " + procName + ", SmallMoney parameter. Expected: {0}. Actual: {1}.", _c_smallmoney_val, (decimal)param.Value));
                                 break;
                             default:
@@ -599,7 +599,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // check our ouput and return value params
                     Assert.True(VerifyOutputParams(cmd.Parameters), "FAILED: InputOutput parameter test with returned rows and bound return value!");
 
-                    Assert.True(1 == dataSet.Tables[0].Rows.Count, "FAILED:  Expected 1 row to be loaded in the dataSet!");
+                    Assert.True(dataSet.Tables[0].Rows.Count == 1, "FAILED:  Expected 1 row to be loaded in the dataSet!");
 
                     DataRow row = dataSet.Tables[0].Rows[0];
                     Assert.True((int)row["ShipperId"] == 2, "FAILED:  ShipperId column should be 2, not " + DBConvertToString(row["ShipperId"]));
@@ -631,10 +631,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // verify the ouptut parameter
                     Assert.True(
                         ((int)cmd.Parameters[1].Value == 2000) &&
-                        (0 == string.Compare(cmd.Parameters[2].Value.ToString(), "Success!", false, CultureInfo.InvariantCulture)),
+                        string.Compare(cmd.Parameters[2].Value.ToString(), "Success!", false, CultureInfo.InvariantCulture) == 0,
                         "FAILED:  unbound return value case, output param is not correct!");
 
-                    Assert.True(1 == dataSet.Tables[0].Rows.Count, "FAILED:  Expected 1 row to be loaded in the dataSet!");
+                    Assert.True(dataSet.Tables[0].Rows.Count == 1, "FAILED:  Expected 1 row to be loaded in the dataSet!");
 
                     row = dataSet.Tables[0].Rows[0];
                     Assert.True((int)row["ShipperId"] == 1, "FAILED:  ShipperId column should be 1, not " + DBConvertToString(row["ShipperId"]));
@@ -1626,7 +1626,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             return
                 (int)sqlParameters[1].Value == 2000 &&
-                (0 == string.Compare((string)sqlParameters[2].Value, "Success!", false, CultureInfo.InvariantCulture)) &&
+                string.Compare((string)sqlParameters[2].Value, "Success!", false, CultureInfo.InvariantCulture) == 0 &&
                 (int)sqlParameters[3].Value == 42;
         }
 
@@ -1639,7 +1639,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void WriteObject(StringBuilder textBuilder, object value, CultureInfo cultureInfo, Hashtable used, int indent, int recursionLimit)
         {
-            if (0 > --recursionLimit)
+            if (--recursionLimit < 0)
             {
                 return;
             }
@@ -1741,7 +1741,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     textBuilder.Append(valuetype.Name);
                     Array array = (Array)value;
 
-                    if (1 < array.Rank)
+                    if (array.Rank > 1)
                     {
                         textBuilder.Append("{");
                     }
@@ -1763,7 +1763,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         AppendNewLineIndent(textBuilder, indent);
                         textBuilder.Append("}");
                     }
-                    if (1 < array.Rank)
+                    if (array.Rank > 1)
                     {
                         textBuilder.Append('}');
                     }
@@ -1814,7 +1814,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         PropertyInfo[] properties = valuetype.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
                         bool hasinfo = false;
-                        if (fields != null && (0 < fields.Length))
+                        if (fields != null && fields.Length > 0)
                         {
                             textBuilder.Append(fullName);
                             fullName = null;
@@ -1832,7 +1832,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             }
                             hasinfo = true;
                         }
-                        if (properties != null && (0 < properties.Length))
+                        if (properties != null && properties.Length > 0)
                         {
                             if (fullName != null)
                             {
@@ -1847,7 +1847,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 if (property.CanRead)
                                 {
                                     ParameterInfo[] parameters = property.GetIndexParameters();
-                                    if (parameters == null || (0 == parameters.Length))
+                                    if (parameters == null || parameters.Length == 0)
                                     {
                                         AppendNewLineIndent(textBuilder, indent + 1);
                                         textBuilder.Append(property.Name);

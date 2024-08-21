@@ -1339,9 +1339,9 @@ namespace Microsoft.Data.SqlClient
         private static void FillInTimeInfo(ref TimeInfo timeInfo, ReadOnlySpan<byte> timeBytes, byte scale, byte denormalizedScale)
         {
             int length = timeBytes.Length;
-            Debug.Assert(3 <= length && length <= 5, "invalid data length for timeInfo: " + length);
-            Debug.Assert(0 <= scale && scale <= 7, "invalid scale: " + scale);
-            Debug.Assert(0 <= denormalizedScale && denormalizedScale <= 7, "invalid denormalized scale: " + denormalizedScale);
+            Debug.Assert(length >= 3 && length <= 5, "invalid data length for timeInfo: " + length);
+            Debug.Assert(scale >= 0 && scale <= 7, "invalid scale: " + scale);
+            Debug.Assert(denormalizedScale >= 0 && denormalizedScale <= 7, "invalid denormalized scale: " + denormalizedScale);
 
             long tickUnits = timeBytes[0] + ((long)timeBytes[1] << 8) + ((long)timeBytes[2] << 16);
             if (length > 3)

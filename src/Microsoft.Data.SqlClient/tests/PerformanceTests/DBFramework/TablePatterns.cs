@@ -74,7 +74,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         internal static Table TableX25Columns(int count, DataTypes dt, string tableNamePrefix)
         {
             if (count % 25 != 0)
+            {
                 throw new System.ArgumentException($"Count {count} not a multiple of 25.");
+            }
 
             Table t = Table.Build(tableNamePrefix);
             int sets = count / 25, i = 0;

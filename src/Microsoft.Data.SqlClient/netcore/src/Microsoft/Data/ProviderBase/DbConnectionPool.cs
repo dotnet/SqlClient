@@ -123,7 +123,7 @@ namespace Microsoft.Data.ProviderBase
                     lock (connections)
                     {
                         int i = connections.Count - 1;
-                        if (0 <= i)
+                        if (i >= 0)
                         {
                             transactedObject = connections[i];
                             connections.RemoveAt(i);
@@ -159,7 +159,7 @@ namespace Microsoft.Data.ProviderBase
                         // synchronize multi-threaded access with GetTransactedObject
                         lock (connections)
                         {
-                            Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
+                            Debug.Assert(connections.IndexOf(transactedObject) < 0, "adding to pool a second time?");
                             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
                             connections.Add(transactedObject);
                         }
@@ -194,7 +194,7 @@ namespace Microsoft.Data.ProviderBase
                                 // synchronize multi-threaded access with GetTransactedObject
                                 lock (connections)
                                 {
-                                    Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
+                                    Debug.Assert(connections.IndexOf(transactedObject) < 0, "adding to pool a second time?");
                                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
                                     connections.Add(transactedObject);
                                 }
@@ -268,7 +268,7 @@ namespace Microsoft.Data.ProviderBase
 
                             // Once we've completed all the ended notifications, we can
                             // safely remove the list from the transacted pool.
-                            if (0 >= connections.Count)
+                            if (connections.Count <= 0)
                             {
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Removing List from transacted pool.", ObjectID, transaction.GetHashCode());
                                 _transactedCxns.Remove(transaction);
@@ -292,7 +292,7 @@ namespace Microsoft.Data.ProviderBase
 
                 // If (and only if) we found the connection in the list of
                 // connections, we'll put it back...
-                if (0 <= entry)
+                if (entry >= 0)
                 {
                     SqlClientEventSource.Log.ExitFreeConnection();
                     Pool.PutObjectFromTransactedPool(transactedObject);
@@ -816,7 +816,7 @@ namespace Microsoft.Data.ProviderBase
 
                 Debug.Assert(timerIsNotDisposed, "ErrorCallback timer has been disposed");
 
-                if (30000 < _errorWait)
+                if (_errorWait > 30000)
                 {
                     _errorWait = 60000;
                 }
@@ -1239,12 +1239,12 @@ namespace Microsoft.Data.ProviderBase
                                     // we reached MaxPoolSize.  If so, we will no longer wait on
                                     // the CreationHandle, but instead wait for a free object or
                                     // the timeout.
-                                    if (Count >= MaxPoolSize && 0 != MaxPoolSize)
+                                    if (Count >= MaxPoolSize && MaxPoolSize != 0)
                                     {
                                         if (!ReclaimEmancipatedObjects())
                                         {
                                             // modify handle array not to wait on creation mutex anymore
-                                            Debug.Assert(2 == CREATION_HANDLE, "creation handle changed value");
+                                            Debug.Assert(CREATION_HANDLE == 2, "creation handle changed value");
                                             allowCreate = false;
                                         }
                                     }
@@ -1753,7 +1753,7 @@ namespace Microsoft.Data.ProviderBase
             }
             else
             {
-                if ((oldConnection != null) || (Count < MaxPoolSize) || (0 == MaxPoolSize))
+                if ((oldConnection != null) || (Count < MaxPoolSize) || MaxPoolSize == 0)
                 {
                     // If we have an odd number of total objects, reclaim any dead objects.
                     // If we did not find any objects to reclaim, create a new one.

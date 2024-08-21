@@ -531,7 +531,7 @@ namespace Microsoft.Data.ProviderBase
                 {
                     if (version != DBNull.Value)
                     {
-                        if (0 > string.Compare(_normalizedServerVersion, (string)version, StringComparison.OrdinalIgnoreCase))
+                        if (string.Compare(_normalizedServerVersion, (string)version, StringComparison.OrdinalIgnoreCase) < 0)
                         {
                             result = false;
                         }
@@ -550,7 +550,7 @@ namespace Microsoft.Data.ProviderBase
                     {
                         if (version != DBNull.Value)
                         {
-                            if (0 < string.Compare(_normalizedServerVersion, (string)version, StringComparison.OrdinalIgnoreCase))
+                            if (string.Compare(_normalizedServerVersion, (string)version, StringComparison.OrdinalIgnoreCase) > 0)
                             {
                                 result = false;
                             }

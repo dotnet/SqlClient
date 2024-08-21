@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient
 
         protected override void NotifyItem(int message, int tag, object value)
         {
-            Debug.Assert(0 == message, "unexpected message?");
+            Debug.Assert(message == 0, "unexpected message?");
             Debug.Assert(DataReaderTag == tag || CommandTag == tag || BulkCopyTag == tag, "unexpected tag?");
 
             if (tag == DataReaderTag)

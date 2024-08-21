@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient
             SqlParameterCollection parameters = null;
 
             SqlParameterCollection collection = command.Parameters;
-            if (0 < collection.Count)
+            if (collection.Count > 0)
             {
                 parameters = new SqlParameterCollection();
 
@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient
                             int offset = p.Offset;
                             int size = p.Size;
                             int countOfChars = charValues.Length - offset;
-                            if ((0 != size) && (size < countOfChars))
+                            if (size != 0 && (size < countOfChars))
                             {
                                 countOfChars = size;
                             }
@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void BuildStoredProcedureName(StringBuilder builder, string part)
         {
-            if (part != null && (0 < part.Length))
+            if (part != null && part.Length > 0)
             {
                 if ('[' == part[0])
                 {
@@ -204,7 +204,7 @@ namespace Microsoft.Data.SqlClient
                             count++;
                         }
                     }
-                    if (1 == (count % 2))
+                    if (count % 2 == 1)
                     {
                         builder.Append(part);
                         return;
@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient
 
         private void ValidateCommandBehavior(string method, CommandBehavior behavior)
         {
-            if (0 != (behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection)))
+            if ((behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection)) != 0)
             {
                 ADP.ValidateCommandBehavior(behavior);
                 throw ADP.NotSupportedCommandBehavior(behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection), method);

@@ -229,7 +229,7 @@ namespace Microsoft.Data.SqlClient
         internal long ColumnDataBytesRemaining()
         {
             // If there are an unknown (-1) number of bytes left for a PLP, read its size
-            if (-1 == _sharedState._columnDataBytesRemaining)
+            if (_sharedState._columnDataBytesRemaining == -1)
             {
                 _sharedState._columnDataBytesRemaining = (long)_parser.PlpBytesLeft(_stateObj);
             }
@@ -270,7 +270,7 @@ namespace Microsoft.Data.SqlClient
             SmiExtendedMetaData[] metaDataReturn = null;
             _SqlMetaDataSet metaData = this.MetaData;
 
-            if (metaData != null && 0 < metaData.Length)
+            if (metaData != null && metaData.Length > 0)
             {
                 metaDataReturn = new SmiExtendedMetaData[metaData.VisibleColumnCount];
                 int returnIndex = 0;
@@ -568,15 +568,15 @@ namespace Microsoft.Data.SqlClient
                             schemaRow[size] = TdsEnums.WHIDBEY_DATE_LENGTH;
                             break;
                         case SqlDbType.Time:
-                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (0 <= col.scale && col.scale <= 7), "Invalid scale for Time column: " + col.scale);
+                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (col.scale >= 0 && col.scale <= 7), "Invalid scale for Time column: " + col.scale);
                             schemaRow[size] = TdsEnums.WHIDBEY_TIME_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
                             break;
                         case SqlDbType.DateTime2:
-                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (0 <= col.scale && col.scale <= 7), "Invalid scale for DateTime2 column: " + col.scale);
+                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (col.scale >= 0 && col.scale <= 7), "Invalid scale for DateTime2 column: " + col.scale);
                             schemaRow[size] = TdsEnums.WHIDBEY_DATETIME2_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
                             break;
                         case SqlDbType.DateTimeOffset:
-                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (0 <= col.scale && col.scale <= 7), "Invalid scale for DateTimeOffset column: " + col.scale);
+                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (col.scale >= 0 && col.scale <= 7), "Invalid scale for DateTimeOffset column: " + col.scale);
                             schemaRow[size] = TdsEnums.WHIDBEY_DATETIMEOFFSET_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
                             break;
                     }
@@ -781,13 +781,13 @@ namespace Microsoft.Data.SqlClient
             // iib. user called read and fetched a subset of the column data
 
             // Wipe out any Streams or TextReaders
-            if (-1 != _lastColumnWithDataChunkRead)
+            if (_lastColumnWithDataChunkRead != -1)
             {
                 CloseActiveSequentialStreamAndTextReader();
             }
 
             // i. user called read but didn't fetch anything
-            if (0 == _sharedState._nextColumnHeaderToRead)
+            if (_sharedState._nextColumnHeaderToRead == 0)
             {
                 result = _stateObj.Parser.TrySkipRow(_metaData, _stateObj);
                 if (result != TdsOperationStatus.Done)
@@ -1681,7 +1681,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // If there are an unknown (-1) number of bytes left for a PLP, read its size
-                if ((-1 == _sharedState._columnDataBytesRemaining) && (_metaData[i].metaType.IsPlp))
+                if (_sharedState._columnDataBytesRemaining == -1 && (_metaData[i].metaType.IsPlp))
                 {
                     ulong left;
                     result = _parser.TryPlpBytesLeft(_stateObj, out left);
@@ -1692,7 +1692,7 @@ namespace Microsoft.Data.SqlClient
                     _sharedState._columnDataBytesRemaining = (long)left;
                 }
 
-                if (0 == _sharedState._columnDataBytesRemaining)
+                if (_sharedState._columnDataBytesRemaining == 0)
                 {
                     return TdsOperationStatus.Done; // We've read this column to the end
                 }
@@ -2244,12 +2244,12 @@ namespace Microsoft.Data.SqlClient
             bool isUnicode = _metaData[i].metaType.IsNCharType;
 
             // If there are an unknown (-1) number of bytes left for a PLP, read its size
-            if (-1 == _sharedState._columnDataBytesRemaining)
+            if (_sharedState._columnDataBytesRemaining == -1)
             {
                 _sharedState._columnDataBytesRemaining = (long)_parser.PlpBytesLeft(_stateObj);
             }
 
-            if (0 == _sharedState._columnDataBytesRemaining)
+            if (_sharedState._columnDataBytesRemaining == 0)
             {
                 _stateObj._plpdecoder = null;
                 return 0; // We've read this column to the end
@@ -3850,7 +3850,7 @@ namespace Microsoft.Data.SqlClient
             bool isSequentialAccess = IsCommandBehavior(CommandBehavior.SequentialAccess);
             if (isSequentialAccess)
             {
-                if (0 < _sharedState._nextColumnDataToRead)
+                if (_sharedState._nextColumnDataToRead > 0)
                 {
                     _data[_sharedState._nextColumnDataToRead - 1].Clear();
                 }
@@ -4069,12 +4069,12 @@ namespace Microsoft.Data.SqlClient
                     byte typeAndMask = (byte)(_metaData[currentColumn].tdsType & TdsEnums.SQLLenMask);
                     if ((typeAndMask == TdsEnums.SQLVarLen) || (typeAndMask == TdsEnums.SQLVarCnt))
                     {
-                        if (0 != (_metaData[currentColumn].tdsType & 0x80))
+                        if ((_metaData[currentColumn].tdsType & 0x80) != 0)
                         {
                             // UInt16 represents size
                             maxHeaderSize = 2;
                         }
-                        else if (0 == (_metaData[currentColumn].tdsType & 0x0c))
+                        else if ((_metaData[currentColumn].tdsType & 0x0c) == 0)
                         {
                             // UInt32 represents size
                             maxHeaderSize = 4;
@@ -4130,7 +4130,7 @@ namespace Microsoft.Data.SqlClient
                         localSXml.Close();
                     }
                 }
-                else if (0 < _sharedState._columnDataBytesRemaining)
+                else if (_sharedState._columnDataBytesRemaining > 0)
                 {
                     result = _stateObj.TrySkipLongBytes(_sharedState._columnDataBytesRemaining);
                     if (result != TdsOperationStatus.Done)

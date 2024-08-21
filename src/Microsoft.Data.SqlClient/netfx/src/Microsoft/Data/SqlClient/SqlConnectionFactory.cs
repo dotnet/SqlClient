@@ -175,10 +175,14 @@ namespace Microsoft.Data.SqlClient
             {    // never pool context connections.
                 int connectionTimeout = opt.ConnectTimeout;
 
-                if ((0 < connectionTimeout) && (connectionTimeout < Int32.MaxValue / 1000))
+                if (connectionTimeout > 0 && connectionTimeout < Int32.MaxValue / 1000)
+                {
                     connectionTimeout *= 1000;
+                }
                 else if (connectionTimeout >= Int32.MaxValue / 1000)
+                {
                     connectionTimeout = Int32.MaxValue;
+                }
 
                 if (opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive)
                 {

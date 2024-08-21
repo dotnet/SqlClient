@@ -779,13 +779,15 @@ namespace Microsoft.Data.SqlClient
             switch (tdsType)
             {
                 case TdsEnums.SQLMONEYN:
-                    return ((4 == length) ? s_metaSmallMoney : s_metaMoney);
+                    return length == 4 ? s_metaSmallMoney : s_metaMoney;
                 case TdsEnums.SQLDATETIMN:
-                    return ((4 == length) ? s_metaSmallDateTime : s_metaDateTime);
+                    return length == 4 ? s_metaSmallDateTime : s_metaDateTime;
                 case TdsEnums.SQLINTN:
-                    return ((4 <= length) ? ((4 == length) ? s_metaInt : s_metaBigInt) : ((2 == length) ? s_metaSmallInt : s_metaTinyInt));
+                    return length >= 4
+                        ? length == 4 ? s_metaInt : s_metaBigInt
+                        : length == 2 ? s_metaSmallInt : s_metaTinyInt;
                 case TdsEnums.SQLFLTN:
-                    return ((4 == length) ? s_metaReal : s_metaFloat);
+                    return length == 4 ? s_metaReal : s_metaFloat;
                 case TdsEnums.SQLTEXT:
                     return MetaText;
                 case TdsEnums.SQLVARBINARY:

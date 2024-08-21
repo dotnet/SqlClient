@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (0 > value)
+                if (value < 0)
                 {
                     throw ADP.ArgumentOutOfRange(nameof(UpdateBatchSize));
                 }
@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ExecuteBatch/*' />
         protected override int ExecuteBatch()
         {
-            Debug.Assert(_commandSet != null && (0 < _commandSet.CommandCount), "no commands");
+            Debug.Assert(_commandSet != null && _commandSet.CommandCount > 0, "no commands");
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlDataAdapter.ExecuteBatch | Info | Correlation | Object Id {0}, Activity Id {1}, Command Count {2}", ObjectID, ActivityCorrelator.Current, _commandSet.CommandCount);
             return _commandSet.ExecuteNonQuery();
         }

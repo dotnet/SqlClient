@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             column.ColumnName = "col2";
             table.Columns.Add(column);
 
-            if (0 == timeout)
+            if (timeout == 0)
             {
                 for (int i = 0; i < 100; i++)
                 {
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     catch (Exception e)
                     {
-                        Assert.True(e.Message.Contains("Timeout Expired") && 0 != timeout, "Unexpected exception: " + e);
+                        Assert.True(e.Message.Contains("Timeout Expired") && timeout != 0, "Unexpected exception: " + e);
                     }
                 }
             }

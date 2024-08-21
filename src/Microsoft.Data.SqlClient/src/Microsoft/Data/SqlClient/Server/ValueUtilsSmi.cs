@@ -2827,7 +2827,7 @@ namespace Microsoft.Data.SqlClient.Server
                 length = Math.Min(length, TdsEnums.TYPE_SIZE_LIMIT);
             }
 
-            Debug.Assert(0 > maxLength || 0 > actualLength || maxLength >= actualLength, "Actual = " + actualLength + ", max = " + maxLength + ", sqldbtype=" + dbType);
+            Debug.Assert(maxLength < 0 || actualLength < 0 || maxLength >= actualLength, "Actual = " + actualLength + ", max = " + maxLength + ", sqldbtype=" + dbType);
 
             if (actualLength >= 0)
             {
@@ -3941,7 +3941,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             byte[] copyBuffer = new byte[chunkSize];
             int bytesRead;
-            while (0 != (bytesRead = source.Read(copyBuffer, 0, chunkSize)))
+            while ((bytesRead = source.Read(copyBuffer, 0, chunkSize)) != 0)
             {
                 dest.Write(copyBuffer, 0, bytesRead);
             }

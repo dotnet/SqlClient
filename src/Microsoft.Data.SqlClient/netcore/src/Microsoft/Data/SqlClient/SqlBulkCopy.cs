@@ -525,7 +525,7 @@ namespace Microsoft.Data.SqlClient
 
             StringBuilder updateBulkCommandText = new StringBuilder();
 
-            if (0 == internalResults[CollationResultId].Count)
+            if (internalResults[CollationResultId].Count == 0)
             {
                 throw SQL.BulkLoadNoCollation();
             }

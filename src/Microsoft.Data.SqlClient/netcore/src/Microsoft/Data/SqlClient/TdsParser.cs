@@ -1521,12 +1521,12 @@ namespace Microsoft.Data.SqlClient
                     // strip provider info from SNI
                     //
                     int iColon = errorMessage.IndexOf(':');
-                    Debug.Assert(0 <= iColon, "':' character missing in sni errorMessage");
+                    Debug.Assert(iColon >= 0, "':' character missing in sni errorMessage");
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > ':' character missing in sni errorMessage. Error Message index of ':' = {0}", iColon);
                     Debug.Assert(errorMessage.Length > iColon + 1 && errorMessage[iColon + 1] == ' ', "Expecting a space after the ':' character");
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Expecting a space after the ':' character. Error Message Length = {0}", errorMessage.Length);
                     // extract the message excluding the colon and trailing cr/lf chars
-                    if (0 <= iColon)
+                    if (iColon >= 0)
                     {
                         int len = errorMessage.Length;
                         len -= Environment.NewLine.Length; // exclude newline sequence
@@ -1686,7 +1686,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                Debug.Assert(2 == stateObj._bShortBytes.Length);
+                Debug.Assert(stateObj._bShortBytes.Length == 2);
             }
 
             byte[] bytes = stateObj._bShortBytes;
@@ -1818,7 +1818,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             byte[] bytes = stateObj._bLongBytes;
-            Debug.Assert(8 == bytes.Length, "Cached buffer has wrong size");
+            Debug.Assert(bytes.Length == 8, "Cached buffer has wrong size");
 
             bytes[current++] = (byte)(v & 0xff);
             bytes[current++] = (byte)((v >> 8) & 0xff);
@@ -2957,7 +2957,7 @@ namespace Microsoft.Data.SqlClient
                             return result;
                         }
                         env._oldLength = byteLength;
-                        Debug.Assert(0 == env._oldLength, "old length should be zero");
+                        Debug.Assert(env._oldLength == 0, "old length should be zero");
 
                         // env.length includes 1 byte for type token
                         env._length = 5 + env._newLength;
@@ -4576,10 +4576,10 @@ namespace Microsoft.Data.SqlClient
         {
             int codePage = 0;
 
-            if (0 != collation._sortId)
+            if (collation._sortId != 0)
             {
                 codePage = TdsEnums.CODE_PAGE_FROM_SORT_ID[collation._sortId];
-                Debug.Assert(0 != codePage, "GetCodePage accessed codepage array and produced 0!, sortID =" + ((Byte)(collation._sortId)).ToString((IFormatProvider)null));
+                Debug.Assert(codePage != 0, "GetCodePage accessed codepage array and produced 0!, sortID =" + ((Byte)(collation._sortId)).ToString((IFormatProvider)null));
             }
             else
             {
@@ -4678,7 +4678,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.SynchronousCallMayNotPend();
                         }
                     }
-                    if (0 == sharedState._nextColumnHeaderToRead)
+                    if (sharedState._nextColumnHeaderToRead == 0)
                     {
                         // i. user called read but didn't fetch anything
                         if (stateObj.Parser.TrySkipRow(stateObj._cleanupMetaData, stateObj) != TdsOperationStatus.Done)
@@ -4702,7 +4702,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 
-                            else if (0 < sharedState._columnDataBytesRemaining)
+                            else if (sharedState._columnDataBytesRemaining > 0)
                             {
                                 if (stateObj.TrySkipLongBytes(sharedState._columnDataBytesRemaining) != TdsOperationStatus.Done)
                                 {
@@ -4956,7 +4956,7 @@ namespace Microsoft.Data.SqlClient
                 return result;
             }
 
-            if (0 != tableSize)
+            if (tableSize != 0)
             {
                 SqlTceCipherInfoTable tempTable = new SqlTceCipherInfoTable(tableSize);
 
@@ -5149,7 +5149,7 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
 
-                Debug.Assert(0 <= col.scale && col.scale <= 7);
+                Debug.Assert(col.scale >= 0 && col.scale <= 7);
 
                 // calculate actual column length here
                 // TODO: variable-length calculation needs to be encapsulated better
@@ -5562,7 +5562,7 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
 
-                if (0 != textPtrLen)
+                if (textPtrLen != 0)
                 {
                     // read past text pointer
                     result = stateObj.TrySkipBytes(textPtrLen);
@@ -5878,7 +5878,7 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
 
-                if (0 != textPtrLen)
+                if (textPtrLen != 0)
                 {
                     result = stateObj.TrySkipBytes(textPtrLen + TdsEnums.TEXT_TIME_STAMP_LEN);
                     if (result != TdsOperationStatus.Done)
@@ -6211,7 +6211,7 @@ namespace Microsoft.Data.SqlClient
                     // Check the sign from the first byte.
                     int index = 0;
                     byteValue = unencryptedBytes[index++];
-                    bool fPositive = (1 == byteValue);
+                    bool fPositive = (byteValue == 1);
 
                     // Now read the 4 next integers which contain the actual value.
                     length = checked((int)length - 1);
@@ -6483,17 +6483,17 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.SQLTIME:
-                    Debug.Assert(3 <= length && length <= 5, "invalid length for time type!");
+                    Debug.Assert(length >= 3 && length <= 5, "invalid length for time type!");
                     value.SetToTime(dateTimeData, scale, scale);
                     break;
 
                 case TdsEnums.SQLDATETIME2:
-                    Debug.Assert(6 <= length && length <= 8, "invalid length for datetime2 type!");
+                    Debug.Assert(length >= 6 && length <= 8, "invalid length for datetime2 type!");
                     value.SetToDateTime2(dateTimeData, scale, scale);
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
-                    Debug.Assert(8 <= length && length <= 10, "invalid length for datetimeoffset type!");
+                    Debug.Assert(length >= 8 && length <= 10, "invalid length for datetimeoffset type!");
                     value.SetToDateTimeOffset(dateTimeData, scale, scale);
                     break;
 
@@ -6976,7 +6976,7 @@ namespace Microsoft.Data.SqlClient
             MetaType mt = MetaType.GetMetaTypeFromValue(value);
 
             // Special case data type correction for SqlMoney inside a SqlVariant.
-            if ((TdsEnums.SQLNUMERICN == mt.TDSType) && (8 == length))
+            if ((TdsEnums.SQLNUMERICN == mt.TDSType) && length == 8)
             {
                 // The caller will coerce all SqlTypes to native CLR types, which means SqlMoney will
                 // coerce to decimal/SQLNUMERICN (via SqlMoney.Value call).  In the case where the original
@@ -7319,7 +7319,7 @@ namespace Microsoft.Data.SqlClient
             int[] bits = decimal.GetBits(value.Value);
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
-            bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
+            bool isNeg = (bits[3] & unchecked((int)0x80000000)) != 0;
             long l = ((long)(uint)bits[1]) << 0x20 | (uint)bits[0];
 
             if (isNeg)
@@ -7350,7 +7350,7 @@ namespace Microsoft.Data.SqlClient
             int[] bits = Decimal.GetBits(m.Value);
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
-            bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
+            bool isNeg = (bits[3] & unchecked((int)0x80000000)) != 0;
             long l = ((long)(uint)bits[1]) << 0x20 | (uint)bits[0];
 
             if (isNeg)
@@ -7368,7 +7368,7 @@ namespace Microsoft.Data.SqlClient
                 length = 8;
             }
 
-            Debug.Assert(8 == length, "invalid length in SerializeCurrency");
+            Debug.Assert(length == 8, "invalid length in SerializeCurrency");
             if (stateObj._bLongBytes == null)
             {
                 stateObj._bLongBytes = new byte[8];
@@ -7393,7 +7393,7 @@ namespace Microsoft.Data.SqlClient
             int[] bits = decimal.GetBits(m.Value);
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
-            bool isNeg = (0 != (bits[3] & unchecked((int)0x80000000)));
+            bool isNeg = (bits[3] & unchecked((int)0x80000000)) != 0;
             long l = ((long)(uint)bits[1]) << 0x20 | (uint)bits[0];
 
             if (isNeg)
@@ -7430,7 +7430,7 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeTime(TimeSpan value, byte scale, int length)
         {
-            if (0 > value.Ticks || value.Ticks >= TimeSpan.TicksPerDay)
+            if (value.Ticks < 0 || value.Ticks >= TimeSpan.TicksPerDay)
             {
                 throw SQL.TimeOverflow(value.ToString());
             }
@@ -7446,7 +7446,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteTime(TimeSpan value, byte scale, int length, TdsParserStateObject stateObj)
         {
-            if (0 > value.Ticks || value.Ticks >= TimeSpan.TicksPerDay)
+            if (value.Ticks < 0 || value.Ticks >= TimeSpan.TicksPerDay)
             {
                 throw SQL.TimeOverflow(value.ToString());
             }
@@ -7521,7 +7521,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-            bool fPositive = (1 == byteValue);
+            bool fPositive = (byteValue == 1);
 
             length = checked((int)length - 1);
 
@@ -7688,7 +7688,7 @@ namespace Microsoft.Data.SqlClient
             */
 
             // write the sign (note that COM and SQL are opposite)
-            if (0x80000000 == (decimalBits[3] & 0x80000000))
+            if ((decimalBits[3] & 0x80000000) == 0x80000000)
                 bytes[current++] = 0;
             else
                 bytes[current++] = 1;
@@ -7733,7 +7733,7 @@ namespace Microsoft.Data.SqlClient
             */
 
             // write the sign (note that COM and SQL are opposite)
-            if (0x80000000 == (stateObj._decimalBits[3] & 0x80000000))
+            if ((stateObj._decimalBits[3] & 0x80000000) == 0x80000000)
                 stateObj.WriteByte(0);
             else
                 stateObj.WriteByte(1);
@@ -8034,7 +8034,7 @@ namespace Microsoft.Data.SqlClient
                     return TdsOperationStatus.Done;
                 case TdsEnums.SQLVarLen:
                 case TdsEnums.SQLVarCnt:
-                    if (0 != (token & 0x80))
+                    if ((token & 0x80) != 0)
                     {
                         ushort value;
                         result = stateObj.TryReadUInt16(out value);
@@ -8046,7 +8046,7 @@ namespace Microsoft.Data.SqlClient
                         tokenLength = value;
                         return TdsOperationStatus.Done;
                     }
-                    else if (0 == (token & 0x0c))
+                    else if ((token & 0x0c) == 0)
                     {
                         return stateObj.TryReadInt32(out tokenLength);
                     }
@@ -9339,7 +9339,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (mt.Is2008Type)
                             {
-                                WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj, enableOptimizedParameterBinding, isAdvancedTraceOn);
+                                WriteSmiParameter(param, i, (options & TdsEnums.RPC_PARAM_DEFAULT) != 0, stateObj, enableOptimizedParameterBinding, isAdvancedTraceOn);
                                 continue;
                             }
 
@@ -9557,7 +9557,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            bool isParameterEncrypted = 0 != (options & TdsEnums.RPC_PARAM_ENCRYPTED);
+            bool isParameterEncrypted = (options & TdsEnums.RPC_PARAM_ENCRYPTED) != 0;
 
             // Additional information we need to send over wire to the server when writing encrypted parameters.
             SqlColumnEncryptionInputParameterInfo encryptedParameterInfoToWrite = null;
@@ -9816,7 +9816,7 @@ namespace Microsoft.Data.SqlClient
             // scale and precision are only relevant for numeric and decimal types
             if (mt.SqlDbType == SqlDbType.Decimal)
             {
-                if (0 == precision)
+                if (precision == 0)
                 {
                     stateObj.WriteByte(TdsEnums.DEFAULT_NUMERIC_PRECISION);
                 }
@@ -9890,7 +9890,7 @@ namespace Microsoft.Data.SqlClient
                 stateObj.WriteByte(outCollation._sortId);
             }
 
-            if (0 == codePageByteSize)
+            if (codePageByteSize == 0)
                 WriteParameterVarLen(mt, actualSize, isNull, stateObj, isDataFeed);
             else
                 WriteParameterVarLen(mt, codePageByteSize, isNull, stateObj, isDataFeed);
@@ -10175,7 +10175,7 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.Decimal:
                     stateObj.WriteByte(TdsEnums.SQLNUMERICN);
                     stateObj.WriteByte(checked((byte)MetaType.MetaDecimal.FixedLength));   // SmiMetaData's length and actual wire format's length are different
-                    stateObj.WriteByte(0 == metaData.Precision ? (byte)1 : metaData.Precision);
+                    stateObj.WriteByte(metaData.Precision == 0 ? (byte)1 : metaData.Precision);
                     stateObj.WriteByte(metaData.Scale);
                     break;
                 case SqlDbType.Float:
@@ -10333,7 +10333,7 @@ namespace Microsoft.Data.SqlClient
             WriteIdentifier(metaData.TypeSpecificNamePart3, stateObj);
 
             // TVP_COLMETADATA
-            if (0 == metaData.FieldMetaData.Count)
+            if (metaData.FieldMetaData.Count == 0)
             {
                 WriteUnsignedShort((ushort)TdsEnums.TVP_NOMETADATA_TOKEN, stateObj);
             }
@@ -10432,14 +10432,14 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Remember this column if any flags were set
-                if (0 != flags)
+                if (flags != 0)
                 {
                     columnList.Add(new TdsOrderUnique(checked((short)(i + 1)), flags));
                 }
             }
 
             // Write flagged columns to wire...
-            if (0 < columnList.Count)
+            if (columnList.Count > 0)
             {
                 stateObj.WriteByte(TdsEnums.TVP_ORDER_UNIQUE_TOKEN);
                 WriteShort(columnList.Count, stateObj);
@@ -10510,7 +10510,7 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(cekTable[i].CekVersion, stateObj);
 
                 // Write 8 bytes of key MD Version
-                Debug.Assert(8 == cekTable[i].CekMdVersion.Length);
+                Debug.Assert(cekTable[i].CekMdVersion.Length == 8);
                 stateObj.WriteByteArray(cekTable[i].CekMdVersion, 8, 0);
 
                 // We don't really need to send the keys
@@ -11091,7 +11091,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.ArgumentOutOfRange(nameof(service));
                 }
 
-                if (-1 > timeout)
+                if (timeout < -1)
                 {
                     throw ADP.ArgumentOutOfRange(nameof(timeout));
                 }
@@ -11134,7 +11134,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(ushort.MaxValue >= callbackId.Length, "CallbackId length is out of range");
             Debug.Assert(service != null, "Service is null");
             Debug.Assert(ushort.MaxValue >= service.Length, "Service length is out of range");
-            Debug.Assert(-1 <= timeout, "Timeout");
+            Debug.Assert(timeout >= -1, "Timeout");
 
             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.TdsParser.WriteQueryNotificationHeader|DEP> NotificationRequest: userData: '{0}', options: '{1}', timeout: '{2}'", notificationRequest.UserData, notificationRequest.Options, notificationRequest.Timeout);
             WriteShort(TdsEnums.HEADERTYPE_QNOTIFICATION, stateObj);      // Query notifications Type
@@ -11190,7 +11190,7 @@ namespace Microsoft.Data.SqlClient
             // Write Mars header data
             WriteMarsHeaderData(stateObj, CurrentTransaction);
 
-            if (0 != notificationHeaderSize)
+            if (notificationHeaderSize != 0)
             {
                 // Write Notification header length
                 WriteInt(notificationHeaderSize, stateObj);
@@ -11238,12 +11238,18 @@ namespace Microsoft.Data.SqlClient
 
                     case TdsEnums.SQLVarLen:
                     case TdsEnums.SQLVarCnt:
-                        if (0 != (token & 0x80))
+                        if ((token & 0x80) != 0)
+                        {
                             tokenLength = 2;
-                        else if (0 == (token & 0x0c))
+                        }
+                        else if ((token & 0x0c) == 0)
+                        {
                             tokenLength = 4;
+                        }
                         else
+                        {
                             tokenLength = 1;
+                        }
 
                         break;
 
@@ -11494,8 +11500,10 @@ namespace Microsoft.Data.SqlClient
 
                     if (type.FixedLength == 4)
                     {
-                        if (0 > dt.DayTicks || dt.DayTicks > ushort.MaxValue)
+                        if (dt.DayTicks < 0 || dt.DayTicks > ushort.MaxValue)
+                        {
                             throw SQL.SmallDateTimeOverflow(dt.ToString());
+                        }
 
                         WriteShort(dt.DayTicks, stateObj);
                         WriteShort(dt.TimeTicks / SqlDateTime.SQLTicksPerMinute, stateObj);
@@ -12160,8 +12168,10 @@ namespace Microsoft.Data.SqlClient
 
                     if (type.FixedLength == 4)
                     {
-                        if (0 > dt.days || dt.days > ushort.MaxValue)
+                        if (dt.days < 0 || dt.days > ushort.MaxValue)
+                        {
                             throw SQL.SmallDateTimeOverflow(MetaType.ToDateTime(dt.days, dt.time, 4).ToString(CultureInfo.InvariantCulture));
+                        }
 
                         WriteShort(dt.days, stateObj);
                         WriteShort(dt.time, stateObj);
@@ -12370,8 +12380,10 @@ namespace Microsoft.Data.SqlClient
 
                     if (type.FixedLength == 4)
                     {
-                        if (0 > dt.days || dt.days > UInt16.MaxValue)
+                        if (dt.days < 0 || dt.days > UInt16.MaxValue)
+                        {
                             throw SQL.SmallDateTimeOverflow(MetaType.ToDateTime(dt.days, dt.time, 4).ToString(CultureInfo.InvariantCulture));
+                        }
 
                         if (stateObj._bIntBytes == null)
                         {
@@ -12563,8 +12575,10 @@ namespace Microsoft.Data.SqlClient
 
                     if (type.FixedLength == 4)
                     {
-                        if (0 > dt.DayTicks || dt.DayTicks > UInt16.MaxValue)
+                        if (dt.DayTicks < 0 || dt.DayTicks > UInt16.MaxValue)
+                        {
                             throw SQL.SmallDateTimeOverflow(dt.ToString());
+                        }
 
                         if (stateObj._bIntBytes == null)
                         {

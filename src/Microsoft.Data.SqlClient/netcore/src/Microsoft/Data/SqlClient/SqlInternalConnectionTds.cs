@@ -901,7 +901,7 @@ namespace Microsoft.Data.SqlClient
             // the async commands, or we don't know that we're in a state that
             // we can recover from.  We doom the connection in this case, to
             // prevent odd cases when we go to the wire.
-            if (0 != _asyncCommandCount)
+            if (_asyncCommandCount != 0)
             {
                 DoomThisConnection();
             }
@@ -1814,7 +1814,7 @@ namespace Microsoft.Data.SqlClient
                         throw;
                     }
 
-                    if (1 == attemptNumber % 2)
+                    if (attemptNumber % 2 == 1)
                     {
                         // Check sleep interval to make sure we won't exceed the original timeout
                         //  Do this in the catch block so we can re-throw the current exception
@@ -1829,7 +1829,7 @@ namespace Microsoft.Data.SqlClient
 
                 // After trying to connect to both servers fails, sleep for a bit to prevent clogging
                 //  the network with requests, then update sleep interval for next iteration (max 1 second interval)
-                if (1 == attemptNumber % 2)
+                if (attemptNumber % 2 == 1)
                 {
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, sleeping {1}[milisec]", ObjectID, sleepInterval);
                     Thread.Sleep(sleepInterval);
@@ -2650,7 +2650,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         IsGlobalTransaction = true;
-                        if (1 == data[0])
+                        if (data[0] == 1)
                         {
                             IsGlobalTransactionsEnabledForServer = true;
                         }
@@ -2721,7 +2721,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         byte supportedTceVersion = data[0];
-                        if (0 == supportedTceVersion || supportedTceVersion > TdsEnums.MAX_SUPPORTED_TCE_VERSION)
+                        if (supportedTceVersion == 0 || supportedTceVersion > TdsEnums.MAX_SUPPORTED_TCE_VERSION)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for TCE", ObjectID);
                             throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidVersion, supportedTceVersion);
@@ -2760,7 +2760,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         byte supportedDataClassificationVersion = data[0];
-                        if ((0 == supportedDataClassificationVersion) || (supportedDataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED))
+                        if (supportedDataClassificationVersion == 0 || (supportedDataClassificationVersion > TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED))
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for DATACLASSIFICATION", ObjectID);
                             throw SQL.ParsingErrorValue(ParsingErrorState.DataClassificationInvalidVersion, supportedDataClassificationVersion);
@@ -2786,7 +2786,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
 
-                        if (1 == data[0])
+                        if (data[0] == 1)
                         {
                             IsSQLDNSCachingSupported = true;
                             _cleanSQLDNSCaching = false;

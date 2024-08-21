@@ -1683,7 +1683,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception NullCertificatePath(string[] validLocations, bool isSystemOp)
         {
-            Debug.Assert(2 == validLocations.Length);
+            Debug.Assert(validLocations.Length == 2);
             if (isSystemOp)
             {
                 return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(Strings.TCE_NullCertificatePathSysErr, validLocations[0], validLocations[1], @"/"));
@@ -1720,7 +1720,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception InvalidCertificatePath(string actualCertificatePath, string[] validLocations, bool isSystemOp)
         {
-            Debug.Assert(2 == validLocations.Length);
+            Debug.Assert(validLocations.Length == 2);
             if (isSystemOp)
             {
                 return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificatePathSysErr, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
@@ -1843,7 +1843,7 @@ namespace Microsoft.Data.SqlClient
         {
 
 #if NETFRAMEWORK
-            Debug.Assert(2 == validLocations.Length);
+            Debug.Assert(validLocations.Length == 2);
 #endif
             if (isSystemOp)
             {

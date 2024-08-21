@@ -241,10 +241,10 @@ namespace Microsoft.Data.SqlClient
         private void CheckWritingToColumn(int ordinal)
         {
 #if DEBUG
-            Debug.Assert(0 <= ordinal, "TdsRecordBufferSetter.CheckWritingToColumn: Targeting invalid column: " + ordinal);
+            Debug.Assert(ordinal >= 0, "TdsRecordBufferSetter.CheckWritingToColumn: Targeting invalid column: " + ordinal);
             SkipPossibleDefaultedColumns(ordinal);
 
-            Debug.Assert(0 <= _currentField && _metaData.FieldMetaData.Count > _currentField, "_currentField out of range for setting a column:" + _currentField);
+            Debug.Assert(_currentField >= 0 && _metaData.FieldMetaData.Count > _currentField, "_currentField out of range for setting a column:" + _currentField);
             Debug.Assert(ordinal == _currentField, "Setter called out of order.  Should be " + _currentField + ", but was " + ordinal);
             // Must not write to field with a DefaultFieldsProperty set to true
             Debug.Assert(!((SmiDefaultFieldsProperty)_metaData.ExtendedProperties[SmiPropertySelector.DefaultFields])[ordinal],

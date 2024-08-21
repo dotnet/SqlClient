@@ -1982,12 +1982,12 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (SqlDbType.Char == SqlDbType || SqlDbType.NChar == SqlDbType)
             {
-                if (1 != MaxLength)
+                if (MaxLength != 1)
                 {
                     ThrowInvalidType();
                 }
             }
-            else if ((1 > MaxLength) ||  // char must have max length of at least 1
+            else if (MaxLength < 1 ||  // char must have max length of at least 1
                     (SqlDbType.VarChar != SqlDbType && SqlDbType.NVarChar != SqlDbType &&
                     SqlDbType.Text != SqlDbType && SqlDbType.NText != SqlDbType)
                     )

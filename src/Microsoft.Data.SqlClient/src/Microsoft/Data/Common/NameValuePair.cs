@@ -29,7 +29,7 @@ namespace Microsoft.Data.Common
         {
             get
             {
-                Debug.Assert(0 < _length, "NameValuePair zero Length usage");
+                Debug.Assert(_length > 0, "NameValuePair zero Length usage");
                 return _length;
             }
         }

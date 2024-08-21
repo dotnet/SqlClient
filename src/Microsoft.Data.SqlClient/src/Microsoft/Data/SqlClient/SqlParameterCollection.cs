@@ -338,7 +338,7 @@ namespace Microsoft.Data.SqlClient
         private void RemoveIndex(int index)
         {
             List<SqlParameter> items = InnerList;
-            Debug.Assert((items != null) && (0 <= index) && (index < Count), "RemoveIndex, invalid");
+            Debug.Assert((items != null) && index >= 0 && (index < Count), "RemoveIndex, invalid");
             SqlParameter item = items[index];
             items.RemoveAt(index);
             item.ResetParent();
@@ -347,7 +347,7 @@ namespace Microsoft.Data.SqlClient
         private void Replace(int index, object newValue)
         {
             List<SqlParameter> items = InnerList;
-            Debug.Assert((items != null) && (0 <= index) && (index < Count), "Replace Index invalid");
+            Debug.Assert((items != null) && index >= 0 && (index < Count), "Replace Index invalid");
             ValidateType(newValue);
             Validate(index, newValue);
             SqlParameter item = items[index];
@@ -384,7 +384,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     name = ADP.Parameter + index.ToString(CultureInfo.CurrentCulture);
                     index++;
-                } while (-1 != IndexOf(name));
+                } while (IndexOf(name) != -1);
                 ((SqlParameter)value).ParameterName = name;
             }
         }

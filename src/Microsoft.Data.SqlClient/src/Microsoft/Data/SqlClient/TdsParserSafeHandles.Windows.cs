@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient
             base.handle = IntPtr.Zero;
             if (IntPtr.Zero != ptr)
             {
-                if (0 != SNINativeMethodWrapper.SNIClose(ptr))
+                if (SNINativeMethodWrapper.SNIClose(ptr) != 0)
                 {
                     return false;   // SNIClose should never fail.
                 }

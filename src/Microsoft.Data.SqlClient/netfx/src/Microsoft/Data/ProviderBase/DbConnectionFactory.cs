@@ -532,7 +532,7 @@ namespace Microsoft.Data.ProviderBase
             // distributed transactions that need it.
             lock (_poolsToRelease)
             {
-                if (0 != _poolsToRelease.Count)
+                if (_poolsToRelease.Count != 0)
                 {
                     DbConnectionPool[] poolsToRelease = _poolsToRelease.ToArray();
                     foreach (DbConnectionPool pool in poolsToRelease)
@@ -541,7 +541,7 @@ namespace Microsoft.Data.ProviderBase
                         {
                             pool.Clear();
 
-                            if (0 == pool.Count)
+                            if (pool.Count == 0)
                             {
                                 _poolsToRelease.Remove(pool);
                                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePool={1}", ObjectID, pool.ObjectID);
@@ -557,7 +557,7 @@ namespace Microsoft.Data.ProviderBase
             // empty, it's because there are active pools that need it.
             lock (_poolGroupsToRelease)
             {
-                if (0 != _poolGroupsToRelease.Count)
+                if (_poolGroupsToRelease.Count != 0)
                 {
                     DbConnectionPoolGroup[] poolGroupsToRelease = _poolGroupsToRelease.ToArray();
                     foreach (DbConnectionPoolGroup poolGroup in poolGroupsToRelease)
@@ -566,7 +566,7 @@ namespace Microsoft.Data.ProviderBase
                         {
                             int poolsLeft = poolGroup.Clear(); // may add entries to _poolsToRelease
 
-                            if (0 == poolsLeft)
+                            if (poolsLeft == 0)
                             {
                                 _poolGroupsToRelease.Remove(poolGroup);
                                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePoolGroup={1}", ObjectID, poolGroup.ObjectID);

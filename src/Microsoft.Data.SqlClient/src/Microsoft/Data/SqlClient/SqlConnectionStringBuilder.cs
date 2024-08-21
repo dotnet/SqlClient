@@ -674,7 +674,7 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionStringBuilder constr = (context.Instance as SqlConnectionStringBuilder);
                     if (constr is not null)
                     {
-                        if ((0 < constr.DataSource.Length) && (constr.IntegratedSecurity || (0 < constr.UserID.Length)))
+                        if (constr.DataSource.Length > 0 && (constr.IntegratedSecurity || constr.UserID.Length > 0))
                         {
                             flag = true;
                         }
@@ -800,7 +800,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         string server = rows[i][serverName] as string;
                         string instance = rows[i][instanceName] as string;
-                        if ((instance is null) || (0 == instance.Length) || ("MSSQLSERVER" == instance))
+                        if ((instance is null) || instance.Length == 0 || ("MSSQLSERVER" == instance))
                         {
                             serverNames[i] = server;
                         }

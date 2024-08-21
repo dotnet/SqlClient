@@ -129,7 +129,7 @@ namespace Microsoft.Data.ProviderBase
                     lock (connections)
                     {
                         int i = connections.Count - 1;
-                        if (0 <= i)
+                        if (i >= 0)
                         {
                             transactedObject = connections[i];
                             connections.RemoveAt(i);
@@ -165,7 +165,7 @@ namespace Microsoft.Data.ProviderBase
                         // synchronize multi-threaded access with GetTransactedObject
                         lock (connections)
                         {
-                            Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
+                            Debug.Assert(connections.IndexOf(transactedObject) < 0, "adding to pool a second time?");
                             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
                             connections.Add(transactedObject);
                         }
@@ -200,7 +200,7 @@ namespace Microsoft.Data.ProviderBase
                                 // synchronize multi-threaded access with GetTransactedObject
                                 lock (connections)
                                 {
-                                    Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
+                                    Debug.Assert(connections.IndexOf(transactedObject) < 0, "adding to pool a second time?");
                                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
                                     connections.Add(transactedObject);
                                 }
@@ -276,7 +276,7 @@ namespace Microsoft.Data.ProviderBase
 
                             // Once we've completed all the ended notifications, we can
                             // safely remove the list from the transacted pool.
-                            if (0 >= connections.Count)
+                            if (connections.Count <= 0)
                             {
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Removing List from transacted pool.", ObjectID, transaction.GetHashCode());
                                 _transactedCxns.Remove(transaction);
@@ -301,7 +301,7 @@ namespace Microsoft.Data.ProviderBase
 
                 // If (and only if) we found the connection in the list of
                 // connections, we'll put it back...
-                if (0 <= entry)
+                if (entry >= 0)
                 {
                     Pool.PerformanceCounters.NumberOfFreeConnections.Decrement();
                     Pool.PutObjectFromTransactedPool(transactedObject);
@@ -349,9 +349,9 @@ namespace Microsoft.Data.ProviderBase
                     _errorHandle.DangerousAddRef(ref mustRelease2);
                     _creationHandle.DangerousAddRef(ref mustRelease3);
 
-                    Debug.Assert(0 == SEMAPHORE_HANDLE, "SEMAPHORE_HANDLE");
-                    Debug.Assert(1 == ERROR_HANDLE, "ERROR_HANDLE");
-                    Debug.Assert(2 == CREATION_HANDLE, "CREATION_HANDLE");
+                    Debug.Assert(SEMAPHORE_HANDLE == 0, "SEMAPHORE_HANDLE");
+                    Debug.Assert(ERROR_HANDLE == 1, "ERROR_HANDLE");
+                    Debug.Assert(CREATION_HANDLE == 2, "CREATION_HANDLE");
 
                     WriteIntPtr(SEMAPHORE_HANDLE * IntPtr.Size, _poolHandle.DangerousGetHandle());
                     WriteIntPtr(ERROR_HANDLE * IntPtr.Size, _errorHandle.DangerousGetHandle());
@@ -399,15 +399,15 @@ namespace Microsoft.Data.ProviderBase
             {
                 // NOTE: The SafeHandle class guarantees this will be called exactly once.
                 // we know we can touch these other managed objects because of our original DangerousAddRef
-                if (0 != (1 & _releaseFlags))
+                if ((1 & _releaseFlags) != 0)
                 {
                     _poolHandle.DangerousRelease();
                 }
-                if (0 != (2 & _releaseFlags))
+                if ((2 & _releaseFlags) != 0)
                 {
                     _errorHandle.DangerousRelease();
                 }
-                if (0 != (4 & _releaseFlags))
+                if ((4 & _releaseFlags) != 0)
                 {
                     _creationHandle.DangerousRelease();
                 }
@@ -938,7 +938,7 @@ namespace Microsoft.Data.ProviderBase
 
                 Debug.Assert(timerIsNotDisposed, "ErrorCallback timer has been disposed");
 
-                if (30000 < _errorWait)
+                if (_errorWait > 30000)
                 {
                     _errorWait = 60000;
                 }
@@ -1369,7 +1369,7 @@ namespace Microsoft.Data.ProviderBase
                         RuntimeHelpers.PrepareConstrainedRegions();
                         try
                         {
-                            Debug.Assert(2 == waitHandleCount || 3 == waitHandleCount, "unexpected waithandle count");
+                            Debug.Assert(waitHandleCount == 2 || waitHandleCount == 3, "unexpected waithandle count");
                         }
                         finally
                         {
@@ -1436,12 +1436,12 @@ namespace Microsoft.Data.ProviderBase
 
                                     // BUG - if we receive the CreationHandle midway into the wait
                                     // period and re-wait, we will be waiting on the full period
-                                    if (Count >= MaxPoolSize && 0 != MaxPoolSize)
+                                    if (Count >= MaxPoolSize && MaxPoolSize != 0)
                                     {
                                         if (!ReclaimEmancipatedObjects())
                                         {
                                             // modify handle array not to wait on creation mutex anymore
-                                            Debug.Assert(2 == CREATION_HANDLE, "creation handle changed value");
+                                            Debug.Assert(CREATION_HANDLE == 2, "creation handle changed value");
                                             waitHandleCount = 2;
                                         }
                                     }
@@ -1520,7 +1520,7 @@ namespace Microsoft.Data.ProviderBase
                         if (CREATION_HANDLE == waitResult)
                         {
                             int result = SafeNativeMethods.ReleaseSemaphore(_waitHandles.CreationHandle.DangerousGetHandle(), 1, IntPtr.Zero);
-                            if (0 == result)
+                            if (result == 0)
                             { // failure case
                                 releaseSemaphoreResult = Marshal.GetHRForLastWin32Error();
                             }
@@ -1530,7 +1530,7 @@ namespace Microsoft.Data.ProviderBase
                             _waitHandles.DangerousRelease();
                         }
                     }
-                    if (0 != releaseSemaphoreResult)
+                    if (releaseSemaphoreResult != 0)
                     {
                         Marshal.ThrowExceptionForHR(releaseSemaphoreResult); // will only throw if (hresult < 0)
                     }
@@ -1725,7 +1725,7 @@ namespace Microsoft.Data.ProviderBase
                                 {
                                     waitResult = SafeNativeMethods.WaitForSingleObjectEx(_waitHandles.CreationHandle.DangerousGetHandle(), timeout, false);
                                 }
-                                if (WAIT_OBJECT_0 == waitResult)
+                                if (waitResult == WAIT_OBJECT_0)
                                 {
                                     DbConnectionInternal newObj;
 
@@ -1777,7 +1777,7 @@ namespace Microsoft.Data.ProviderBase
                             }
                             finally
                             {
-                                if (WAIT_OBJECT_0 == waitResult)
+                                if (waitResult == WAIT_OBJECT_0)
                                 {
                                     // reuse waitResult and ignore its value
                                     waitResult = SafeNativeMethods.ReleaseSemaphore(_waitHandles.CreationHandle.DangerousGetHandle(), 1, IntPtr.Zero);
@@ -2003,7 +2003,7 @@ namespace Microsoft.Data.ProviderBase
             }
             else
             {
-                if ((oldConnection != null) || (Count < MaxPoolSize) || (0 == MaxPoolSize))
+                if ((oldConnection != null) || (Count < MaxPoolSize) || MaxPoolSize == 0)
                 {
                     // If we have an odd number of total objects, reclaim any dead objects.
                     // If we did not find any objects to reclaim, create a new one.

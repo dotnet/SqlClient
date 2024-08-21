@@ -216,7 +216,7 @@ namespace Microsoft.Data.ProviderBase
 
 #if DEBUG
             int activateCount = Interlocked.Increment(ref _activateCount);
-            Debug.Assert(1 == activateCount, "activated multiple times?");
+            Debug.Assert(activateCount == 1, "activated multiple times?");
 #endif // DEBUG
 
             Activate(transaction);
@@ -342,7 +342,7 @@ namespace Microsoft.Data.ProviderBase
             // ReclaimEmancipatedObjects.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DelegatedTransactionEnded|RES|CPOOL> {0}, Delegated Transaction Completed.", ObjectID);
 
-            if (1 == _pooledCount)
+            if (_pooledCount == 1)
             {
                 // When _pooledCount is 1, it indicates a closed, pooled,
                 // connection so it is ready to put back into the pool for
@@ -360,7 +360,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 pool.PutObjectFromTransactedPool(this);
             }
-            else if (-1 == _pooledCount && !_owningObject.TryGetTarget(out _))
+            else if (_pooledCount == -1 && !_owningObject.TryGetTarget(out _))
             {
                 // When _pooledCount is -1 and the owning object no longer exists,
                 // it indicates a closed (or leaked), non-pooled connection so 

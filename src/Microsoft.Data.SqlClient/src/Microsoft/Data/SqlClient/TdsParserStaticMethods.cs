@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient
                     int index = aliasLookup.IndexOf(',');
 
                     // If we found the key, but there was no "," in the string, it is a bad Alias so return.
-                    if (-1 != index)
+                    if (index != -1)
                     {
                         string parsedProtocol = aliasLookup.Substring(0, index).ToLower(CultureInfo.InvariantCulture);
 
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
                             if ("dbnetlib" == parsedProtocol)
                             {
                                 index = parsedAliasName.IndexOf(':');
-                                if (-1 != index && index + 1 < parsedAliasName.Length)
+                                if (index != -1 && index + 1 < parsedAliasName.Length)
                                 {
                                     parsedProtocol = parsedAliasName.Substring(0, index);
                                     if (SqlConnectionString.ValidProtocol(parsedProtocol))
@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClient
         {
             bool result = false;
 
-            if (0 != timeoutTime && long.MaxValue != timeoutTime)
+            if (timeoutTime != 0 && long.MaxValue != timeoutTime)
             {
                 result = ADP.TimerHasExpired(timeoutTime);
             }

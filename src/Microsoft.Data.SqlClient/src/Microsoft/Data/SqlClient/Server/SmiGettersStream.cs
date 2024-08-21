@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(sink != null);
             Debug.Assert(getters != null);
-            Debug.Assert(0 <= ordinal);
+            Debug.Assert(ordinal >= 0);
             Debug.Assert(metaData != null);
 
             _sink = sink;

@@ -414,7 +414,7 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentOutOfRangeException InvalidCommandBehavior(CommandBehavior value)
         {
-            Debug.Assert((0 > (int)value) || ((int)value > 0x3F), "valid CommandType " + value.ToString());
+            Debug.Assert((int)value < 0 || ((int)value > 0x3F), "valid CommandType " + value.ToString());
 
             return InvalidEnumerationValue(typeof(CommandBehavior), (int)value);
         }
@@ -577,11 +577,11 @@ namespace Microsoft.Data.Common
             // should be added, even if the name part is null/empty, to maintain proper location of the parts.
             for (int i = 0; i < strings.Length; i++)
             {
-                if (0 < bld.Length)
+                if (bld.Length > 0)
                 {
                     bld.Append('.');
                 }
-                if (strings[i] is not null && 0 != strings[i].Length)
+                if (strings[i] is not null && strings[i].Length != 0)
                 {
                     bld.Append(BuildQuotedString("[", "]", strings[i]));
                 }
@@ -1006,7 +1006,7 @@ namespace Microsoft.Data.Common
             => IndexOutOfRange(StringsHelper.GetString(Strings.SQL_InvalidDataLength, length.ToString(CultureInfo.InvariantCulture)));
 
         internal static bool CompareInsensitiveInvariant(string strvalue, string strconst)
-            => 0 == CultureInfo.InvariantCulture.CompareInfo.Compare(strvalue, strconst, CompareOptions.IgnoreCase);
+            => CultureInfo.InvariantCulture.CompareInfo.Compare(strvalue, strconst, CompareOptions.IgnoreCase) == 0;
 
         internal static int DstCompare(string strA, string strB) // this is null safe
             => CultureInfo.CurrentCulture.CompareInfo.Compare(strA, strB, ADP.DefaultCompareOptions);
@@ -1342,7 +1342,7 @@ namespace Microsoft.Data.Common
         internal static void CheckArgumentLength(string value, string parameterName)
         {
             CheckArgumentNull(value, parameterName);
-            if (0 == value.Length)
+            if (value.Length == 0)
             {
                 throw Argument(StringsHelper.GetString(Strings.ADP_EmptyString, parameterName)); // MDAC 94859
             }
@@ -1500,7 +1500,7 @@ namespace Microsoft.Data.Common
                                 // query for the required length
                                 // VSTFDEVDIV 479551 - ensure that GetComputerNameEx does not fail with unexpected values and that the length is positive
                 int getComputerNameExError = 0;
-                if (0 == SafeNativeMethods.GetComputerNameEx(ComputerNameDnsFullyQualified, null, ref length))
+                if (SafeNativeMethods.GetComputerNameEx(ComputerNameDnsFullyQualified, null, ref length) == 0)
                 {
                     getComputerNameExError = Marshal.GetLastWin32Error();
                 }
@@ -1511,7 +1511,7 @@ namespace Microsoft.Data.Common
 
                 StringBuilder buffer = new(length);
                 length = buffer.Capacity;
-                if (0 == SafeNativeMethods.GetComputerNameEx(ComputerNameDnsFullyQualified, buffer, ref length))
+                if (SafeNativeMethods.GetComputerNameEx(ComputerNameDnsFullyQualified, buffer, ref length) == 0)
                 {
                     throw ADP.ComputerNameEx(Marshal.GetLastWin32Error());
                 }
@@ -1530,11 +1530,11 @@ namespace Microsoft.Data.Common
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         internal static IntPtr IntPtrOffset(IntPtr pbase, int offset)
         {
-            if (4 == ADP.s_ptrSize)
+            if (ADP.s_ptrSize == 4)
             {
                 return (IntPtr)checked(pbase.ToInt32() + offset);
             }
-            Debug.Assert(8 == ADP.s_ptrSize, "8 != IntPtr.Size"); // MDAC 73747
+            Debug.Assert(ADP.s_ptrSize == 8, "8 != IntPtr.Size"); // MDAC 73747
             return (IntPtr)checked(pbase.ToInt64() + offset);
         }
 

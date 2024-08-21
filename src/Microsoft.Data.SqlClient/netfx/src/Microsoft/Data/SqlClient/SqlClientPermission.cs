@@ -175,7 +175,7 @@ namespace Microsoft.Data.SqlClient
         private bool IsEmpty()
         { // MDAC 84804
             ArrayList keyvalues = _keyvalues;
-            bool flag = !IsUnrestricted() && !AllowBlankPassword && (keyvalues == null || (0 == keyvalues.Count));
+            bool flag = !IsUnrestricted() && !AllowBlankPassword && (keyvalues == null || keyvalues.Count == 0);
             return flag;
         }
 
@@ -252,7 +252,7 @@ namespace Microsoft.Data.SqlClient
 
         private string DecodeXmlValue(string value)
         {
-            if (value != null && (0 < value.Length))
+            if (value != null && value.Length > 0)
             {
                 value = value.Replace("&quot;", "\"");
                 value = value.Replace("&apos;", "\'");
@@ -265,7 +265,7 @@ namespace Microsoft.Data.SqlClient
 
         private string EncodeXmlValue(string value)
         {
-            if (value != null && (0 < value.Length))
+            if (value != null && value.Length > 0)
             {
                 value = value.Replace('\0', ' '); // assumption that '\0' will only be at end of string
                 value = value.Trim();

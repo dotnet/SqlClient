@@ -268,7 +268,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         }
 
                         // Stop will remove key when decremented to 0 for this AppDomain, which should now be the case.
-                        Debug.Assert(0 == value, "We did not reach 0 at end of loop in AppDomainUnload!");
+                        Debug.Assert(value == 0, "We did not reach 0 at end of loop in AppDomainUnload!");
                         Debug.Assert(!_appDomainKeyHash.ContainsKey(appDomainKey), "Key not removed after AppDomainUnload!");
 
                         if (_appDomainKeyHash.ContainsKey(appDomainKey))
@@ -860,7 +860,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                 Debug.Fail("Unexpected AppDomainKey count in Stop()");
                             }
 
-                            if (1 == value)
+                            if (value == 1)
                             { // Remove from dictionary if pre-decrement count was one.
                                 _appDomainKeyHash.Remove(appDomainKey);
                                 appDomainStop = true;
@@ -877,7 +877,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 Debug.Assert(_startCount > 0, "About to decrement _startCount less than 0!");
                 int result = Interlocked.Decrement(ref _startCount);
 
-                if (0 == result)
+                if (result == 0)
                 {
                     // If we've reached refCount 0, destroy.
                     // Lock to ensure Cancel() complete prior to other thread calling TearDown.
@@ -946,7 +946,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlConnectionContainer.Stop|DEP> _startCount not 0 after decrement.  _startCount: '{0}'.", _startCount);
                 }
 
-                Debug.Assert(0 <= _startCount, "Invalid start count state");
+                Debug.Assert(_startCount >= 0, "Invalid start count state");
 
                 return _stopped;
             }
@@ -1093,7 +1093,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 xmlReader.Read();
                 if ((XmlNodeType.Element == xmlReader.NodeType) &&
                      (RootNode == xmlReader.LocalName) &&
-                     (3 <= xmlReader.AttributeCount))
+                     xmlReader.AttributeCount >= 3)
                 {
                     // Loop until we've processed all the attributes.
                     while ((MessageAttributes.All != messageAttributes) && (xmlReader.MoveToNextAttribute()))
@@ -1189,7 +1189,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     }
 
                     // Verify state after Read().
-                    if ((XmlNodeType.Element != xmlReader.NodeType) || (0 != string.Compare(xmlReader.LocalName, MessageNode, StringComparison.OrdinalIgnoreCase)))
+                    if ((XmlNodeType.Element != xmlReader.NodeType) || string.Compare(xmlReader.LocalName, MessageNode, StringComparison.OrdinalIgnoreCase) != 0)
                     {
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                         return null;

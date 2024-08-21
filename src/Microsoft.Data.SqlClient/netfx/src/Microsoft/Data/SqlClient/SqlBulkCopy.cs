@@ -549,7 +549,7 @@ namespace Microsoft.Data.SqlClient
 
             StringBuilder updateBulkCommandText = new StringBuilder();
 
-            if (_connection.Is2000 && 0 == internalResults[CollationResultId].Count)
+            if (_connection.Is2000 && internalResults[CollationResultId].Count == 0)
             {
                 throw SQL.BulkLoadNoCollation();
             }
@@ -568,7 +568,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                isInTransaction = (bool)(0 < (SqlInt32)(internalResults[TranCountResultId][TranCountRowId][TranCountValueId]));
+                isInTransaction = (bool)((SqlInt32)internalResults[TranCountResultId][TranCountRowId][TranCountValueId] > 0);
             }
 
             // Throw if there is a transaction but no flag is set

@@ -97,7 +97,7 @@ namespace Microsoft.Data.Common
                 throw ADP.InvalidValue(keyName);
             }
 
-            if ((0 < builder.Length) && (';' != builder[builder.Length - 1]))
+            if (builder.Length > 0 && builder[builder.Length - 1] != ';')
             {
                 builder.Append(";");
             }
@@ -116,8 +116,8 @@ namespace Microsoft.Data.Common
             { // else <keyword>=;
                 if (useOdbcRules)
                 {
-                    if ((0 < keyValue.Length) &&
-                        (('{' == keyValue[0]) || (0 <= keyValue.IndexOf(';')) || (0 == string.Compare(DbConnectionStringKeywords.Driver, keyName, StringComparison.OrdinalIgnoreCase))) &&
+                    if (keyValue.Length > 0 &&
+                        (keyValue[0] == '{' || keyValue.IndexOf(';') >= 0 || string.Compare(DbConnectionStringKeywords.Driver, keyName, StringComparison.OrdinalIgnoreCase) == 0) &&
                         !s_connectionStringQuoteOdbcValueRegex.IsMatch(keyValue))
                     {
                         // always quote Driver value (required for ODBC Version 2.65 and earlier)
@@ -134,7 +134,7 @@ namespace Microsoft.Data.Common
                     // <value> -> <value>
                     builder.Append(keyValue);
                 }
-                else if ((-1 != keyValue.IndexOf('\"')) && (-1 == keyValue.IndexOf('\'')))
+                else if (keyValue.IndexOf('\"') != -1 && keyValue.IndexOf('\'') == -1)
                 {
                     // <val"ue> -> <'val"ue'>
                     builder.Append('\'');
@@ -192,7 +192,7 @@ namespace Microsoft.Data.Common
 
                 // We don't know if rootFolderpath ends with '\', and we don't know if the given name starts with onw
                 int fileNamePosition = DataDirectory.Length;    // filename starts right after the '|datadirectory|' keyword
-                bool rootFolderEndsWith = (0 < rootFolderPath.Length) && rootFolderPath[rootFolderPath.Length - 1] == '\\';
+                bool rootFolderEndsWith = rootFolderPath.Length > 0 && rootFolderPath[rootFolderPath.Length - 1] == '\\';
                 bool fileNameStartsWith = (fileNamePosition < value.Length) && value[fileNamePosition] == '\\';
 
                 // replace |datadirectory| with root folder path

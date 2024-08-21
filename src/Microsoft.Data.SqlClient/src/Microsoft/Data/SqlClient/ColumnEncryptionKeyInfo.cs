@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NullArgumentInConstructorInternal(_decryptedKeyName, _className);
             }
-            if (0 == decryptedKey.Length)
+            if (decryptedKey.Length == 0)
             {
                 throw SQL.EmptyArgumentInConstructorInternal(_decryptedKeyName, _className);
             }
@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NullArgumentInConstructorInternal(_keyMetadataVersionName, _className);
             }
-            if (0 == keyMetadataVersion.Length)
+            if (keyMetadataVersion.Length == 0)
             {
                 throw SQL.EmptyArgumentInConstructorInternal(_keyMetadataVersionName, _className);
             }
@@ -109,14 +109,22 @@ namespace Microsoft.Data.SqlClient
         internal int SerializeToBuffer(byte[] bytePackage, int startOffset)
         {
 
-            if (null == bytePackage)
+            if (bytePackage == null)
+            {
                 throw SQL.NullArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName);
-            if (0 == bytePackage.Length)
+            }
+            if (bytePackage.Length == 0)
+            {
                 throw SQL.EmptyArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName);
+            }
             if (!(startOffset < bytePackage.Length))
+            {
                 throw SQL.OffsetOutOfBounds(_startOffsetName, _className, _serializeToBufferMethodName);
-            if ((bytePackage.Length - startOffset) < GetLengthForSerialization())
+            }
+            if (bytePackage.Length - startOffset < GetLengthForSerialization())
+            {
                 throw SQL.InsufficientBuffer(_bytePackageName, _className, _serializeToBufferMethodName);
+            }
 
             Buffer.BlockCopy(DatabaseIdBytes, 0, bytePackage, startOffset, DatabaseIdBytes.Length);
             startOffset += DatabaseIdBytes.Length;

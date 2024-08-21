@@ -121,7 +121,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ClearAllPoolsTest(string connectionString)
         {
             SqlConnection.ClearAllPools();
-            Assert.True(0 == ConnectionPoolWrapper.AllConnectionPools().Length, "Pools exist after clearing all pools");
+            Assert.True(ConnectionPoolWrapper.AllConnectionPools().Length == 0, "Pools exist after clearing all pools");
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DataTestUtility.AssertEqualsWithDescription(1, pool.ConnectionCount, "Saved pool has incorrect number of connections");
 
                 SqlConnection.ClearAllPools();
-                Assert.True(0 == ConnectionPoolWrapper.AllConnectionPools().Length, "Pools exist after clearing all pools");
+                Assert.True(ConnectionPoolWrapper.AllConnectionPools().Length == 0, "Pools exist after clearing all pools");
                 DataTestUtility.AssertEqualsWithDescription(0, pool.ConnectionCount, "Saved pool has incorrect number of connections.");
             }
         }

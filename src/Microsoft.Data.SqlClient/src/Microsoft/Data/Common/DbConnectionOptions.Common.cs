@@ -116,7 +116,7 @@ namespace Microsoft.Data.Common
             _usersConnectionString = connectionString != null ? connectionString : "";
 
             // first pass on parsing, initial syntax check
-            if (0 < _usersConnectionString.Length)
+            if (_usersConnectionString.Length > 0)
             {
                 _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
                 _hasPasswordKeyword = (_parsetable.ContainsKey(KEY.Password) || _parsetable.ContainsKey(SYNONYM.Pwd));
@@ -240,7 +240,7 @@ namespace Microsoft.Data.Common
         }
 
         private static bool CompareInsensitiveInvariant(string strvalue, string strconst)
-            => (0 == StringComparer.OrdinalIgnoreCase.Compare(strvalue, strconst));
+            => StringComparer.OrdinalIgnoreCase.Compare(strvalue, strconst) == 0;
 
         [System.Diagnostics.Conditional("DEBUG")]
         private static void DebugTraceKeyValuePair(string keyname, string keyvalue, Dictionary<string, string> synonyms)
@@ -269,7 +269,7 @@ namespace Microsoft.Data.Common
         private static string GetKeyName(StringBuilder buffer)
         {
             int count = buffer.Length;
-            while ((0 < count) && char.IsWhiteSpace(buffer[count - 1]))
+            while (count > 0 && char.IsWhiteSpace(buffer[count - 1]))
             {
                 count--; // trailing whitespace
             }
@@ -286,7 +286,7 @@ namespace Microsoft.Data.Common
                 {
                     index++; // leading whitespace
                 }
-                while ((0 < count) && char.IsWhiteSpace(buffer[count - 1]))
+                while (count > 0 && char.IsWhiteSpace(buffer[count - 1]))
                 {
                     count--; // trailing whitespace
                 }
@@ -522,9 +522,9 @@ namespace Microsoft.Data.Common
             {
 #if DEBUG
                 bool compValue = s_connectionStringValidValueRegex.IsMatch(keyvalue);
-                Debug.Assert((-1 == keyvalue.IndexOf('\u0000')) == compValue, "IsValueValid mismatch with regex");
+                Debug.Assert((keyvalue.IndexOf('\u0000') == -1) == compValue, "IsValueValid mismatch with regex");
 #endif
-                return (-1 == keyvalue.IndexOf('\u0000'));
+                return keyvalue.IndexOf('\u0000') == -1;
             }
             return true;
         }
@@ -535,9 +535,9 @@ namespace Microsoft.Data.Common
             {
 #if DEBUG
                 bool compValue = s_connectionStringValidKeyRegex.IsMatch(keyname);
-                Debug.Assert(((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000'))) == compValue, "IsValueValid mismatch with regex");
+                Debug.Assert((keyname.Length > 0 && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000'))) == compValue, "IsValueValid mismatch with regex");
 #endif
-                return ((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000')));
+                return keyname.Length > 0 && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && keyname.IndexOf('\u0000') == -1;
             }
             return false;
         }
@@ -565,7 +565,7 @@ namespace Microsoft.Data.Common
                 {
                     string keyname = (firstKey ? keypair.Value : keypair.Value.Replace("==", "=")).ToLower(CultureInfo.InvariantCulture);
                     string keyvalue = keyvalues[indexValue++].Value;
-                    if (0 < keyvalue.Length)
+                    if (keyvalue.Length > 0)
                     {
                         if (!firstKey)
                         {

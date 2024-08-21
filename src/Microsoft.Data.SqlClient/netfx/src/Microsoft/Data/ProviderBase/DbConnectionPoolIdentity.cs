@@ -60,7 +60,7 @@ namespace Microsoft.Data.ProviderBase
 
             // NOTE - We copied this code from System.Security.Principal.Win32.CreateWellKnownSid...
 
-            if (0 == UnsafeNativeMethods.CreateWellKnownSid((int)sidType, null, resultSid, ref length))
+            if (UnsafeNativeMethods.CreateWellKnownSid((int)sidType, null, resultSid, ref length) == 0)
             {
                 IntegratedSecurityError(Win32_CreateWellKnownSid);
             }

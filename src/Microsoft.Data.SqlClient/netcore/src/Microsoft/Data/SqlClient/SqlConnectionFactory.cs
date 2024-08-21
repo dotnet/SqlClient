@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient
             {    // never pool context connections.
                 int connectionTimeout = opt.ConnectTimeout;
 
-                if ((0 < connectionTimeout) && (connectionTimeout < int.MaxValue / 1000))
+                if (connectionTimeout > 0 && connectionTimeout < int.MaxValue / 1000)
                 {
                     connectionTimeout *= 1000;
                 }

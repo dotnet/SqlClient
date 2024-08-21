@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient
 
             // If the size of the cache exceeds the threshold, set that we are in trimming and trim the cache accordingly.
             long currentCacheSize = _cache.Count;
-            if ((currentCacheSize > CacheSize + CacheTrimThreshold) && (0 == Interlocked.CompareExchange(ref _inTrim, 1, 0)))
+            if ((currentCacheSize > CacheSize + CacheTrimThreshold) && (Interlocked.CompareExchange(ref _inTrim, 1, 0) == 0))
             {
                 try
                 {
