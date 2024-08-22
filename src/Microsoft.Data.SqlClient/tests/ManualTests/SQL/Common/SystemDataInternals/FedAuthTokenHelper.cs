@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.Common.SystemDataInte
                 byte[] tokenBytes = (byte[])authenticationContextValueObj.GetType().GetProperty("AccessToken", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(authenticationContextValueObj, null);
 
                 object sqlFedAuthTokenObj = sqlFedAuthTokenConstructorInfo.Invoke(new object[] { });
-                FieldInfo accessTokenInfo = sqlFedAuthTokenObj.GetType().GetField("_accessToken", BindingFlags.NonPublic | BindingFlags.Instance);
+                FieldInfo accessTokenInfo = sqlFedAuthTokenObj.GetType().GetField("AccessToken", BindingFlags.NonPublic | BindingFlags.Instance);
                 accessTokenInfo.SetValue(sqlFedAuthTokenObj, tokenBytes);
 
                 string tokenHash = (string)tokenHashInfo.Invoke(activeDirectoryAuthenticationTimeoutRetryHelperObj, new object[] { sqlFedAuthTokenObj });
