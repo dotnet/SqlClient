@@ -313,8 +313,8 @@ namespace Microsoft.Data.SqlClient
                 SqlTceCipherInfoEntry copy = new(ordinal);
                 foreach (SqlEncryptionKeyInfo cekInfo in original.ColumnEncryptionKeyValues)
                 {
-                    copy.Add(cekInfo._encryptedKey, cekInfo._databaseId, cekInfo._cekId, cekInfo._cekVersion,
-                            cekInfo._cekMdVersion, cekInfo._keyPath, cekInfo._keyStoreName, cekInfo._algorithmName);
+                    copy.Add(cekInfo.EncryptedKey, cekInfo.DatabaseId, cekInfo.CekId, cekInfo.CekVersion,
+                            cekInfo.CekMdVersion, cekInfo.KeyPath, cekInfo.KeyStoreName, cekInfo.AlgorithmName);
                 }
                 enclaveKeys.TryAdd(ordinal, copy);
             }

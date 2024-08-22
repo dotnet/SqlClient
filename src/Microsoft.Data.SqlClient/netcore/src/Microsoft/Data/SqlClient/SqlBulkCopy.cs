@@ -556,7 +556,7 @@ namespace Microsoft.Data.SqlClient
                 rejectColumn = false;
 
                 // Check for excluded types
-                if ((metadata._type == SqlDbType.Timestamp)
+                if ((metadata.Type == SqlDbType.Timestamp)
                     || ((metadata.IsIdentity) && !IsCopyOption(SqlBulkCopyOptions.KeepIdentity)))
                 {
                     // Remove metadata for excluded columns
@@ -569,8 +569,8 @@ namespace Microsoft.Data.SqlClient
                 int assocId;
                 for (assocId = 0; assocId < _localColumnMappings.Count; assocId++)
                 {
-                    if ((_localColumnMappings[assocId]._destinationColumnOrdinal == metadata._ordinal) ||
-                        (UnquotedName(_localColumnMappings[assocId]._destinationColumnName) == metadata._column))
+                    if ((_localColumnMappings[assocId]._destinationColumnOrdinal == metadata.Ordinal) ||
+                        (UnquotedName(_localColumnMappings[assocId]._destinationColumnName) == metadata.Column))
                     {
                         if (rejectColumn)
                         {
@@ -579,7 +579,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         _sortedColumnMappings.Add(new _ColumnMapping(_localColumnMappings[assocId]._internalSourceColumnOrdinal, metadata));
-                        destColumnNames.Add(metadata._column);
+                        destColumnNames.Add(metadata.Column);
                         nmatched++;
 
                         if (nmatched > 1)
@@ -588,25 +588,25 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         // Some datatypes need special handling ...
-                        if (metadata._type == SqlDbType.Variant)
+                        if (metadata.Type == SqlDbType.Variant)
                         {
-                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata._column, "sql_variant");
+                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.Column, "sql_variant");
                         }
-                        else if (metadata._type == SqlDbType.Udt)
+                        else if (metadata.Type == SqlDbType.Udt)
                         {
-                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata._column, "varbinary");
+                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.Column, "varbinary");
                         }
                         else
                         {
-                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata._column, metadata._type.ToString());
+                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.Column, metadata.Type.ToString());
                         }
 
-                        switch (metadata._metaType.NullableType)
+                        switch (metadata.MetaType.NullableType)
                         {
                             case TdsEnums.SQLNUMERICN:
                             case TdsEnums.SQLDECIMALN:
                                 // Decimal and numeric need to include precision and scale
-                                updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0},{1})", metadata._precision, metadata._scale);
+                                updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0},{1})", metadata.Precision, metadata.Scale);
                                 break;
                             case TdsEnums.SQLUDT:
                                 {
@@ -616,7 +616,7 @@ namespace Microsoft.Data.SqlClient
                                     }
                                     else
                                     {
-                                        int size = metadata._length;
+                                        int size = metadata.Length;
                                         updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
                                     }
                                     break;
@@ -625,15 +625,15 @@ namespace Microsoft.Data.SqlClient
                             case TdsEnums.SQLDATETIME2:
                             case TdsEnums.SQLDATETIMEOFFSET:
                                 // date, dateime2, and datetimeoffset need to include scale
-                                updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", metadata._scale);
+                                updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", metadata.Scale);
                                 break;
                             default:
                                 {
                                     // For non-long non-fixed types we need to add the Size
-                                    if (!metadata._metaType.IsFixed && !metadata._metaType.IsLong)
+                                    if (!metadata.MetaType.IsFixed && !metadata.MetaType.IsLong)
                                     {
-                                        int size = metadata._length;
-                                        switch (metadata._metaType.NullableType)
+                                        int size = metadata.Length;
+                                        switch (metadata.MetaType.NullableType)
                                         {
                                             case TdsEnums.SQLNCHAR:
                                             case TdsEnums.SQLNVARCHAR:
@@ -645,7 +645,7 @@ namespace Microsoft.Data.SqlClient
                                         }
                                         updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
                                     }
-                                    else if (metadata._metaType.IsPlp && metadata._metaType.SqlDbType != SqlDbType.Xml)
+                                    else if (metadata.MetaType.IsPlp && metadata.MetaType.SqlDbType != SqlDbType.Xml)
                                     {
                                         // Partial length column prefix (max)
                                         updateBulkCommandText.Append("(max)");
@@ -659,7 +659,7 @@ namespace Microsoft.Data.SqlClient
                         object rowvalue = rowset[i][CollationId];
 
                         bool shouldSendCollation;
-                        switch (metadata._type)
+                        switch (metadata.Type)
                         {
                             case SqlDbType.Char:
                             case SqlDbType.NChar:
@@ -683,15 +683,15 @@ namespace Microsoft.Data.SqlClient
                             {
                                 updateBulkCommandText.Append(" COLLATE " + collation_name.Value);
                                 // Compare collations only if the collation value was set on the metadata
-                                if (_sqlDataReaderRowSource != null && metadata._collation != null)
+                                if (_sqlDataReaderRowSource != null && metadata.Collation != null)
                                 {
                                     // On SqlDataReader we can verify the sourcecolumn collation!
                                     int sourceColumnId = _localColumnMappings[assocId]._internalSourceColumnOrdinal;
-                                    int destinationLcid = metadata._collation.LCID;
+                                    int destinationLcid = metadata.Collation.LCID;
                                     int sourceLcid = _sqlDataReaderRowSource.GetLocaleId(sourceColumnId);
                                     if (sourceLcid != destinationLcid)
                                     {
-                                        throw SQL.BulkLoadLcidMismatch(sourceLcid, _sqlDataReaderRowSource.GetName(sourceColumnId), destinationLcid, metadata._column);
+                                        throw SQL.BulkLoadLcidMismatch(sourceLcid, _sqlDataReaderRowSource.GetName(sourceColumnId), destinationLcid, metadata.Column);
                                     }
                                 }
                             }
@@ -958,7 +958,7 @@ namespace Microsoft.Data.SqlClient
 
                             object value = _sqlDataReaderRowSource.GetValue(sourceOrdinal);
                             isNull = ((value == null) || (value == DBNull.Value));
-                            if ((!isNull) && (metadata._type == SqlDbType.Udt))
+                            if ((!isNull) && (metadata.Type == SqlDbType.Udt))
                             {
                                 var columnAsINullable = value as INullable;
                                 isNull = (columnAsINullable != null) && columnAsINullable.IsNull;
@@ -1170,7 +1170,7 @@ namespace Microsoft.Data.SqlClient
             bool isSqlType;
             bool isDataFeed;
 
-            if (((_sqlDataReaderRowSource != null) || (_dataTableSource != null)) && ((metadata._metaType.NullableType == TdsEnums.SQLDECIMALN) || (metadata._metaType.NullableType == TdsEnums.SQLNUMERICN)))
+            if (((_sqlDataReaderRowSource != null) || (_dataTableSource != null)) && ((metadata.MetaType.NullableType == TdsEnums.SQLDECIMALN) || (metadata.MetaType.NullableType == TdsEnums.SQLNUMERICN)))
             {
                 isDataFeed = false;
 
@@ -1213,28 +1213,28 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             // Check for data streams
-            else if ((_enableStreaming) && (metadata._length == MAX_LENGTH))
+            else if ((_enableStreaming) && (metadata.Length == MAX_LENGTH))
             {
                 isSqlType = false;
 
                 if (_sqlDataReaderRowSource != null)
                 {
                     // MetaData property is not set for SMI, but since streaming is disabled we do not need it
-                    MetaType mtSource = _sqlDataReaderRowSource.MetaData[sourceOrdinal]._metaType;
+                    MetaType mtSource = _sqlDataReaderRowSource.MetaData[sourceOrdinal].MetaType;
 
                     // There is no memory gain for non-sequential access for binary
-                    if ((metadata._type == SqlDbType.VarBinary) && (mtSource.IsBinType) && (mtSource.SqlDbType != SqlDbType.Timestamp) && _sqlDataReaderRowSource.IsCommandBehavior(CommandBehavior.SequentialAccess))
+                    if ((metadata.Type == SqlDbType.VarBinary) && (mtSource.IsBinType) && (mtSource.SqlDbType != SqlDbType.Timestamp) && _sqlDataReaderRowSource.IsCommandBehavior(CommandBehavior.SequentialAccess))
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedStream;
                     }
                     // For text and XML there is memory gain from streaming on destination side even if reader is non-sequential
-                    else if (((metadata._type == SqlDbType.VarChar) || (metadata._type == SqlDbType.NVarChar)) && (mtSource.IsCharType) && (mtSource.SqlDbType != SqlDbType.Xml))
+                    else if (((metadata.Type == SqlDbType.VarChar) || (metadata.Type == SqlDbType.NVarChar)) && (mtSource.IsCharType) && (mtSource.SqlDbType != SqlDbType.Xml))
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedText;
                     }
-                    else if ((metadata._type == SqlDbType.Xml) && (mtSource.SqlDbType == SqlDbType.Xml))
+                    else if ((metadata.Type == SqlDbType.Xml) && (mtSource.SqlDbType == SqlDbType.Xml))
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedXml;
@@ -1247,12 +1247,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (_dbDataReaderRowSource != null)
                 {
-                    if (metadata._type == SqlDbType.VarBinary)
+                    if (metadata.Type == SqlDbType.VarBinary)
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedStream;
                     }
-                    else if ((metadata._type == SqlDbType.VarChar) || (metadata._type == SqlDbType.NVarChar))
+                    else if ((metadata.Type == SqlDbType.VarChar) || (metadata.Type == SqlDbType.NVarChar))
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedText;
@@ -1451,28 +1451,28 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!metadata.IsNullable)
                 {
-                    throw SQL.BulkLoadBulkLoadNotAllowDBNull(metadata._column);
+                    throw SQL.BulkLoadBulkLoadNotAllowDBNull(metadata.Column);
                 }
                 return value;
             }
 
-            MetaType type = metadata._metaType;
+            MetaType type = metadata.MetaType;
             bool typeChanged = false;
 
             // If the column is encrypted then we are going to transparently encrypt this column
             // (based on connection string setting)- Use the metaType for the underlying
             // value (unencrypted value) for conversion/casting purposes (below).
             // Note - this flag is set if connection string options has TCE turned on
-            byte scale = metadata._scale;
-            byte precision = metadata._precision;
-            int length = metadata._length;
-            if (metadata._isEncrypted)
+            byte scale = metadata.Scale;
+            byte precision = metadata.Precision;
+            int length = metadata.Length;
+            if (metadata.IsEncrypted)
             {
                 Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
-                type = metadata._baseTI._metaType;
-                scale = metadata._baseTI._scale;
-                precision = metadata._baseTI._precision;
-                length = metadata._baseTI._length;
+                type = metadata.BaseTI.MetaType;
+                scale = metadata.BaseTI.Scale;
+                precision = metadata.BaseTI.Precision;
+                length = metadata.BaseTI.Length;
             }
 
             try
@@ -1513,7 +1513,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             catch (SqlTruncateException)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata._ordinal, RowNumber, metadata._isEncrypted, metadata._column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.Ordinal, RowNumber, metadata.IsEncrypted, metadata.Column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
                         }
 
@@ -1558,7 +1558,7 @@ namespace Microsoft.Data.SqlClient
                             int maxStringLength = length / 2;
                             if (str.Length > maxStringLength)
                             {
-                                if (metadata._isEncrypted)
+                                if (metadata.IsEncrypted)
                                 {
                                     str = "<encrypted>";
                                 }
@@ -1568,7 +1568,7 @@ namespace Microsoft.Data.SqlClient
                                     // https://blogs.msdn.microsoft.com/sql_server_team/string-or-binary-data-would-be-truncated-replacing-the-infamous-error-8152/
                                     str = str.Remove(Math.Min(maxStringLength, 100));
                                 }
-                                throw SQL.BulkLoadStringTooLong(_destinationTableName, metadata._column, str);
+                                throw SQL.BulkLoadStringTooLong(_destinationTableName, metadata.Column, str);
                             }
                         }
                         break;
@@ -1602,7 +1602,7 @@ namespace Microsoft.Data.SqlClient
 
                     default:
                         Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
-                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata._ordinal, RowNumber, metadata._isEncrypted, metadata._column, value.ToString(), null);
+                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.Ordinal, RowNumber, metadata.IsEncrypted, metadata.Column, value.ToString(), null);
                 }
 
                 if (typeChanged)
@@ -1619,7 +1619,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
-                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata._ordinal, RowNumber, metadata._isEncrypted, metadata._column, value.ToString(), e);
+                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.Ordinal, RowNumber, metadata.IsEncrypted, metadata.Column, value.ToString(), e);
             }
         }
 
@@ -2160,17 +2160,17 @@ namespace Microsoft.Data.SqlClient
 
                 // If column encryption is requested via connection string option, perform encryption here
                 if (!isNull && // if value is not NULL
-                    metadata._isEncrypted)
+                    metadata.IsEncrypted)
                 { // If we are transparently encrypting
                     Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
-                    value = _parser.EncryptColumnValue(value, metadata, metadata._column, _stateObj, isDataFeed, isSqlType);
+                    value = _parser.EncryptColumnValue(value, metadata, metadata.Column, _stateObj, isDataFeed, isSqlType);
                     isSqlType = false; // Its not a sql type anymore
                 }
             }
 
             //write part
             Task writeTask = null;
-            if (metadata._type != SqlDbType.Variant)
+            if (metadata.Type != SqlDbType.Variant)
             {
                 //this is the most common path
                 writeTask = _parser.WriteBulkCopyValue(value, metadata, _stateObj, isSqlType, isDataFeed, isNull); //returns Task/Null
@@ -2178,7 +2178,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // Target type shouldn't be encrypted
-                Debug.Assert(!metadata._isEncrypted, "Can't encrypt SQL Variant type");
+                Debug.Assert(!metadata.IsEncrypted, "Can't encrypt SQL Variant type");
                 SqlBuffer.StorageType variantInternalType = SqlBuffer.StorageType.Empty;
                 if ((_sqlDataReaderRowSource != null) && (_connection.Is2008OrNewer))
                 {

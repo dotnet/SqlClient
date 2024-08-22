@@ -76,9 +76,9 @@ namespace Microsoft.Data.SqlClient
                 decryptedKeysToBeSentToEnclave.Add(
                     new ColumnEncryptionKeyInfo(
                         sqlClientSymmetricKey.RootKey,
-                        cipherInfo.ColumnEncryptionKeyValues[0]._databaseId,
-                        cipherInfo.ColumnEncryptionKeyValues[0]._cekMdVersion,
-                        cipherInfo.ColumnEncryptionKeyValues[0]._cekId
+                        cipherInfo.ColumnEncryptionKeyValues[0].DatabaseId,
+                        cipherInfo.ColumnEncryptionKeyValues[0].CekMdVersion,
+                        cipherInfo.ColumnEncryptionKeyValues[0].CekId
                     )
                 );
             }

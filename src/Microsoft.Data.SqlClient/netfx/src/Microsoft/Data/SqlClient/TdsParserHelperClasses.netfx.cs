@@ -22,19 +22,19 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed partial class SqlLoginAck
     {
-        internal string _programName;
+        public string ProgramName;
 
-        internal bool _isVersion8;
+        public bool IsVersion8;
     }
 
     internal sealed partial class _SqlMetaDataSet
     {
         private _SqlMetaDataSet(_SqlMetaDataSet original)
         {
-            _id = original._id;
+            Id = original.Id;
             _hiddenColumnCount = original._hiddenColumnCount;
             _visibleColumnMap = original._visibleColumnMap;
-            _schemaTable = original._schemaTable;
+            SchemaTable = original.SchemaTable;
             if (original._metaDataArray == null)
             {
                 _metaDataArray = null;
@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed partial class SqlReturnValue
     {
-        internal ushort _parmIndex;      //2005 or later only
+        public ushort ParmIndex;      //2005 or later only
     }
 
     internal static class SslProtocolsHelper

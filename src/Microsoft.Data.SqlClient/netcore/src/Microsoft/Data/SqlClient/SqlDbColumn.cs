@@ -21,19 +21,19 @@ namespace Microsoft.Data.SqlClient
         private void Populate()
         {
             AllowDBNull = _metadata.IsNullable;
-            BaseCatalogName = _metadata.catalogName;
-            BaseColumnName = _metadata._baseColumn;
-            BaseSchemaName = _metadata.schemaName;
-            BaseServerName = _metadata.serverName;
-            BaseTableName = _metadata.tableName;
-            ColumnName = _metadata._column;
-            ColumnOrdinal = _metadata._ordinal;
-            ColumnSize = (_metadata._metaType.IsSizeInCharacters && (_metadata._length != 0x7fffffff)) ? (_metadata._length / 2) : _metadata._length;
+            BaseCatalogName = _metadata.CatalogName;
+            BaseColumnName = _metadata.BaseColumn;
+            BaseSchemaName = _metadata.SchemaName;
+            BaseServerName = _metadata.ServerName;
+            BaseTableName = _metadata.TableName;
+            ColumnName = _metadata.Column;
+            ColumnOrdinal = _metadata.Ordinal;
+            ColumnSize = (_metadata.MetaType.IsSizeInCharacters && (_metadata.Length != 0x7fffffff)) ? (_metadata.Length / 2) : _metadata.Length;
             IsAutoIncrement = _metadata.IsIdentity;
             IsIdentity = _metadata.IsIdentity;
-            IsLong = _metadata._metaType.IsLong;
+            IsLong = _metadata.MetaType.IsLong;
 
-            if (SqlDbType.Timestamp == _metadata._type)
+            if (SqlDbType.Timestamp == _metadata.Type)
             {
                 IsUnique = true;
             }
@@ -42,18 +42,18 @@ namespace Microsoft.Data.SqlClient
                 IsUnique = false;
             }
 
-            if (TdsEnums.UNKNOWN_PRECISION_SCALE != _metadata._precision)
+            if (TdsEnums.UNKNOWN_PRECISION_SCALE != _metadata.Precision)
             {
-                NumericPrecision = _metadata._precision;
+                NumericPrecision = _metadata.Precision;
             }
             else
             {
-                NumericPrecision = _metadata._metaType.Precision;
+                NumericPrecision = _metadata.MetaType.Precision;
             }
 
             IsReadOnly = _metadata.IsReadOnly;
 
-            UdtAssemblyQualifiedName = _metadata.udt?._assemblyQualifiedName;
+            UdtAssemblyQualifiedName = _metadata.Udt?.AssemblyQualifiedName;
 
         }
 

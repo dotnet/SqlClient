@@ -16,14 +16,14 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal sealed class SqlEncryptionKeyInfo
     {
-        internal byte[] _encryptedKey; // the encrypted "column encryption key"
-        internal int _databaseId;
-        internal int _cekId;
-        internal int _cekVersion;
-        internal byte[] _cekMdVersion;
-        internal string _keyPath;
-        internal string _keyStoreName;
-        internal string _algorithmName;
+        public byte[] EncryptedKey; // the encrypted "column encryption key"
+        public int DatabaseId;
+        public int CekId;
+        public int CekVersion;
+        public byte[] CekMdVersion;
+        public string KeyPath;
+        public string KeyStoreName;
+        public string AlgorithmName;
     }
 
     /// <summary>
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the ordinal.
         /// </summary>
-        internal int Ordinal
+        public int Ordinal
         {
             get
             {
@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the DatabaseID.
         /// </summary>
-        internal int DatabaseId
+        public int DatabaseId
         {
             get
             {
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the CEK ID.
         /// </summary>
-        internal int CekId
+        public int CekId
         {
             get
             {
@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the CEK Version.
         /// </summary>
-        internal int CekVersion
+        public int CekVersion
         {
             get
             {
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the CEK MD Version.
         /// </summary>
-        internal byte[] CekMdVersion
+        public byte[] CekMdVersion
         {
             get
             {
@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the list of Column Encryption Key Values.
         /// </summary>
-        internal List<SqlEncryptionKeyInfo> ColumnEncryptionKeyValues
+        public List<SqlEncryptionKeyInfo> ColumnEncryptionKeyValues
         {
             get
             {
@@ -142,21 +142,21 @@ namespace Microsoft.Data.SqlClient
         /// <param name="keyPath"></param>
         /// <param name="keyStoreName"></param>
         /// <param name="algorithmName"></param>
-        internal void Add(byte[] encryptedKey, int databaseId, int cekId, int cekVersion, byte[] cekMdVersion, string keyPath, string keyStoreName, string algorithmName)
+        public void Add(byte[] encryptedKey, int databaseId, int cekId, int cekVersion, byte[] cekMdVersion, string keyPath, string keyStoreName, string algorithmName)
         {
 
             Debug.Assert(_columnEncryptionKeyValues != null, "_columnEncryptionKeyValues should already be initialized.");
 
             SqlEncryptionKeyInfo encryptionKey = new SqlEncryptionKeyInfo
             {
-                _encryptedKey = encryptedKey,
-                _databaseId = databaseId,
-                _cekId = cekId,
-                _cekVersion = cekVersion,
-                _cekMdVersion = cekMdVersion,
-                _keyPath = keyPath,
-                _keyStoreName = keyStoreName,
-                _algorithmName = algorithmName
+                EncryptedKey = encryptedKey,
+                DatabaseId = databaseId,
+                CekId = cekId,
+                CekVersion = cekVersion,
+                CekMdVersion = cekMdVersion,
+                KeyPath = keyPath,
+                KeyStoreName = keyStoreName,
+                AlgorithmName = algorithmName
             };
             _columnEncryptionKeyValues.Add(encryptionKey);
 
@@ -180,7 +180,7 @@ namespace Microsoft.Data.SqlClient
         /// Constructor.
         /// </summary>
         /// <param name="ordinal"></param>
-        internal SqlTceCipherInfoEntry(int ordinal = 0)
+        public SqlTceCipherInfoEntry(int ordinal = 0)
         {
             _ordinal = ordinal;
             _databaseId = 0;
@@ -200,13 +200,13 @@ namespace Microsoft.Data.SqlClient
     {
         private readonly SqlTceCipherInfoEntry[] _keyList;
 
-        internal SqlTceCipherInfoTable(int tabSize)
+        public SqlTceCipherInfoTable(int tabSize)
         {
             Debug.Assert(0 < tabSize, "Invalid Table Size");
             _keyList = new SqlTceCipherInfoEntry[tabSize];
         }
 
-        internal SqlTceCipherInfoEntry this[int index]
+        public SqlTceCipherInfoEntry this[int index]
         {
             get
             {
@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal int Size
+        public int Size
         {
             get
             {
@@ -231,12 +231,12 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed partial class _SqlMetaDataSet
     {
-        internal readonly SqlTceCipherInfoTable _cekTable; // table of "column encryption keys" used for this metadataset
+        public readonly SqlTceCipherInfoTable CekTable; // table of "column encryption keys" used for this metadataset
 
-        internal _SqlMetaDataSet(int count, SqlTceCipherInfoTable cipherTable)
+        public _SqlMetaDataSet(int count, SqlTceCipherInfoTable cipherTable)
             : this(count)
         {
-            _cekTable = cipherTable;
+            CekTable = cipherTable;
         }
     }
 
@@ -289,7 +289,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the Encryption Info Entry.
         /// </summary>
-        internal SqlTceCipherInfoEntry EncryptionInfo
+        public SqlTceCipherInfoEntry EncryptionInfo
         {
             get
             {
@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the cipher's encryption algorithm id.
         /// </summary>
-        internal byte CipherAlgorithmId
+        public byte CipherAlgorithmId
         {
             get
             {
@@ -316,7 +316,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the cipher's encryption algorithm name (could be null).
         /// </summary>
-        internal string CipherAlgorithmName
+        public string CipherAlgorithmName
         {
             get
             {
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return EncryptionType (Deterministic, Randomized, etc.)
         /// </summary>
-        internal byte EncryptionType
+        public byte EncryptionType
         {
             get
             {
@@ -338,7 +338,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return normalization rule version.
         /// </summary>
-        internal byte NormalizationRuleVersion
+        public byte NormalizationRuleVersion
         {
             get
             {
@@ -349,7 +349,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the cipher encryption algorithm handle.
         /// </summary>
-        internal SqlClientEncryptionAlgorithm CipherAlgorithm
+        public SqlClientEncryptionAlgorithm CipherAlgorithm
         {
             get
             {
@@ -365,7 +365,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return Encryption Key Info.
         /// </summary>
-        internal SqlEncryptionKeyInfo EncryptionKeyInfo
+        public SqlEncryptionKeyInfo EncryptionKeyInfo
         {
             get
             {
@@ -382,7 +382,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return Ordinal into Cek Table.
         /// </summary>
-        internal ushort CekTableOrdinal
+        public ushort CekTableOrdinal
         {
             get
             {
@@ -399,7 +399,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="cipherAlgorithmName"></param>
         /// <param name="encryptionType"></param>
         /// <param name="normalizationRuleVersion"></param>
-        internal SqlCipherMetadata(SqlTceCipherInfoEntry sqlTceCipherInfoEntry,
+        public SqlCipherMetadata(SqlTceCipherInfoEntry sqlTceCipherInfoEntry,
                                     ushort ordinal,
                                     byte cipherAlgorithmId,
                                     string cipherAlgorithmName,
@@ -421,7 +421,7 @@ namespace Microsoft.Data.SqlClient
         /// Do we have an handle to the cipher encryption algorithm already ?
         /// </summary>
         /// <returns></returns>
-        internal bool IsAlgorithmInitialized()
+        public bool IsAlgorithmInitialized()
         {
             return _sqlClientEncryptionAlgorithm != null ? true : false;
         }
@@ -429,19 +429,19 @@ namespace Microsoft.Data.SqlClient
 
     internal partial class SqlMetaDataPriv
     {
-        internal bool _isEncrypted; // TCE encrypted?
-        internal SqlMetaDataPriv _baseTI;   // for encrypted columns, represents the TYPE_INFO for plaintext value
-        internal SqlCipherMetadata _cipherMD; // Cipher related metadata for encrypted columns.
+        public bool IsEncrypted; // TCE encrypted?
+        public SqlMetaDataPriv BaseTI;   // for encrypted columns, represents the TYPE_INFO for plaintext value
+        public SqlCipherMetadata CipherMD; // Cipher related metadata for encrypted columns.
 
         /// <summary>
         /// Is the algorithm handle for the cipher encryption initialized ?
         /// </summary>
         /// <returns></returns>
-        internal bool IsAlgorithmInitialized()
+        public bool IsAlgorithmInitialized()
         {
-            if (_cipherMD != null)
+            if (CipherMD != null)
             {
-                return _cipherMD.IsAlgorithmInitialized();
+                return CipherMD.IsAlgorithmInitialized();
             }
 
             return false;
@@ -451,13 +451,13 @@ namespace Microsoft.Data.SqlClient
         /// Returns the normalization rule version byte.
         /// </summary>
         /// <returns></returns>
-        internal byte NormalizationRuleVersion
+        public byte NormalizationRuleVersion
         {
             get
             {
-                if (_cipherMD != null)
+                if (CipherMD != null)
                 {
-                    return _cipherMD.NormalizationRuleVersion;
+                    return CipherMD.NormalizationRuleVersion;
                 }
 
                 return 0x00;
@@ -489,7 +489,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the SMI Parameter Metadata.
         /// </summary>
-        internal SmiParameterMetaData ParameterMetadata
+        public SmiParameterMetaData ParameterMetadata
         {
             get
             {
@@ -502,7 +502,7 @@ namespace Microsoft.Data.SqlClient
         /// This is pre-calculated and cached since members are immutable.
         /// Does not include _smiParameterMetadata's serialization.
         /// </summary>
-        internal byte[] SerializedWireFormat
+        public byte[] SerializedWireFormat
         {
             get
             {
@@ -515,7 +515,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="smiParameterMetadata"></param>
         /// <param name="cipherMetadata"></param>
-        internal SqlColumnEncryptionInputParameterInfo(SmiParameterMetaData smiParameterMetadata, SqlCipherMetadata cipherMetadata)
+        public SqlColumnEncryptionInputParameterInfo(SmiParameterMetaData smiParameterMetadata, SqlCipherMetadata cipherMetadata)
         {
             Debug.Assert(smiParameterMetadata != null, "smiParameterMetadata should not be null.");
             Debug.Assert(cipherMetadata != null, "cipherMetadata should not be null");
@@ -549,7 +549,7 @@ namespace Microsoft.Data.SqlClient
             totalLength += sizeof(int);
 
             // Metadata version of the encryption key.
-            totalLength += _cipherMetadata.EncryptionKeyInfo._cekMdVersion.Length;
+            totalLength += _cipherMetadata.EncryptionKeyInfo.CekMdVersion.Length;
 
             // Normalization Rule Version.
             totalLength += sizeof(byte);
@@ -566,17 +566,17 @@ namespace Microsoft.Data.SqlClient
             serializedWireFormat[consumedBytes++] = _cipherMetadata.EncryptionType;
 
             // 3 - Write the database id of the encryption key.
-            SerializeIntIntoBuffer(_cipherMetadata.EncryptionKeyInfo._databaseId, serializedWireFormat, ref consumedBytes);
+            SerializeIntIntoBuffer(_cipherMetadata.EncryptionKeyInfo.DatabaseId, serializedWireFormat, ref consumedBytes);
 
             // 4 - Write the id of the encryption key.
-            SerializeIntIntoBuffer(_cipherMetadata.EncryptionKeyInfo._cekId, serializedWireFormat, ref consumedBytes);
+            SerializeIntIntoBuffer(_cipherMetadata.EncryptionKeyInfo.CekId, serializedWireFormat, ref consumedBytes);
 
             // 5 - Write the version of the encryption key.
-            SerializeIntIntoBuffer(_cipherMetadata.EncryptionKeyInfo._cekVersion, serializedWireFormat, ref consumedBytes);
+            SerializeIntIntoBuffer(_cipherMetadata.EncryptionKeyInfo.CekVersion, serializedWireFormat, ref consumedBytes);
 
             // 6 - Write the metadata version of the encryption key.
-            Buffer.BlockCopy(_cipherMetadata.EncryptionKeyInfo._cekMdVersion, 0, serializedWireFormat, consumedBytes, _cipherMetadata.EncryptionKeyInfo._cekMdVersion.Length);
-            consumedBytes += _cipherMetadata.EncryptionKeyInfo._cekMdVersion.Length;
+            Buffer.BlockCopy(_cipherMetadata.EncryptionKeyInfo.CekMdVersion, 0, serializedWireFormat, consumedBytes, _cipherMetadata.EncryptionKeyInfo.CekMdVersion.Length);
+            consumedBytes += _cipherMetadata.EncryptionKeyInfo.CekMdVersion.Length;
 
             // 7 - Write Normalization Rule Version.
             serializedWireFormat[consumedBytes++] = _cipherMetadata.NormalizationRuleVersion;

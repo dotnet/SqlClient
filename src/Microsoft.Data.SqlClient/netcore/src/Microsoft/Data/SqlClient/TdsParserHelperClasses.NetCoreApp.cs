@@ -30,14 +30,14 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed partial class _SqlMetaDataSet
     {
-        internal ReadOnlyCollection<DbColumn> _dbColumnSchema;
+        public ReadOnlyCollection<DbColumn> DbColumnSchema;
 
         private _SqlMetaDataSet(_SqlMetaDataSet original)
         {
-            _id = original._id;
+            Id = original.Id;
             _hiddenColumnCount = original._hiddenColumnCount;
             _visibleColumnMap = original._visibleColumnMap;
-            _dbColumnSchema = original._dbColumnSchema;
+            DbColumnSchema = original.DbColumnSchema;
             if (original._metaDataArray == null)
             {
                 _metaDataArray = null;

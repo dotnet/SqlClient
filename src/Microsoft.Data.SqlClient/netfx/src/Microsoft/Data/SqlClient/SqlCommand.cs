@@ -4562,9 +4562,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     // In _batchRPCMode, the actual T-SQL query is in the first parameter and not present as the rpcName, as is the case with non-_batchRPCMode.
                     // So input parameters start at parameters[1]. parameters[0] is the actual T-SQL Statement. rpcName is sp_executesql.
-                    if (_RPCList[i]._systemParams.Length > 1)
+                    if (_RPCList[i].SystemParams.Length > 1)
                     {
-                        _RPCList[i]._needsFetchParameterEncryptionMetadata = true;
+                        _RPCList[i].NeedsFetchParameterEncryptionMetadata = true;
 
                         // Since we are going to need multiple RPC objects, allocate a new one here for each command in the batch.
                         _SqlRPC rpcDescribeParameterEncryptionRequest = new _SqlRPC();
@@ -4611,8 +4611,8 @@ namespace Microsoft.Data.SqlClient
                 GetRPCObject(0, GetParameterCount(_parameters), ref rpc);
                 Debug.Assert(rpc != null, "GetRPCObject should not return rpc as null.");
 
-                rpc._rpcName = CommandText;
-                rpc._userParams = _parameters;
+                rpc.RpcName = CommandText;
+                rpc.UserParams = _parameters;
 
                 // Prepare the RPC request for describe parameter encryption procedure.
                 PrepareDescribeParameterEncryptionRequest(rpc, ref _sqlRPCParameterEncryptionReqArray[0], serializedAttestationParameters);
@@ -4679,7 +4679,7 @@ namespace Microsoft.Data.SqlClient
             // sp_describe_parameter_encryption always has 2 parameters (stmt, paramlist).
             //sp_describe_parameter_encryption can have an optional 3rd parameter (attestationParametes), used to identify and execute attestation protocol
             GetRPCObject(attestationParameters == null ? 2 : 3, 0, ref describeParameterEncryptionRequest, forSpDescribeParameterEncryption: true);
-            describeParameterEncryptionRequest._rpcName = "sp_describe_parameter_encryption";
+            describeParameterEncryptionRequest.RpcName = "sp_describe_parameter_encryption";
 
             // Prepare @tsql parameter
             string text;
@@ -4687,11 +4687,11 @@ namespace Microsoft.Data.SqlClient
             // In _batchRPCMode, The actual T-SQL query is in the first parameter and not present as the rpcName, as is the case with non-_batchRPCMode.
             if (_batchRPCMode)
             {
-                Debug.Assert(originalRpcRequest._systemParamCount > 0,
+                Debug.Assert(originalRpcRequest.SystemParamCount > 0,
                     "originalRpcRequest didn't have at-least 1 parameter in BatchRPCMode, in PrepareDescribeParameterEncryptionRequest.");
-                text = (string)originalRpcRequest._systemParams[0].Value;
+                text = (string)originalRpcRequest.SystemParams[0].Value;
                 //@tsql
-                SqlParameter tsqlParam = describeParameterEncryptionRequest._systemParams[0];
+                SqlParameter tsqlParam = describeParameterEncryptionRequest.SystemParams[0];
                 tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                 tsqlParam.Value = text;
                 tsqlParam.Size = text.Length;
@@ -4699,17 +4699,17 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                text = originalRpcRequest._rpcName;
+                text = originalRpcRequest.RpcName;
                 if (CommandType == CommandType.StoredProcedure)
                 {
                     // For stored procedures, we need to prepare @tsql in the following format
                     // N'EXEC sp_name @param1=@param1, @param1=@param2, ..., @paramN=@paramN'
-                    describeParameterEncryptionRequest._systemParams[0] = BuildStoredProcedureStatementForColumnEncryption(text, originalRpcRequest._userParams);
+                    describeParameterEncryptionRequest.SystemParams[0] = BuildStoredProcedureStatementForColumnEncryption(text, originalRpcRequest.UserParams);
                 }
                 else
                 {
                     //@tsql
-                    SqlParameter tsqlParam = describeParameterEncryptionRequest._systemParams[0];
+                    SqlParameter tsqlParam = describeParameterEncryptionRequest.SystemParams[0];
                     tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                     tsqlParam.Value = text;
                     tsqlParam.Size = text.Length;
@@ -4725,9 +4725,9 @@ namespace Microsoft.Data.SqlClient
             // And it is already in the format expected out of BuildParamList, which is not the case with Non-_batchRPCMode.
             if (_batchRPCMode)
             {
-                if (originalRpcRequest._systemParamCount > 1)
+                if (originalRpcRequest.SystemParamCount > 1)
                 {
-                    parameterList = (string)originalRpcRequest._systemParams[1].Value;
+                    parameterList = (string)originalRpcRequest.SystemParams[1].Value;
                 }
             }
             else
@@ -4736,11 +4736,11 @@ namespace Microsoft.Data.SqlClient
                 // Need to create new parameters as we cannot have the same parameter being part of two SqlCommand objects
                 SqlParameterCollection tempCollection = new SqlParameterCollection();
 
-                if (originalRpcRequest._userParams != null)
+                if (originalRpcRequest.UserParams != null)
                 {
-                    for (int i = 0; i < originalRpcRequest._userParams.Count; i++)
+                    for (int i = 0; i < originalRpcRequest.UserParams.Count; i++)
                     {
-                        SqlParameter param = originalRpcRequest._userParams[i];
+                        SqlParameter param = originalRpcRequest.UserParams[i];
                         SqlParameter paramCopy = new SqlParameter(
                             param.ParameterName,
                             param.SqlDbType,
@@ -4784,7 +4784,7 @@ namespace Microsoft.Data.SqlClient
                 parameterList = BuildParamList(tdsParser, tempCollection, includeReturnValue: true);
             }
 
-            SqlParameter paramsParam = describeParameterEncryptionRequest._systemParams[1];
+            SqlParameter paramsParam = describeParameterEncryptionRequest.SystemParams[1];
             paramsParam.SqlDbType = ((parameterList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             paramsParam.Size = parameterList.Length;
             paramsParam.Value = parameterList;
@@ -4792,7 +4792,7 @@ namespace Microsoft.Data.SqlClient
 
             if (attestationParameters != null)
             {
-                SqlParameter attestationParametersParam = describeParameterEncryptionRequest._systemParams[2];
+                SqlParameter attestationParametersParam = describeParameterEncryptionRequest.SystemParams[2];
                 attestationParametersParam.SqlDbType = SqlDbType.VarBinary;
                 attestationParametersParam.Size = attestationParameters.Length;
                 attestationParametersParam.Value = attestationParameters;
@@ -4971,7 +4971,7 @@ namespace Microsoft.Data.SqlClient
 
                 Debug.Assert(rpc != null, "rpc should not be null here.");
 
-                int userParamCount = rpc._userParams?.Count ?? 0;
+                int userParamCount = rpc.UserParams?.Count ?? 0;
                 int recievedMetadataCount = 0;
 
                 if (!enclaveMetadataExists || ds.NextResult())
@@ -4989,7 +4989,7 @@ namespace Microsoft.Data.SqlClient
                         // Null is used to indicate the end of the valid part of the array. Refer to GetRPCObject().
                         for (int index = 0; index < userParamCount; index++)
                         {
-                            SqlParameter sqlParameter = rpc._userParams[index];
+                            SqlParameter sqlParameter = rpc.UserParams[index];
                             Debug.Assert(sqlParameter != null, "sqlParameter should not be null.");
 
                             if (SqlParameter.ParameterNamesEqual(sqlParameter.ParameterName, parameterName, StringComparison.Ordinal))
@@ -5024,9 +5024,9 @@ namespace Microsoft.Data.SqlClient
 
                                     // This is effective only for BatchRPCMode even though we set it for non-BatchRPCMode also,
                                     // since for non-BatchRPCMode mode, paramoptions gets thrown away and reconstructed in BuildExecuteSql.
-                                    int options = (int)(rpc._userParamMap[index] >> 32);
+                                    int options = (int)(rpc.UserParamMap[index] >> 32);
                                     options |= TdsEnums.RPC_PARAM_ENCRYPTED;
-                                    rpc._userParamMap[index] = ((((long)options) << 32) | (long)index);
+                                    rpc.UserParamMap[index] = ((((long)options) << 32) | (long)index);
                                 }
 
                                 break;
@@ -5041,7 +5041,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     for (int index = 0; index < userParamCount; index++)
                     {
-                        SqlParameter sqlParameter = rpc._userParams[index];
+                        SqlParameter sqlParameter = rpc.UserParams[index];
                         if (!sqlParameter.HasReceivedMetadata && sqlParameter.Direction != ParameterDirection.ReturnValue)
                         {
                             // Encryption MD wasn't sent by the server - we expect the metadata to be sent for all the parameters 
@@ -5102,7 +5102,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // The server has responded with encryption related information for this rpc request. So clear the needsFetchParameterEncryptionMetadata flag.
-                rpc._needsFetchParameterEncryptionMetadata = false;
+                rpc.NeedsFetchParameterEncryptionMetadata = false;
             } while (ds.NextResult());
 
             // Verify that we received response for each rpc call needs tce
@@ -5110,9 +5110,9 @@ namespace Microsoft.Data.SqlClient
             {
                 for (int i = 0; i < _RPCList.Count; i++)
                 {
-                    if (_RPCList[i]._needsFetchParameterEncryptionMetadata)
+                    if (_RPCList[i].NeedsFetchParameterEncryptionMetadata)
                     {
-                        throw SQL.ProcEncryptionMetadataMissing(_RPCList[i]._rpcName);
+                        throw SQL.ProcEncryptionMetadataMissing(_RPCList[i].RpcName);
                     }
                 }
             }
@@ -5576,7 +5576,7 @@ namespace Microsoft.Data.SqlClient
 
                     // if 2000, then set NOMETADATA_UNLESSCHANGED flag
                     if (_activeConnection.Is2000)
-                        rpc._options = TdsEnums.RPC_NOMETADATA;
+                        rpc.Options = TdsEnums.RPC_NOMETADATA;
                     if (returnStream)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.ExecuteReader|INFO> {0}, Command executed as RPC.", ObjectID);
@@ -6211,29 +6211,29 @@ namespace Microsoft.Data.SqlClient
 
             // track the records affected for the just completed rpc batch
             // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
-            current._cumulativeRecordsAffected = rowsAffected;
+            current.CumulativeRecordsAffected = rowsAffected;
 
-            current._recordsAffected =
+            current.RecordsAffected =
                 (((previous != null) && (0 <= rowsAffected))
-                    ? (rowsAffected - Math.Max(previous._cumulativeRecordsAffected, 0))
+                    ? (rowsAffected - Math.Max(previous.CumulativeRecordsAffected, 0))
                     : rowsAffected);
 
-            if (current._batchCommand != null)
+            if (current.BatchCommand != null)
             {
-                current._batchCommand.SetRecordAffected(current._recordsAffected.GetValueOrDefault());
+                current.BatchCommand.SetRecordAffected(current.RecordsAffected.GetValueOrDefault());
             }
 
             // track the error collection (not available from TdsParser after ExecuteNonQuery)
             // and the which errors are associated with the just completed rpc batch
-            current._errorsIndexStart = previous?._errorsIndexEnd ?? 0;
-            current._errorsIndexEnd = stateObj.ErrorCount;
-            current._errors = stateObj._errors;
+            current.ErrorsIndexStart = previous?.ErrorsIndexEnd ?? 0;
+            current.ErrorsIndexEnd = stateObj.ErrorCount;
+            current.Errors = stateObj._errors;
 
             // track the warning collection (not available from TdsParser after ExecuteNonQuery)
             // and the which warnings are associated with the just completed rpc batch
-            current._warningsIndexStart = previous?._warningsIndexEnd ?? 0;
-            current._warningsIndexEnd = stateObj.WarningCount;
-            current._warnings = stateObj._warnings;
+            current.WarningsIndexStart = previous?.WarningsIndexEnd ?? 0;
+            current.WarningsIndexEnd = stateObj.WarningCount;
+            current.Warnings = stateObj._warnings;
         }
 
         //
@@ -6254,7 +6254,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_RPCList.Count > _currentlyExecutingBatch)
                 {
-                    parameters = _RPCList[_currentlyExecutingBatch]._userParams;
+                    parameters = _RPCList[_currentlyExecutingBatch].UserParams;
                 }
                 else
                 {
@@ -6305,9 +6305,9 @@ namespace Microsoft.Data.SqlClient
         {
             if (_inPrepare)
             {
-                if (!rec._value.IsNull)
+                if (!rec.Value.IsNull)
                 {
-                    _prepareHandle = rec._value.Int32;
+                    _prepareHandle = rec.Value.Int32;
                 }
                 _inPrepare = false;
                 return;
@@ -6316,21 +6316,21 @@ namespace Microsoft.Data.SqlClient
             SqlParameterCollection parameters = GetCurrentParameterCollection();
             int count = GetParameterCount(parameters);
 
-            SqlParameter thisParam = GetParameterForOutputValueExtraction(parameters, rec._parameter, count);
+            SqlParameter thisParam = GetParameterForOutputValueExtraction(parameters, rec.Parameter, count);
 
             if (thisParam != null)
             {
                 // If the parameter's direction is InputOutput, Output or ReturnValue and it needs to be transparently encrypted/decrypted
                 // then simply decrypt, deserialize and set the value.
-                if (rec._cipherMD != null &&
+                if (rec.CipherMD != null &&
                     thisParam.CipherMetadata != null &&
                     (thisParam.Direction == ParameterDirection.Output ||
                     thisParam.Direction == ParameterDirection.InputOutput ||
                     thisParam.Direction == ParameterDirection.ReturnValue))
                 {
-                    if (rec._tdsType != TdsEnums.SQLBIGVARBINARY)
+                    if (rec.TdsType != TdsEnums.SQLBIGVARBINARY)
                     {
-                        throw SQL.InvalidDataTypeForEncryptedParameter(thisParam.GetPrefixedParameterName(), rec._tdsType, TdsEnums.SQLBIGVARBINARY);
+                        throw SQL.InvalidDataTypeForEncryptedParameter(thisParam.GetPrefixedParameterName(), rec.TdsType, TdsEnums.SQLBIGVARBINARY);
                     }
 
                     // Decrypt the ciphertext
@@ -6340,15 +6340,15 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.ClosedConnectionError();
                     }
 
-                    if (!rec._value.IsNull)
+                    if (!rec.Value.IsNull)
                     {
                         try
                         {
                             Debug.Assert(_activeConnection != null, @"_activeConnection should not be null");
 
                             // Get the key information from the parameter and decrypt the value.
-                            rec._cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec._value.ByteArray, rec._cipherMD, _activeConnection, this);
+                            rec.CipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.Value.ByteArray, rec.CipherMD, _activeConnection, this);
 
                             if (unencryptedBytes != null)
                             {
@@ -6392,13 +6392,13 @@ namespace Microsoft.Data.SqlClient
                             Connection.CheckGetExtendedUDTInfo(rec, true);
 
                             //extract the byte array from the param value
-                            if (rec._value.IsNull)
+                            if (rec.Value.IsNull)
                             {
                                 data = DBNull.Value;
                             }
                             else
                             {
-                                data = rec._value.ByteArray; //should work for both sql and non-sql values
+                                data = rec.Value.ByteArray; //should work for both sql and non-sql values
                             }
 
                             //call the connection to instantiate the UDT object
@@ -6421,21 +6421,21 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        thisParam.SetSqlBuffer(rec._value);
+                        thisParam.SetSqlBuffer(rec.Value);
                     }
 
-                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(rec._type, rec.IsMultiValued);
+                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(rec.Type, rec.IsMultiValued);
 
-                    if (rec._type == SqlDbType.Decimal)
+                    if (rec.Type == SqlDbType.Decimal)
                     {
-                        thisParam.ScaleInternal = rec._scale;
-                        thisParam.PrecisionInternal = rec._precision;
+                        thisParam.ScaleInternal = rec.Scale;
+                        thisParam.PrecisionInternal = rec.Precision;
                     }
                     else if (mt.IsVarTime)
                     {
-                        thisParam.ScaleInternal = rec._scale;
+                        thisParam.ScaleInternal = rec.Scale;
                     }
-                    else if (rec._type == SqlDbType.Xml)
+                    else if (rec.Type == SqlDbType.Xml)
                     {
                         SqlCachedBuffer cachedBuffer = (thisParam.Value as SqlCachedBuffer);
                         if (cachedBuffer != null)
@@ -6444,10 +6444,10 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
 
-                    if (rec._collation != null)
+                    if (rec.Collation != null)
                     {
                         Debug.Assert(mt.IsCharType, "Invalid collation structure for non-char type");
-                        thisParam.Collation = rec._collation;
+                        thisParam.Collation = rec.Collation;
                     }
                 }
             }
@@ -6513,7 +6513,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_RPCList.Count > _currentlyExecutingBatch)
                 {
-                    return _RPCList[_currentlyExecutingBatch]._userParams;
+                    return _RPCList[_currentlyExecutingBatch].UserParams;
                 }
                 else
                 {
@@ -6597,44 +6597,44 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            rpc._procID = 0;
-            rpc._rpcName = null;
-            rpc._options = 0;
-            rpc._systemParamCount = systemParamCount;
+            rpc.ProcId = 0;
+            rpc.RpcName = null;
+            rpc.Options = 0;
+            rpc.SystemParamCount = systemParamCount;
 
-            rpc._recordsAffected = default(int?);
-            rpc._cumulativeRecordsAffected = -1;
+            rpc.RecordsAffected = default(int?);
+            rpc.CumulativeRecordsAffected = -1;
 
-            rpc._errorsIndexStart = 0;
-            rpc._errorsIndexEnd = 0;
-            rpc._errors = null;
+            rpc.ErrorsIndexStart = 0;
+            rpc.ErrorsIndexEnd = 0;
+            rpc.Errors = null;
 
-            rpc._warningsIndexStart = 0;
-            rpc._warningsIndexEnd = 0;
-            rpc._warnings = null;
-            rpc._needsFetchParameterEncryptionMetadata = false;
+            rpc.WarningsIndexStart = 0;
+            rpc.WarningsIndexEnd = 0;
+            rpc.Warnings = null;
+            rpc.NeedsFetchParameterEncryptionMetadata = false;
 
-            int currentCount = rpc._systemParams?.Length ?? 0;
+            int currentCount = rpc.SystemParams?.Length ?? 0;
 
             // Make sure there is enough space in the parameters and paramoptions arrays
             if (currentCount < systemParamCount)
             {
-                Array.Resize(ref rpc._systemParams, systemParamCount);
-                Array.Resize(ref rpc._systemParamOptions, systemParamCount);
+                Array.Resize(ref rpc.SystemParams, systemParamCount);
+                Array.Resize(ref rpc.SystemParamOptions, systemParamCount);
                 for (int index = currentCount; index < systemParamCount; index++)
                 {
-                    rpc._systemParams[index] = new SqlParameter();
+                    rpc.SystemParams[index] = new SqlParameter();
                 }
             }
 
             for (int ii = 0; ii < systemParamCount; ii++)
             {
-                rpc._systemParamOptions[ii] = 0;
+                rpc.SystemParamOptions[ii] = 0;
             }
 
-            if ((rpc._userParamMap?.Length ?? 0) < userParamCount)
+            if ((rpc.UserParamMap?.Length ?? 0) < userParamCount)
             {
-                Array.Resize(ref rpc._userParamMap, userParamCount);
+                Array.Resize(ref rpc.UserParamMap, userParamCount);
             }
         }
 
@@ -6702,15 +6702,15 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
 
-                    rpc._userParamMap[userParamCount] = ((((long)options) << 32) | (long)index);
+                    rpc.UserParamMap[userParamCount] = ((((long)options) << 32) | (long)index);
                     userParamCount += 1;
 
                     // Must set parameter option bit for LOB_COOKIE if unfilled LazyMat blob
                 }
             }
 
-            rpc._userParamCount = userParamCount;
-            rpc._userParams = parameters;
+            rpc.UserParamCount = userParamCount;
+            rpc.UserParams = parameters;
         }
 
         //
@@ -6729,20 +6729,20 @@ namespace Microsoft.Data.SqlClient
             _SqlRPC rpc = null;
             GetRPCObject(systemParameterCount, userParameterCount, ref rpc);
 
-            rpc._procID = TdsEnums.RPC_PROCID_PREPEXEC;
-            rpc._rpcName = TdsEnums.SP_PREPEXEC;
+            rpc.ProcId = TdsEnums.RPC_PROCID_PREPEXEC;
+            rpc.RpcName = TdsEnums.SP_PREPEXEC;
 
             //@handle
-            sqlParam = rpc._systemParams[0];
+            sqlParam = rpc.SystemParams[0];
             sqlParam.SqlDbType = SqlDbType.Int;
             sqlParam.Value = _prepareHandle;
             sqlParam.Size = 4;
             sqlParam.Direction = ParameterDirection.InputOutput;
-            rpc._systemParamOptions[0] = TdsEnums.RPC_PARAM_BYREF;
+            rpc.SystemParamOptions[0] = TdsEnums.RPC_PARAM_BYREF;
 
             //@batch_params
             string paramList = BuildParamList(_stateObj.Parser, _parameters);
-            sqlParam = rpc._systemParams[1];
+            sqlParam = rpc.SystemParams[1];
             sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             sqlParam.Value = paramList;
             sqlParam.Size = paramList.Length;
@@ -6750,7 +6750,7 @@ namespace Microsoft.Data.SqlClient
 
             //@batch_text
             string text = GetCommandText(behavior);
-            sqlParam = rpc._systemParams[2];
+            sqlParam = rpc.SystemParams[2];
             sqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             sqlParam.Size = text.Length;
             sqlParam.Value = text;
@@ -6820,10 +6820,10 @@ namespace Microsoft.Data.SqlClient
             // 4-part name 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 = 523
             // each char takes 2 bytes. 523 * 2 = 1046
             int commandTextLength = ADP.CharSize * CommandText.Length;
-            rpc._procID = 0;
+            rpc.ProcId = 0;
             if (commandTextLength <= MaxRPCNameLength)
             {
-                rpc._rpcName = CommandText; // just get the raw command text
+                rpc.RpcName = CommandText; // just get the raw command text
             }
             else
             {
@@ -6849,11 +6849,11 @@ namespace Microsoft.Data.SqlClient
             _SqlRPC rpc = null;
             GetRPCObject(systemParameterCount, userParameterCount, ref rpc);
 
-            rpc._procID = TdsEnums.RPC_PROCID_EXECUTE;
-            rpc._rpcName = TdsEnums.SP_EXECUTE;
+            rpc.ProcId = TdsEnums.RPC_PROCID_EXECUTE;
+            rpc.RpcName = TdsEnums.SP_EXECUTE;
 
             //@handle
-            SqlParameter sqlParam = rpc._systemParams[0];
+            SqlParameter sqlParam = rpc.SystemParams[0];
             sqlParam.SqlDbType = SqlDbType.Int;
             sqlParam.Value = _prepareHandle;
             sqlParam.Size = 4;
@@ -6887,15 +6887,15 @@ namespace Microsoft.Data.SqlClient
             }
 
             GetRPCObject(systemParamCount, userParamCount, ref rpc);
-            rpc._procID = TdsEnums.RPC_PROCID_EXECUTESQL;
-            rpc._rpcName = TdsEnums.SP_EXECUTESQL;
+            rpc.ProcId = TdsEnums.RPC_PROCID_EXECUTESQL;
+            rpc.RpcName = TdsEnums.SP_EXECUTESQL;
 
             // @sql
             if (commandText == null)
             {
                 commandText = GetCommandText(behavior);
             }
-            sqlParam = rpc._systemParams[0];
+            sqlParam = rpc.SystemParams[0];
             sqlParam.SqlDbType = ((commandText.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             sqlParam.Size = commandText.Length;
             sqlParam.Value = commandText;
@@ -6904,7 +6904,7 @@ namespace Microsoft.Data.SqlClient
             if (userParamCount > 0)
             {
                 string paramList = BuildParamList(_stateObj.Parser, _batchRPCMode ? parameters : _parameters);
-                sqlParam = rpc._systemParams[1];
+                sqlParam = rpc.SystemParams[1];
                 sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                 sqlParam.Size = paramList.Length;
                 sqlParam.Value = paramList;
@@ -7446,7 +7446,7 @@ namespace Microsoft.Data.SqlClient
 
             _SqlRPC rpc = new _SqlRPC
             {
-                _batchCommand = batchCommand
+                BatchCommand = batchCommand
             };
             string commandText = batchCommand.CommandText;
             CommandType cmdType = batchCommand.CommandType;
@@ -7477,24 +7477,24 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_batchRPCMode, "Command is not in batch RPC Mode");
             Debug.Assert(_RPCList != null, "batch command have been cleared");
-            return _RPCList[commandIndex]._recordsAffected;
+            return _RPCList[commandIndex].RecordsAffected;
         }
 
         internal SqlBatchCommand GetCurrentBatchCommand()
         {
             if (_batchRPCMode)
             {
-                return _RPCList[_currentlyExecutingBatch]._batchCommand;
+                return _RPCList[_currentlyExecutingBatch].BatchCommand;
             }
             else
             {
-                return _rpcArrayOf1?[0]._batchCommand;
+                return _rpcArrayOf1?[0].BatchCommand;
             }
         }
 
         internal SqlBatchCommand GetBatchCommand(int index)
         {
-            return _RPCList[index]._batchCommand;
+            return _RPCList[index].BatchCommand;
         }
 
         internal int GetCurrentBatchIndex()
@@ -7505,17 +7505,17 @@ namespace Microsoft.Data.SqlClient
         internal SqlException GetErrors(int commandIndex)
         {
             SqlException result = null;
-            int length = (_RPCList[commandIndex]._errorsIndexEnd - _RPCList[commandIndex]._errorsIndexStart);
+            int length = (_RPCList[commandIndex].ErrorsIndexEnd - _RPCList[commandIndex].ErrorsIndexStart);
             if (0 < length)
             {
                 SqlErrorCollection errors = new SqlErrorCollection();
-                for (int i = _RPCList[commandIndex]._errorsIndexStart; i < _RPCList[commandIndex]._errorsIndexEnd; ++i)
+                for (int i = _RPCList[commandIndex].ErrorsIndexStart; i < _RPCList[commandIndex].ErrorsIndexEnd; ++i)
                 {
-                    errors.Add(_RPCList[commandIndex]._errors[i]);
+                    errors.Add(_RPCList[commandIndex].Errors[i]);
                 }
-                for (int i = _RPCList[commandIndex]._warningsIndexStart; i < _RPCList[commandIndex]._warningsIndexEnd; ++i)
+                for (int i = _RPCList[commandIndex].WarningsIndexStart; i < _RPCList[commandIndex].WarningsIndexEnd; ++i)
                 {
-                    errors.Add(_RPCList[commandIndex]._warnings[i]);
+                    errors.Add(_RPCList[commandIndex].Warnings[i]);
                 }
                 result = SqlException.CreateException(errors, Connection.ServerVersion, Connection.ClientConnectionId, innerException: null, batchCommand: null);
             }

@@ -227,7 +227,7 @@ namespace Microsoft.Data.SqlClient
             catch (Exception e)
             {
                 // compute the strings to pass
-                string keyStr = GetBytesAsString(md.EncryptionKeyInfo._encryptedKey, fLast: true, countOfBytes: 10);
+                string keyStr = GetBytesAsString(md.EncryptionKeyInfo.EncryptedKey, fLast: true, countOfBytes: 10);
                 string valStr = GetBytesAsString(cipherText, fLast: false, countOfBytes: 10);
                 throw SQL.ThrowDecryptionFailed(keyStr, valStr, e);
             }
@@ -275,7 +275,7 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    sqlClientSymmetricKey = ShouldUseInstanceLevelProviderFlow(keyInfo._keyStoreName, connection, command) ?
+                    sqlClientSymmetricKey = ShouldUseInstanceLevelProviderFlow(keyInfo.KeyStoreName, connection, command) ?
                         GetKeyFromLocalProviders(keyInfo, connection, command) :
                         globalCekCache.GetKey(keyInfo, connection, command);
                     encryptionkeyInfoChosen = keyInfo;
@@ -303,10 +303,10 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths is not null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
 
-            ThrowIfKeyPathIsNotTrustedForServer(serverName, keyInfo._keyPath);
-            if (!TryGetColumnEncryptionKeyStoreProvider(keyInfo._keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider, connection, command))
+            ThrowIfKeyPathIsNotTrustedForServer(serverName, keyInfo.KeyPath);
+            if (!TryGetColumnEncryptionKeyStoreProvider(keyInfo.KeyStoreName, out SqlColumnEncryptionKeyStoreProvider provider, connection, command))
             {
-                throw SQL.UnrecognizedKeyStoreProviderName(keyInfo._keyStoreName,
+                throw SQL.UnrecognizedKeyStoreProviderName(keyInfo.KeyStoreName,
                     SqlConnection.GetColumnEncryptionSystemKeyStoreProvidersNames(),
                     GetListOfProviderNamesThatWereSearched(connection, command));
             }
@@ -316,13 +316,13 @@ namespace Microsoft.Data.SqlClient
             byte[] plaintextKey;
             try
             {
-                plaintextKey = provider.DecryptColumnEncryptionKey(keyInfo._keyPath, keyInfo._algorithmName, keyInfo._encryptedKey);
+                plaintextKey = provider.DecryptColumnEncryptionKey(keyInfo.KeyPath, keyInfo.AlgorithmName, keyInfo.EncryptedKey);
             }
             catch (Exception e)
             {
                 // Generate a new exception and throw.
-                string keyHex = GetBytesAsString(keyInfo._encryptedKey, fLast: true, countOfBytes: 10);
-                throw SQL.KeyDecryptionFailed(keyInfo._keyStoreName, keyHex, e);
+                string keyHex = GetBytesAsString(keyInfo.EncryptedKey, fLast: true, countOfBytes: 10);
+                throw SQL.KeyDecryptionFailed(keyInfo.KeyStoreName, keyHex, e);
             }
 
             return new SqlClientSymmetricKey(plaintextKey);
