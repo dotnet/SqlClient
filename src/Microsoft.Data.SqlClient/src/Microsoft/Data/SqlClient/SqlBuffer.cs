@@ -811,7 +811,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (StorageType.Guid == _type)
                 {
-                    return new SqlGuid(_value._guid);
+                    return IsNull ? SqlGuid.Null : new SqlGuid(_value._guid);
                 }
                 else if (StorageType.SqlGuid == _type)
                 {
@@ -886,7 +886,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlMoney.Null;
                     }
-#if NETCOREAPP && NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                     return SqlMoney.FromTdsValue(_value._int64);
 #else
                     return SqlTypeWorkarounds.SqlMoneyCtor(_value._int64, 1/*ignored*/);
@@ -989,7 +989,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return SqlXml.Null;
                         }
-                        Debug.Assert(null != _object);
+                        Debug.Assert(_object != null);
                         return (SqlXml)_object;
 
                     case StorageType.Date:
@@ -1211,7 +1211,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void Clear(SqlBuffer[] values)
         {
-            if (null != values)
+            if (values != null)
             {
                 for (int i = 0; i < values.Length; ++i)
                 {

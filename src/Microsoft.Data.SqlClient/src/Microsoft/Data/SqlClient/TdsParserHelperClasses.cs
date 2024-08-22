@@ -325,7 +325,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                Debug.Assert(null == value, "used only by SqlBulkCopy");
+                Debug.Assert(value == null, "used only by SqlBulkCopy");
                 _metaDataArray[index] = value;
             }
         }
@@ -689,7 +689,7 @@ namespace Microsoft.Data.SqlClient
 
         private void ParseMultipartName()
         {
-            if (null != _multipartName)
+            if (_multipartName != null)
             {
                 string[] parts = MultipartIdentifier.ParseMultipartIdentifier(_multipartName, "[\"", "]\"", Strings.SQL_TDSParserTableName, false);
                 _serverName = parts[0];
@@ -699,5 +699,7 @@ namespace Microsoft.Data.SqlClient
                 _multipartName = null;
             }
         }
+
+        internal static readonly MultiPartTableName Null = new MultiPartTableName(new string[] { null, null, null, null });
     }
 }

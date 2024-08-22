@@ -423,7 +423,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal bool IsAlgorithmInitialized()
         {
-            return (null != _sqlClientEncryptionAlgorithm) ? true : false;
+            return _sqlClientEncryptionAlgorithm != null ? true : false;
         }
     }
 
@@ -439,7 +439,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal bool IsAlgorithmInitialized()
         {
-            if (null != _cipherMD)
+            if (_cipherMD != null)
             {
                 return _cipherMD.IsAlgorithmInitialized();
             }
@@ -455,7 +455,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null != _cipherMD)
+                if (_cipherMD != null)
                 {
                     return _cipherMD.NormalizationRuleVersion;
                 }

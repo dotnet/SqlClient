@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null, SqlBatchCommand batchCommand = null)
         {
-            Debug.Assert(null != errorCollection && errorCollection.Count > 0, "no errorCollection?");
+            Debug.Assert(errorCollection != null && errorCollection.Count > 0, "no errorCollection?");
 
             StringBuilder message = new();
             for (int i = 0; i < errorCollection.Count; i++)

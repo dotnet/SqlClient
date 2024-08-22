@@ -1,0 +1,59 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: debug
+    type: boolean
+    default: false
+
+  - name: targetFramework
+    type: string
+
+  - name: platform
+    type: string
+    default: $(Platform)
+
+  - name: configuration
+    type: string
+    default: '$(Configuration)'
+  
+  - name: operatingSystem
+    type: string
+
+steps:
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results'
+  inputs:
+    testResultsFormat: VSTest
+    mergeTestResults: true
+    buildPlatform: '${{parameters.platform }}'
+    buildConfiguration: '${{parameters.configuration }}'
+    ${{ if eq(parameters.operatingSystem, 'Windows') }}:
+      testResultsFiles: 'TestResults/*.trx'
+      testRunTitle: 'Windows Tests'
+    ${{ else }}:
+      testResultsFiles: |
+        TestResults/*.trx
+        TestResults/**/*.coverage
+      testRunTitle: 'Linux Tests'
+
+- powershell: |
+   cd TestResults
+   $TF="${{parameters.targetFramework }}"
+   Get-ChildItem -Filter “*.coverage” -Recurse | Rename-Item -NewName {"$TF" + $_.name} 
+  displayName: 'Rename coverage files'
+
+- ${{ if eq(parameters.debug, true)}}:
+  - powershell: |
+      cd TestResults
+      Get-ChildItem -Filter “*.coverage” -Recurse
+    displayName: 'List test result coverage files [debug]'
+
+- task: PublishPipelineArtifact@1
+  displayName: 'Publish Pipeline Artifact'
+  inputs:
+    targetPath: TestResults
+    artifact: '${{parameters.targetFramework }}WinAz$(System.JobId)'
+  condition: succeededOrFailed()

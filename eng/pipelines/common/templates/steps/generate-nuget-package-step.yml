@@ -1,0 +1,60 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: nuspecPath
+    type: string
+    default: '$(nuspecPath)'
+
+  - name: NugetPackageVersion
+    type: string
+    default: '$(NugetPackageVersion)'
+
+  - name: OutputDirectory
+    type: string
+    default: '$(Build.SourcesDirectory)/packages'
+
+  - name: Configuration
+    type: string
+    default: '$(Configuration)'
+
+  - name: generateSymbolsPackage
+    type: boolean
+    default: true
+
+  - name: displayName
+    type: string
+    default: 'NuGet pack with snupkg'
+
+  - name: installNuget
+    type: boolean
+    default: true
+
+  - name: referenceType
+    default: project
+    values:
+    - project
+    - package
+
+steps:
+- ${{ if parameters.installNuget }}:
+  - task: NuGetToolInstaller@1
+    displayName: 'Install Latest Nuget'
+    inputs:
+      checkLatest: true
+
+- powershell: |
+    $Commit=git rev-parse HEAD
+    Write-Host "##vso[task.setvariable variable=CommitHead;]$Commit"
+  displayName: CommitHead
+ 
+- task: NuGetCommand@2
+  displayName: ${{parameters.displayName }}
+  inputs:
+    command: custom
+    ${{ if parameters.generateSymbolsPackage }}:
+      arguments: 'pack -Symbols -SymbolPackageFormat snupkg ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'
+    ${{else }}:
+      arguments: 'pack ${{parameters.nuspecPath}} -Version ${{parameters.NugetPackageVersion}} -OutputDirectory ${{parameters.OutputDirectory}} -properties "COMMITID=$(CommitHead);Configuration=${{parameters.Configuration}};ReferenceType=${{parameters.referenceType}}"'

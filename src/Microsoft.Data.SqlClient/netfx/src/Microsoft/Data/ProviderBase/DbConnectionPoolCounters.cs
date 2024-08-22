@@ -123,7 +123,7 @@ namespace Microsoft.Data.ProviderBase
             internal void Decrement()
             {
                 PerformanceCounter instance = _instance;
-                if (null != instance)
+                if (instance != null)
                 {
                     instance.Decrement();
                 }
@@ -134,7 +134,7 @@ namespace Microsoft.Data.ProviderBase
             { // TODO: race condition, Dispose at the same time as Increment/Decrement
                 PerformanceCounter instance = _instance;
                 _instance = null;
-                if (null != instance)
+                if (instance != null)
                 {
                     instance.RemoveInstance();
                     // should we be calling instance.Close?
@@ -146,7 +146,7 @@ namespace Microsoft.Data.ProviderBase
             internal void Increment()
             {
                 PerformanceCounter instance = _instance;
-                if (null != instance)
+                if (instance != null)
                 {
                     instance.Increment();
                 }
@@ -229,7 +229,7 @@ namespace Microsoft.Data.ProviderBase
             // First try GetEntryAssembly name, then AppDomain.FriendlyName.
             Assembly assembly = Assembly.GetEntryAssembly();
 
-            if (null != assembly)
+            if (assembly != null)
             {
                 AssemblyName name = assembly.GetName();
                 if (name != null)
@@ -253,7 +253,7 @@ namespace Microsoft.Data.ProviderBase
             if (ADP.IsEmpty(instanceName))
             {
                 AppDomain appDomain = AppDomain.CurrentDomain;
-                if (null != appDomain)
+                if (appDomain != null)
                 {
                     instanceName = appDomain.FriendlyName;
                 }
@@ -315,7 +315,7 @@ namespace Microsoft.Data.ProviderBase
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         private void SafeDispose(Counter counter)
         { // WebData 103603
-            if (null != counter)
+            if (counter != null)
             {
                 counter.Dispose();
             }
@@ -324,7 +324,7 @@ namespace Microsoft.Data.ProviderBase
         [PrePrepareMethod]
         void ExceptionEventHandler(object sender, UnhandledExceptionEventArgs e)
         {
-            if ((null != e) && e.IsTerminating)
+            if (e != null && e.IsTerminating)
             {
                 Dispose();
             }

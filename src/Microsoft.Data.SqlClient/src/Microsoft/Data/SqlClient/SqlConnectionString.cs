@@ -233,7 +233,6 @@ namespace Microsoft.Data.SqlClient
         internal const int SynonymCount = 33;
 #else
         internal const int SynonymCount = 30;
-        internal const int DeprecatedSynonymCount = 2;
 #endif // NETFRAMEWORK
 
         private static Dictionary<string, string> s_sqlClientSynonyms;
@@ -426,7 +425,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (null != _networkLibrary)
+            if (_networkLibrary != null)
             { // MDAC 83525
                 string networkLibrary = _networkLibrary.Trim().ToLower(CultureInfo.InvariantCulture);
                 Hashtable netlib = NetlibMapping();
@@ -461,7 +460,7 @@ namespace Microsoft.Data.SqlClient
             ValidateValueLength(_initialCatalog, TdsEnums.MAXLEN_DATABASE, KEY.Initial_Catalog);
             ValidateValueLength(_password, TdsEnums.MAXLEN_CLIENTSECRET, KEY.Password);
             ValidateValueLength(_userID, TdsEnums.MAXLEN_CLIENTID, KEY.User_ID);
-            if (null != _workstationId)
+            if (_workstationId != null)
             {
                 ValidateValueLength(_workstationId, TdsEnums.MAXLEN_HOSTNAME, KEY.Workstation_Id);
             }
@@ -488,7 +487,7 @@ namespace Microsoft.Data.SqlClient
 #else
             _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName);
 #endif // NETFRAMEWORK
-            if (null != _expandedAttachDBFilename)
+            if (_expandedAttachDBFilename != null)
             {
                 if (0 <= _expandedAttachDBFilename.IndexOf('|'))
                 {
@@ -783,13 +782,13 @@ namespace Microsoft.Data.SqlClient
             {
                 // so tdsparser.connect can determine if SqlConnection.UserConnectionOptions
                 // needs to enforce local host after datasource alias lookup
-                return (null != _expandedAttachDBFilename) && (null == _localDBInstance);
+                return _expandedAttachDBFilename != null && _localDBInstance == null;
             }
         }
 
         protected internal override string Expand()
         {
-            if (null != _expandedAttachDBFilename)
+            if (_expandedAttachDBFilename != null)
             {
 #if NETFRAMEWORK
                 return ExpandKeyword(KEY.AttachDBFilename, _expandedAttachDBFilename);
@@ -832,12 +831,12 @@ namespace Microsoft.Data.SqlClient
         internal static Dictionary<string, string> GetParseSynonyms()
         {
             Dictionary<string, string> synonyms = s_sqlClientSynonyms;
-            if (null == synonyms)
+            if (synonyms == null)
             {
 
                 int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
-#if !NETFRAMEWORK
-                count += SqlConnectionStringBuilder.DeprecatedKeywordsCount + DeprecatedSynonymCount;
+#if NET6_0_OR_GREATER
+                count += SqlConnectionStringBuilder.DeprecatedKeywordsCount;
 #endif
                 synonyms = new Dictionary<string, string>(count, StringComparer.OrdinalIgnoreCase)
                 {
@@ -937,7 +936,7 @@ namespace Microsoft.Data.SqlClient
             // Note: In Longhorn you'll be able to rename a machine without
             // rebooting.  Therefore, don't cache this machine name.
             string result = WorkstationId;
-            if (null == result)
+            if (result == null)
             {
                 // permission to obtain Environment.MachineName is Asserted
                 // since permission to open the connection has been granted
@@ -1024,7 +1023,7 @@ namespace Microsoft.Data.SqlClient
             // ArgumentException and other types are raised as is (no wrapping)
         }
 
-#if NETCOREAPP || NETSTANDARD
+#if NET6_0_OR_GREATER
         internal void ThrowUnsupportedIfKeywordSet(string keyword)
         {
             if (ContainsKey(keyword))
@@ -1173,7 +1172,7 @@ namespace Microsoft.Data.SqlClient
             const int NetLibCount = 8;
 
             Hashtable hash = s_netlibMapping;
-            if (null == hash)
+            if (hash == null)
             {
                 hash = new Hashtable(NetLibCount)
                 {

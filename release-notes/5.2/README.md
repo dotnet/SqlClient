@@ -1,5 +1,12 @@
 # Microsoft.Data.SqlClient 5.2 Releases
 
+The following Microsoft.Data.SqlClient 5.2 stable releases have been shipped:
+
+| Release Date | Version | Notes |
+| :-- | :-- | :--: |
+| 2024/05/31 | 5.2.1 | [release notes](5.2.1.md) |
+| 2024/02/28 | 5.2.0 | [release notes](5.2.0.md) |
+
 The following Microsoft.Data.SqlClient 5.2 preview releases have been shipped:
 
 | Release Date | Version | Notes |

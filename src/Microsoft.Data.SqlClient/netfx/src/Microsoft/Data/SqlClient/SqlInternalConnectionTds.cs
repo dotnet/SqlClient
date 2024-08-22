@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Identity.Client;
-using SysTx = System.Transactions;
+using System.Transactions;
 
 
 namespace Microsoft.Data.SqlClient
@@ -738,7 +738,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return IsTransactionRoot && (!Is2008OrNewer || null == Pool);
+                return IsTransactionRoot && (!Is2008OrNewer || Pool == null);
             }
         }
 
@@ -803,7 +803,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 // TODO: probably need to use a different method, but that's a different bug
-                bool result = (null == FindLiveReader(null)); // can't prepare with a live data reader...
+                bool result = FindLiveReader(null) == null; // can't prepare with a live data reader...
                 return result;
             }
         }
@@ -868,7 +868,7 @@ namespace Microsoft.Data.SqlClient
                 TdsParser parser = Interlocked.Exchange(ref _parser, null);  // guard against multiple concurrent dispose calls -- Delegated Transactions might cause this.
 
                 Debug.Assert(parser != null && _fConnectionOpen || parser == null && !_fConnectionOpen, "Unexpected state on dispose");
-                if (null != parser)
+                if (parser != null)
                 {
                     parser.Disconnect();
                 }
@@ -895,7 +895,7 @@ namespace Microsoft.Data.SqlClient
                 SqlDataReader reader = null;
                 if (parser.MARSOn)
                 {
-                    if (null != command)
+                    if (command != null)
                     { // command can't have datareader already associated with it
                         reader = FindLiveReader(command);
                     }
@@ -909,7 +909,7 @@ namespace Microsoft.Data.SqlClient
 
                     reader = FindLiveReader(null);
                 }
-                if (null != reader)
+                if (reader != null)
                 {
                     // if MARS is on, then a datareader associated with the command exists
                     // or if MARS is off, then a datareader exists
@@ -952,7 +952,7 @@ namespace Microsoft.Data.SqlClient
         {
             // If we are enlisted in a transaction, check that transaction is active.
             // When using explicit transaction unbinding, also verify that the enlisted transaction is the current transaction.
-            SysTx.Transaction enlistedTransaction = EnlistedTransaction;
+            Transaction enlistedTransaction = EnlistedTransaction;
 
             if (enlistedTransaction != null)
             {
@@ -960,16 +960,16 @@ namespace Microsoft.Data.SqlClient
 
                 if (requireExplicitTransactionUnbind)
                 {
-                    SysTx.Transaction currentTransaction = SysTx.Transaction.Current;
+                    Transaction currentTransaction = Transaction.Current;
 
-                    if (SysTx.TransactionStatus.Active != enlistedTransaction.TransactionInformation.Status || !enlistedTransaction.Equals(currentTransaction))
+                    if (TransactionStatus.Active != enlistedTransaction.TransactionInformation.Status || !enlistedTransaction.Equals(currentTransaction))
                     {
                         throw ADP.TransactionConnectionMismatch();
                     }
                 }
                 else // implicit transaction unbind
                 {
-                    if (SysTx.TransactionStatus.Active != enlistedTransaction.TransactionInformation.Status)
+                    if (TransactionStatus.Active != enlistedTransaction.TransactionInformation.Status)
                     {
                         if (EnlistedTransactionDisposed)
                         {
@@ -1012,7 +1012,7 @@ namespace Microsoft.Data.SqlClient
         // POOLING METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        override protected void Activate(SysTx.Transaction transaction)
+        override protected void Activate(Transaction transaction)
         {
             FailoverPermissionDemand(); // Demand for unspecified failover pooled connections
 
@@ -1024,7 +1024,7 @@ namespace Microsoft.Data.SqlClient
             // Regardless of whether we're required to automatically enlist,
             // when there is not a current transaction, we cannot leave the
             // connection enlisted in a transaction.
-            if (null != transaction)
+            if (transaction != null)
             {
                 if (ConnectionOptions.Enlist)
                 {
@@ -1055,7 +1055,7 @@ namespace Microsoft.Data.SqlClient
             // transaction is completed and we can do it all then.
             if (!IsNonPoolableTransactionRoot)
             {
-                Debug.Assert(null != _parser || IsConnectionDoomed, "Deactivating a disposed connection?");
+                Debug.Assert(_parser != null || IsConnectionDoomed, "Deactivating a disposed connection?");
                 if (_parser != null)
                 {
 
@@ -1140,18 +1140,18 @@ namespace Microsoft.Data.SqlClient
         {
             TdsParser parser = Parser;
 
-            if (null != parser)
+            if (parser != null)
             {
                 parser.DisconnectTransaction(internalTransaction);
             }
         }
 
-        internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, IsolationLevel iso)
+        internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso)
         {
             ExecuteTransaction(transactionRequest, name, iso, null, false);
         }
 
-        override internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, IsolationLevel iso, SqlInternalTransaction internalTransaction, bool isDelegateControlRequest)
+        override internal void ExecuteTransaction(TransactionRequest transactionRequest, string name, System.Data.IsolationLevel iso, SqlInternalTransaction internalTransaction, bool isDelegateControlRequest)
         {
             if (IsConnectionDoomed)
             {  // doomed means we can't do anything else...
@@ -1173,7 +1173,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            string transactionName = (null == name) ? String.Empty : name;
+            string transactionName = name == null ? String.Empty : name;
 
             if (!_parser.Is2005OrNewer)
             {
@@ -1189,35 +1189,35 @@ namespace Microsoft.Data.SqlClient
         internal void ExecuteTransactionPre2005(
                     TransactionRequest transactionRequest,
                     string transactionName,
-                    IsolationLevel iso,
+                    System.Data.IsolationLevel iso,
                     SqlInternalTransaction internalTransaction)
         {
             StringBuilder sqlBatch = new StringBuilder();
 
             switch (iso)
             {
-                case IsolationLevel.Unspecified:
+                case System.Data.IsolationLevel.Unspecified:
                     break;
-                case IsolationLevel.ReadCommitted:
+                case System.Data.IsolationLevel.ReadCommitted:
                     sqlBatch.Append(TdsEnums.TRANS_READ_COMMITTED);
                     sqlBatch.Append(";");
                     break;
-                case IsolationLevel.ReadUncommitted:
+                case System.Data.IsolationLevel.ReadUncommitted:
                     sqlBatch.Append(TdsEnums.TRANS_READ_UNCOMMITTED);
                     sqlBatch.Append(";");
                     break;
-                case IsolationLevel.RepeatableRead:
+                case System.Data.IsolationLevel.RepeatableRead:
                     sqlBatch.Append(TdsEnums.TRANS_REPEATABLE_READ);
                     sqlBatch.Append(";");
                     break;
-                case IsolationLevel.Serializable:
+                case System.Data.IsolationLevel.Serializable:
                     sqlBatch.Append(TdsEnums.TRANS_SERIALIZABLE);
                     sqlBatch.Append(";");
                     break;
-                case IsolationLevel.Snapshot:
-                    throw SQL.SnapshotNotSupported(IsolationLevel.Snapshot);
+                case System.Data.IsolationLevel.Snapshot:
+                    throw SQL.SnapshotNotSupported(System.Data.IsolationLevel.Snapshot);
 
-                case IsolationLevel.Chaos:
+                case System.Data.IsolationLevel.Chaos:
                     throw SQL.NotSupportedIsolationLevel(iso);
 
                 default:
@@ -1269,7 +1269,7 @@ namespace Microsoft.Data.SqlClient
             // to be created, and we set that on the parser.
             if (TransactionRequest.Begin == transactionRequest)
             {
-                Debug.Assert(null != internalTransaction, "Begin Transaction request without internal transaction");
+                Debug.Assert(internalTransaction != null, "Begin Transaction request without internal transaction");
                 _parser.CurrentTransaction = internalTransaction;
             }
         }
@@ -1278,7 +1278,7 @@ namespace Microsoft.Data.SqlClient
         internal void ExecuteTransaction2005(
                     TransactionRequest transactionRequest,
                     string transactionName,
-                    IsolationLevel iso,
+                    System.Data.IsolationLevel iso,
                     SqlInternalTransaction internalTransaction,
                     bool isDelegateControlRequest)
         {
@@ -1287,25 +1287,25 @@ namespace Microsoft.Data.SqlClient
 
             switch (iso)
             {
-                case IsolationLevel.Unspecified:
+                case System.Data.IsolationLevel.Unspecified:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.Unspecified;
                     break;
-                case IsolationLevel.ReadCommitted:
+                case System.Data.IsolationLevel.ReadCommitted:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.ReadCommitted;
                     break;
-                case IsolationLevel.ReadUncommitted:
+                case System.Data.IsolationLevel.ReadUncommitted:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.ReadUncommitted;
                     break;
-                case IsolationLevel.RepeatableRead:
+                case System.Data.IsolationLevel.RepeatableRead:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.RepeatableRead;
                     break;
-                case IsolationLevel.Serializable:
+                case System.Data.IsolationLevel.Serializable:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.Serializable;
                     break;
-                case IsolationLevel.Snapshot:
+                case System.Data.IsolationLevel.Snapshot:
                     isoLevel = TdsEnums.TransactionManagerIsolationLevel.Snapshot;
                     break;
-                case IsolationLevel.Chaos:
+                case System.Data.IsolationLevel.Chaos:
                     throw SQL.NotSupportedIsolationLevel(iso);
                 default:
                     throw ADP.InvalidIsolationLevel(iso);
@@ -1386,7 +1386,7 @@ namespace Microsoft.Data.SqlClient
                 // an object that the ExecTMReq will also lock, but since we're on
                 // the same thread, the lock is a no-op.
 
-                if (null != internalTransaction && internalTransaction.IsDelegated)
+                if (internalTransaction != null && internalTransaction.IsDelegated)
                 {
                     if (_parser.MARSOn)
                     {
@@ -1436,7 +1436,7 @@ namespace Microsoft.Data.SqlClient
         override protected byte[] GetDTCAddress()
         {
             byte[] dtcAddress = _parser.GetDTCAddress(ConnectionOptions.ConnectTimeout, _parser.GetSession(this));
-            Debug.Assert(null != dtcAddress, "null dtcAddress?");
+            Debug.Assert(dtcAddress != null, "null dtcAddress?");
             return dtcAddress;
         }
 
@@ -1508,7 +1508,7 @@ namespace Microsoft.Data.SqlClient
             if (enlistOK && ConnectionOptions.Enlist && _routingInfo == null)
             {
                 _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
-                SysTx.Transaction tx = ADP.GetCurrentTransaction();
+                Transaction tx = ADP.GetCurrentTransaction();
                 Enlist(tx);
             }
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
@@ -1664,7 +1664,7 @@ namespace Microsoft.Data.SqlClient
             ServerInfo dataSource = new ServerInfo(connectionOptions);
             string failoverPartner;
 
-            if (null != PoolGroupProviderInfo)
+            if (PoolGroupProviderInfo != null)
             {
                 useFailoverPartner = PoolGroupProviderInfo.UseFailoverPartner;
                 failoverPartner = PoolGroupProviderInfo.FailoverPartner;
@@ -1715,7 +1715,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ROR_FailoverNotSupportedConnString();
                         }
 
-                        if (null != ServerProvidedFailOverPartner)
+                        if (ServerProvidedFailOverPartner != null)
                         {
                             throw SQL.ROR_FailoverNotSupportedServer(this);
                         }
@@ -1866,7 +1866,7 @@ namespace Microsoft.Data.SqlClient
                                         isFirstTransparentAttempt: isFirstTransparentAttempt,
                                         disableTnir: disableTnir);
 
-                    if (connectionOptions.MultiSubnetFailover && null != ServerProvidedFailOverPartner)
+                    if (connectionOptions.MultiSubnetFailover && ServerProvidedFailOverPartner != null)
                     {
                         // connection succeeded: trigger exception if server sends failover partner and MultiSubnetFailover is used.
                         throw SQL.MultiSubnetFailoverWithFailoverPartner(serverProvidedFailoverPartner: true, internalConnection: this);
@@ -1914,7 +1914,7 @@ namespace Microsoft.Data.SqlClient
                         continue;
                     }
 
-                    if (null == _parser
+                    if (_parser == null
                         || TdsParserState.Closed != _parser.State
                         || IsDoNotRetryConnectError(sqlex)
                         || timeout.IsExpired)
@@ -1935,7 +1935,7 @@ namespace Microsoft.Data.SqlClient
                 // We only get here when we failed to connect, but are going to re-try
 
                 // Switch to failover logic if the server provided a partner
-                if (null != ServerProvidedFailOverPartner)
+                if (ServerProvidedFailOverPartner != null)
                 {
                     if (connectionOptions.MultiSubnetFailover)
                     {
@@ -1970,7 +1970,7 @@ namespace Microsoft.Data.SqlClient
             }
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
-            if (null != PoolGroupProviderInfo)
+            if (PoolGroupProviderInfo != null)
             {
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
@@ -2060,7 +2060,7 @@ namespace Microsoft.Data.SqlClient
             ServerInfo failoverServerInfo = new ServerInfo(connectionOptions, failoverHost, connectionOptions.FailoverPartnerSPN);
 
             ResolveExtendedServerName(primaryServerInfo, !redirectedUserInstance, connectionOptions);
-            if (null == ServerProvidedFailOverPartner)
+            if (ServerProvidedFailOverPartner == null)
             {// No point in resolving the failover partner when we're going to override it below
              // Don't resolve aliases if failover == primary // UNDONE: WHY?  Previous code in TdsParser.Connect did this, but the reason is not clear
                 ResolveExtendedServerName(failoverServerInfo, !redirectedUserInstance && failoverHost != primaryServerInfo.UserServerName, connectionOptions);
@@ -2117,7 +2117,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // Primary server may give us a different failover partner than the connection string indicates.  Update it
-                    if (null != ServerProvidedFailOverPartner && failoverServerInfo.ResolvedServerName != ServerProvidedFailOverPartner)
+                    if (ServerProvidedFailOverPartner != null && failoverServerInfo.ResolvedServerName != ServerProvidedFailOverPartner)
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, new failover partner={1}", ObjectID, ServerProvidedFailOverPartner);
                         failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailOverPartner);
@@ -2233,12 +2233,12 @@ namespace Microsoft.Data.SqlClient
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
             // if connected to failover host, but said host doesn't have DbMirroring set up, throw an error
-            if (useFailoverHost && null == ServerProvidedFailOverPartner)
+            if (useFailoverHost && ServerProvidedFailOverPartner == null)
             {
                 throw SQL.InvalidPartnerConfiguration(failoverHost, CurrentDatabase);
             }
 
-            if (null != PoolGroupProviderInfo)
+            if (PoolGroupProviderInfo != null)
             {
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
@@ -2328,7 +2328,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void FailoverPermissionDemand()
         {
-            if (null != PoolGroupProviderInfo)
+            if (PoolGroupProviderInfo != null)
             {
                 PoolGroupProviderInfo.FailoverPermissionDemand();
             }
@@ -2443,7 +2443,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.BreakConnection|RES|CPOOL> {0}, Breaking connection.", ObjectID);
             DoomThisConnection();   // Mark connection as unusable, so it will be destroyed
 
-            if (null != connection)
+            if (connection != null)
             {
                 connection.Close();
             }
@@ -3323,7 +3323,7 @@ namespace Microsoft.Data.SqlClient
         {
             //-----------------
             // Preconditions
-            Debug.Assert(null != userOptions);
+            Debug.Assert(userOptions != null);
 
             //-----------------
             //Method body
@@ -3342,7 +3342,7 @@ namespace Microsoft.Data.SqlClient
         {
             //-----------------
             // Preconditions
-            Debug.Assert(null != userOptions && null != routing);
+            Debug.Assert(userOptions != null && routing != null);
 
             //-----------------
             //Method body

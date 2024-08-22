@@ -429,6 +429,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = new SqlCredential(connection._credential.UserId, password);
             }
             _accessToken = connection._accessToken;
+            _accessTokenCallback = connection._accessTokenCallback;
             _serverCertificateValidationCallback = connection._serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = connection._clientCertificateRetrievalCallback;
             _originalNetworkAddressInfo = connection._originalNetworkAddressInfo;
@@ -498,7 +499,7 @@ namespace Microsoft.Data.SqlClient
                         // start
                         if (ConnectionState.Open == State)
                         {
-                            if (null == _statistics)
+                            if (_statistics == null)
                             {
                                 _statistics = new SqlStatistics();
                                 _statistics._openTimestamp = ADP.TimerCurrent();
@@ -512,7 +513,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // stop
-                        if (null != _statistics)
+                        if (_statistics != null)
                         {
                             if (ConnectionState.Open == State)
                             {
@@ -652,7 +653,7 @@ namespace Microsoft.Data.SqlClient
         private bool UsesClearUserIdOrPassword(SqlConnectionString opt)
         {
             bool result = false;
-            if (null != opt)
+            if (opt != null)
             {
                 result = (!ADP.IsEmpty(opt.UserID) || !ADP.IsEmpty(opt.Password));
             }
@@ -788,7 +789,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return ((null != constr) ? constr.CommandTimeout : SqlConnectionString.DEFAULT.Command_Timeout);
+                return constr != null ? constr.CommandTimeout : SqlConnectionString.DEFAULT.Command_Timeout;
             }
         }
 
@@ -878,7 +879,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return ((null != constr) ? constr.ConnectTimeout : SqlConnectionString.DEFAULT.Connect_Timeout);
+                return constr != null ? constr.ConnectTimeout : SqlConnectionString.DEFAULT.Connect_Timeout;
             }
         }
 
@@ -897,14 +898,14 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
                 string result;
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     result = innerConnection.CurrentDatabase;
                 }
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = ((null != constr) ? constr.InitialCatalog : SqlConnectionString.DEFAULT.Initial_Catalog);
+                    result = constr != null ? constr.InitialCatalog : SqlConnectionString.DEFAULT.Initial_Catalog;
                 }
                 return result;
             }
@@ -921,7 +922,7 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
                 string result;
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     result = innerConnection.IsSQLDNSCachingSupported ? "true" : "false";
                 }
@@ -945,7 +946,7 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
                 string result;
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     result = innerConnection.IsDNSCachingBeforeRedirectSupported ? "true" : "false";
                 }
@@ -971,14 +972,14 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
                 string result;
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     result = innerConnection.CurrentDataSource;
                 }
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = ((null != constr) ? constr.DataSource : SqlConnectionString.DEFAULT.Data_Source);
+                    result = constr != null ? constr.DataSource : SqlConnectionString.DEFAULT.Data_Source;
                 }
                 return result;
             }
@@ -1005,14 +1006,14 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
                 int result;
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     result = innerConnection.PacketSize;
                 }
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = ((null != constr) ? constr.PacketSize : SqlConnectionString.DEFAULT.Packet_Size);
+                    result = constr != null ? constr.PacketSize : SqlConnectionString.DEFAULT.Packet_Size;
                 }
                 return result;
             }
@@ -1031,7 +1032,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     return innerConnection.ClientConnectionId;
                 }
@@ -1040,7 +1041,7 @@ namespace Microsoft.Data.SqlClient
                     Task reconnectTask = _currentReconnectionTask;
                     // Connection closed but previously open should return the correct ClientConnectionId
                     DbConnectionClosedPreviouslyOpened innerConnectionClosed = (InnerConnection as DbConnectionClosedPreviouslyOpened);
-                    if ((reconnectTask != null && !reconnectTask.IsCompleted) || null != innerConnectionClosed)
+                    if ((reconnectTask != null && !reconnectTask.IsCompleted) || innerConnectionClosed != null)
                     {
                         return _originalConnectionId;
                     }
@@ -1122,8 +1123,8 @@ namespace Microsoft.Data.SqlClient
                 // Note: In Longhorn you'll be able to rename a machine without
                 // rebooting.  Therefore, don't cache this machine name.
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                string result = ((null != constr) ? constr.WorkstationId : null);
-                if (null == result)
+                string result = constr != null ? constr.WorkstationId : null;
+                if (result == null)
                 {
                     // getting machine name requires Environment.Permission
                     // user must have that permission in order to retrieve this
@@ -1533,7 +1534,7 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(connection, "connection");
 
             DbConnectionOptions connectionOptions = connection.UserConnectionOptions;
-            if (null != connectionOptions)
+            if (connectionOptions != null)
             {
                 connectionOptions.DemandPermission();
                 if (connection.IsContextConnection)
@@ -1608,7 +1609,7 @@ namespace Microsoft.Data.SqlClient
                             CloseInnerConnection();
                             GC.SuppressFinalize(this);
 
-                            if (null != Statistics)
+                            if (Statistics != null)
                             {
                                 _statistics._closeTimestamp = ADP.TimerCurrent();
                             }
@@ -1718,7 +1719,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (StatisticsEnabled)
                 {
-                    if (null == _statistics)
+                    if (_statistics == null)
                     {
                         _statistics = new SqlStatistics();
                     }
@@ -1987,7 +1988,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (StatisticsEnabled)
                 {
-                    if (null == _statistics)
+                    if (_statistics == null)
                     {
                         _statistics = new SqlStatistics();
                     }
@@ -2350,7 +2351,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlInternalConnectionTds tdsConnection = (GetOpenConnection() as SqlInternalConnectionTds);
-                if (null == tdsConnection)
+                if (tdsConnection == null)
                 {
                     throw SQL.NotAvailableOnContextConnection();
                 }
@@ -2495,7 +2496,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalConnection GetOpenConnection()
         {
             SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
-            if (null == innerConnection)
+            if (innerConnection == null)
             {
                 throw ADP.ClosedConnectionError();
             }
@@ -2506,7 +2507,7 @@ namespace Microsoft.Data.SqlClient
         {
             DbConnectionInternal innerConnection = InnerConnection;
             SqlInternalConnection innerSqlConnection = (innerConnection as SqlInternalConnection);
-            if (null == innerSqlConnection)
+            if (innerSqlConnection == null)
             {
                 throw ADP.OpenConnectionRequired(method, innerConnection.State);
             }
@@ -2516,7 +2517,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalConnectionTds GetOpenTdsConnection()
         {
             SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
-            if (null == innerConnection)
+            if (innerConnection == null)
             {
                 throw ADP.ClosedConnectionError();
             }
@@ -2526,7 +2527,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalConnectionTds GetOpenTdsConnection(string method)
         {
             SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
-            if (null == innerConnection)
+            if (innerConnection == null)
             {
                 throw ADP.OpenConnectionRequired(method, InnerConnection.State);
             }
@@ -2535,19 +2536,18 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent)
         {
-            bool notified;
-            OnInfoMessage(imevent, out notified);
+            OnInfoMessage(imevent, out _);
         }
 
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
         {
 
-            Debug.Assert(null != imevent, "null SqlInfoMessageEventArgs");
-            var imeventValue = (null != imevent) ? imevent.Message : "";
+            Debug.Assert(imevent != null, "null SqlInfoMessageEventArgs");
+            var imeventValue = imevent != null ? imevent.Message : "";
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnection.OnInfoMessage|API|INFO> {0}, Message='{1}'", ObjectID, imeventValue);
             SqlInfoMessageEventHandler handler = (SqlInfoMessageEventHandler)Events[EventInfoMessage];
 
-            if (null != handler)
+            if (handler != null)
             {
                 notified = true;
                 try
@@ -2628,8 +2628,10 @@ namespace Microsoft.Data.SqlClient
         // if SQLDebug has never been called, it is a noop.
         internal void CheckSQLDebug()
         {
-            if (null != _sdc)
+            if (_sdc != null)
+            {
                 CheckSQLDebug(_sdc);
+            }
         }
 
         // SxS: using GetCurrentThreadId
@@ -2639,7 +2641,7 @@ namespace Microsoft.Data.SqlClient
         private void CheckSQLDebug(SqlDebugContext sdc)
         {
             // check to see if debugging has been activated
-            Debug.Assert(null != sdc, "SQL Debug: invalid null debugging context!");
+            Debug.Assert(sdc != null, "SQL Debug: invalid null debugging context!");
 
 #pragma warning disable 618
             uint tid = (uint)AppDomain.GetCurrentThreadId();    // Sql Debugging doesn't need fiber support;
@@ -2747,7 +2749,7 @@ namespace Microsoft.Data.SqlClient
             if (option == TdsEnums.SQLDEBUG_ON)
             {
                 // debug data
-                p = new SqlParameter(null, SqlDbType.VarBinary, (null != data) ? data.Length : 0);
+                p = new SqlParameter(null, SqlDbType.VarBinary, data != null ? data.Length : 0);
                 p.Value = data;
                 c.Parameters.Add(p);
             }
@@ -2758,7 +2760,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
         public static void ChangePassword(string connectionString, string newPassword)
         {
-            using (TryEventScope.Create("<sc.SqlConnection.ChangePassword|API>"))
+            using (TryEventScope.Create(nameof(SqlConnection)))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
 
@@ -2801,7 +2803,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='/docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
-            using (TryEventScope.Create("<sc.SqlConnection.ChangePassword|API>"))
+            using (TryEventScope.Create(nameof(SqlConnection)))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
 
@@ -2951,7 +2953,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.NotAvailableOnContextConnection();
             }
 
-            if (null != Statistics)
+            if (Statistics != null)
             {
                 Statistics.Reset();
                 if (ConnectionState.Open == State)
@@ -2970,7 +2972,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.NotAvailableOnContextConnection();
             }
 
-            if (null != Statistics)
+            if (Statistics != null)
             {
                 UpdateStatistics();
                 return Statistics.GetDictionary();
@@ -3278,20 +3280,26 @@ namespace Microsoft.Data.SqlClient
             IntPtr pDacl = IntPtr.Zero;
 
             // validate the structure
-            if (null == pszMachineName || null == pszSDIDLLName)
+            if (pszMachineName == null || pszSDIDLLName == null)
+            {
                 return false;
+            }
 
             if (pszMachineName.Length > TdsEnums.SDCI_MAX_MACHINENAME ||
-            pszSDIDLLName.Length > TdsEnums.SDCI_MAX_DLLNAME)
+                pszSDIDLLName.Length > TdsEnums.SDCI_MAX_DLLNAME)
+            {
                 return false;
+            }
 
             // note that these are ansi strings
             Encoding cp = System.Text.Encoding.GetEncoding(TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_VALUE);
             byte[] rgbMachineName = cp.GetBytes(pszMachineName);
             byte[] rgbSDIDLLName = cp.GetBytes(pszSDIDLLName);
 
-            if (null != rgbData && cbData > TdsEnums.SDCI_MAX_DATA)
+            if (rgbData != null && cbData > TdsEnums.SDCI_MAX_DATA)
+            {
                 return false;
+            }
 
             string mapFileName;
 
@@ -3356,7 +3364,7 @@ namespace Microsoft.Data.SqlClient
             offset += TdsEnums.SDCI_MAX_DLLNAME;
             Marshal.WriteInt32(pMemMap, offset, (int)cbData);
             offset += 4;
-            if (null != rgbData)
+            if (rgbData != null)
             {
                 Marshal.Copy(rgbData, 0, ADP.IntPtrOffset(pMemMap, offset), (int)cbData);
             }
