@@ -4,11 +4,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security;
+using System.Security.Authentication;
 using System.Text;
 using Microsoft.Data.Common;
 
@@ -18,6 +21,20 @@ namespace Microsoft.Data.SqlClient
     {
         Read = 0,
         Write = 1
+    }
+
+    internal enum EncryptionOptions
+    {
+        OFF,
+        ON,
+        NOT_SUP,
+        REQ,
+        LOGIN,
+#if NETFRAMEWORK
+        OPTIONS_MASK = 0x3f,
+        CTAIP = 0x40,
+        CLIENT_CERT = 0x80,
+#endif
     }
 
     internal enum PreLoginHandshakeStatus
@@ -102,12 +119,17 @@ namespace Microsoft.Data.SqlClient
         public SecureString NewSecurePassword;
     }
 
-    internal sealed partial class SqlLoginAck
+    internal sealed class SqlLoginAck
     {
         public byte MajorVersion;
         public byte MinorVersion;
         public short BuildNum;
         public uint TdsVersion;
+#if NETFRAMEWORK
+        public string ProgramName;
+
+        public bool IsVersion8;
+#endif
     }
 
     internal sealed class SqlFedAuthInfo
@@ -282,6 +304,10 @@ namespace Microsoft.Data.SqlClient
         public ushort Id;             // for altrow-columns only
 
         public DataTable SchemaTable;
+#if NET
+        public ReadOnlyCollection<DbColumn> DbColumnSchema;
+#endif
+
         private readonly _SqlMetaData[] _metaDataArray;
 
         private int _hiddenColumnCount;
@@ -294,6 +320,30 @@ namespace Microsoft.Data.SqlClient
             for (int i = 0; i < _metaDataArray.Length; ++i)
             {
                 _metaDataArray[i] = new _SqlMetaData(i);
+            }
+        }
+
+        private _SqlMetaDataSet(_SqlMetaDataSet original)
+        {
+            Id = original.Id;
+            _hiddenColumnCount = original._hiddenColumnCount;
+            _visibleColumnMap = original._visibleColumnMap;
+#if NET
+            DbColumnSchema = original.DbColumnSchema;
+#else
+            SchemaTable = original.SchemaTable;
+#endif
+            if (original._metaDataArray == null)
+            {
+                _metaDataArray = null;
+            }
+            else
+            {
+                _metaDataArray = new _SqlMetaData[original._metaDataArray.Length];
+                for (int idx = 0; idx < _metaDataArray.Length; idx++)
+                {
+                    _metaDataArray[idx] = (_SqlMetaData)original._metaDataArray[idx].Clone();
+                }
             }
         }
 
@@ -617,6 +667,9 @@ namespace Microsoft.Data.SqlClient
     {
         public string Parameter;
         public readonly SqlBuffer Value;
+#if NETFRAMEWORK
+        public ushort ParmIndex;      //2005 or later only
+#endif
 
         public SqlReturnValue() : base()
         {
@@ -701,5 +754,159 @@ namespace Microsoft.Data.SqlClient
         }
 
         public static readonly MultiPartTableName Null = new MultiPartTableName(new string[] { null, null, null, null });
+    }
+
+    internal static class SslProtocolsHelper
+    {
+#if NET
+        private static string ToFriendlyName(this SslProtocols protocol)
+        {
+            string name;
+
+            /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
+             * This driver does not support this version yet!
+            if ((protocol & SslProtocols.Tls13) == SslProtocols.Tls13)
+            {
+                name = "TLS 1.3";
+            }*/
+            if ((protocol & SslProtocols.Tls12) == SslProtocols.Tls12)
+            {
+                name = "TLS 1.2";
+            }
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
+#endif
+            else if ((protocol & SslProtocols.Tls11) == SslProtocols.Tls11)
+            {
+                name = "TLS 1.1";
+            }
+            else if ((protocol & SslProtocols.Tls) == SslProtocols.Tls)
+            {
+                name = "TLS 1.0";
+            }
+#if NET8_0_OR_GREATER
+#pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
+#endif
+#pragma warning disable CS0618 // Type or member is obsolete: SSL is deprecated
+            else if ((protocol & SslProtocols.Ssl3) == SslProtocols.Ssl3)
+            {
+                name = "SSL 3.0";
+            }
+            else if ((protocol & SslProtocols.Ssl2) == SslProtocols.Ssl2)
+#pragma warning restore CS0618 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
+            {
+                name = "SSL 2.0";
+            }
+            else
+            {
+                name = protocol.ToString();
+            }
+
+            return name;
+        }
+
+        /// <summary>
+        /// check the negotiated secure protocol if it's under TLS 1.2
+        /// </summary>
+        /// <param name="protocol"></param>
+        /// <returns>Localized warning message</returns>
+        public static string GetProtocolWarning(this SslProtocols protocol)
+        {
+            string message = string.Empty;
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
+#endif
+#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
+            if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
+#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+#if NET8_0_OR_GREATER
+#pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
+#endif
+            {
+                message = StringsHelper.Format(Strings.SEC_ProtocolWarning, protocol.ToFriendlyName());
+            }
+            return message;
+        }
+#else
+        // protocol versions from native sni
+        [Flags]
+        private enum NativeProtocols
+        {
+            SP_PROT_SSL2_SERVER = 0x00000004,
+            SP_PROT_SSL2_CLIENT = 0x00000008,
+            SP_PROT_SSL3_SERVER = 0x00000010,
+            SP_PROT_SSL3_CLIENT = 0x00000020,
+            SP_PROT_TLS1_0_SERVER = 0x00000040,
+            SP_PROT_TLS1_0_CLIENT = 0x00000080,
+            SP_PROT_TLS1_1_SERVER = 0x00000100,
+            SP_PROT_TLS1_1_CLIENT = 0x00000200,
+            SP_PROT_TLS1_2_SERVER = 0x00000400,
+            SP_PROT_TLS1_2_CLIENT = 0x00000800,
+            SP_PROT_TLS1_3_SERVER = 0x00001000,
+            SP_PROT_TLS1_3_CLIENT = 0x00002000,
+            SP_PROT_SSL2 = SP_PROT_SSL2_SERVER | SP_PROT_SSL2_CLIENT,
+            SP_PROT_SSL3 = SP_PROT_SSL3_SERVER | SP_PROT_SSL3_CLIENT,
+            SP_PROT_TLS1_0 = SP_PROT_TLS1_0_SERVER | SP_PROT_TLS1_0_CLIENT,
+            SP_PROT_TLS1_1 = SP_PROT_TLS1_1_SERVER | SP_PROT_TLS1_1_CLIENT,
+            SP_PROT_TLS1_2 = SP_PROT_TLS1_2_SERVER | SP_PROT_TLS1_2_CLIENT,
+            SP_PROT_TLS1_3 = SP_PROT_TLS1_3_SERVER | SP_PROT_TLS1_3_CLIENT,
+            SP_PROT_NONE = 0x0
+        }
+
+        private static string ToFriendlyName(this NativeProtocols protocol)
+        {
+            string name;
+
+            if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
+            {
+                name = "TLS 1.3";
+            }
+            else if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
+            {
+                name = "TLS 1.2";
+            }
+            else if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_SERVER))
+            {
+                name = "TLS 1.1";
+            }
+            else if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_SERVER))
+            {
+                name = "TLS 1.0";
+            }
+            else if (protocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
+            {
+                name = "SSL 3.0";
+            }
+            else if (protocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
+            {
+                name = "SSL 2.0";
+            }
+            else if (protocol.HasFlag(NativeProtocols.SP_PROT_NONE))
+            {
+                name = "None";
+            }
+            else
+            {
+                throw new ArgumentException(StringsHelper.GetString(StringsHelper.net_invalid_enum, nameof(NativeProtocols)), nameof(NativeProtocols));
+            }
+            return name;
+        }
+
+        /// <summary>
+        /// check the negotiated secure protocol if it's under TLS 1.2
+        /// </summary>
+        /// <param name="protocol"></param>
+        /// <returns>Localized warning message</returns>
+        public static string GetProtocolWarning(uint protocol)
+        {
+            var nativeProtocol = (NativeProtocols)protocol;
+            string message = string.Empty;
+            if ((nativeProtocol & (NativeProtocols.SP_PROT_SSL2 | NativeProtocols.SP_PROT_SSL3 | NativeProtocols.SP_PROT_TLS1_1)) != NativeProtocols.SP_PROT_NONE)
+            {
+                message = StringsHelper.GetString(Strings.SEC_ProtocolWarning, nativeProtocol.ToFriendlyName());
+            }
+            return message;
+        }
+#endif
     }
 }
