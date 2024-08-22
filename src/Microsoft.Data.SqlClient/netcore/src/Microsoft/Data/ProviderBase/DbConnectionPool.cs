@@ -15,7 +15,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.ProviderBase
 {
-    sealed internal partial class DbConnectionPool
+    internal sealed class DbConnectionPool
     {
         private enum State
         {
@@ -1763,5 +1763,39 @@ namespace Microsoft.Data.ProviderBase
                 return obj;
             }
         }
+
+#if NET6_0_OR_GREATER
+        private bool IsBlockingPeriodEnabled()
+        {
+            var poolGroupConnectionOptions = _connectionPoolGroup.ConnectionOptions as SqlConnectionString;
+            if (poolGroupConnectionOptions == null)
+            {
+                return true;
+            }
+            var policy = poolGroupConnectionOptions.PoolBlockingPeriod;
+
+            switch (policy)
+            {
+                case PoolBlockingPeriod.Auto:
+                    {
+                        return !ADP.IsAzureSqlServerEndpoint(poolGroupConnectionOptions.DataSource);
+                    }
+                case PoolBlockingPeriod.AlwaysBlock:
+                    {
+                        return true; //Enabled
+                    }
+                case PoolBlockingPeriod.NeverBlock:
+                    {
+                        return false; //Disabled
+                    }
+                default:
+                    {
+                        //we should never get into this path.
+                        Debug.Fail("Unknown PoolBlockingPeriod. Please specify explicit results in above switch case statement.");
+                        return true;
+                    }
+            }
+        }
+#endif
     }
 }
