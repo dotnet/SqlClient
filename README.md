@@ -14,8 +14,7 @@ Microsoft.Data.SqlClient is a data provider for Microsoft SQL Server and Azure S
 The Microsoft.Data.SqlClient package supports the below environments:
 
 - .NET Framework 4.6.2+
-- .NET Core 3.1+
-- .NET Standard 2.0+
+- .NET Core 6.0+
 
 The source code of this library is now available under the MIT license.
 
@@ -27,7 +26,7 @@ The Microsoft.Data.SqlClient NuGet package is available on [NuGet.org](https://w
 
 For the .NET Framework driver on Windows, a package reference to [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI/) loads native `Microsoft.Data.SqlClient.SNI.x64.dll` and `Microsoft.Data.SqlClient.SNI.x86.dll` libraries into the client's build directories.
 
-For the .NET Core driver on Windows, a package reference to [Microsoft.Data.SqlClient.SNI.runtime](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI.runtime/) loads `arm`, `arm64`, `x64` and `x86` native `Microsoft.Data.SqlClient.SNI.dll` libraries into the client's build directories.
+For the .NET Core driver on Windows, a package reference to [Microsoft.Data.SqlClient.SNI.runtime](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI.runtime/) loads `arm64`, `x64` and `x86` native `Microsoft.Data.SqlClient.SNI.dll` libraries into the client's build directories.
 
 ## Helpful Links
 
