@@ -9260,8 +9260,11 @@ namespace Microsoft.Data.SqlClient
             {
                 // Write Feature ID
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_JSONSUPPORT);
+
+                // Feature Data Length
                 WriteInt(1, _physicalStateObj);
-                _physicalStateObj.WriteByte(1);
+
+                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_JSON_VERSION);
             }
 
             return len;

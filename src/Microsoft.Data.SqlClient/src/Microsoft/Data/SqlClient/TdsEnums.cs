@@ -996,6 +996,9 @@ namespace Microsoft.Data.SqlClient
         internal const byte DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT = 0x01;
         internal const byte DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED = 0x02;
 
+        // JSON Support constants
+        internal const byte MAX_SUPPORTED_JSON_VERSION = 0x01;
+
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x03; // max version
         internal const byte MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT = 0x02; // min version with enclave support

@@ -3255,7 +3255,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         byte jsonSupportVersion = data[0];
-                        if (jsonSupportVersion == 0 || jsonSupportVersion > 1)
+                        if (jsonSupportVersion == 0 || jsonSupportVersion > TdsEnums.MAX_SUPPORTED_JSON_VERSION)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for JSONSUPPORT", ObjectID);
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
