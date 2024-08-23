@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool AddDNSInfo(SQLDNSInfo item)
         {
-            if (null != item)
+            if (item != null)
             {
                 if (DNSInfoCache.ContainsKey(item.FQDN))
                 {
@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool IsDuplicate(SQLDNSInfo newItem)
         {
-            if (null != newItem)
+            if (newItem != null)
             {
                 SQLDNSInfo oldItem;
                 if (GetDNSInfo(newItem.FQDN, out oldItem))

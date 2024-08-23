@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient
             _algorithmVersion = algorithmVersion;
             _version[0] = algorithmVersion;
 
-            Debug.Assert(null != encryptionKey, "Null encryption key detected in AeadAes256CbcHmac256 algorithm");
+            Debug.Assert(encryptionKey != null, "Null encryption key detected in AeadAes256CbcHmac256 algorithm");
             Debug.Assert(0x01 == algorithmVersion, "Unknown algorithm version passed to AeadAes256CbcHmac256");
 
             // Validate encryption type for this algorithm

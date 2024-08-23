@@ -989,7 +989,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return SqlXml.Null;
                         }
-                        Debug.Assert(null != _object);
+                        Debug.Assert(_object != null);
                         return (SqlXml)_object;
 
                     case StorageType.Date:
@@ -1211,7 +1211,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void Clear(SqlBuffer[] values)
         {
-            if (null != values)
+            if (values != null)
             {
                 for (int i = 0; i < values.Length; ++i)
                 {

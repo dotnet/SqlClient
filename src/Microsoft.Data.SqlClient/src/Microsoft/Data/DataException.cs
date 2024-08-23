@@ -21,8 +21,8 @@ namespace Microsoft.Data
 
         private static void TraceException(string trace, Exception e)
         {
-            Debug.Assert(null != e, "TraceException: null Exception");
-            if (null != e)
+            Debug.Assert(e != null, "TraceException: null Exception");
+            if (e != null)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(trace, e.Message);
                 try

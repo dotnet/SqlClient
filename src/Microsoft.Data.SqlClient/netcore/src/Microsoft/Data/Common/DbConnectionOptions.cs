@@ -15,7 +15,7 @@ namespace Microsoft.Data.Common
             int copyPosition = 0;
 
             StringBuilder builder = new(_usersConnectionString.Length);
-            for (NameValuePair current = _keyChain; null != current; current = current.Next)
+            for (NameValuePair current = _keyChain; current != null; current = current.Next)
             {
                 if (string.Equals(current.Name, DbConnectionStringKeywords.AttachDBFilename, StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -38,12 +38,12 @@ namespace Microsoft.Data.Common
         internal static string ExpandDataDirectory(string keyword, string value)
         {
             string fullPath = null;
-            if ((null != value) && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase))
+            if (value != null && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase))
             {
                 // find the replacement path
                 object rootFolderObject = AppDomain.CurrentDomain.GetData("DataDirectory");
                 var rootFolderPath = (rootFolderObject as string);
-                if ((null != rootFolderObject) && (null == rootFolderPath))
+                if (rootFolderObject != null && rootFolderPath == null)
                 {
                     throw ADP.InvalidDataDirectory();
                 }

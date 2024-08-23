@@ -92,8 +92,8 @@ namespace Microsoft.Data.ProviderBase
             set
             {
                 Transaction currentEnlistedTransaction = _enlistedTransaction;
-                if (((null == currentEnlistedTransaction) && (null != value))
-                    || ((null != currentEnlistedTransaction) && !currentEnlistedTransaction.Equals(value)))
+                if ((currentEnlistedTransaction == null && value != null)
+                    || (currentEnlistedTransaction != null && !currentEnlistedTransaction.Equals(value)))
                 {  // WebData 20000024
 
                     // Pay attention to the order here:
@@ -108,7 +108,7 @@ namespace Microsoft.Data.ProviderBase
                     Transaction previousTransactionClone = null;
                     try
                     {
-                        if (null != value)
+                        if (value != null)
                         {
                             valueClone = value.Clone();
                         }
@@ -143,12 +143,12 @@ namespace Microsoft.Data.ProviderBase
                         // we really need to dispose our clones; they may have
                         // native resources and GC may not happen soon enough.
                         // VSDevDiv 479564: don't dispose if still holding reference in _enlistedTransaction
-                        if (null != previousTransactionClone &&
+                        if (previousTransactionClone != null &&
                                 !Object.ReferenceEquals(previousTransactionClone, _enlistedTransaction))
                         {
                             previousTransactionClone.Dispose();
                         }
-                        if (null != valueClone && !Object.ReferenceEquals(valueClone, _enlistedTransaction))
+                        if (valueClone != null && !Object.ReferenceEquals(valueClone, _enlistedTransaction))
                         {
                             valueClone.Dispose();
                         }
@@ -159,7 +159,7 @@ namespace Microsoft.Data.ProviderBase
                     // against multiple concurrent calls to enlist, which really
                     // isn't supported anyway.
 
-                    if (null != value)
+                    if (value != null)
                     {
                         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.set_EnlistedTransaction|RES|CPOOL> {0}, Transaction {1}, Enlisting.", ObjectID, value.GetHashCode());
                         TransactionOutcomeEnlist(value);
@@ -404,10 +404,10 @@ namespace Microsoft.Data.ProviderBase
 
         internal void AddWeakReference(object value, int tag)
         {
-            if (null == _referenceCollection)
+            if (_referenceCollection == null)
             {
                 _referenceCollection = CreateReferenceCollection();
-                if (null == _referenceCollection)
+                if (_referenceCollection == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.CreateReferenceCollectionReturnedNull);
                 }
@@ -450,7 +450,7 @@ namespace Microsoft.Data.ProviderBase
             //     if the DbConnectionInternal derived class needs to close the connection it should
             //     delegate to the DbConnection if one exists or directly call dispose
             //         DbConnection owningObject = (DbConnection)Owner;
-            //         if (null != owningObject) {
+            //         if (owningObject != null) {
             //             owningObject.Close(); // force the closed state on the outer object.
             //         }
             //         else {
@@ -460,8 +460,8 @@ namespace Microsoft.Data.ProviderBase
             ////////////////////////////////////////////////////////////////
             // DON'T MESS WITH THIS CODE UNLESS YOU KNOW WHAT YOU'RE DOING!
             ////////////////////////////////////////////////////////////////
-            Debug.Assert(null != owningObject, "null owningObject");
-            Debug.Assert(null != connectionFactory, "null connectionFactory");
+            Debug.Assert(owningObject != null, "null owningObject");
+            Debug.Assert(connectionFactory != null, "null connectionFactory");
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.CloseConnection|RES|CPOOL> {0} Closing.", ObjectID);
 
             // if an exception occurs after the state change but before the try block
@@ -489,7 +489,7 @@ namespace Microsoft.Data.ProviderBase
                         // The singleton closed classes won't have owners and
                         // connection pools, and we won't want to put them back
                         // into the pool.
-                        if (null != connectionPool)
+                        if (connectionPool != null)
                         {
                             connectionPool.PutObject(this, owningObject);   // PutObject calls Deactivate for us...
                             // NOTE: Before we leave the PutObject call, another
@@ -615,7 +615,7 @@ namespace Microsoft.Data.ProviderBase
 
                 DbConnectionPool pool = Pool;
 
-                if (null == pool)
+                if (pool == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.PooledObjectWithoutPool);      // pooled connection does not have a pool
                 }
@@ -719,7 +719,7 @@ namespace Microsoft.Data.ProviderBase
         internal void NotifyWeakReference(int message)
         {
             DbReferenceCollection referenceCollection = ReferenceCollection;
-            if (null != referenceCollection)
+            if (referenceCollection != null)
             {
                 referenceCollection.Notify(message);
             }
@@ -768,7 +768,7 @@ namespace Microsoft.Data.ProviderBase
                     connectionFactory.SetInnerConnectionTo(outerConnection, this);
                     throw;
                 }
-                if (null == openConnection)
+                if (openConnection == null)
                 {
                     connectionFactory.SetInnerConnectionTo(outerConnection, this);
                     throw ADP.InternalConnectionError(ADP.ConnectionError.GetConnectionReturnsNull);
@@ -790,7 +790,7 @@ namespace Microsoft.Data.ProviderBase
 
             //3 // The following tests are retail assertions of things we can't allow to happen.
             bool isAlive = _owningObject.TryGetTarget(out DbConnection connection);
-            if (null == expectedOwner)
+            if (expectedOwner == null)
             {
                 if (isAlive)
                 {
@@ -840,7 +840,7 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.PostPop|RES|CPOOL> {0}, Preparing to pop from pool,  owning connection {1}, pooledCount={2}", ObjectID, 0, _pooledCount);
 
             //3 // The following tests are retail assertions of things we can't allow to happen.
-            if (null != Pool)
+            if (Pool != null)
             {
                 if (0 != _pooledCount)
                 {
@@ -856,7 +856,7 @@ namespace Microsoft.Data.ProviderBase
         internal void RemoveWeakReference(object value)
         {
             DbReferenceCollection referenceCollection = ReferenceCollection;
-            if (null != referenceCollection)
+            if (referenceCollection != null)
             {
                 referenceCollection.Remove(value);
             }
@@ -929,7 +929,7 @@ namespace Microsoft.Data.ProviderBase
             DetachTransaction(transaction, false);
 
             DbConnectionPool pool = Pool;
-            if (null != pool)
+            if (pool != null)
             {
                 pool.TransactionEnded(transaction, this);
             }

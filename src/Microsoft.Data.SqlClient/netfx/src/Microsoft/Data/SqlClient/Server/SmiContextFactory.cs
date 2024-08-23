@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 Type smiLinkType = Type.GetType("Microsoft.SqlServer.Server.InProcLink, SqlAccess, PublicKeyToken=89845dcd8080cc91");
 
-                if (null == smiLinkType)
+                if (smiLinkType == null)
                 {
                     Debug.Assert(false, "could not get InProcLink type");
                     throw SQL.ContextUnavailableOutOfProc();    // Must not be a valid version of Sql Server.
@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             get
             {
-                if (null == _smiLink)
+                if (_smiLink == null)
                 {
                     throw SQL.ContextUnavailableOutOfProc();    // Must not be a valid version of Sql Server, or not be SqlCLR
                 }
@@ -108,7 +108,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             get
             {
-                if (null == _smiLink)
+                if (_smiLink == null)
                 {
                     throw SQL.ContextUnavailableOutOfProc();    // Must not be a valid version of Sql Server, or not be SqlCLR
                 }
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal SmiContext GetCurrentContext()
         {
-            if (null == _smiLink)
+            if (_smiLink == null)
             {
                 throw SQL.ContextUnavailableOutOfProc();    // Must not be a valid version of Sql Server, or not be SqlCLR
             }
@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient.Server
             object result = _smiLink.GetCurrentContext(_eventSinkForGetCurrentContext);
             _eventSinkForGetCurrentContext.ProcessMessagesAndThrow();
 
-            if (null == result)
+            if (result == null)
             {
                 throw SQL.ContextUnavailableWhileInProc();
             }
