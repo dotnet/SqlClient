@@ -64,5 +64,15 @@ steps:
       rm -f $SQLCMD_ERRORS
     fi
 
+    echo "Configuring Dedicated Administer Connections to allow remote connections..."
+    sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "sp_configure 'remote admin connections', 1; RECONFIGURE;"
+    if [ $? = 1 ]
+    then
+      echo "Error configuring DAC for remote access."
+      exit $errstatus
+    else
+      echo "Configuration complete."
+    fi
+
   displayName: 'Configure SQL Server [macOS]'
   condition: ${{parameters.condition }}
