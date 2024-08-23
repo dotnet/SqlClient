@@ -504,6 +504,17 @@ This update brings the below changes over the previous release:
 
 - Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1419](https://github.com/dotnet/SqlClient/pull/1419) [#1425](https://github.com/dotnet/SqlClient/pull/1425)
 
+## [Stable release 4.0.6] - 2024-08-21
+
+### Fixed
+
+- Fixed connection to unsubscribe from transaction completion events before returning it to the connection pool [#2301](https://github.com/dotnet/SqlClient/pull/2301) [#2435](https://github.com/dotnet/SqlClient/pull/2435)
+- Fixed AcquireTokenAsync timeout handling for edge cases in ActiveDirectoryAuthenticationProvider [#2707](https://github.com/dotnet/SqlClient/pull/2707)
+
+### Changed
+
+- Code health improvements: [#2147](https://github.com/dotnet/SqlClient/pull/2147), [#2513](https://github.com/dotnet/SqlClient/pull/2513), [#2519](https://github.com/dotnet/SqlClient/pull/2519)
+
 ## [Stable release 4.0.5] - 2024-01-09
 
 ### Fixed
