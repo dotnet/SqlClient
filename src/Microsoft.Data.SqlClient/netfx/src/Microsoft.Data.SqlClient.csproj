@@ -718,7 +718,6 @@
     <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
-    <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
     <Compile Include="Misc\ExternDll.cs" />
   </ItemGroup>
   <!-- Resources  -->
