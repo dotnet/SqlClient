@@ -19,9 +19,6 @@ namespace Microsoft.Data.ProviderBase
         private Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> _connectionPoolGroups;
         private readonly List<DbConnectionPool> _poolsToRelease;
         private readonly List<DbConnectionPoolGroup> _poolGroupsToRelease;
-#if NETFRAMEWORK
-        private readonly DbConnectionPoolCounters _performanceCounters;
-#endif
         private readonly Timer _pruningTimer;
 
         private const int PruningDueTime = 4 * 60 * 1000;           // 4 minutes
@@ -37,6 +34,8 @@ namespace Microsoft.Data.ProviderBase
         private static Task<DbConnectionInternal> s_completedTask;
 
 #if NETFRAMEWORK
+        private readonly DbConnectionPoolCounters _performanceCounters;
+
         protected DbConnectionFactory() : this(DbConnectionPoolCountersNoCounters.SingletonInstance) { }
 
         protected DbConnectionFactory(DbConnectionPoolCounters performanceCounters)
@@ -479,12 +478,7 @@ namespace Microsoft.Data.ProviderBase
                     }
                 }
 
-                // We don't support connection pooling on Win9x; it lacks too many of the APIs we require.
-#if NETFRAMEWORK
-                if ((poolOptions == null) && ADP.s_isWindowsNT)
-#else
                 if (poolOptions == null)
-#endif
                 {
                     if (connectionPoolGroup != null)
                     {
