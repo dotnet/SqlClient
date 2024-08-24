@@ -8410,6 +8410,7 @@ namespace Microsoft.Data.SqlClient
 
             return len;
         }
+
         private void WriteLoginData(SqlLogin rec,
                                      TdsEnums.FeatureExtension requestedFeatures,
                                      SessionData recoverySessionData,

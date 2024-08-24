@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
     /// <para> Represents a single encrypted value for a CEK. It contains the encrypted CEK,
     ///  the store type, name,the key path and encryption algorithm.</para>
     /// </summary>
-    internal sealed class SqlEncryptionKeyInfo
+    internal class SqlEncryptionKeyInfo
     {
         internal byte[] encryptedKey; // the encrypted "column encryption key"
         internal int databaseId;
@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
     /// rotation scenario) We need to keep all these around until we can resolve the CEK
     /// using the correct master key.</para>
     /// </summary>
-    internal sealed class SqlTceCipherInfoEntry
+    internal class SqlTceCipherInfoEntry
     {
 
         /// <summary>
@@ -196,27 +196,27 @@ namespace Microsoft.Data.SqlClient
     /// may have been encrypted using multiple master keys (giving us multiple CEK values). All these values form one single
     /// entry in this table.</para>
     ///</summary>
-    internal sealed class SqlTceCipherInfoTable
+    internal class SqlTceCipherInfoTable
     {
-        private readonly SqlTceCipherInfoEntry[] _keyList;
+        private readonly SqlTceCipherInfoEntry[] keyList;
 
         internal SqlTceCipherInfoTable(int tabSize)
         {
             Debug.Assert(0 < tabSize, "Invalid Table Size");
-            _keyList = new SqlTceCipherInfoEntry[tabSize];
+            keyList = new SqlTceCipherInfoEntry[tabSize];
         }
 
         internal SqlTceCipherInfoEntry this[int index]
         {
             get
             {
-                Debug.Assert(index < _keyList.Length, "Invalid index specified.");
-                return _keyList[index];
+                Debug.Assert(index < keyList.Length, "Invalid index specified.");
+                return keyList[index];
             }
             set
             {
-                Debug.Assert(index < _keyList.Length, "Invalid index specified.");
-                _keyList[index] = value;
+                Debug.Assert(index < keyList.Length, "Invalid index specified.");
+                keyList[index] = value;
             }
         }
 
@@ -224,7 +224,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return _keyList.Length;
+                return keyList.Length;
             }
         }
     }
@@ -243,7 +243,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Represents Encryption related information of the cipher data.
     /// </summary>
-    internal sealed class SqlCipherMetadata
+    internal class SqlCipherMetadata
     {
 
         /// <summary>

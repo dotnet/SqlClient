@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Class encapsulating the data to be sent to the server as part of Federated Authentication Feature Extension.
     /// </summary>
-    internal sealed class FederatedAuthenticationFeatureExtensionData
+    internal class FederatedAuthenticationFeatureExtensionData
     {
         internal TdsEnums.FedAuthLibrary libraryType;
         internal bool fedAuthRequiredPreLoginResponse;
@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient
         internal byte[] accessToken;
     }
 
-    internal sealed class RoutingInfo
+    internal class RoutingInfo
     {
         internal byte Protocol { get; private set; }
         internal ushort Port { get; private set; }
@@ -532,7 +532,7 @@ namespace Microsoft.Data.SqlClient
             flags = value ? flags | flag : flags & ~flag;
         }
 
-        internal void CopyFrom(SqlMetaDataPriv original)
+        internal virtual void CopyFrom(SqlMetaDataPriv original)
         {
             this.type = original.type;
             this.tdsType = original.tdsType;
