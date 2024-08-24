@@ -280,60 +280,60 @@ namespace Microsoft.Data.SqlClient
 
                     if (!colMetaData.IsHidden)
                     {
-                        SqlCollation collation = colMetaData.Collation;
+                        SqlCollation collation = colMetaData.collation;
 
                         string typeSpecificNamePart1 = null;
                         string typeSpecificNamePart2 = null;
                         string typeSpecificNamePart3 = null;
 
-                        if (SqlDbType.Xml == colMetaData.Type)
+                        if (SqlDbType.Xml == colMetaData.type)
                         {
-                            typeSpecificNamePart1 = colMetaData.XmlSchemaCollection?.Database;
-                            typeSpecificNamePart2 = colMetaData.XmlSchemaCollection?.OwningSchema;
-                            typeSpecificNamePart3 = colMetaData.XmlSchemaCollection?.Name;
+                            typeSpecificNamePart1 = colMetaData.xmlSchemaCollection?.Database;
+                            typeSpecificNamePart2 = colMetaData.xmlSchemaCollection?.OwningSchema;
+                            typeSpecificNamePart3 = colMetaData.xmlSchemaCollection?.Name;
                         }
-                        else if (SqlDbType.Udt == colMetaData.Type)
+                        else if (SqlDbType.Udt == colMetaData.type)
                         {
                             Connection.CheckGetExtendedUDTInfo(colMetaData, true); // Ensure that colMetaData.udtType is set
 
-                            typeSpecificNamePart1 = colMetaData.Udt?.DatabaseName;
-                            typeSpecificNamePart2 = colMetaData.Udt?.SchemaName;
-                            typeSpecificNamePart3 = colMetaData.Udt?.TypeName;
+                            typeSpecificNamePart1 = colMetaData.udt?.DatabaseName;
+                            typeSpecificNamePart2 = colMetaData.udt?.SchemaName;
+                            typeSpecificNamePart3 = colMetaData.udt?.TypeName;
                         }
 
-                        int length = colMetaData.Length;
+                        int length = colMetaData.length;
                         if (length > TdsEnums.MAXSIZE)
                         {
                             length = (int)SmiMetaData.UnlimitedMaxLengthIndicator;
                         }
-                        else if (SqlDbType.NChar == colMetaData.Type
-                                || SqlDbType.NVarChar == colMetaData.Type)
+                        else if (SqlDbType.NChar == colMetaData.type
+                                || SqlDbType.NVarChar == colMetaData.type)
                         {
                             length /= ADP.CharSize;
                         }
 
                         metaDataReturn[returnIndex] =
                             new SmiQueryMetaData(
-                                colMetaData.Type,
+                                colMetaData.type,
                                 length,
-                                colMetaData.Precision,
-                                colMetaData.Scale,
+                                colMetaData.precision,
+                                colMetaData.scale,
                                 collation != null ? collation.LCID : _defaultLCID,
                                 collation != null ? collation.SqlCompareOptions : SqlCompareOptions.None,
-                                colMetaData.Udt?.Type,
+                                colMetaData.udt?.Type,
                                 false, // isMultiValued
                                 null, // fieldmetadata
                                 null, // extended properties
-                                colMetaData.Column,
+                                colMetaData.column,
                                 typeSpecificNamePart1,
                                 typeSpecificNamePart2,
                                 typeSpecificNamePart3,
                                 colMetaData.IsNullable,
-                                colMetaData.ServerName,
-                                colMetaData.CatalogName,
-                                colMetaData.SchemaName,
-                                colMetaData.TableName,
-                                colMetaData.BaseColumn,
+                                colMetaData.serverName,
+                                colMetaData.catalogName,
+                                colMetaData.schemaName,
+                                colMetaData.tableName,
+                                colMetaData.baseColumn,
                                 colMetaData.IsKey,
                                 colMetaData.IsIdentity,
                                 colMetaData.IsReadOnly,
@@ -537,47 +537,47 @@ namespace Microsoft.Data.SqlClient
                 _SqlMetaData col = md[i];
                 DataRow schemaRow = schemaTable.NewRow();
 
-                schemaRow[columnName] = col.Column;
-                schemaRow[ordinal] = col.Ordinal;
+                schemaRow[columnName] = col.column;
+                schemaRow[ordinal] = col.ordinal;
                 //
                 // be sure to return character count for string types, byte count otherwise
                 // col.length is always byte count so for unicode types, half the length
                 //
                 // For MAX and XML datatypes, we get 0x7fffffff from the server. Do not divide this.
-                if (col.CipherMD != null)
+                if (col.cipherMD != null)
                 {
-                    Debug.Assert(col.BaseTI != null && col.BaseTI.MetaType != null, "col.baseTI and col.baseTI.metaType should not be null.");
-                    schemaRow[size] = (col.BaseTI.MetaType.IsSizeInCharacters && (col.BaseTI.Length != 0x7fffffff)) ? (col.BaseTI.Length / 2) : col.BaseTI.Length;
+                    Debug.Assert(col.baseTI != null && col.baseTI.metaType != null, "col.baseTI and col.baseTI.metaType should not be null.");
+                    schemaRow[size] = (col.baseTI.metaType.IsSizeInCharacters && (col.baseTI.length != 0x7fffffff)) ? (col.baseTI.length / 2) : col.baseTI.length;
                 }
                 else
                 {
-                    schemaRow[size] = (col.MetaType.IsSizeInCharacters && (col.Length != 0x7fffffff)) ? (col.Length / 2) : col.Length;
+                    schemaRow[size] = (col.metaType.IsSizeInCharacters && (col.length != 0x7fffffff)) ? (col.length / 2) : col.length;
                 }
 
                 schemaRow[dataType] = GetFieldTypeInternal(col);
                 schemaRow[providerSpecificDataType] = GetProviderSpecificFieldTypeInternal(col);
-                schemaRow[nonVersionedProviderType] = (int)(col.CipherMD != null ? col.BaseTI.Type : col.Type); // SqlDbType enum value - does not change with TypeSystem.
+                schemaRow[nonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
                 schemaRow[dataTypeName] = GetDataTypeNameInternal(col);
 
                 if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[providerType] = SqlDbType.NVarChar;
-                    switch (col.Type)
+                    switch (col.type)
                     {
                         case SqlDbType.Date:
                             schemaRow[size] = TdsEnums.WHIDBEY_DATE_LENGTH;
                             break;
                         case SqlDbType.Time:
-                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.Scale || (0 <= col.Scale && col.Scale <= 7), "Invalid scale for Time column: " + col.Scale);
-                            schemaRow[size] = TdsEnums.WHIDBEY_TIME_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.Scale ? col.Scale : col.MetaType.Scale];
+                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (0 <= col.scale && col.scale <= 7), "Invalid scale for Time column: " + col.scale);
+                            schemaRow[size] = TdsEnums.WHIDBEY_TIME_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
                             break;
                         case SqlDbType.DateTime2:
-                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.Scale || (0 <= col.Scale && col.Scale <= 7), "Invalid scale for DateTime2 column: " + col.Scale);
-                            schemaRow[size] = TdsEnums.WHIDBEY_DATETIME2_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.Scale ? col.Scale : col.MetaType.Scale];
+                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (0 <= col.scale && col.scale <= 7), "Invalid scale for DateTime2 column: " + col.scale);
+                            schemaRow[size] = TdsEnums.WHIDBEY_DATETIME2_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
                             break;
                         case SqlDbType.DateTimeOffset:
-                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.Scale || (0 <= col.Scale && col.Scale <= 7), "Invalid scale for DateTimeOffset column: " + col.Scale);
-                            schemaRow[size] = TdsEnums.WHIDBEY_DATETIMEOFFSET_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.Scale ? col.Scale : col.MetaType.Scale];
+                            Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (0 <= col.scale && col.scale <= 7), "Invalid scale for DateTimeOffset column: " + col.scale);
+                            schemaRow[size] = TdsEnums.WHIDBEY_DATETIMEOFFSET_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
                             break;
                     }
                 }
@@ -598,19 +598,19 @@ namespace Microsoft.Data.SqlClient
                     // TypeSystem.SQLServer2005 and above
 
                     // SqlDbType enum value - always the actual type for SQLServer2005.
-                    schemaRow[providerType] = (int)(col.CipherMD != null ? col.BaseTI.Type : col.Type);
+                    schemaRow[providerType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type);
 
-                    if (col.Type == SqlDbType.Udt)
+                    if (col.type == SqlDbType.Udt)
                     { // Additional metadata for UDTs.
                         Debug.Assert(Connection.Is2008OrNewer, "Invalid Column type received from the server");
-                        schemaRow[udtAssemblyQualifiedName] = col.Udt?.AssemblyQualifiedName;
+                        schemaRow[udtAssemblyQualifiedName] = col.udt?.AssemblyQualifiedName;
                     }
-                    else if (col.Type == SqlDbType.Xml)
+                    else if (col.type == SqlDbType.Xml)
                     { // Additional metadata for Xml.
                         Debug.Assert(Connection.Is2008OrNewer, "Invalid DataType (Xml) for the column");
-                        schemaRow[xmlSchemaCollectionDatabase] = col.XmlSchemaCollection?.Database;
-                        schemaRow[xmlSchemaCollectionOwningSchema] = col.XmlSchemaCollection?.OwningSchema;
-                        schemaRow[xmlSchemaCollectionName] = col.XmlSchemaCollection?.Name;
+                        schemaRow[xmlSchemaCollectionDatabase] = col.xmlSchemaCollection?.Database;
+                        schemaRow[xmlSchemaCollectionOwningSchema] = col.xmlSchemaCollection?.OwningSchema;
+                        schemaRow[xmlSchemaCollectionName] = col.xmlSchemaCollection?.Name;
                     }
                 }
                 else
@@ -618,53 +618,53 @@ namespace Microsoft.Data.SqlClient
                     // TypeSystem.SQLServer2000
 
                     // SqlDbType enum value - variable for certain types when SQLServer2000.
-                    schemaRow[providerType] = GetVersionedMetaType(col.MetaType).SqlDbType;
+                    schemaRow[providerType] = GetVersionedMetaType(col.metaType).SqlDbType;
                 }
 
-                if (col.CipherMD != null)
+                if (col.cipherMD != null)
                 {
-                    Debug.Assert(col.BaseTI != null, @"col.baseTI should not be null.");
-                    if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.BaseTI.Precision)
+                    Debug.Assert(col.baseTI != null, @"col.baseTI should not be null.");
+                    if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.baseTI.precision)
                     {
-                        schemaRow[precision] = col.BaseTI.Precision;
+                        schemaRow[precision] = col.baseTI.precision;
                     }
                     else
                     {
-                        schemaRow[precision] = col.BaseTI.MetaType.Precision;
+                        schemaRow[precision] = col.baseTI.metaType.Precision;
                     }
                 }
-                else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.Precision)
+                else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.precision)
                 {
-                    schemaRow[precision] = col.Precision;
+                    schemaRow[precision] = col.precision;
                 }
                 else
                 {
-                    schemaRow[precision] = col.MetaType.Precision;
+                    schemaRow[precision] = col.metaType.Precision;
                 }
 
                 if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[scale] = MetaType.MetaNVarChar.Scale;
                 }
-                else if (col.CipherMD != null)
+                else if (col.cipherMD != null)
                 {
-                    Debug.Assert(col.BaseTI != null, @"col.baseTI should not be null.");
-                    if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.BaseTI.Scale)
+                    Debug.Assert(col.baseTI != null, @"col.baseTI should not be null.");
+                    if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.baseTI.scale)
                     {
-                        schemaRow[scale] = col.BaseTI.Scale;
+                        schemaRow[scale] = col.baseTI.scale;
                     }
                     else
                     {
-                        schemaRow[scale] = col.BaseTI.MetaType.Scale;
+                        schemaRow[scale] = col.baseTI.metaType.Scale;
                     }
                 }
-                else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.Scale)
+                else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale)
                 {
-                    schemaRow[scale] = col.Scale;
+                    schemaRow[scale] = col.scale;
                 }
                 else
                 {
-                    schemaRow[scale] = col.MetaType.Scale;
+                    schemaRow[scale] = col.metaType.Scale;
                 }
 
                 schemaRow[allowDBNull] = col.IsNullable;
@@ -681,19 +681,19 @@ namespace Microsoft.Data.SqlClient
                 schemaRow[isIdentity] = col.IsIdentity;
                 schemaRow[isAutoIncrement] = col.IsIdentity;
 
-                if (col.CipherMD != null)
+                if (col.cipherMD != null)
                 {
-                    Debug.Assert(col.BaseTI != null, @"col.baseTI should not be null.");
-                    Debug.Assert(col.BaseTI.MetaType != null, @"col.baseTI.metaType should not be null.");
-                    schemaRow[isLong] = col.BaseTI.MetaType.IsLong;
+                    Debug.Assert(col.baseTI != null, @"col.baseTI should not be null.");
+                    Debug.Assert(col.baseTI.metaType != null, @"col.baseTI.metaType should not be null.");
+                    schemaRow[isLong] = col.baseTI.metaType.IsLong;
                 }
                 else
                 {
-                    schemaRow[isLong] = col.MetaType.IsLong;
+                    schemaRow[isLong] = col.metaType.IsLong;
                 }
 
                 // mark unique for timestamp columns
-                if (SqlDbType.Timestamp == col.Type)
+                if (SqlDbType.Timestamp == col.type)
                 {
                     schemaRow[isUnique] = true;
                     schemaRow[isRowVersion] = true;
@@ -707,29 +707,29 @@ namespace Microsoft.Data.SqlClient
                 schemaRow[isReadOnly] = col.IsReadOnly;
                 schemaRow[isColumnSet] = col.IsColumnSet;
 
-                if (!string.IsNullOrEmpty(col.ServerName))
+                if (!string.IsNullOrEmpty(col.serverName))
                 {
-                    schemaRow[baseServerName] = col.ServerName;
+                    schemaRow[baseServerName] = col.serverName;
                 }
-                if (!string.IsNullOrEmpty(col.CatalogName))
+                if (!string.IsNullOrEmpty(col.catalogName))
                 {
-                    schemaRow[baseCatalogName] = col.CatalogName;
+                    schemaRow[baseCatalogName] = col.catalogName;
                 }
-                if (!string.IsNullOrEmpty(col.SchemaName))
+                if (!string.IsNullOrEmpty(col.schemaName))
                 {
-                    schemaRow[baseSchemaName] = col.SchemaName;
+                    schemaRow[baseSchemaName] = col.schemaName;
                 }
-                if (!string.IsNullOrEmpty(col.TableName))
+                if (!string.IsNullOrEmpty(col.tableName))
                 {
-                    schemaRow[baseTableName] = col.TableName;
+                    schemaRow[baseTableName] = col.tableName;
                 }
-                if (!string.IsNullOrEmpty(col.BaseColumn))
+                if (!string.IsNullOrEmpty(col.baseColumn))
                 {
-                    schemaRow[baseColumnName] = col.BaseColumn;
+                    schemaRow[baseColumnName] = col.baseColumn;
                 }
-                else if (!string.IsNullOrEmpty(col.Column))
+                else if (!string.IsNullOrEmpty(col.column))
                 {
-                    schemaRow[baseColumnName] = col.Column;
+                    schemaRow[baseColumnName] = col.column;
                 }
 
                 schemaTable.Rows.Add(schemaRow);
@@ -1208,20 +1208,20 @@ namespace Microsoft.Data.SqlClient
             {
                 // TypeSystem.SQLServer2005 and above
 
-                if (metaData.Type == SqlDbType.Udt)
+                if (metaData.type == SqlDbType.Udt)
                 {
-                    dataTypeName = metaData.Udt?.DatabaseName + "." + metaData.Udt?.SchemaName + "." + metaData.Udt?.TypeName;
+                    dataTypeName = metaData.udt?.DatabaseName + "." + metaData.udt?.SchemaName + "." + metaData.udt?.TypeName;
                 }
                 else
                 { // For all other types, including Xml - use data in MetaType.
-                    if (metaData.CipherMD != null)
+                    if (metaData.cipherMD != null)
                     {
-                        Debug.Assert(metaData.BaseTI != null && metaData.BaseTI.MetaType != null, "metaData.baseTI and metaData.baseTI.metaType should not be null.");
-                        dataTypeName = metaData.BaseTI.MetaType.TypeName;
+                        Debug.Assert(metaData.baseTI != null && metaData.baseTI.metaType != null, "metaData.baseTI and metaData.baseTI.metaType should not be null.");
+                        dataTypeName = metaData.baseTI.metaType.TypeName;
                     }
                     else
                     {
-                        dataTypeName = metaData.MetaType.TypeName;
+                        dataTypeName = metaData.metaType.TypeName;
                     }
                 }
             }
@@ -1229,7 +1229,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // TypeSystem.SQLServer2000
 
-                dataTypeName = GetVersionedMetaType(metaData.MetaType).TypeName;
+                dataTypeName = GetVersionedMetaType(metaData.metaType).TypeName;
             }
 
             return dataTypeName;
@@ -1298,28 +1298,28 @@ namespace Microsoft.Data.SqlClient
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
-                if (metaData.Type == SqlDbType.Udt)
+                if (metaData.type == SqlDbType.Udt)
                 {
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
-                    fieldType = metaData.Udt?.Type;
+                    fieldType = metaData.udt?.Type;
                 }
                 else
                 { // For all other types, including Xml - use data in MetaType.
-                    if (metaData.CipherMD != null)
+                    if (metaData.cipherMD != null)
                     {
-                        Debug.Assert(metaData.BaseTI != null && metaData.BaseTI.MetaType != null, "metaData.baseTI and metaData.baseTI.metaType should not be null.");
-                        fieldType = metaData.BaseTI.MetaType.ClassType;
+                        Debug.Assert(metaData.baseTI != null && metaData.baseTI.metaType != null, "metaData.baseTI and metaData.baseTI.metaType should not be null.");
+                        fieldType = metaData.baseTI.metaType.ClassType;
                     }
                     else
                     {
-                        fieldType = metaData.MetaType.ClassType; // Com+ type.
+                        fieldType = metaData.metaType.ClassType; // Com+ type.
                     }
                 }
             }
             else
             {
                 // TypeSystem.SQLServer2000
-                fieldType = GetVersionedMetaType(metaData.MetaType).ClassType; // Com+ type.
+                fieldType = GetVersionedMetaType(metaData.metaType).ClassType; // Com+ type.
             }
 
             return fieldType;
@@ -1330,13 +1330,13 @@ namespace Microsoft.Data.SqlClient
             _SqlMetaData sqlMetaData = MetaData[i];
             int lcid;
 
-            if (sqlMetaData.CipherMD != null)
+            if (sqlMetaData.cipherMD != null)
             {
                 // If this column is encrypted, get the collation from baseTI
                 //
-                if (sqlMetaData.BaseTI.Collation != null)
+                if (sqlMetaData.baseTI.collation != null)
                 {
-                    lcid = sqlMetaData.BaseTI.Collation.LCID;
+                    lcid = sqlMetaData.baseTI.collation.LCID;
                 }
                 else
                 {
@@ -1345,9 +1345,9 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                if (sqlMetaData.Collation != null)
+                if (sqlMetaData.collation != null)
                 {
-                    lcid = sqlMetaData.Collation.LCID;
+                    lcid = sqlMetaData.collation.LCID;
                 }
                 else
                 {
@@ -1362,7 +1362,7 @@ namespace Microsoft.Data.SqlClient
         override public string GetName(int i)
         {
             CheckMetaDataIsReady(columnIndex: i);
-            return _metaData[i].Column;
+            return _metaData[i].column;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*' />
@@ -1411,30 +1411,30 @@ namespace Microsoft.Data.SqlClient
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
-                if (metaData.Type == SqlDbType.Udt)
+                if (metaData.type == SqlDbType.Udt)
                 {
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
-                    providerSpecificFieldType = metaData.Udt?.Type;
+                    providerSpecificFieldType = metaData.udt?.Type;
                 }
                 else
                 {
                     // For all other types, including Xml - use data in MetaType.
-                    if (metaData.CipherMD != null)
+                    if (metaData.cipherMD != null)
                     {
-                        Debug.Assert(metaData.BaseTI != null && metaData.BaseTI.MetaType != null,
+                        Debug.Assert(metaData.baseTI != null && metaData.baseTI.metaType != null,
                             "metaData.baseTI and metaData.baseTI.metaType should not be null.");
-                        providerSpecificFieldType = metaData.BaseTI.MetaType.SqlType; // SqlType type.
+                        providerSpecificFieldType = metaData.baseTI.metaType.SqlType; // SqlType type.
                     }
                     else
                     {
-                        providerSpecificFieldType = metaData.MetaType.SqlType; // SqlType type.
+                        providerSpecificFieldType = metaData.metaType.SqlType; // SqlType type.
                     }
                 }
             }
             else
             {
                 // TypeSystem.SQLServer2000
-                providerSpecificFieldType = GetVersionedMetaType(metaData.MetaType).SqlType; // SqlType type.
+                providerSpecificFieldType = GetVersionedMetaType(metaData.metaType).SqlType; // SqlType type.
             }
 
             return providerSpecificFieldType;
@@ -1482,15 +1482,15 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    if (_metaData == null || _metaData.SchemaTable == null)
+                    if (_metaData == null || _metaData.schemaTable == null)
                     {
                         if (this.MetaData != null)
                         {
-                            _metaData.SchemaTable = BuildSchemaTable();
-                            Debug.Assert(_metaData.SchemaTable != null, "No schema information yet!");
+                            _metaData.schemaTable = BuildSchemaTable();
+                            Debug.Assert(_metaData.schemaTable != null, "No schema information yet!");
                         }
                     }
-                    return _metaData?.SchemaTable;
+                    return _metaData?.schemaTable;
                 }
                 finally
                 {
@@ -1513,12 +1513,12 @@ namespace Microsoft.Data.SqlClient
             // If this ever changes, the following code should be changed to be like GetStream/GetTextReader
             CheckDataIsReady(columnIndex: i);
 
-            MetaType mt = _metaData[i].MetaType;
+            MetaType mt = _metaData[i].metaType;
 
             // XmlReader only allowed on XML types
             if (mt.SqlDbType != SqlDbType.Xml)
             {
-                throw SQL.XmlReaderNotSupportOnColumnType(_metaData[i].Column);
+                throw SQL.XmlReaderNotSupportOnColumnType(_metaData[i].column);
             }
 
             if (IsCommandBehavior(CommandBehavior.SequentialAccess))
@@ -1552,17 +1552,17 @@ namespace Microsoft.Data.SqlClient
             CheckDataIsReady(columnIndex: i);
 
             // Streaming is not supported on encrypted columns.
-            if (_metaData[i] != null && _metaData[i].CipherMD != null)
+            if (_metaData[i] != null && _metaData[i].cipherMD != null)
             {
-                throw SQL.StreamNotSupportOnEncryptedColumn(_metaData[i].Column);
+                throw SQL.StreamNotSupportOnEncryptedColumn(_metaData[i].column);
             }
 
             // Stream is only for Binary, Image, VarBinary, Udt and Xml types
             // NOTE: IsBinType also includes Timestamp for some reason...
-            MetaType mt = _metaData[i].MetaType;
+            MetaType mt = _metaData[i].metaType;
             if (((!mt.IsBinType) || (mt.SqlDbType == SqlDbType.Timestamp)) && (mt.SqlDbType != SqlDbType.Variant))
             {
-                throw SQL.StreamNotSupportOnColumnType(_metaData[i].Column);
+                throw SQL.StreamNotSupportOnColumnType(_metaData[i].column);
             }
 
             // For non-variant types with sequential access, we support proper streaming
@@ -1610,10 +1610,10 @@ namespace Microsoft.Data.SqlClient
             CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true);
 
             // don't allow get bytes on non-long or non-binary columns
-            MetaType mt = _metaData[i].MetaType;
+            MetaType mt = _metaData[i].metaType;
             if (!(mt.IsLong || mt.IsBinType) || (SqlDbType.Xml == mt.SqlDbType))
             {
-                throw SQL.NonBlobColumn(_metaData[i].Column);
+                throw SQL.NonBlobColumn(_metaData[i].column);
             }
 
             try
@@ -1660,9 +1660,9 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(!HasActiveStreamOrTextReaderOnColumn(i), "Column has an active Stream or TextReader");
 
-                if (_metaData[i] != null && _metaData[i].CipherMD != null)
+                if (_metaData[i] != null && _metaData[i].cipherMD != null)
                 {
-                    throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].Column);
+                    throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
                 }
 
                 if (_sharedState._nextColumnHeaderToRead <= i)
@@ -1681,7 +1681,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // If there are an unknown (-1) number of bytes left for a PLP, read its size
-                if ((-1 == _sharedState._columnDataBytesRemaining) && (_metaData[i].MetaType.IsPlp))
+                if ((-1 == _sharedState._columnDataBytesRemaining) && (_metaData[i].metaType.IsPlp))
                 {
                     ulong left;
                     result = _parser.TryPlpBytesLeft(_stateObj, out left);
@@ -1700,7 +1700,7 @@ namespace Microsoft.Data.SqlClient
                 // if no buffer is passed in, return the number total of bytes, or -1
                 if (buffer == null)
                 {
-                    if (_metaData[i].MetaType.IsPlp)
+                    if (_metaData[i].metaType.IsPlp)
                     {
                         remaining = (long)_parser.PlpBytesTotalLength(_stateObj);
                         return TdsOperationStatus.Done;
@@ -1721,7 +1721,7 @@ namespace Microsoft.Data.SqlClient
                 long cb = dataIndex - _columnDataBytesRead;
 
                 // if dataIndex is outside of the data range, return 0
-                if ((cb > _sharedState._columnDataBytesRemaining) && !_metaData[i].MetaType.IsPlp)
+                if ((cb > _sharedState._columnDataBytesRemaining) && !_metaData[i].metaType.IsPlp)
                 {
                     return TdsOperationStatus.Done;
                 }
@@ -1740,7 +1740,7 @@ namespace Microsoft.Data.SqlClient
                 // Skip if needed
                 if (cb > 0)
                 {
-                    if (_metaData[i].MetaType.IsPlp)
+                    if (_metaData[i].metaType.IsPlp)
                     {
                         ulong skipped;
                         result = _parser.TrySkipPlpValue((ulong)cb, _stateObj, out skipped);
@@ -1786,17 +1786,17 @@ namespace Microsoft.Data.SqlClient
             //                 the use of GetBytes on string data columns, but
             //                 GetSqlBinary isn't supposed to.  What we end up
             //                 doing isn't exactly pretty, but it does work.
-            if (_metaData[i].MetaType.IsBinType)
+            if (_metaData[i].metaType.IsBinType)
             {
                 data = GetSqlBinary(i).Value;
             }
             else
             {
-                Debug.Assert(_metaData[i].MetaType.IsLong, "non long type?");
-                Debug.Assert(_metaData[i].MetaType.IsCharType, "non-char type?");
+                Debug.Assert(_metaData[i].metaType.IsLong, "non long type?");
+                Debug.Assert(_metaData[i].metaType.IsCharType, "non-char type?");
 
                 SqlString temp = GetSqlString(i);
-                if (_metaData[i].MetaType.IsNCharType)
+                if (_metaData[i].metaType.IsNCharType)
                 {
                     data = temp.GetUnicodeBytes();
                 }
@@ -1918,7 +1918,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // if plp columns, do partial reads. Don't read the entire value in one shot.
-                if (_metaData[i].MetaType.IsPlp)
+                if (_metaData[i].metaType.IsPlp)
                 {
                     // Read in data
                     result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
@@ -1959,29 +1959,29 @@ namespace Microsoft.Data.SqlClient
             // Xml type is not supported
             MetaType mt = null;
 
-            if (_metaData[i].CipherMD != null)
+            if (_metaData[i].cipherMD != null)
             {
-                Debug.Assert(_metaData[i].BaseTI != null, "_metaData[i].baseTI should not be null.");
-                mt = _metaData[i].BaseTI.MetaType;
+                Debug.Assert(_metaData[i].baseTI != null, "_metaData[i].baseTI should not be null.");
+                mt = _metaData[i].baseTI.metaType;
             }
             else
             {
-                mt = _metaData[i].MetaType;
+                mt = _metaData[i].metaType;
             }
 
             Debug.Assert(mt != null, @"mt should not be null.");
 
             if (((!mt.IsCharType) && (mt.SqlDbType != SqlDbType.Variant)) || (mt.SqlDbType == SqlDbType.Xml))
             {
-                throw SQL.TextReaderNotSupportOnColumnType(_metaData[i].Column);
+                throw SQL.TextReaderNotSupportOnColumnType(_metaData[i].column);
             }
 
             // For non-variant types with sequential access, we support proper streaming
             if ((mt.SqlDbType != SqlDbType.Variant) && (IsCommandBehavior(CommandBehavior.SequentialAccess)))
             {
-                if (_metaData[i].CipherMD != null)
+                if (_metaData[i].cipherMD != null)
                 {
-                    throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].Column);
+                    throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
                 }
 
                 System.Text.Encoding encoding;
@@ -1992,7 +1992,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    encoding = _metaData[i].Encoding;
+                    encoding = _metaData[i].encoding;
                 }
 
                 _currentTextReader = new SqlSequentialTextReader(this, i, encoding);
@@ -2040,27 +2040,27 @@ namespace Microsoft.Data.SqlClient
             }
 
             MetaType mt = null;
-            if (_metaData[i].CipherMD != null)
+            if (_metaData[i].cipherMD != null)
             {
-                Debug.Assert(_metaData[i].BaseTI != null, @"_metaData[i].baseTI should not be null.");
-                mt = _metaData[i].BaseTI.MetaType;
+                Debug.Assert(_metaData[i].baseTI != null, @"_metaData[i].baseTI should not be null.");
+                mt = _metaData[i].baseTI.metaType;
             }
             else
             {
-                mt = _metaData[i].MetaType;
+                mt = _metaData[i].metaType;
             }
 
             Debug.Assert(mt != null, "mt should not be null.");
 
             SqlDbType sqlDbType;
-            if (_metaData[i].CipherMD != null)
+            if (_metaData[i].cipherMD != null)
             {
-                Debug.Assert(_metaData[i].BaseTI != null, @"_metaData[i].baseTI should not be null.");
-                sqlDbType = _metaData[i].BaseTI.Type;
+                Debug.Assert(_metaData[i].baseTI != null, @"_metaData[i].baseTI should not be null.");
+                sqlDbType = _metaData[i].baseTI.type;
             }
             else
             {
-                sqlDbType = _metaData[i].Type;
+                sqlDbType = _metaData[i].type;
             }
 
             try
@@ -2075,9 +2075,9 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.InvalidDataLength(length);
                     }
 
-                    if (_metaData[i].CipherMD != null)
+                    if (_metaData[i].cipherMD != null)
                     {
-                        throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].Column);
+                        throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
                     }
 
                     // if bad buffer index, throw
@@ -2209,13 +2209,13 @@ namespace Microsoft.Data.SqlClient
             AssertReaderState(requireData: true, permitAsync: false, columnIndex: i, enforceSequentialAccess: true);
             Debug.Assert(!HasActiveStreamOrTextReaderOnColumn(i), "Column has active Stream or TextReader");
             // don't allow get bytes on non-long or non-binary columns
-            Debug.Assert(_metaData[i].MetaType.IsPlp, "GetCharsFromPlpData called on a non-plp column!");
+            Debug.Assert(_metaData[i].metaType.IsPlp, "GetCharsFromPlpData called on a non-plp column!");
             // Must be sequential reading
             Debug.Assert(IsCommandBehavior(CommandBehavior.SequentialAccess), "GetCharsFromPlpData called for non-Sequential access");
 
-            if (!_metaData[i].MetaType.IsCharType)
+            if (!_metaData[i].metaType.IsCharType)
             {
-                throw SQL.NonCharColumn(_metaData[i].Column);
+                throw SQL.NonCharColumn(_metaData[i].column);
             }
 
             if (_sharedState._nextColumnHeaderToRead <= i)
@@ -2241,7 +2241,7 @@ namespace Microsoft.Data.SqlClient
             if (dataIndex == 0)
                 _stateObj._plpdecoder = null;
 
-            bool isUnicode = _metaData[i].MetaType.IsNCharType;
+            bool isUnicode = _metaData[i].metaType.IsNCharType;
 
             // If there are an unknown (-1) number of bytes left for a PLP, read its size
             if (-1 == _sharedState._columnDataBytesRemaining)
@@ -2579,7 +2579,7 @@ namespace Microsoft.Data.SqlClient
         //       Always make sure to take reference copies of anything set to null in TryCloseInternal()
         private object GetSqlValueFromSqlBufferInternal(SqlBuffer data, _SqlMetaData metaData)
         {
-            Debug.Assert(!data.IsEmpty || data.IsNull || metaData.Type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
+            Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
             // Convert 2008 types to string
             if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
@@ -2594,7 +2594,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // TypeSystem.SQLServer2005 and above
 
-                if (metaData.Type == SqlDbType.Udt)
+                if (metaData.type == SqlDbType.Udt)
                 {
                     SqlConnection connection = _connection;
                     if (connection != null)
@@ -2616,7 +2616,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // TypeSystem.SQLServer2000
 
-                if (metaData.Type == SqlDbType.Xml)
+                if (metaData.type == SqlDbType.Xml)
                 {
                     return data.SqlString;
                 }
@@ -2769,7 +2769,7 @@ namespace Microsoft.Data.SqlClient
         //       Always make sure to take reference copies of anything set to null in TryCloseInternal()
         private object GetValueFromSqlBufferInternal(SqlBuffer data, _SqlMetaData metaData)
         {
-            Debug.Assert(!data.IsEmpty || data.IsNull || metaData.Type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
+            Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
             if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
@@ -2790,7 +2790,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // TypeSystem.SQLServer2005 and above
 
-                if (metaData.Type != SqlDbType.Udt)
+                if (metaData.type != SqlDbType.Udt)
                 {
                     return data.Value;
                 }
@@ -2896,16 +2896,16 @@ namespace Microsoft.Data.SqlClient
             else if (typeof(T) == typeof(XmlReader))
             {
                 // XmlReader only allowed on XML types
-                if (metaData.MetaType.SqlDbType != SqlDbType.Xml)
+                if (metaData.metaType.SqlDbType != SqlDbType.Xml)
                 {
-                    throw SQL.XmlReaderNotSupportOnColumnType(metaData.Column);
+                    throw SQL.XmlReaderNotSupportOnColumnType(metaData.column);
                 }
 
                 if (IsCommandBehavior(CommandBehavior.SequentialAccess))
                 {
                     // Wrap the sequential stream in an XmlReader
-                    _currentStream = new SqlSequentialStream(this, metaData.Ordinal);
-                    _lastColumnWithDataChunkRead = metaData.Ordinal;
+                    _currentStream = new SqlSequentialStream(this, metaData.ordinal);
+                    _lastColumnWithDataChunkRead = metaData.ordinal;
                     return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true, async: isAsync);
                 }
                 else
@@ -2925,11 +2925,11 @@ namespace Microsoft.Data.SqlClient
             else if (typeof(T) == typeof(TextReader))
             {
                 // Xml type is not supported
-                MetaType metaType = metaData.MetaType;
-                if (metaData.CipherMD != null)
+                MetaType metaType = metaData.metaType;
+                if (metaData.cipherMD != null)
                 {
-                    Debug.Assert(metaData.BaseTI != null, "_metaData[i].baseTI should not be null.");
-                    metaType = metaData.BaseTI.MetaType;
+                    Debug.Assert(metaData.baseTI != null, "_metaData[i].baseTI should not be null.");
+                    metaType = metaData.baseTI.metaType;
                 }
 
                 if (
@@ -2937,25 +2937,25 @@ namespace Microsoft.Data.SqlClient
                     (metaType.SqlDbType == SqlDbType.Xml)
                 )
                 {
-                    throw SQL.TextReaderNotSupportOnColumnType(metaData.Column);
+                    throw SQL.TextReaderNotSupportOnColumnType(metaData.column);
                 }
 
                 // For non-variant types with sequential access, we support proper streaming
                 if ((metaType.SqlDbType != SqlDbType.Variant) && IsCommandBehavior(CommandBehavior.SequentialAccess))
                 {
-                    if (metaData.CipherMD != null)
+                    if (metaData.cipherMD != null)
                     {
-                        throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(metaData.Column);
+                        throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(metaData.column);
                     }
 
                     System.Text.Encoding encoding = SqlUnicodeEncoding.SqlUnicodeEncodingInstance;
                     if (!metaType.IsNCharType)
                     {
-                        encoding = metaData.Encoding;
+                        encoding = metaData.encoding;
                     }
 
-                    _currentTextReader = new SqlSequentialTextReader(this, metaData.Ordinal, encoding);
-                    _lastColumnWithDataChunkRead = metaData.Ordinal;
+                    _currentTextReader = new SqlSequentialTextReader(this, metaData.ordinal, encoding);
+                    _lastColumnWithDataChunkRead = metaData.ordinal;
                     return (T)(object)_currentTextReader;
                 }
                 else
@@ -2967,25 +2967,25 @@ namespace Microsoft.Data.SqlClient
             }
             else if (typeof(T) == typeof(Stream))
             {
-                if (metaData != null && metaData.CipherMD != null)
+                if (metaData != null && metaData.cipherMD != null)
                 {
-                    throw SQL.StreamNotSupportOnEncryptedColumn(metaData.Column);
+                    throw SQL.StreamNotSupportOnEncryptedColumn(metaData.column);
                 }
 
                 // Stream is only for Binary, Image, VarBinary, Udt, Xml and Timestamp(RowVersion) types
-                MetaType metaType = metaData.MetaType;
+                MetaType metaType = metaData.metaType;
                 if (
                     (!metaType.IsBinType || metaType.SqlDbType == SqlDbType.Timestamp) && 
                     metaType.SqlDbType != SqlDbType.Variant
                 )
                 {
-                    throw SQL.StreamNotSupportOnColumnType(metaData.Column);
+                    throw SQL.StreamNotSupportOnColumnType(metaData.column);
                 }
 
                 if ((metaType.SqlDbType != SqlDbType.Variant) && (IsCommandBehavior(CommandBehavior.SequentialAccess)))
                 {
-                    _currentStream = new SqlSequentialStream(this, metaData.Ordinal);
-                    _lastColumnWithDataChunkRead = metaData.Ordinal;
+                    _currentStream = new SqlSequentialStream(this, metaData.ordinal);
+                    _lastColumnWithDataChunkRead = metaData.ordinal;
                     return (T)(object)_currentStream;
                 }
                 else
@@ -3191,7 +3191,7 @@ namespace Microsoft.Data.SqlClient
                             if (_altRowStatus == ALTROWSTATUS.Null)
                             {
                                 // cache the regular metadata
-                                _altMetaDataSetCollection.MetaDataSet = _metaData;
+                                _altMetaDataSetCollection.metaDataSet = _metaData;
                                 _metaData = null;
                             }
                             else
@@ -3448,7 +3448,7 @@ namespace Microsoft.Data.SqlClient
                                     break;
                                 case ALTROWSTATUS.Done:
                                     // restore the row-metaData
-                                    _metaData = _altMetaDataSetCollection.MetaDataSet;
+                                    _metaData = _altMetaDataSetCollection.metaDataSet;
                                     Debug.Assert(_altRowStatus == ALTROWSTATUS.Done, "invalid AltRowStatus");
                                     _altRowStatus = ALTROWSTATUS.Null;
                                     break;
@@ -3785,7 +3785,7 @@ namespace Microsoft.Data.SqlClient
 
                 TdsOperationStatus result = _parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)_sharedState._columnDataBytesRemaining, _stateObj,
                     _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                    columnMetaData.Column);
+                    columnMetaData.column);
                 if (result != TdsOperationStatus.Done)
                 {
                     // will read UDTs as VARBINARY.
@@ -3835,7 +3835,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(i == _sharedState._nextColumnDataToRead ||                                                          // Either we haven't read the column yet
                         ((i + 1 < _sharedState._nextColumnDataToRead) && (IsCommandBehavior(CommandBehavior.SequentialAccess))) ||   // Or we're in sequential mode and we've read way past the column (i.e. it was not the last column we read)
                         (!_data[i].IsEmpty || _data[i].IsNull) ||                                                       // Or we should have data stored for the column (unless the column was null)
-                        (_metaData[i].Type == SqlDbType.Timestamp),                                                     // Or SqlClient: IsDBNull always returns false for timestamp datatype
+                        (_metaData[i].type == SqlDbType.Timestamp),                                                     // Or SqlClient: IsDBNull always returns false for timestamp datatype
 
                         "Gone past column, be we have no data stored for it");
                     return TdsOperationStatus.Done;
@@ -3914,7 +3914,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (isNull)
                         {
-                            if (columnMetaData.Type != SqlDbType.Timestamp)
+                            if (columnMetaData.type != SqlDbType.Timestamp)
                             {
                                 TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
                                     columnMetaData,
@@ -3930,7 +3930,7 @@ namespace Microsoft.Data.SqlClient
                                 // state so there are no remaining bytes and advance the next column to read
                                 result = _parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)dataLength, _stateObj,
                                     _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                    columnMetaData.Column);
+                                    columnMetaData.column);
                                 if (result != TdsOperationStatus.Done)
                                 {
                                     // will read UDTs as VARBINARY.
@@ -3966,7 +3966,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Trigger new behavior for RowVersion to send DBNull.Value by allowing entry for Timestamp or discard entry for Timestamp for legacy support.
                     // if LegacyRowVersionNullBehavior is enabled, Timestamp type must enter "else" block.
-                    if (isNull && (!LocalAppContextSwitches.LegacyRowVersionNullBehavior || columnMetaData.Type != SqlDbType.Timestamp))
+                    if (isNull && (!LocalAppContextSwitches.LegacyRowVersionNullBehavior || columnMetaData.type != SqlDbType.Timestamp))
                     {
                         TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
                                 columnMetaData,
@@ -3987,7 +3987,7 @@ namespace Microsoft.Data.SqlClient
                             // can read it out of order
                             result = _parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)dataLength, _stateObj,
                                 _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                columnMetaData.Column, _command);
+                                columnMetaData.column, _command);
                             if (result != TdsOperationStatus.Done)
                             {
                                 // will read UDTs as VARBINARY.
@@ -4023,7 +4023,7 @@ namespace Microsoft.Data.SqlClient
         {
             AssertReaderState(requireData: true, permitAsync: true, columnIndex: targetColumn);
 
-            if ((_lastColumnWithDataChunkRead == _sharedState._nextColumnDataToRead) && (_metaData[_lastColumnWithDataChunkRead].MetaType.IsPlp))
+            if ((_lastColumnWithDataChunkRead == _sharedState._nextColumnDataToRead) && (_metaData[_lastColumnWithDataChunkRead].metaType.IsPlp))
             {
                 // In the middle of reading a Plp - no idea how much is left
                 return false;
@@ -4059,22 +4059,22 @@ namespace Microsoft.Data.SqlClient
                 if (!_stateObj.IsNullCompressionBitSet(currentColumn))
                 {
                     // NOTE: This is mostly duplicated from TryProcessColumnHeaderNoNBC and TryGetTokenLength
-                    var metaType = _metaData[currentColumn].MetaType;
+                    var metaType = _metaData[currentColumn].metaType;
                     if ((metaType.IsLong) || (metaType.IsPlp) || (metaType.SqlDbType == SqlDbType.Udt) || (metaType.SqlDbType == SqlDbType.Structured))
                     {
                         // Plp, Udt and TVP types have an unknowable size - so return that the estimate failed
                         return false;
                     }
                     int maxHeaderSize;
-                    byte typeAndMask = (byte)(_metaData[currentColumn].TdsType & TdsEnums.SQLLenMask);
+                    byte typeAndMask = (byte)(_metaData[currentColumn].tdsType & TdsEnums.SQLLenMask);
                     if ((typeAndMask == TdsEnums.SQLVarLen) || (typeAndMask == TdsEnums.SQLVarCnt))
                     {
-                        if (0 != (_metaData[currentColumn].TdsType & 0x80))
+                        if (0 != (_metaData[currentColumn].tdsType & 0x80))
                         {
                             // UInt16 represents size
                             maxHeaderSize = 2;
                         }
-                        else if (0 == (_metaData[currentColumn].TdsType & 0x0c))
+                        else if (0 == (_metaData[currentColumn].tdsType & 0x0c))
                         {
                             // UInt32 represents size
                             maxHeaderSize = 4;
@@ -4093,7 +4093,7 @@ namespace Microsoft.Data.SqlClient
                     bytesRemaining = checked(bytesRemaining - maxHeaderSize);
                     if ((currentColumn < targetColumn) || (!headerOnly))
                     {
-                        bytesRemaining = checked(bytesRemaining - _metaData[currentColumn].Length);
+                        bytesRemaining = checked(bytesRemaining - _metaData[currentColumn].length);
                     }
                 }
 
@@ -4113,7 +4113,7 @@ namespace Microsoft.Data.SqlClient
             // If we haven't already entirely read the column
             if (_sharedState._nextColumnDataToRead < _sharedState._nextColumnHeaderToRead)
             {
-                if ((_sharedState._nextColumnHeaderToRead > 0) && (_metaData[_sharedState._nextColumnHeaderToRead - 1].MetaType.IsPlp))
+                if ((_sharedState._nextColumnHeaderToRead > 0) && (_metaData[_sharedState._nextColumnHeaderToRead - 1].metaType.IsPlp))
                 {
                     if (_stateObj._longlen != 0)
                     {
@@ -5830,19 +5830,19 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                if (_metaData == null || _metaData.DbColumnSchema == null)
+                if (_metaData == null || _metaData.dbColumnSchema == null)
                 {
                     if (this.MetaData != null)
                     {
 
-                        _metaData.DbColumnSchema = BuildColumnSchema();
-                        Debug.Assert(_metaData.DbColumnSchema != null, "No schema information yet!");
+                        _metaData.dbColumnSchema = BuildColumnSchema();
+                        Debug.Assert(_metaData.dbColumnSchema != null, "No schema information yet!");
                         // filter table?
                     }
                 }
                 if (_metaData != null)
                 {
-                    return _metaData.DbColumnSchema;
+                    return _metaData.dbColumnSchema;
                 }
                 return s_emptySchema;
             }
@@ -5865,13 +5865,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     dbColumn.SqlNumericScale = MetaType.MetaNVarChar.Scale;
                 }
-                else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.Scale)
+                else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale)
                 {
-                    dbColumn.SqlNumericScale = col.Scale;
+                    dbColumn.SqlNumericScale = col.scale;
                 }
                 else
                 {
-                    dbColumn.SqlNumericScale = col.MetaType.Scale;
+                    dbColumn.SqlNumericScale = col.metaType.Scale;
                 }
 
                 if (_browseModeInfoConsumed)

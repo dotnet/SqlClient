@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient
                 return "null";
 
             // Here we mimic how ADAL calculates hash for token. They use UTF8 instead of Unicode.
-            var originalTokenString = SqlAuthenticationToken.AccessTokenStringFromBytes(token.AccessToken);
+            var originalTokenString = SqlAuthenticationToken.AccessTokenStringFromBytes(token.accessToken);
             var bytesInUtf8 = Encoding.UTF8.GetBytes(originalTokenString);
             using (var sha256 = SHA256.Create())
             {

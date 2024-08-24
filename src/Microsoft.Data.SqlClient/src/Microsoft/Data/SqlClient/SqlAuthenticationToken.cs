@@ -40,9 +40,9 @@ namespace Microsoft.Data.SqlClient
             var tokenBytes = AccessTokenBytesFromString(AccessToken);
             return new SqlFedAuthToken
             {
-                AccessToken = tokenBytes,
-                DataLen = (uint)tokenBytes.Length,
-                ExpirationFileTime = ExpiresOn.ToFileTime()
+                accessToken = tokenBytes,
+                dataLen = (uint)tokenBytes.Length,
+                expirationFileTime = ExpiresOn.ToFileTime()
             };
         }
 

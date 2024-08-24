@@ -59,29 +59,29 @@ namespace Microsoft.Data.SqlClient
 #endif
             SqlConnectionEncryptOption encrypt)
         {
-            _physicalStateObj.SetTimeoutSeconds(rec.Timeout);
+            _physicalStateObj.SetTimeoutSeconds(rec.timeout);
 
             Debug.Assert(recoverySessionData == null || (requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0, "Recovery session data without session recovery feature request");
-            Debug.Assert(TdsEnums.MAXLEN_HOSTNAME >= rec.HostName.Length, "_workstationId.Length exceeds the max length for this value");
+            Debug.Assert(TdsEnums.MAXLEN_HOSTNAME >= rec.hostName.Length, "_workstationId.Length exceeds the max length for this value");
 
-            Debug.Assert(!(rec.UseSspi && _connHandler._fedAuthRequired), "Cannot use SSPI when server has responded 0x01 for FedAuthRequired PreLogin Option.");
-            Debug.Assert(!rec.UseSspi || (requestedFeatures & TdsEnums.FeatureExtension.FedAuth) == 0, "Cannot use both SSPI and FedAuth");
+            Debug.Assert(!(rec.useSSPI && _connHandler._fedAuthRequired), "Cannot use SSPI when server has responded 0x01 for FedAuthRequired PreLogin Option.");
+            Debug.Assert(!rec.useSSPI || (requestedFeatures & TdsEnums.FeatureExtension.FedAuth) == 0, "Cannot use both SSPI and FedAuth");
             Debug.Assert(fedAuthFeatureExtensionData == null || (requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0, "fedAuthFeatureExtensionData provided without fed auth feature request");
             Debug.Assert(fedAuthFeatureExtensionData != null || (requestedFeatures & TdsEnums.FeatureExtension.FedAuth) == 0, "Fed Auth feature requested without specifying fedAuthFeatureExtensionData.");
 
-            Debug.Assert(rec.UserName == null || (rec.UserName != null && TdsEnums.MAXLEN_CLIENTID >= rec.UserName.Length), "_userID.Length exceeds the max length for this value");
-            Debug.Assert(rec.Credential == null || (rec.Credential != null && TdsEnums.MAXLEN_CLIENTID >= rec.Credential.UserId.Length), "_credential.UserId.Length exceeds the max length for this value");
+            Debug.Assert(rec.userName == null || (rec.userName != null && TdsEnums.MAXLEN_CLIENTID >= rec.userName.Length), "_userID.Length exceeds the max length for this value");
+            Debug.Assert(rec.credential == null || (rec.credential != null && TdsEnums.MAXLEN_CLIENTID >= rec.credential.UserId.Length), "_credential.UserId.Length exceeds the max length for this value");
 
-            Debug.Assert(rec.Password == null || (rec.Password != null && TdsEnums.MAXLEN_CLIENTSECRET >= rec.Password.Length), "_password.Length exceeds the max length for this value");
-            Debug.Assert(rec.Credential == null || (rec.Credential != null && TdsEnums.MAXLEN_CLIENTSECRET >= rec.Credential.Password.Length), "_credential.Password.Length exceeds the max length for this value");
+            Debug.Assert(rec.password == null || (rec.password != null && TdsEnums.MAXLEN_CLIENTSECRET >= rec.password.Length), "_password.Length exceeds the max length for this value");
+            Debug.Assert(rec.credential == null || (rec.credential != null && TdsEnums.MAXLEN_CLIENTSECRET >= rec.credential.Password.Length), "_credential.Password.Length exceeds the max length for this value");
 
-            Debug.Assert(rec.Credential != null || rec.UserName != null || rec.Password != null, "cannot mix the new secure password system and the connection string based password");
-            Debug.Assert(rec.NewSecurePassword != null || rec.NewPassword != null, "cannot have both new secure change password and string based change password");
-            Debug.Assert(TdsEnums.MAXLEN_APPNAME >= rec.ApplicationName.Length, "_applicationName.Length exceeds the max length for this value");
-            Debug.Assert(TdsEnums.MAXLEN_SERVERNAME >= rec.ServerName.Length, "_dataSource.Length exceeds the max length for this value");
-            Debug.Assert(TdsEnums.MAXLEN_LANGUAGE >= rec.Language.Length, "_currentLanguage .Length exceeds the max length for this value");
-            Debug.Assert(TdsEnums.MAXLEN_DATABASE >= rec.Database.Length, "_initialCatalog.Length exceeds the max length for this value");
-            Debug.Assert(TdsEnums.MAXLEN_ATTACHDBFILE >= rec.AttachDbFilename.Length, "_attachDBFileName.Length exceeds the max length for this value");
+            Debug.Assert(rec.credential != null || rec.userName != null || rec.password != null, "cannot mix the new secure password system and the connection string based password");
+            Debug.Assert(rec.newSecurePassword != null || rec.newPassword != null, "cannot have both new secure change password and string based change password");
+            Debug.Assert(TdsEnums.MAXLEN_APPNAME >= rec.applicationName.Length, "_applicationName.Length exceeds the max length for this value");
+            Debug.Assert(TdsEnums.MAXLEN_SERVERNAME >= rec.serverName.Length, "_dataSource.Length exceeds the max length for this value");
+            Debug.Assert(TdsEnums.MAXLEN_LANGUAGE >= rec.language.Length, "_currentLanguage .Length exceeds the max length for this value");
+            Debug.Assert(TdsEnums.MAXLEN_DATABASE >= rec.database.Length, "_initialCatalog.Length exceeds the max length for this value");
+            Debug.Assert(TdsEnums.MAXLEN_ATTACHDBFILE >= rec.attachDBFilename.Length, "_attachDBFileName.Length exceeds the max length for this value");
 
             Debug.Assert(_connHandler != null, "SqlConnectionInternalTds handler can not be null at this point.");
             _connHandler!.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
@@ -121,25 +121,25 @@ namespace Microsoft.Data.SqlClient
 
             string userName;
 
-            if (rec.Credential != null)
+            if (rec.credential != null)
             {
-                userName = rec.Credential.UserId;
-                encryptedPasswordLengthInBytes = rec.Credential.Password.Length * 2;
+                userName = rec.credential.UserId;
+                encryptedPasswordLengthInBytes = rec.credential.Password.Length * 2;
             }
             else
             {
-                userName = rec.UserName;
-                encryptedPassword = TdsParserStaticMethods.ObfuscatePassword(rec.Password);
+                userName = rec.userName;
+                encryptedPassword = TdsParserStaticMethods.ObfuscatePassword(rec.password);
                 encryptedPasswordLengthInBytes = encryptedPassword.Length;  // password in clear text is already encrypted and its length is in byte
             }
 
-            if (rec.NewSecurePassword != null)
+            if (rec.newSecurePassword != null)
             {
-                encryptedChangePasswordLengthInBytes = rec.NewSecurePassword.Length * 2;
+                encryptedChangePasswordLengthInBytes = rec.newSecurePassword.Length * 2;
             }
             else
             {
-                encryptedChangePassword = TdsParserStaticMethods.ObfuscatePassword(rec.NewPassword);
+                encryptedChangePassword = TdsParserStaticMethods.ObfuscatePassword(rec.newPassword);
                 encryptedChangePasswordLengthInBytes = encryptedChangePassword.Length;
             }
 
@@ -156,10 +156,10 @@ namespace Microsoft.Data.SqlClient
             //
             checked
             {
-                length += (rec.HostName.Length + rec.ApplicationName.Length +
-                            rec.ServerName.Length + clientInterfaceName.Length +
-                            rec.Language.Length + rec.Database.Length +
-                            rec.AttachDbFilename.Length) * 2;
+                length += (rec.hostName.Length + rec.applicationName.Length +
+                            rec.serverName.Length + clientInterfaceName.Length +
+                            rec.language.Length + rec.database.Length +
+                            rec.attachDBFilename.Length) * 2;
                 if (useFeatureExt)
                 {
                     length += 4;
@@ -172,7 +172,7 @@ namespace Microsoft.Data.SqlClient
             uint outSSPILength = 0;
 
             // only add lengths of password and username if not using SSPI or requesting federated authentication info
-            if (!rec.UseSspi && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
+            if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
             {
                 checked
                 {
@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                if (rec.UseSspi)
+                if (rec.useSSPI)
                 {
                     // now allocate proper length of buffer, and set length
                     outSSPILength = _authenticationProvider.MaxSSPILength;
