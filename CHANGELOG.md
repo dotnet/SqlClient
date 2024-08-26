@@ -15,7 +15,7 @@ This update brings the below changes over the previous release:
 
 ### Added
 
-- Added `TokenCredential` object to take advantage of token caching in . [#2380](https://github.com/dotnet/SqlClient/pull/2380)
+- Added `TokenCredential` object to take advantage of token caching in `ActiveDirectoryAuthenticationProvider`. [#2380](https://github.com/dotnet/SqlClient/pull/2380)
 - Added `DateOnly` and `TimeOnly` support to `DataTable` as a structured parameter. [#2258](https://github.com/dotnet/SqlClient/pull/2258)
 - Added `Microsoft.Data.SqlClient.Diagnostics.SqlClientDiagnostic` type in .NET. [#2226](https://github.com/dotnet/SqlClient/pull/2226)
 - Added scope trace for `GenerateSspiClientContext`. [#2497](https://github.com/dotnet/SqlClient/pull/2497), [#2725](https://github.com/dotnet/SqlClient/pull/2725)
@@ -29,7 +29,7 @@ This update brings the below changes over the previous release:
 - Fixed SSPI retry negotiation with default port in .NET. [#2559](https://github.com/dotnet/SqlClient/pull/2559)
 - Fixed assembly path in .NET 8.0 and `.AssemblyAttributes`. [#2550](https://github.com/dotnet/SqlClient/pull/2550)
 - Fixed certificate chain validation. [#2487](https://github.com/dotnet/SqlClient/pull/2487)
-- Fixed clone of `SqlConnection` and included `AccessTokenCallback`. [#2525](https://github.com/dotnet/SqlClient/pull/2525)
+- Fixed clone of `SqlConnection` to include `AccessTokenCallback`. [#2525](https://github.com/dotnet/SqlClient/pull/2525)
 - Fixed issue with `DateTimeOffset` in table-valued parameters, which was introduced in 5.2. [#2453](https://github.com/dotnet/SqlClient/pull/2453)
 - Fixed `ArgumentNullException` on `SqlDataRecord.GetValue` when using user-defined data type on .NET. [#2448](https://github.com/dotnet/SqlClient/pull/2448)
 - Fixed `SqlBuffer` and `SqlGuild` when it's null. [#2310](https://github.com/dotnet/SqlClient/pull/2310)
