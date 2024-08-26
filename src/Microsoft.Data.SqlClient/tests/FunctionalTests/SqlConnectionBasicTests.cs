@@ -269,6 +269,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryMSI)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryDefault)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials)]
         public void ConnectionTestInvalidCredentialAndAuthentication(SqlAuthenticationMethod authentication)
         {
             var connectionString = $"Authentication={authentication}";

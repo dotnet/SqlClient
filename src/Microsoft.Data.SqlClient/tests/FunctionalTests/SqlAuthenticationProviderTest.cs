@@ -18,6 +18,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryMSI)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryDefault)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials)]
         public void DefaultAuthenticationProviders(SqlAuthenticationMethod method)
         {
             Assert.IsType<ActiveDirectoryAuthenticationProvider>(SqlAuthenticationProvider.GetProvider(method));

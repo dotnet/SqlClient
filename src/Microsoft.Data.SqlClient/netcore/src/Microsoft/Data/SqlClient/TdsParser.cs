@@ -8314,6 +8314,9 @@ namespace Microsoft.Data.SqlClient
                             case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYWORKLOADIDENTITY;
                                 break;
+                            case SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYFEDERATEDIDENTITYCREDENTIALS;
+                                break;
                             default:
                                 if (_connHandler._accessTokenCallback != null)
                                 {

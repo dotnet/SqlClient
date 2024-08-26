@@ -61,6 +61,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Federated Identity Credentials authentication unavailable. The required environment variables are not fully configured..
+        /// </summary>
+        internal static string AAD_FIC_Invalid_Setup {
+            get {
+                return ResourceManager.GetString("AAD_FIC_Invalid_Setup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Connection timed out while retrieving an access token using &apos;{0}&apos; authentication method. Last error: {1}: {2}.
         /// </summary>
         internal static string AAD_Token_Retrieving_Timeout {

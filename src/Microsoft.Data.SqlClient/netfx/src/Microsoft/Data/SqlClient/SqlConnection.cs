@@ -410,6 +410,11 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
                 }
 
+                if (UsesActiveDirectoryFederatedIdentityCredentials(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryFederatedIdentityCredentialsString);
+                }
+
                 Credential = credential;
             }
             // else
@@ -638,6 +643,11 @@ namespace Microsoft.Data.SqlClient
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
         }
 
+        private bool UsesActiveDirectoryFederatedIdentityCredentials(SqlConnectionString opt)
+        {
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryFederatedIdentityCredentials;
+        }
+
         private bool UsesAuthentication(SqlConnectionString opt)
         {
             return opt != null && opt.Authentication != SqlAuthenticationMethod.NotSpecified;
@@ -848,6 +858,10 @@ namespace Microsoft.Data.SqlClient
                         else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
                         {
                             throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+                        }
+                        else if (UsesActiveDirectoryFederatedIdentityCredentials(connectionOptions))
+                        {
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryFederatedIdentityCredentialsString);
                         }
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -1201,6 +1215,10 @@ namespace Microsoft.Data.SqlClient
                     else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
                     {
                         throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+                    }
+                    else if (UsesActiveDirectoryFederatedIdentityCredentials(connectionOptions))
+                    {
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryFederatedIdentityCredentialsString);
                     }
 
                     CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
