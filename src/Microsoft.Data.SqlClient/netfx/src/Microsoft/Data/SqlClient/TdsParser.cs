@@ -6910,6 +6910,12 @@ namespace Microsoft.Data.SqlClient
                                 // call to decrypt column keys has failed. The data wont be decrypted.
                                 // Not setting the value to false, forces the driver to look for column value.
                                 // Packet received from Key Vault will throws invalid token header.
+                                if (stateObj._pendingData)
+                                {
+                                    // Drain the pending data now if setting the HasPendingData to false.
+                                    // SqlDataReader.TryCloseInternal can not drain if HasPendingData = false.
+                                    DrainData(stateObj);
+                                }
                                 stateObj._pendingData = false;
                             }
                             throw SQL.ColumnDecryptionFailed(columnName, null, e);
