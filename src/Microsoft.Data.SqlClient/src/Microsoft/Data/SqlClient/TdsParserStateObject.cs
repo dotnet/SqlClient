@@ -298,7 +298,7 @@ namespace Microsoft.Data.SqlClient
         internal TdsParserStateObject(TdsParser parser)
         {
             // Construct a physical connection
-            Debug.Assert(null != parser, "no parser?");
+            Debug.Assert(parser != null, "no parser?");
             _parser = parser;
             _onTimeoutAsync = OnTimeoutAsync;
 
@@ -411,7 +411,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool HasOwner => _owner.TryGetTarget(out object _);
+        internal bool HasOwner => _owner.TryGetTarget(out _);
 
         internal TdsParser Parser => _parser;
 
@@ -1654,7 +1654,7 @@ namespace Microsoft.Data.SqlClient
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadStringWithEncoding");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
-            if (null == encoding)
+            if (encoding == null)
             {
                 // Need to skip the current column before throwing the error - this ensures that the state shared between this and the data reader is consistent when calling DrainData
                 if (isPlp)

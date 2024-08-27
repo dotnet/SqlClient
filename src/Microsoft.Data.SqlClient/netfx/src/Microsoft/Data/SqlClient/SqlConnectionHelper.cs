@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 Microsoft.Data.ProviderBase.DbConnectionPoolGroup poolGroup = PoolGroup;
-                return ((null != poolGroup) ? poolGroup.ConnectionOptions : null);
+                return poolGroup != null ? poolGroup.ConnectionOptions : null;
             }
         }
 
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);
             bool hidePassword = InnerConnection.ShouldHidePassword;
             DbConnectionOptions connectionOptions = UserConnectionOptions;
-            return ((null != connectionOptions) ? connectionOptions.UsersConnectionString(hidePassword) : "");
+            return connectionOptions != null ? connectionOptions.UsersConnectionString(hidePassword) : "";
         }
 
         private void ConnectionString_Set(string value)
@@ -153,7 +153,7 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 // when a poolgroup expires and the connection eventually activates, the pool entry will be replaced
-                Debug.Assert(null != value, "null poolGroup");
+                Debug.Assert(value != null, "null poolGroup");
                 _poolGroup = value;
             }
         }
@@ -243,7 +243,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.EnlistDistributedTransactionHelper|RES|TRAN> {0}, Connection enlisting in a transaction.", ObjectID);
             Transaction indigoTransaction = null;
 
-            if (null != transaction)
+            if (transaction != null)
             {
                 indigoTransaction = TransactionInterop.GetTransactionFromDtcTransaction((IDtcTransaction)transaction);
             }
@@ -342,14 +342,14 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
 
             Microsoft.Data.ProviderBase.DbConnectionPoolGroup poolGroup = PoolGroup;
-            DbConnectionOptions connectionOptions = ((null != poolGroup) ? poolGroup.ConnectionOptions : null);
-            if ((null == connectionOptions) || connectionOptions.IsEmpty)
+            DbConnectionOptions connectionOptions = poolGroup != null ? poolGroup.ConnectionOptions : null;
+            if (connectionOptions == null || connectionOptions.IsEmpty)
             {
                 throw ADP.NoConnectionString();
             }
 
             DbConnectionOptions userConnectionOptions = UserConnectionOptions;
-            Debug.Assert(null != userConnectionOptions, "null UserConnectionOptions");
+            Debug.Assert(userConnectionOptions != null, "null UserConnectionOptions");
 
             userConnectionOptions.DemandPermission();
         }
@@ -364,8 +364,8 @@ namespace Microsoft.Data.SqlClient
         internal void SetInnerConnectionEvent(DbConnectionInternal to)
         {
             // Set's the internal connection without verifying that it's a specific value
-            Debug.Assert(null != _innerConnection, "null InnerConnection");
-            Debug.Assert(null != to, "to null InnerConnection");
+            Debug.Assert(_innerConnection != null, "null InnerConnection");
+            Debug.Assert(to != null, "to null InnerConnection");
 
             ConnectionState originalState = _innerConnection.State & ConnectionState.Open;
             ConnectionState currentState = to.State & ConnectionState.Open;
@@ -406,9 +406,9 @@ namespace Microsoft.Data.SqlClient
         internal bool SetInnerConnectionFrom(DbConnectionInternal to, DbConnectionInternal from)
         {
             // Set's the internal connection, verifying that it's a specific value before doing so.
-            Debug.Assert(null != _innerConnection, "null InnerConnection");
-            Debug.Assert(null != from, "from null InnerConnection");
-            Debug.Assert(null != to, "to null InnerConnection");
+            Debug.Assert(_innerConnection != null, "null InnerConnection");
+            Debug.Assert(from != null, "from null InnerConnection");
+            Debug.Assert(to != null, "to null InnerConnection");
 
             bool result = (from == Interlocked.CompareExchange<DbConnectionInternal>(ref _innerConnection, to, from));
             return result;
@@ -419,8 +419,8 @@ namespace Microsoft.Data.SqlClient
         internal void SetInnerConnectionTo(DbConnectionInternal to)
         {
             // Set's the internal connection without verifying that it's a specific value
-            Debug.Assert(null != _innerConnection, "null InnerConnection");
-            Debug.Assert(null != to, "to null InnerConnection");
+            Debug.Assert(_innerConnection != null, "null InnerConnection");
+            Debug.Assert(to != null, "to null InnerConnection");
             _innerConnection = to;
         }
 

@@ -2228,7 +2228,7 @@ namespace Microsoft.Data.SqlClient
         {
             // Create and throw an exception array
             SqlErrorCollection sqlErs = new SqlErrorCollection();
-            Exception exceptionToInclude = (null != e.InnerException) ? e.InnerException : e;
+            Exception exceptionToInclude = e.InnerException != null ? e.InnerException : e;
             sqlErs.Add(new SqlError(infoNumber: 0, errorState: (byte)0x00, errorClass: (byte)TdsEnums.MIN_ERROR_CLASS, server: serverName, errorMessage: errorMessage, procedure: null, lineNumber: 0));
 
             if (e is SqlException)

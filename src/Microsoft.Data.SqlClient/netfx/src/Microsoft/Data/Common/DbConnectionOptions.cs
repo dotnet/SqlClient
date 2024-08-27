@@ -59,7 +59,7 @@ namespace Microsoft.Data.Common
             int copyPosition = 0;
 
             StringBuilder builder = new(_usersConnectionString.Length);
-            for (NameValuePair current = _keyChain; null != current; current = current.Next)
+            for (NameValuePair current = _keyChain; current != null; current = current.Next)
             {
                 if ((current.Name == keyword) && (current.Value == this[keyword]))
                 {
@@ -88,11 +88,11 @@ namespace Microsoft.Data.Common
             ADP.CheckArgumentNull(builder, nameof(builder));
             ADP.CheckArgumentLength(keyName, nameof(keyName));
 
-            if ((null == keyName) || !s_connectionStringValidKeyRegex.IsMatch(keyName))
+            if (keyName == null || !s_connectionStringValidKeyRegex.IsMatch(keyName))
             {
                 throw ADP.InvalidKeyname(keyName);
             }
-            if ((null != keyValue) && !IsValueValidInternal(keyValue))
+            if (keyValue != null && !IsValueValidInternal(keyValue))
             {
                 throw ADP.InvalidValue(keyName);
             }
@@ -112,7 +112,7 @@ namespace Microsoft.Data.Common
             }
             builder.Append("=");
 
-            if (null != keyValue)
+            if (keyValue != null)
             { // else <keyword>=;
                 if (useOdbcRules)
                 {
@@ -165,16 +165,16 @@ namespace Microsoft.Data.Common
         internal static string ExpandDataDirectory(string keyword, string value, ref string datadir)
         {
             string fullPath = null;
-            if ((null != value) && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase))
+            if (value != null && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase))
             {
 
                 string rootFolderPath = datadir;
-                if (null == rootFolderPath)
+                if (rootFolderPath == null)
                 {
                     // find the replacement path
                     object rootFolderObject = AppDomain.CurrentDomain.GetData("DataDirectory");
                     rootFolderPath = (rootFolderObject as string);
-                    if ((null != rootFolderObject) && (null == rootFolderPath))
+                    if (rootFolderObject != null && rootFolderPath == null)
                     {
                         throw ADP.InvalidDataDirectory();
                     }
@@ -182,7 +182,7 @@ namespace Microsoft.Data.Common
                     {
                         rootFolderPath = AppDomain.CurrentDomain.BaseDirectory;
                     }
-                    if (null == rootFolderPath)
+                    if (rootFolderPath == null)
                     {
                         rootFolderPath = "";
                     }

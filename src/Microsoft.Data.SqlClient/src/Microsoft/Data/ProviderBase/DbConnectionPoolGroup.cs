@@ -51,9 +51,9 @@ namespace Microsoft.Data.ProviderBase
 
         internal DbConnectionPoolGroup(DbConnectionOptions connectionOptions, DbConnectionPoolKey key, DbConnectionPoolGroupOptions poolGroupOptions)
         {
-            Debug.Assert(null != connectionOptions, "null connection options");
+            Debug.Assert(connectionOptions != null, "null connection options");
 #if NETFRAMEWORK
-            Debug.Assert(null == poolGroupOptions || ADP.s_isWindowsNT, "should not have pooling options on Win9x");
+            Debug.Assert(poolGroupOptions == null || ADP.s_isWindowsNT, "should not have pooling options on Win9x");
 #endif
 
             _connectionOptions = connectionOptions;
@@ -81,7 +81,7 @@ namespace Microsoft.Data.ProviderBase
             set
             {
                 _providerInfo = value;
-                if (null != value)
+                if (value != null)
                 {
                     _providerInfo.PoolGroup = this;
                 }
@@ -153,7 +153,7 @@ namespace Microsoft.Data.ProviderBase
             // PoolGroupOptions will only be null when we're not supposed to pool
             // connections.
             DbConnectionPool pool = null;
-            if (null != _poolGroupOptions)
+            if (_poolGroupOptions != null)
             {
 #if NETFRAMEWORK
                 Debug.Assert(ADP.s_isWindowsNT, "should not be pooling on Win9x");
@@ -177,7 +177,7 @@ namespace Microsoft.Data.ProviderBase
                     }
                 }
 
-                if (null != currentIdentity)
+                if (currentIdentity != null)
                 {
                     if (!_poolCollection.TryGetValue(currentIdentity, out pool)) // find the pool
                     {
@@ -224,7 +224,7 @@ namespace Microsoft.Data.ProviderBase
                 }
             }
 
-            if (null == pool)
+            if (pool == null)
             {
                 lock (this)
                 {

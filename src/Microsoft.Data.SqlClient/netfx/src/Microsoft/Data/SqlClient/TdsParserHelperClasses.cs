@@ -579,7 +579,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                Debug.Assert(null == value, "used only by SqlBulkCopy");
+                Debug.Assert(value == null, "used only by SqlBulkCopy");
                 _metaDataArray[index] = value;
             }
         }
@@ -871,7 +871,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal bool IsAlgorithmInitialized()
         {
-            return (null != _sqlClientEncryptionAlgorithm) ? true : false;
+            return _sqlClientEncryptionAlgorithm != null ? true : false;
         }
     }
 
@@ -960,7 +960,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal bool IsAlgorithmInitialized()
         {
-            if (null != cipherMD)
+            if (cipherMD != null)
             {
                 return cipherMD.IsAlgorithmInitialized();
             }
@@ -976,7 +976,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null != cipherMD)
+                if (cipherMD != null)
                 {
                     return cipherMD.NormalizationRuleVersion;
                 }
@@ -1293,7 +1293,7 @@ namespace Microsoft.Data.SqlClient
 
         private void ParseMultipartName()
         {
-            if (null != _multipartName)
+            if (_multipartName != null)
             {
                 string[] parts = MultipartIdentifier.ParseMultipartIdentifier(_multipartName, "[\"", "]\"", Strings.SQL_TDSParserTableName, false);
                 _serverName = parts[0];
