@@ -77,8 +77,6 @@ variables:
     value: ${{ parameters['MDS_PackageRef_Version'] }}
   - name: CurrentNetFxVersion
     value: ${{ parameters['CurrentNetFxVersion'] }}
-  - name: ProductVersion    #MDS product version (MDS validation)
-    value: $(NUGETPACKAGEVERSION)
 
 resources:
   repositories: 
@@ -158,6 +156,7 @@ extends:
       - template: eng/pipelines/common/templates/jobs/validate-signed-package-job.yml@self
         parameters:
           packageFolderName: $(packageFolderName)
+          isPreview: ${{ parameters['isPreview'] }}
           downloadPackageStep:
             download: current
             artifact: $(packageFolderName)
@@ -167,6 +166,7 @@ extends:
       - template: eng/pipelines/common/templates/jobs/run-tests-package-reference-job.yml@self
         parameters:
           packageFolderName: $(packageFolderName)
+          isPreview: ${{ parameters['isPreview'] }}
           downloadPackageStep:
             download: current
             artifact: $(packageFolderName)
