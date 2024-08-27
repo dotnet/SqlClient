@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 6.0.0-preview1.?.?] - 2024-08-?
+## [Preview Release 6.0.0-preview1.24240.8] - 2024-08-27
 
 This update brings the below changes over the previous release:
 
