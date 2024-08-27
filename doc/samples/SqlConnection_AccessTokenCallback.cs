@@ -1,8 +1,7 @@
-using System;
-using System.Data;
 // <Snippet1>
-using Microsoft.Data.SqlClient;
+using Azure.Core;
 using Azure.Identity;
+using Microsoft.Data.SqlClient;
 
 class Program
 {
@@ -12,25 +11,31 @@ class Program
         Console.ReadLine();
     }
 
+    const string defaultScopeSuffix = "/.default";
+    // Reuse the credential object to take advantage of the underlying token cache
+    private static DefaultAzureCredential credential = new();
+
+    // Use a shared callback function for connections that should be in the same connection pool
+    private static Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> myAccessTokenCallback =
+        async (authParams, cancellationToken) =>
+        {
+            string scope = authParams.Resource.EndsWith(defaultScopeSuffix)
+                ? authParams.Resource
+                : $"{authParams.Resource}{defaultScopeSuffix}";
+            AccessToken token = await credential.GetTokenAsync(
+                new TokenRequestContext([scope]),
+                cancellationToken);
+
+            return new SqlAuthenticationToken(token.Token, token.ExpiresOn);
+        };
+
     private static void OpenSqlConnection()
     {
-        const string defaultScopeSuffix = "/.default";
         string connectionString = GetConnectionString();
-        DefaultAzureCredential credential = new();
 
         using (SqlConnection connection = new(connectionString)
         {
-            AccessTokenCallback = async (authParams, cancellationToken) =>
-            {
-                string scope = authParams.Resource.EndsWith(defaultScopeSuffix)
-                    ? authParams.Resource
-                    : $"{authParams.Resource}{defaultScopeSuffix}";
-                AccessToken token = await credential.GetTokenAsync(
-                    new TokenRequestContext([scope]),
-                    cancellationToken);
-
-                return new SqlAuthenticationToken(token.Token, token.ExpiresOn);
-            }
+            AccessTokenCallback = myAccessTokenCallback
         })
         {
             connection.Open();
