@@ -216,12 +216,13 @@ This update brings the below changes over the previous release:
 - Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
 - Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
 
-## [Stable release 5.1.6] - 2024-08-09
+## [Stable release 5.1.6] - 2024-08-27
 
 ### Fixed
 
 - Fixed Transient fault handling issue with `OpenAsync`. [#1983](https://github.com/dotnet/SqlClient/pull/1983) [#2508](https://github.com/dotnet/SqlClient/pull/2508)
 - Fixed `AcquireTokenAsync` timeout handling for edge cases in `ActiveDirectoryAuthenticationProvider`. [#2706](https://github.com/dotnet/SqlClient/pull/2706)
+- Fixed pending data with `SqlDataReader` against an encrypted column. [#2618](https://github.com/dotnet/SqlClient/pull/2618) [#2818](https://github.com/dotnet/SqlClient/pull/2818)
 
 ### Changed
 
