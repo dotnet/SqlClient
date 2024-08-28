@@ -2,7 +2,7 @@
   <members name="ApplicationIntent">
     <ApplicationIntent>
       <summary>
-        Specifies a value for <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ApplicationIntent" />. Possible values are <see cref="Microsoft.Data.SqlClient.ApplicationIntent.ReadWrite" /> and <see cref="Microsoft.Data.SqlClient.ApplicationIntent.ReadOnly" />.
+        Specifies a value for <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ApplicationIntent" />. Possible values are <see cref="F:Microsoft.Data.SqlClient.ApplicationIntent.ReadWrite" /> and <see cref="F:Microsoft.Data.SqlClient.ApplicationIntent.ReadOnly" />.
       </summary>
     </ApplicationIntent>
     <ReadWrite>

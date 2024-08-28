@@ -178,7 +178,7 @@
         <see langword="true" /> if the specified authentication method is supported; otherwise, <see langword="false" />.
       </returns>
       <remarks>
-        The supported authentication modes with <see cref="Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> are:
+        The supported authentication modes with <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> are:
         <list type="bullet">
           <item>Active Directory Password</item>
           <item>Active Directory Integrated</item>
