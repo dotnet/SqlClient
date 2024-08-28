@@ -7,6 +7,7 @@ namespace Microsoft.Data.ProviderBase
     sealed internal partial class DbConnectionPoolIdentity
     {
         public static readonly DbConnectionPoolIdentity NoIdentity = new DbConnectionPoolIdentity(string.Empty, false, true);
+        private static DbConnectionPoolIdentity s_lastIdentity = null;
 
         private readonly string _sidString;
         private readonly bool _isRestricted;
@@ -43,13 +44,26 @@ namespace Microsoft.Data.ProviderBase
             return _hashCode;
         }
 
-        internal static DbConnectionPoolIdentity GetCurrentManaged()
+        private static DbConnectionPoolIdentity GetCurrentManaged()
         {
+            DbConnectionPoolIdentity current;
             string domainString = System.Environment.UserDomainName;
             string sidString = (!string.IsNullOrWhiteSpace(domainString) ? domainString + "\\" : "") + System.Environment.UserName;
             bool isNetwork = false;
             bool isRestricted = false;
-            return new DbConnectionPoolIdentity(sidString, isRestricted, isNetwork);
+
+            var lastIdentity = s_lastIdentity;
+
+            if ((lastIdentity != null) && (lastIdentity._sidString == sidString) && (lastIdentity._isRestricted == isRestricted) && (lastIdentity._isNetwork == isNetwork))
+            {
+                current = lastIdentity;
+            }
+            else
+            {
+                current = new DbConnectionPoolIdentity(sidString, isRestricted, isNetwork);
+            }
+            s_lastIdentity = current;
+            return current;
         }
     }
 }

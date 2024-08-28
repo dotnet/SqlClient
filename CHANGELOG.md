@@ -55,6 +55,23 @@ This update brings the below changes over the previous release:
 - Updated assembly version to 6.0.0.0. [#2382](https://github.com/dotnet/SqlClient/pull/2382)
 - Code health improvements: [#2366](https://github.com/dotnet/SqlClient/pull/2366), [#2369](https://github.com/dotnet/SqlClient/pull/2369), [#2381](https://github.com/dotnet/SqlClient/pull/2381), [#2390](https://github.com/dotnet/SqlClient/pull/2390), [#2392](https://github.com/dotnet/SqlClient/pull/2392), [#2403](https://github.com/dotnet/SqlClient/pull/2403), [#2410](https://github.com/dotnet/SqlClient/pull/2410), [#2413](https://github.com/dotnet/SqlClient/pull/2413), [#2425](https://github.com/dotnet/SqlClient/pull/2425), [#2428](https://github.com/dotnet/SqlClient/pull/2428), [#2440](https://github.com/dotnet/SqlClient/pull/2440), [#2443](https://github.com/dotnet/SqlClient/pull/2443), [#2450](https://github.com/dotnet/SqlClient/pull/2450), [#2466](https://github.com/dotnet/SqlClient/pull/2466), [#2486](https://github.com/dotnet/SqlClient/pull/2486), [#2521](https://github.com/dotnet/SqlClient/pull/2521), [#2522](https://github.com/dotnet/SqlClient/pull/2522), [#2533](https://github.com/dotnet/SqlClient/pull/2533), [#2552](https://github.com/dotnet/SqlClient/pull/2552), [#2560](https://github.com/dotnet/SqlClient/pull/2560), [#2726](https://github.com/dotnet/SqlClient/pull/2726), [#2751](https://github.com/dotnet/SqlClient/pull/2751), [#2811](https://github.com/dotnet/SqlClient/pull/2811)
 
+## [Stable release 5.2.2] - 2024-08-27
+
+### Fixed
+
+- Fixed `AcquireTokenAsync` timeout handling for edge cases in `ActiveDirectoryAuthenticationProvider`. [#2650](https://github.com/dotnet/SqlClient/pull/2650)
+- Fixed issue with `Socket.Connect` in managed SNI. [#2779](https://github.com/dotnet/SqlClient/pull/2779)
+- Fixed path for `AssemblyAttributes` in obj folder causing NET 8.0 assembly to appear in NET 6.0 dll. [#2789](https://github.com/dotnet/SqlClient/pull/2789)
+- Fixed SSPI retry negotiation with default port in .NET. [#2815](https://github.com/dotnet/SqlClient/pull/2815)
+- Fixed `ArgumentNullException` on `SqlDataRecord.GetValue` when using user-defined data type on .NET.  [#2816](https://github.com/dotnet/SqlClient/pull/2816)
+- Fixed pending data with `SqlDataReader` against an encrypted column. [#2817](https://github.com/dotnet/SqlClient/pull/2817)
+
+### Changed
+
+- Upgraded `Azure.Identity` version from 1.11.3 to 1.11.4 [#2648](https://github.com/dotnet/SqlClient/pull/2648) to address [CVE-2024-35255](https://github.com/advisories/GHSA-m5vv-6r4h-3vj9).
+- Upgraded `Microsoft.Identity.Client` version from 4.60.0 to 4.61.3 [#2648](https://github.com/dotnet/SqlClient/pull/2648) to address [CVE-2024-35255](https://github.com/advisories/GHSA-m5vv-6r4h-3vj9).
+- Added caching to `TokenCredential` objects to take advantage of token caching. [#2775](https://github.com/dotnet/SqlClient/pull/2775)
+
 ## [Stable release 5.2.1] - 2024-05-31
 
 This update brings the below changes over the previous release:
@@ -266,6 +283,21 @@ This update brings the below changes over the previous release:
 - Removed reference to Microsoft.Win32.Registry since it's shipped starting with .NET 6.0. [#1974](https://github.com/dotnet/SqlClient/pull/1974)
 - Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
 - Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
+
+## [Stable release 5.1.6] - 2024-08-27
+
+### Fixed
+
+- Fixed Transient fault handling issue with `OpenAsync`. [#1983](https://github.com/dotnet/SqlClient/pull/1983) [#2508](https://github.com/dotnet/SqlClient/pull/2508)
+- Fixed `AcquireTokenAsync` timeout handling for edge cases in `ActiveDirectoryAuthenticationProvider`. [#2706](https://github.com/dotnet/SqlClient/pull/2706)
+- Fixed pending data with `SqlDataReader` against an encrypted column. [#2618](https://github.com/dotnet/SqlClient/pull/2618) [#2818](https://github.com/dotnet/SqlClient/pull/2818)
+
+### Changed
+
+- Upgraded `Azure.Identity` version from 1.11.3 to 1.11.4 [#2649] (https://github.com/dotnet/SqlClient/pull/2649) [#2529] (https://github.com/dotnet/SqlClient/pull/2529) to address [CVE-2024-35255](https://github.com/advisories/GHSA-m5vv-6r4h-3vj9).
+- Upgraded `Microsoft.Identity.Client` version from 4.60.0 to 4.61.3 [#2649] (https://github.com/dotnet/SqlClient/pull/2649) [#2529] (https://github.com/dotnet/SqlClient/pull/2529) to address [CVE-2024-35255](https://github.com/advisories/GHSA-m5vv-6r4h-3vj9).
+- Added caching to `TokenCredential` objects to take advantage of token caching. [#2776](https://github.com/dotnet/SqlClient/pull/2776)
+- Code health improvements: [#2490] (https://github.com/dotnet/SqlClient/pull/2490)
 
 ## [Stable release 5.1.5] - 2024-01-29
 
@@ -555,6 +587,17 @@ This update brings the below changes over the previous release:
 
 - Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1419](https://github.com/dotnet/SqlClient/pull/1419) [#1425](https://github.com/dotnet/SqlClient/pull/1425)
 
+## [Stable release 4.0.6] - 2024-08-21
+
+### Fixed
+
+- Fixed connection to unsubscribe from transaction completion events before returning it to the connection pool [#2301](https://github.com/dotnet/SqlClient/pull/2301) [#2435](https://github.com/dotnet/SqlClient/pull/2435)
+- Fixed AcquireTokenAsync timeout handling for edge cases in ActiveDirectoryAuthenticationProvider [#2707](https://github.com/dotnet/SqlClient/pull/2707)
+
+### Changed
+
+- Code health improvements: [#2147](https://github.com/dotnet/SqlClient/pull/2147), [#2513](https://github.com/dotnet/SqlClient/pull/2513), [#2519](https://github.com/dotnet/SqlClient/pull/2519)
+
 ## [Stable release 4.0.5] - 2024-01-09
 
 ### Fixed
@@ -711,12 +754,13 @@ This update brings the below changes over the previous release:
 - Optimized async method allocations in .NET Framework by porting changes from .NET Core. [#1084](https://github.com/dotnet/SqlClient/pull/1084)
 - Various code improvements [#902](https://github.com/dotnet/SqlClient/pull/902) [#925](https://github.com/dotnet/SqlClient/pull/925) [#933](https://github.com/dotnet/SqlClient/pull/933) [#934](https://github.com/dotnet/SqlClient/pull/934) [#1024](https://github.com/dotnet/SqlClient/pull/1024) [#1057](https://github.com/dotnet/SqlClient/pull/1057) [#1122](https://github.com/dotnet/SqlClient/pull/1122) [#1133](https://github.com/dotnet/SqlClient/pull/1133) [#1134](https://github.com/dotnet/SqlClient/pull/1134) [#1141](https://github.com/dotnet/SqlClient/pull/1141) [#1187](https://github.com/dotnet/SqlClient/pull/1187) [#1188](https://github.com/dotnet/SqlClient/pull/1188) [#1223](https://github.com/dotnet/SqlClient/pull/1223) [#1225](https://github.com/dotnet/SqlClient/pull/1225)  [#1226](https://github.com/dotnet/SqlClient/pull/1226)
 
-## [Stable release 3.1.6] - 2024-08-15
+## [Stable release 3.1.7] - 2024-08-20
 
 ### Fixed
 
 - Fixed connection to unsubscribe from transaction completion events before returning it to the connection pool. [#2301](https://github.com/dotnet/SqlClient/pull/2301) [#2434](https://github.com/dotnet/SqlClient/pull/2434)
 - Fixed `AcquireTokenAsync` timeout handling for edge cases in `ActiveDirectoryAuthenticationProvider`. [#2709](https://github.com/dotnet/SqlClient/pull/2709)
+- Fixed the signing issue with `Microsoft.Data.SqlClient` assembly. [#2789](https://github.com/dotnet/SqlClient/pull/2789)
 
 ### Changed
 
