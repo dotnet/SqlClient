@@ -2,6 +2,10 @@
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Data.SqlClient;
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 
 class Program
 {
@@ -12,8 +16,9 @@ class Program
     }
 
     const string defaultScopeSuffix = "/.default";
-    // Reuse the credential object to take advantage of the underlying token cache
-    private static DefaultAzureCredential credential = new();
+
+    // Reuse credential objects to take advantage of underlying token caches
+    private static ConcurrentDictionary<string, DefaultAzureCredential> credentials = new ConcurrentDictionary<string, DefaultAzureCredential>();
 
     // Use a shared callback function for connections that should be in the same connection pool
     private static Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> myAccessTokenCallback =
@@ -22,8 +27,13 @@ class Program
             string scope = authParams.Resource.EndsWith(defaultScopeSuffix)
                 ? authParams.Resource
                 : $"{authParams.Resource}{defaultScopeSuffix}";
-            AccessToken token = await credential.GetTokenAsync(
-                new TokenRequestContext([scope]),
+
+            DefaultAzureCredentialOptions options = new DefaultAzureCredentialOptions();
+            options.ManagedIdentityClientId = authParams.UserId;
+
+            // Reuse the same credential object if we are using the same MI Client Id
+            AccessToken token = await credentials.GetOrAdd(authParams.UserId, new DefaultAzureCredential(options)).GetTokenAsync(
+                new TokenRequestContext(new string[] { scope }),
                 cancellationToken);
 
             return new SqlAuthenticationToken(token.Token, token.ExpiresOn);
@@ -31,10 +41,14 @@ class Program
 
     private static void OpenSqlConnection()
     {
-        string connectionString = GetConnectionString();
+        // (Optional) Pass a User-Assigned Managed Identity Client ID.
+        // This will ensure different MI Client IDs are in different connection pools.
+        string connectionString = "Server=myServer.database.windows.net;Encrypt=Mandatory;UserId=<ManagedIdentitityClientId>;";
 
-        using (SqlConnection connection = new(connectionString)
+        using (SqlConnection connection = new SqlConnection(connectionString)
         {
+            // The callback function is part of the connection pool key. Using a static callback function
+            // ensures connections will not create a new pool per connection just for the callback.
             AccessTokenCallback = myAccessTokenCallback
         })
         {
