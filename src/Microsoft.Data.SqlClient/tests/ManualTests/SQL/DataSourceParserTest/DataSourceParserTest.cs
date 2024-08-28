@@ -11,16 +11,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.DataSourceParserTest
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData("localhost")]
         [InlineData("tcp:localhost")]
-        [InlineData("np:localhost")]
         [InlineData(" localhost ")]
         [InlineData(" tcp:localhost ")]
-        [InlineData(" np:localhost ")]
         [InlineData(" localhost")]
         [InlineData(" tcp:localhost")]
-        [InlineData(" np:localhost")]
         [InlineData("localhost ")]
         [InlineData("tcp:localhost ")]
-        [InlineData("np:localhost ")]
         public void ParseDataSourceWithoutInstanceNorPortTestShouldSucceed(string dataSource)
         {
             DataTestUtility.ParseDataSource(dataSource, out string hostname, out _, out _);
@@ -30,16 +26,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.DataSourceParserTest
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData("localhost,1433")]
         [InlineData("tcp:localhost,1433")]
-        [InlineData("np:localhost,1433")]
         [InlineData(" localhost,1433 ")]
         [InlineData(" tcp:localhost,1433 ")]
-        [InlineData(" np:localhost,1433 ")]
         [InlineData(" localhost,1433")]
         [InlineData(" tcp:localhost,1433")]
-        [InlineData(" np:localhost,1433")]
         [InlineData("localhost,1433 ")]
         [InlineData("tcp:localhost,1433 ")]
-        [InlineData("np:localhost,1433 ")]
         public void ParseDataSourceWithoutInstanceButWithPortTestShouldSucceed(string dataSource)
         {
             DataTestUtility.ParseDataSource(dataSource, out string hostname, out int port, out _);
@@ -50,16 +42,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.DataSourceParserTest
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData("localhost\\MSSQLSERVER02")]
         [InlineData("tcp:localhost\\MSSQLSERVER02")]
-        [InlineData("np:localhost\\MSSQLSERVER02")]
         [InlineData(" localhost\\MSSQLSERVER02 ")]
         [InlineData(" tcp:localhost\\MSSQLSERVER02 ")]
-        [InlineData(" np:localhost\\MSSQLSERVER02 ")]
         [InlineData(" localhost\\MSSQLSERVER02")]
         [InlineData(" tcp:localhost\\MSSQLSERVER02")]
-        [InlineData(" np:localhost\\MSSQLSERVER02")]
         [InlineData("localhost\\MSSQLSERVER02 ")]
         [InlineData("tcp:localhost\\MSSQLSERVER02 ")]
-        [InlineData("np:localhost\\MSSQLSERVER02 ")]
         public void ParseDataSourceWithInstanceButWithoutPortTestShouldSucceed(string dataSource)
         {
             DataTestUtility.ParseDataSource(dataSource, out string hostname, out _, out string instanceName);
@@ -70,16 +58,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.DataSourceParserTest
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData("localhost\\MSSQLSERVER02,1433")]
         [InlineData("tcp:localhost\\MSSQLSERVER02,1433")]
-        [InlineData("np:localhost\\MSSQLSERVER02,1433")]
         [InlineData(" localhost\\MSSQLSERVER02,1433 ")]
         [InlineData(" tcp:localhost\\MSSQLSERVER02,1433 ")]
-        [InlineData(" np:localhost\\MSSQLSERVER02,1433 ")]
         [InlineData(" localhost\\MSSQLSERVER02,1433")]
         [InlineData(" tcp:localhost\\MSSQLSERVER02,1433")]
-        [InlineData(" np:localhost\\MSSQLSERVER02,1433")]
         [InlineData("localhost\\MSSQLSERVER02,1433 ")]
         [InlineData("tcp:localhost\\MSSQLSERVER02,1433 ")]
-        [InlineData("np:localhost\\MSSQLSERVER02,1433 ")]
         public void ParseDataSourceWithInstanceAndPortTestShouldSucceed(string dataSource)
         {
             DataTestUtility.ParseDataSource(dataSource, out string hostname, out int port, out string instanceName);
