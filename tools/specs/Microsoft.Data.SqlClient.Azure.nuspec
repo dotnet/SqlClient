@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata minClientVersion="2.12">
+    <id>Microsoft.Data.SqlClient.Azure</id>
+    <version>$version$</version>
+    <title>Microsoft.Data.SqlClient.Azure</title>
+    <authors>Microsoft</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
+    <icon>dotnet.png</icon>
+    <readme>README.md</readme>
+    <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$"/>
+    <description>The current data provider for Azure SQL databases and SQL Server. This has replaced System.Data.SqlClient. These classes provide access to SQL and encapsulate database-specific protocols, including tabular data stream (TDS).
+
+Commonly Used Types:
+Microsoft.Data.SqlClient.SqlConnection
+Microsoft.Data.SqlClient.SqlException
+Microsoft.Data.SqlClient.SqlParameter
+Microsoft.Data.SqlClient.SqlDataReader
+Microsoft.Data.SqlClient.SqlCommand
+Microsoft.Data.SqlClient.SqlTransaction
+Microsoft.Data.SqlClient.SqlParameterCollection
+Microsoft.Data.SqlClient.SqlClientFactory
+
+When using NuGet 3.x this package requires at least version 3.4.</description>
+    <releaseNotes>https://go.microsoft.com/fwlink/?linkid=2090501</releaseNotes>
+    <copyright>© Microsoft Corporation. All rights reserved.</copyright>
+    <tags>sqlclient microsoft.data.sqlclient azure</tags>
+    <dependencies>
+      <dependency id="Microsoft.Data.SqlClient" version="[$version$]" />
+    </dependencies>
+  </metadata>
+
+  <files>
+    <file src="..\icons\dotnet.png" target="" />
+    <file src="..\..\README.md" target="" />
+  </files>
+
+</package>

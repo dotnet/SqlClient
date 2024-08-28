@@ -64,6 +64,15 @@ jobs:
     parameters:
       NugetPackageVersion: $(NugetPackageVersion)
       configuration: $(Configuration)
+      nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.Azure.nuspec'
+      OutputDirectory: $(packagePath)
+      generateSymbolsPackage: false
+      displayName: 'Generate NuGet package M.D.SqlClient.Azure'
+
+  - template: ../steps/generate-nuget-package-step.yml@self
+    parameters:
+      NugetPackageVersion: $(NugetPackageVersion)
+      configuration: $(Configuration)
       nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
       OutputDirectory: $(packagePath)
       generateSymbolsPackage: false
