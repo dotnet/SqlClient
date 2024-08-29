@@ -6395,6 +6395,7 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     // Drain the pending data now if setting the HasPendingData to false.
                                     // SqlDataReader.TryCloseInternal can not drain if HasPendingData = false.
+                                    stateObj._readerState._nextColumnDataToRead++;
                                     DrainData(stateObj);
                                 }
                                 stateObj.HasPendingData = false;
