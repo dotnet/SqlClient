@@ -6388,16 +6388,15 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (stateObj is not null)
                             {
-                                // call to decrypt column keys has failed. The data wont be decrypted.
-                                // Not setting the value to false, forces the driver to look for column value.
-                                // Packet received from Key Vault will throws invalid token header.
-                                if (stateObj.HasPendingData)
-                                {
-                                    // Drain the pending data now if setting the HasPendingData to false.
-                                    // SqlDataReader.TryCloseInternal can not drain if HasPendingData = false.
-                                    stateObj._readerState._nextColumnDataToRead++;
-                                    DrainData(stateObj);
-                                }
+                                // Throwing an exception here circumvents the normal pending data checks and cleanup processes,
+                                // so we need to ensure the appropriate state. Increment the _nextColumnDataToRead index because
+                                // we already read the encrypted column data; Otherwise we'll double count and attempt to drain a
+                                // corresponding number of bytes a second time. We don't want the rest of the pending data to
+                                // interfere with future operations, so we must drain it. Set HasPendingData to false to indicate
+                                // that we successfully drained the data.
+
+                                stateObj._readerState._nextColumnDataToRead++;
+                                DrainData(stateObj);
                                 stateObj.HasPendingData = false;
                             }
                             throw SQL.ColumnDecryptionFailed(columnName, null, e);
