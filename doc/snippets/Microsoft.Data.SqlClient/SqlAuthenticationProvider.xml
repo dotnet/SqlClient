@@ -15,7 +15,7 @@
           
           namespace CustomAuthenticationProviderExamples
           {
-              /// summary>
+              /// &lt;summary&gt;
               /// Example demonstrating creating a custom device code flow authentication provider and attaching it to the driver.
               /// This is helpful for applications that wish to override the Callback for the Device Code Result implemented by the SqlClient driver.
               /// &lt;/summary&gt;

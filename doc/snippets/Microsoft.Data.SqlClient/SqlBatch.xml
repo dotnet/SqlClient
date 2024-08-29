@@ -2,7 +2,9 @@
   <members name="SqlBatch">
     <SqlBatch>
       <example>
-        The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        </para>
         <code language="c#">
           using Microsoft.Data.SqlClient;
           
@@ -54,7 +56,10 @@
     <ctor1>
       <summary>Initializes a new <see cref="T:SqlBatch" />.</summary>
       <example>
-        The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        </para>
+        
         <code language="c#">
           using Microsoft.Data.SqlClient;
           
@@ -127,54 +132,54 @@
         The list of commands contained in the batch in a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
       </summary>
       <example>
-        The following example creates a <see cref="Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        </para>
         <code language="c#">
-          <![CDATA[
-using Microsoft.Data.SqlClient;
-
-class Program
-{
-    static void Main()
-    {
-        string str = "Data Source=(local);Initial Catalog=Northwind;"
-                   + "Integrated Security=SSPI;Encrypt=False";
-        RunBatch(str);
-    }
-
-    static void RunBatch(string connString)
-    {
-        using var connection = new SqlConnection(connString);
-        connection.Open();
-
-        var batch = new SqlBatch(connection);
-
-        const int count = 10;
-        const string parameterName = "parameter";
-        for (int i = 0; i < count; i++)
-        {
-            var batchCommand = new SqlBatchCommand($"SELECT @{parameterName} as value");
-            batchCommand.Parameters.Add(new SqlParameter(parameterName, i));
-            batch.BatchCommands.Add(batchCommand);
-        }
-
-        // Optionally Prepare
-        batch.Prepare();
-
-        var results = new List<int>(count);
-        using (SqlDataReader reader = batch.ExecuteReader())
-        {
-            do
-            {
-                while (reader.Read())
-                {
-                    results.Add(reader.GetFieldValue<int>(0));
-                }
-            } while (reader.NextResult());
-        }
-        Console.WriteLine(string.Join(", ", results));
-    }
-}
-          ]]>
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  string str = "Data Source=(local);Initial Catalog=Northwind;"
+                             + "Integrated Security=SSPI;Encrypt=False";
+                  RunBatch(str);
+              }
+          
+              static void RunBatch(string connString)
+              {
+                  using var connection = new SqlConnection(connString);
+                  connection.Open();
+          
+                  var batch = new SqlBatch(connection);
+          
+                  const int count = 10;
+                  const string parameterName = "parameter";
+                  for (int i = 0; i &lt; count; i++)
+                  {
+                      var batchCommand = new SqlBatchCommand($"SELECT @{parameterName} as value");
+                      batchCommand.Parameters.Add(new SqlParameter(parameterName, i));
+                      batch.BatchCommands.Add(batchCommand);
+                  }
+          
+                  // Optionally Prepare
+                  batch.Prepare();
+          
+                  var results = new List&lt;int&gt;(count);
+                  using (SqlDataReader reader = batch.ExecuteReader())
+                  {
+                      do
+                      {
+                          while (reader.Read())
+                          {
+                              results.Add(reader.GetFieldValue&lt;int&gt;(0));
+                          }
+                      } while (reader.NextResult());
+                  }
+                  Console.WriteLine(string.Join(", ", results));
+              }
+          }
         </code>
       </example>
     </BatchCommands>
@@ -188,7 +193,9 @@ class Program
         Sends the <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Commands" /> to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Connection" /> and builds a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
       </summary>
       <example>
-        The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        </para>
         <code language="c#">
           using Microsoft.Data.SqlClient;
           
@@ -338,7 +345,7 @@ class Program
           For more information about asynchronous programming, see <see href="/dotnet/framework/data/adonet/asynchronous-programming">Asynchronous Programming</see>.
         </para>
         <para>
-          This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="System.ArgumentException" />, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <see cref="System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)" />.
+          This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <see cref="M:System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)" />.
         </para>
         <note type="note">
           This method benefits from <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync(System.Threading.CancellationToken)" />, and all the expected exceptions of that method also apply here.
@@ -354,7 +361,7 @@ class Program
       </summary>
       <returns>The total number of rows affected across all the batch commands.</returns>
       <remarks>
-        You can use <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery" /> to perform catalog operations (for example, querying the structure of a database or creating database objects such as tables), or to change the data in a database by executing UPDATE, INSERT, or DELETE statements. Although <see cref="Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery" /> does not return any rows, any output parameters or return values mapped to parameters are populated with data. For UPDATE, INSERT, and DELETE statements, the return value is the total number of rows affected by the batch. If no UPDATE, INSERT, or DELETE statements are included in the batch, the return value is -1.
+        You can use <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery" /> to perform catalog operations (for example, querying the structure of a database or creating database objects such as tables), or to change the data in a database by executing UPDATE, INSERT, or DELETE statements. Although <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery" /> does not return any rows, any output parameters or return values mapped to parameters are populated with data. For UPDATE, INSERT, and DELETE statements, the return value is the total number of rows affected by the batch. If no UPDATE, INSERT, or DELETE statements are included in the batch, the return value is -1.
         <note type="note">
           This method benefits from <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery" />, and all the expected exceptions of that method also apply here.
         </note>
