@@ -397,9 +397,6 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region DLL Imports
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr LoadLibrary(string dllToLoad);
-
         [DllImport("secur32.dll", ExactSpelling = true, SetLastError = true)]
         internal static extern uint QueryContextAttributes(ref CredHandle contextHandle, [In] ContextAttribute attribute, [In] IntPtr buffer);
 
