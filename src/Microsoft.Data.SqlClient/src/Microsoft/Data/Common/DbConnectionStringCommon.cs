@@ -356,7 +356,6 @@ namespace Microsoft.Data.Common
         internal const string ActiveDirectoryMSIString = "Active Directory MSI";
         internal const string ActiveDirectoryDefaultString = "Active Directory Default";
         internal const string ActiveDirectoryWorkloadIdentityString = "Active Directory Workload Identity";
-        const string SqlCertificateString = "Sql Certificate";
 
 #if DEBUG
         private static readonly string[] s_supportedAuthenticationModes =
@@ -454,13 +453,6 @@ namespace Microsoft.Data.Common
                 result = SqlAuthenticationMethod.ActiveDirectoryDefault;
                 isSuccess = true;
             }
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlCertificateString)
-                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.SqlCertificate, CultureInfo.InvariantCulture))) {
-                result = SqlAuthenticationMethod.SqlCertificate;
-                isSuccess = true;
-            }
-#endif
             else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryWorkloadIdentityString)
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, CultureInfo.InvariantCulture)))
             {
@@ -532,11 +524,7 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value)
         {
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 12, "SqlAuthenticationMethod enum has changed, update needed");
-#else
             Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 11, "SqlAuthenticationMethod enum has changed, update needed");
-#endif
             return value == SqlAuthenticationMethod.SqlPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
@@ -546,9 +534,6 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || value == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || value == SqlAuthenticationMethod.ActiveDirectoryDefault
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-                || value == SqlAuthenticationMethod.SqlCertificate
-#endif
                 || value == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
@@ -568,9 +553,6 @@ namespace Microsoft.Data.Common
                 SqlAuthenticationMethod.ActiveDirectoryManagedIdentity => ActiveDirectoryManagedIdentityString,
                 SqlAuthenticationMethod.ActiveDirectoryMSI => ActiveDirectoryMSIString,
                 SqlAuthenticationMethod.ActiveDirectoryDefault => ActiveDirectoryDefaultString,
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-                SqlAuthenticationMethod.SqlCertificate => SqlCertificateString,
-#endif
                 SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity => ActiveDirectoryWorkloadIdentityString,
                 _ => null
             };
@@ -959,12 +941,6 @@ namespace Microsoft.Data.Common
             }
         }
         #endregion
-
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-        internal static bool IsValidCertificateValue(string value) => string.IsNullOrEmpty(value)
-                                                              || value.StartsWith("subject:", StringComparison.OrdinalIgnoreCase)
-                                                              || value.StartsWith("sha1:", StringComparison.OrdinalIgnoreCase);
-#endif
     }
 
     internal static class DbConnectionStringDefaults
@@ -985,9 +961,6 @@ namespace Microsoft.Data.Common
         internal const bool ContextConnection = false;
         internal static readonly bool TransparentNetworkIPResolution = !LocalAppContextSwitches.DisableTNIRByDefault;
         internal const string NetworkLibrary = "";
-#if ADONET_CERT_AUTH
-        internal const string Certificate = "";
-#endif
 #endif
         internal const string CurrentLanguage = "";
         internal const string DataSource = "";
@@ -1043,9 +1016,6 @@ namespace Microsoft.Data.Common
         // OracleClient
         internal const string Unicode = "Unicode";
         internal const string OmitOracleConnectionName = "Omit Oracle Connection Name";
-
-        // SqlClient
-        internal const string Certificate = "Certificate";
 #endif
         // SqlClient
         internal const string ApplicationIntent = "Application Intent";

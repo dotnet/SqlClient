@@ -54,9 +54,6 @@ namespace Microsoft.Data.SqlClient
             TdsEnums.FeatureExtension requestedFeatures,
             SessionData recoverySessionData,
             FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
-#if NETFRAMEWORK
-            SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo,
-#endif
             SqlConnectionEncryptOption encrypt)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
@@ -86,31 +83,6 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_connHandler != null, "SqlConnectionInternalTds handler can not be null at this point.");
             _connHandler!.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
-
-#if NETFRAMEWORK
-            // Add CTAIP Provider
-            //
-            if (originalNetworkAddressInfo != null)
-            {
-                SNINativeMethodWrapper.CTAIPProviderInfo cauthInfo = new SNINativeMethodWrapper.CTAIPProviderInfo();
-                cauthInfo.originalNetworkAddress = originalNetworkAddressInfo.Address.GetAddressBytes();
-                cauthInfo.fromDataSecurityProxy = originalNetworkAddressInfo.IsFromDataSecurityProxy;
-
-                UInt32 error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.CTAIP_PROV, cauthInfo);
-                if (error != TdsEnums.SNI_SUCCESS)
-                {
-                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                    ThrowExceptionAndWarning(_physicalStateObj);
-                }
-
-                try
-                { } // EmptyTry/Finally to avoid FXCop violation
-                finally
-                {
-                    _physicalStateObj.ClearAllWritePackets();
-                }
-            }
-#endif
 
             // get the password up front to use in sspi logic below
             byte[] encryptedPassword = null;
@@ -239,27 +211,6 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.ResetSecurePasswordsInformation();     // Password information is needed only from Login process; done with writing login packet and should clear information
             _physicalStateObj.HasPendingData = true;
             _physicalStateObj._messageStatus = 0;
-
-#if NETFRAMEWORK
-            // Remvove CTAIP Provider after login record is sent.
-            //
-            if (originalNetworkAddressInfo != null)
-            {
-                UInt32 error = SNINativeMethodWrapper.SNIRemoveProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.CTAIP_PROV);
-                if (error != TdsEnums.SNI_SUCCESS)
-                {
-                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                    ThrowExceptionAndWarning(_physicalStateObj);
-                }
-
-                try
-                { } // EmptyTry/Finally to avoid FXCop violation
-                finally
-                {
-                    _physicalStateObj.ClearAllWritePackets();
-                }
-            }
-#endif
         }// tdsLogin
     }
 }

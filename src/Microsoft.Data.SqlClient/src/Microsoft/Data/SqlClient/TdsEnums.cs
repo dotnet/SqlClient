@@ -600,9 +600,7 @@ namespace Microsoft.Data.SqlClient
         // dbnetlib error values
         public const short TIMEOUT_EXPIRED = -2;
         public const short ENCRYPTION_NOT_SUPPORTED = 20;
-#if NETFRAMEWORK
         public const short CTAIP_NOT_SUPPORTED = 21;
-#endif
 
         // CAUTION: These are not error codes returned by SNI. This is used for backward compatibility
         // since netlib (now removed from sqlclient) returned these codes.
@@ -1176,11 +1174,7 @@ namespace Microsoft.Data.SqlClient
         ActiveDirectoryDefault,
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryWorkloadIdentity/*'/>
-        ActiveDirectoryWorkloadIdentity,
-
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-        SqlCertificate,
-#endif
+        ActiveDirectoryWorkloadIdentity
     }
     // This enum indicates the state of TransparentNetworkIPResolution
     // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.
