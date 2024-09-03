@@ -61,6 +61,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        private void ValidateNullJson(SqlDataReader reader)
+        {
+            while (reader.Read())
+            {
+                bool IsNull = reader.IsDBNull(0);
+                _output.WriteLine(IsNull ? "null" : "not null");
+                Assert.True(IsNull);
+            }
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonWrite()
         {       
@@ -283,6 +293,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         await ValidateRowsAsync(reader2);
                         reader2.Close();
                     }
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
+        public void TestNullJson()
+        {
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
+
+            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
+            string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
+            string tableRead = "SELECT * FROM " + tableName;
+
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    //Create Table
+                    command.CommandText = tableCreate;
+                    command.ExecuteNonQuery();
+
+                    //Insert Null value
+                    command.CommandText = tableInsert;
+                    var parameter = new SqlParameter("@jsonData", SqlDbTypeExtensions.Json);
+                    parameter.Value = DBNull.Value;
+                    command.Parameters.Add(parameter);
+                    command.ExecuteNonQuery();
+
+                    //Query the table
+                    command.CommandText = tableRead;
+                    var reader = command.ExecuteReader();
+
+                    ValidateNullJson(reader);
+                    reader.Close();
                 }
             }
         }
