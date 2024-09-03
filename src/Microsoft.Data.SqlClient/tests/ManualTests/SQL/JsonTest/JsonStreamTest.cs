@@ -68,7 +68,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void PrintJsonDataToFile(SqlConnection connection)
         {
             DeleteFile(_outputFile);
-            Console.OutputEncoding = Encoding.UTF8;
             using (SqlCommand command = new SqlCommand("SELECT [data] FROM [jsonTab]", connection))
             {
                 using (SqlDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess))
@@ -99,7 +98,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private async Task PrintJsonDataToFileAsync(SqlConnection connection)
         {
             DeleteFile(_outputFile);
-            Console.OutputEncoding = Encoding.UTF8;
             using (SqlCommand command = new SqlCommand("SELECT [data] FROM [jsonTab]", connection))
             {
                 using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess))
