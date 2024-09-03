@@ -12910,7 +12910,7 @@ namespace Microsoft.Data.SqlClient
             char[] inBuff = new char[constTextBufferSize];
 
             encoding = encoding ?? new UnicodeEncoding(false, false);
-            ConstrainedTextWriter writer = new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, null), encoding), size);
+            ConstrainedTextWriter writer = encoding == Encoding.UTF8 ? new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, null)), size) : new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, null), encoding), size);
 
             if (needBom)
             {
@@ -13169,7 +13169,8 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, null, IsBOMNeeded(type, value), stateObj, paramSize));
+                                Encoding encoding = type.NullableType == TdsEnums.SQLJSON ? Encoding.UTF8 : null;
+                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, encoding, IsBOMNeeded(type, value), stateObj, paramSize));
                             }
                         }
                         else

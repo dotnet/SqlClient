@@ -123,6 +123,7 @@ namespace Microsoft.Data.SqlClient
             type == SqlDbType.Char ||
             type == SqlDbType.VarChar ||
             type == SqlDbType.Text ||
+            type == SqlDbTypeExtensions.Json ||
             type == SqlDbType.Xml;
 
         private static bool _IsNCharType(SqlDbType type) =>
