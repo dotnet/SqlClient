@@ -306,30 +306,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
             string tableRead = "SELECT * FROM " + tableName;
 
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-            {
-                connection.Open();
-                using (SqlCommand command = connection.CreateCommand())
-                {
-                    //Create Table
-                    command.CommandText = tableCreate;
-                    command.ExecuteNonQuery();
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using SqlCommand command = connection.CreateCommand();
 
-                    //Insert Null value
-                    command.CommandText = tableInsert;
-                    var parameter = new SqlParameter("@jsonData", SqlDbTypeExtensions.Json);
-                    parameter.Value = DBNull.Value;
-                    command.Parameters.Add(parameter);
-                    command.ExecuteNonQuery();
+            //Create Table
+            command.CommandText = tableCreate;
+            command.ExecuteNonQuery();
 
-                    //Query the table
-                    command.CommandText = tableRead;
-                    var reader = command.ExecuteReader();
+            //Insert Null value
+            command.CommandText = tableInsert;
+            var parameter = new SqlParameter("@jsonData", SqlDbTypeExtensions.Json);
+            parameter.Value = DBNull.Value;
+            command.Parameters.Add(parameter);
+            command.ExecuteNonQuery();
 
-                    ValidateNullJson(reader);
-                    reader.Close();
-                }
-            }
+            //Query the table
+            command.CommandText = tableRead;
+            var reader = command.ExecuteReader();
+            ValidateNullJson(reader);
+
+            reader.Close();
+            DataTestUtility.DropTable(connection, tableName);
         }
     }
 }
