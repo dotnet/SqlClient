@@ -6667,6 +6667,10 @@ namespace Microsoft.Data.SqlClient
                     }
                     break;
 
+                case SqlDbTypeExtensions.Json:
+                    nullVal.SetToNullOfType(SqlBuffer.StorageType.Json);
+                    break;
+
                 default:
                     Debug.Fail("unknown null sqlType!" + md.type.ToString());
                     break;
