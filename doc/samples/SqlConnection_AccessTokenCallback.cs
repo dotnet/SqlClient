@@ -1,11 +1,11 @@
-// <Snippet1>
-using Azure.Core;
-using Azure.Identity;
-using Microsoft.Data.SqlClient;
 using System;
+// <Snippet1>
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Core;
+using Azure.Identity;
+using Microsoft.Data.SqlClient;
 
 class Program
 {
