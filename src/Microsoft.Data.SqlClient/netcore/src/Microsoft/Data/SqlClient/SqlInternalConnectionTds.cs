@@ -200,6 +200,9 @@ namespace Microsoft.Data.SqlClient
 
         internal SQLDNSInfo pendingSQLDNSObject = null;
 
+        // Json Support Flag
+        internal bool IsJsonSupportEnabled = false;
+
         // TCE flags
         internal byte _tceVersionSupported;
 
@@ -1362,7 +1365,9 @@ namespace Microsoft.Data.SqlClient
 
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
-
+#if DEBUG
+            requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
+#endif
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 
@@ -2808,6 +2813,24 @@ namespace Microsoft.Data.SqlClient
                         // not put them in the DNS cache at this point but need to store them somewhere
                         // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
 
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_JSONSUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for JSONSUPPORT", ObjectID);
+                        if (data.Length != 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for JSONSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        byte jsonSupportVersion = data[0];            
+                        if (jsonSupportVersion == 0 || jsonSupportVersion > TdsEnums.MAX_SUPPORTED_JSON_VERSION)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for JSONSUPPORT", ObjectID);
+                            throw SQL.ParsingError();
+                        }
+                        IsJsonSupportEnabled = true;
                         break;
                     }
 

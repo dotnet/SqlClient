@@ -952,6 +952,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             port = -1;
             instanceName = string.Empty;
 
+            // Remove leading and trailing spaces
+            dataSource = dataSource.Trim();
+
             if (dataSource.Contains(":"))
             {
                 dataSource = dataSource.Substring(dataSource.IndexOf(":", StringComparison.Ordinal) + 1);
