@@ -6395,8 +6395,14 @@ namespace Microsoft.Data.SqlClient
                                 // interfere with future operations, so we must drain it. Set HasPendingData to false to indicate
                                 // that we successfully drained the data.
 
+                                // The SqlDataReader also maintains a state called dataReady. We need to set that to false if we've
+                                // drained the data off the connection. Otherwise, a consumer that catches the exception may
+                                // continue to use the reader and will timeout waiting to read data that doesn't exist.
+
                                 // Order matters here. Must increment column before draining data.
                                 // Update state objects after draining data.
+
+
 
                                 if (stateObj._readerState != null)
                                 {
