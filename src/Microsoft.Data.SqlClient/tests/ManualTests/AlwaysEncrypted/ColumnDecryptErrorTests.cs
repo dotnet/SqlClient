@@ -23,7 +23,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             tableName = fixture.ColumnDecryptErrorTestTable.Name;
         }
 
-        // tests
+        /*
+         * This test ensures that column decryption errors and connection pooling play nicely together.
+         * When a decryption error is encountered, we expect the connection to be drained of data and
+         * properly reset before being returned to the pool. If this doesn't happen, then random bytes
+         * may be left in the connection's state. These can interfere with the next operation that utilizes
+         * the connection.
+         * 
+         * We test that state is properly reset by triggering the same error condition twice. Routing column key discovery
+         * away from AKV toward a dummy key store achieves this. Each connection pulls from a pool of max 
+         * size one to ensure we are using the same internal connection/socket both times. We expect to 
+         * receive the "Failed to decrypt column" exception twice. If the state were not cleaned properly,
+         * the second error would be different because the TDS stream would be unintelligible.
+         * 
+         * Finally, we assert that restoring the connection to AKV allows a successful query.
+         */
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore), nameof(DataTestUtility.IsAKVSetupAvailable))]
         [ClassData(typeof(TestQueries))]
         public void TestCleanConnectionAfterDecryptFail(string connString, string selectQuery, int totalColumnsInSelect, string[] types)
@@ -53,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 { "AZURE_KEY_VAULT", new DummyKeyStoreProvider() }
             };
 
-            String poolEnabledConnString = new SqlConnectionStringBuilder(connString) { Pooling = true }.ToString();
+            String poolEnabledConnString = new SqlConnectionStringBuilder(connString) { Pooling = true, MaxPoolSize = 1 }.ToString();
 
             using (SqlConnection sqlConnection = new SqlConnection(poolEnabledConnString))
             {
