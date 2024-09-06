@@ -6395,9 +6395,23 @@ namespace Microsoft.Data.SqlClient
                                 // interfere with future operations, so we must drain it. Set HasPendingData to false to indicate
                                 // that we successfully drained the data.
 
-                                stateObj._readerState._nextColumnDataToRead++;
+                                // Order matters here. Must increment column before draining data.
+                                // Update state objects after draining data.
+
+                                if (stateObj._readerState != null)
+                                {
+                                    stateObj._readerState._nextColumnDataToRead++;
+                                }
+
                                 DrainData(stateObj);
+
+                                if (stateObj._readerState != null)
+                                {
+                                    stateObj._readerState._dataReady = false;
+                                }
+
                                 stateObj.HasPendingData = false;
+                                
                             }
                             throw SQL.ColumnDecryptionFailed(columnName, null, e);
                         }
