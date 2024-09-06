@@ -6,56 +6,107 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
+using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public sealed class ColumnDecryptErrorTests : IClassFixture<PlatformSpecificTestContext>, IDisposable
+    public sealed class ColumnDecryptErrorTests : IClassFixture<SQLSetupStrategyAzureKeyVault>, IDisposable
     {
-        private SQLSetupStrategy fixture;
+        private SQLSetupStrategyAzureKeyVault fixture;
 
         private readonly string tableName;
 
-        public ColumnDecryptErrorTests(PlatformSpecificTestContext context)
+        public ColumnDecryptErrorTests(SQLSetupStrategyAzureKeyVault context)
         {
-            fixture = context.Fixture;
+            fixture = context;
             tableName = fixture.ColumnDecryptErrorTestTable.Name;
         }
 
         // tests
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore), nameof(DataTestUtility.IsAKVSetupAvailable))]
         [ClassData(typeof(TestQueries))]
         public void TestCleanConnectionAfterDecryptFail(string connString, string selectQuery, int totalColumnsInSelect, string[] types)
         {
+            // Arrange
             Assert.False(string.IsNullOrWhiteSpace(selectQuery), "FAILED: select query should not be null or empty.");
             Assert.True(totalColumnsInSelect <= 3, "FAILED: totalColumnsInSelect should <= 3.");
 
-            using (SqlConnection sqlConn = new SqlConnection(connString))
+            using (SqlConnection sqlConnection = new SqlConnection(connString))
             {
-                sqlConn.Open();
+                sqlConnection.Open();
 
-                Table.DeleteData(tableName, sqlConn);
+                Table.DeleteData(tableName, sqlConnection);
 
-                // insert 1 row data
                 Customer customer = new Customer(
                     45,
                     "Microsoft",
                     "Corporation");
 
-                DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
+                DatabaseHelper.InsertCustomerData(sqlConnection, null, tableName, customer);
+            }
 
-                using (SqlCommand sqlCommand = new SqlCommand(string.Format(selectQuery, tableName),
-                                                            sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
+
+            // Act - Trigger a column decrypt error on the connection
+            Dictionary<String, SqlColumnEncryptionKeyStoreProvider> keyStoreProviders = new()
+            {
+                { "AZURE_KEY_VAULT", new DummyKeyStoreProvider() }
+            };
+
+            String poolEnabledConnString = new SqlConnectionStringBuilder(connString) { Pooling = true }.ToString();
+
+            using (SqlConnection sqlConnection = new SqlConnection(poolEnabledConnString))
+            {
+                sqlConnection.Open();
+                sqlConnection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(keyStoreProviders);
+
+                using SqlCommand sqlCommand = new SqlCommand(string.Format(selectQuery, tableName),
+                                                            sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled);
+                
+                using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+
+                Assert.True(sqlDataReader.HasRows, "FAILED: Select statement did not return any rows.");
+
+                while (sqlDataReader.Read())
                 {
-                    using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
-                    {
-                        Assert.True(sqlDataReader.HasRows, "FAILED: Select statement did not return any rows.");
+                    var error = Assert.Throws<SqlException>(() => DatabaseHelper.CompareResults(sqlDataReader, types, totalColumnsInSelect));
+                    Assert.Contains("Failed to decrypt column", error.Message);
+                }
+            }
 
-                        while (sqlDataReader.Read())
-                        {
-                            DatabaseHelper.CompareResults(sqlDataReader, types, totalColumnsInSelect);
-                        }
-                    }
+
+            // Assert
+            using (SqlConnection sqlConnection = new SqlConnection(poolEnabledConnString))
+            {
+                sqlConnection.Open();
+                sqlConnection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(keyStoreProviders);
+
+                using SqlCommand sqlCommand = new SqlCommand(string.Format(selectQuery, tableName),
+                                                            sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled);
+                using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+
+                Assert.True(sqlDataReader.HasRows, "FAILED: Select statement did not return any rows.");
+
+                while (sqlDataReader.Read())
+                {
+                    var error = Assert.Throws<SqlException>(() => DatabaseHelper.CompareResults(sqlDataReader, types, totalColumnsInSelect));
+                    Assert.Contains("Failed to decrypt column", error.Message);
+                }
+            }
+
+            using (SqlConnection sqlConnection = new SqlConnection(poolEnabledConnString))
+            {
+                sqlConnection.Open();
+
+                using SqlCommand sqlCommand = new SqlCommand(string.Format(selectQuery, tableName),
+                                                            sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled);
+                using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+
+                Assert.True(sqlDataReader.HasRows, "FAILED: Select statement did not return any rows.");
+
+                while (sqlDataReader.Read())
+                {
+                    DatabaseHelper.CompareResults(sqlDataReader, types, totalColumnsInSelect);
                 }
             }
         }
@@ -70,6 +121,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlConnection.Open();
                     Table.DeleteData(fixture.ColumnDecryptErrorTestTable.Name, sqlConnection);
                 }
+            }
+        }
+
+        private sealed class DummyKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider
+        {
+            public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
+            {
+                // Must be 32 to match the key length expected for the 'AEAD_AES_256_CBC_HMAC_SHA256' algorithm
+                return new byte[32];
+            }
+
+            public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
+            {
+                return new byte[32];
             }
         }
     }
