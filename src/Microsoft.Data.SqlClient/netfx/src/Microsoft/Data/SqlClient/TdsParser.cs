@@ -4315,25 +4315,6 @@ namespace Microsoft.Data.SqlClient
             // information provided by S. Ashwin
             switch (majorMinor)
             {
-                case TdsEnums.SQL70OR2000_MAJOR << 24 | TdsEnums.DEFAULT_MINOR:    // 7.0 & 2000 RTM
-                    // note that 7.0 and 2000 can only be distinguished by the increment
-                    switch (increment)
-                    {
-                        case TdsEnums.SQL2000_INCREMENT:
-                            _is2000 = true;
-                            break;
-                        case TdsEnums.SQL70_INCREMENT:
-                            // no flag will be set
-                            break;
-                        default:
-                            throw SQL.InvalidTDSVersion();
-                    }
-                    break;
-                case TdsEnums.SQL2000SP1_MAJOR << 24 | TdsEnums.SQL2000SP1_MINOR: // 2000 SP1
-                    if (increment != TdsEnums.SQL2000SP1_INCREMENT)
-                    { throw SQL.InvalidTDSVersion(); }
-                    _is2000SP1 = true;
-                    break;
                 case TdsEnums.SQL2005_MAJOR << 24 | TdsEnums.SQL2005_RTM_MINOR:     // 2005
                     if (increment != TdsEnums.SQL2005_INCREMENT)
                     { throw SQL.InvalidTDSVersion(); }

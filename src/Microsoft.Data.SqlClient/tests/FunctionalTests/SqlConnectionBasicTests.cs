@@ -492,5 +492,37 @@ namespace Microsoft.Data.SqlClient.Tests
                 });
             }
         }
+
+        [Theory]
+        [InlineData(9, 0, 2047)] // SQL Server 2005
+        [InlineData(10, 0, 2531)] // SQL Server 2008
+        [InlineData(10, 50, 2500)] // SQL Server 2008 R2
+        [InlineData(11, 0, 3000)] // SQL Server 2012-2022
+        public void ConnectionTestPermittedVersion(int major, int minor, int build)
+        {
+            Version simulatedServerVersion = new Version(major, minor, build);
+            using TestTdsServer server = TestTdsServer.StartTestServer(serverVersion: simulatedServerVersion);
+            using SqlConnection conn = new SqlConnection(server.ConnectionString);
+
+            conn.Open();
+            Assert.Equal(ConnectionState.Open, conn.State);
+
+            Version returnedServerVersion = Version.Parse(conn.ServerVersion);
+
+            Assert.Equal(simulatedServerVersion, returnedServerVersion);
+        }
+
+        [Theory]
+        [InlineData(7, 0, 623)] // SQL Server 7.0
+        [InlineData(8, 0, 194)] // SQL Server 2000 RTM
+        [InlineData(8, 0, 384)] // SQL Server 2000 SP1
+        public void ConnectionTestDeniedVersion(int major, int minor, int build)
+        {
+            Version simulatedServerVersion = new Version(major, minor, build);
+            using TestTdsServer server = TestTdsServer.StartTestServer(serverVersion: simulatedServerVersion);
+            using SqlConnection conn = new SqlConnection(server.ConnectionString);
+
+            Assert.Throws<InvalidOperationException>(() => conn.Open());
+        }
     }
 }
