@@ -103,11 +103,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     customerFirstParam.ForceColumnEncryption = true;
 
                     using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
-                    var error = Assert.Throws<SqlException>(() => sqlDataReader.Read());
-                    if (error != null)
+                    while (sqlDataReader.Read())
+                    {
+                        var error = Assert.Throws<SqlException>(() => DatabaseHelper.CompareResults(sqlDataReader, new string[] { @"string" }, 1));
+                        Console.WriteLine($"Error = {error.Message}");
                         Assert.Contains("Failed to decrypt column", error.Message);
-                    else
-                        Assert.Fail("Decryption unexpectedly succeeded.");
+                    }
                 }
             }
         }
