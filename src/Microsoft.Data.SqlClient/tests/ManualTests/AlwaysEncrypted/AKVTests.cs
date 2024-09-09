@@ -58,6 +58,68 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             DatabaseHelper.ValidateResultSet(sqlDataReader);
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public void ForcedColumnDecryptErrorTestShouldPass()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
+            {
+                ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled,
+                AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
+                EnclaveAttestationUrl = ""
+            };
+
+            using (SqlConnection sqlConnection = new(builder.ConnectionString))
+            {
+                sqlConnection.Open();
+                Table.DeleteData(_akvTableName, sqlConnection);
+                Customer customer = new(45, "Microsoft", "Corporation");
+
+                using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction())
+                {
+                    DatabaseHelper.InsertCustomerData(sqlConnection, sqlTransaction, _akvTableName, customer);
+                    sqlTransaction.Commit();
+                }
+            }
+
+            // Setup Empty key store provider
+            Dictionary<String, SqlColumnEncryptionKeyStoreProvider> emptyKeyStoreProviders = new()
+            {
+                { "AZURE_KEY_VAULT", new EmptyKeyStoreProvider() }
+            };
+
+            // Try this test 3 times to ensure that the connection is not left in a bad state after a decrypt error.
+            for (int i = 0; i < 3; i++)
+            {
+                // Setup connection using the empty key store provider
+                using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
+                {
+                    sqlConnection.Open();
+                    sqlConnection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(emptyKeyStoreProviders);
+
+                    using SqlCommand sqlCommand = new($"SELECT FirstName FROM [{_akvTableName}] WHERE FirstName = @firstName",
+                                                                sqlConnection);
+                    SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
+                    customerFirstParam.Direction = System.Data.ParameterDirection.Input;
+                    customerFirstParam.ForceColumnEncryption = true;
+
+                    using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+
+                    try
+                    {
+                        while (sqlDataReader.Read())
+                        {
+                            string firstName = sqlDataReader.GetString(0);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error message = {ex.Message}");
+                        Assert.Contains("Failed to decrypt column", ex.Message);
+                    }
+                }
+            }
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRoundTripWithAKVAndCertStoreProvider()
@@ -119,6 +181,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             sqlCommand.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customProvider);
             Exception ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteReader());
             Assert.StartsWith("The current credential is not configured to acquire tokens for tenant", ex.InnerException.Message);
+        }
+
+        private class EmptyKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider
+        {
+            public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
+            {
+                return new byte[32];
+            }
+
+            public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
+            {
+                return new byte[32];
+            }
         }
     }
 }
