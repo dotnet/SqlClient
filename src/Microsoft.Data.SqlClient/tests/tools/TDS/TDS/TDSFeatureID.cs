@@ -20,6 +20,11 @@ namespace Microsoft.SqlServer.TDS
         FederatedAuthentication = 0x02,
 
         /// <summary>
+        /// JSON Support
+        /// </summary>
+        JsonSupport = 0x0D,
+
+        /// <summary>
         /// End of the list
         /// </summary>
         Terminator = 0xFF
