@@ -7237,8 +7237,6 @@ namespace Microsoft.Data.SqlClient
                                 // Order matters here. Must increment column before draining data.
                                 // Update state objects after draining data.
 
-                                // trigger build
-
                                 if (stateObj._readerState != null)
                                 {
                                     stateObj._readerState._nextColumnDataToRead++;
