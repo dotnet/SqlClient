@@ -75,7 +75,6 @@
   </ItemGroup>
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
     <Compile Include="AlwaysEncrypted\DateOnlyReadTests.cs" />
-    <Compile Include="AlwaysEncrypted\ColumnDecryptErrorTests.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '1'">
     <Compile Include="SQL\AsyncTest\AsyncTimeoutTest.cs" />
