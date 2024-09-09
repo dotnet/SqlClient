@@ -17,6 +17,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -337,14 +338,20 @@ namespace Microsoft.Data.SqlClient.SNI
                 pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
             }
 
-            connectTask = ParallelConnectAsync(serverAddresses, port);
-
-            if (!(connectTask.Wait(isInfiniteTimeOut ? -1: timeout.MillisecondsRemainingInt)))
+            try
+            {
+                connectTask = ParallelConnectAsync(serverAddresses, port, timeout);
+            }
+            catch (OperationCanceledException)
             {
                 callerReportError = false;
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0} Connection timed out, Exception: {1}", args0: _connectionId, args1: Strings.SNI_ERROR_40);
                 ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_40);
                 return availableSocket;
+            }
+            catch (Exception)
+            {
+                throw;
             }
 
             availableSocket = connectTask.Result;
@@ -508,7 +515,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return null;
         }
 
-        private static Task<Socket> ParallelConnectAsync(IPAddress[] serverAddresses, int port)
+        private static async Task<Socket> ParallelConnectAsync(IPAddress[] serverAddresses, int port, TimeoutTimer timeout)
         {
             if (serverAddresses == null)
             {
@@ -521,92 +528,56 @@ namespace Microsoft.Data.SqlClient.SNI
 
             var sockets = new List<Socket>(serverAddresses.Length);
             var connectTasks = new List<Task>(serverAddresses.Length);
-            var tcs = new TaskCompletionSource<Socket>();
-            var lastError = new StrongBox<Exception>();
-            var pendingCompleteCount = new StrongBox<int>(serverAddresses.Length);
 
-            foreach (IPAddress address in serverAddresses)
-            {
-                var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                sockets.Add(socket);
-
-                // Start all connection tasks now, to prevent possible race conditions with
-                // calling ConnectAsync on disposed sockets.
-                try
-                {
-                    connectTasks.Add(socket.ConnectAsync(address, port));
-                }
-                catch (Exception e)
-                {
-                    connectTasks.Add(Task.FromException(e));
-                }
-            }
-
-            for (int i = 0; i < sockets.Count; i++)
-            {
-                ParallelConnectHelper(sockets[i], connectTasks[i], tcs, pendingCompleteCount, lastError, sockets);
-            }
-
-            return tcs.Task;
-        }
-
-        private static async void ParallelConnectHelper(
-            Socket socket,
-            Task connectTask,
-            TaskCompletionSource<Socket> tcs,
-            StrongBox<int> pendingCompleteCount,
-            StrongBox<Exception> lastError,
-            List<Socket> sockets)
-        {
-            bool success = false;
             try
             {
-                // Try to connect.  If we're successful, store this task into the result task.
-                await connectTask.ConfigureAwait(false);
-                success = tcs.TrySetResult(socket);
-                if (success)
+                foreach (IPAddress address in serverAddresses)
                 {
-                    // Whichever connection completes the return task is responsible for disposing
-                    // all of the sockets (except for whichever one is stored into the result task).
-                    // This ensures that only one thread will attempt to dispose of a socket.
-                    // This is also the closest thing we have to canceling connect attempts.
-                    foreach (Socket otherSocket in sockets)
-                    {
-                        if (otherSocket != socket)
-                        {
-                            otherSocket.Dispose();
-                        }
-                    }
+                    var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    sockets.Add(socket);
+                    connectTasks.Add(ParallelConnectHelper(socket, address, port, timeout));
                 }
-            }
-            catch (Exception e)
-            {
-                // Store an exception to be published if no connection succeeds
-                Interlocked.Exchange(ref lastError.Value, e);
-            }
-            finally
-            {
-                // If we didn't successfully transition the result task to completed,
-                // then someone else did and they would have cleaned up, so there's nothing
-                // more to do.  Otherwise, no one completed it yet or we failed; either way,
-                // see if we're the last outstanding connection, and if we are, try to complete
-                // the task, and if we're successful, it's our responsibility to dispose all of the sockets.
-                if (!success && Interlocked.Decrement(ref pendingCompleteCount.Value) == 0)
-                {
-                    if (lastError.Value != null)
-                    {
-                        tcs.TrySetException(lastError.Value);
-                    }
-                    else
-                    {
-                        tcs.TrySetCanceled();
-                    }
 
-                    foreach (Socket s in sockets)
+                // Task.WhenAny returns Task<Task<Socket>>, so we need to unwrap it
+                Task<Socket> firstCompletedTask = (Task<Socket>)await Task.WhenAny(connectTasks);
+                Socket connectedSocket = await firstCompletedTask;
+
+                foreach(Socket socket in sockets)
+                {
+                    if(socket != connectedSocket)
                     {
-                        s.Dispose();
+                        socket.Dispose();
                     }
                 }
+
+                return connectedSocket;
+            }
+            catch(Exception)
+            {
+                throw;
+            }
+        }
+
+        private static async Task<Socket> ParallelConnectHelper(
+            Socket socket,
+            IPAddress address,
+            int port,
+            TimeoutTimer timeout)
+        {
+            CancellationTokenSource cts = new();
+            try
+            {
+                if (!timeout.IsInfinite)
+                {
+                    cts.CancelAfter(timeout.MillisecondsRemainingInt);
+                }
+                await socket.ConnectAsync(address, port,cts.Token);
+                return socket;
+            }
+            catch(OperationCanceledException)
+            {
+                socket.Dispose();
+                throw;
             }
         }
 
