@@ -6388,16 +6388,36 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (stateObj is not null)
                             {
-                                // call to decrypt column keys has failed. The data wont be decrypted.
-                                // Not setting the value to false, forces the driver to look for column value.
-                                // Packet received from Key Vault will throws invalid token header.
-                                if (stateObj.HasPendingData)
+                                // Throwing an exception here circumvents the normal pending data checks and cleanup processes,
+                                // so we need to ensure the appropriate state. Increment the _nextColumnDataToRead index because
+                                // we already read the encrypted column data; Otherwise we'll double count and attempt to drain a
+                                // corresponding number of bytes a second time. We don't want the rest of the pending data to
+                                // interfere with future operations, so we must drain it. Set HasPendingData to false to indicate
+                                // that we successfully drained the data.
+
+                                // The SqlDataReader also maintains a state called dataReady. We need to set that to false if we've
+                                // drained the data off the connection. Otherwise, a consumer that catches the exception may
+                                // continue to use the reader and will timeout waiting to read data that doesn't exist.
+
+                                // Order matters here. Must increment column before draining data.
+                                // Update state objects after draining data.
+
+
+
+                                if (stateObj._readerState != null)
                                 {
-                                    // Drain the pending data now if setting the HasPendingData to false.
-                                    // SqlDataReader.TryCloseInternal can not drain if HasPendingData = false.
-                                    DrainData(stateObj);
+                                    stateObj._readerState._nextColumnDataToRead++;
                                 }
+
+                                DrainData(stateObj);
+
+                                if (stateObj._readerState != null)
+                                {
+                                    stateObj._readerState._dataReady = false;
+                                }
+
                                 stateObj.HasPendingData = false;
+                                
                             }
                             throw SQL.ColumnDecryptionFailed(columnName, null, e);
                         }
@@ -8411,6 +8431,24 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        internal int WriteJsonSupportFeatureRequest(bool write /* if false just calculates the length */)
+        {
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_JSONSUPPORT);
+
+                // Feature Data Length
+                WriteInt(1, _physicalStateObj);
+
+                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_JSON_VERSION);
+            }
+
+            return len;
+        }
+
         private void WriteLoginData(SqlLogin rec,
                                      TdsEnums.FeatureExtension requestedFeatures,
                                      SessionData recoverySessionData,
@@ -8721,6 +8759,11 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
                 {
                     length += WriteSQLDNSCachingFeatureRequest(write);
+                }
+
+                if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
+                {
+                    length += WriteJsonSupportFeatureRequest(write);
                 }
 
                 length++; // for terminator
