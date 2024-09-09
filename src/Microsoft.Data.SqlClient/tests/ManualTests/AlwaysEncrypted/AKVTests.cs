@@ -110,6 +110,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         {
                             string firstName = sqlDataReader.GetString(0);
                         }
+                        // If this is reached, then decryption succeeded unexpectedly.
+                        Assert.Fail( "Column decryption should have failed.");
                     }
                     catch (Exception ex)
                     {
