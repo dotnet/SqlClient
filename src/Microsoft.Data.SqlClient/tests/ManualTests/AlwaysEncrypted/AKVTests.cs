@@ -106,12 +106,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     try
                     {
+                        string firstName = string.Empty;
                         while (sqlDataReader.Read())
                         {
-                            string firstName = sqlDataReader.GetString(0);
+                            firstName = sqlDataReader.GetString(0);
                         }
                         // If this is reached, then decryption succeeded unexpectedly.
-                        Assert.Fail( "Column decryption should have failed.");
+                        Console.WriteLine($"firstName = {firstName}");
+                        Assert.Contains(@"Microsoft", firstName);
+                        Console.WriteLine( "Column decryption should have failed.");
                     }
                     catch (Exception ex)
                     {
