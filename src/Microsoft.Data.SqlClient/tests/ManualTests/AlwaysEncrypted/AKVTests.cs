@@ -104,7 +104,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
                     var error = Assert.Throws<SqlException>(() => sqlDataReader.Read());
-                    Assert.Contains("Failed to decrypt column", error.Message);
+                    if (error != null)
+                        Assert.Contains("Failed to decrypt column", error.Message);
+                    else
+                        Assert.Fail("Decryption unexpectedly succeeded.");
                 }
             }
         }
