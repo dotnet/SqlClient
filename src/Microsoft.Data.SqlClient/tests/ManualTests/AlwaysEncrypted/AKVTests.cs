@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
                 EnclaveAttestationUrl = ""
             };
-            using SqlConnection sqlConnection = new (builder.ConnectionString);
+            using SqlConnection sqlConnection = new(builder.ConnectionString);
 
             sqlConnection.Open();
             Customer customer = new(45, "Microsoft", "Corporation");
@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
 
             // Test INPUT parameter on an encrypted parameter
-            using SqlCommand sqlCommand = new ($"SELECT CustomerId, FirstName, LastName FROM [{_akvTableName}] WHERE FirstName = @firstName",
+            using SqlCommand sqlCommand = new($"SELECT CustomerId, FirstName, LastName FROM [{_akvTableName}] WHERE FirstName = @firstName",
                                                             sqlConnection);
             SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
             customerFirstParam.Direction = System.Data.ParameterDirection.Input;
@@ -103,24 +103,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     customerFirstParam.ForceColumnEncryption = true;
 
                     using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
-
-                    try
-                    {
-                        string firstName = string.Empty;
-                        while (sqlDataReader.Read())
-                        {
-                            firstName = sqlDataReader.GetString(0);
-                        }
-                        // If this is reached, then decryption succeeded unexpectedly.
-                        Console.WriteLine($"firstName = {firstName}");
-                        Assert.Contains(@"Microsoft", firstName);
-                        Console.WriteLine( "Column decryption should have failed.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error message = {ex.Message}");
-                        Assert.Contains("Failed to decrypt column", ex.Message);
-                    }
+                    var error = Assert.Throws<SqlException>(() => sqlDataReader.Read());
+                    Assert.Contains("Failed to decrypt column", error.Message);
                 }
             }
         }
@@ -129,7 +113,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRoundTripWithAKVAndCertStoreProvider()
         {
-            using SQLSetupStrategyCertStoreProvider certStoreFixture = new ();
+            using SQLSetupStrategyCertStoreProvider certStoreFixture = new();
             byte[] plainTextColumnEncryptionKey = ColumnEncryptionKey.GenerateRandomBytes(ColumnEncryptionKey.KeySizeInBytes);
             byte[] encryptedColumnEncryptionKeyUsingAKV = _fixture.AkvStoreProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", plainTextColumnEncryptionKey);
             byte[] columnEncryptionKeyReturnedAKV2Cert = certStoreFixture.CertStoreProvider.DecryptColumnEncryptionKey(certStoreFixture.CspColumnMasterKey.KeyPath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingAKV);
