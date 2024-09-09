@@ -17,7 +17,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
-using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
