@@ -6,7 +6,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
-using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
