@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             DatabaseHelper.ValidateResultSet(sqlDataReader);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void ForcedColumnDecryptErrorTestShouldPass()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
