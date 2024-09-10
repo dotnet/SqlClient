@@ -1,13 +1,9 @@
-﻿
-<docs>
+﻿<docs>
   <members name="SqlEnclaveAttestationParameters">
     <SqlEnclaveAttestationParameters>
       <summary>
         Encapsulates the information SqlClient sends to SQL Server to initiate the process of attesting and creating a secure session with the enclave, SQL Server uses for computations on columns protected using Always Encrypted.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
     </SqlEnclaveAttestationParameters>
     <ctor>
       <param name="protocol">
@@ -22,9 +18,6 @@
       <summary>
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlEnclaveAttestationParameters" /> class.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
       <exception cref="T:System.ArgumentNullException"> <paramref name="clientDiffieHellmanKey" /> is <see langword="null" /> .</exception>
     </ctor>
     <ClientDiffieHellmanKey>
@@ -45,9 +38,6 @@
       <returns>
         The information required by SQL Server to execute attestation protocol identified by EnclaveAttestationProtocols.
       </returns>
-      <remarks>
-        To be added.
-      </remarks>
     </GetInput>
     <Protocol>
       <summary>
@@ -56,9 +46,6 @@
       <value>
         The enclave attestation protocol identifier.
       </value>
-      <remarks>
-        To be added.
-      </remarks>
     </Protocol>
   </members>
 </docs>
