@@ -135,6 +135,9 @@
       <param name="index">
         The index where the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object should be located.
       </param>
+      <param name="batchCommand">
+        The <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object to add to the collection.
+      </param>
       <summary>
         Sets the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object at the specified index to a new value.
       </summary>
