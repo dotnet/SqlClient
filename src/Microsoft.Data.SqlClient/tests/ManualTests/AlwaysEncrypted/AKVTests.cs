@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             DatabaseHelper.ValidateResultSet(sqlDataReader);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void ForcedColumnDecryptErrorTestShouldPass()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
@@ -71,8 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection sqlConnection = new(builder.ConnectionString))
             {
                 sqlConnection.Open();
-                Table.DeleteData(_akvTableName, sqlConnection);
-                Customer customer = new(45, "Microsoft", "Corporation");
+                Customer customer = new(88, "Microsoft2", "Corporation2");
 
                 using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction())
                 {
@@ -98,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     using SqlCommand sqlCommand = new($"SELECT FirstName FROM [{_akvTableName}] WHERE FirstName = @firstName",
                                                                 sqlConnection);
-                    SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
+                    SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft2");
                     customerFirstParam.Direction = System.Data.ParameterDirection.Input;
                     customerFirstParam.ForceColumnEncryption = true;
 
