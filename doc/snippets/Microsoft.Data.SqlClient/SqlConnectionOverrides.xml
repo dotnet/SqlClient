@@ -15,7 +15,7 @@
 		</None>
 		<OpenWithoutRetry>
 			<summary>
-				Disable transient fault handling during the initial SqlConnection Open attempt.
+				Disable transient fault handling during the initial <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Open" /> attempt.
 			</summary>
 			<value>
 				1

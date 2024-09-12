@@ -82,11 +82,6 @@
         </code>
       </example>
 		</SqlConnection>
-		<ctor1>
-			<summary>
-				Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> class.
-			</summary>
-		</ctor1>
 		<ctor2>
 			<summary>
 				Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> class.
@@ -98,22 +93,22 @@
 				<list type="table">
 					<listheader>
 						<term>Properties</term>
-						<term>Initial value</term>
+						<description>Initial value</description>
 					</listheader>
 					<item>
-						<description><see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /></description>
+						<term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /></term>
 						<description>empty string ("")</description>
 					</item>
 					<item>
-						<description><see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionTimeout" /></description>
+						<term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionTimeout" /></term>
 						<description>15</description>
 					</item>
 					<item>
-						<description><see cref="P:Microsoft.Data.SqlClient.SqlConnection.Database" /></description>
+						<term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.Database" /></term>
 						<description>empty string ("")</description>
 					</item>
 					<item>
-						<description><see cref="P:Microsoft.Data.SqlClient.SqlConnection.DataSource" /></description>
+						<term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.DataSource" /></term>
 						<description>empty string ("")</description>
 					</item>
 				</list>
@@ -176,22 +171,22 @@
 				<list type="table">
 					<listheader>
 						<term>Properties</term>
-						<term>Initial value</term>
+						<description>Initial value</description>
 					</listheader>
 					<item>
-						<description><see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /></description>
+						<term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /></term>
 						<description><c>connectionString</c></description>
 					</item>
 					<item>
-						<description><see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionTimeout" /></description>
+						<term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionTimeout" /></term>
 						<description>15</description>
 					</item>
 					<item>
-						<description><see cref="P:Microsoft.Data.SqlClient.SqlConnection.Database" /></description>
+						<term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.Database" /></term>
 						<description>empty string ("")</description>
 					</item>
 					<item>
-						<description><see cref="P:Microsoft.Data.SqlClient.SqlConnection.DataSource" /></description>
+						<term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.DataSource" /></term>
 						<description>empty string ("")</description>
 					</item>
 				</list>
@@ -243,12 +238,12 @@
         </code>
       </example>
 			<exception cref="T:System.ArgumentException">
-				The supplied connection string argument failed <see cref="T:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /> validation.
+				The supplied connection string argument failed <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /> validation.
 			</exception>
 		</ctorConnectionString>
 		<ctorConnectionStringCredential>
 			<param name="connectionString">
-				A connection string that does not use any of the following connection string keywords: <c>Integrated Security = true</c>, <c>UserId</c>, or <c>Password</c> ; or that does not use <c>ConnectionContext = true</c>.
+				A connection string that does not use any of the following connection string keywords: <c>Integrated Security = true</c>, <c>UserId</c>, or <c>Password</c>; or that does not use <c>ConnectionContext = true</c>.
 			</param>
 			<param name="credential">
 				A <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> object. If <paramref name="credential" /> is null, <see cref="M:Microsoft.Data.SqlClient.SqlConnection.#ctor(System.String,Microsoft.Data.SqlClient.SqlCredential)" /> is functionally equivalent to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.#ctor(System.String)" />.
@@ -257,7 +252,7 @@
 				Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> class given a connection string, that does not use <c>Integrated Security = true</c> and a <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> object that contains the user ID and password.
 			</summary>
 			<exception cref="T:System.ArgumentException">
-				The supplied arguments failed validation, including <see cref="T:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /> validation.
+				The supplied arguments failed validation, including <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /> validation.
 			</exception>
 		</ctorConnectionStringCredential>
 		<AccessToken>
@@ -268,7 +263,7 @@
 				The access token for the connection.
 			</value>
 			<remarks>
-				The AccessToken is a part of the connection pool key. Care should be taken when using this property to manage your own access token. The application is responsible for knowing when the token expires and connections from the pool should no longer be used. If you set a minimum pool size > 0 along with AccessToken, you must call <see cref="M:Microsoft.Data.SqlClient.SqlConnection.ClearPool" /> after the access token expires to ensure the connection pool doesn't maintain those connections indefinitely.
+				The AccessToken is a part of the connection pool key. Care should be taken when using this property to manage your own access token. The application is responsible for knowing when the token expires and connections from the pool should no longer be used. If you set a minimum pool size > 0 along with AccessToken, you must call <see cref="M:Microsoft.Data.SqlClient.SqlConnection.ClearPool(Microsoft.Data.SqlClient.SqlConnection)" /> after the access token expires to ensure the connection pool doesn't maintain those connections indefinitely.
 			</remarks>
 		</AccessToken>
 		<AccessTokenCallback>
@@ -276,7 +271,7 @@
 				Gets or sets the access token callback for the connection.
 			</summary>
 			<value>
-				The Func that takes a <see cref="T:SqlAuthenticationParameters" /> and <see cref="T:System.Threading.CancellationToken" /> and returns a <see cref="T:SqlAuthenticationToken" />.
+				The Func that takes a <see cref="T:SqlAuthenticationParameters" /> and <see cref="T:System.Threading.CancellationToken" /> and returns a <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationToken" />.
 			</value>
 			<example>
         <para>
@@ -344,11 +339,6 @@
 				To be added.
 			</remarks>
 		</BeginDbTransaction>
-		<BeginTransaction1>
-			<summary>
-				Starts a database transaction.
-			</summary>
-		</BeginTransaction1>
 		<BeginTransaction2>
 			<summary>
 				Starts a database transaction.
@@ -864,7 +854,7 @@
 				Changes the SQL Server password for the user indicated in the connection string to the supplied new password.
 			</summary>
 			<remarks>
-        When you are using SQL Server on Windows Server, developers can take advantage of functionality that lets the client application supply both the current and a new password in order to change the existing password. Applications can implement functionality such as prompting the user for a new password during initial login if the old one has expired, and this operation can be completed without administrator intervention. The <see cref="M:Microsoft.Data.SqlClient.SqlConnection.ChangePassword" /> method changes the SQL Server password for the user indicated in the supplied <c>connectionString</c> parameter to the value supplied in the <paramref name="newPassword" /> parameter. If the connection string includes the option for integrated security (that is, "Integrated Security=True" or the equivalent), an exception is thrown. To determine that the password has expired, calling the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Open" /> method raises a <see cref="T:Microsoft.Data.SqlClient.SqlException" />. In order to indicate that the password that is contained within the connection string must be reset, the <see cref="P:Microsoft.Data.SqlClient.SqlException.Number" /> property for the exception contains the status value 18487 or 18488. The first value (18487) indicates that the password has expired and the second (18488) indicates that the password must be reset before logging in. This method opens its own connection to the server, requests the password change, and closes the connection as soon as it has completed. This connection is not retrieved from, nor returned to, the SQL Server connection pool.
+        When you are using SQL Server on Windows Server, developers can take advantage of functionality that lets the client application supply both the current and a new password in order to change the existing password. Applications can implement functionality such as prompting the user for a new password during initial login if the old one has expired, and this operation can be completed without administrator intervention. This method changes the SQL Server password for the user indicated in the supplied <c>connectionString</c> parameter to the value supplied in the <paramref name="newPassword" /> parameter. If the connection string includes the option for integrated security (that is, "Integrated Security=True" or the equivalent), an exception is thrown. To determine that the password has expired, calling the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Open" /> method raises a <see cref="T:Microsoft.Data.SqlClient.SqlException" />. In order to indicate that the password that is contained within the connection string must be reset, the <see cref="P:Microsoft.Data.SqlClient.SqlException.Number" /> property for the exception contains the status value 18487 or 18488. The first value (18487) indicates that the password has expired and the second (18488) indicates that the password must be reset before logging in. This method opens its own connection to the server, requests the password change, and closes the connection as soon as it has completed. This connection is not retrieved from, nor returned to, the SQL Server connection pool.
       </remarks>
       <example>
         <para>
@@ -1214,28 +1204,28 @@
 				<list type="table">
 					<listheader>
 						<term>Keyword</term>
-						<term>Default</term>
-						<term>Description</term>
+						<description>Default</description>
+						<description>Description</description>
 					</listheader>
 					<item>
-						<description>Addr</description>
+						<term>Addr</term>
 						<description>N/A</description>
 						<description>Synonym of <b>Data Source</b>.</description>
 					</item>
 					<item>
-						<description>Address</description>
+						<term>Address</term>
 						<description>N/A</description>
 						<description>Synonym of <b>Data Source</b>.</description>
 					</item>
 					<item>
-						<description>App</description>
+						<term>App</term>
 						<description>N/A</description>
 						<description>Synonym of <b>Application Name</b>.</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Application Intent</b> or <b>ApplicationIntent</b>
-						</description>
+						</term>
 						<description>ReadWrite</description>
 						<description>
               <para>
@@ -1247,7 +1237,7 @@
 						</description>
 					</item>
 					<item>
-						<description>Application Name</description>
+						<term>Application Name</term>
 						<description>N/A</description>
 						<description>
               <para>
@@ -1259,9 +1249,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>AttachDBFilename</b> or <b>Extended Properties</b> or <b>Initial File Name</b>
-						</description>
+						</term>
 						<description>N/A</description>
 						<description>
               <para>
@@ -1291,7 +1281,7 @@
 						</description>
 					</item>
 					<item>
-						<description>Attestation Protocol</description>
+						<term>Attestation Protocol</term>
 						<description>NotSpecified</description>
 						<description>
               <para>
@@ -1311,7 +1301,7 @@
 						</description>
 					</item>
 					<item>
-						<description>Authentication</description>
+						<term>Authentication</term>
 						<description>N/A</description>
 						<description>
               <para>
@@ -1337,14 +1327,14 @@
 						</description>
 					</item>
 					<item>
-						<description>Column Encryption Setting</description>
+						<term>Column Encryption Setting</term>
 						<description>disabled</description>
 						<description>
 							Enables or disables <see href="/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted</see> functionality for the connection. Supported values are: <c>enabled</c> and <c>disabled</c>
 						</description>
 					</item>
 					<item>
-						<description>Command Timeout</description>
+						<term>Command Timeout</term>
 						<description>30</description>
 						<description>
               <para>
@@ -1356,9 +1346,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
 							<b>Connect Retry Count</b> or <b>ConnectRetryCount</b>
-						</description>
+						</term>
 						<description>1</description>
 						<description>
               <para>
@@ -1373,9 +1363,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Connect Retry Interval</b> or <b>ConnectRetryInterval</b>
-						</description>
+						</term>
 						<description>10</description>
 						<description>
               <para>
@@ -1387,9 +1377,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Connect Timeout</b> or <b>Connection Timeout</b> or <b>Timeout</b>
-						</description>
+						</term>
 						<description>15</description>
 						<description>
               <para>
@@ -1404,9 +1394,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Current Language</b> or <b>Language</b>
-						</description>
+						</term>
 						<description>N/A</description>
 						<description>
               <para>
@@ -1418,9 +1408,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Data Source</b> or <b>Server</b> or <b>Address</b> or <b>Addr</b> or <b>Network Address</b>
-						</description>
+						</term>
 						<description>N/A</description>
 						<description>
               <para>
@@ -1483,12 +1473,12 @@
 						</description>
 					</item>
 					<item>
-						<description>Enclave Attestation Url</description>
+						<term>Enclave Attestation Url</term>
 						<description>N/A</description>
 						<description>Gets or sets the enclave attestation URL to be used with enclave based Always Encrypted.</description>
 					</item>
 					<item>
-						<description>Encrypt</description>
+						<term>Encrypt</term>
 						<description>
 							<c>true</c> in 4.0 and above <br /><br />
 							<c>false</c> in 3.x and below
@@ -1511,14 +1501,14 @@
 						</description>
 					</item>
 					<item>
-						<description>Enlist</description>
+						<term>Enlist</term>
 						<description>'true'</description>
 						<description>
 							<c>true</c> indicates that the SQL Server connection pooler automatically enlists the connection in the creation thread's current transaction context.
 						</description>
 					</item>
 					<item>
-						<description>Failover Partner</description>
+						<term>Failover Partner</term>
 						<description>N/A</description>
 						<description>
               <para>
@@ -1539,36 +1529,36 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Failover Partner SPN</b> or <b>FailoverPartnerSPN</b>
-						</description>
+						</term>
 						<description>N/A</description>
 						<description>
               The SPN for the failover partner. The default value is an empty string, which causes SqlClient to use the default, driver-generated SPN. (Only available in v5.0+)
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Host Name In Certificate</b> or <b>HostNameInCertificate</b>
-						</description>
+						</term>
 						<description>N/A</description>
 						<description>
 							The host name to use when validating the server certificate. When not specified, the server name from the Data Source is used for certificate validation. (Only available in v5.0+)
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Server Certificate</b> or <b>ServerCertificate</b>
-						</description>
+						</term>
 						<description>N/A</description>
 						<description>
 							The path to a certificate file to match against the SQL Server TLS/SSL certificate. The accepted certificate formats are PEM, DER, and CER. If specified, the SQL Server certificate is checked by verifying if the ServerCertificate provided is an exact match. (Only available in v5.1+)
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Initial Catalog</b> or <b>Database</b>
-						</description>
+						</term>
 						<description>N/A</description>
 						<description>
               <para>
@@ -1580,9 +1570,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Integrated Security</b> or <b>Trusted_Connection</b>
-						</description>
+						</term>
 						<description><c>false</c></description>
 						<description>
               <para>
@@ -1600,9 +1590,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>IP Address Preference</b> or <b>IPAddressPreference</b>
-						</description>
+						</term>
 						<description><c>IPv4First</c></description>
 						<description>
               <para>
@@ -1616,9 +1606,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Load Balance Timeout</b> or <b>Connection Lifetime</b>
-						</description>
+						</term>
 						<description>0</description>
 						<description>
               <para>
@@ -1630,7 +1620,7 @@
 						</description>
 					</item>
 					<item>
-						<description>Max Pool Size</description>
+						<term>Max Pool Size</term>
 						<description>100</description>
 						<description>
               <para>
@@ -1642,7 +1632,7 @@
 						</description>
 					</item>
 					<item>
-						<description>Min Pool Size</description>
+						<term>Min Pool Size</term>
 						<description>0</description>
 						<description>
               <para>
@@ -1657,9 +1647,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Multiple Active Result Sets</b> or <b>MultipleActiveResultSets</b>
-            </description>
+            </term>
 						<description>false</description>
 						<description>
               <para>
@@ -1674,9 +1664,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Multi Subnet Failover</b> or <b>MultiSubnetFailover</b>
-						</description>
+						</term>
 						<description>false</description>
 						<description>
               <para>
@@ -1691,9 +1681,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Network Library</b> or <b>Network</b> or <b>Net</b>
-						</description>
+						</term>
 						<description>N/A</description>
 						<description>
               <para>
@@ -1718,7 +1708,7 @@
 						</description>
 					</item>
 					<item>
-						<description>Packet Size</description>
+						<term>Packet Size</term>
 						<description>8000</description>
 						<description>
               <para>
@@ -1730,9 +1720,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Password</b> or <b>PWD</b>
-						</description>
+						</term>
 						<description>N/A</description>
 						<description>
               <para>
@@ -1744,9 +1734,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Persist Security Info</b> or <b>PersistSecurityInfo</b>
-						</description>
+						</term>
 						<description><c>false</c></description>
 						<description>
               <para>
@@ -1761,16 +1751,16 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Pool Blocking Period</b> or <b>PoolBlockingPeriod</b>
-						</description>
+						</term>
 						<description>Auto</description>
 						<description>
 							Sets the blocking period behavior for a connection pool. See <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.PoolBlockingPeriod" /> property for details.
 						</description>
 					</item>
 					<item>
-						<description>Pooling</description>
+						<term>Pooling</term>
 						<description><c>true</c></description>
 						<description>
               <para>
@@ -1785,14 +1775,14 @@
 						</description>
 					</item>
 					<item>
-						<description>Replication</description>
+						<term>Replication</term>
             <description><c>false</c></description>
 						<description><c>true</c> if replication is supported using the connection.</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Server SPN</b> or <b>ServerSPN</b>
-						</description>
+						</term>
 						<description>N/A</description>
 						<description>
               <para>
@@ -1801,7 +1791,7 @@
 						</description>
 					</item>
 					<item>
-						<description>Transaction Binding</description>
+						<term>Transaction Binding</term>
 						<description>Implicit Unbind</description>
 						<description>
               <para>
@@ -1826,9 +1816,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Transparent Network IP Resolution</b> or <b>TransparentNetworkIPResolution</b>
-						</description>
+						</term>
 						<description>See description.</description>
 						<description>
               <para>
@@ -1873,16 +1863,16 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Trust Server Certificate</b> or <b>TrustServerCertificate</b>
-						</description>
+						</term>
             <description><c>false</c></description>
 						<description>
 							When set to <c>true</c>, TLS is used to encrypt the channel when bypassing walking the certificate chain to validate trust. If TrustServerCertificate is set to <c>true</c> and Encrypt is set to <c>false</c>, the channel is not encrypted. Recognized values are <c>true</c>, <c>false</c>, <c>yes</c>, and <c>no</c>. For more information, see <see href="/sql/connect/ado-net/connection-string-syntax">Connection String Syntax</see>.
 						</description>
 					</item>
 					<item>
-						<description>Type System Version</description>
+						<term>Type System Version</term>
 						<description>N/A</description>
 						<description>
               <b>
@@ -1906,9 +1896,9 @@
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>User ID</b> or <b>UID</b> or <b>User</b>
-						</description>
+						</term>
 						<description>N/A</description>
 						<description>
               <para>
@@ -1920,16 +1910,16 @@
 						</description>
 					</item>
 					<item>
-						<description>User Instance</description>
+						<term>User Instance</term>
 						<description><c>false</c></description>
 						<description>
 							A value that indicates whether to redirect the connection from the default SQL Server Express instance to a runtime-initiated instance running under the account of the caller.
 						</description>
 					</item>
 					<item>
-						<description>
+						<term>
               <b>Workstation ID</b> or <b>WSID</b>
-						</description>
+						</term>
 						<description>The local computer name</description>
 						<description>
               <para>The name of the workstation connecting to SQL Server.</para>
@@ -2121,7 +2111,7 @@
 			</value>
 			<remarks>
         <para>
-          <c>Persist Security Info = true</c> is required to get the value of the <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> object with <see cref="T:Microsoft.Data.SqlClient.SqlConnection.Credential" />. The default value of <see cref="T:Microsoft.Data.SqlClient.SqlConnection.Credential" /> is null. An <see cref="T:System.InvalidOperationException" /> exception will be raised:
+          <c>Persist Security Info = true</c> is required to get the value of the <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> object with <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Credential" />. The default value of <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Credential" /> is null. An <see cref="T:System.InvalidOperationException" /> exception will be raised:
         </para>
         <list type="bullet">
           <item>
@@ -2139,17 +2129,6 @@
         </list>
       </remarks>
 		</Credential>
-		<Credentials>
-			<summary>
-				To be added.
-			</summary>
-			<value>
-				To be added.
-			</value>
-			<remarks>
-				To be added.
-			</remarks>
-		</Credentials>
 		<Database>
 			<summary>
 				Gets the name of the current database or the database to be used after a connection is opened.
@@ -2158,7 +2137,7 @@
 				The name of the current database or the name of the database to be used after a connection is opened. The default value is an empty string.
 			</value>
 			<remarks>
-        The <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Database" /> property updates dynamically. If you change the current database using a Transact-SQL statement or the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.ChangeDatabase" /> method, an informational message is sent and the property is updated automatically.
+        The <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Database" /> property updates dynamically. If you change the current database using a Transact-SQL statement or the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.ChangeDatabase(System.String)" /> method, an informational message is sent and the property is updated automatically.
         <para>
         </para>
       </remarks>
@@ -2289,7 +2268,7 @@
 			</summary>
 			<remarks>
         <para>
-          You can use the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction" /> method to enlist in a distributed transaction. Because it enlists a connection in a <see cref="T:System.Transactions.Transaction" /> instance, <b>EnlistTransaction</b> takes advantage of functionality available in the <see cref="T:System.Transactions" /> namespace for managing distributed transactions, making it preferable to <b>EnlistDistributedTransaction</b> for this purpose. For more information, see <see href="/sql/connect/ado-net/distributed-transactions">Distributed Transactions</see>.
+          You can use the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction(System.Transactions.Transaction)" /> method to enlist in a distributed transaction. Because it enlists a connection in a <see cref="T:System.Transactions.Transaction" /> instance, <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction(System.Transactions.Transaction)" /> takes advantage of functionality available in the <see cref="T:System.Transactions" /> namespace for managing distributed transactions, making it preferable to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistDistributedTransaction(System.EnterpriseServices.ITransaction)" /> for this purpose. For more information, see <see href="/sql/connect/ado-net/distributed-transactions">Distributed Transactions</see>.
         </para>
         <para>
           You can continue to enlist in an existing distributed transaction using the <b>EnlistDistributedTransaction</b> method if auto-enlistment is disabled. Enlisting in an existing distributed transaction makes sure that, if the transaction is committed or rolled back, modifications made by the code at the data source are also committed or rolled back. <c>EnlistDistributedTransaction</c> returns an exception if the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> has already started a transaction using <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" />. However, if the transaction is a local transaction started at the data source (for example, by explicitly executing the BEGIN TRANSACTION statement using an <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object), <b>EnlistDistributedTransaction</b> rolls back the local transaction and enlists in the existing distributed transaction as requested. You do not receive notice that the local transaction was rolled back, and are responsible for managing any local transactions not started using <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" />.
@@ -2304,7 +2283,7 @@
 				Enlists in the specified transaction as a distributed transaction.
 			</summary>
 			<remarks>
-				You can use the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction" /> method to enlist in a distributed transaction. Because it enlists a connection in a <see cref="T:System.Transactions.Transaction" /> instance, <b>EnlistTransaction</b> takes advantage of functionality available in the <see cref="T:System.Transactions" /> namespace for managing distributed transactions, making it preferable to <b>EnlistDistributedTransaction</b>, which uses a <b>System.EnterpriseServices.ITransaction</b> object. It also has slightly different semantics: once a connection is explicitly enlisted on a transaction, it cannot be unenlisted or enlisted in another transaction until the first transaction finishes. For more information about distributed transactions, see <see href="/sql/connect/ado-net/distributed-transactions">Distributed Transactions</see>.
+				You can use the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction(System.Transactions.Transaction)" /> method to enlist in a distributed transaction. Because it enlists a connection in a <see cref="T:System.Transactions.Transaction" /> instance, <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction(System.Transactions.Transaction)" /> takes advantage of functionality available in the <see cref="T:System.Transactions" /> namespace for managing distributed transactions, making it preferable to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistDistributedTransaction(System.EnterpriseServices.ITransaction)" />, which uses a <see cref="T:System.EnterpriseServices.ITransaction" /> object (from <see cref="T:System.EnterpriseServices" /> namespace). It also has slightly different semantics: once a connection is explicitly enlisted on a transaction, it cannot be unenlisted or enlisted in another transaction until the first transaction finishes. For more information about distributed transactions, see <see href="/sql/connect/ado-net/distributed-transactions">Distributed Transactions</see>.
 			</remarks>
 		</EnlistTransaction>
 		<FireInfoMessageEventOnUserErrors>
@@ -2326,17 +2305,9 @@
 				</para>
 			</remarks>
 		</FireInfoMessageEventOnUserErrors>
-		<GetSchema1>
-			<summary>
-				Returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />.
-			</summary>
-			<remarks>
-				If you attempt to retrieve schema information for more than one versioned stored procedure, the schema for the latest one only is returned.
-			</remarks>
-		</GetSchema1>
 		<GetSchema2>
 			<summary>
-				Returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about scheme, see [SQL Server Schema Collections](/sql/connect/ado-net/sql-server-schema-collections).
+        Returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about scheme, see <see href="/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
 			</summary>
 			<returns>
 				A <see cref="T:System.Data.DataTable" /> that contains schema information.
@@ -2654,7 +2625,7 @@
 			<exception cref="T:System.ArgumentException">
 				<paramref name="collectionName" /> is specified as null.
 			</exception>
-			<altmember cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema" />
+			<seealso cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema" />
 		</GetSchemaCollectionNameRestrictionValues>
 		<InfoMessage>
 			<summary>
@@ -2696,7 +2667,7 @@
 					If you specify a port number other than 1433 when you are trying to connect to an instance of SQL Server and using a protocol other than TCP/IP, the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Open" /> method fails. To specify a port number other than 1433, include "server=machinename,port number" in the connection string, and use the TCP/IP protocol.
 				</note>
 				<note type="note">
-					The .NET Framework Data Provider for SQL Server requires the Security permission with "Allows calls to unmanaged assemblies" enabled (<see cref="T:System.Security.Permissions.SecurityPermission" /> with <see cref="P:System.Security.Permissions.SecurityPermissionFlag" /> set to <c>UnmanagedCode</c>) to open a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> with SQL Debugging enabled.
+					The .NET Framework Data Provider for SQL Server requires the Security permission with "Allows calls to unmanaged assemblies" enabled (<see cref="T:System.Security.Permission.SecurityPermission" /> with <see cref="T:System.Security.Permissions.SecurityPermissionFlag" /> set to <c>UnmanagedCode</c>) to open a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> with SQL Debugging enabled.
 				</note>
       </remarks>
       <example>
@@ -2776,7 +2747,7 @@
 					If you specify a port number other than 1433 when you are trying to connect to an instance of SQL Server and using a protocol other than TCP/IP, the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Open" /> method fails. To specify a port number other than 1433, include "server=machinename,port number" in the connection string, and use the TCP/IP protocol.
 				</note>
 				<note type="note">
-					The .NET Framework Data Provider for SQL Server requires the Security permission with "Allows calls to unmanaged assemblies" enabled (<see cref="T:System.Security.Permissions.SecurityPermission" /> with <see cref="P:System.Security.Permissions.SecurityPermissionFlag" /> set to <c>UnmanagedCode</c>) to open a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> with SQL Debugging enabled.
+					The .NET Framework Data Provider for SQL Server requires the Security permission with "Allows calls to unmanaged assemblies" enabled (<see cref="T:System.Security.Permissions.SecurityPermission" /> with <see cref="T:System.Security.Permissions.SecurityPermissionFlag" /> set to <c>UnmanagedCode</c>) to open a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> with SQL Debugging enabled.
 				</note>
       </remarks>
       <example>
@@ -2845,10 +2816,10 @@
 			</returns>
 			<remarks>
 				<para>
-					After calling <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync" />, <see cref="P:Microsoft.Data.SqlClient.SqlConnection.State" /> must return <see cref="F:System.Data.ConnectionState.Connecting" /> until the returned <see cref="T:System.Threading.Tasks.Task" /> is completed. Then, if the connection was successful, <see cref="P:Microsoft.Data.SqlClient.SqlConnection.State" /> must return <see cref="F:System.Data.ConnectionState.Open" />. If the connection fails, <see cref="T:Microsoft.Data.SqlClient.SqlConnection.State" /> must return <see cref="F:System.Data.ConnectionState.Closed" />.
+					After calling <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync(System.Threading.CancellationToken)" />, <see cref="P:Microsoft.Data.SqlClient.SqlConnection.State" /> must return <see cref="F:System.Data.ConnectionState.Connecting" /> until the returned <see cref="T:System.Threading.Tasks.Task" /> is completed. Then, if the connection was successful, <see cref="P:Microsoft.Data.SqlClient.SqlConnection.State" /> must return <see cref="F:System.Data.ConnectionState.Open" />. If the connection fails, <see cref="P:Microsoft.Data.SqlClient.SqlConnection.State" /> must return <see cref="F:System.Data.ConnectionState.Closed" />.
 				</para>
 				<para>
-					A call to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Close" /> will attempt to cancel or close the corresponding <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync" /> call. For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+					A call to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Close" /> will attempt to cancel or close the corresponding <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync(System.Threading.CancellationToken)" /> call. For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
 				</para>
 			</remarks>
 			<exception cref="T:System.InvalidOperationException">
@@ -3005,7 +2976,6 @@
 			</value>
 			<remarks>
 				<para>
-					## Remarks
 					You must set the value for this property before opening the connection to take effect.
 				</para>
 				<para>
@@ -3018,10 +2988,10 @@
 					<item>
 						Create a <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> by using one of the following static methods of the <see cref="T:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory" /> class:
 						<list type="bullet">
-							<item><see cref="M:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateFixedRetryProvider" /></item>
-							<item><see cref="M:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateIncrementalRetryProvider" /></item>
-							<item><see cref="M:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateExponentialRetryProvider" /></item>
-							<item> <see cref="M:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateNoneRetryProvider" /></item>
+							<item><see cref="M:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateFixedRetryProvider(Microsoft.Data.SqlClient.SqlRetryLogicOption)" /></item>
+							<item><see cref="M:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateIncrementalRetryProvider(Microsoft.Data.SqlClient.SqlRetryLogicOption)" /></item>
+							<item><see cref="M:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateExponentialRetryProvider(Microsoft.Data.SqlClient.SqlRetryLogicOption)" /></item>
+							<item><see cref="M:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateNoneRetryProvider" /></item>
 						</list>
 					</item>
 					<item>
@@ -3210,7 +3180,7 @@
 				The version of the instance of SQL Server.
 			</value>
 			<remarks>
-        The version is of the form <i>##.##.####</i>, where the first two digits are the major version, the next two digits are the minor version, and the last four digits are the release version. The string is of the form <i>major.minor.build</i>, where major and minor are exactly two digits and build is exactly four digits. <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ServerVersion" /> was called while the returned Task was not completed and the connection was not opened after a call to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync" />.
+        The version is of the form <i>##.##.####</i>, where the first two digits are the major version, the next two digits are the minor version, and the last four digits are the release version. The string is of the form <i>major.minor.build</i>, where major and minor are exactly two digits and build is exactly four digits. <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ServerVersion" /> was called while the returned Task was not completed and the connection was not opened after a call to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync(System.Threading.CancellationToken)" />.
       </remarks>
       <example>
         <para>
@@ -3273,11 +3243,6 @@
 				Returns an <see cref="T:System.Data.ConnectionState" /> enumeration indicating the state of the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. Closing and reopening the connection will refresh the value of <see cref="P:Microsoft.Data.SqlClient.SqlConnection.State" />.
 			</remarks>
 		</State>
-		<StateChange>
-			<summary>
-				Occurs when the state of the connection changes.
-			</summary>
-		</StateChange>
 		<StatisticsEnabled>
 			<summary>
 				When set to <see langword="true" />, enables statistics gathering for the current connection.
@@ -3289,39 +3254,6 @@
 				Enabling statistics gathering has a minor, but measurable effect on performance and therefore should be enabled only when it is required.
 			</remarks>
 		</StatisticsEnabled>
-		<System.Data.IDbConnection.BeginTransaction>
-			<summary>
-				Begins a database transaction.
-			</summary>
-			<returns>
-				An object that represents the new transaction.
-			</returns>
-			<remarks>
-				Once the transaction has completed, you must explicitly commit or roll back the transaction by using the <see cref="M:System.Data.IDbTransaction.Commit" /> or <see cref="M:System.Data.IDbTransaction.Rollback" /> method.
-			</remarks>
-		</System.Data.IDbConnection.BeginTransaction>
-		<System.Data.IDbConnection.BeginTransactionIso>
-			<param name="iso">
-				One of the <see cref="T:System.Data.IsolationLevel" /> values.
-			</param>
-			<summary>
-				Begins a database transaction with the specified <see cref="T:System.Data.IsolationLevel" /> value.
-			</summary>
-			<returns>
-				An object that represents the new transaction.
-			</returns>
-			<remarks>
-				Once the transaction has completed, you must explicitly commit or roll back the transaction by using the <see cref="M:System.Data.IDbTransaction.Commit" /> or <see cref="M:System.Data.IDbTransaction.Rollback" /> method.
-			</remarks>
-		</System.Data.IDbConnection.BeginTransactionIso>
-		<System.Data.IDbConnection.CreateCommand>
-			<summary>
-				Creates and returns a Command object that is associated with the connection.
-			</summary>
-			<returns>
-				A Command object that is associated with the connection.
-			</returns>
-		</System.Data.IDbConnection.CreateCommand>
 		<System.ICloneable.Clone>
 			<summary>
 				Creates a new object that is a copy of the current instance.

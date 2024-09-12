@@ -865,6 +865,7 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         internal string SQLDNSCachingSupportedStateBeforeRedirect { get { throw null; } }
 
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/System.ICloneable.Clone/*' />
         object System.ICloneable.Clone() { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]

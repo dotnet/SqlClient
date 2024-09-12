@@ -78,9 +78,6 @@
 			<summary>
 				Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" /> class.
 			</summary>
-			<remarks>
-				To be added.
-			</remarks>
 		</ctor1>
 		<ctor2>
 			<param name="adapter">
@@ -186,25 +183,6 @@
 				To be added.
 			</remarks>
 		</Dispose>
-		<GetDeleteCommand1>
-			<summary>
-				Gets the automatically generated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object required to perform deletions on the database.
-			</summary>
-			<remarks>
-				<para>
-					An application can use the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> method for informational or troubleshooting purposes because it returns the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object to be executed.
-				</para>
-				<para>
-					You can also use <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> as the basis of a modified command. For example, you might call <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> and modify the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> value, and then explicitly set that on the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
-				</para>
-				<para>
-					After the SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> will still be using information from the previous statement, which might not be correct. The SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" />.
-				</para>
-				<para>
-					For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
-				</para>
-			</remarks>
-		</GetDeleteCommand1>
 		<GetDeleteCommand2>
 			<summary>
 				Gets the automatically generated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object required to perform deletions on the database.
@@ -220,7 +198,7 @@
 					You can also use <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> as the basis of a modified command. For example, you might call <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> and modify the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> value, and then explicitly set that on the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
 				</para>
 				<para>
-					After the SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> will still be using information from the previous statement, which might not be correct. The SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" />.
+					After the SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> will still be using information from the previous statement, which might not be correct. The SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" />.
 				</para>
 				<para>
 					For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
@@ -245,20 +223,20 @@
 					You can also use <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> as the basis of a modified command. For example, you might call <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> and modify the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> value, and then explicitly set that on the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
 				</para>
 				<para>
-					After the SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> will still be using information from the previous statement, which might not be correct. The SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" />.
+					After the SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> will still be using information from the previous statement, which might not be correct. The SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" />.
 				</para>
 				<para>
-					The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <c>true</c> for the <c>useColumnsForParameterNames</c> parameter lets you force the <see cref="T:System.Data.OleDb.OleDbCommandBuilder" /> to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
+					The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <see langword="true" /> for the <paramref name="useColumnsForParameterNames" /> parameter lets you force the command builder to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
 				</para>
         <list type="bullet">
           <item>
-            The <see cref="T:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="T:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
+            The <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
           </item>
           <item>
-            The generated parameter name meets the criteria specified in the <see cref="T:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="T:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
+            The generated parameter name meets the criteria specified in the <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
           </item>
           <item>
-            A <see cref="T:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="T:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
+            A <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
           </item>
         </list>
 				<para>
@@ -266,25 +244,6 @@
 				</para>
 			</remarks>
 		</GetDeleteCommand3>
-		<GetInsertCommand1>
-			<summary>
-				Gets the automatically generated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object that is required to perform insertions on the database.
-			</summary>
-			<remarks>
-				<para>
-					An application can use the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> method for informational or troubleshooting purposes because it returns the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object to be executed.
-				</para>
-				<para>
-					You can also use <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> as the basis of a modified command. For example, you might call <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> and modify the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> value, and then explicitly set that on the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
-				</para>
-				<para>
-					After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" />.
-				</para>
-				<para>
-					For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
-				</para>
-			</remarks>
-		</GetInsertCommand1>
 		<GetInsertCommand2>
 			<summary>
 				Gets the automatically generated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object required to perform insertions on the database.
@@ -300,7 +259,7 @@
 					You can also use <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> as the basis of a modified command. For example, you might call <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> and modify the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> value, and then explicitly set that on the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
 				</para>
 				<para>
-					After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" />.
+					After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" />.
 				</para>
 				<para>
 					For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
@@ -328,17 +287,17 @@
 					After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" />.
 				</para>
 				<para>
-					The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <c>true</c> for the <c>useColumnsForParameterNames</c> parameter lets you force the <see cref="T:System.Data.OleDb.OleDbCommandBuilder" /> to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
+					The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <see langword="true" /> for the <paramref name="useColumnsForParameterNames" /> parameter lets you force the command builder to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
 				</para>
         <list type="bullet">
           <item>
-            The <see cref="T:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="T:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
+            The <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
           </item>
           <item>
-            The generated parameter name meets the criteria specified in the <see cref="T:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="T:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
+            The generated parameter name meets the criteria specified in the <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
           </item>
           <item>
-            A <see cref="T:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="T:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
+            A <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
           </item>
         </list>
 				<para>
@@ -402,25 +361,6 @@
 				To be added.
 			</remarks>
 		</GetSchemaTable>
-		<GetUpdateCommand1>
-			<summary>
-				Gets the automatically generated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object required to perform updates on the database.
-			</summary>
-			<remarks>
-				<para>
-					An application can use the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> method for informational or troubleshooting purposes because it returns the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object to be executed.
-				</para>
-				<para>
-					You can also use <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> as the basis of a modified command. For example, you might call <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> and modify the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> value, and then explicitly set that on the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
-				</para>
-				<para>
-					After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" />.
-				</para>
-				<para>
-					For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
-				</para>
-			</remarks>
-		</GetUpdateCommand1>
 		<GetUpdateCommand2>
 			<summary>
 				Gets the automatically generated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object required to perform updates on the database.
@@ -430,14 +370,13 @@
 			</returns>
 			<remarks>
 				<para>
-					## Remarks
 					An application can use the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> method for informational or troubleshooting purposes because it returns the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object to be executed.
 				</para>
 				<para>
 					You can also use <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> as the basis of a modified command. For example, you might call <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> and modify the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> value, and then explicitly set that on the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
 				</para>
 				<para>
-					After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" />.
+					After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" />.
 				</para>
 				<para>
 					For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
@@ -462,20 +401,20 @@
 					You can also use <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> as the basis of a modified command. For example, you might call <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> and modify the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> value, and then explicitly set that on the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
 				</para>
 				<para>
-					After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" />.
+					After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" />.
 				</para>
 				<para>
-					The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <c>true</c> for the <c>useColumnsForParameterNames</c> parameter lets you force the <see cref="T:System.Data.OleDb.OleDbCommandBuilder" /> to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
+					The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <see langword="true" /> for the <paramref name="useColumnsForParameterNames" /> parameter lets you force the command builder to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
 				</para>
         <list type="bullet">
           <item>
-            The <see cref="T:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="T:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
+            The <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
           </item>
           <item>
-            The generated parameter name meets the criteria specified in the <see cref="T:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="T:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
+            The generated parameter name meets the criteria specified in the <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
           </item>
           <item>
-            A <see cref="T:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="T:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
+            A <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
           </item>
         </list>
 				<para>
@@ -543,11 +482,6 @@
 				This property cannot be changed after an insert, update, or delete command has been generated.
 			</exception>
 		</QuoteSuffix>
-		<RefreshSchema>
-			<summary>
-				Clears the commands that are associated with this command builder.
-			</summary>
-		</RefreshSchema>
 		<SchemaSeparator>
 			<summary>
 				Gets or sets the character to be used for the separator between the schema identifier and any other identifiers.
