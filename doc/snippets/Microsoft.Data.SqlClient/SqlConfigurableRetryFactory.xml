@@ -1,13 +1,13 @@
 ﻿<docs>
-	<members name="SqlConfigurableRetryFactory">
-		<SqlConfigurableRetryFactory>
-			<summary>
-				Provides different retry logic providers with a common list of transient errors.
-			</summary>
-			<remarks>
-				<para>
-					The following table shows the inner transient error list.
-				</para>
+  <members name="SqlConfigurableRetryFactory">
+    <SqlConfigurableRetryFactory>
+      <summary>
+        Provides different retry logic providers with a common list of transient errors.
+      </summary>
+      <remarks>
+        <para>
+          The following table shows the inner transient error list.
+        </para>
         <list type="table">
           <listheader>
             <term>Error Number</term>
@@ -114,66 +114,27 @@
             </description>
           </item>
         </list>
-			</remarks>
-		</SqlConfigurableRetryFactory>
-		<CreateExponentialRetryProvider>
-			<param name="retryLogicOption">
-				An object of <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicOption" /> containing the configuration for the object.
-			</param>
-			<summary>
-				Provides an exponential time interval retry logic provider.
-			</summary>
-			<returns>
-				A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
-			</returns>
-			<remarks>
+      </remarks>
+    </SqlConfigurableRetryFactory>
+    <CreateExponentialRetryProvider>
+      <param name="retryLogicOption">
+        An object of <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicOption" /> containing the configuration for the object.
+      </param>
+      <summary>
+        Provides an exponential time interval retry logic provider.
+      </summary>
+      <returns>
+        A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
+      </returns>
+      <remarks>
         <note type="note">
           The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
         </note>
-			</remarks>
-			<exception cref="T:System.ArgumentNullException">
-				If the <paramref name="retryLogicOption" /> parameter was null.
-			</exception>
-			<exception cref="T:System.ArgumentOutOfRangeException">
-				If at least one of the following conditions occurs:
-        <list type="bullet">
-          <item>
-            <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.NumberOfTries" /> is less than 1 or bigger than 60.
-          </item>
-          <item>
-            <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.DeltaTime" /> is bigger than 120 seconds.
-          </item>
-          <item>
-            <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
-            <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
-            <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is not less than <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" />.
-          </item>
-        </list>
-			</exception>
-		</CreateExponentialRetryProvider>
-		<CreateIncrementalRetryProvider>
-			<param name="retryLogicOption">
-				An object of <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicOption" /> containing the configuration for the object.
-			</param>
-			<summary>
-				Provides an incremental time interval retry logic provider.
-			</summary>
-			<returns>
-				A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
-			</returns>
-			<remarks>
-        <note type="note">
-          The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
-        </note>
-			</remarks>
-			<exception cref="T:System.ArgumentNullException">
-				If the <paramref name="retryLogicOption" /> parameter was null.
-			</exception>
-			<exception cref="T:System.ArgumentOutOfRangeException">
+      </remarks>
+      <exception cref="T:System.ArgumentNullException">
+        If the <paramref name="retryLogicOption" /> parameter was null.
+      </exception>
+      <exception cref="T:System.ArgumentOutOfRangeException">
         If at least one of the following conditions occurs:
         <list type="bullet">
           <item>
@@ -192,27 +153,27 @@
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is not less than <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" />.
           </item>
         </list>
-			</exception>
-		</CreateIncrementalRetryProvider>
-		<CreateFixedRetryProvider>
-			<param name="retryLogicOption">
-				An object of <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicOption" /> containing the configuration for the object.
-			</param>
-			<summary>
-				Provides a fixed interval time retry logic provider.
-			</summary>
-			<returns>
-				A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
-			</returns>
-			<remarks>
+      </exception>
+    </CreateExponentialRetryProvider>
+    <CreateIncrementalRetryProvider>
+      <param name="retryLogicOption">
+        An object of <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicOption" /> containing the configuration for the object.
+      </param>
+      <summary>
+        Provides an incremental time interval retry logic provider.
+      </summary>
+      <returns>
+        A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
+      </returns>
+      <remarks>
         <note type="note">
           The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
         </note>
-			</remarks>
-			<exception cref="T:System.ArgumentNullException">
-				If the `retryLogicOption` parameter was null.
-			</exception>
-			<exception cref="T:System.ArgumentOutOfRangeException">
+      </remarks>
+      <exception cref="T:System.ArgumentNullException">
+        If the <paramref name="retryLogicOption" /> parameter was null.
+      </exception>
+      <exception cref="T:System.ArgumentOutOfRangeException">
         If at least one of the following conditions occurs:
         <list type="bullet">
           <item>
@@ -231,20 +192,59 @@
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is not less than <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" />.
           </item>
         </list>
-			</exception>
-		</CreateFixedRetryProvider>
-		<CreateNoneRetryProvider>
-			<summary>
-				Provides a non-retryable provider with a <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBase.TransientPredicate" /> that returns <see langword="false" />.
-			</summary>
-			<returns>
-				A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
-			</returns>
-			<remarks>
+      </exception>
+    </CreateIncrementalRetryProvider>
+    <CreateFixedRetryProvider>
+      <param name="retryLogicOption">
+        An object of <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicOption" /> containing the configuration for the object.
+      </param>
+      <summary>
+        Provides a fixed interval time retry logic provider.
+      </summary>
+      <returns>
+        A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
+      </returns>
+      <remarks>
+        <note type="note">
+          The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
+        </note>
+      </remarks>
+      <exception cref="T:System.ArgumentNullException">
+        If the `retryLogicOption` parameter was null.
+      </exception>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        If at least one of the following conditions occurs:
+        <list type="bullet">
+          <item>
+            <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.NumberOfTries" /> is less than 1 or bigger than 60.
+          </item>
+          <item>
+            <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.DeltaTime" /> is bigger than 120 seconds.
+          </item>
+          <item>
+            <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is bigger than 120 seconds.
+          </item>
+          <item>
+            <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" /> is bigger than 120 seconds.
+          </item>
+          <item>
+            <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is not less than <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" />.
+          </item>
+        </list>
+      </exception>
+    </CreateFixedRetryProvider>
+    <CreateNoneRetryProvider>
+      <summary>
+        Provides a non-retryable provider with a <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBase.TransientPredicate" /> that returns <see langword="false" />.
+      </summary>
+      <returns>
+        A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
+      </returns>
+      <remarks>
         <note type="note">
           The returned provider of this function performs a single execution without any retry logic.
         </note>
-			</remarks>
-		</CreateNoneRetryProvider>
-	</members>
+      </remarks>
+    </CreateNoneRetryProvider>
+  </members>
 </docs>
