@@ -12,10 +12,10 @@
           The <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> performs checks for valid key/value pairs. Therefore, you cannot use this class to create invalid connection strings; trying to add invalid pairs will throw an exception. The class maintains a fixed collection of synonyms and can translate from a synonym to the corresponding well-known key name. 
         </para>
         <para>
-          For example, when you use the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item" /> property to retrieve a value, you can specify a string that contains any synonym for the key you need. For example, you can specify "Network Address", "addr", or any other acceptable synonym for this key within a connection string when you use any member that requires a string that contains the key name, such as the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item" /> property or the <see cref="M:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove" /> method. See the <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /> property for a full list of acceptable synonyms.
+          For example, when you use the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item[System.String]" /> property to retrieve a value, you can specify a string that contains any synonym for the key you need. For example, you can specify "Network Address", "addr", or any other acceptable synonym for this key within a connection string when you use any member that requires a string that contains the key name, such as the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item[System.String]" /> property or the <see cref="M:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove(System.String)" /> method. See the <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /> property for a full list of acceptable synonyms.
         </para>
         <para>
-          The <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item" /> property handles tries to insert malicious entries. For example, the following code, using the default Item property (the indexer, in C#) correctly escapes the nested key/value pair:
+          The <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item[System.String]" /> property handles tries to insert malicious entries. For example, the following code, using the default Item property (the indexer, in C#) correctly escapes the nested key/value pair:
         </para>
         <code language="vb">
           Dim builder As New Microsoft.Data.SqlClient.SqlConnectionStringBuilder
@@ -102,11 +102,6 @@
         </code>
       </example>
     </SqlConnectionStringBuilder>
-    <ctor1>
-      <summary>
-        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class.
-      </summary>
-    </ctor1>
     <ctor2>
       <summary>
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class.
@@ -120,7 +115,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class. The provided connection string provides the data for the instance's internal connection information.
       </summary>
       <remarks>
-        The <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class provides a fixed internal collection of key/value pairs. Even if you supply only a small subset of the possible connection string values in the constructor, the object always provides default values for each key/value pair. When the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ConnectionString" /> property of the object is retrieved, the string contains only key/value pairs in which the value is not the default value for the item.
+        The <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class provides a fixed internal collection of key/value pairs. Even if you supply only a small subset of the possible connection string values in the constructor, the object always provides default values for each key/value pair. When the <see cref="P:System.Data.Common.DbConnectionStringBuilder.ConnectionString" /> property of the object is retrieved, the string contains only key/value pairs in which the value is not the default value for the item.
       </remarks>
       <example>
         <para>
@@ -326,12 +321,12 @@
       <exception cref="T:System.ArgumentNullException">
         To set the value to null, use <see cref="F:System.DBNull.Value" /> .
       </exception>
-      <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">
+      <seealso href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">
         Working with Connection Strings
-      </related>
-      <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">
+      </seealso>
+      <seealso href="/sql/connect/ado-net/overview-sqlclient-driver">
         Overview of the SqlClient driver
-      </related>
+      </seealso>
     </AttachDBFilename>
     <AttestationProtocol>
       <summary>
@@ -590,7 +585,7 @@
           False
         </code>
       </example>
-      <exception cref="T:System.ArgumentNullException"> <paramref name="keyword" /> is null (<see langword="Nothing" /> in Visual Basic)</exception>
+      <exception cref="T:System.ArgumentNullException"><paramref name="keyword" /> is null (<see langword="Nothing" /> in Visual Basic)</exception>
     </ContainsKey>
     <ContextConnection>
       <summary>
@@ -613,7 +608,7 @@
         Gets or sets the language used for database server warning or error messages..
       </summary>
       <value>
-        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.CurrentLanguage" /> property, or <see langword="String.Empty" /> if no value has been supplied.
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.CurrentLanguage" /> property, or <c>string.Empty</c> if no value has been supplied.
       </value>
       <remarks>
         <para>
@@ -742,13 +737,13 @@
           This property corresponds to the "Encrypt" key within the connection string.
         </para>
         <para>
-          When <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TrustServerCertificate" /> is <see langword="false" /> and <b>Encrypt</b> is <see cref="F:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" />, <see cref="F:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> or <see langword="true" />, the server name (or IP address) in a server's TLS certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see <see href="/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements">Enable encrypted connections to the Database Engine</see> .
+          When <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TrustServerCertificate" /> is <see langword="false" /> and <b>Encrypt</b> is <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" />, <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> or <see langword="true" />, the server name (or IP address) in a server's TLS certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see <see href="/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements">Enable encrypted connections to the Database Engine</see> .
         </para>
         <note type="note">
           Starting from <b>version 4.0</b>, the default value of the property <b>Encrypt</b> is set to <see langword="true" /> while it is <see langword="false" /> for earlier versions.
         </note>
         <note type="note">
-          Starting from <b>version 5.0</b>, the data type is updated to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> , and the default value of the <c>Encrypt</c> property is set to <see cref="E:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> .
+          Starting from <b>version 5.0</b>, the data type is updated to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> , and the default value of the <c>Encrypt</c> property is set to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> .
         </note>
       </remarks>
       <seealso href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">
@@ -822,7 +817,7 @@
           This property corresponds to the "HostNameInCertificate" and "Host Name in Certificate" keys within the connection string.
         </para>
         <note type="note">
-          This property only applies when using <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> in <see cref="F:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> or <see cref="F:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> mode, otherwise it is ignored.
+          This property only applies when using <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> in <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> or <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> mode, otherwise it is ignored.
         </note>
       </remarks>
     </HostNameInCertificate>
@@ -831,7 +826,7 @@
         Gets or sets the name of the database associated with the connection.
       </summary>
       <value>
-        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.InitialCatalog" /> property, or <see langword="String.Empty" /> if none has been supplied.
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.InitialCatalog" /> property, or <c>string.Empty</c> if none has been supplied.
       </value>
       <remarks>
         <para>
@@ -985,10 +980,9 @@
       <summary>
         Gets a value that indicates whether the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> has a fixed size.
       </summary>
-      <value> <see langword="true" /> in every case, because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> supplies a fixed-size collection of key/value pairs.</value>
-      <remarks>
-        To be added.
-      </remarks>
+      <value>
+        <see langword="true" /> in every case, because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> supplies a fixed-size collection of key/value pairs.
+      </value>
       <seealso href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">
         Working with Connection Strings
       </seealso>
@@ -1011,7 +1005,7 @@
       </remarks>
       <example>
         <para>
-          The following code, in a console application, creates a new <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> and adds key/value pairs to its connection string, using the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item" /> property.
+          The following code, in a console application, creates a new <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> and adds key/value pairs to its connection string, using the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item[System.String]" /> property.
         </para>
         <!-- SqlConnectionStringBuilder2 -->
         <code language="c#">
@@ -1092,8 +1086,8 @@
           }
         </code>
       </example>
-      <altmember cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Values" />
-      <altmember cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item(System.String)" />
+      <seealso cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Values" />
+      <seealso cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item(System.String)" />
     </Keys>
     <LoadBalanceTimeout>
       <summary>
@@ -1184,7 +1178,7 @@
     </MultipleActiveResultSets>
     <MultiSubnetFailover>
       <summary>
-        If your application is connecting to an AlwaysOn availability group (AG) on different subnets, setting MultiSubnetFailover=true provides faster detection of and connection to the (currently) active server. For more information about SqlClient support for Always On Availability Groups, see <see href="/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery">SqlClient Support for High Availability, Disaster Recovery</see>.
+        If your application is connecting to an AlwaysOn availability group (AG) on different subnets, setting <c>MultiSubnetFailover=true</c> provides faster detection of and connection to the (currently) active server. For more information about SqlClient support for Always On Availability Groups, see <see href="/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery">SqlClient Support for High Availability, Disaster Recovery</see>.
       </summary>
       <value>
         Returns <see cref="T:System.Boolean" /> indicating the current value of the property.
@@ -1360,116 +1354,116 @@
       </returns>
       <remarks>
         <para>
-          Because the <b>Remove</b> method returns a value that indicates its success, it is not required to look for a key before trying to remove the key/value pair from the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance. Because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> maintains a fixed-size collection of key/value pairs, calling the <see cref="M:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove" /> method simply resets the value of the key/value pair back to its default value.
+          Because the <b>Remove</b> method returns a value that indicates its success, it is not required to look for a key before trying to remove the key/value pair from the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance. Because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> maintains a fixed-size collection of key/value pairs, calling the <b>Remove</b> method simply resets the value of the key/value pair back to its default value.
         </para>
         <para>
-          Because the collection of keys supported by the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> is fixed, every item within the collection has a known default value. The following table lists the keys, and the value for each when the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> is first initialized, or after the <see cref="M:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove" /> method has been called.
+          Because the collection of keys supported by the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> is fixed, every item within the collection has a known default value. The following table lists the keys, and the value for each when the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> is first initialized, or after the <b>Remove</b> method has been called.
         </para>
         <list type="table">
           <listheader>
             <term>Key</term>
-            <term>Default value</term>
+            <description>Default value</description>
           </listheader>
           <item>
-            <description>Application Name</description>
+            <term>Application Name</term>
             <description>
               "Framework Microsoft SqlClient Data Provider" when running on .NET Framework. "Core Microsoft SqlClient Data Provider" otherwise.
             </description>
           </item>
           <item>
-            <description>AttachDBFilename</description>
+            <term>AttachDBFilename</term>
             <description>Empty string</description>
           </item>
           <item>
-            <description>Connection Timeout</description>
+            <term>Connection Timeout</term>
             <description>15</description>
           </item>
           <item>
-            <description>Context Connection(Obsolete)</description>
+            <term>Context Connection(Obsolete)</term>
             <description>False</description>
           </item>
           <item>
-            <description>Current Language</description>
+            <term>Current Language</term>
             <description>Empty string</description>
           </item>
           <item>
-            <description>Data Source</description>
+            <term>Data Source</term>
             <description>Empty string</description>
           </item>
           <item>
-            <description>Encrypt</description>
+            <term>Encrypt</term>
             <description>False in versions prior to 4.0, True in versions 4.0 and up</description>
           </item>
           <item>
-            <description>Enlist</description>
+            <term>Enlist</term>
             <description>True</description>
           </item>
           <item>
-            <description>Failover Partner</description>
+            <term>Failover Partner</term>
             <description>Empty string</description>
           </item>
           <item>
-            <description>Initial Catalog</description>
+            <term>Initial Catalog</term>
             <description>Empty string</description>
           </item>
           <item>
-            <description>Integrated Security</description>
+            <term>Integrated Security</term>
             <description>False</description>
           </item>
           <item>
-            <description>Load Balance Timeout</description>
+            <term>Load Balance Timeout</term>
             <description>0</description>
           </item>
           <item>
-            <description>Max Pool Size</description>
+            <term>Max Pool Size</term>
             <description>100</description>
           </item>
           <item>
-            <description>Min Pool Size</description>
+            <term>Min Pool Size</term>
             <description>0</description>
           </item>
           <item>
-            <description>MultipleActiveResultSets</description>
+            <term>MultipleActiveResultSets</term>
             <description>False</description>
           </item>
           <item>
-            <description>Network Library</description>
+            <term>Network Library</term>
             <description>Empty string</description>
           </item>
           <item>
-            <description>Packet Size</description>
+            <term>Packet Size</term>
             <description>8000</description>
           </item>
           <item>
-            <description>Password</description>
+            <term>Password</term>
             <description>Empty string</description>
           </item>
           <item>
-            <description>Persist Security Info</description>
+            <term>Persist Security Info</term>
             <description>False</description>
           </item>
           <item>
-            <description>Pooling</description>
+            <term>Pooling</term>
             <description>True</description>
           </item>
           <item>
-            <description>Replication</description>
+            <term>Replication</term>
             <description>False</description>
           </item>
           <item>
-            <description>Transaction Binding</description>
+            <term>Transaction Binding</term>
             <description>Implicit Unbind</description>
           </item>
           <item>
-            <description>User ID</description>
+            <term>User ID</term>
             <description>Empty string</description>
           </item>
           <item>
-            <description>User Instance</description>
+            <term>User Instance</term>
             <description>False</description>
           </item>
           <item>
-            <description>Workstation ID</description>
+            <term>Workstation ID</term>
             <description>Empty string</description>
           </item>
         </list>
@@ -1556,14 +1550,14 @@
         Gets or sets the path to a certificate file to match against the SQL Server TLS/SSL certificate for the connection. The accepted certificate formats are PEM, DER, and CER. If specified, the SQL Server certificate is checked by verifying if the `ServerCertificate` provided is an exact match. (Only available in v5.1+)
       </summary>
       <value>
-        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerCertificate" /> property, or <see langword="String.Empty" /> if none has been supplied.
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerCertificate" /> property, or <c>string.Empty</c> if none has been supplied.
       </value>
       <remarks>
         <para>
           This property corresponds to the "ServerCertificate" and "Server Certificate" keys within the connection string.
         </para>
         <note type="note">
-          This property only applies when using <c>Encrypt</c> in <see cref="F:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> or <see cref="F:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> mode, otherwise it is ignored.
+          This property only applies when using <c>Encrypt</c> in <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> or <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> mode, otherwise it is ignored.
         </note>
       </remarks>
     </ServerCertificate>
@@ -1592,7 +1586,7 @@
       </summary>
       <returns> <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> contains an entry with the specified key; otherwise, <see langword="false" />.</returns>
       <remarks>
-        This method behaves identically to the <see cref="M:System.Data.Common.DbConnectionStringBuilder.ContainsKey" /> method.
+        This method behaves identically to the <see cref="M:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ContainsKey(System.String)" /> method.
       </remarks>
     </ShouldSerialize>
     <TransactionBinding>
@@ -1600,7 +1594,7 @@
         Gets or sets a string value that indicates how the connection maintains its association with an enlisted <see langword="System.Transactions" /> transaction.
       </summary>
       <value>
-        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TransactionBinding" /> property, or `Implicit Unbind` if none has been supplied.
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TransactionBinding" /> property, or <c>Implicit Unbind</c> if none has been supplied.
       </value>
       <remarks>
         <para>
@@ -1612,18 +1606,18 @@
         <list type="table">
           <listheader>
             <term>Value</term>
-            <term>Description</term>
+            <description>Description</description>
           </listheader>
           <item>
-            <description>Implicit Unbind</description>
+            <term>Implicit Unbind</term>
             <description>
               The default. Causes the connection to detach from the transaction when it ends. After detaching, additional requests on the connection are performed in autocommit mode. The <see cref="P:System.Transactions.Transaction.Current" /> property is not checked when executing requests while the transaction is active. After the transaction has ended, additional requests are performed in autocommit mode.
             </description>
           </item>
           <item>
-            <description>Explicit Unbind</description>
+            <term>Explicit Unbind</term>
             <description>
-              Causes the connection to remain attached to the transaction until the connection is closed or until <see cref="P:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction" /> is called with a <see langword="null" /> (<c>Nothing</c> in Visual Basic) value. An <see cref="T:System.InvalidOperationException" /> is thrown if <see cref="P:System.Transactions.Transaction.Current" /> is not the enlisted transaction or if the enlisted transaction is not active. This behavior enforces the strict scoping rules required for <see cref="T:System.Transactions.TransactionScope" /> support.
+              Causes the connection to remain attached to the transaction until the connection is closed or until <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction(System.Transactions.Transaction)" /> is called with a <see langword="null" /> (<c>Nothing</c> in Visual Basic) value. An <see cref="T:System.InvalidOperationException" /> is thrown if <see cref="P:System.Transactions.Transaction.Current" /> is not the enlisted transaction or if the enlisted transaction is not active. This behavior enforces the strict scoping rules required for <see cref="T:System.Transactions.TransactionScope" /> support.
             </description>
           </item>
         </list>
@@ -1681,7 +1675,7 @@
           This property corresponds to the "Trust Server Certificate" and "TrustServerCertificate" keys within the connection string.
         </para>
         <para>
-          When <c>Trust Server Certificate</c> is set to <c>true</c>, the transport layer will use TLS to encrypt the channel and bypass walking the certificate chain to validate trust. If <c>Trust Server Certificate</c> is set to <c>true</c> and encryption is enforced by target server, the encryption level specified on the server will be used even if <c>Encrypt</c> is set to <c>false</c> . The connection will fail otherwise.
+          When <c>Trust Server Certificate</c> is set to <see langword="true" />, the transport layer will use TLS to encrypt the channel and bypass walking the certificate chain to validate trust. If <c>Trust Server Certificate</c> is set to <see langword="true" /> and encryption is enforced by target server, the encryption level specified on the server will be used even if <c>Encrypt</c> is set to <see langword="false" /> . The connection will fail otherwise.
         </para>
         <para>
           For more information, see <see href="/sql/relational-databases/security/encryption/encryption-hierarchy">Encryption Hierarchy</see> and <see href="/sql/relational-databases/native-client/features/using-encryption-without-validation">Using Encryption Without Validation</see>.
@@ -1703,7 +1697,7 @@
       </returns>
       <remarks>
         <para>
-          The <see cref="M:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TryGetValue" /> method lets developers safely retrieve a value from a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> without needing to verify that the supplied key name is a valid key name. Because <b>TryGetValue</b> does not raise an exception when you call it, passing in a nonexistent key, you do not have to look for a key before retrieving its value.  Calling <b>TryGetValue</b> with a nonexistent key will place the value null ( <c>Nothing</c> in Visual Basic) in the <c>value</c> parameter.
+          The <see cref="M:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TryGetValue" /> method lets developers safely retrieve a value from a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> without needing to verify that the supplied key name is a valid key name. Because <b>TryGetValue</b> does not raise an exception when you call it, passing in a nonexistent key, you do not have to look for a key before retrieving its value. Calling <b>TryGetValue</b> with a nonexistent key will place the value null (<c>Nothing</c> in Visual Basic) in the <paramref name="value" /> parameter.
         </para>
       </remarks>
       <example>
@@ -1820,7 +1814,7 @@
         Gets or sets the user ID to be used when connecting to SQL Server.
       </summary>
       <value>
-        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.UserID" /> property, or <see langword="String.Empty" /> if none has been supplied.
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.UserID" /> property, or <c>string.Empty</c> if none has been supplied.
       </value>
       <remarks>
         <para>
@@ -1842,7 +1836,7 @@
         Gets or sets a value that indicates whether to redirect the connection from the default SQL Server Express instance to a runtime-initiated instance running under the account of the caller.
       </summary>
       <value>
-        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.UserInstance" /> property, or <see langword="False" /> if none has been supplied.
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.UserInstance" /> property, or <see langword="false" /> if none has been supplied.
       </value>
       <remarks>
         <para>
@@ -1902,14 +1896,14 @@
           }
         </code>
       </example>
-      <altmember cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Keys" />
+      <seealso cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Keys" />
     </Values>
     <WorkstationID>
       <summary>
         Gets or sets the name of the workstation connecting to SQL Server.
       </summary>
       <value>
-        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.WorkstationID" /> property, or <see cref="P:System.String.Empty" /> if none has been supplied.
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.WorkstationID" /> property, or <c>string.Empty</c> if none has been supplied.
       </value>
       <remarks>
         <para>

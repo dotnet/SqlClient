@@ -18,7 +18,7 @@
           When using sequential access (<see cref="F:System.Data.CommandBehavior.SequentialAccess" />), an <see cref="T:System.InvalidOperationException" /> will be raised if the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> position is advanced and another read operation is attempted on the previous column.
         </para>
         <note type="note">
-          For optimal performance, <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> avoids creating unnecessary objects or making unnecessary copies of data. Therefore, multiple calls to methods such as <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetValue" /> return a reference to the same object. Use caution if you are modifying the underlying value of the objects returned by methods such as <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetValue" />.
+          For optimal performance, <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> avoids creating unnecessary objects or making unnecessary copies of data. Therefore, multiple calls to methods such as <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetValue(System.Int32)" /> return a reference to the same object. Use caution if you are modifying the underlying value of the objects returned by methods such as <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetValue(System.Int32)" />.
         </note>
       </remarks>
       <example>
@@ -78,15 +78,15 @@
       </summary>
       <remarks>
         <para>
-          You must ensure the <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Close" /> method is called when you are through using the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> before using the associated <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> for any other purpose. The <c>Close</c> method may either be called directly or through the <c>Dispose</c> method, disposing directly or in the context of <see href="/dotnet/csharp/language-reference/language-specification/statements#the-using-statement">
+          You must ensure the <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Close" /> method is called when you are through using the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> before using the associated <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> for any other purpose. The <b>Close</b> method may either be called directly or through the <see cref="M:System.IDisposable.Dispose"/> method, disposing directly or in the context of <see href="/dotnet/csharp/language-reference/language-specification/statements#the-using-statement">
             the using statement
           </see> block.
         </para>
         <para>
-          The <c>Close</c> method populates the values for output parameters, return values and <c>RecordsAffected</c> on the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> by consuming any pending results. This may be a long operation depending on the amount of data to be consumed. If output values, return values, and <c>RecordsAffected</c> are not important to your application, the time to close may be shortened by calling the <see cref="M:Microsoft.Data.SqlClient.SqlCommand.Cancel" /> method of the associated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object before the <c>Close</c> method is called.
+          The <b>Close</b> method populates the values for output parameters, return values and <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.RecordsAffected" /> on the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> by consuming any pending results. This may be a long operation depending on the amount of data to be consumed. If output values, return values, and <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.RecordsAffected" /> are not important to your application, the time to close may be shortened by calling the <see cref="M:Microsoft.Data.SqlClient.SqlCommand.Cancel" /> method of the associated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object before the <b>Close</b> method is called.
         </para>
         <note type="caution">
-          Do not call <c>Close</c> or <c>Dispose</c> on a Connection, a DataReader, or any other managed object in the <c>Finalize</c> method of your class. In a finalizer, you should only release unmanaged resources that your class owns directly. If your class does not own any unmanaged resources, do not include a <c>Finalize</c> method in your class definition. For more information, see <see href="/dotnet/standard/garbage-collection/">Garbage Collection</see>.
+          Do not call <b>Close</b> or <see cref="M:System.IDisposable.Dispose" /> on a Connection, a DataReader, or any other managed object in the finalizer method of your class. In a finalizer, you should only release unmanaged resources that your class owns directly. If your class does not own any unmanaged resources, do not include a finalizer method in your class definition. For more information, see <see href="/dotnet/standard/garbage-collection/">Garbage Collection</see>.
         </note>
       </remarks>
       <example>
@@ -144,14 +144,6 @@
         The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> associated with the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
       </value>
     </Connection>
-    <SensitivityClassification>
-      <summary>
-        Gets the <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" /> information with the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
-      </summary>
-      <value>
-        The <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" /> associated with the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
-      </value>
-    </SensitivityClassification>
     <Depth>
       <summary>
         Gets a value that indicates the depth of nesting for the current row.
@@ -174,17 +166,6 @@
         To be added.
       </remarks>
     </Dispose>
-    <DisposeDisposing>
-      <param name="disposing">
-        <see langword="true" /> to release managed and unmanaged resources; <see langword="false" /> to release only unmanaged resources.
-      </param>
-      <summary>
-        Releases the unmanaged resources used by the <see cref="T:System.Data.SqlClient.SqlDataReader" /> and optionally releases the managed resources.
-      </summary>
-      <remarks>
-        This method calls <see cref="M:System.Data.Common.DbDataReader.Dispose" />.
-      </remarks>
-    </DisposeDisposing>
     <FieldCount>
       <summary>
         Gets the number of columns in the current row.
@@ -214,7 +195,7 @@
           No conversions are performed; therefore, the data retrieved must already be a Boolean, or an exception is generated.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -236,7 +217,7 @@
           No conversions are performed; therefore, the data retrieved must already be a byte.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -267,10 +248,10 @@
       </returns>
       <remarks>
         <para>
-          <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetBytes" /> returns the number of available bytes in the field. Most of the time this is the exact length of the field. However, the number returned may be less than the true length of the field if <c>GetBytes</c> has already been used to obtain bytes from the field. This may be the case, for example, if the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is reading a large data structure into a buffer. For more information, see the <c>SequentialAccess</c> setting for <see cref="T:System.Data.CommandBehavior" />.
+          <b>GetBytes</b> returns the number of available bytes in the field. Most of the time this is the exact length of the field. However, the number returned may be less than the true length of the field if <b>GetBytes</b> has already been used to obtain bytes from the field. This may be the case, for example, if the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is reading a large data structure into a buffer. For more information, see the <see cref="F:System.Data.CommandBehavior.SequentialAccess" /> setting for <see cref="T:System.Data.CommandBehavior" />.
         </para>
         <para>
-          If you pass a buffer that is <see langword="null" />, <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetBytes" /> returns the length of the entire field in bytes, not the remaining size based on the buffer offset parameter.
+          If you pass a buffer that is <see langword="null" />, <b>GetBytes</b> returns the length of the entire field in bytes, not the remaining size based on the buffer offset parameter.
         </para>
         <para>
           No conversions are performed; therefore, the data retrieved must already be a byte array.
@@ -318,16 +299,16 @@
       </returns>
       <remarks>
         <para>
-          <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetChars" /> returns the number of available characters in the field. Frequently this is the exact length of the field. However, the number returned may be less than the true length of the field if <c>GetChars</c> has already been used to obtain characters from the field. This may be the case, for example, if the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is reading a large data structure into a buffer. For more information, see the <c>SequentialAccess</c> setting for <see cref="T:System.Data.CommandBehavior" />.
+          <b>GetChars</b> returns the number of available characters in the field. Frequently this is the exact length of the field. However, the number returned may be less than the true length of the field if <b>GetChars</b> has already been used to obtain characters from the field. This may be the case, for example, if the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is reading a large data structure into a buffer. For more information, see the <see cref="System.Data.CommandBehavior.SequentialAccess" /> setting for <see cref="T:System.Data.CommandBehavior" />.
         </para>
         <para>
-          The actual number of characters read can be less than the requested length, if the end of the field is reached. If you pass a buffer that is <see langword="null" />, <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetChars" /> returns the length of the entire field in characters, not the remaining size based on the buffer offset parameter.
+          The actual number of characters read can be less than the requested length, if the end of the field is reached. If you pass a buffer that is <see langword="null" />, <b>GetChars</b> returns the length of the entire field in characters, not the remaining size based on the buffer offset parameter.
         </para>
         <para>
           No conversions are performed; therefore. the data retrieved must already be a character array.
         </para>
         <note type="note">
-          The <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetChars" /> method returns 0 when <c>dataIndex</c> is negative.
+          The <b>GetChars</b> method returns 0 when <paramref name="dataIndex" /> is negative.
         </note>
       </remarks>
     </GetChars>
@@ -364,7 +345,7 @@
         The string representing the data type of the specified column.
       </returns>
       <remarks>
-        Returns the name of the back-end data type. <c>numeric</c> is a synonym in SQL Server for the <c>decimal</c> data type. <c>GetDataTypeName</c> will return "decimal" for a column defined as either decimal or numeric.
+        Returns the name of the back-end data type. <c>numeric</c> is a synonym in SQL Server for the <c>decimal</c> data type. <b>GetDataTypeName</b> will return "decimal" for a column defined as either decimal or numeric.
       </remarks>
     </GetDataTypeName>
     <GetDateTime>
@@ -382,7 +363,7 @@
           No conversions are performed; therefore, the data retrieved must already be a <see cref="T:System.DateTime" /> object.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -404,7 +385,7 @@
           No conversions are performed; therefore, the data retrieved must already be a <see cref="T:System.DateTimeOffset" /> object.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -426,7 +407,7 @@
           No conversions are performed; therefore, the data retrieved must already be a <see cref="T:System.Decimal" /> object.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -448,7 +429,7 @@
           No conversions are performed. Therefore, the data retrieved must already be a double-precision floating point number.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -474,7 +455,7 @@
         Gets the <see cref="T:System.Type" /> that is the data type of the object.
       </summary>
       <returns>
-        The <see cref="T:System.Type" /> that is the data type of the object. If the type does not exist on the client, in the case of a User-Defined Type (UDT) returned from the database, **GetFieldType** returns null.
+        The <see cref="T:System.Type" /> that is the data type of the object. If the type does not exist on the client, in the case of a User-Defined Type (UDT) returned from the database, <b>GetFieldType</b> returns null.
       </returns>
     </GetFieldType>
     <GetFieldValue>
@@ -525,7 +506,7 @@
           <item>TextReader</item>
           <item>TimeOnly (.NET 6 or later)</item>
           <item>XmlReader</item>
-          <item>UDT, which can be any CLR type marked with <see cref="T:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute" />.</item>
+          <item>UDT, which can be any CLR type marked with <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" />.</item>
         </list>
         <para>
           For more information, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
@@ -599,7 +580,7 @@
           <item>TextReader</item>
           <item>TimeOnly (.NET 6 or later)</item>
           <item>XmlReader</item>
-          <item>UDT, which can be any CLR type marked with <see cref="T:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute" />.</item>
+          <item>UDT, which can be any CLR type marked with <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" />.</item>
         </list>
         <para>
           For more information, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
@@ -637,7 +618,7 @@
           No conversions are performed. Therefore, the data retrieved must already be a single-precision floating point number.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -659,7 +640,7 @@
           No conversions are performed; therefore, the data retrieved must already be a GUID.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -681,7 +662,7 @@
           No conversions are performed; therefore, the data retrieved must already be a 16-bit signed integer.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -703,7 +684,7 @@
           No conversions are performed; therefore, the data retrieved must already be a 32-bit signed integer.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -725,7 +706,7 @@
           No conversions are performed; therefore, the data retrieved must already be a 64-bit signed integer.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -755,15 +736,15 @@
       </returns>
       <remarks>
         <para>
-          <c>GetOrdinal</c> performs a case-sensitive lookup first. If it fails, a second, case-insensitive search occurs (a case-insensitive comparison is done using the database collation). Unexpected results can occur when comparisons are affected by culture-specific casing rules. For example, in Turkish, the following example yields the wrong results because the file system in Turkish does not use linguistic casing rules for the letter 'i' in "file". The method throws an <c>IndexOutOfRange</c> exception if the zero-based column ordinal is not found. <c>GetOrdinal</c> is kana-width insensitive.
+          <b>GetOrdinal</b> performs a case-sensitive lookup first. If it fails, a second, case-insensitive search occurs (a case-insensitive comparison is done using the database collation). Unexpected results can occur when comparisons are affected by culture-specific casing rules. For example, in Turkish, the following example yields the wrong results because the file system in Turkish does not use linguistic casing rules for the letter 'i' in "file". The method throws an <see cref="T:System.IndexOutOfRangeException" /> exception if the zero-based column ordinal is not found. <b>GetOrdinal</b> is kana-width insensitive.
         </para>
         <para>
-          Because ordinal-based lookups are more efficient than named lookups, it is inefficient to call <c>GetOrdinal</c> within a loop. Save time by calling <c>GetOrdinal</c> once and assigning the results to an integer variable for use within the loop.
+          Because ordinal-based lookups are more efficient than named lookups, it is inefficient to call <b>GetOrdinal</b> within a loop. Save time by calling <b>GetOrdinal</b> once and assigning the results to an integer variable for use within the loop.
         </para>
       </remarks>
       <example>
         <para>
-          The following example demonstrates how to use the <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetOrdinal" /> method.
+          The following example demonstrates how to use the <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetOrdinal(System.String)" /> method.
         </para>
         <!-- SqlDataReader_GetOrdinal -->
         <code language="c#">
@@ -857,58 +838,58 @@
         <list type="table">
           <listheader>
             <term>DataReader column</term>
-            <term>Description</term>
+            <description>Description</description>
           </listheader>
           <item>
-            <description>AllowDBNull</description>
+            <term>AllowDBNull</term>
             <description>
               Set if the consumer can set the column to a null value or if the provider cannot determine whether the consumer can set the column to a null value. Otherwise, not set. A column may contain null values, even if it cannot be set to a null value.
             </description>
           </item>
           <item>
-            <description>BaseCatalogName</description>
+            <term>BaseCatalogName</term>
             <description>
               The name of the catalog in the data store that contains the column. NULL if the base catalog name cannot be determined. The default of this column is a null value.
             </description>
           </item>
           <item>
-            <description>BaseColumnName</description>
+            <term>BaseColumnName</term>
             <description>
               The name of the column in the data store. This might be different than the column name returned in the ColumnName column if an alias was used. A null value if the base column name cannot be determined or if the rowset column is derived, but not identical to, a column in the data store. The default of this column is a null value.
             </description>
           </item>
           <item>
-            <description>BaseSchemaName</description>
+            <term>BaseSchemaName</term>
             <description>
               The name of the schema in the data store that contains the column. A null value if the base schema name cannot be determined. The default of this column is a null value.
             </description>
           </item>
           <item>
-            <description>BaseServerName</description>
+            <term>BaseServerName</term>
             <description>
               The name of the instance of Microsoft SQL Server used by the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
             </description>
           </item>
           <item>
-            <description>BaseTableName</description>
+            <term>BaseTableName</term>
             <description>
               The name of the table or view in the data store that contains the column. A null value if the base table name cannot be determined. The default of this column is a null value.
             </description>
           </item>
           <item>
-            <description>ColumnName</description>
+            <term>ColumnName</term>
             <description>
               The name of the column; this might not be unique. If this cannot be determined, a null value is returned. This name always reflects the most recent renaming of the column in the current view or command text.
             </description>
           </item>
           <item>
-            <description>ColumnOrdinal</description>
+            <term>ColumnOrdinal</term>
             <description>
               The zero-based ordinal of the column. This column cannot contain a null value.
             </description>
           </item>
           <item>
-            <description>ColumnSize</description>
+            <term>ColumnSize</term>
             <description>
               <para>
                 The maximum possible length of a value in the column. For columns that use a fixed-length data type, this is the size of the data type. For <c>nvarchar(MAX)</c>, <c>varchar(MAX)</c>, and <c>varbinary(MAX)</c> columns stored in a SQL Server database, the maximum size is 2GB. If these columns are stored and accessed as files, the limit on maximum size is imposed by the file system. This value changes when using the <c>Type System Version</c> keyword in the connection string.
@@ -919,13 +900,13 @@
             </description>
           </item>
           <item>
-            <description>DataTypeName</description>
+            <term>DataTypeName</term>
             <description>
               Returns a string representing the data type of the specified column.
             </description>
           </item>
           <item>
-            <description>IsAliased</description>
+            <term>IsAliased</term>
             <description>
               <para>
                 <see langword="true" />: The column name is an alias.
@@ -936,7 +917,7 @@
             </description>
           </item>
           <item>
-            <description>IsAutoIncrement</description>
+            <term>IsAutoIncrement</term>
             <description>
               <para>
                 <see langword="true" />: The column assigns values to new rows in fixed increments.
@@ -947,13 +928,13 @@
             </description>
           </item>
           <item>
-            <description>IsColumnSet</description>
+            <term>IsColumnSet</term>
             <description>
               <see langword="true" />: The column is a sparse column that is a member of a column set.
             </description>
           </item>
           <item>
-            <description>IsExpression</description>
+            <term>IsExpression</term>
             <description>
               <para>
                 <see langword="true" />: The column is an expression.
@@ -964,7 +945,7 @@
             </description>
           </item>
           <item>
-            <description>IsHidden</description>
+            <term>IsHidden</term>
             <description>
               <para>
                 <see langword="true" />: The column is hidden.
@@ -975,7 +956,7 @@
             </description>
           </item>
           <item>
-            <description>IsIdentity</description>
+            <term>IsIdentity</term>
             <description>
               <para>
                 <see langword="true" />: The column is an identity column.
@@ -986,7 +967,7 @@
             </description>
           </item>
           <item>
-            <description>IsKey</description>
+            <term>IsKey</term>
             <description>
               <para>
                 <see langword="true" />: The column is one of a set of columns in the rowset that, taken together, uniquely identify the row. The set of columns with <c>IsKey</c> set to <see langword="true" /> must uniquely identify a row in the rowset. There is no requirement that this set of columns is a minimal set of columns. This set of columns may be generated from a base table primary key, a unique constraint or a unique index.
@@ -997,7 +978,7 @@
             </description>
           </item>
           <item>
-            <description>IsLong</description>
+            <term>IsLong</term>
             <description>
               <para>
                 <see langword="true" />: The column contains a Binary Long Object (BLOB) that contains very long data. The definition of very long data is provider-specific.
@@ -1008,7 +989,7 @@
             </description>
           </item>
           <item>
-            <description>IsReadOnly</description>
+            <term>IsReadOnly</term>
             <description>
               <para>
                <see langword="true" />: The column cannot be modified. 
@@ -1019,7 +1000,7 @@
             </description>
           </item>
           <item>
-            <description>IsRowVersion</description>
+            <term>IsRowVersion</term>
             <description>
               <para>
                 <see langword="true" />: The column contains a persistent row identifier that cannot be written to, and has no meaningful value except to identity the row.
@@ -1030,7 +1011,7 @@
             </description>
           </item>
           <item>
-            <description>IsUnique</description>
+            <term>IsUnique</term>
             <description>
               <para>
                 <see langword="true" />: Column is of type <c>timestamp</c>. 
@@ -1041,55 +1022,55 @@
             </description>
           </item>
           <item>
-            <description>NonVersionedProviderType</description>
+            <term>NonVersionedProviderType</term>
             <description>
               The type of the column irrespective of the current <c>Type System Version</c> specified in the connection string. The returned value is from the <see cref="T:System.Data.SqlDbType" /> enumeration.
             </description>
           </item>
           <item>
-            <description>NumericPrecision</description>
+            <term>NumericPrecision</term>
             <description>
               If <c>ProviderType</c> is a numeric data type, this is the maximum precision of the column. The precision depends on the definition of the column. If <c>ProviderType</c> is not a numeric data type, this is 255.
             </description>
           </item>
           <item>
-            <description>NumericScale</description>
+            <term>NumericScale</term>
             <description>
               If <c>ProviderType</c> is DBTYPE_DECIMAL or DBTYPE_NUMERIC, the number of digits to the right of the decimal point. Otherwise, this is 255.
             </description>
           </item>
           <item>
-            <description>ProviderSpecificDataType</description>
+            <term>ProviderSpecificDataType</term>
             <description>
               Returns the provider-specific data type of the column based on the <c>Type System Version</c> keyword in the connection string.
             </description>
           </item>
           <item>
-            <description>ProviderType</description>
+            <term>ProviderType</term>
             <description>
               The indicator of the column's data type. If the data type of the column varies from row to row, this must be Object. This column cannot contain a null value.
             </description>
           </item>
           <item>
-            <description>UdtAssemblyQualifiedName</description>
+            <term>UdtAssemblyQualifiedName</term>
             <description>
               If the column is a user-defined type (UDT), this is the qualified name of the UDT's assembly as per <see cref="T:System.Type.AssemblyQualifiedName" />. If the column is not a UDT, this is null.
             </description>
           </item>
           <item>
-            <description>XmlSchemaCollectionDatabase</description>
+            <term>XmlSchemaCollectionDatabase</term>
             <description>
               The name of the database where the schema collection for this XML instance is located, if the row contains information about an XML column. This value is <c>null</c> (<c>Nothing</c> in Visual Basic) if the collection is defined within the current database. It is also null if there is no schema collection, in which case the <c>XmlSchemaCollectionName</c> and <c>XmlSchemaCollectionOwningSchema</c> columns are also null.
             </description>
           </item>
           <item>
-            <description>XmlSchemaCollectionName</description>
+            <term>XmlSchemaCollectionName</term>
             <description>
               The name of the schema collection for this XML instance, if the row contains information about an XML column. This value is <c>null</c> (<c>Nothing</c> in Visual Basic) if there is no associated schema collection. If the value is null, the <c>XmlSchemaCollectionDatabase</c> and <c>XmlSchemaCollectionOwningSchema</c> columns are also null.
             </description>
           </item>
           <item>
-            <description>XmlSchemaCollectionOwningSchema</description>
+            <term>XmlSchemaCollectionOwningSchema</term>
             <description>
               The owning relational schema where the schema collection for this XML instance is located, if the row contains information about an XML column. This value is <c>null</c> (<c>Nothing</c> in Visual Basic) if the collection is defined within the current database. It is also null if there is no schema collection, in which case the <c>XmlSchemaCollectionDatabase</c> and <c>XmlSchemaCollectionName</c> columns are also null.
             </description>
@@ -1318,7 +1299,7 @@
         The value of the column expressed as a <see cref="T:System.Data.SqlDbType" />.
       </returns>
       <remarks>
-        <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetSqlValue" /> returns data using the native SQL Server types. To retrieve data using the .NET Framework types, see <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetValue" />.
+        <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetSqlValue" /> returns data using the native SQL Server types. To retrieve data using the .NET Framework types, see <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetValue(System.Int32)" />.
       </remarks>
     </GetSqlValue>
     <GetSqlValues>
@@ -1351,7 +1332,7 @@
           No conversions are performed; therefore, the data retrieved must already be an XML value.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.ArgumentOutOfRangeException">
@@ -1376,13 +1357,13 @@
       </returns>
       <remarks>
         <para>
-          <see cref="P:System.IO.Stream.ReadTimeout" /> defaults to the value of <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> ; but you can modify <see cref="P:System.IO.Stream.ReadTimeout" /> via <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetStream" />.
+          <see cref="P:System.IO.Stream.ReadTimeout" /> defaults to the value of <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> ; but you can modify <see cref="P:System.IO.Stream.ReadTimeout" /> via <b>GetStream</b>.
         </para>
         <para>
-          Null values will be returned as an empty (zero bytes) <see cref="T:System.IO.Stream" />. <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetBytes" /> will raise an <see cref="T:System.InvalidOperationException" /> exception when used on an object returned by <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetStream" /> when <see cref="F:System.Data.CommandBehavior.SequentialAccess" /> is in effect. <see cref="T:Microsoft.Data.SqlClient.SqlException" /> exceptions raised from <see cref="T:System.IO.Stream" /> are thrown as <see cref="T:System.IO.IOException" /> exceptions; check the inner exception for the <see cref="T:Microsoft.Data.SqlClient.SqlException" />.
+          Null values will be returned as an empty (zero bytes) <see cref="T:System.IO.Stream" />. <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetBytes(System.Int32,System.Int64,System.Byte[],System.Int32,System.Int32)" /> will raise an <see cref="T:System.InvalidOperationException" /> exception when used on an object returned by <b>GetStream</b> when <see cref="F:System.Data.CommandBehavior.SequentialAccess" /> is in effect. <see cref="T:Microsoft.Data.SqlClient.SqlException" /> exceptions raised from <see cref="T:System.IO.Stream" /> are thrown as <see cref="T:System.IO.IOException" /> exceptions; check the inner exception for the <see cref="T:Microsoft.Data.SqlClient.SqlException" />.
         </para>
         <para>
-          The following <see cref="T:System.IO.Stream" /> members are not available for objects returned by <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetStream" />:
+          The following <see cref="T:System.IO.Stream" /> members are not available for objects returned by <b>GetStream</b>:
         </para>
         <list type="bullet">
           <item>BeginWrite</item>
@@ -1438,7 +1419,7 @@
           No conversions are performed; therefore, the data retrieved must already be a string.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -1460,7 +1441,7 @@
           <see cref="T:Microsoft.Data.SqlClient.SqlException" /> exceptions raised from <see cref="T:System.IO.TextReader" /> are thrown as <see cref="T:System.IO.IOException" /> exceptions; check the inner exception for the <see cref="T:Microsoft.Data.SqlClient.SqlException" />.
         </para>
         <para>
-          Null values will be returned as an empty (zero bytes) <see cref="T:System.IO.TextReader" />. <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetChars" /> will raise an <see cref="T:System.InvalidOperationException" /> exception when used on an object returned by <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetTextReader" /> when <see cref="F:System.Data.CommandBehavior.SequentialAccess" /> is in effect.
+          Null values will be returned as an empty (zero bytes) <see cref="T:System.IO.TextReader" />. <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetChars(System.Int32,System.Int64,System.Char[],System.Int32,System.Int32)" /> will raise an <see cref="T:System.InvalidOperationException" /> exception when used on an object returned by <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetTextReader(System.Int32)" /> when <see cref="F:System.Data.CommandBehavior.SequentialAccess" /> is in effect.
         </para>
         <para>
           For more information, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
@@ -1505,7 +1486,7 @@
           No conversions are performed; therefore, the data retrieved must already be a <see cref="T:System.TimeSpan" /> object.
         </para>
         <para>
-          Call <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull" /> to check for null values before calling this method.
+          Call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.IsDBNull(System.Int32)" /> to check for null values before calling this method.
         </para>
       </remarks>
       <exception cref="T:System.InvalidCastException">
@@ -1523,7 +1504,7 @@
         This method returns <see cref="T:System.DBNull" /> for null database columns.
       </returns>
       <remarks>
-        <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetValue" /> returns data using the .NET Framework types.
+        <b>GetValue</b> returns data using the .NET Framework types.
       </remarks>
     </GetValue>
     <GetValues>
@@ -1601,7 +1582,7 @@
       </returns>
       <remarks>
         <para>
-          The <see cref="T:System.Xml.XmlReader" /> object returned by <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetXmlReader" /> does not support asynchronous operations. If you require asynchronous operations on an <see cref="T:System.Xml.XmlReader" />, cast the XML column to an NVARCHAR(MAX) on the server and use <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetTextReader" /> with <see cref="M:System.Xml.XmlReader.Create" />. <see cref="T:Microsoft.Data.SqlClient.SqlException" /> exceptions raised from <see cref="T:System.Xml.XmlReader" /> are thrown as <see cref="T:System.Xml.XmlException" /> exceptions; check the inner exception for the <see cref="T:Microsoft.Data.SqlClient.SqlException" />. <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetChars" /> will raise an <see cref="T:System.InvalidOperationException" /> exception when used on an object returned by <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetXmlReader" /> when <see cref="F:System.Data.CommandBehavior.SequentialAccess" /> is in effect.
+          The <see cref="T:System.Xml.XmlReader" /> object returned by <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetXmlReader" /> does not support asynchronous operations. If you require asynchronous operations on an <see cref="T:System.Xml.XmlReader" />, cast the XML column to an NVARCHAR(MAX) on the server and use <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetTextReader(System.Int32)" /> with <see cref="M:System.Xml.XmlReader.Create(System.IO.TextReader)" />. <see cref="T:Microsoft.Data.SqlClient.SqlException" /> exceptions raised from <see cref="T:System.Xml.XmlReader" /> are thrown as <see cref="T:System.Xml.XmlException" /> exceptions; check the inner exception for the <see cref="T:Microsoft.Data.SqlClient.SqlException" />. <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetChars(System.Int32,System.Int64,System.Char[],System.Int32,System.Int32)" /> will raise an <see cref="T:System.InvalidOperationException" /> exception when used on an object returned by <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetXmlReader(System.Int32)" /> when <see cref="F:System.Data.CommandBehavior.SequentialAccess" /> is in effect.
         </para>
         <para>
           For more information, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
@@ -1627,13 +1608,16 @@
       <summary>
         Gets a value that indicates whether the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> contains one or more rows.
       </summary>
-      <value><see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> contains one or more rows; otherwise <see langword="false" />.</value>
+      <value><see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> contains one or more rows; otherwise <see langword="false" />.
+      </value>
     </HasRows>
     <IsClosed>
       <summary>
         Retrieves a Boolean value that indicates whether the specified <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance has been closed.
       </summary>
-      <value><see langword="true" /> if the specified <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance is closed; otherwise <see langword="false" />.</value>
+      <value>
+        <see langword="true" /> if the specified <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance is closed; otherwise <see langword="false" />.
+      </value>
       <remarks>
         It is not possible to read from a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance that is closed.
       </remarks>
@@ -1645,7 +1629,9 @@
       <summary>
         Determines whether the specified <see cref="T:System.Data.CommandBehavior" /> matches that of the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
       </summary>
-      <returns><see langword="true" /> if the specified <see cref="T:System.Data.CommandBehavior" /> is true, <see langword="false" /> otherwise.</returns>
+      <returns>
+        <see langword="true" /> if the specified <see cref="T:System.Data.CommandBehavior" /> is true, <see langword="false" /> otherwise.
+      </returns>
       <remarks>
         This member supports the .NET Framework infrastructure and is not intended to be used directly from your code.
       </remarks>
@@ -1657,12 +1643,14 @@
       <summary>
         Gets a value that indicates whether the column contains non-existent or missing values.
       </summary>
-      <returns><see langword="true" /> if the specified column value is equivalent to <see cref="T:System.DBNull" /> ; otherwise <see langword="false" />.</returns>
+      <returns>
+        <see langword="true" /> if the specified column value is equivalent to <see cref="T:System.DBNull" /> ; otherwise <see langword="false" />.
+      </returns>
       <remarks>
-        Call this method to check for null column values before calling the typed get methods (for example, <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetByte" />, <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetChar" />, and so on) to avoid raising an error.
+        Call this method to check for null column values before calling the typed get methods (for example, <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetByte(System.Int32)" />, <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetChar(System.Int32)" />, and so on) to avoid raising an error.
       </remarks>
       <example>
-        <!-- SqlDataReader_IsDbNull -->
+        <!-- SqlDataReader_IsDBNull -->
         <code language="c#">
           using System;
           using System.Data;
@@ -1727,11 +1715,6 @@
         Trying to read a column that does not exist.
       </exception>
     </IsDBNullAsync>
-    <Item>
-      <summary>
-        Gets the value of a column in its native format.
-      </summary>
-    </Item>
     <ItemI>
       <param name="i">
         The zero-based column ordinal.
@@ -1817,7 +1800,7 @@
           The default position of the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is before the first record. Therefore, you must call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> to begin accessing any data.
         </para>
         <para>
-          Only one <c>SqlDataReader</c> per associated <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> may be open at a time, and any attempt to open another will fail until the first one is closed. Similarly, while the <c>SqlDataReader</c> is being used, the associated <c>SqlConnection</c> is busy serving it until you call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Close" />.
+          Only one <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> per associated <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> may be open at a time, and any attempt to open another will fail until the first one is closed. Similarly, while the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is being used, the associated <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is busy serving it until you call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Close" />.
         </para>
       </remarks>
       <example>
@@ -1889,7 +1872,7 @@
       </returns>
       <remarks>
         <para>
-          If the <c>behavior</c> parameter of <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync" /> is set to <c>Default</c>, <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.ReadAsync" /> reads the entire row before returning the Task.
+          If the <c>behavior</c> parameter of <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync" /> is set to <c>Default</c>, <b>ReadAsync</b> reads the entire row before returning the Task.
         </para>
         <para>
           For more information, including code samples, about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
@@ -1916,14 +1899,14 @@
         The value of this property is cumulative. For example, if two records are inserted in batch mode, the value of <c>RecordsAffected</c> will be two. <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.IsClosed" /> and <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.RecordsAffected" /> are the only properties that you can call after the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed.
       </remarks>
     </RecordsAffected>
-    <System.Collections.IEnumerable.GetEnumerator>
+    <SensitivityClassification>
       <summary>
-        Returns an enumerator that can be used to iterate through the item collection.
+        Gets the <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" /> information with the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
       </summary>
-      <returns>
-        The enumerator that can be used to iterate through the item collection.
-      </returns>
-    </System.Collections.IEnumerable.GetEnumerator>
+      <value>
+        The <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" /> associated with the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
+      </value>
+    </SensitivityClassification>
     <System.Data.IDataRecord.GetData>
       <param name="i">
         A column ordinal.
@@ -1938,11 +1921,6 @@
         This member is an explicit interface member implementation. It can be used only when the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance is cast to an <see cref="T:System.Data.IDataRecord" /> interface.
       </remarks>
     </System.Data.IDataRecord.GetData>
-    <System.IDisposable.Dispose>
-      <summary>
-        Releases all resources that are used by the data reader.
-      </summary>
-    </System.IDisposable.Dispose>
     <VisibleFieldCount>
       <summary>
         Gets the number of fields in the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> that are not hidden.

@@ -18,7 +18,7 @@
       <summary>
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlEnclaveAttestationParameters" /> class.
       </summary>
-      <exception cref="T:System.ArgumentNullException"> <paramref name="clientDiffieHellmanKey" /> is <see langword="null" /> .</exception>
+      <exception cref="T:System.ArgumentNullException"><paramref name="clientDiffieHellmanKey" /> is <see langword="null" />.</exception>
     </ctor>
     <ClientDiffieHellmanKey>
       <summary>
@@ -27,9 +27,6 @@
       <value>
         The Diffie-Hellman algorithm.
       </value>
-      <remarks>
-        To be added.
-      </remarks>
     </ClientDiffieHellmanKey>
     <GetInput>
       <summary>

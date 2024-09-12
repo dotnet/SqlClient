@@ -80,6 +80,9 @@
       <seealso cref="T:Microsoft.Data.SqlClient.SqlErrorCollection" />
       <seealso cref="T:Microsoft.Data.SqlClient.SqlException" />
     </SqlError>
+    <ctor>
+      <summary>Constructs a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlError" /> class.</summary>
+    </ctor>
     <Class>
       <summary>
         Gets the severity level of the error returned from SQL Server.
@@ -259,12 +262,12 @@
         <list type="table">
           <listheader>
             <term>Source of Error</term>
-            <term>SqlError.Number</term>
-            <term>SqlError.State</term>
-            <term>SqlException has inner Win32Exception (beginning with.NET Framework 4.5)</term>
+            <description>SqlError.Number</description>
+            <description>SqlError.State</description>
+            <description>SqlException has inner Win32Exception (beginning with.NET Framework 4.5)</description>
           </listheader>
           <item>
-            <description>Error from server</description>
+            <term>Error from server</term>
             <description>
               <para>
                 Server error code
@@ -277,55 +280,55 @@
             <description>No</description>
           </item>
           <item>
-            <description>Connection timeout</description>
+            <term>Connection timeout</term>
             <description>-2</description>
             <description>0</description>
             <description>Yes (Number = 258)</description>
           </item>
           <item>
-            <description>Communication error (non-LocalDB)</description>
+            <term>Communication error (non-LocalDB)</term>
             <description>Win32 error code</description>
             <description>0</description>
             <description>Yes (Number = Win32 error code)</description>
           </item>
           <item>
-            <description>Communication error (LocalDB)</description>
+            <term>Communication error (LocalDB)</term>
             <description>Win32 error code</description>
             <description>0</description>
             <description>No</description>
           </item>
           <item>
-            <description>Encryption capability mismatch</description>
+            <term>Encryption capability mismatch</term>
             <description>20</description>
             <description>0</description>
             <description>No</description>
           </item>
           <item>
-            <description>Failed to start LocalDB</description>
+            <term>Failed to start LocalDB</term>
             <description>Win32 error code</description>
             <description>0</description>
             <description>No</description>
           </item>
           <item>
-            <description>Read-only routing failure</description>
+            <term>Read-only routing failure</term>
             <description>0</description>
             <description>0</description>
             <description>No</description>
           </item>
           <item>
-            <description>Server had severe error processing query</description>
+            <term>Server had severe error processing query</term>
             <description>0</description>
             <description>0</description>
             <description>No</description>
           </item>
           <item>
-            <description>Processed cancellation while parsing results</description>
+            <term>Processed cancellation while parsing results</term>
             <description>0</description>
             <description>0</description>
             <description>No</description>
           </item>
           <item>
-            <description>Failed to create user instance</description>
+            <term>Failed to create user instance</term>
             <description>0</description>
             <description>0</description>
             <description>No</description>

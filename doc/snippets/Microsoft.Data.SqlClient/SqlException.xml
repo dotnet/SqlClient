@@ -1,5 +1,4 @@
-﻿
-<docs>
+﻿<docs>
   <members name="SqlException">
     <SqlException>
       <summary>
@@ -19,19 +18,19 @@
           For information about the warning and informational messages sent by SQL Server, see <see href="/sql/relational-databases/errors-events/database-engine-events-and-errors">Database Engine Events and Errors</see>. The <see cref="T:Microsoft.Data.SqlClient.SqlException" /> class maps to SQL Server severity.
         </para>
         <para>
-          The following is general information on handling exceptions. Your code should catch exceptions to prevent the application from crashing and to allow displaying a relevant error message to the user.  You can use database transactions to ensure that the data is consistent regardless of what happens in the client application (including a crash). Features like System.Transaction.TransactionScope or the BeginTransaction method (in System.Data.OleDb.OleDbConnection, System.Data.ODBC.ODBCConnection, and Microsoft.Data.SqlClient.SqlConnection) ensure consistent data regardless of exceptions raised by a provider. Transactions can fail, so catch failures and retry the transaction.
+          The following is general information on handling exceptions. Your code should catch exceptions to prevent the application from crashing and to allow displaying a relevant error message to the user.  You can use database transactions to ensure that the data is consistent regardless of what happens in the client application (including a crash). Features like <see cref="T:System.Transactions.TransactionScope" /> or the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" /> ensure consistent data regardless of exceptions raised by a provider. Transactions can fail, so catch failures and retry the transaction.
         </para>
         <para>
           Note that beginning with .NET Framework 4.5, <see cref="T:Microsoft.Data.SqlClient.SqlException" /> can return an inner <see cref="T:System.ComponentModel.Win32Exception" />.
         </para>
         <para>
-          The exception class of a .NET Framework data provider reports provider-specific errors. For example System.Data.Odbc has OdbcException, System.Data.OleDb has OleDbException, and Microsoft.Data.SqlClient has SqlException. For the best level of error detail, catch these exceptions and use the members of these exception classes to get details of the error.
+          The exception class of a .NET Framework data provider reports provider-specific errors. For example System.Data.Odbc has <see cref="T:System.Data.Odbc.OdbcException" />, System.Data.OleDb has <see cref="T:System.Data.OleDb.OleDbException" />, and Microsoft.Data.SqlClient has <b>SqlException</b>. For the best level of error detail, catch these exceptions and use the members of these exception classes to get details of the error.
         </para>
         <para>
-          Bad input can cause a .NET Framework data provider type to raise an exception such as System.ArgumentException or System.IndexOutOfRangeException.  Calling a method at the wrong time can raise System.InvalidOperationException.
+          Bad input can cause a .NET Framework data provider type to raise an exception such as System.ArgumentException or System.IndexOutOfRangeException. Calling a method at the wrong time can raise System.InvalidOperationException.
         </para>
         <para>
-          So, in general, write an exception handler that catches any provider specific exceptions as well as exceptions from the common language runtime.  These can be layered as follows:
+          So, in general, write an exception handler that catches any provider specific exceptions as well as exceptions from the common language runtime. These can be layered as follows:
         </para>
         <code language="c#">
           try
@@ -308,9 +307,6 @@
       <seealso cref="T:Microsoft.Data.SqlClient.SqlErrorCollection" />
       <seealso cref="T:Microsoft.Data.SqlClient.SqlError" />
     </Errors>
-    <GetObjectData>
-      <inheritdoc cref="M:System.Exception.GetObjectData" />
-    </GetObjectData>
     <LineNumber>
       <summary>
         Gets the line number within the Transact-SQL command batch or stored procedure that generated the error.

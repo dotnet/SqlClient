@@ -6,26 +6,25 @@
       </summary>
       <remarks>
         <para>
-          The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />, serves as a bridge between a <see cref="T:System.Data.DataSet" /> and SQL Server for retrieving and saving data. The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> provides this bridge by mapping <see cref="System.Data.Common.DbDataAdapter.Fill%2A" />, which changes the data in the <see cref="System.Data.DataSet" /> to match the data in the data source, and <see cref="M:System.Data.Common.DbDataAdapter.Update%2A" />, which changes the data in the data source to match the data in the <see cref="T:System.Data.DataSet" />, using the appropriate Transact-SQL statements against the data source. The update is performed on a by-row basis. For every inserted, modified, and deleted row, the <see cref="M:System.Data.Common.DbDataAdapter.Update%2A" /> method determines the type of change that has been performed on it (<c>Insert</c>, <c>Update
-          </c>, or <c>Delete</c>). Depending on the type of change, the <c>Insert</c>, <c>Update</c>, or <c>Delete</c> command template executes to propagate the modified row to the data source. When the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> fills a <see cref="System.Data.DataSet" />, it creates the necessary tables and columns for the returned data if they do not already exist. However, primary key information is not included in the implicitly created schema unless the <see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction%2A" /> property is set to <see cref="F:System.Data.MissingSchemaAction.AddWithKey" />. You may also have the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> create the schema of the <see cref="T:System.Data.DataSet" />, including primary key information, before filling it with data using <c>FillSchema</c>. For more information, see <see href="/sql/connect/ado-net/add-existing-constraints-to-dataset">Adding Existing Constraints to a DataSet</see>. <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is used in conjunction with <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> to increase performance when connecting to a SQL Server database.
+          The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />, serves as a bridge between a <see cref="T:System.Data.DataSet" /> and SQL Server for retrieving and saving data. The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> provides this bridge by mapping <see cref="M:System.Data.Common.DbDataAdapter.Fill(System.Data.DataSet)" />, which changes the data in the <see cref="T:System.Data.DataSet" /> to match the data in the data source, and <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, which changes the data in the data source to match the data in the <see cref="T:System.Data.DataSet" />, using the appropriate Transact-SQL statements against the data source. The update is performed on a by-row basis. For every inserted, modified, and deleted row, the <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> method determines the type of change that has been performed on it (<c>Insert</c>, <c>Update</c>, or <c>Delete</c>). Depending on the type of change, the <c>Insert</c>, <c>Update</c>, or <c>Delete</c> command template executes to propagate the modified row to the data source. When the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> fills a <see cref="T:System.Data.DataSet" />, it creates the necessary tables and columns for the returned data if they do not already exist. However, primary key information is not included in the implicitly created schema unless the <see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction" /> property is set to <see cref="F:System.Data.MissingSchemaAction.AddWithKey" />. You may also have the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> create the schema of the <see cref="T:System.Data.DataSet" />, including primary key information, before filling it with data using <c>FillSchema</c>. For more information, see <see href="/sql/connect/ado-net/add-existing-constraints-to-dataset">Adding Existing Constraints to a DataSet</see>. <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is used in conjunction with <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> to increase performance when connecting to a SQL Server database.
         </para>
         <note type="note">
-          If you are using SQL Server stored procedures to edit or delete data using a <c>DataAdapter</c>, make sure that you do not use SET NOCOUNT ON in the stored procedure definition. This causes the rows affected count returned to be zero, which the <c>DataAdapter</c> interprets as a concurrency conflict. In this event, a <see cref="System.Data.DBConcurrencyException" /> will be thrown.
+          If you are using SQL Server stored procedures to edit or delete data using a <c>DataAdapter</c>, make sure that you do not use SET NOCOUNT ON in the stored procedure definition. This causes the rows affected count returned to be zero, which the <c>DataAdapter</c> interprets as a concurrency conflict. In this event, a <see cref="T:System.Data.DBConcurrencyException" /> will be thrown.
         </note>
         <para>
-          The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> also includes the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A" />, and <see cref="P:System.Data.Common.DataAdapter.TableMappings%2A" /> properties to facilitate the loading and updating of data.
+          The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> also includes the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, and <see cref="P:System.Data.Common.DataAdapter.TableMappings" /> properties to facilitate the loading and updating of data.
         </para>
         <para>
           When an instance of <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is created, the read/write properties are set to initial values. For a list of these values, see the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> constructor.
         </para>
         <para>
-          The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A" />, and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A" /> are generic templates that are automatically filled with individual values from every modified row through the parameters mechanism.
+          The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" />, and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" /> are generic templates that are automatically filled with individual values from every modified row through the parameters mechanism.
         </para>
         <para>
-          For every column that you propagate to the data source on <see cref="P:System.Data.Common.DbDataAdapter.Update%2A" />, a parameter should be added to the <c>InsertCommand</c>, <c>UpdateCommand</c>, or <c>DeleteCommand</c>. The <see cref="P:System.Data.Common.DbParameter.SourceColumn%2A" /> property of the <see cref="T:System.Data.Common.DbParameter" /> object should be set to the name of the column. This setting indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.
+          For every column that you propagate to the data source on <see cref="P:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, a parameter should be added to the <c>InsertCommand</c>, <c>UpdateCommand</c>, or <c>DeleteCommand</c>. The <see cref="P:System.Data.Common.DbParameter.SourceColumn" /> property of the <see cref="T:System.Data.Common.DbParameter" /> object should be set to the name of the column. This setting indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.
         </para>
         <note type="note">
-          An <see cref="T:System.InvalidOperationException" /> will occur if the <see cref="M:System.Data.Common.DbDataAdapter.Fill%2A" /> method is called and the table contains a user-defined type that is not available on the client computer. For more information, see <see href="/sql/relational-databases/clr-integration-database-objects-user-defined-types/clr-user-defined-types">CLR User-Defined Types</see>.
+          An <see cref="T:System.InvalidOperationException" /> will occur if the <see cref="M:System.Data.Common.DbDataAdapter.Fill" /> method is called and the table contains a user-defined type that is not available on the client computer. For more information, see <see href="/sql/relational-databases/clr-integration-database-objects-user-defined-types/clr-user-defined-types">CLR User-Defined Types</see>.
         </note>
       </remarks>
       <example>
@@ -62,11 +61,6 @@
         </code>
       </example>
     </SqlDataAdapter>
-    <ctor1>
-      <summary>
-        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> class.
-      </summary>
-    </ctor1>
     <ctor2>
       <summary>
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> class.
@@ -80,17 +74,17 @@
             <term>
               Properties
             </term>
-            <term>
+            <description>
               Initial value
-            </term>
+            </description>
           </listheader>
           <item>
-            <description><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction%2A" /></description>
-            <description><c>MissingMappingAction.Passthrough</c></description>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction" /></term>
+            <description><see cref="F:System.Data.MissingMappingAction.Passthrough" /></description>
           </item>
           <item>
-            <description><see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction%2A" /></description>
-            <description><c>MissingSchemaAction.Add</c></description>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction" /></term>
+            <description><see cref="F:System.Data.MissingSchemaAction.Add" /></description>
           </item>
         </list>
         <para>
@@ -199,32 +193,32 @@
       </summary>
       <remarks>
         <para>
-          This implementation of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> constructor sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" /> property to the value specified in the <paramref name="selectCommand" /> parameter. When an instance of <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is created, the following read/write properties are set to the following initial values.
+          This implementation of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> constructor sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property to the value specified in the <paramref name="selectCommand" /> parameter. When an instance of <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is created, the following read/write properties are set to the following initial values.
         </para>
         <list type="table">
           <listheader>
             <term>Properties</term>
-            <term>Initial value</term>
+            <description>Initial value</description>
           </listheader>
           <item>
-            <description><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction%2A" /></description>
-            <description><c>MissingMappingAction.Passthrough</c></description>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction" /></term>
+            <description><see cref="F:System.Data.MissingMappingAction.Passthrough" /></description>
           </item>
           <item>
-            <description><see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction%2A" /></description>
-            <description><c>MissingSchemaAction.Add</c></description>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction" /></term>
+            <description><see cref="F:System.Data.MissingSchemaAction.Add" /></description>
           </item>
         </list>
         <para>
           You can change the value of these properties through a separate call to the property.
         </para>
         <para>
-          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" /> (or any of the other command properties) is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
+          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> (or any of the other command properties) is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
         </para>
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets some of its properties.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets some of its properties.
         </para>
         <!-- SqlDataAdapter_SqlDataAdapter1 -->
         <code language="c#">
@@ -309,23 +303,27 @@
       </summary>
       <remarks>
         <para>
-          This implementation of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> opens and closes a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> if it is not already open. This can be useful in an application that must call the <see cref="M:System.Data.Common.DbDataAdapter.Fill%2A" /> method for two or more <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> objects. If the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is already open, you must explicitly call <b>Close</b> or <b>Dispose</b> to close it.
+          This implementation of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> opens and closes a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> if it is not already open. This can be useful in an application that must call the <see cref="M:System.Data.Common.DbDataAdapter.Fill(System.Data.DataSet)" /> method for two or more <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> objects. If the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is already open, you must explicitly call <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Close" /> or <see cref="M:System.IDisposable.Dispose" /> to close it.
         </para>
         <para>
           When an instance of <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is created, the following read/write properties are set to the following initial values.
         </para>
         <list type="table">
           <listheader>
-            <term>Properties</term>
-            <term>Initial value</term>
+            <term>
+              Properties
+            </term>
+            <description>
+              Initial value
+            </description>
           </listheader>
           <item>
-            <description><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction%2A" /></description>
-            <description><c>MissingMappingAction.Passthrough</c></description>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction" /></term>
+            <description><see cref="F:System.Data.MissingMappingAction.Passthrough" /></description>
           </item>
           <item>
-            <description><see cref="System.Data.Common.DataAdapter.MissingSchemaAction%2A" /></description>
-            <description><c>MissingSchemaAction.Add</c></description>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction" /></term>
+            <description><see cref="F:System.Data.MissingSchemaAction.Add" /></description>
           </item>
         </list>
         <para>
@@ -420,23 +418,27 @@
       </summary>
       <remarks>
         <para>
-          This overload of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> constructor uses the <paramref name="selectCommandText" /> parameter to set the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" /> property. The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> will create and maintain the connection created with the <paramref name="selectConnectionString" /> parameter.
+          This overload of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> constructor uses the <paramref name="selectCommandText" /> parameter to set the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property. The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> will create and maintain the connection created with the <paramref name="selectConnectionString" /> parameter.
         </para>
         <para>
           When an instance of <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is created, the following read/write properties are set to the following initial values.
         </para>
         <list type="table">
           <listheader>
-            <term>Properties</term>
-            <term>Initial value</term>
+            <term>
+              Properties
+            </term>
+            <description>
+              Initial value
+            </description>
           </listheader>
           <item>
-            <description><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction%2A" /></description>
-            <description><c>MissingMappingAction.Passthrough</c></description>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction" /></term>
+            <description><see cref="F:System.Data.MissingMappingAction.Passthrough" /></description>
           </item>
           <item>
-            <description><see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction%2A" /></description>
-            <description><c>MissingSchemaAction.Add</c></description>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction" /></term>
+            <description><see cref="F:System.Data.MissingSchemaAction.Add" /></description>
           </item>
         </list>
         <para>
@@ -597,18 +599,18 @@
       </value>
       <remarks>
         <para>
-          During <see cref="M:System.Data.Common.DbDataAdapter.Update%2A" />, if this property is not set and primary key information is present in the <see cref="T:System.Data.DataSet" />, the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A" /> can be generated automatically if you set the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" /> property and use the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. Then, any additional commands that you do not set are generated by the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. This generation logic requires key column information to be present in the <see cref="T:System.Data.DataSet" />. For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
+          During <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, if this property is not set and primary key information is present in the <see cref="T:System.Data.DataSet" />, the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> can be generated automatically if you set the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property and use the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. Then, any additional commands that you do not set are generated by the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. This generation logic requires key column information to be present in the <see cref="T:System.Data.DataSet" />. For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
         </para>
         <para>
-          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
+          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
         </para>
         <para>
-          For every column that you propagate to the data source on <see cref="M:System.Data.Common.DbDataAdapter.Update%2A" />, a parameter should be added to the <c>InsertCommand</c>, <c>UpdateCommand</c>, or <c>DeleteCommand</c>. The <c>SourceColumn</c> property of the parameter should be set to the name of the column. This indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.
+          For every column that you propagate to the data source on <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, a parameter should be added to the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, or <b>DeleteCommand</b>. The <c>SourceColumn</c> property of the parameter should be set to the name of the column. This indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.
         </para>
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A" />, and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A" /> properties. It assumes you have already created a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> properties. It assumes you have already created a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.
         </para>
         <!-- SqlDataAdapter -->
         <code language="c#">
@@ -678,17 +680,6 @@
         </code>
       </example>
     </DeleteCommand>
-    <Dispose>
-      <param name="disposing">
-        To be added.
-      </param>
-      <summary>
-        To be added.
-      </summary>
-      <remarks>
-        To be added.
-      </remarks>
-    </Dispose>
     <ExecuteBatch>
       <summary>
         To be added.
@@ -754,21 +745,21 @@
       </value>
       <remarks>
         <para>
-          During <see cref="M:System.Data.Common.DbDataAdapter.Update%2A" />, if this property is not set and primary key information is present in the <see cref="T:System.Data.DataSet" />, the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A" /> can be generated automatically if you set the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" /> property and use the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. Then, any additional commands that you do not set are generated by the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. This generation logic requires key column information to be present in the <see cref="T:System.Data.DataSet" />. For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
+          During <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, if this property is not set and primary key information is present in the <see cref="T:System.Data.DataSet" />, the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" /> can be generated automatically if you set the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property and use the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. Then, any additional commands that you do not set are generated by the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. This generation logic requires key column information to be present in the <see cref="T:System.Data.DataSet" />. For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
         </para>
         <para>
-          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
+          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
         </para>
         <para>
           If execution of this command returns rows, these rows can be added to the <see cref="T:System.Data.DataSet" /> depending on how you set the <b>UpdatedRowSource</b> property of the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
         </para>
         <para>
-          For every column that you propagate to the data source on <see cref="M:System.Data.Common.DbDataAdapter.Update%2A" />, a parameter should be added to <c>InsertCommand</c>, <c>UpdateCommand</c>, or <c>DeleteCommand</c>. The <c>SourceColumn</c> property of the parameter should be set to the name of the column. This indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.
+          For every column that you propagate to the data source on <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, a parameter should be added to <b>InsertCommand</b>, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, or <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" />. The <c>SourceColumn</c> property of the parameter should be set to the name of the column. This indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.
         </para>
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets the <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" />, <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A" />, <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A" />, and <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A" /> properties. It assumes you have already created a <see cref="Microsoft.Data.SqlClient.SqlConnection" /> object.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> properties. It assumes you have already created a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.
         </para>
         <!-- SqlDataAdapter -->
         <code language="c#">
@@ -866,21 +857,21 @@
       </summary>
       <remarks>
         <para>
-          When using <see cref="M:System.Data.Common.DbDataAdapter.Update%2A" />, there are two events that occur per data row updated. The order of execution is as follows:
+          When using <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, there are two events that occur per data row updated. The order of execution is as follows:
         </para>
         <list type="number">
           <item>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</item>
-          <item>The <see cref="E:System.Data.Common.DbDataAdapter.OnRowUpdating%2A" /> event is raised.</item>
+          <item>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</item>
           <item>The command executes.</item>
           <item>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</item>
           <item>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</item>
-          <item>The <see cref="E:System.Data.Common.DbDataAdapter.OnRowUpdated%2A" /> event is raised.</item>
-          <item><see cref="System.Data.DataRow.AcceptChanges%2A" /> is called.</item>
+          <item>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</item>
+          <item><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</item>
         </list>
       </remarks>
       <example>
         <para>
-          The following example shows how to use both the <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> and <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> events.
+          The following example shows how to use both the <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> and <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> events.
         </para>
         <!-- SqlDataAdapter_RowUpdated -->
         <code language="c#">
@@ -960,13 +951,13 @@
           }
         </code>
         <para>
-          The <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event returns this output:
+          The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event returns this output:
         </para>
         <code>
           event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 status=0)
         </code>
         <para>
-          The <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event returns this output:
+          The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event returns this output:
         </para>
         <code>
           event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 recordsAffected=1 row=System.Data.DataRow[37] status=0)
@@ -979,21 +970,21 @@
       </summary>
       <remarks>
         <para>
-          When using <see cref="M:System.Data.Common.DbDataAdapter.Update%2A" />, there are two events that occur per data row updated. The order of execution is as follows:
+          When using <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, there are two events that occur per data row updated. The order of execution is as follows:
         </para>
         <list type="number">
           <item>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</item>
-          <item>The <see cref="E:System.Data.Common.DbDataAdapter.OnRowUpdating%2A" /> event is raised.</item>
+          <item>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</item>
           <item>The command executes.</item>
           <item>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</item>
           <item>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</item>
-          <item>The <see cref="E:System.Data.Common.DbDataAdapter.OnRowUpdated%2A" /> event is raised.</item>
-          <item><see cref="M:System.Data.DataRow.AcceptChanges%2A" /> is called.</item>
+          <item>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</item>
+          <item><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</item>
         </list>
       </remarks>
       <example>
         <para>
-          The following example shows how to use both the <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> and <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> events.
+          The following example shows how to use both the <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> and <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> events.
         </para>
         <!-- SqlDataAdapter_RowUpdated -->
         <code language="c#">
@@ -1073,13 +1064,13 @@
           }
         </code>
         <para>
-          The <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event returns this output:
+          The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event returns this output:
         </para>
         <code>
           event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 status=0)
         </code>
         <para>
-          The <see cref="Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event returns this output:
+          The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event returns this output:
         </para>
         <code>
           event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 recordsAffected=1 row=System.Data.DataRow[37] status=0)
@@ -1095,15 +1086,15 @@
       </value>
       <remarks>
         <para>
-          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
+          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
         </para>
         <para>
-          If the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" /> does not return any rows, no tables are added to the <see cref="T:System.Data.DataSet" />, and no exception is raised.
+          If the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> does not return any rows, no tables are added to the <see cref="T:System.Data.DataSet" />, and no exception is raised.
         </para>
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A" />, and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A" /> properties. It assumes you have already created a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> properties. It assumes you have already created a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.
         </para>
         <!-- SqlDataAdapter -->
         <code language="c#">
@@ -1265,7 +1256,7 @@
           </item>
         </list>
         <para>
-          When setting this to a value other than 1, all the commands associated with the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> have to have their <see cref="P:Microsoft.Data.SqlClient.SqlCommand.UpdateRowSource" /><b>UpdatedRowSource</b> property set to <see langword="F:System.Data.UpdateRowSource.None" /> or <see cref="F:System.Data.UpdateRowSource.OutputParameters" />. An exception is thrown otherwise.
+          When setting this to a value other than 1, all the commands associated with the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> have to have their <see cref="P:Microsoft.Data.SqlClient.SqlCommand.UpdatedRowSource" /> property set to <see cref="F:System.Data.UpdateRowSource.None" /> or <see cref="F:System.Data.UpdateRowSource.OutputParameters" />. An exception is thrown otherwise.
         </para>
       </value>
       <remarks>
@@ -1273,7 +1264,10 @@
           Gets or sets a value that enables or disables batch processing support, and specifies the number of commands that can be executed in a batch.
         </para>
         <para>
-          Use the <see cref="PMicrosoft.Data.SqlClient.SqlDataAdapter.UpdateBatchSize%2A" /> property to update a data source with changes from a <see cref="T:System.Data.DataSet" />. This can increase application performance by reducing the number of round-trips to the server.       Executing an extremely large batch could decrease performance. Therefore, you should test for the optimum batch size setting before implementing your application.
+          Use the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateBatchSize" /> property to update a data source with changes from a <see cref="T:System.Data.DataSet" />. This can increase application performance by reducing the number of round-trips to the server.
+        </para>
+        <para>
+          Executing an extremely large batch could decrease performance. Therefore, you should test for the optimum batch size setting before implementing your application.
         </para>
         <para>
           An <see cref="T:System.ArgumentOutOfRangeException" /> is thrown if the value is set to a number less than zero.
@@ -1289,16 +1283,16 @@
       </value>
       <remarks>
         <para>
-          During <see cref="P:System.Data.Common.DbDataAdapter.Update%2A" />, if this property is not set and primary key information is present in the <see cref="T:System.Data.DataSet" />, the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A" /> can be generated automatically if you set the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" /> property and use the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. Then, any additional commands that you do not set are generated by the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. This generation logic requires key column information to be present in the <see cref="T:System.Data.DataSet" />. For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
+          During <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, if this property is not set and primary key information is present in the <see cref="T:System.Data.DataSet" />, the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" /> can be generated automatically if you set the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property and use the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. Then, any additional commands that you do not set are generated by the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. This generation logic requires key column information to be present in the <see cref="T:System.Data.DataSet" />. For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
         </para>
         <para>
-          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A" /> maintains a reference to the previously created <see cref="Microsoft.Data.SqlClient.SqlCommand" /> object.
+          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
         </para>
         <note type="note">
-          If execution of this command returns rows, the updated rows may be merged with the <see cref="System.Data.DataSet" /> depending on how you set the <see cref="Microsoft.Data.SqlClient.SqlCommand.UpdatedRowSource" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
+          If execution of this command returns rows, the updated rows may be merged with the <see cref="T:System.Data.DataSet" /> depending on how you set the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.UpdatedRowSource" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
         </note>
         <para>
-          For every column that you propagate to the data source on <see cref="M:System.Data.Common.DbDataAdapter.Update%2A" />, a parameter should be added to <c>InsertCommand</c>, <c>UpdateCommand</c>, or <c>DeleteCommand</c>.
+          For every column that you propagate to the data source on <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, a parameter should be added to <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <b>UpdateCommand</b>, or <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" />.
         </para>
         <para>
           The <c>SourceColumn</c> property of the parameter should be set to the name of the column. This indicates that the value of the parameter is not set manually, but taken from the particular column in the currently processed row.
@@ -1306,7 +1300,7 @@
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A" /> and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A" /> properties. It assumes you have already created a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" /> and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> properties. It assumes you have already created a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.
         </para>
         <!-- SqlDataAdapter -->
         <code language="c#">
