@@ -1,5 +1,14 @@
 ﻿<docs>
   <members name="SqlClientDiagnostic">
+    <SqlClientDiagnostic>
+      <summary>Class that provides strongly-typed collection of key-value pairs for SqlClient diagnostic objects.</summary>
+    </SqlClientDiagnostic>
+    <ctor>
+      <summary>Constructs a new instance of the <see cref="Microsoft.Data.SqlClient.Diagnostics.SqlClientDiagnostic" /> class.</summary>
+      <param name="operationId">Guid that identifies the operation for correlation of events.</param>
+      <param name="operation">Operation being performed that caused the diagnostic event.</param>
+      <param name="timestamp">Timestamp of when the diagnostic event occurred.</param>
+    </ctor>
     <OperationId>
       <summary>
         A guid value used to correlate before, after and error events.
@@ -35,6 +44,9 @@
         The number of elements in the collection.
       </returns>
     </Count>
+    <CommonPropertyCount>
+      <summary>The number of common properties.</summary>
+    </CommonPropertyCount>
     <GetEnumerator>
       <summary>
         Returns an enumerator that iterates through the collection.
@@ -43,6 +55,22 @@
         An enumerator that can be used to iterate through the collection.
       </returns>
     </GetEnumerator>
+    <GetDerivedCount>
+      <summary>Gets the number of properties in derived instances of <see cref="Microsoft.Data.SqlClient.Diagnostics.SqlClientDiagnostic" /> that are not common to all diagnostic objects.</summary>
+    </GetDerivedCount>
+    <GetDerivedProperty>
+      <summary>Gets a property from a derived instance of <see cref="Microsoft.Data.SqlClient.Diagnostics.SqlClientDiagnostic" />.</summary>
+    </GetDerivedProperty>
+    <TryGetCommonProperty>
+      <summary>Attempts to retrieve the key-value pair diagnostic property.</summary>
+      <param name="index">Index to attempt to retrieve.</param>
+      <param name="property">
+        If a key-value pair with the provided <paramref name="index" /> was found, this out parameter will be populated with the retrieved diagnostic property. If nothing was found, this parameter will be set to <see langword="null" />.
+      </param>
+      <returns>
+        <see langword="true" /> is returned if the property is found. <see langword="false" /> is returned in all other situations.
+      </returns>
+    </TryGetCommonProperty>
   </members>
   <members name="SqlClientCommandBefore">
     <SqlClientCommandBefore>
@@ -57,7 +85,7 @@
     </Name>
     <ConnectionId>
       <summary>
-        A nullable guid uniquely identifying the connection that the xommand is being executed on.
+        A nullable guid uniquely identifying the connection that the command is being executed on.
       </summary>
     </ConnectionId>
     <TransactionId>
