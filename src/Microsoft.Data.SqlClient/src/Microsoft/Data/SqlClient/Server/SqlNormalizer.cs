@@ -155,7 +155,7 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET8_0_OR_GREATER
                     s.ReadExactly(_padBuffer, 0, _padBuffer.Length);
 #else
-                    s.Read(_padBuffer, 0, _padBuffer.Length);
+                   s.Read(_padBuffer, 0, _padBuffer.Length);
 #endif
                     return result;
                 }
