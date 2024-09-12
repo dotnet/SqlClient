@@ -16,3 +16,8 @@ dotnet_diagnostic.SYSLIB0039.severity = suggestion
 
 # CA1310: Specify StringComparison for correctness
 dotnet_diagnostic.CA1310.severity = error
+
+# CA2022: This analyzer detects calls to Stream.Read or Stream.ReadAsync that do not check the return value. 
+#         These methods may return fewer bytes than requested, resulting in unreliable code.
+#         The fixer will recommend replacing the call with Stream.ReadExactly or Stream.ReadExactlyAsync, if available. 
+dotnet_diagnostic.CA2022.severity = error
