@@ -114,6 +114,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         int rowsAffected3 = command2.ExecuteNonQuery();
                         ValidateRowsAffected(rowsAffected3);
                     }
+
+                    DataTestUtility.DropTable(connection, tableName);
                 }
             }
         }
@@ -227,6 +229,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         ValidateRows(reader2);
                         reader2.Close();
                     }
+
+                    DataTestUtility.DropTable(connection, tableName);
                 }
             }
         }

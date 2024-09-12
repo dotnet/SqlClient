@@ -11490,7 +11490,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (type.NullableType == TdsEnums.SQLJSON)
                         {
-                            // TODO : Performance and BOM check. Saurabh 
+                            // TODO : Performance and BOM check. For more details see https://github.com/dotnet/SqlClient/issues/2852
                             byte[] jsonAsBytes = Encoding.UTF8.GetBytes(value.ToString());
                             WriteInt(jsonAsBytes.Length, stateObj);
                             return stateObj.WriteByteArray(jsonAsBytes, jsonAsBytes.Length, 0, canAccumulate: false);
