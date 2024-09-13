@@ -58,8 +58,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             DatabaseHelper.ValidateResultSet(sqlDataReader);
         }
 
+        /*
+         This unit test is designed for PR #2618, which addresses an issue where a failed decryption leaves a connection in a bad state  
+         when it is returned to the connection pool. If a subsequent connection is retried it will result in an "Internal connection fatal error",
+         which causes that connection to be doomed, preventing it from being returned to the pool. 
+         Consequently, retrying a new connection will encounter the same decryption error, leading to a repetitive failure cycle.
+
+         The purpose of this unit test is to simulate a decryption error and verify that the connection remains usable when returned to the pool. 
+         It aims to confirm that three consecutive connections will consistently fail with the "Failed to decrypt column" error.
+        */
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public void ForcedColumnDecryptErrorTestShouldPass()
+        public void ForcedColumnDecryptErrorTestShouldFail()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
             {
@@ -68,6 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 EnclaveAttestationUrl = ""
             };
 
+            // Setup record to query
             using (SqlConnection sqlConnection = new(builder.ConnectionString))
             {
                 sqlConnection.Open();
@@ -86,17 +96,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 { "AZURE_KEY_VAULT", new EmptyKeyStoreProvider() }
             };
 
-            // Try this test 3 times to ensure that the connection is not left in a bad state after a decrypt error.
+            // Three consecutive connections should fail with "Failed to decrypt column" error. This proves that an error in decryption
+            // does not leave the connection in a bad state.
             for (int i = 0; i < 3; i++)
             {
-                // Setup connection using the empty key store provider
                 using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
                 {
                     sqlConnection.Open();
+                    // Setup connection using the empty key store provider thereby forcing a decryption error.
                     sqlConnection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(emptyKeyStoreProviders);
 
-                    using SqlCommand sqlCommand = new($"SELECT FirstName FROM [{_akvTableName}] WHERE FirstName = @firstName",
-                                                                sqlConnection);
+                    using SqlCommand sqlCommand = new($"SELECT FirstName FROM [{_akvTableName}] WHERE FirstName = @firstName", sqlConnection);
                     SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft2");
                     customerFirstParam.Direction = System.Data.ParameterDirection.Input;
                     customerFirstParam.ForceColumnEncryption = true;
@@ -105,7 +115,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     while (sqlDataReader.Read())
                     {
                         var error = Assert.Throws<SqlException>(() => DatabaseHelper.CompareResults(sqlDataReader, new string[] { @"string" }, 1));
-                        Console.WriteLine($"Error = {error.Message}");
                         Assert.Contains("Failed to decrypt column", error.Message);
                     }
                 }
