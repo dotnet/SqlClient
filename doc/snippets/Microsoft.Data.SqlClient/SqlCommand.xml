@@ -753,7 +753,7 @@
       </remarks>
       <example>
         <para>
-          The following console application creates updates data within the <b>AdventureWorks</b> sample database, doing its work asynchronously. In order to emulate a long-running process, this example inserts a WAITFOR statement in the command text. Normally, you would not take efforts to make your commands run slower, but doing this in this case makes it easier to demonstrate the asynchronous behavior.
+          The following console application creates updates data within the <b>AdventureWorks</b> sample database, doing its work asynchronously. In order to emulate a long-running process, this example inserts a <c>WAITFOR</c> statement in the command text. Normally, you would not take efforts to make your commands run slower, but doing this in this case makes it easier to demonstrate the asynchronous behavior.
         </para>
         <!-- SqlCommand_BeginExecuteNonQuery -->
         <code language="c#">

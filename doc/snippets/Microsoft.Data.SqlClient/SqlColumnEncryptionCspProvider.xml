@@ -24,7 +24,7 @@
         The encrypted column encryption key.
       </param>
       <summary>
-        Decrypts the given encrypted value using an asymmetric key specified by the key path and algorithm. The key path will be in the format of <c>[ProviderName]/KeyIdentifier</c> and should be an asymmetric key stored in the specified CSP provider. The valid algorithm used to encrypt/decrypt the CEK is 'RSA_OAEP'.
+        Decrypts the given encrypted value using an asymmetric key specified by the key path and algorithm. The key path will be in the format of <c>[ProviderName]/KeyIdentifier</c> and should be an asymmetric key stored in the specified CSP provider. The valid algorithm used to encrypt/decrypt the CEK is <c>RSA_OAEP</c>'.
       </summary>
       <returns>
         The decrypted column encryption key.
@@ -41,7 +41,7 @@
         The plaintext column encryption key.
       </param>
       <summary>
-        Encrypts the given plain text column encryption key using an asymmetric key specified by the key path and the specified algorithm. The key path will be in the format of [ProviderName]/KeyIdentifier and should be an asymmetric key stored in the specified CSP provider. The valid algorithm used to encrypt/decrypt the CEK is 'RSA_OAEP'.
+        Encrypts the given plain text column encryption key using an asymmetric key specified by the key path and the specified algorithm. The key path will be in the format of <c>[ProviderName]/KeyIdentifier</c> and should be an asymmetric key stored in the specified CSP provider. The valid algorithm used to encrypt/decrypt the CEK is <c>RSA_OAEP</c>.
       </summary>
       <returns>
         The encrypted column encryption key.
@@ -49,7 +49,7 @@
     </EncryptColumnEncryptionKey>
     <ProviderName>
       <summary>
-        A constant string for the provider name 'MSSQL_CSP_PROVIDER'.
+        A constant string for the provider name <c>MSSQL_CSP_PROVIDER</c>.
       </summary>
     </ProviderName>
     <SignColumnMasterKeyMetadata>
@@ -66,7 +66,7 @@
         The signature of the column master key metadata.
       </returns>
       <remarks>
-        The <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCspProvider.SignColumnMasterKeyMetadata" /> method must be implemented by the corresponding key store providers. <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCspProvider.SignColumnMasterKeyMetadata" /> should use an asymmetric key identified by a key path and sign the masterkey metadata consisting of <c>masterKeyPath</c>, <c>allowEnclaveComputations</c>, and <c>providerName</c>.
+        The <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCspProvider.SignColumnMasterKeyMetadata" /> method must be implemented by the corresponding key store providers. <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCspProvider.SignColumnMasterKeyMetadata" /> should use an asymmetric key identified by a key path and sign the master key metadata consisting of <paramref name="masterKeyPath" />, <paramref name="allowEnclaveComputations" />, and <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCspProvider.ProviderName" />.
       </remarks>
     </SignColumnMasterKeyMetadata>
     <VerifyColumnMasterKeyMetadata>
@@ -80,7 +80,7 @@
         Master key metadata signature.
       </param>
       <summary>
-        This function must be implemented by the corresponding Key Store providers. This function should use an asymmetric key identified by a key path and sign the masterkey metadata consisting of (masterKeyPath, allowEnclaveComputations, providerName).
+        This function must be implemented by the corresponding Key Store providers. This function should use an asymmetric key identified by a key path and sign the masterkey metadata consisting of (<paramref name="masterKeyPath" />, <paramref name="allowEnclaveComputations" />, <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCspProvider.ProviderName" />).
       </summary>
       <returns>
         A Boolean that indicates if the master key metadata can be verified based on the provided signature.
