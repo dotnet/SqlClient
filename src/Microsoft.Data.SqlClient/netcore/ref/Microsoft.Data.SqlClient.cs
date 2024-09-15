@@ -1467,6 +1467,7 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/SqlInfoMessageEventArgs/*'/>
     public sealed partial class SqlInfoMessageEventArgs : System.EventArgs
     {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/ctor/*'/>
         internal SqlInfoMessageEventArgs() { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Errors/*'/>
         public Microsoft.Data.SqlClient.SqlErrorCollection Errors { get { throw null; } }
@@ -1587,6 +1588,7 @@ namespace Microsoft.Data.SqlClient
         public SqlParameter(string parameterName, System.Data.SqlDbType dbType, int size, string sourceColumn) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameValue/*'/>
         public SqlParameter(string parameterName, object value) { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/System.ICloneable.Clone/*'/>
         object System.ICloneable.Clone() { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/CompareInfo/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
@@ -1661,6 +1663,7 @@ namespace Microsoft.Data.SqlClient
     [System.ComponentModel.ListBindableAttribute(false)]
     public sealed partial class SqlParameterCollection : System.Data.Common.DbParameterCollection
     {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ctor/*'/>
         internal SqlParameterCollection() { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/Count/*'/>
         public override int Count { get { throw null; } }

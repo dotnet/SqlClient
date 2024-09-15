@@ -1,56 +1,93 @@
-﻿
-<docs>
+﻿<docs>
   <members name="SqlParameterCollection">
     <SqlParameterCollection>
       <summary>
-        Represents a collection of parameters associated with a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> and their respective mappings to columns in a <see cref="T:System.Data.DataSet" /> . This class cannot be inherited.
+        Represents a collection of parameters associated with a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> and their respective mappings to columns in a <see cref="T:System.Data.DataSet" />. This class cannot be inherited.
       </summary>
       <remarks>
         <para>
-          ## Remarks   If the command contains an ad hoc SQL statement, as opposed to a stored-procedure name, the number of the parameters in the collection must be equal to the number of parameter placeholders within the command text, or SQL Server raises an error. With a stored procedure, all the parameters declared in the stored procedure without a default value must be provided. Parameters declared with a default value are optional. This lets you specify a value other than the default.
+          If the command contains an ad hoc SQL statement, as opposed to a stored-procedure name, the number of the parameters in the collection must be equal to the number of parameter placeholders within the command text, or SQL Server raises an error. With a stored procedure, all the parameters declared in the stored procedure without a default value must be provided. Parameters declared with a default value are optional. This lets you specify a value other than the default.
         </para>
         <para>
-          For more information with additional sample code demonstrating how to use parameters, see <see href="/sql/connect/ado-net/commands-parameters">
-            Commands and Parameters
-          </see> .
-        </para>
-        <para />
-        <para>
-          ## Examples   The following example creates multiple instances of <see cref="Microsoft.Data.SqlClient.SqlParameter" /> through the <see cref="Microsoft.Data.SqlClient.SqlParameterCollection" /> collection. The parameters are used to select data within the data source and populate the <see cref="System.Data.DataSet" /> . This code assumes that a <see cref="System.Data.DataSet" /> and a <see cref="Microsoft.Data.SqlClient.SqlDataAdapter" /> have already been created with the appropriate schema, commands, and connection.
-        </para>
-        <para> <see href="~/../sqlclient/doc/samples/SqlParameterCollection_Add6.cs#1">
-            !code-csharp[SqlParameterCollection_Add6 Example#1
-          </see> ]
+          For more information with additional sample code demonstrating how to use parameters, see <see href="/sql/connect/ado-net/commands-parameters">Commands and Parameters</see>.
         </para>
       </remarks>
+      <example>
+        <para>
+          The following example creates multiple instances of <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> through the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> collection. The parameters are used to select data within the data source and populate the <see cref="T:System.Data.DataSet" />. This code assumes that a <see cref="T:System.Data.DataSet" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> have already been created with the appropriate schema, commands, and connection.
+        </para>
+        <!-- SqlParameterCollection_Add6 -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using System.Data.Common;
+          using System.Windows.Forms;
+          using System.Xml;
+          using Microsoft.Data.SqlClient;
+          
+          public class Form1 : Form
+          {
+              protected DataSet categoriesDataSet;
+              protected DataGrid dataGrid1;
+              protected SqlDataAdapter categoriesAdapter;
+          
+          
+              public void AddSqlParameters()
+              {
+                  // ...
+                  // create categoriesDataSet and categoriesAdapter
+                  // ...
+          
+                  categoriesAdapter.SelectCommand.Parameters.Add(
+                      "@CategoryName",
+                      SqlDbType.VarChar,
+                      80
+                  ).Value = "toasters";
+                  categoriesAdapter.SelectCommand.Parameters.Add(
+                    "@SerialNum",
+                    SqlDbType.Int
+                  ).Value = 239;
+                  categoriesAdapter.Fill(categoriesDataSet);
+          
+              }
+          }
+        </code>
+      </example>
     </SqlParameterCollection>
-    <Add>
-      <summary>
-        Adds a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
-      </summary>
-    </Add>
+    <ctor>
+      <summary>Constructs and initializes a new instance of <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.</summary>
+    </ctor>
     <AddValue1>
       <param name="value">
         The <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to add to the collection.
       </param>
       <summary>
-        Adds the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Adds the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
       <returns>
         A new <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.
       </returns>
-      <remarks>
-        <para>
-          ## Examples <see href="~/../sqlclient/doc/samples/SqlParameterCollection_Add.cs#1">
-            !code-csharp[SqlParameterCollection_Add Example#1
-          </see> ]
-        </para>
-      </remarks>
+      <example>
+        <!-- SqlParameterCollection_Add -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          public class Sample
+          {
+              public void AddSqlParameter(SqlCommand command)
+              {
+                  command.Parameters.Add(new SqlParameter("Description", "Beverages"));
+              }
+          }
+        </code>
+      </example>
       <exception cref="T:System.ArgumentException">
-        The <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> specified in the <paramref name="value" /> parameter is already added to this or another <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        The <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> specified in the <paramref name="value" /> parameter is already added to this or another <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </exception>
       <exception cref="T:System.InvalidCastException">
-        The parameter passed was not a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> .
+        The parameter passed was not a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" />.
       </exception>
       <exception cref="T:System.ArgumentNullException">
         The <paramref name="value" /> parameter is null.
@@ -58,17 +95,14 @@
     </AddValue1>
     <AddValue2>
       <param name="value">
-        An <see cref="T:System.Object" /> .
+        An <see cref="T:System.Object" />.
       </param>
       <summary>
-        Adds the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Adds the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
       <returns>
         The index of the new <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.
       </returns>
-      <remarks>
-        To be added.
-      </remarks>
     </AddValue2>
     <AddParameterNameSqlDbType>
       <param name="parameterName">
@@ -83,36 +117,74 @@
       <returns>
         A new <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.
       </returns>
-      <remarks>
-        <para>
-          ## Examples <see href="~/../sqlclient/doc/samples/SqlParameterCollection_Add3.cs#1">
-            !code-csharp[SqlParameterCollection_Add3 Example#1
-          </see> ]
-        </para>
-      </remarks>
+      <example>
+        <!-- SqlParameterCollection_Add3 -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          public class Sample
+          {
+              public void AddSqlParameter(SqlCommand command)
+              {
+                  SqlParameter param = command.Parameters.Add(
+                      "@Description",
+                      SqlDbType.NVarChar);
+                  param.Size = 16;
+                  param.Value = "Beverages";
+              }
+          }
+        </code>
+      </example>
     </AddParameterNameSqlDbType>
     <AddParameterNameValue>
       <param name="parameterName">
         The name of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to add to the collection.
       </param>
       <param name="value">
-        A <see cref="T:System.Object" /> .
+        A <see cref="T:System.Object" />.
       </param>
       <summary>
-        Adds the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Adds the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
       <returns>
-        A new <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.    Use caution when you are using this overload of the <see langword="SqlParameterCollection.Add" /> method to specify integer parameter values. Because this overload takes a <paramref name="value" /> of type <see cref="T:System.Object" /> , you must convert the integral value to an <see cref="T:System.Object" /> type when the value is zero, as the following C# example demonstrates.    ```   parameters.Add("@pname", Convert.ToInt32(0));   ```    If you do not perform this conversion, the compiler assumes that you are trying to call the <see langword="SqlParameterCollection.Add" /> ( <see langword="string" /> , <see langword="SqlDbType" /> ) overload.
+        A new <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.
       </returns>
       <remarks>
         <para>
-          ## Examples <see href="~/../sqlclient/doc/samples/SqlParameterCollection_Add1.cs#1">
-            !code-csharp[SqlParameterCollection_Add1 Example#1
-          </see> ]
+          Use caution when you are using this overload to specify integer parameter values. Because this overload takes a <paramref name="value" /> of type <see cref="T:System.Object" />, you must convert the integral value to an <see cref="T:System.Object" /> type when the value is zero, as the following C# example demonstrates.
+        </para>
+        <code language="c#">
+          parameters.Add("@pname", Convert.ToInt32(0));
+        </code>
+        <para>
+          If you do not perform this conversion, the compiler assumes that you are trying to call the <see cref="M:Microsoft.Data.SqlClient.SqlParameterCollection.Add(System.String, System.String)" /> overload.
         </para>
       </remarks>
+      <example>
+        <!-- SqlParameterCollection_Add1 -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          public class Sample
+          {
+              public void AddSqlParameter(SqlCommand command)
+              {
+                  SqlParameter param = new SqlParameter(
+                      "@Description", 
+                      SqlDbType.NVarChar,
+                      16);
+                  param.Value = "Beverages";
+                  command.Parameters.Add(param);
+              }
+          }
+        </code>
+      </example>
       <exception cref="T:System.ArgumentException">
-        The <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> specified in the <paramref name="value" /> parameter is already added to this or another <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        The <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> specified in the <paramref name="value" /> parameter is already added to this or another <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </exception>
       <exception cref="T:System.ArgumentNullException">
         The <paramref name="value" /> parameter is null.
@@ -126,29 +198,38 @@
         The <see cref="T:System.Data.SqlDbType" /> of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to add to the collection.
       </param>
       <param name="size">
-        The size as an <see cref="T:System.Int32" /> .
+        The size as an <see cref="T:System.Int32" />.
       </param>
       <summary>
-        Adds a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> , given the specified parameter name, <see cref="T:System.Data.SqlDbType" /> and size.
+        Adds a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />, given the specified parameter name, <see cref="T:System.Data.SqlDbType" /> and size.
       </summary>
       <returns>
         A new <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.
       </returns>
       <remarks>
-        <para>
-          ## Remarks   This overload is useful when you are adding a parameter of a variable-length data type such as <c>
-            varchar
-          </c> or <c>
-            binary
-          </c> .
-        </para>
-        <para />
-        <para>
-          ## Examples <see href="~/../sqlclient/doc/samples/SqlParameterCollection_Add1.cs#1">
-            !code-csharp[SqlParameterCollection_Add1 Example#1
-          </see> ]
-        </para>
+        This overload is useful when you are adding a parameter of a variable-length data type such as <c>varchar</c> or <c>binary</c>.
       </remarks>
+      <example>
+        <!-- SqlParameterCollection_Add1 -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          public class Sample
+          {
+              public void AddSqlParameter(SqlCommand command)
+              {
+                  SqlParameter param = new SqlParameter(
+                      "@Description",
+                      SqlDbType.NVarChar,
+                      16);
+                  param.Value = "Beverages";
+                  command.Parameters.Add(param);
+              }
+          }
+        </code>
+      </example>
     </AddParameterNameSqlDbTypeSize>
     <AddParameterNameSqlDbTypeSizeSourceColumn>
       <param name="parameterName">
@@ -161,7 +242,7 @@
         The column length.
       </param>
       <param name="sourceColumn">
-        The name of the source column ( <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" /> ) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> .
+        The name of the source column (<see cref="P:Microsoft.Data.SqlClient.SqlParameter.SourceColumn" />) if this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is used in a call to <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />.
       </param>
       <summary>
         Adds a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> with the parameter name, the data type, and the column length.
@@ -169,40 +250,38 @@
       <returns>
         A new <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.
       </returns>
-      <remarks>
-        <para>
-          ## Examples <see href="~/../sqlclient/doc/samples/SqlParameterCollection_Add5.cs#1">
-            !code-csharp[SqlParameterCollection_Add5 Example#1
-          </see> ]
-        </para>
-      </remarks>
+      <example>
+        <!-- SqlParameterCollection_Add5 -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          public class Sample
+          {
+              public void AddSqlParameter(SqlCommand cmd)
+              {
+                  SqlParameter p1 = cmd.Parameters.Add("@Description", SqlDbType.NVarChar, 16, "Description");
+              }
+          }
+        </code>
+      </example>
     </AddParameterNameSqlDbTypeSizeSourceColumn>
-    <AddRange>
-      <summary>
-        Adds elements to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
-      </summary>
-    </AddRange>
     <AddRangeValues1>
       <param name="values">
         The <see cref="T:System.Array" /> values to add.
       </param>
       <summary>
-        Adds an array of values to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Adds an array of values to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
     </AddRangeValues1>
     <AddRangeValues2>
       <param name="values">
         The <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> values to add.
       </param>
       <summary>
-        Adds an array of <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> values to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Adds an array of <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> values to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
     </AddRangeValues2>
     <AddWithValue>
       <param name="parameterName">
@@ -212,95 +291,125 @@
         The value to be added. Use <see cref="F:System.DBNull.Value" /> instead of null, to indicate a null value.
       </param>
       <summary>
-        Adds a value to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Adds a value to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
       <returns>
         A <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.
       </returns>
       <remarks>
         <para>
-          ## Remarks <see cref="Microsoft.Data.SqlClient.SqlParameterCollection.AddWithValue%2A" /> replaces the <c>
-            SqlParameterCollection.Add
-          </c> method that takes a <see cref="System.String" /> and an <see cref="System.Object" /> . The overload of <c>
-            Add
-          </c> that takes a string and an object was deprecated because of possible ambiguity with the <c>
-            SqlParameterCollection.Add
-          </c> overload that takes a <see cref="System.String" /> and a <see cref="System.Data.SqlDbType" /> enumeration value where passing an integer with the string could be interpreted as being either the parameter value or the corresponding <see cref="System.Data.SqlDbType" /> value. Use <see cref="Microsoft.Data.SqlClient.SqlParameterCollection.AddWithValue%2A" /> whenever you want to add a parameter by specifying its name and value.
+          <b>AddWithValue</b> replaces the <b>SqlParameterCollection.Add</b> method that takes a <see cref="T:System.String" /> and an <see cref="T:System.Object" />. The overload of <b>Add</b> that takes a string and an object was deprecated because of possible ambiguity with the <b>SqlParameterCollection.Add</b> overload that takes a <see cref="T:System.String" /> and a <see cref="T:System.Data.SqlDbType" /> enumeration value where passing an integer with the string could be interpreted as being either the parameter value or the corresponding <see cref="T:System.Data.SqlDbType" /> value. Use <b>AddWithValue</b> whenever you want to add a parameter by specifying its name and value.
         </para>
         <para>
-          For <see cref="System.Data.SqlDbType" /> <c>
-            Xml
-          </c> enumeration values, you can use a string, an XML value, an <see cref="System.Xml.XmlReader" /> derived type instance, or a <see cref="System.Data.SqlTypes.SqlXml" /> object.
-        </para>
-        <para />
-        <para>
-          ## Examples   The following example demonstrates how to use the <c>
-            AddWithValue
-          </c> method.
-        </para>
-        <para> <see href="~/../sqlclient/doc/samples/SqlParameterCollection_AddWithValue.cs#1">
-            !code-csharp[SqlParameterCollection_AddWithValue#1
-          </see> ]
+          For <see cref="F:System.Data.SqlDbType.Xml" /> enumeration values, you can use a string, an XML value, an <see cref="T:System.Xml.XmlReader" /> derived type instance, or a <see cref="T:System.Data.SqlTypes.SqlXml" /> object.
         </para>
       </remarks>
+      <example>
+        <para>
+          The following example demonstrates how to use the <b>AddWithValue</b> method.
+        </para>
+        <!-- SqlParameterCollection_AddWithValue -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  string connectionString = GetConnectionString();
+                  string demo = @"&lt;StoreSurvey xmlns=""http://schemas.microsoft.com/sqlserver/2004/07/adventure-works/StoreSurvey""&gt;&lt;AnnualSales&gt;1500000&lt;/AnnualSales&gt;&lt;AnnualRevenue&gt;150000&lt;/AnnualRevenue&gt;&lt;BankName&gt;Primary International&lt;/BankName&gt;&lt;BusinessType&gt;OS&lt;/BusinessType&gt;&lt;YearOpened&gt;1974&lt;/YearOpened&gt;&lt;Specialty&gt;Road&lt;/Specialty&gt;&lt;SquareFeet&gt;38000&lt;/SquareFeet&gt;&lt;Brands&gt;3&lt;/Brands&gt;&lt;Internet&gt;DSL&lt;/Internet&gt;&lt;NumberEmployees&gt;40&lt;/NumberEmployees&gt;&lt;/StoreSurvey&gt;";
+                  Int32 id = 3;
+                  UpdateDemographics(id, demo, connectionString);
+                  Console.ReadLine();
+              }
+              
+              private static void UpdateDemographics(
+                  Int32 customerID,
+                  string demoXml,
+                  string connectionString)
+              {
+                  // Update the demographics for a store, which is stored 
+                  // in an xml column. 
+                  string commandText = "UPDATE Sales.Store SET Demographics = @demographics "
+                      + "WHERE CustomerID = @ID;";
+          
+                  using (SqlConnection connection = new SqlConnection(connectionString))
+                  {
+                      SqlCommand command = new SqlCommand(commandText, connection);
+                      command.Parameters.Add("@ID", SqlDbType.Int);
+                      command.Parameters["@ID"].Value = customerID;
+          
+                      // Use AddWithValue to assign Demographics.
+                      // SQL Server will implicitly convert strings into XML.
+                      command.Parameters.AddWithValue("@demographics", demoXml);
+          
+                      try
+                      {
+                          connection.Open();
+                          Int32 rowsAffected = command.ExecuteNonQuery();
+                          Console.WriteLine("RowsAffected: {0}", rowsAffected);
+                      }
+                      catch (Exception ex)
+                      {
+                          Console.WriteLine(ex.Message);
+                      }
+                  }
+              }
+
+              static private string GetConnectionString()
+              {
+                  // To avoid storing the connection string in your code, 
+                  // you can retrieve it from a configuration file.
+                  return "Data Source=(local);Initial Catalog=AdventureWorks;"
+                       + "Integrated Security=SSPI";
+              }
+          }
+        </code>
+      </example>
     </AddWithValue>
     <Clear>
       <summary>
-        Removes all the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> objects from the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Removes all the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> objects from the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
     </Clear>
-    <Contains>
-      <summary>
-        Determines whether the specified object is in this <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
-      </summary>
-    </Contains>
     <ContainsValue1>
       <param name="value">
         The <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> value.
       </param>
       <summary>
-        Determines whether the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is in this <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Determines whether the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> is in this <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
-      <returns> <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> contains the value; otherwise, <see langword="false" /> .</returns>
-      <remarks>
-        To be added.
-      </remarks>
+      <returns>
+        <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> contains the value; otherwise, <see langword="false" />.
+      </returns>
     </ContainsValue1>
     <ContainsValue2>
       <param name="value">
         The <see cref="T:System.Object" /> value.
       </param>
       <summary>
-        Determines whether the specified <see cref="T:System.Object" /> is in this <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Determines whether the specified <see cref="T:System.Object" /> is in this <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
-      <returns> <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> contains the value; otherwise, <see langword="false" /> .</returns>
-      <remarks>
-        To be added.
-      </remarks>
+      <returns>
+        <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> contains the value; otherwise, <see langword="false" />.
+      </returns>
     </ContainsValue2>
     <ContainsValue3>
       <param name="value">
         The <see cref="T:System.String" /> value.
       </param>
       <summary>
-        Determines whether the specified parameter name is in this <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Determines whether the specified parameter name is in this <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
-      <returns> <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> contains the value; otherwise, <see langword="false" /> .</returns>
-      <remarks>
-        To be added.
-      </remarks>
+      <returns>
+        <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> contains the value; otherwise, <see langword="false" />.
+      </returns>
     </ContainsValue3>
-    <CopyTo>
-      <summary>
-        Copies all the elements of the current <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> to the specified object.
-      </summary>
-    </CopyTo>
     <CopyToArrayIndex1>
       <param name="array">
-        The one-dimensional <see cref="T:System.Array" /> that is the destination of the elements copied from the current <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        The one-dimensional <see cref="T:System.Array" /> that is the destination of the elements copied from the current <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </param>
       <param name="index">
         A 32-bit integer that represents the index in the <see cref="T:System.Array" /> at which copying starts.
@@ -308,13 +417,10 @@
       <summary>
         Copies all the elements of the current <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> to the specified one-dimensional <see cref="T:System.Array" /> starting at the specified destination <see cref="T:System.Array" /> index.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
     </CopyToArrayIndex1>
     <CopyToArrayIndex2>
       <param name="array">
-        The <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> that is the destination of the elements copied from the current <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        The <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> that is the destination of the elements copied from the current <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </param>
       <param name="index">
         A 32-bit integer that represents the index in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> at which copying starts.
@@ -322,31 +428,22 @@
       <summary>
         Copies all the elements of the current <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> to the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> starting at the specified destination index.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
     </CopyToArrayIndex2>
     <Count>
       <summary>
-        Returns an Integer that contains the number of elements in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> . Read-only.
+        Returns an Integer that contains the number of elements in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />. Read-only.
       </summary>
       <value>
         The number of elements in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> as an Integer.
       </value>
-      <remarks>
-        To be added.
-      </remarks>
     </Count>
     <GetEnumerator>
       <summary>
-        Returns an enumerator that iterates through the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Returns an enumerator that iterates through the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
       <returns>
-        An <see cref="T:System.Collections.IEnumerator" /> for the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        An <see cref="T:System.Collections.IEnumerator" /> for the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </returns>
-      <remarks>
-        To be added.
-      </remarks>
     </GetEnumerator>
     <GetParameterIndex>
       <param name="index">
@@ -376,11 +473,6 @@
         To be added.
       </remarks>
     </GetParameterParameterName>
-    <IndexOf>
-      <summary>
-        Gets the location of the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> within the collection.
-      </summary>
-    </IndexOf>
     <IndexOfValue1>
       <param name="value">
         The <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> to find.
@@ -389,11 +481,8 @@
         Gets the location of the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> within the collection.
       </summary>
       <returns>
-        The zero-based location of the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> that is a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> within the collection. Returns -1 when the object does not exist in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        The zero-based location of the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> that is a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> within the collection. Returns -1 when the object does not exist in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </returns>
-      <remarks>
-        To be added.
-      </remarks>
     </IndexOfValue1>
     <IndexOfValue2>
       <param name="value">
@@ -403,11 +492,8 @@
         Gets the location of the specified <see cref="T:System.Object" /> within the collection.
       </summary>
       <returns>
-        The zero-based location of the specified <see cref="T:System.Object" /> that is a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> within the collection. Returns -1 when the object does not exist in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        The zero-based location of the specified <see cref="T:System.Object" /> that is a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> within the collection. Returns -1 when the object does not exist in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </returns>
-      <remarks>
-        To be added.
-      </remarks>
     </IndexOfValue2>
     <IndexOfParameterName>
       <param name="parameterName">
@@ -417,77 +503,55 @@
         Gets the location of the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> with the specified name.
       </summary>
       <returns>
-        The zero-based location of the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> with the specified case-sensitive name. Returns -1 when the object does not exist in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        The zero-based location of the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> with the specified case-sensitive name. Returns -1 when the object does not exist in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </returns>
-      <remarks>
-        To be added.
-      </remarks>
     </IndexOfParameterName>
-    <Insert>
-      <summary>
-        Inserts a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object into the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
-      </summary>
-    </Insert>
     <InsertIndexValue1>
       <param name="index">
         The zero-based index at which value should be inserted.
       </param>
       <param name="value">
-        A <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object to be inserted in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        A <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object to be inserted in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </param>
       <summary>
         Inserts a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object into the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> at the specified index.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
     </InsertIndexValue1>
     <InsertIndexValue2>
       <param name="index">
         The zero-based index at which value should be inserted.
       </param>
       <param name="value">
-        An <see cref="T:System.Object" /> to be inserted in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        An <see cref="T:System.Object" /> to be inserted in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </param>
       <summary>
         Inserts an <see cref="T:System.Object" /> into the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> at the specified index.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
     </InsertIndexValue2>
     <IsFixedSize>
       <summary>
         Gets a value that indicates whether the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> has a fixed size.
       </summary>
-      <value> <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> has a fixed size; otherwise, <see langword="false" /> .</value>
-      <remarks>
-        To be added.
-      </remarks>
+      <value>
+        <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> has a fixed size; otherwise, <see langword="false" />.
+      </value>
     </IsFixedSize>
     <IsReadOnly>
       <summary>
         Gets a value that indicates whether the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> is read-only.
       </summary>
-      <value> <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> is read-only; otherwise, <see langword="false" /> .</value>
-      <remarks>
-        To be added.
-      </remarks>
+      <value>
+        <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> is read-only; otherwise, <see langword="false" />.
+      </value>
     </IsReadOnly>
     <IsSynchronized>
       <summary>
         Gets a value that indicates whether the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> is synchronized.
       </summary>
-      <value> <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> is synchronized; otherwise, <see langword="false" /> .</value>
-      <remarks>
-        To be added.
-      </remarks>
+      <value>
+        <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> is synchronized; otherwise, <see langword="false" />.
+      </value>
     </IsSynchronized>
-    <Item>
-      <summary>
-        Gets the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> with a specified attribute.
-      </summary>
-    </Item>
     <ItemIndex>
       <param name="index">
         The zero-based index of the parameter to retrieve.
@@ -498,19 +562,86 @@
       <value>
         The <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> at the specified index.
       </value>
-      <remarks>
+      <example>
         <para>
-          ## Examples   The following example demonstrates creating <see cref="Microsoft.Data.SqlClient.SqlParameter" /> objects to supply an input parameter to a stored procedure that returns results in an output parameter. The code iterates through the items in the <see cref="Microsoft.Data.SqlClient.SqlParameterCollection" /> and displays some parameter properties in the console window. This example assumes a valid connection string to the
-          <b>
-            AdventureWorks
-          </b>
-          sample database on an instance of SQL Server.
+          The following example demonstrates creating <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> objects to supply an input parameter to a stored procedure that returns results in an output parameter. The code iterates through the items in the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> and displays some parameter properties in the console window. This example assumes a valid connection string to the <b>AdventureWorks</b> sample database on an instance of SQL Server.
         </para>
-        <para> <see href="~/../sqlclient/doc/samples/SqlParameterCollection_Count.cs#1">
-            !code-csharp[SqlParameterCollection_Count Example#1
-          </see> ]
-        </para>
-      </remarks>
+        <!-- SqlParameterCollection_Count -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  // Supply any valid Document ID value.
+                  // The value 7 is supplied for demonstration purposes.
+                  string summaryString = CreateSqlParameters(7);
+                  Console.ReadLine();
+              }
+              
+              static private string CreateSqlParameters(int documentID)
+              {
+                  // Assumes GetConnectionString returns a valid connection string to the
+                  // AdventureWorks sample database on an instance of SQL Server 2005.
+                  using (SqlConnection connection = new SqlConnection(GetConnectionString()))
+                  {
+                      connection.Open();
+                      SqlCommand command = connection.CreateCommand();
+                      try
+                      {
+                          // Setup the command to execute the stored procedure.
+                          command.CommandText = "GetDocumentSummary";
+                          command.CommandType = CommandType.StoredProcedure;
+          
+                          // Create the input parameter for the DocumentID.
+                          SqlParameter paramID = new SqlParameter("@DocumentID", SqlDbType.Int);
+                          paramID.Value = documentID;
+                          command.Parameters.Add(paramID);
+          
+                          // Create the output parameter to retrieve the summary.
+                          SqlParameter paramSummary = new SqlParameter("@DocumentSummary", SqlDbType.NVarChar, -1);
+                          paramSummary.Direction = ParameterDirection.Output;
+                          command.Parameters.Add(paramSummary);
+          
+                          // List the parameters and some of properties.
+                          SqlParameterCollection paramCollection = command.Parameters;
+                          string parameterList = "";
+                          for (int i = 0; i &lt; paramCollection.Count; i++)
+                          {
+                              parameterList += String.Format("  {0}, {1}, {2}\n",
+                                  paramCollection[i], paramCollection[i].DbType,
+                                  paramCollection[i].Direction);
+                          }
+                          Console.WriteLine("Parameter Collection:\n" + parameterList);
+          
+                          // Execute the stored procedure; retrieve
+                          // and display the output parameter value.
+                          command.ExecuteNonQuery();
+                          Console.WriteLine((String)(paramSummary.Value));
+                          return (String)(paramSummary.Value);
+                      }
+                      catch (Exception ex)
+                      {
+                          Console.WriteLine(ex.Message);
+                          return null;
+                      }
+                  }
+              }
+              
+              static private string GetConnectionString()
+              {
+                  // To avoid storing the connection string in your code, 
+                  // you can retrieve it from a configuration file, using the 
+                  // System.Configuration.ConfigurationSettings.AppSettings property
+                  return "Data Source=(local);Initial Catalog=AdventureWorks;" +
+                         "Integrated Security=SSPI";
+              }
+          }
+        </code>
+      </example>
       <exception cref="T:System.IndexOutOfRangeException">
         The specified index does not exist.
       </exception>
@@ -526,23 +657,12 @@
         The <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> with the specified name.
       </value>
       <remarks>
-        <para>
-          ## Remarks   The <c>
-            parameterName
-          </c> is used to look up the index value in the underlying <see cref="Microsoft.Data.SqlClient.SqlParameterCollection" /> . If the <c>
-            parameterName
-          </c> is not valid, an <see cref="System.IndexOutOfRangeException" /> will be thrown.
-        </para>
+        The <paramref name="parameterName" /> is used to look up the index value in the underlying <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />. If the <paramref name="parameterName" /> is not valid, an <see cref="T:System.IndexOutOfRangeException" /> will be thrown.
       </remarks>
       <exception cref="T:System.IndexOutOfRangeException">
         The specified <paramref name="parameterName" /> is not valid.
       </exception>
     </ItemParameterName>
-    <Remove>
-      <summary>
-        Removes the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> from the collection.
-      </summary>
-    </Remove>
     <RemoveValue1>
       <param name="value">
         A <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object to remove from the collection.
@@ -550,17 +670,41 @@
       <summary>
         Removes the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> from the collection.
       </summary>
-      <remarks>
+      <example>
         <para>
-          ## Examples   The following example searches for a <see cref="Microsoft.Data.SqlClient.SqlParameter" /> object in a <see cref="Microsoft.Data.SqlClient.SqlParameterCollection" /> collection. If the parameter exists, the example removes it. This example assumes that a <see cref="Microsoft.Data.SqlClient.SqlParameterCollection" /> collection has already been created by a <see cref="Microsoft.Data.SqlClient.SqlCommand" /> .
+          The following example searches for a <see cref="Microsoft.Data.SqlClient.SqlParameter" /> object in a <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> collection. If the parameter exists, the example removes it. This example assumes that a <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> collection has already been created by a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />.
         </para>
-        <para> <see href="~/../sqlclient/doc/samples/SqlParameterCollection_Remove.cs#1">
-            !code-csharp[SqlParameterCollection_Remove Example#1
-          </see> ]
-        </para>
-      </remarks>
+        <!-- SqlParameterCollection_Remove -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using System.Data.Common;
+          using System.Windows.Forms;
+          using System.Xml;
+          using Microsoft.Data.SqlClient;
+          
+          public class Form1 : Form
+          {
+              protected DataSet DataSet1;
+              protected DataGrid dataGrid1;
+              protected SqlCommand command;
+              protected SqlParameter param;
+          
+              public void SearchSqlParams()
+              {
+                  // ...
+                  // create SqlCommand command and SqlParameter param
+                  // ...
+                  if (command.Parameters.Contains(param))
+                  {
+                      command.Parameters.Remove(param);
+                  }
+              }
+          }
+        </code>
+      </example>
       <exception cref="T:System.InvalidCastException">
-        The parameter is not a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> .
+        The parameter is not a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" />.
       </exception>
       <exception cref="T:System.SystemException">
         The parameter does not exist in the collection.
@@ -573,15 +717,7 @@
       <summary>
         Removes the specified <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> from the collection.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
     </RemoveValue2>
-    <RemoveAt>
-      <summary>
-        Removes the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object from the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> at the specified index.
-      </summary>
-    </RemoveAt>
     <RemoveAtIndex>
       <param name="index">
         The zero-based index of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object to remove.
@@ -589,9 +725,6 @@
       <summary>
         Removes the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> from the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> at the specified index.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
     </RemoveAtIndex>
     <RemoveAtParameterName>
       <param name="parameterName">
@@ -600,9 +733,6 @@
       <summary>
         Removes the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> from the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> at the specified parameter name.
       </summary>
-      <remarks>
-        To be added.
-      </remarks>
     </RemoveAtParameterName>
     <SetParameterIndexValue>
       <param name="index">
@@ -634,14 +764,11 @@
     </SetParameterParameterNameValue>
     <SyncRoot>
       <summary>
-        Gets an object that can be used to synchronize access to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        Gets an object that can be used to synchronize access to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </summary>
       <value>
-        An object that can be used to synchronize access to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> .
+        An object that can be used to synchronize access to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
       </value>
-      <remarks>
-        To be added.
-      </remarks>
     </SyncRoot>
   </members>
 </docs>

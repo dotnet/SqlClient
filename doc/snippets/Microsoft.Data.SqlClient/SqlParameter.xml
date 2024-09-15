@@ -71,7 +71,7 @@
       </summary>
       <example>
         <para>
-          The following example creates a <see cref="Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
         </para>
         <!-- SqlParameter_SqlParameter -->
         <code language="c#">
@@ -107,7 +107,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> class that uses the parameter name and the data type.
       </summary>
       <remarks>
-        The data type and, if appropriate, <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Size" /> and <see cref="Microsoft.Data.SqlClient.SqlParameter.Precision%2A" /> are inferred from the value of the <paramref name="dbType" /> parameter.
+        The data type and, if appropriate, <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Size" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision" /> are inferred from the value of the <paramref name="dbType" /> parameter.
       </remarks>
       <example>
         <para>
@@ -150,7 +150,7 @@
       </summary>
       <remarks>
         <para>
-          When you specify an <see cref="T:System.Object" /> in the <paramref name="value" /> parameter, the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType%2A" /> is inferred from the Microsoft .NET Framework type of the <see cref="T:System.Object" />.
+          When you specify an <see cref="T:System.Object" /> in the <paramref name="value" /> parameter, the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> is inferred from the Microsoft .NET Framework type of the <see cref="T:System.Object" />.
         </para>
         <para>
           Use caution when you use this overload of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> constructor to specify integer parameter values. Because this overload takes a <paramref name="value" /> of type <see cref="T:System.Object" />, you must convert the integral value to an <see cref="T:System.Object" /> type when the value is zero, as the following C# example demonstrates.
@@ -258,7 +258,7 @@
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
         </para>
         <!-- SqlParameter_SqlParameter5 -->
         <code language="c#">
@@ -322,7 +322,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> class that uses the parameter name, the type of the parameter, the size of the parameter, a <see cref="T:System.Data.ParameterDirection" />, the precision of the parameter, the scale of the parameter, the source column, a <see cref="T:System.Data.DataRowVersion" /> to use, and the value of the parameter.
       </summary>
       <remarks>
-        The <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Size" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision%2A" /> are inferred from the value of the <paramref name="dbType" /> parameter if they are not explicitly set in the <paramref name="size" /> and <paramref name="precision" /> parameters.
+        The <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Size" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision" /> are inferred from the value of the <paramref name="dbType" /> parameter if they are not explicitly set in the <paramref name="size" /> and <paramref name="precision" /> parameters.
       </remarks>
       <example>
         <para>
@@ -404,7 +404,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> class that uses the parameter name, the type of the parameter, the length of the parameter the direction, the precision, the scale, the name of the source column, one of the <see cref="T:System.Data.DataRowVersion" /> values, a Boolean for source column mapping, the value of the <see langword="SqlParameter" />, the name of the database where the schema collection for this XML instance is located, the owning relational schema where the schema collection for this XML instance is located, and the name of the schema collection for this parameter.
       </summary>
       <remarks>
-        The <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Size%2A" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision%2A" /> are inferred from the value of the <paramref name="dbType" /> parameter if they are not explicitly set in the <paramref name="size" /> and <paramref name="precision" /> parameters.
+        The <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Size" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision" /> are inferred from the value of the <paramref name="dbType" /> parameter if they are not explicitly set in the <paramref name="size" /> and <paramref name="precision" /> parameters.
       </remarks>
     </ctorParameterNameDbTypeSizeDirectionPrecisionScaleSourceColumnSourceVersionSourceColumnNullMappingValue>
     <CompareInfo>
@@ -414,20 +414,17 @@
       <value>
         A <see cref="T:System.Globalization.CompareInfo" /> object that defines string comparison for this parameter.
       </value>
-      <remarks>
-        To be added.
-      </remarks>
     </CompareInfo>
     <DbType>
       <summary>
         Gets or sets the <see cref="T:System.Data.SqlDbType" /> of the parameter.
       </summary>
       <value>
-        One of the <see cref="T:System.Data.SqlDbType" /> values. The default is <see langword="NVarChar" />.
+        One of the <see cref="T:System.Data.SqlDbType" /> values. The default is <c>NVARCHAR</c>.
       </value>
       <remarks>
         <para>
-          The <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType%2A" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType%2A" /> are linked. Therefore, setting the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType%2A" /> changes the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType%2A" /> to a supporting <see cref="T:System.Data.SqlDbType" />.
+          The <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> are linked. Therefore, setting the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> changes the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> to a supporting <see cref="T:System.Data.SqlDbType" />.
         </para>
         <para>
           For a list of the supported data types, see the appropriate <see cref="T:System.Data.SqlDbType" /> member. For more information, see <see href="/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see>.
@@ -479,11 +476,11 @@
         One of the <see cref="T:System.Data.ParameterDirection" /> values. The default is <see langword="Input" />.
       </value>
       <remarks>
-        If the <see cref="T:System.Data.ParameterDirection" /> is output, and execution of the associated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> does not return a value, the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> contains a null value. <see cref="F:System.Data.ParameterDirection.Output" />, <see cref="F:System.Data.ParameterDirection.InputOut" />, and <see cref="F:System.Data.ParameterDirection.ReturnValue" /> parameters returned by calling <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A" /> cannot be accessed until you close the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
+        If the <see cref="T:System.Data.ParameterDirection" /> is output, and execution of the associated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> does not return a value, the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> contains a null value. <see cref="F:System.Data.ParameterDirection.Output" />, <see cref="F:System.Data.ParameterDirection.InputOut" />, and <see cref="F:System.Data.ParameterDirection.ReturnValue" /> parameters returned by calling <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader" /> cannot be accessed until you close the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
         </para>
         <list type="bullet">
           <item><see href="/sql/connect/ado-net/commands-parameters">Commands and Parameters</see></item>
@@ -511,11 +508,11 @@
         <see langword="true" /> if null values are accepted; otherwise, <see langword="false" />. The default is <see langword="false" />.
       </value>
       <remarks>
-        Null values are handled using the <see cref="System.DBNull" /> class.
+        Null values are handled using the <see cref="T:System.DBNull" /> class.
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
         </para>
         <!-- SqlParameter #2 -->
         <code language="c#">
@@ -537,7 +534,7 @@
       </value>
       <remarks>
         <para>
-          The locale identifies conventions and language for a particular geographical region. The codepage used to encode a specific string (the character set) is based on the locale used by that string or the environment that produced it. This property sets (for input parameters) or gets (for output parameters) the locale to be attached to a string when exchanging data with the server. This property is typically used together with the <see cref="Microsoft.Data.SqlClient.SqlParameter.CompareInfo%2A" /> property.
+          The locale identifies conventions and language for a particular geographical region. The codepage used to encode a specific string (the character set) is based on the locale used by that string or the environment that produced it. This property sets (for input parameters) or gets (for output parameters) the locale to be attached to a string when exchanging data with the server. This property is typically used together with the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.CompareInfo" /> property.
         </para>
         <code language="c#">
           static void CreateSqlParameterLocaleId()
@@ -582,11 +579,11 @@
         The name of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" />. The default is an empty string.
       </value>
       <remarks>
-        The <see cref="P:Microsoft.Data.SqlClient.SqlParameter.ParameterName%2A" /> is specified in the form <c>@paramname</c>. You must set <see cref="P:Microsoft.Data.SqlClient.SqlParameter.ParameterName%2A" /> before executing a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> that relies on parameters.
+        The <see cref="P:Microsoft.Data.SqlClient.SqlParameter.ParameterName" /> is specified in the form <c>@paramname</c>. You must set <see cref="P:Microsoft.Data.SqlClient.SqlParameter.ParameterName" /> before executing a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> that relies on parameters.
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
         </para>
         <!-- SqlParameter_ParameterName -->
         <code language="c#">
@@ -622,18 +619,18 @@
           The <b>Precision</b> property is used by parameters that have a <see cref="T:System.Data.SqlDbType" /> of <c>Decimal</c>.
         </para>
         <para>
-          You do not need to specify values for the <b>Precision</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale%2A" /> properties for input parameters, as they can be inferred from the parameter value. <b>Precision</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale" /> are required for output parameters and for scenarios where you need to specify complete metadata for a parameter without indicating a value, such as specifying a null value with a specific precision and scale.
+          You do not need to specify values for the <b>Precision</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale" /> properties for input parameters, as they can be inferred from the parameter value. <b>Precision</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale" /> are required for output parameters and for scenarios where you need to specify complete metadata for a parameter without indicating a value, such as specifying a null value with a specific precision and scale.
         </para>
         <note type="note">
-          Use of this property to coerce data passed to the database is not supported. To round, truncate, or otherwise coerce data before passing it to the database, use the <see cref="System.Math" /> class that is part of the <c>System</c> namespace prior to assigning a value to the parameter's <see paramref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> property.
+          Use of this property to coerce data passed to the database is not supported. To round, truncate, or otherwise coerce data before passing it to the database, use the <see cref="T:System.Math" /> class that is part of the <c>System</c> namespace prior to assigning a value to the parameter's <see paramref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> property.
         </note>
         <note type="note">
-          Microsoft .NET Framework data providers that are included with the .NET Framework version 1.0 do not verify the <b>Precision</b> or <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale%2A" /> of <see cref="T:System.Decimal" /> parameter values. This can cause truncated data being inserted at the data source. If you are using .NET Framework version 1.0, validate the <b>Precision</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale%2A" /> of <see cref="T:System.Decimal" /> values before setting the parameter value. When you use .NET Framework version 1.1 or a later version, an exception is thrown if a <see cref="T:System.Decimal" /> parameter value is set with an invalid <b>Precision</b>. <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale%2A" /> values that exceed the <see cref="T:System.Decimal" /> parameter scale are still truncated.
+          Microsoft .NET Framework data providers that are included with the .NET Framework version 1.0 do not verify the <b>Precision</b> or <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale" /> of <see cref="T:System.Decimal" /> parameter values. This can cause truncated data being inserted at the data source. If you are using .NET Framework version 1.0, validate the <b>Precision</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale" /> of <see cref="T:System.Decimal" /> values before setting the parameter value. When you use .NET Framework version 1.1 or a later version, an exception is thrown if a <see cref="T:System.Decimal" /> parameter value is set with an invalid <b>Precision</b>. <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale" /> values that exceed the <see cref="T:System.Decimal" /> parameter scale are still truncated.
         </note>
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
         </para>
         <!-- SqlParameter_Precision -->
         <code language="c#">
@@ -661,7 +658,7 @@
         Resets the type associated with this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" />.
       </summary>
       <remarks>
-        When executing a command that includes parameter values, code can either set the type of parameter explicitly, or the parameter can infer its type from its value. Calling this method resets the parameter so that it can again infer its type from the value passed in the parameter. Calling this method affects both the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType%2A" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType%2A" /> properties of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" />.
+        When executing a command that includes parameter values, code can either set the type of parameter explicitly, or the parameter can infer its type from its value. Calling this method resets the parameter so that it can again infer its type from the value passed in the parameter. Calling this method affects both the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> properties of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" />.
       </remarks>
     </ResetDbType>
     <ResetSqlDbType>
@@ -669,7 +666,7 @@
         Resets the type associated with this <see cref="T:Microsoft.Data.SqlClient.SqlParameter" />.
       </summary>
       <remarks>
-        When executing a command that includes parameter values, code can either set the type of parameter explicitly, or the parameter can infer its type from its value. Calling this method resets the parameter so that it can again infer its type from the value passed in the parameter. Calling this method affects both the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType%2A" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType%2A" /> properties of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" />.
+        When executing a command that includes parameter values, code can either set the type of parameter explicitly, or the parameter can infer its type from its value. Calling this method resets the parameter so that it can again infer its type from the value passed in the parameter. Calling this method affects both the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> properties of the <see cref="T:Microsoft.Data.SqlClient.SqlParameter" />.
       </remarks>
     </ResetSqlDbType>
     <Scale>
@@ -687,18 +684,18 @@
           Data may be truncated if the <b>Scale</b> property is not explicitly specified and the data on the server does not fit in scale 0 (the default).
         </note>
         <para>
-          You do not need to specify values for the <see cref="Microsoft.Data.SqlClient.SqlParameter.Precision%2A" /> and <b>Scale</b> properties for input parameters, as they can be inferred from the parameter value. <see cref="Microsoft.Data.SqlClient.SqlParameter.Precision%2A" /> and <c>Scale</c> are required for output parameters and for scenarios where you need to specify complete metadata for a parameter without indicating a value, such as specifying a null value with a specific precision and scale.
+          You do not need to specify values for the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision" /> and <b>Scale</b> properties for input parameters, as they can be inferred from the parameter value. <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision" /> and <c>Scale</c> are required for output parameters and for scenarios where you need to specify complete metadata for a parameter without indicating a value, such as specifying a null value with a specific precision and scale.
         </para>
         <note type="note">
           Use of this property to coerce data passed to the database is not supported. To round, truncate, or otherwise coerce data before passing it to the database, use the <see cref="T:System.Math" /> class that is part of the <c>System</c> namespace prior to assigning a value to the parameter's <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> property.
         </note>
         <note type="note">
-          .NET Framework data providers that are included with the .NET Framework version 1.0 do not verify the <see cref="T:Microsoft.Data.SqlClient.SqlParameter.Precision%2A" /> or <b>Scale</b> of <see cref="T:System.Decimal" /> parameter values. This can cause truncated data to be inserted at the data source. If you are using .NET Framework version 1.0, validate the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision%2A" /> and <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> of <see cref="T:System.Decimal" /> values before setting the parameter value. <b>Scale</b> values that exceed the <see cref="T:System.Decimal" /> parameter scale are still truncated.
+          .NET Framework data providers that are included with the .NET Framework version 1.0 do not verify the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision" /> or <b>Scale</b> of <see cref="T:System.Decimal" /> parameter values. This can cause truncated data to be inserted at the data source. If you are using .NET Framework version 1.0, validate the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision" /> and <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> of <see cref="T:System.Decimal" /> values before setting the parameter value. <b>Scale</b> values that exceed the <see cref="T:System.Decimal" /> parameter scale are still truncated.
         </note>
       </remarks>
       <example>
         <para>
-          The following example creates a <see cref="Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
         </para>
         <!-- SqlParameter #4 -->
         <code language="c#">
@@ -727,7 +724,7 @@
           For output parameters with a variable length type (nvarchar, for example), the size of the parameter defines the size of the buffer holding the output parameter. The output parameter can be truncated to a size specified with <b>Size</b>. For character types, the size specified with <b>Size</b> is in characters.
         </para>
         <para>
-          The <b>Size</b> property is used for binary and string types. For parameters of type <see cref="F:Microsoft.Data.SqlClient.SqlType.String" />, <b>Size</b> means length in Unicode characters. For parameters of type <see cref="F:Microsoft.Data.SqlClient.SqlType.Xml" />, <c>Size</c> is ignored.
+          The <b>Size</b> property is used for binary and string types. For string type parameters, <b>Size</b> means length in Unicode characters. For parameters of type <see cref="F:System.Data.SqlDbType.Xml" />, <c>Size</c> is ignored.
         </para>
         <para>
           For non-string data types and ANSI string data, the <b>Size</b> property refers to the number of bytes. For Unicode string data, <b>Size</b> refers to the number of characters. The count for strings does not include the terminating character.
@@ -774,7 +771,7 @@
       </value>
       <remarks>
         <para>
-          When <b>SourceColumn</b> is set to anything other than an empty string, the value of the parameter is retrieved from the column with the <b>SourceColumn</b> name. If <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Direction%2A" /> is set to <see cref="F:System.Data.ParameterDirection.Input" />, the value is taken from the <see cref="T:System.Data.DataSet" />. If <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Direction%2A" /> is set to <see cref="F:System.Data.ParameterDirection.Output" />, the value is taken from the data source. A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Direction%2A" /> of <see cref="F:System.Data.ParameterDirection.InputOutput" /> is a combination of both.
+          When <b>SourceColumn</b> is set to anything other than an empty string, the value of the parameter is retrieved from the column with the <b>SourceColumn</b> name. If <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Direction" /> is set to <see cref="F:System.Data.ParameterDirection.Input" />, the value is taken from the <see cref="T:System.Data.DataSet" />. If <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Direction" /> is set to <see cref="F:System.Data.ParameterDirection.Output" />, the value is taken from the data source. A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Direction" /> of <see cref="F:System.Data.ParameterDirection.InputOutput" /> is a combination of both.
         </para>
         <para>
           For more information about how to use the <b>SourceColumn</b> property, see <see href="/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see> and <see href="/sql/connect/ado-net/update-data-sources-with-dataadapters">Updating Data Sources with DataAdapters</see>.
@@ -828,7 +825,7 @@
         One of the <see cref="T:System.Data.DataRowVersion" /> values. The default is <see cref="F:System.Data.DataRowVersion.Current" />.
       </value>
       <remarks>
-        This property is used by the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" /> during an update to determine whether the original or current value is used for a parameter value. This lets primary keys be updated. This property is set to the version of the <see cref="T:System.Data.DataRow" /> used by the <see cref="P:System.Data.DataRow.Item" /> property, or one of the <see cref="M:System.Data.DataRow.GetChildRows" /> methods of the <see cref="T:System.Data.DataRow" /> object.
+        This property is used by the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" /> during an update to determine whether the original or current value is used for a parameter value. This lets primary keys be updated. This property is set to the version of the <see cref="T:System.Data.DataRow" /> used by the <see cref="P:System.Data.DataRow.Item(System.String)" /> property, or one of the <see cref="M:System.Data.DataRow.GetChildRows(System.String)" /> methods of the <see cref="T:System.Data.DataRow" /> object.
       </remarks>
       <example>
         <para>
@@ -853,7 +850,7 @@
       </value>
       <remarks>
         <para>
-          The <b>SqlDbType</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType%2A" /> are linked. Therefore, setting the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType%2A" /> changes the <b>SqlDbType</b> to a supporting <see cref="T:System.Data.SqlDbType" />.
+          The <b>SqlDbType</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> are linked. Therefore, setting the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> changes the <b>SqlDbType</b> to a supporting <see cref="T:System.Data.SqlDbType" />.
         </para>
         <para>
           For a list of the supported data types, see the appropriate <see cref="T:System.Data.SqlDbType" /> member. For more information, see <see href="/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see>.
@@ -875,19 +872,19 @@
           For input parameters, the value is bound to the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> that is sent to the server. For output and return value parameters, the value is set on completion of the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> and after the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed.
         </para>
         <para>
-          This property can be set to null or <see cref="F:System.DBNull.Value?displayProperty=nameWithType" />. Use <see cref="F:System.DBNull.Value?displayProperty=nameWithType" /> to send a NULL value as the value of the parameter. Use null or do not set <b>SqlValue</b> to use the default value for the parameter.
+          This property can be set to null or <see cref="F:System.DBNull.Value" />. Use <see cref="F:System.DBNull.Value" /> to send a NULL value as the value of the parameter. Use null or do not set <b>SqlValue</b> to use the default value for the parameter.
         </para>
         <para>
           If the application specifies the database type, the bound value is converted to that type when the provider sends the data to the server. The provider tries to convert any type of value if it supports the <see cref="T:System.IConvertible" /> interface. Conversion errors may result if the specified type is not compatible with the value.
         </para>
         <para>
-          Both the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType%2A" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType%2A" /> properties can be inferred by setting the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value%2A" />.
+          Both the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> properties can be inferred by setting the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />.
         </para>
         <para>
-          The <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value%2A" /> property is overwritten by <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />.
+          The <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> property is overwritten by <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />.
         </para>
         <para>
-          Use the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value%2A" /> property to return parameter values as common language runtime (CLR) types.
+          Use the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> property to return parameter values as common language runtime (CLR) types.
         </para>
         <para>
           For information about streaming, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
@@ -944,7 +941,7 @@
           For input parameters, the value is bound to the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> that is sent to the server. For output and return value parameters, the value is set on completion of the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> and after the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed.
         </para>
         <para>
-          This property can be set to <see langword="null" /> or <see cref="F:System.DBNull.Value?displayProperty=nameWithType" />. Use <see cref="F:System.DBNull.Value?displayProperty=nameWithType" /> to send a NULL value as the value of the parameter. Use <see langword="null" /> or do not set <b>Value</b> to use the default value for the parameter.
+          This property can be set to <see langword="null" /> or <see cref="F:System.DBNull.Value" />. Use <see cref="F:System.DBNull.Value" /> to send a NULL value as the value of the parameter. Use <see langword="null" /> or do not set <b>Value</b> to use the default value for the parameter.
         </para>
         <para>
           An exception is thrown if non-Unicode XML data is passed as a string.
@@ -953,7 +950,7 @@
           If the application specifies the database type, the bound value is converted to that type when the provider sends the data to the server. The provider tries to convert any type of value if it supports the <see cref="T:System.IConvertible" /> interface. Conversion errors may result if the specified type is not compatible with the value.
         </para>
         <para>
-          Both the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType%2A" /> and <see cref="PLMicrosoft.Data.SqlClient.SqlParameter.SqlDbType%2A" /> properties can be inferred by setting <b>Value</b>.
+          Both the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> properties can be inferred by setting <b>Value</b>.
         </para>
         <para>
           The <b>Value</b> property is overwritten by <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />.
@@ -984,7 +981,7 @@
         The name of the database where the schema collection for this XML instance is located.
       </value>
       <remarks>
-        This value is null (<c>Nothing</c> in Microsoft Visual Basic) if the collection is defined within the current database. It is also null if there is no schema collection, in which case <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionName%2A" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionOwningSchema%2A" /> are also null.
+        This value is null (<c>Nothing</c> in Microsoft Visual Basic) if the collection is defined within the current database. It is also null if there is no schema collection, in which case <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionName" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionOwningSchema" /> are also null.
       </remarks>
     </XmlSchemaCollectionDatabase>
     <XmlSchemaCollectionName>
@@ -996,7 +993,7 @@
       </value>
       <remarks>
         <para>
-          This value is null (<c>Nothing</c> in Microsoft Visual Basic) if there is no associated schema collection. If the value is null, then <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionDatabase%2A" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionOwningSchema%2A" /> are also null.
+          This value is null (<c>Nothing</c> in Microsoft Visual Basic) if there is no associated schema collection. If the value is null, then <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionDatabase" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionOwningSchema" /> are also null.
         </para>
       </remarks>
     </XmlSchemaCollectionName>
@@ -1008,7 +1005,7 @@
         The owning relational schema for this XML instance.
       </value>
       <remarks>
-        This value is null (<c>Nothing</c> in Microsoft Visual Basic) if the collection is defined within the current database. It is also null if there is no schema collection, in which case <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionDatabase%2A" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionName%2A" /> are also null.
+        This value is null (<c>Nothing</c> in Microsoft Visual Basic) if the collection is defined within the current database. It is also null if there is no schema collection, in which case <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionDatabase" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.XmlSchemaCollectionName" /> are also null.
       </remarks>
     </XmlSchemaCollectionOwningSchema>
   </members>

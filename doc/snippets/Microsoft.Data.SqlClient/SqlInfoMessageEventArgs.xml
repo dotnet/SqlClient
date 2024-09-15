@@ -13,6 +13,11 @@
         </para>
       </remarks>
     </SqlInfoMessageEventArgs>
+    <ctor>
+      <summary>
+        Constructs and initializes a new instance of <see cref="T:Microsoft.Data.SqlClient.SqlInfoMessageEventArgs" />
+      </summary>
+    </ctor>
     <Errors>
       <summary>
         Gets the collection of warnings sent from the server.
