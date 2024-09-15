@@ -68,10 +68,10 @@ namespace Microsoft.Data.SqlClient
             IPAddressPreference,
             ServerSPN,
             FailoverPartnerSPN,
+            ContextConnection,
 #if NETFRAMEWORK
             ConnectionReset,
             NetworkLibrary,
-            ContextConnection,
             TransparentNetworkIPResolution,
 #if ADONET_CERT_AUTH
             Certificate,
@@ -90,6 +90,7 @@ namespace Microsoft.Data.SqlClient
         private ApplicationIntent _applicationIntent = DbConnectionStringDefaults.ApplicationIntent;
         private string _applicationName = DbConnectionStringDefaults.ApplicationName;
         private string _attachDBFilename = DbConnectionStringDefaults.AttachDBFilename;
+        private bool _contextConnection = DbConnectionStringDefaults.ContextConnection;
         private string _currentLanguage = DbConnectionStringDefaults.CurrentLanguage;
         private string _dataSource = DbConnectionStringDefaults.DataSource;
         private string _failoverPartner = DbConnectionStringDefaults.FailoverPartner;
@@ -132,7 +133,6 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
         private bool _connectionReset = DbConnectionStringDefaults.ConnectionReset;
-        private bool _contextConnection = DbConnectionStringDefaults.ContextConnection;
         private bool _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
         private string _networkLibrary = DbConnectionStringDefaults.NetworkLibrary;
 #if ADONET_CERT_AUTH
@@ -187,10 +187,10 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.IPAddressPreference] = DbConnectionStringKeywords.IPAddressPreference;
             validKeywords[(int)Keywords.ServerSPN] = DbConnectionStringKeywords.ServerSPN;
             validKeywords[(int)Keywords.FailoverPartnerSPN] = DbConnectionStringKeywords.FailoverPartnerSPN;
+            validKeywords[(int)Keywords.ContextConnection] = DbConnectionStringKeywords.ContextConnection;
 #if NETFRAMEWORK
             validKeywords[(int)Keywords.ConnectionReset] = DbConnectionStringKeywords.ConnectionReset;
             validKeywords[(int)Keywords.NetworkLibrary] = DbConnectionStringKeywords.NetworkLibrary;
-            validKeywords[(int)Keywords.ContextConnection] = DbConnectionStringKeywords.ContextConnection;
             validKeywords[(int)Keywords.TransparentNetworkIPResolution] = DbConnectionStringKeywords.TransparentNetworkIPResolution;
 #if ADONET_CERT_AUTH
             validKeywords[(int)Keywords.Certificate] = DbConnectionStringKeywords.Certificate;
@@ -243,10 +243,9 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringKeywords.IPAddressPreference, Keywords.IPAddressPreference },
                 { DbConnectionStringKeywords.ServerSPN, Keywords.ServerSPN },
                 { DbConnectionStringKeywords.FailoverPartnerSPN, Keywords.FailoverPartnerSPN },
-
+                { DbConnectionStringKeywords.ContextConnection, Keywords.ContextConnection },
 #if NETFRAMEWORK
                 { DbConnectionStringKeywords.ConnectionReset, Keywords.ConnectionReset },
-                { DbConnectionStringKeywords.ContextConnection, Keywords.ContextConnection },
                 { DbConnectionStringKeywords.TransparentNetworkIPResolution, Keywords.TransparentNetworkIPResolution },
                 { DbConnectionStringKeywords.NetworkLibrary, Keywords.NetworkLibrary },
 #if ADONET_CERT_AUTH
@@ -403,12 +402,12 @@ namespace Microsoft.Data.SqlClient
                     return ServerSPN;
                 case Keywords.FailoverPartnerSPN:
                     return FailoverPartnerSPN;
-#if NETFRAMEWORK
 #pragma warning disable 618 // Obsolete properties
-                case Keywords.ConnectionReset:
-                    return ConnectionReset;
                 case Keywords.ContextConnection:
                     return ContextConnection;
+#if NETFRAMEWORK
+                case Keywords.ConnectionReset:
+                    return ConnectionReset;
 #pragma warning restore 618
                 case Keywords.TransparentNetworkIPResolution:
                     return TransparentNetworkIPResolution;
@@ -417,6 +416,8 @@ namespace Microsoft.Data.SqlClient
 #if ADONET_CERT_AUTH
                 case Keywords.Certificate:              return Certificate;
 #endif
+#else
+#pragma warning restore 618
 #endif
                 default:
                     Debug.Fail("unexpected keyword");
@@ -559,12 +560,12 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.FailoverPartnerSPN:
                     _failoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSPN;
                     break;
+                case Keywords.ContextConnection:
+                    _contextConnection = DbConnectionStringDefaults.ContextConnection;
+                    break;
 #if NETFRAMEWORK
                 case Keywords.ConnectionReset:
                     _connectionReset = DbConnectionStringDefaults.ConnectionReset;
-                    break;
-                case Keywords.ContextConnection:
-                    _contextConnection = DbConnectionStringDefaults.ContextConnection;
                     break;
                 case Keywords.TransparentNetworkIPResolution:
                     _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
@@ -1076,13 +1077,13 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.FailoverPartnerSPN:
                             FailoverPartnerSPN = ConvertToString(value);
                             break;
-#if NETFRAMEWORK
 #pragma warning disable 618 // Obsolete properties
-                        case Keywords.ConnectionReset:
-                            ConnectionReset = ConvertToBoolean(value);
-                            break;
                         case Keywords.ContextConnection:
                             ContextConnection = ConvertToBoolean(value);
+                            break;
+#if NETFRAMEWORK
+                        case Keywords.ConnectionReset:
+                            ConnectionReset = ConvertToBoolean(value);
                             break;
 #pragma warning restore 618
                         case Keywords.NetworkLibrary:
@@ -1096,6 +1097,8 @@ namespace Microsoft.Data.SqlClient
                             Certificate = ConvertToString(value);
                             break;
 #endif
+#else
+#pragma warning restore 618
 #endif
                         default:
                             Debug.Fail("unexpected keyword");
@@ -1195,6 +1198,26 @@ namespace Microsoft.Data.SqlClient
                 }
                 SetValue(DbConnectionStringKeywords.ConnectTimeout, value);
                 _connectTimeout = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*' />
+        [DisplayName(DbConnectionStringKeywords.ContextConnection)]
+        [Obsolete("ContextConnection has been deprecated. Connecting to the context connection using Microsoft.Data.SqlClient is not supported, and the only valid value for this property is false.")]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ContextConnection)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool ContextConnection
+        {
+            get => _contextConnection;
+            set
+            {
+                if (value)
+                {
+                    throw SQL.ContextConnectionIsUnsupported();
+                }
+                SetValue(DbConnectionStringKeywords.ContextConnection, value);
+                _contextConnection = value;
             }
         }
 
@@ -1871,22 +1894,6 @@ namespace Microsoft.Data.SqlClient
             {
                 SetValue(DbConnectionStringKeywords.ConnectionReset, value);
                 _connectionReset = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*' />
-        [DisplayName(DbConnectionStringKeywords.ContextConnection)]
-        [Obsolete("ContextConnection has been deprecated. SqlConnection will ignore the 'Context Connection' keyword.")]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ContextConnection)]
-        [RefreshProperties(RefreshProperties.All)]
-        public bool ContextConnection
-        {
-            get => _contextConnection;
-            set
-            {
-                SetValue(DbConnectionStringKeywords.ContextConnection, value);
-                _contextConnection = value;
             }
         }
 

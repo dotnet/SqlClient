@@ -2423,6 +2423,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextConnectionIsInUse));
         }
+        static internal Exception ContextConnectionIsUnsupported()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextConnectionIsUnsupported));
+        }
         static internal Exception ContextUnavailableOutOfProc()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextUnavailableOutOfProc));
@@ -2771,13 +2775,13 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-#if NETFRAMEWORK
-    sealed internal class InOutOfProcHelper
+    internal sealed class InOutOfProcHelper
     {
         private static readonly InOutOfProcHelper SingletonInstance = new InOutOfProcHelper();
 
-        private bool _inProc = false;
+        private readonly bool _inProc = false;
 
+#if NETFRAMEWORK
         // InOutOfProcHelper detects whether it's running inside the server or not.  It does this
         //  by checking for the existence of a well-known function export on the current process.
         //  Note that calling conventions, etc. do not matter -- we'll never call the function, so
@@ -2810,6 +2814,11 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+#else
+        private InOutOfProcHelper()
+        {
+        }
+#endif
 
         internal static bool InProc
         {
@@ -2819,6 +2828,5 @@ namespace Microsoft.Data.SqlClient
             }
         }
     }
-#endif
 }
 
