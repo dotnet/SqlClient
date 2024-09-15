@@ -879,6 +879,12 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
+            // Context connection's prepare is a no-op
+            if (_activeConnection != null && _activeConnection.IsContextConnection)
+            {
+                return;
+            }
+
             SqlStatistics statistics = null;
             using (TryEventScope.Create("SqlCommand.Prepare | API | Object Id {0}", ObjectID))
             {
@@ -978,6 +984,12 @@ namespace Microsoft.Data.SqlClient
         // SqlInternalConnectionTds needs to be able to unprepare a statement
         internal void Unprepare()
         {
+            // Context connection's prepare is a no-op
+            if (_activeConnection.IsContextConnection)
+            {
+                return;
+            }
+
             Debug.Assert(true == IsPrepared, "Invalid attempt to Unprepare a non-prepared command!");
             Debug.Assert(_activeConnection != null, "must have an open connection to UnPrepare");
             Debug.Assert(false == _inPrepare, "_inPrepare should be false!");
@@ -5477,6 +5489,12 @@ namespace Microsoft.Data.SqlClient
             if (string.IsNullOrEmpty(this.CommandText))
             {
                 throw ADP.CommandTextRequired(method);
+            }
+
+            if ((isAsync) && (_activeConnection.IsContextConnection))
+            {
+                // Async not supported on Context Connections
+                throw SQL.NotAvailableOnContextConnection();
             }
         }
 

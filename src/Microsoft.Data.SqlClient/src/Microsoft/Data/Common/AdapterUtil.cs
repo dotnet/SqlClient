@@ -1290,6 +1290,12 @@ namespace Microsoft.Data.Common
         internal static ArgumentException InvalidMixedArgumentOfSecureCredentialAndIntegratedSecurity()
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity));
 
+        internal static ArgumentException InvalidMixedArgumentOfSecureCredentialAndContextConnection()
+            => Argument(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection));
+        
+        internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndContextConnection()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndContextConnection));
+
         internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndIntegratedSecurity()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity));
 
@@ -1410,14 +1416,6 @@ namespace Microsoft.Data.Common
         internal static ArgumentException InvalidValue(string parameterName)
         {
             return Argument(StringsHelper.GetString(Strings.ADP_InvalidValue), parameterName);
-        }
-        internal static ArgumentException InvalidMixedArgumentOfSecureCredentialAndContextConnection()
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection));
-        }
-        internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndContextConnection()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndContextConnection));
         }
         internal static Exception InvalidMixedUsageOfAccessTokenAndCredential()
         {
