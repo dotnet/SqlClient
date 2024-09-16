@@ -155,7 +155,9 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET8_0_OR_GREATER
                     s.ReadExactly(_padBuffer, 0, _padBuffer.Length);
 #else
-                   s.Read(_padBuffer, 0, _padBuffer.Length);
+#pragma warning disable CA2022 // ReadExactly is not available in NET6.0
+                    s.Read(_padBuffer, 0, _padBuffer.Length);
+#pragma warning restore CA2022
 #endif
                     return result;
                 }
@@ -386,7 +388,9 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET8_0_OR_GREATER
             s.ReadExactly(b, 0, b.Length);
 #else
+#pragma warning disable CA2022 // ReadExactly is not available in NET6.0
             s.Read(b, 0, b.Length);
+#pragma warning restore CA2022
 #endif
             if (!_skipNormalize)
             {
@@ -417,7 +421,9 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET8_0_OR_GREATER
             s.ReadExactly(b, 0, b.Length);
 #else
+#pragma warning disable CA2022 // ReadExactly is not available in NET6.0
             s.Read(b, 0, b.Length);
+#pragma warning restore CA2022 
 #endif
             if (!_skipNormalize)
             {
@@ -448,7 +454,9 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET8_0_OR_GREATER
             s.ReadExactly(b, 0, b.Length);
 #else
+#pragma warning disable CA2022 // ReadExactly is not available in NET6.0
             s.Read(b, 0, b.Length);
+#pragma warning restore CA2022
 #endif
             if (!_skipNormalize)
             {
@@ -479,7 +487,9 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET8_0_OR_GREATER
             s.ReadExactly(b, 0, b.Length);
 #else
+#pragma warning disable CA2022 // ReadExactly is not available in NET6.0
             s.Read(b, 0, b.Length);
+#pragma warning restore CA2022
 #endif
             if (!_skipNormalize)
             {
@@ -510,7 +520,9 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET8_0_OR_GREATER
             s.ReadExactly(b, 0, b.Length);
 #else
+#pragma warning disable CA2022 // ReadExactly is not available in NET6.0
             s.Read(b, 0, b.Length);
+#pragma warning restore CA2022
 #endif
             if (!_skipNormalize)
             {
@@ -541,7 +553,9 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET8_0_OR_GREATER
             s.ReadExactly(b, 0, b.Length);
 #else
+#pragma warning disable CA2022 // ReadExactly is not available in NET6.0
             s.Read(b, 0, b.Length);
+#pragma warning restore CA2022
 #endif
             if (!_skipNormalize)
             {
@@ -590,7 +604,9 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET8_0_OR_GREATER
             s.ReadExactly(b, 0, b.Length);
 #else
+#pragma warning disable CA2022 // ReadExactly is not available in NET6.0
             s.Read(b, 0, b.Length);
+#pragma warning restore CA2022
 #endif
             if (!_skipNormalize)
             {
@@ -649,7 +665,9 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET8_0_OR_GREATER
             s.ReadExactly(b, 0, b.Length);
 #else
+#pragma warning disable CA2022 // ReadExactly is not available in NET6.0
             s.Read(b, 0, b.Length);
+#pragma warning restore CA2022
 #endif
             if (!_skipNormalize)
             {
