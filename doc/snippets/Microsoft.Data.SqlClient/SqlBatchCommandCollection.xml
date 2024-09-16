@@ -1,4 +1,4 @@
-﻿<docs>
+<docs>
   <members name="SqlBatchCommandCollection">
     <SqlBatchCommandCollection>
       <summary>
@@ -95,7 +95,7 @@
     </Remove1>
     <Remove2>
       <param name="item">
-        The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1" /> .
+        The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1" />.
       </param>
       <summary>
         Removes the specified <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object from the collection.
