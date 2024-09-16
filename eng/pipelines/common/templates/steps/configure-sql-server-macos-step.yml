@@ -41,6 +41,17 @@ steps:
 
     docker ps -a
 
+    echo 0.0.0.0
+    sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
+    echo 127.0.0.1
+    sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
+    echo ::1
+    sqlcmd -S ::1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
+    echo localhost
+    sqlcmd -S localhost -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
+    echo "(default)"
+    sqlcmd -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION"
+
     # Connect to server and get the version:
     counter=1
     errstatus=1
