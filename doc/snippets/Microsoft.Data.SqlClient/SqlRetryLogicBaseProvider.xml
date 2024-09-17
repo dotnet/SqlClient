@@ -2,7 +2,7 @@
   <members name="SqlRetryLogicBaseProvider">
     <SqlRetryLogicBaseProvider>
       <summary>
-        Applies retry logic on an operation through the `Execute` or `ExecuteAsync` function.
+        Applies retry logic on an operation through the <see cref="M:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute{TResult}(System.Object,System.Func{TResult})" /> or <see cref="M:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute{TResult}(System.Object,System.Func{System.Threading.Task{TResult}},System.Threading.CancellationToken)" /> function.
       </summary>
     </SqlRetryLogicBaseProvider>
     <Retrying>
@@ -24,7 +24,7 @@
       </summary>
       <remarks>
         <note type="note">
-          The <b>RetryLogic</b> property is assigned at construction of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> creation and its value is used as a template internally. Don't use it to monitor the status of the retry logic during and after execution. Instead, use the <see cref="E:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Retrying" /> event to collect data about retry executions.
+          The <b>RetryLogic</b> property is assigned at construction of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> creation and its value is used as a template internally. Don't use it to monitor the status of the retry logic during and after execution. Instead, use the <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Retrying" /> event to collect data about retry executions.
         </note>
       </remarks>
     </RetryLogic>
@@ -85,7 +85,7 @@
         </note>
       </summary>
       <returns>
-        A task representing the asynchronous operation. The results of the task will be the return value of the `function`, if it runs without exception.
+        A task representing the asynchronous operation. The results of the task will be the return value of the <paramref name="function" />, if it runs without exception.
       </returns>
       <remarks>
         <note type="note">

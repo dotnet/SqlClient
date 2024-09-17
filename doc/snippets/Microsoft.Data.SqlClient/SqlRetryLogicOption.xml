@@ -6,7 +6,7 @@
       </summary>
       <example>
         <para>
-          The following sample declares a <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicOption" /> object that is configured to apply retry logic for the error number <c>102</c> for a maximum of <c>5</c> times and <c>3</c> to <c>60</c> seconds gap time between each run. It will only work for the SELECT SQL statements assigned to the <see cref="T:Microsoft.Data.SqlClient.SqlCommand.RetryLogicProvider" />.
+          The following sample declares a <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicOption" /> object that is configured to apply retry logic for the error number <c>102</c> for a maximum of <c>5</c> times and <c>3</c> to <c>60</c> seconds gap time between each run. It will only work for the SELECT SQL statements assigned to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.RetryLogicProvider" />.
         </para>
         <!-- SqlConfigurableRetryLogic_SqlRetryLogicOptions -->
         <code language="c#">
@@ -57,7 +57,7 @@
         Sets the minimum allowed gap time interval as a <see cref="T:System.TimeSpan" /> object.
       </summary>
       <value>
-        <see cref="T:System.TimeSpan" /> The minimum upcoming gap time before the next execution attempt; the default value is **zero** and must be between 0 and 120 seconds.
+        <see cref="T:System.TimeSpan" /> The minimum upcoming gap time before the next execution attempt; the default value is <b>zero</b> and must be between 0 and 120 seconds.
       </value>
     </MinTimeInterval>
     <MaxTimeInterval>
@@ -73,14 +73,16 @@
         Sets the list of transient error numbers on which to retry when they occur.
       </summary>
       <value>
-        List of <see cref="T:Microsoft.Data.SqlClient.SqlException.Number" /> ; Set to <see langword="null" /> to use the internal list of exceptions from the <see cref="T:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory" /> object.
+        List of <see cref="P:Microsoft.Data.SqlClient.SqlException.Number" />; Set to <see langword="null" /> to use the internal list of exceptions from the <see cref="T:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory" /> object.
       </value>
     </TransientErrors>
     <AuthorizedSqlCondition>
       <summary>
-        Sets a pre-retry validation function on the <see cref="T:Microsoft.Data.SqlClient.SqlCommand.CommandText" /> to only include specific SQL statements.
+        Sets a pre-retry validation function on the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandText" /> to only include specific SQL statements.
       </summary>
-      <value> <see cref="T:System.Predicate`1" /> The pre-retry validation delegate function; <see langword="true" /> if the `CommandText` is authorized to retry the operation.</value>
+      <value>
+        <see cref="T:System.Predicate`1" /> The pre-retry validation delegate function; <see langword="true" /> if the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandText" /> is authorized to retry the operation.
+      </value>
     </AuthorizedSqlCondition>
   </members>
 </docs>

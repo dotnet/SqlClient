@@ -102,7 +102,7 @@
           The <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" /> method is equivalent to the Transact-SQL COMMIT TRANSACTION statement. You cannot roll back a transaction once it has been committed, because all modifications have become a permanent part of the database. For more information, see <see href="/sql/t-sql/language-elements/commit-transaction-transact-sql">COMMIT TRANSACTION (Transact-SQL)</see>.
         </para>
         <note type="note">
-          <c>Try</c> / <c>Catch</c> exception handling should always be used when committing or rolling back a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" />. Both <c>Commit</c> and <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Rollback" /> generates an <see cref="T:System.InvalidOperationException" /> if the connection is terminated or if the transaction has already been rolled back on the server.
+          <c>Try</c> / <c>Catch</c> exception handling should always be used when committing or rolling back a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" />. Both <b>Commit</b> and <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Rollback" /> generates an <see cref="T:System.InvalidOperationException" /> if the connection is terminated or if the transaction has already been rolled back on the server.
         </note>
         <para>
           For more information on SQL Server transactions, see <see href="/sql/t-sql/language-elements/transactions-transact-sql">Transactions (Transact-SQL)</see>. 
@@ -238,7 +238,7 @@
         Specifies the <see cref="T:System.Data.IsolationLevel" /> for this transaction.
       </summary>
       <value>
-        The <see cref="T:System.Data.IsolationLevel" /> for this transaction. The default is <see langword="ReadCommitted" />.
+        The <see cref="T:System.Data.IsolationLevel" /> for this transaction. The default is <see cref="F:System.Data.IsolationLevel.ReadCommitted" />.
       </value>
       <remarks>
         <para>
@@ -263,10 +263,10 @@
           The <b>Rollback</b> method is equivalent to the Transact-SQL ROLLBACK TRANSACTION statement. For more information, see <see href="/sql/t-sql/language-elements/rollback-transaction-transact-sql">ROLLBACK TRANSACTION (Transact-SQL)</see>.
         </para>
         <para>
-          The transaction can only be rolled back from a pending state (after <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" /> has been called, but before <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" /> is called). The transaction is rolled back in the event it is disposed before <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" /> or <c>Rollback</c> is called.
+          The transaction can only be rolled back from a pending state (after <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" /> has been called, but before <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" /> is called). The transaction is rolled back in the event it is disposed before <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" /> or <b>Rollback</b> is called.
         </para>
         <note type="note">
-          <c>Try</c> / <c>Catch</c> exception handling should always be used when rolling back a transaction. A <c>Rollback</c> generates an <see cref="T:System.InvalidOperationException" /> if the connection is terminated or if the transaction has already been rolled back on the server.
+          <c>Try</c> / <c>Catch</c> exception handling should always be used when rolling back a transaction. A <b>Rollback</b> generates an <see cref="T:System.InvalidOperationException" /> if the connection is terminated or if the transaction has already been rolled back on the server.
         </note>
         <para>
           For more information on SQL Server transactions, see <see href="/sql/t-sql/language-elements/transactions-transact-sql">Transactions (Transact-SQL)</see>.
