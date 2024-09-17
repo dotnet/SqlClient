@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Diagnostics;
 using Microsoft.Data.Common;
 
@@ -11,8 +12,6 @@ namespace Microsoft.Data.SqlClient
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
         private protected TdsParserStateObject _physicalStateObj = null!;
-
-        internal virtual uint MaxSSPILength => 4096; // TODO: what is a good default here?
 
         internal void Initialize(ServerInfo serverInfo, TdsParserStateObject physicalStateObj, TdsParser parser)
         {
@@ -27,24 +26,49 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        internal abstract void GenerateSspiClientContext(ReadOnlyMemory<byte> input, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer);
+        protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SqlAuthenticationParameters authParams, ReadOnlySpan<string> serverNames);
 
-        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref UInt32 sendLength, byte[] sniSpnBuffer)
-            => SSPIData(receivedBuff, ref sendBuff, ref sendLength, new[] { sniSpnBuffer });
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string serverNames)
+            => SSPIData(receivedBuff, outgoingBlobWriter, new[] { serverNames });
 
-        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref UInt32 sendLength, byte[][] sniSpnBuffer)
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string[] serverNames)
         {
             using (TrySNIEventScope.Create(nameof(SSPIContextProvider)))
             {
                 try
                 {
-                    GenerateSspiClientContext(receivedBuff, ref sendBuff, ref sendLength, sniSpnBuffer);
+                    if (GenerateSspiClientContext(receivedBuff, outgoingBlobWriter, CreateSqlAuthParams(_parser.Connection, serverNames[0]), serverNames))
+                    {
+                        return;
+                    }
                 }
                 catch (Exception e)
                 {
                     SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
                 }
             }
+        }
+
+        private static SqlAuthenticationParameters CreateSqlAuthParams(SqlInternalConnectionTds connection, string serverName)
+        {
+            var auth = new SqlAuthenticationParameters.Builder(
+                authenticationMethod: connection.ConnectionOptions.Authentication,
+                resource: null,
+                authority: null,
+                serverName: serverName,
+                connection.ConnectionOptions.InitialCatalog);
+
+            if (connection.ConnectionOptions.UserID is { } userId)
+            {
+                auth.WithUserId(userId);
+            }
+
+            if (connection.ConnectionOptions.Password is { } password)
+            {
+                auth.WithPassword(password);
+            }
+
+            return auth;
         }
 
         protected void SSPIError(string error, string procedure)

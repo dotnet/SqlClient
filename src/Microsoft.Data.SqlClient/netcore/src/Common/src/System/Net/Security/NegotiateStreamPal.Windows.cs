@@ -73,7 +73,7 @@ namespace System.Net.Security
         internal static SecurityStatusPal InitializeSecurityContext(
             SafeFreeCredentials credentialsHandle,
             ref SafeDeleteContext securityContext,
-            string[] spn,
+            ReadOnlySpan<string> spn,
             ContextFlagsPal requestedContextFlags,
             SecurityBuffer[] inSecurityBufferArray,
             SecurityBuffer outSecurityBuffer,
