@@ -280,10 +280,13 @@
         <!-- SqlConnection_AccessTokenCallback -->
         <code language="c#">
           using System;
-          using System.Data;
+          using System.Collections.Concurrent;
+          using System.Threading;
+          using System.Threading.Tasks;
+          using Azure.Core;
           using Azure.Identity;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main()
@@ -291,26 +294,42 @@
                   OpenSqlConnection();
                   Console.ReadLine();
               }
-          
+
+              const string defaultScopeSuffix = "/.default";
+
+              // Reuse credential objects to take advantage of underlying token caches
+              private static ConcurrentDictionar&lt;string, DefaultAzureCredential&gt; credentials = new ConcurrentDictionary&lt;string, DefaultAzureCredential&gt;();
+
+              // Use a shared callback function for connections that should be in the same connection pool
+              private static Func&lt;SqlAuthenticationParameters, CancellationToken, Task&lt;SqlAuthenticationToken&gt;&gt; myAccessTokenCallback =
+                  async (authParams, cancellationToken) =>
+                  {
+                      string scope = authParams.Resource.EndsWith(defaultScopeSuffix)
+                          ? authParams.Resource
+                          : $"{authParams.Resource}{defaultScopeSuffix}";
+
+                      DefaultAzureCredentialOptions options = new DefaultAzureCredentialOptions();
+                      options.ManagedIdentityClientId = authParams.UserId;
+
+                      // Reuse the same credential object if we are using the same MI Client ID
+                      AccessToken token = await credentials.GetOrAdd(authParams.UserId, new DefaultAzureCredential(options)).GetTokenAsync(
+                          new TokenRequestContext(new string[] { scope }),
+                          cancellationToken);
+
+                      return new SqlAuthenticationToken(token.Token, token.ExpiresOn);
+                  };
+
               private static void OpenSqlConnection()
               {
-                  const string defaultScopeSuffix = "/.default";
-                  string connectionString = GetConnectionString();
-                  DefaultAzureCredential credential = new();
-          
-                  using (SqlConnection connection = new(connectionString)
+                  // (Optional) Pass a User-Assigned Managed Identity Client ID.
+                  // This will ensure different MI Client IDs are in different connection pools.
+                  string connectionString = "Server=myServer.database.windows.net;Encrypt=Mandatory;UserId=&lt;ManagedIdentityClientId&gt;;";
+
+                  using (SqlConnection connection = new SqlConnection(connectionString)
                   {
-                      AccessTokenCallback = async (authParams, cancellationToken) =>
-                      {
-                          string scope = authParams.Resource.EndsWith(defaultScopeSuffix)
-                              ? authParams.Resource
-                              : $"{authParams.Resource}{defaultScopeSuffix}";
-                          AccessToken token = await credential.GetTokenAsync(
-                              new TokenRequestContext([scope]),
-                              cancellationToken);
-          
-                          return new SqlAuthenticationToken(token.Token, token.ExpiresOn);
-                      }
+                      // The callback function is part of the connection pool key. Using a static callback function
+                      // ensures connections will not create a new pool per connection just for the callback.
+                      AccessTokenCallback = myAccessTokenCallback
                   })
                   {
                       connection.Open();
