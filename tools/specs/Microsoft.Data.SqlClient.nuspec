@@ -9,6 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
+    <readme>README.md</readme>
     <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$"/>
     <description>The current data provider for SQL Server and Azure SQL databases. This has replaced System.Data.SqlClient. These classes provide access to SQL and encapsulate database-specific protocols, including tabular data stream (TDS).
     
@@ -30,30 +31,31 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       <group targetFramework="net462">
         <dependency id="Microsoft.Data.SqlClient.SNI" version="6.0.0-preview1.24226.4" />
         <dependency id="Azure.Identity" version="1.12.0" />
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="6.0.1" exclude="Compile" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.5.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
         <dependency id="System.Buffers" version="4.5.1" />
-        <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
-        <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.3.0" />
         <dependency id="System.Text.Encodings.Web" version="6.0.0" />
       </group>
       <group targetFramework="net8.0">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.0-preview1.24226.4" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.12.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.0" exclude="Compile" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.5.0" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="System.Configuration.ConfigurationManager" version="8.0.0" exclude="Compile" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.0" exclude="Compile" />
       </group>
       <group targetFramework="net6.0">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.0-preview1.24226.4" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.12.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="6.0.1" exclude="Compile" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.5.0" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="System.Configuration.ConfigurationManager" version="6.0.1" exclude="Compile" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="6.0.1" exclude="Compile" />
       </group>
     </dependencies>
     <frameworkAssemblies>
@@ -77,6 +79,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
   </metadata>
   <files>
     <file src="..\icons\dotnet.png" target="" />
+    <file src="..\..\README.md" target="" />
 
     <!-- ref NetFx -->
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net462\Microsoft.Data.SqlClient.dll" target="ref\net462\" exclude="" />
