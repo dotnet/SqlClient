@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /*
-         This unit test is designed for PR #2618, which addresses an issue where a failed decryption leaves a connection in a bad state  
+         This unit test is going to assess an issue where a failed decryption leaves a connection in a bad state  
          when it is returned to the connection pool. If a subsequent connection is retried it will result in an "Internal connection fatal error",
          which causes that connection to be doomed, preventing it from being returned to the pool. 
          Consequently, retrying a new connection will encounter the same decryption error, leading to a repetitive failure cycle.
