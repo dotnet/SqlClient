@@ -479,7 +479,7 @@
           The <b>Save</b> method is equivalent to the Transact-SQL SAVE TRANSACTION statement.
         </para>
         <para>
-          The value used in the <paramref name="savePoint" /> parameter can be the same value used in the <c>transactionName</c> parameter of some implementations of the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" /> method.
+          The value used in the <paramref name="savePointName" /> parameter can be the same value used in the <c>transactionName</c> parameter of some implementations of the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" /> method.
         </para>
         <para>
           Savepoints offer a mechanism to roll back parts of transactions. You create a savepoint using the <b>Save</b> method, and then later call the <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Rollback" /> method to roll back to the savepoint instead of rolling back to the start of the transaction.
