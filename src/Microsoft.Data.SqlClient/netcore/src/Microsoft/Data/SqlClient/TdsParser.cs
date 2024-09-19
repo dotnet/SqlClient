@@ -157,6 +157,10 @@ namespace Microsoft.Data.SqlClient
         // size of Guid  (e.g. _clientConnectionId, ActivityId.Id)
         private const int GUID_SIZE = 16;
 
+        // now data length is 1 byte
+        // First bit is 1 indicating client support failover partner with readonly intent
+        private static readonly byte[] s_featureExtDataAzureSQLSupportFeatureRequest = { 0x01 };
+
         // NOTE: You must take the internal connection's _parserLock before modifying this
         internal bool _asyncWrite = false;
 
@@ -8375,6 +8379,24 @@ namespace Microsoft.Data.SqlClient
             return len; // size of data written
         }
 
+        internal int WriteAzureSQLSupportFeatureRequest(bool write /* if false just calculates the length */)
+        {
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = featureData
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_AZURESQLSUPPORT);
+
+                // Feature Data length
+                WriteInt(s_featureExtDataAzureSQLSupportFeatureRequest.Length, _physicalStateObj);
+
+                _physicalStateObj.WriteByteArray(s_featureExtDataAzureSQLSupportFeatureRequest, s_featureExtDataAzureSQLSupportFeatureRequest.Length, 0);
+            }
+
+            return len;
+        }
+
         internal int WriteDataClassificationFeatureRequest(bool write /* if false just calculates the length */)
         {
             int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
@@ -8746,6 +8768,10 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.GlobalTransactions) != 0)
                 {
                     length += WriteGlobalTransactionsFeatureRequest(write);
+                }
+                if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLSupport) != 0)
+                {
+                    length += WriteAzureSQLSupportFeatureRequest(write);
                 }
                 if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
                 {

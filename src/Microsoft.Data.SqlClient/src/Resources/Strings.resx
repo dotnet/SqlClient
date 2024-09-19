@@ -4399,7 +4399,7 @@
     <value>Dictionary object containing SQL Server names and their trusted column master key paths.</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>Two or more redirections have occurred. Only one redirection per login is allowed.</value>
+    <value>Too many redirections have occurred. Only {0} redirections per login is allowed.</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>Connecting to a mirrored SQL Server instance using the ApplicationIntent ReadOnly connection option is not supported.</value>
