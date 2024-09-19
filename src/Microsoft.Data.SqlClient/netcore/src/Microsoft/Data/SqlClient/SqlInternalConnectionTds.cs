@@ -109,6 +109,10 @@ namespace Microsoft.Data.SqlClient
         // CONNECTION AND STATE VARIABLES
         private readonly SqlConnectionPoolGroupProviderInfo _poolGroupProviderInfo; // will only be null when called for ChangePassword, or creating SSE User Instance
         private TdsParser _parser;
+        
+        // Connection re-route limit
+        internal const int _maxNumberOfRedirectRoute = 10;
+        
         private SqlLoginAck _loginAck;
         private SqlCredential _credential;
         private FederatedAuthenticationFeatureExtensionData _fedAuthFeatureExtensionData;
@@ -1558,7 +1562,7 @@ namespace Microsoft.Data.SqlClient
                     if (RoutingInfo != null)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginNoFailover> Routed to {0}", serverInfo.ExtendedServerName);
-                        if (routingAttempts > 0)
+                        if (routingAttempts > _maxNumberOfRedirectRoute)
                         {
                             throw SQL.ROR_RecursiveRoutingNotSupported(this);
                         }
