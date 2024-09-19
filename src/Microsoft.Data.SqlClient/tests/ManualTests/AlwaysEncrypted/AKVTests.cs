@@ -66,6 +66,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
          The purpose of this unit test is to simulate a decryption error and verify that the connection remains usable when returned to the pool. 
          It aims to confirm that three consecutive connections will consistently fail with the "Failed to decrypt column" error.
+
+         Before the fix was implemented, this is what happens internally:
+
+         1. A connection is used from a connection in pool.
+         2. That connection is used to query a table with a column that is encrypted.
+         3. When the decryption failed for some reason, a "Failed to decrypt column." error is raised. The connection is returned to the connection pool 
+            with the error still in its buffer.
+         4. When the client connects a second time, a connection is used from the pool again and grabbing the same connection recently returned back to the pool.
+         5. This time when the connection is opened it will raise an "Internal connection fatal error." because that connection still has an existing error in it.  
+            Thus, the driver dooms that connection since  the error is fatal and not returned it back to the connection pool.
+         6. When the client connects the third time, it will grab an unused connection from the connection pool. 
+         7. That new connection is used to query a table with a column that is encrypted.
+         8. When the decryption failed for some reason, a "Failed to decrypt column." error is raised. The connection is returned to the connection pool 
+            with the error still in its buffer.
+         9. And the cycle continues.
+
+         So, this unit test will try to connect 3 times and do the same query to ensure that the expected error messages are identical each time, 
+         "Failed to decrypt column". This proves that the fix worked, and the connection is returned to the pool in a good state. 
+         Although, 2 tries are enough to ascertain that the fix worked but for completeness, same numbers of connection attempts as in the repro 
+         are performed. 
         */
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void ForcedColumnDecryptErrorTestShouldFail()
