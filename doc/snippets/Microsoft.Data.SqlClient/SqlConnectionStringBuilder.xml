@@ -550,7 +550,7 @@
                   // Keys you have provided return true.
                   Console.WriteLine(builder.ContainsKey("Server"));
           
-                  // Comparison is case insensitive, and synonyms
+                  // Comparison is case-insensitive, and synonyms
                   // are automatically converted to their "well-known"
                   // names.
                   Console.WriteLine(builder.ContainsKey("Database"));

@@ -34,7 +34,7 @@
         </para>
         <code language="c#">
           try
-          {
+'         {
               // code here
           }
           catch (SqlException sqlEx)
@@ -307,6 +307,9 @@
       <seealso cref="T:Microsoft.Data.SqlClient.SqlErrorCollection" />
       <seealso cref="T:Microsoft.Data.SqlClient.SqlError" />
     </Errors>
+    <GetObjectData>
+      <summary>To be added</summary>
+    </GetObjectData>
     <LineNumber>
       <summary>
         Gets the line number within the Transact-SQL command batch or stored procedure that generated the error.
