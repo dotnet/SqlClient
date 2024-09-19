@@ -46,13 +46,13 @@
           The access mode to use when opening the file. Supported <see cref="T:System.IO.FileAccess" /> enumeration values are <see cref="F:System.IO.FileAccess.Read" />, <see cref="F:System.IO.FileAccess.Write" />, and <see cref="F:System.IO.FileAccess.ReadWrite" />.
         </para>
         <para>
-          When using <see langword="FileAccess.Read" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object can be used to read all the existing data.
+          When using <see cref="F:System.IO.FileAccess.Read" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object can be used to read all the existing data.
         </para>
         <para>
-          When using <see langword="FileAccess.Write" />, <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a zero byte file. Existing data will be overwritten when the object is closed and the transaction is committed.
+          When using <see cref="F:System.IO.FileAccess.Write" />, <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a zero byte file. Existing data will be overwritten when the object is closed and the transaction is committed.
         </para>
         <para>
-          When using <see langword="FileAccess.ReadWrite" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a file which has all the existing data in it. The handle is positioned at the beginning of the file. You can use one of the <see cref="M:System.IO.Stream.Seek" /> methods to move the handle position within the file to write or append new data.
+          When using <see cref="F:System.IO.FileAccess.ReadWrite" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a file which has all the existing data in it. The handle is positioned at the beginning of the file. You can use one of the <see cref="M:System.IO.Stream.Seek" /> methods to move the handle position within the file to write or append new data.
         </para>         
       </param>
       <summary>
@@ -310,9 +310,9 @@
       <value>
         <see langword="true" /> if the current stream supports writing; otherwise, <see langword="false" />.
       </value>
-      <related href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
+      <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
-      </related>
+      </seealso>
     </CanWrite>
     <dtor>
       <summary>
@@ -341,7 +341,7 @@
         The number of bytes read from the stream, between zero (0) and the number of bytes you requested. Streams return zero (0) only at the end of the stream, otherwise, they should block until at least one byte is available.
       </returns>
       <exception cref="T:System.ArgumentException">
-        The <see cref="T:System.IAsyncResult" /> object did not come from the corresponding <see cref="M:Microsoft.Data.SqlTypes.SqlFileStream.BeginRead" /> method.
+        The <see cref="T:System.IAsyncResult" /> object did not come from the corresponding <see cref="M:Microsoft.Data.SqlTypes.SqlFileStream.BeginRead(System.Byte[],System.Int32,System.Int32,System.AsyncCallback,System.Object)" /> method.
       </exception>
       <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
@@ -355,7 +355,7 @@
         Ends an asynchronous write operation.
       </summary>
       <exception cref="T:System.ArgumentException">
-        The <see cref="T:System.IAsyncResult" /> object did not come from the corresponding <see cref="M:Microsoft.Data.SqlTypes.SqlFileStream.BeginRead" /> method.
+        The <see cref="T:System.IAsyncResult" /> object did not come from the corresponding <see cref="M:Microsoft.Data.SqlTypes.SqlFileStream.BeginRead(System.Byte[],System.Int32,System.Int32,System.AsyncCallback,System.Object)" /> method.
       </exception>
       <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
@@ -500,7 +500,7 @@
         Gets or sets the transaction context for this <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object.
       </summary>
       <value>
-        The <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream.TransactionContext" /> array that was passed to the constructor for this <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object.
+        The <b>TransactionContext</b> array that was passed to the constructor for this <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object.
       </value>
       <seealso href="https://msdn.microsoft.com/library/bd8b845c-0f09-4295-b466-97ef106eefa8">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)

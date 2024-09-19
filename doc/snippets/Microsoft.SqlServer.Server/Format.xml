@@ -31,7 +31,7 @@
             The aggregate must not have any <c>[NonSerialized]</c> fields.
           </item>
           <item>
-            Fields must not be marked as an explicit layout (with a <see cref="P:System.Runtime.InteropServices.StructLayoutAttribute.Value" /> of <see cref="P:System.Runtime.InteropServices.LayoutKind.Explicit" /> ).
+            Fields must not be marked as an explicit layout (with a <see cref="P:System.Runtime.InteropServices.StructLayoutAttribute.Value" /> of <see cref="F:System.Runtime.InteropServices.LayoutKind.Explicit" /> ).
           </item>
         </list>
         <para>
@@ -45,13 +45,13 @@
             Specify the <see cref="P:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute.IsByteOrdered" /> attribute property. The default value is <see langword="false" />.
           </item>
           <item>
-            If you omit any field in the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read" /> or <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write" /> methods, the state of that field is not serialized.
+            If you omit any field in the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read(System.IO.BinaryReader)" /> or <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write(System.IO.BinaryWriter)" /> methods, the state of that field is not serialized.
           </item>
         </list>
       </remarks>
       <example>
         <para>
-          The following example shows the <c>UserDefinedType</c> attribute of the Point UDT. The UDT is byte-ordered, is named "Point", has a validation method named "ValidatePoint", and uses the native serialization format.
+          The following example shows the <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" /> attribute of the Point UDT. The UDT is byte-ordered, is named "Point", has a validation method named "ValidatePoint", and uses the native serialization format.
         </para>
         <!-- DataWorks_SqlUserDefinedTypeAttribute -->
         <code language="c#">
@@ -213,7 +213,7 @@
               ' Use StringBuilder to provide string representation of UDT.
               Public Overrides Function ToString() As String
                   ' Since InvokeIfReceiverIsNull defaults to 'true'
-                  ' this test is unneccesary if Point is only being called
+                  ' this test is unnecessary if Point is only being called
                   ' from SQL.
                   If Me.IsNull Then
                       Return "NULL"

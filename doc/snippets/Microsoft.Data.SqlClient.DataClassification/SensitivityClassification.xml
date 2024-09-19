@@ -31,7 +31,7 @@
     </Labels>
     <SensitivityRank>
       <summary>
-        Returns the relative sensitivity rank for the query associated with the active 'SqlDataReader'.
+        Returns the relative sensitivity rank for the query associated with the active <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
       </summary>
       <value>
         Relative sensitivity ranking for this query.

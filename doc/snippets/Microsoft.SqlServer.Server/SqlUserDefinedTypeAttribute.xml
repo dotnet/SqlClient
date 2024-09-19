@@ -44,7 +44,7 @@
         A required attribute on a user-defined type (UDT), used to confirm that the given type is a UDT and to indicate the storage format of the UDT.
       </summary>
       <remarks>
-        The following example specifies that the <see cref="P:Microsoft.SqlServer.Server.Format" /> of the user-defined type is <see cref="P:Microsoft.SqlServer.Server.SerializedDataWithMetadata" /> and the <see cref="P:Microsoft.SqlServer.Server.Format.MaxByteSize" /> is 8000 bytes.
+        The following example specifies that the <see cref="P:Microsoft.SqlServer.Server.Format" /> of the user-defined type is <see cref="F:Microsoft.SqlServer.Server.Format.Native" /> and the <see cref="P:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute.MaxByteSize" /> is 8000 bytes.
       </remarks>
       <example>
         <!-- SqlUserDefinedTypeAttribute_Type1 #12 -->

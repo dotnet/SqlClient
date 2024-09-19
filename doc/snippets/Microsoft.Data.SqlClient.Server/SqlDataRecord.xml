@@ -159,7 +159,7 @@
           This method enables you to obtain a binary value either in a single call or in chunks. Getting the value in chunks is useful for large values or values of unknown size.
         </para>
         <para>
-          To obtain the value in several chunks, allocate a byte array of the chunk-size and call <see cref="M:Microsoft.Data.SqlClient.Server.SqlDataRecord.GetBytes" /> repeatedly, adjusting the <paramref name="fieldOffset" /> parameter accordingly in each call.
+          To obtain the value in several chunks, allocate a byte array of the chunk-size and call <b>GetBytes</b> repeatedly, adjusting the <paramref name="fieldOffset" /> parameter accordingly in each call.
         </para>
       </remarks>
       <exception cref="T:System.IndexOutOfRangeException">
@@ -219,7 +219,7 @@
           This method enables you to obtain a character value either in a single call or in chunks. Getting the value in chunks is useful for large values or values of unknown size.
         </para>
         <para>
-          To obtain the value in several chunks, allocate a char array of the chunk-size and call <see cref="M:Microsoft.Data.SqlClient.Server.SqlDataRecord.GetChars" /> repeatedly adjusting the<c>fieldOffset</c>parameter accordingly in each call.
+          To obtain the value in several chunks, allocate a char array of the chunk-size and call <b>GetChars</b> repeatedly adjusting the <paramref name="fieldOffset" /> parameter accordingly in each call.
         </para>
       </remarks>
       <exception cref="T:System.IndexOutOfRangeException">
@@ -368,7 +368,7 @@
         Gets the value for the column specified by the ordinal as a <see cref="T:System.Single" />.
       </summary>
       <returns>
-        The column value as a <see langword="T:System.Single" />.
+        The column value as a <see cref="T:System.Single" />.
       </returns>
       <exception cref="T:System.IndexOutOfRangeException">
         The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).
@@ -895,7 +895,7 @@
         The CLR type value of the column specified by the ordinal.
       </returns>
       <remarks>
-        For columns with null value, <see cref="P:System.DBNull.Value" /> is returned.
+        For columns with null value, <see cref="F:System.DBNull.Value" /> is returned.
       </remarks>
       <exception cref="T:System.IndexOutOfRangeException">
         The <paramref name="ordinal" /> is less than 0 or greater than the number of columns (that is, <see cref="P:Microsoft.Data.SqlClient.Server.SqlDataRecord.FieldCount" />).
@@ -916,7 +916,7 @@
       </returns>
       <remarks>
         <para>
-          The CLR type values of the column are copied into the <paramref name="values" /> array that is passed as a parameter. For columns with null value, <see cref="P:System.DBNull.Value" /> is returned.
+          The CLR type values of the column are copied into the <paramref name="values" /> array that is passed as a parameter. For columns with null value, <see cref="F:System.DBNull.Value" /> is returned.
         </para>
         <para>
           The length of the <paramref name="values" /> array does not need to match the number of columns in the record. If the array length is greater than the number of columns, all the column values are copied into the array; if it is less, only the array length number of column values is copied into the array, starting at the column value with ordinal 0.

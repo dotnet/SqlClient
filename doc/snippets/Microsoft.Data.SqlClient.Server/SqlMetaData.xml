@@ -60,7 +60,7 @@
       </summary>
       <remarks>
         <para>
-          Only the following are allowed to be passed to this constructor as <paramref name="dbType" />: <see cref="F:System.Data.SqlDbType.Bit" />, <see cref="F:System.Data.SqlDbType.BigInt" />, <see cref="F:System.Data.SqlDbType.DateTime" />, <see cref="F:System.Data.SqlDbType.Decimal" />, <see cref="F:System.Data.SqlDbType.Float" />, <see cref="F:System.Data.SqlDbType.Int" />, <see cref="F:System.Data.SqlDbType.Money" />, <see cref="F:System.Data.SqlDbType.Numeric" />, <see cref="F:System.Data.SqlDbType.SmallDateTime" />, <see cref="F:System.Data.SqlDbType.SmallInt" />, <see cref="F:System.Data.SqlDbType.SmallMoney" />, <see cref="F:System.Data.SqlDbType.Timestamp" />, <see cref="F:System.Data.SqlDbType.TinyInt" />, <see cref="F:System.Data.SqlDbType.UniqueIdentifier" />, <see cref="F:System.Data.SqlDbType.Xml" />.
+          Only the following are allowed to be passed to this constructor as <paramref name="dbType" />: <see cref="F:System.Data.SqlDbType.Bit" />, <see cref="F:System.Data.SqlDbType.BigInt" />, <see cref="F:System.Data.SqlDbType.DateTime" />, <see cref="F:System.Data.SqlDbType.Decimal" />, <see cref="F:System.Data.SqlDbType.Float" />, <see cref="F:System.Data.SqlDbType.Int" />, <see cref="F:System.Data.SqlDbType.Money" />, <c>Numeric</c>, <see cref="F:System.Data.SqlDbType.SmallDateTime" />, <see cref="F:System.Data.SqlDbType.SmallInt" />, <see cref="F:System.Data.SqlDbType.SmallMoney" />, <see cref="F:System.Data.SqlDbType.Timestamp" />, <see cref="F:System.Data.SqlDbType.TinyInt" />, <see cref="F:System.Data.SqlDbType.UniqueIdentifier" />, <see cref="F:System.Data.SqlDbType.Xml" />.
         </para>
         <para>
           The following are the default values assigned to <paramref name="dtType" />, depending on the <see cref="T:System.Data.SqlDbType" /> (the <see cref="P:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionDatabase" />, <see cref="P:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionName" />, <see cref="P:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionOwningSchema" />, and <see cref="P:Microsoft.Data.SqlClient.Server.SqlMetaData.Type" /> properties are set to <see langword="null" />):
@@ -76,7 +76,7 @@
               <description>Compare options</description>
             </listheader>
             <item>
-              <term>see cref="F:System.Data.SqlDbType.Bit" /></term>
+              <term><see cref="F:System.Data.SqlDbType.Bit" /></term>
               <description>1</description>
               <description>1</description>
               <description>0</description>
@@ -132,7 +132,7 @@
               <description>None</description>
             </item>
             <item>
-              <term><see cref="F:System.Data.SqlDbType.Numeric" /></term>
+              <term><c>Numeric</c></term>
               <description>9</description>
               <description>18</description>
               <description>0</description>
@@ -535,7 +535,7 @@
         The <paramref name="name" /> is <see langword="null" />.
       </exception>
       <exception cref="T:System.ArgumentException">
-        A SqlDbType that is not allowed was passed to the constructor as <paramref name="dbType" />.
+        A <see cref="T:System.Data.SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />.
       </exception>
     </ctorNameDbTypeMaxLengthLocaleCompareOptions>
     <ctorNameDbTypeDatabaseOwningSchemaObjectName>
@@ -709,7 +709,7 @@
       </summary>
       <remarks>
         <para>
-          Only the following are allowed to be passed to the constructor as <paramref name="dbType" />: <see cref="F:System.Data.SqlDbType.BigInt" />, <see cref="F:System.Data.SqlDbType.Bit" />, <see cref="F:System.Data.DateTime" />, <see cref="F:System.Data.SqlDbType.Decimal" />, <see cref="F:System.Data.SqlDbType.Float" />, <see cref="F:System.Data.SqlDbType.Image" />, <see cref="F:System.Data.SqlDbType.Int" />, <see cref="F:System.Data.SqlDbType.Money" />, <see cref="F:System.Data.SqlDbType.NText" />, <see cref="F:System.Data.SqlDbType.Numeric" />, <see cref="F:System.Data.SqlDbType.Real" />, <see cref="F:System.Data.SqlDbType.SmallDateTime" />, <see cref="F:System.Data.SqlDbType.SmallInt" />, <see cref="F:System.Data.SqlDbType.SmallMoney" />, <see cref="F:System.Data.SqlDbType.Text" />, <see cref="F:System.Data.SqlDbType.TimeStamp" />, <see cref="F:System.Data.SqlDbType.TinyInt" />, <see cref="F:System.Data.SqlDbType.Udt" />, <see cref="F:System.Data.SqlDbType.UniqueIdentifier" />, <see cref="F:System.Data.SqlDbType.Variant" />, <see cref="F:System.Data.SqlDbType.Xml" />.
+          Only the following are allowed to be passed to the constructor as <paramref name="dbType" />: <see cref="F:System.Data.SqlDbType.BigInt" />, <see cref="F:System.Data.SqlDbType.Bit" />, <see cref="F:System.Data.SqlDbType.DateTime" />, <see cref="F:System.Data.SqlDbType.Decimal" />, <see cref="F:System.Data.SqlDbType.Float" />, <see cref="F:System.Data.SqlDbType.Image" />, <see cref="F:System.Data.SqlDbType.Int" />, <see cref="F:System.Data.SqlDbType.Money" />, <see cref="F:System.Data.SqlDbType.NText" />, <c>Numeric</c>, <see cref="F:System.Data.SqlDbType.Real" />, <see cref="F:System.Data.SqlDbType.SmallDateTime" />, <see cref="F:System.Data.SqlDbType.SmallInt" />, <see cref="F:System.Data.SqlDbType.SmallMoney" />, <see cref="F:System.Data.SqlDbType.Text" />, <see cref="F:System.Data.SqlDbType.Timestamp" />, <see cref="F:System.Data.SqlDbType.TinyInt" />, <see cref="F:System.Data.SqlDbType.Udt" />, <see cref="F:System.Data.SqlDbType.UniqueIdentifier" />, <see cref="F:System.Data.SqlDbType.Variant" />, <see cref="F:System.Data.SqlDbType.Xml" />.
         </para>
         <para>
           The following are the default values assigned to <paramref name="dbType" />, depending on the <see cref="T:System.Data.SqlDbType" /> (the <see cref="P:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionDatabase" />, <see cref="P:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionName" />, <see cref="P:Microsoft.Data.SqlClient.Server.SqlMetaData.XmlSchemaCollectionOwningSchema" />, and <see cref="P:Microsoft.Data.SqlClient.Server.SqlMetaData.Type" /> properties are set to <see langword="null" />):
@@ -733,7 +733,7 @@
               <description>None</description>
             </item>
             <item>
-              <term><see cref="F:System.Data.Bit" /></term>
+              <term><see cref="F:System.Data.SqlDbType.Bit" /></term>
               <description>1</description>
               <description>1</description>
               <description>0</description>
@@ -741,7 +741,7 @@
               <description>None</description>
             </item>
             <item>
-              <term><see cref="F:System.Data.DateTime" /></term>
+              <term><see cref="F:System.Data.SqlDbType.DateTime" /></term>
               <description>8</description>
               <description>23</description>
               <description>3</description>
@@ -845,7 +845,7 @@
               <description>IgnoreCase, IgnoreKanaType, IgnoreWidth</description>
             </item>
             <item>
-              <term><see cref="F:System.Data.SqlDbType.TimeStamp" /></term>
+              <term><see cref="F:System.Data.SqlDbType.Timestamp" /></term>
               <description>8</description>
               <description>0</description>
               <description>0</description>
@@ -899,7 +899,7 @@
         The <paramref name="name" /> is <see langword="null" />.
       </exception>
       <exception cref="T:System.ArgumentException">
-        A <see langword="SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />, or <paramref name="userDefinedType" /> points to a type that does not have <see cref="T:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute" /> declared.
+        A <see langword="SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />, or <paramref name="userDefinedType" /> points to a type that does not have <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" /> declared.
       </exception>
     </ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedType>
     <ctorNameDbTypeUserDefinedTypeServerTypeNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
@@ -1495,7 +1495,7 @@
         Indicates if the column in the table-valued parameter is unique.
       </summary>
       <value>
-        A <see langword="Boolean" /> value.
+        A <see cref="T:System.Boolean" /> value.
       </value>
       <remarks>
         <para>
@@ -1518,7 +1518,7 @@
       </value>
       <remarks>
         <para>
-          The default value is the current locale of the current thread for string-valued SqlDbTypes, and 0 for <see cref="T:System.Data.SqlDbTypes" />s that do not support collation.
+          The default value is the current locale of the current thread for string-valued <see cref="T:System.Data.SqlDbType" />s, and 0 for <see cref="T:System.Data.SqlDbType" />s that do not support collation.
         </para>
         <para>
           Returns 0 if the collation of the underlying column type is not defined.
@@ -1548,7 +1548,7 @@
           The potential maximum length for values of the specified column. Returns 0 for types other than fixed and varying length character and binary types. For variable size columns or parameters declared with the <c>Max</c> constructor parameter, it returns -1.
         </para>
         <para>
-          For <see cref="F:System.Data.DbType.Row" /> this returns the number of columns in the row metadata instance.
+          For <c>Row</c> this returns the number of columns in the row metadata instance.
         </para>
         <para>
           The default value is 0.
@@ -1663,7 +1663,7 @@
         Reports whether this column should use the default server value.
       </summary>
       <value>
-        A <see langword="Boolean" /> value.
+        A <see cref="T:System.Boolean" /> value.
       </value>
       <remarks>
         <para>

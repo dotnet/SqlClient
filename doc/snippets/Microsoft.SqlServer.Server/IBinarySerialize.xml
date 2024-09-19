@@ -24,11 +24,11 @@
         Generates a user-defined type (UDT) or user-defined aggregate from its binary form.
       </summary>
       <remarks>
-        The <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read" /> method must reconstitute your object using the information written by the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write" /> method.
+        The <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read(System.IO.BinaryReader)" /> method must reconstitute your object using the information written by the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write(System.IO.BinaryWriter)" /> method.
       </remarks>
       <example>
         <para>
-          The following example shows the implementation of the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read" /> method of a UDT, which uses a <see cref="T:System.IO.BinaryReader" /> to de-serialize a previously persisted UDT. This example assumes that the UDT has two data properties: <c>StringValue</c> and <c>DoubleValue</c>.
+          The following example shows the implementation of the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read(System.IO.BinaryReader)" /> method of a UDT, which uses a <see cref="T:System.IO.BinaryReader" /> to de-serialize a previously persisted UDT. This example assumes that the UDT has two data properties: <c>StringValue</c> and <c>DoubleValue</c>.
         </para>
         <!-- DataWorks_IBinarySerialize_Sample #1 -->
         <code language="c#">
@@ -117,11 +117,11 @@
         Converts a user-defined type (UDT) or user-defined aggregate into its binary format so that it may be persisted.
       </summary>
       <remarks>
-        Write sufficient information to the binary stream to allow the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read" /> method to reconstitute your UDT or user-defined aggregate.
+        Write sufficient information to the binary stream to allow the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read(System.IO.BinaryReader)" /> method to reconstitute your UDT or user-defined aggregate.
       </remarks>
       <example>
         <para>
-          The following example shows the implementation of the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write" /> method of a UDT, which uses a <see cref="T:System.IO.BinaryWriter" /> to serialize the UDT in the user-defined binary format. The purpose of the null character padding is to ensure that the string value is completely separated from the double value, so that one UDT is compared to another in Transact-SQL code, string bytes are compared to string bytes and double bytes are compared to double bytes.
+          The following example shows the implementation of the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write(System.IO.BinaryWriter)" /> method of a UDT, which uses a <see cref="T:System.IO.BinaryWriter" /> to serialize the UDT in the user-defined binary format. The purpose of the null character padding is to ensure that the string value is completely separated from the double value, so that one UDT is compared to another in Transact-SQL code, string bytes are compared to string bytes and double bytes are compared to double bytes.
         </para>
         <!-- DataWorks_IBinarySerialize_Sample #2 -->
         <code language="c#">

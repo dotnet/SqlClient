@@ -42,7 +42,7 @@
         The value of the <paramref name="options" /> parameter is <see langword="null" />.
       </exception>
       <exception cref="T:System.ArgumentOutOfRangeException">
-        The <paramref name="options" /> or <paramref name="userData" /> parameter is longer than <see cref="P:System.Uint16.MaxValue" /> or the value in the <paramref name="timeout" /> parameter is less than zero.
+        The <paramref name="options" /> or <paramref name="userData" /> parameter is longer than <see cref="F:System.UInt16.MaxValue" /> or the value in the <paramref name="timeout" /> parameter is less than zero.
       </exception>
       <seealso href="/sql/connect/ado-net/sql/query-notifications-sql-server">
         Using Query Notifications
@@ -76,7 +76,7 @@
         The value is <see langword="null" />.
       </exception>
       <exception cref="T:System.ArgumentException">
-        The value is longer than <see cref="P:System.Uint16.MaxValue" />.
+        The value is longer than <see cref="F:System.UInt16.MaxValue" />.
       </exception>
       <seealso href="/sql/connect/ado-net/sql/query-notifications-sql-server">
         Using Query Notifications
@@ -110,7 +110,7 @@
         This value is not used by the notifications infrastructure. Instead, it is a mechanism that allows an application to associate notifications with application state. The value specified in the <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.UserData" /> property is included in the SQL Server 2005 queue message.
       </remarks>
       <exception cref="T:System.ArgumentException">
-        The value is longer than <see cref="P:System.Uint16.MaxValue" />.
+        The value is longer than <see cref="F:System.UInt16.MaxValue" />.
       </exception>
       <seealso href="/sql/connect/ado-net/sql/query-notifications-sql-server">
         Using Query Notifications

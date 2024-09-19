@@ -11,22 +11,22 @@
       </summary>
     </SensitivityRank>
     <NotDefined>
-      No sensitivity rank defined.
+      <summary>No sensitivity rank defined.</summary>
     </NotDefined>
     <None>
-      Corresponds to rank value of 0.
+      <summary>Corresponds to rank value of 0.</summary>
     </None>
     <Low>
-      Corresponds to rank value of 10.
+      <summary>Corresponds to rank value of 10.</summary>
     </Low>
     <Medium>
-      Corresponds to rank value 20.
+      <summary>Corresponds to rank value 20.</summary>
     </Medium>
     <High>
-      Corresponds to rank value 30.
+      <summary>Corresponds to rank value 30.</summary>
     </High>
     <Critical>
-      Corresponds to rank value 40.
+      <summary>Corresponds to rank value 40.</summary>
     </Critical>
   </members>
 </docs>

@@ -179,7 +179,7 @@
           You must specify the <see cref="P:Microsoft.SqlServer.Server.SqlUserDefinedAggregateAttribute.MaxByteSize" /> property with the UserDefined serialization <see cref="T:Microsoft.SqlServer.Server.Format" />.
         </para>
         <para>
-          The maximum allowed value for this property is specified by the <see cref="P:Microsoft.SqlServer.Server.SqlUserDefinedAggregateAttribute.MaxByteSizeValue" /> field.
+          The maximum allowed value for this property is specified by the <see cref="F:Microsoft.SqlServer.Server.SqlUserDefinedAggregateAttribute.MaxByteSizeValue" /> field.
         </para>
         <para>
           The maximum size allowed is 2 gigabytes (GB). You can specify a number from 1 to 8000 bytes, or -1 to represent a value larger than 8000 bytes, up to 2 gigabytes.
