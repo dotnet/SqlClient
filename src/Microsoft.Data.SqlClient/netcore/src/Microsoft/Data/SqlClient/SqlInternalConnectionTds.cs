@@ -1048,7 +1048,6 @@ namespace Microsoft.Data.SqlClient
                 default:
                     throw ADP.InvalidIsolationLevel(iso);
             }
-
             TdsParserStateObject stateObj = _parser._physicalStateObj;
             TdsParser parser = _parser;
             bool mustPutSession = false;
