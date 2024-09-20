@@ -1123,7 +1123,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PoolBlockingPeriod/*'/>
         [System.ComponentModel.DisplayNameAttribute("Pool Blocking Period")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
-        public PoolBlockingPeriod PoolBlockingPeriod { get { throw null; } set { } }/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*'/>
+        public PoolBlockingPeriod PoolBlockingPeriod { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*'/>
         [System.ComponentModel.DisplayNameAttribute("Pooling")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool Pooling { get { throw null; } set { } }
@@ -1203,9 +1204,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SelectCommand/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public new Microsoft.Data.SqlClient.SqlCommand SelectCommand { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/System.Data.IDbDataAdapter.DeleteCommand/*' />
         System.Data.IDbCommand System.Data.IDbDataAdapter.DeleteCommand { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/System.Data.IDbDataAdapter.InsertCommand/*' />
         System.Data.IDbCommand System.Data.IDbDataAdapter.InsertCommand { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/System.Data.IDbDataAdapter.SelectCommand/*' />
         System.Data.IDbCommand System.Data.IDbDataAdapter.SelectCommand { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/System.Data.IDbDataAdapter.UpdateCommand/*' />
         System.Data.IDbCommand System.Data.IDbDataAdapter.UpdateCommand { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateBatchSize/*'/>
         public override int UpdateBatchSize { get { throw null; } set { } }
@@ -1220,6 +1225,7 @@ namespace Microsoft.Data.SqlClient
         protected override void OnRowUpdated(System.Data.Common.RowUpdatedEventArgs value) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdating/*'/>
         protected override void OnRowUpdating(System.Data.Common.RowUpdatingEventArgs value) { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/System.ICloneable.Clone/*' />
         object System.ICloneable.Clone() { throw null; }
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SqlDataReader/*'/>
