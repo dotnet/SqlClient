@@ -5,16 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
@@ -462,9 +459,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
                         // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
                         isConnected = socket.Connected && checkErrorLst.Count == 0;
-
-                        // workaround - socket can appear connected to socket.Select if server responded with RST
-                        isConnected = isConnected && (socket.Poll(100, SelectMode.SelectRead) && socket.Available == 0);
                     }
 
                     if (isConnected)
@@ -545,7 +539,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
             // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
             // Socket.Select is used because it supports timeouts, while Socket.Connect does not
-            // Socket.Select also allows us to try multiple sockets using a single thread
+            // Socket.Select also allows us to wait for multiple sockets using a single thread
+            // Socket.Select will return as soon any any socket in the list meets read/write/error
 
             List<Socket> socketsInFlight = new List<Socket>(sockets.Count);
             socketsInFlight.AddRange(sockets);
@@ -555,6 +550,9 @@ namespace Microsoft.Data.SqlClient.SNI
             List<Socket> checkErrorLst = new();
             SocketException lastError = null;
 
+            // Each time the loop repeats, we will either end with a connected socket or an errored socket
+            // A connected socket results in all other sockets getting disposed and returning that socket
+            // An errored socket results in that socket being removed from socketsInFlight and repeating the loop
             while (connectedSocket == null && socketsInFlight.Count > 0 && !timeout.IsExpired)
             {
                 try
@@ -564,17 +562,18 @@ namespace Microsoft.Data.SqlClient.SNI
                     // https://github.com/dotnet/SqlClient/pull/1029#issuecomment-875364044
                     // which states that Socket.Select can't handle timeouts greater than int.MaxValue microseconds
                     do
-                    {
+                    { // timeout loop for when select timed out but no sockets have changed state
                         // Socket.Select timeout is in microseconds and can only handle up to int.MaxValue
+                        // This means our connection timeout can be greater than the max select timeout
                         socketSelectTimeout =
                             checked((int)(Math.Min(timeout.MillisecondsRemainingInt, int.MaxValue / 1000) * 1000));
 
-                        checkReadLst = new List<Socket>(sockets.Count);
-                        checkReadLst.AddRange(sockets);
-                        checkWriteLst = new List<Socket>(sockets.Count);
-                        checkWriteLst.AddRange(sockets);
-                        checkErrorLst = new List<Socket>(sockets.Count);
-                        checkErrorLst.AddRange(sockets);
+                        checkReadLst = new List<Socket>(socketsInFlight.Count);
+                        checkReadLst.AddRange(socketsInFlight);
+                        checkWriteLst = new List<Socket>(socketsInFlight.Count);
+                        checkWriteLst.AddRange(socketsInFlight);
+                        checkErrorLst = new List<Socket>(socketsInFlight.Count);
+                        checkErrorLst.AddRange(socketsInFlight);
 
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
                                                                     "Determining the status of sockets during the remaining timeout of {0} microseconds.",
@@ -582,7 +581,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                         // Socket.Select will return as soon as any socket is readable, writable, or errored
                         Socket.Select(checkReadLst, checkWriteLst, checkErrorLst, socketSelectTimeout);
-                        // nothing selected means timeout
+                        // nothing selected means select timed out
                     } while (checkReadLst.Count == 0 && checkWriteLst.Count == 0 && checkErrorLst.Count == 0 && !timeout.IsExpired);
                 }
                 catch (SocketException e)
@@ -593,7 +592,6 @@ namespace Microsoft.Data.SqlClient.SNI
                         $"{nameof(SNITCPHandle)}.{nameof(ParallelConnect)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
                     lastError = e;
                 }
-
 
                 if (timeout.IsExpired)
                 {
@@ -632,7 +630,9 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 if (connectedSocket == null)
                 {
-                    // Remove any remaining (unsuccessful) sockets from socketsInFlight
+                    // Remove any remaining (unsuccessful) sockets from socketsInFlight so that we
+                    // loop again on any remaining socketsInFlight
+
                     foreach (Socket socket in checkErrorLst)
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent(nameof(SNITCPHandle), EventType.INFO,
@@ -664,6 +664,12 @@ namespace Microsoft.Data.SqlClient.SNI
                             "Disposing non-selected socket: {0}", socket?.RemoteEndPoint);
                     socket?.Dispose();
                 }
+            }
+
+            if (connectedSocket != null && lastError != null)
+            {
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    $"{nameof(SNITCPHandle)}.{nameof(ParallelConnect)}{EventType.ERR}No connections succeeded. Last error: {lastError}");
             }
 
             return connectedSocket;
