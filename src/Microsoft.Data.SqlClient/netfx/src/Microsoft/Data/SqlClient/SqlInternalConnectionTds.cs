@@ -26,15 +26,15 @@ namespace Microsoft.Data.SqlClient
     internal class SessionStateRecord
     {
         internal bool _recoverable;
-        internal UInt32 _version;
-        internal Int32 _dataLength;
+        internal uint _version;
+        internal int _dataLength;
         internal byte[] _data;
     }
 
     internal class SessionData
     {
         internal const int _maxNumberOfSessionStates = 256;
-        internal UInt32 _tdsVersion;
+        internal uint _tdsVersion;
         internal bool _encrypted;
 
         internal string _database;
@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient
         public void AssertUnrecoverableStateCountIsCorrect()
         {
             byte unrecoverableCount = 0;
-            foreach (var state in _delta)
+            foreach (SessionStateRecord state in _delta)
             {
                 if (state != null && !state._recoverable)
                     unrecoverableCount++;
@@ -136,10 +136,9 @@ namespace Microsoft.Data.SqlClient
         // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
-        internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
+        internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
-        private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
 
         // Certificate auth calbacks.
         ServerCertificateValidationCallback _serverCallback;
@@ -288,7 +287,7 @@ namespace Microsoft.Data.SqlClient
         private int _asyncCommandCount; // number of async Begins minus number of async Ends.
 
         // FOR SSE
-        private string _instanceName = String.Empty;
+        private string _instanceName = string.Empty;
 
         // FOR NOTIFICATIONS
         private DbConnectionPoolIdentity _identity; // Used to lookup info for notification matching Start().
@@ -496,7 +495,6 @@ namespace Microsoft.Data.SqlClient
             _accessTokenCallback = accessTokenCallback;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
 
             _serverCallback = serverCallback;
             _clientCallback = clientCallback;
@@ -504,7 +502,7 @@ namespace Microsoft.Data.SqlClient
 
             _identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");
-            Debug.Assert(credential == null || (String.IsNullOrEmpty(connectionOptions.UserID) && String.IsNullOrEmpty(connectionOptions.Password)), "cannot mix the new secure password system and the connection string based password");
+            Debug.Assert(credential == null || (string.IsNullOrEmpty(connectionOptions.UserID) && string.IsNullOrEmpty(connectionOptions.Password)), "cannot mix the new secure password system and the connection string based password");
 
             Debug.Assert(credential == null || !connectionOptions.IntegratedSecurity, "Cannot use SqlCredential and Integrated Security");
             Debug.Assert(credential == null || !connectionOptions.ContextConnection, "Cannot use SqlCredential with context connection");
@@ -1176,7 +1174,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            string transactionName = name == null ? String.Empty : name;
+            string transactionName = name == null ? string.Empty : name;
 
             if (!_parser.Is2005OrNewer)
             {
@@ -1717,7 +1715,7 @@ namespace Microsoft.Data.SqlClient
                     // If not a connection to Azure SQL, Readonly with FailoverPartner is not supported
                     if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
                     {
-                        if (!String.IsNullOrEmpty(ConnectionOptions.FailoverPartner))
+                        if (!string.IsNullOrEmpty(ConnectionOptions.FailoverPartner))
                         {
                             throw SQL.ROR_FailoverNotSupportedConnString();
                         }
@@ -1853,7 +1851,7 @@ namespace Microsoft.Data.SqlClient
                     _parser.Disconnect();
 
                 _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
-                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, String.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
+                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, string.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
 
                 try
                 {
@@ -1903,7 +1901,7 @@ namespace Microsoft.Data.SqlClient
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
                         _currentFailoverPartner = null;
-                        _instanceName = String.Empty;
+                        _instanceName = string.Empty;
 
                         routingAttempts++;
 
@@ -2112,7 +2110,7 @@ namespace Microsoft.Data.SqlClient
                     _parser.Disconnect();
 
                 _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
-                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, String.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
+                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, string.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
 
                 ServerInfo currentServerInfo;
                 if (useFailoverHost)
@@ -2176,7 +2174,7 @@ namespace Microsoft.Data.SqlClient
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
                         _currentFailoverPartner = null;
-                        _instanceName = String.Empty;
+                        _instanceName = string.Empty;
 
                         AttemptOneLogin(
                                 currentServerInfo,
@@ -2693,7 +2691,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (_newDbConnectionPoolAuthenticationContext != null)
                     {
-                         _dbConnectionPool.AuthenticationContexts.TryAdd(_dbConnectionPoolAuthenticationContextKey, _newDbConnectionPoolAuthenticationContext);
+                        _dbConnectionPool.AuthenticationContexts.TryAdd(_dbConnectionPoolAuthenticationContextKey, _newDbConnectionPoolAuthenticationContext);
                     }
                 }
             }
