@@ -15,7 +15,7 @@ The <xref:Microsoft.Data.SqlDbTypeExtensions> class provides <xref:System.Data.S
       </remarks>
     </SqlDbTypeExtensions>
     <SqlJson name="default">
-      <summary>Gets the <see cref="T:System.Data.SqlDbType" /> enum value for JSON datatype.</summary>
+      <summary>Gets the <see cref="T:System.Data.SqlDbType" /> enum value for the JSON datatype.</summary>
       <returns>
         <see cref="T:System.Data.SqlDbType" /> enum value for JSON datatype.
       </returns>
