@@ -62,30 +62,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
          This unit test is going to assess an issue where a failed decryption leaves a connection in a bad state  
          when it is returned to the connection pool. If a subsequent connection is retried it will result in an "Internal connection fatal error",
          which causes that connection to be doomed, preventing it from being returned to the pool. 
-         Consequently, retrying a new connection will encounter the same decryption error, leading to a repetitive failure cycle.
+         Consequently, retrying a third connection will encounter the same decryption error, leading to a repetitive failure cycle.
 
          The purpose of this unit test is to simulate a decryption error and verify that the connection remains usable when returned to the pool. 
          It aims to confirm that three consecutive connections will consistently fail with the "Failed to decrypt column" error.
-
-         Before the fix was implemented, this is what happens internally:
-
-         1. A connection is used from a connection in pool.
-         2. That connection is used to query a table with a column that is encrypted.
-         3. When the decryption failed for some reason, a "Failed to decrypt column." error is raised. The connection is returned to the connection pool 
-            with the error still in its buffer.
-         4. When the client connects a second time, a connection is used from the pool again and grabbing the same connection recently returned back to the pool.
-         5. This time when the connection is opened it will raise an "Internal connection fatal error." because that connection still has an existing error in it.  
-            Thus, the driver dooms that connection since  the error is fatal and not returned it back to the connection pool.
-         6. When the client connects the third time, it will grab an unused connection from the connection pool. 
-         7. That new connection is used to query a table with a column that is encrypted.
-         8. When the decryption failed for some reason, a "Failed to decrypt column." error is raised. The connection is returned to the connection pool 
-            with the error still in its buffer.
-         9. And the cycle continues.
-
-         So, this unit test will try to connect 3 times and do the same query to ensure that the expected error messages are identical each time, 
-         "Failed to decrypt column". This proves that the fix worked, and the connection is returned to the pool in a good state. 
-         Although, 2 tries are enough to ascertain that the fix worked but for completeness, same numbers of connection attempts as in the repro 
-         are performed. 
         */
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void ForcedColumnDecryptErrorTestShouldFail()
@@ -118,6 +98,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             // Three consecutive connections should fail with "Failed to decrypt column" error. This proves that an error in decryption
             // does not leave the connection in a bad state.
+            // In each try, when a "Failed to decrypt error" is thrown, the connection's TDS Parser state object buffer is drained of any
+            // pending data so it does not interfere with future operations. In addition, the TDS parser state object's reader.DataReady flag
+            // is set to false so that the calling function that catches the exception will not continue to use the reader. Otherwise, it will 
+            // timeout waiting to read data that doesn't exist. Also, the TDS Parser state object HasPendingData flag is also set to false
+            // to indicate that the buffer has been cleared and to avoid it getting cleared again in SqlDataReader.TryCloseInternal function.
+            // Finally, after successfully handling the decryption error, the connection is then returned back to the connection pool without 
+            // an error. A proof that the connection's state object is clean is in the second connection being able to throw the same error.
+            // The third connection is for making sure we test 3 times as the minimum number of connections to reproduce the issue previously.
             for (int i = 0; i < 3; i++)
             {
                 using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
