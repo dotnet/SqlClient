@@ -54,12 +54,15 @@ jobs:
   - name: pathToDownloadedNuget # path to the downloaded nuget files
     value: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
 
+  - name: BuildType
+    value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
+
   steps:
   - script: SET
     displayName: 'Print Environment Variables'
 
   - task: NuGetToolInstaller@1
-    displayName: 'Use NuGet '
+    displayName: 'Use NuGet'
 
   - powershell: |
       #Sets Variables for AssemblyFileVersion, AssemblyVersion and NugetPackageVersion
@@ -112,6 +115,7 @@ jobs:
 
   - powershell: |
       if($env:CDP_BUILD_TYPE -eq 'Official')
+
       {
           # Recursively find all .dll files in TempFolder (installed nuget folder)
           # Microsoft.Data.SqlClient.dll and Microsoft.Data.SqlClient.resources.dll (in localized folders) should have strong name

@@ -396,9 +396,20 @@ namespace Microsoft.Data.SqlClient.SNI
                                                          byte[][] _sniSpnBuffer)
         {
 #if NET7_0_OR_GREATER
-            _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = Encoding.Unicode.GetString(_sniSpnBuffer[0]) });
-            sendBuff = _negotiateAuth.GetOutgoingBlob(receivedBuff, out NegotiateAuthenticationStatusCode statusCode)!;
-            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}, StatusCode={1}", _sessionHandle?.ConnectionId, statusCode);
+           NegotiateAuthenticationStatusCode statusCode = NegotiateAuthenticationStatusCode.UnknownCredentials;
+
+            for (int i = 0; i < _sniSpnBuffer.Length; i++)
+            {
+                _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = Encoding.Unicode.GetString(_sniSpnBuffer[i]) });
+                sendBuff = _negotiateAuth.GetOutgoingBlob(receivedBuff, out statusCode)!;
+                // Log session id, status code and the actual SPN used in the negotiation
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}, StatusCode={1}, SPN={2}", _sessionHandle?.ConnectionId, statusCode, _negotiateAuth.TargetName);
+                if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
+                    break; // Successful case, exit the loop with current SPN.
+                else
+                    _negotiateAuth = null; // Reset _negotiateAuth to be generated again for next SPN.
+            }
+
             if (statusCode is not NegotiateAuthenticationStatusCode.Completed and not NegotiateAuthenticationStatusCode.ContinueNeeded)
             {
                 throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + Environment.NewLine + statusCode);
