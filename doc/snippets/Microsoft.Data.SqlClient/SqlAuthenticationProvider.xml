@@ -109,7 +109,7 @@
     </SetProvider>
     <BeforeLoad>
       <param name="authenticationMethod">The authentication method.</param>
-      <summary>This method is called immediately before the provider is added to SQL authentication provider registry.</summary>
+      <summary>This method is called immediately before the provider is added to the SQL authentication provider registry.</summary>
       <remarks>
         Avoid performing long-waiting tasks in this method, since it can block other threads from accessing the provider registry.
       </remarks>

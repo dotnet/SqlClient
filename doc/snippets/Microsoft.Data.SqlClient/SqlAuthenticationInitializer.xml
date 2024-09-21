@@ -2,7 +2,7 @@
   <members name="SqlAuthenticationInitializer">
     <SqlAuthenticationInitializer>
       <summary>
-        Called during instantiation of the first <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> instance.
+        Called during the opening of the first <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> instance to specify an Authentication connection string attribute.
       </summary>
     </SqlAuthenticationInitializer>
     <ctor>
@@ -12,7 +12,7 @@
     </ctor>
     <Initialize>
       <summary>
-        When overridden in a derived class, initializes the authentication initializer. This method is called immediately after the <see cref="M:Microsoft.Data.SqlClient.SqlAuthenticationInitializer.#ctor" /> constructor during instantiation of the first <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> instance.
+        When overridden in a derived class, initializes the authentication initializer. This method is called immediately after the <see cref="M:Microsoft.Data.SqlClient.SqlAuthenticationInitializer.#ctor" /> constructor during the opening of the first <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> instance to specify an Authentication connection string attribute.
       </summary>
     </Initialize>
   </members>
