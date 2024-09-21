@@ -1,4 +1,4 @@
-﻿// <Snippet1>
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 class Program

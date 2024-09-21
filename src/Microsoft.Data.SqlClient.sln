@@ -73,6 +73,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data", "Microsoft.Data", "{908C7DD3-C999-40A6-9433-9F5ACA7C36F5}"
 	ProjectSection(SolutionItems) = preProject
 		..\doc\snippets\Microsoft.Data\OperationAbortedException.xml = ..\doc\snippets\Microsoft.Data\OperationAbortedException.xml
+		..\doc\snippets\Microsoft.Data\SqlDbTypeExtensions.xml = ..\doc\snippets\Microsoft.Data\SqlDbTypeExtensions.xml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.Sql", "Microsoft.Data.Sql", "{0CE216CE-8072-4985-B248-61F0D0BE9C2E}"

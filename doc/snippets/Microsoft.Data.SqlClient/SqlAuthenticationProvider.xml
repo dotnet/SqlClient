@@ -9,10 +9,12 @@
         The following example demonstrates implementing a custom SqlAuthenticationProvider and providing the same to SqlClient for overriding Device Code Flow authentication mode:
         <code language="c#">
           using System;
+          using System.Collections.Generic;
+          using System.Linq;
           using System.Threading.Tasks;
-          using Microsoft.Identity.Client;
           using Microsoft.Data.SqlClient;
-          
+          using Microsoft.Identity.Client;
+
           namespace CustomAuthenticationProviderExamples
           {
               /// &lt;summary&gt;
@@ -21,23 +23,42 @@
               /// &lt;/summary&gt;
               public class CustomDeviceCodeFlowAzureAuthenticationProvider : SqlAuthenticationProvider
               {
+                  private const string ClientId = "my-client-id";
+                  private const string ClientName = "My Application Name";
+                  private const string DefaultScopeSuffix = "/.default";
+
+                  // Maintain a copy of the PublicClientApplication object to cache the underlying access tokens it provides
+                  private static IPublicClientApplication pcApplication;
+
                   public override async Task&lt;SqlAuthenticationToken&gt; AcquireTokenAsync(SqlAuthenticationParameters parameters)
                   {
-                      const string ClientId = "my-client-id";
-                      const string ClientName = "My Application Name";
-                      const string DefaultScopeSuffix = "/.default";
-
                       string[] scopes = [ parameters.Resource.EndsWith(DefaultScopeSuffix) ? parameters.Resource : parameters.Resource + DefaultScopeSuffix ];
 
-                      IPublicClientApplication app = PublicClientApplicationBuilder.Create(ClientId)
-                          .WithAuthority(parameters.Authority)
-                          .WithClientName(ClientName)
-                          .WithRedirectUri("https://login.microsoftonline.com/common/oauth2/nativeclient")
-                          .Build();
+                      IPublicClientApplication app = pcApplication;
+                      if (app == null)
+                      {
+                          pcApplication = app = PublicClientApplicationBuilder.Create(ClientId)
+                              .WithAuthority(parameters.Authority)
+                              .WithClientName(ClientName)
+                              .WithRedirectUri("https://login.microsoftonline.com/common/oauth2/nativeclient")
+                              .Build();
+                      }
+
+                      AuthenticationResult result;
                       using CancellationTokenSource connectionTimeoutCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(parameters.ConnectionTimeout));
 
-                      AuthenticationResult result = await app.AcquireTokenWithDeviceCode(scopes, CustomDeviceFlowCallback)
-                          .ExecuteAsync(connectionTimeoutCancellation.Token);
+                      try
+                      {
+                          IEnumerable&lt;IAccount&gt; accounts = await app.GetAccountsAsync();
+                          result = await app.AcquireTokenSilent(scopes, accounts.FirstOrDefault())
+                              .ExecuteAsync(connectionTimeoutCancellation.Token);
+                      }
+                      catch (MsalUiRequiredException)
+                      {
+                          result = await app.AcquireTokenWithDeviceCode(scopes, deviceCodeResult => CustomDeviceFlowCallback(deviceCodeResult))
+                              .ExecuteAsync(connectionTimeoutCancellation.Token);
+                      }
+
                       return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
                   }
 

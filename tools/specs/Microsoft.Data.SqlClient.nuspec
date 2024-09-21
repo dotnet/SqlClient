@@ -9,6 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
+    <readme>README.md</readme>
     <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$"/>
     <description>The current data provider for SQL Server and Azure SQL databases. This has replaced System.Data.SqlClient. These classes provide access to SQL and encapsulate database-specific protocols, including tabular data stream (TDS).
     
@@ -76,6 +77,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
   </metadata>
   <files>
     <file src="..\icons\dotnet.png" target="" />
+    <file src="..\..\README.md" target="" />
 
     <!-- ref NetFx -->
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net462\Microsoft.Data.SqlClient.dll" target="ref\net462\" exclude="" />
