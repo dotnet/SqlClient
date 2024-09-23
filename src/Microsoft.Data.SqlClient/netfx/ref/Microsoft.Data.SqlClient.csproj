@@ -26,5 +26,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
+    <PackageReference Include="Microsoft.Identity.Client.Broker" Version="4.64.0" />
   </ItemGroup>
 </Project>

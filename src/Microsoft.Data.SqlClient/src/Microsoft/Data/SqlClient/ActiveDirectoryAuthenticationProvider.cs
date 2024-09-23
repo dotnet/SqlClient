@@ -4,14 +4,19 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Azure.Core;
 using Azure.Identity;
+using Microsoft.Data.Common;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensibility;
 
 namespace Microsoft.Data.SqlClient
@@ -107,10 +112,19 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
-        private Func<System.Windows.Forms.IWin32Window> _iWin32WindowFunc = null;
+        /// <summary>
+        /// 
+        /// </summary>
+        public delegate Task<AuthenticationResult> InvokeDelegate(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
+            SqlAuthenticationMethod authenticationMethod, CancellationTokenSource cts, ICustomWebUi customWebUI, Func<DeviceCodeResult, Task> deviceCodeFlowCallback);
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
-        public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => this._iWin32WindowFunc = iWin32WindowFunc;
+        private System.Windows.Forms.Control _control = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="control"></param>
+        public void SetIWin32WindowFunc(System.Windows.Forms.Control control) => this._control = control;
 #endif
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
@@ -207,7 +221,7 @@ namespace Microsoft.Data.SqlClient
 #endif
             PublicClientAppKey pcaKey = new(parameters.Authority, redirectUri, _applicationClientId
 #if NETFRAMEWORK
-            , _iWin32WindowFunc
+            , () => (IWin32Window) _control
 #endif
                 );
 
@@ -284,14 +298,37 @@ namespace Microsoft.Data.SqlClient
                     // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
                     // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
                     // or the user needs to perform two factor authentication.
-                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
+
+#if NETFRAMEWORK
+                    Func<Task<AuthenticationResult>> func = async () =>
+                    {
+                        return await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback
+                        ).ConfigureAwait(false);
+                    };
+
+                    result = await (Task<AuthenticationResult>)_control.Invoke(func);
+#else
+                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback
+                        ).ConfigureAwait(false);
+#endif
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                 }
 
                 if (result == null)
                 {
                     // If no existing 'account' is found, we request user to sign in interactively.
-                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
+#if NETFRAMEWORK
+                    Func<Task<AuthenticationResult>> func = async () =>
+                    {
+                        return await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback
+                        ).ConfigureAwait(false);
+                    };
+
+                    result = await (Task<AuthenticationResult>)_control.Invoke(func);
+#else
+                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback
+                        ).ConfigureAwait(false);
+#endif
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                 }
             }
@@ -365,6 +402,7 @@ namespace Microsoft.Data.SqlClient
                      */
                     ctsInteractive.CancelAfter(180000);
 #endif
+
                     if (customWebUI != null)
                     {
                         return await app.AcquireTokenInteractive(scopes)
@@ -393,12 +431,12 @@ namespace Microsoft.Data.SqlClient
                          *
                          * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
                          */
-                        return await app.AcquireTokenInteractive(scopes)
-                            .WithCorrelationId(connectionId)
-                            .WithLoginHint(userId)
-                            .ExecuteAsync(ctsInteractive.Token)
-                            .ConfigureAwait(false);
-                    }
+                         return await app.AcquireTokenInteractive(scopes)
+                             .WithCorrelationId(connectionId)
+                             .WithLoginHint(userId)
+                             .ExecuteAsync(ctsInteractive.Token)
+                             .ConfigureAwait(false);
+                     }
                 }
                 else
                 {
@@ -545,14 +583,15 @@ namespace Microsoft.Data.SqlClient
             IPublicClientApplication publicClientApplication;
 
 #if NETFRAMEWORK
-            if (_iWin32WindowFunc != null)
+            if (_control != null)
             {
                 publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
                 .WithAuthority(publicClientAppKey._authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
                 .WithRedirectUri(publicClientAppKey._redirectUri)
-                .WithParentActivityOrWindow(_iWin32WindowFunc)
+                .WithParentActivityOrWindow(() => _control)
+                .WithBroker(new BrokerOptions(BrokerOptions.OperatingSystems.Windows))
                 .Build();
             }
             else
@@ -567,6 +606,46 @@ namespace Microsoft.Data.SqlClient
             }
 
             return publicClientApplication;
+        }
+
+
+        // This is your window handle!
+        static IntPtr GetParent()
+        {
+            Process currentProcess = Process.GetCurrentProcess();
+            return currentProcess.MainWindowHandle;
+        }
+
+        enum GetAncestorFlags
+        {
+            GetParent = 1,
+            GetRoot = 2,
+            /// <summary>
+            /// Retrieves the owned root window by walking the chain of parent and owner windows returned by GetParent.
+            /// </summary>
+            GetRootOwner = 3
+        }
+
+        /// <summary>
+        /// Retrieves the handle to the ancestor of the specified window.
+        /// </summary>
+        /// <param name="hwnd">A handle to the window whose ancestor is to be retrieved.
+        /// If this parameter is the desktop window, the function returns NULL. </param>
+        /// <param name="flags">The ancestor to be retrieved.</param>
+        /// <returns>The return value is the handle to the ancestor window.</returns>
+        [DllImport("user32.dll", ExactSpelling = true)]
+        static extern IntPtr GetAncestor(IntPtr hwnd, GetAncestorFlags flags);
+
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetConsoleWindow();
+
+        // This is your window handle!
+        IntPtr GetConsoleOrTerminalWindow()
+        {
+            IntPtr consoleHandle = GetConsoleWindow();
+            IntPtr handle = GetAncestor(consoleHandle, GetAncestorFlags.GetRootOwner);
+
+            return handle;
         }
 
         private static TokenCredentialData CreateTokenCredentialInstance(TokenCredentialKey tokenCredentialKey, string secret)
