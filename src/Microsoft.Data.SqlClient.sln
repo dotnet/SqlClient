@@ -217,6 +217,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.SqlServer.Server"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestClr", "TestClr", "{CDE508A5-F5D0-4A59-A4EF-978833830727}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj", "{9A8996A8-6484-4AA7-B50F-F861430EDE2F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -477,6 +479,12 @@ Global
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x64.Build.0 = Release|Any CPU
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.ActiveCfg = Release|Any CPU
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.Build.0 = Release|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Release|x64.ActiveCfg = Release|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -513,6 +521,7 @@ Global
 		{6C88F00F-9597-43AD-9E5F-9B344DA3B16F} = {CDE508A5-F5D0-4A59-A4EF-978833830727}
 		{B73A7063-37C3-415D-AD53-BB3DA20ABD6E} = {CDE508A5-F5D0-4A59-A4EF-978833830727}
 		{E0A6BB21-574B-43D9-890D-6E1144F2EE9E} = {CDE508A5-F5D0-4A59-A4EF-978833830727}
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}
