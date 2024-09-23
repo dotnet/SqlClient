@@ -564,7 +564,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 // Try to connect.  If we're successful, store this task into the result task.
                 await connectTask.ConfigureAwait(false);
                 // A connection attempt could return quickly if a server refuses connection or there is some other error
-                success = tcs.TrySetResult(socket) && socket.Connected;
+                success = socket.Connected && tcs.TrySetResult(socket);
                 if (success)
                 {
                     // Whichever connection completes the return task is responsible for disposing
