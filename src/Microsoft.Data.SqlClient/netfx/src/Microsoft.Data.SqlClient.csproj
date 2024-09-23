@@ -767,26 +767,16 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
-    <PackageReference Include="System.Text.Encodings.Web">
-      <Version>$(SystemTextEncodingsWebVersion)</Version>
-    </PackageReference>
+    <PackageReference Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebVersion)" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <Version>$(MicrosoftDataSqlClientSniVersion)</Version>
       <PrivateAssets>All</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Azure.Identity">
-      <Version>$(AzureIdentityVersion)</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect">
-      <version>$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)</version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens">
-      <version>$(MicrosoftIdentityModelJsonWebTokensVersion)</version>
-    </PackageReference>
-    <PackageReference Include="System.Buffers">
-      <Version>$(SystemBuffersVersion)</Version>
-    </PackageReference>
+    <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
+    <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
   </ItemGroup>
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />
