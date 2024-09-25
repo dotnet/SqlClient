@@ -614,7 +614,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
       <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
     </Compile>
-    
+
     <Compile Include="Common\Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
     <Compile Include="Common\System\NotImplemented.cs" />
     <Compile Include="Common\System\Net\ContextFlagsPal.cs" />
@@ -748,6 +748,10 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
+    </Compile>
+
     <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates.cs" />
     <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates_types.cs" />
     <Compile Include="Common\Interop\Windows\Kernel32\Interop.CloseHandle.cs" />
@@ -791,7 +795,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs" />
   </ItemGroup>
 
   <!-- Unix only -->
