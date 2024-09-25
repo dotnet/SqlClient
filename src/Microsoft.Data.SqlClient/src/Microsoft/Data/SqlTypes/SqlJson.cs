@@ -11,9 +11,7 @@ using System.Text.Json;
 
 namespace Microsoft.Data.SqlTypes
 {
-    /// <summary>
-    /// Represents the Json Data type in SQL Server.
-    /// </summary>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/SqlJson/*' />
     public class SqlJson : INullable
     {
 
@@ -24,19 +22,13 @@ namespace Microsoft.Data.SqlTypes
         
         private readonly string? _jsonString;
 
-        /// <summary>
-        /// Parameterless constructor. Initializes a new instance of the SqlJson class which 
-        /// represents a null JSON value.
-        /// </summary>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor1/*' />
         public SqlJson()
         {
             SetNull();
         }
 
-        /// <summary>
-        /// Takes a <see cref="string"/> as input and initializes a new instance of the SqlJson class.
-        /// </summary>
-        /// <param name="jsonString"></param>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor2/*' />
         public SqlJson(string? jsonString) 
         {
             if (jsonString == null)
@@ -51,10 +43,7 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <summary>
-        /// Takes a <see cref="JsonDocument"/> as input and initializes a new instance of the SqlJson class.
-        /// </summary>
-        /// <param name="jsonDoc"></param>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor3/*' />
         public SqlJson(JsonDocument? jsonDoc) 
         {
             if (jsonDoc == null)
@@ -67,17 +56,13 @@ namespace Microsoft.Data.SqlTypes
             }
         }
 
-        /// <inheritdoc/>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/IsNull/*' />
         public bool IsNull => _isNull;
 
-        /// <summary>
-        /// Represents a null instance of the <see cref="SqlJson"/> type.
-        /// </summary>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/Null/*' />
         public static SqlJson Null => new();
 
-        /// <summary>
-        /// Gets the string representation of the Json content of this <see cref="SqlJson" /> instance.
-        /// </summary>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/Value/*' />
         public string Value 
         { 
             get
