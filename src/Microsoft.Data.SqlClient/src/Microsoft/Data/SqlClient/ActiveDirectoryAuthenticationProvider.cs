@@ -407,7 +407,7 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        private struct InteractiveAuthStateObject
+        private class InteractiveAuthStateObject
         {
             internal IPublicClientApplication app;
             internal string[] scopes;
@@ -419,6 +419,7 @@ namespace Microsoft.Data.SqlClient
             internal Func<DeviceCodeResult, Task> deviceCodeFlowCallback;
             internal AuthenticationResult result;
             internal SemaphoreSlim _waitHandle;
+
         }
 
 
