@@ -10,7 +10,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Data.Common;
@@ -112,20 +111,31 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
-        /// <summary>
-        /// 
-        /// </summary>
-        public delegate Task<AuthenticationResult> InvokeDelegate(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
-            SqlAuthenticationMethod authenticationMethod, CancellationTokenSource cts, ICustomWebUi customWebUI, Func<DeviceCodeResult, Task> deviceCodeFlowCallback);
 
-        private System.Windows.Forms.Control _control = null;
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="control"></param>
-        public void SetIWin32WindowFunc(System.Windows.Forms.Control control) => this._control = control;
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
+        public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => SetParentActivityOrWindow(iWin32WindowFunc);
 #endif
+
+        private Func<object> _parentActivityOrWindowFunc = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="parentActivityOrWindowFunc"></param>
+        public void SetParentActivityOrWindow(Func<object> parentActivityOrWindowFunc) => this._parentActivityOrWindowFunc = parentActivityOrWindowFunc;
+
+        private delegate Task<AuthenticationResult> InvokeDelegate(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
+    SqlAuthenticationMethod authenticationMethod, CancellationTokenSource cts, ICustomWebUi customWebUI, Func<DeviceCodeResult, Task> deviceCodeFlowCallback);
+
+        private SynchronizationContext _synchronizationContext = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="synchronizationContext"></param>
+        public void SetSynchronizationContext(SynchronizationContext synchronizationContext) => this._synchronizationContext = synchronizationContext;
+
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
 
@@ -219,11 +229,7 @@ namespace Microsoft.Data.SqlClient
                 redirectUri = "http://localhost";
             }
 #endif
-            PublicClientAppKey pcaKey = new(parameters.Authority, redirectUri, _applicationClientId
-#if NETFRAMEWORK
-            , () => (IWin32Window) _control
-#endif
-                );
+            PublicClientAppKey pcaKey = new(parameters.Authority, redirectUri, _applicationClientId, _parentActivityOrWindowFunc);
 
             AuthenticationResult result = null;
             IPublicClientApplication app = await GetPublicClientAppInstanceAsync(pcaKey, cts.Token).ConfigureAwait(false);
@@ -299,36 +305,55 @@ namespace Microsoft.Data.SqlClient
                     // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
                     // or the user needs to perform two factor authentication.
 
-#if NETFRAMEWORK
-                    Func<Task<AuthenticationResult>> func = async () =>
+                    using (SemaphoreSlim waitHandle = new SemaphoreSlim(0))
                     {
-                        return await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback
-                        ).ConfigureAwait(false);
-                    };
+                        InteractiveAuthStateObject state = new InteractiveAuthStateObject()
+                        {
+                            app = app,
+                            scopes = scopes,
+                            connectionId = parameters.ConnectionId,
+                            userId = parameters.UserId,
+                            authenticationMethod = parameters.AuthenticationMethod,
+                            cts = cts,
+                            customWebUI = _customWebUI,
+                            deviceCodeFlowCallback = _deviceCodeFlowCallback,
+                            _waitHandle = waitHandle
+                        };
 
-                    result = await (Task<AuthenticationResult>)_control.Invoke(func);
-#else
-                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback
-                        ).ConfigureAwait(false);
-#endif
+                        _synchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
+
+                        await waitHandle.WaitAsync().ConfigureAwait(false);
+                        result = state.result;
+                    }
+
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                 }
 
                 if (result == null)
                 {
                     // If no existing 'account' is found, we request user to sign in interactively.
-#if NETFRAMEWORK
-                    Func<Task<AuthenticationResult>> func = async () =>
+                    using (SemaphoreSlim waitHandle = new SemaphoreSlim(0))
                     {
-                        return await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback
-                        ).ConfigureAwait(false);
-                    };
+                        InteractiveAuthStateObject state = new InteractiveAuthStateObject()
+                        {
+                            app = app,
+                            scopes = scopes,
+                            connectionId = parameters.ConnectionId,
+                            userId = parameters.UserId,
+                            authenticationMethod = parameters.AuthenticationMethod,
+                            cts = cts,
+                            customWebUI = _customWebUI,
+                            deviceCodeFlowCallback = _deviceCodeFlowCallback,
+                            _waitHandle = waitHandle
+                        };
 
-                    result = await (Task<AuthenticationResult>)_control.Invoke(func);
-#else
-                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback
-                        ).ConfigureAwait(false);
-#endif
+                        _synchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
+
+                        await waitHandle.WaitAsync().ConfigureAwait(false);
+                        result = state.result;
+                    }
+
+
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                 }
             }
@@ -382,12 +407,28 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        private static async Task<AuthenticationResult> AcquireTokenInteractiveDeviceFlowAsync(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
-            SqlAuthenticationMethod authenticationMethod, CancellationTokenSource cts, ICustomWebUi customWebUI, Func<DeviceCodeResult, Task> deviceCodeFlowCallback)
+        private struct InteractiveAuthStateObject
         {
+            internal IPublicClientApplication app;
+            internal string[] scopes;
+            internal Guid connectionId;
+            internal string userId;
+            internal SqlAuthenticationMethod authenticationMethod;
+            internal CancellationTokenSource cts;
+            internal ICustomWebUi customWebUI;
+            internal Func<DeviceCodeResult, Task> deviceCodeFlowCallback;
+            internal AuthenticationResult result;
+            internal SemaphoreSlim _waitHandle;
+        }
+
+
+        private static async void AcquireTokenInteractiveDeviceFlowAsync(object state)
+        {
+            InteractiveAuthStateObject interactiveAuthStateObject = (InteractiveAuthStateObject)state;
+
             try
             {
-                if (authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive)
+                if (interactiveAuthStateObject.authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive)
                 {
                     CancellationTokenSource ctsInteractive = new();
 #if NET6_0_OR_GREATER
@@ -403,14 +444,16 @@ namespace Microsoft.Data.SqlClient
                     ctsInteractive.CancelAfter(180000);
 #endif
 
-                    if (customWebUI != null)
+                    if (interactiveAuthStateObject.customWebUI != null)
                     {
-                        return await app.AcquireTokenInteractive(scopes)
-                            .WithCorrelationId(connectionId)
-                            .WithCustomWebUi(customWebUI)
-                            .WithLoginHint(userId)
+                        var result = await interactiveAuthStateObject.app.AcquireTokenInteractive(interactiveAuthStateObject.scopes)
+                            .WithCorrelationId(interactiveAuthStateObject.connectionId)
+                            .WithCustomWebUi(interactiveAuthStateObject.customWebUI)
+                            .WithLoginHint(interactiveAuthStateObject.userId)
                             .ExecuteAsync(ctsInteractive.Token)
                             .ConfigureAwait(false);
+                        interactiveAuthStateObject.result = result;
+                        return;
                     }
                     else
                     {
@@ -431,29 +474,36 @@ namespace Microsoft.Data.SqlClient
                          *
                          * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
                          */
-                         return await app.AcquireTokenInteractive(scopes)
-                             .WithCorrelationId(connectionId)
-                             .WithLoginHint(userId)
+                         var result = await interactiveAuthStateObject.app.AcquireTokenInteractive(interactiveAuthStateObject.scopes)
+                             .WithCorrelationId(interactiveAuthStateObject.connectionId)
+                             .WithLoginHint(interactiveAuthStateObject.userId)
                              .ExecuteAsync(ctsInteractive.Token)
                              .ConfigureAwait(false);
+                        interactiveAuthStateObject.result = result;
+                        return;
                      }
                 }
                 else
                 {
-                    AuthenticationResult result = await app.AcquireTokenWithDeviceCode(scopes,
-                        deviceCodeResult => deviceCodeFlowCallback(deviceCodeResult))
-                        .WithCorrelationId(connectionId)
-                        .ExecuteAsync(cancellationToken: cts.Token)
+                    AuthenticationResult result = await interactiveAuthStateObject.app.AcquireTokenWithDeviceCode(interactiveAuthStateObject.scopes,
+                        deviceCodeResult => interactiveAuthStateObject.deviceCodeFlowCallback(deviceCodeResult))
+                        .WithCorrelationId(interactiveAuthStateObject.connectionId)
+                        .ExecuteAsync(cancellationToken: interactiveAuthStateObject.cts.Token)
                         .ConfigureAwait(false);
-                    return result;
+                    interactiveAuthStateObject.result = result;
+                    return;
                 }
             }
             catch (OperationCanceledException)
             {
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenInteractiveDeviceFlowAsync | Operation timed out while acquiring access token.");
-                throw (authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive) ?
+                throw (interactiveAuthStateObject.authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive) ?
                     SQL.ActiveDirectoryInteractiveTimeout() :
                     SQL.ActiveDirectoryDeviceFlowTimeout();
+            }
+            finally
+            {
+                interactiveAuthStateObject._waitHandle.Release();
             }
         }
 
@@ -582,20 +632,18 @@ namespace Microsoft.Data.SqlClient
         {
             IPublicClientApplication publicClientApplication;
 
-#if NETFRAMEWORK
-            if (_control != null)
+            if (_parentActivityOrWindowFunc != null)
             {
                 publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
                 .WithAuthority(publicClientAppKey._authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
                 .WithRedirectUri(publicClientAppKey._redirectUri)
-                .WithParentActivityOrWindow(() => _control)
+                .WithParentActivityOrWindow(_parentActivityOrWindowFunc)
                 .WithBroker(new BrokerOptions(BrokerOptions.OperatingSystems.Windows))
                 .Build();
             }
             else
-#endif
             {
                 publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
                 .WithAuthority(publicClientAppKey._authority)
@@ -704,22 +752,16 @@ namespace Microsoft.Data.SqlClient
             public readonly string _authority;
             public readonly string _redirectUri;
             public readonly string _applicationClientId;
-#if NETFRAMEWORK
-            public readonly Func<System.Windows.Forms.IWin32Window> _iWin32WindowFunc;
-#endif
+            public readonly Func<object> _parentActivityOrWindowFunc;
 
             public PublicClientAppKey(string authority, string redirectUri, string applicationClientId
-#if NETFRAMEWORK
-            , Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc
-#endif
+            , Func<object> parentActivityOrWindowFunc
                 )
             {
                 _authority = authority;
                 _redirectUri = redirectUri;
                 _applicationClientId = applicationClientId;
-#if NETFRAMEWORK
-                _iWin32WindowFunc = iWin32WindowFunc;
-#endif
+                _parentActivityOrWindowFunc = parentActivityOrWindowFunc;
             }
 
             public override bool Equals(object obj)
@@ -729,18 +771,14 @@ namespace Microsoft.Data.SqlClient
                     return (string.CompareOrdinal(_authority, pcaKey._authority) == 0
                         && string.CompareOrdinal(_redirectUri, pcaKey._redirectUri) == 0
                         && string.CompareOrdinal(_applicationClientId, pcaKey._applicationClientId) == 0
-#if NETFRAMEWORK
-                        && pcaKey._iWin32WindowFunc == _iWin32WindowFunc
-#endif
+                        && pcaKey._parentActivityOrWindowFunc == _parentActivityOrWindowFunc
                     );
                 }
                 return false;
             }
 
             public override int GetHashCode() => Tuple.Create(_authority, _redirectUri, _applicationClientId
-#if NETFRAMEWORK
-                , _iWin32WindowFunc
-#endif
+                , _parentActivityOrWindowFunc
                 ).GetHashCode();
         }
 
