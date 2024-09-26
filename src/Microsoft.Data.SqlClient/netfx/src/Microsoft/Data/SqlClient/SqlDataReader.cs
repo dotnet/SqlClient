@@ -13,6 +13,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -2273,7 +2274,11 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 System.Text.Encoding encoding;
-                if (mt.IsNCharType)
+                if (mt.SqlDbType == SqlDbTypeExtensions.Json)
+                {
+                    encoding = new UTF8Encoding();
+                }
+                else if (mt.IsNCharType)
                 {
                     // NChar types always use unicode
                     encoding = SqlUnicodeEncoding.SqlUnicodeEncodingInstance;
@@ -2282,7 +2287,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     encoding = _metaData[i].encoding;
                 }
-                encoding = mt.SqlDbType == SqlDbTypeExtensions.Json ? System.Text.Encoding.UTF8 : encoding;
                 _currentTextReader = new SqlSequentialTextReader(this, i, encoding);
                 _lastColumnWithDataChunkRead = i;
                 return _currentTextReader;

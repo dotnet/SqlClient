@@ -155,15 +155,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 File.Delete(filename);
             }
-
         }
-        
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonStreaming()
         {
             GenerateJsonFile(10000, _jsonFile);
-
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
@@ -180,7 +177,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public async Task TestJsonStreamingAsync()
         {
             GenerateJsonFile(10000, _jsonFile);
-
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 await connection.OpenAsync();

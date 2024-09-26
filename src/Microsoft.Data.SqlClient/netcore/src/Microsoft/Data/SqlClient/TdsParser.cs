@@ -11913,7 +11913,7 @@ namespace Microsoft.Data.SqlClient
 
             encoding = encoding ?? TextDataFeed.DefaultEncoding;
 
-            using (ConstrainedTextWriter writer = encoding == Encoding.UTF8 ? new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, null)), size) : new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, null), encoding), size))
+            using (ConstrainedTextWriter writer = new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, null), encoding), size))
             {
                 if (needBom)
                 {
@@ -12177,7 +12177,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                Encoding encoding = type.NullableType == TdsEnums.SQLJSON ? Encoding.UTF8 : null;
+                                Encoding encoding = type.NullableType == TdsEnums.SQLJSON ? new UTF8Encoding() : null;
                                 return NullIfCompletedWriteTask(WriteTextFeed(tdf, encoding, IsBOMNeeded(type, value), stateObj, paramSize));
                             }
                         }
