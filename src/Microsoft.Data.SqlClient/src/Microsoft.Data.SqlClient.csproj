@@ -2,6 +2,7 @@
 	<PropertyGroup>
 		<OutputType>ClassLibrary</OutputType>
 		<TargetFrameworks>net6.0;net8.0;net462</TargetFrameworks>
+		<RootNamespace />
 	</PropertyGroup>
   
 </Project>
