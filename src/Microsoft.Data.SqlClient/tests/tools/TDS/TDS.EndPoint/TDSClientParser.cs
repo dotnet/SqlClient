@@ -202,7 +202,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             }
 
             // Log event
-            Log("Recieved a response to \"{0}\"", Client.State);
+            Log("received a response to \"{0}\"", Client.State);
 
             // Return what we inflated
             return responseMessage;

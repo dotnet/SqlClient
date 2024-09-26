@@ -828,7 +828,7 @@
           The SQL Server type values of the column are copied into the <paramref name="values" /> array that is passed as a parameter. For null values, a Sql type instance is returned where the <see cref="P:System.Data.SqlTypes.INullable.IsNull" /> property is true.
         </para>
         <para>
-          The length of the <paramref name="value" /> array does not need to match the number of columns in the record. If the array length is greater than the number of columns, all the column values are copied into the array; if it is less, only the array length number of column values are copied into the array, starting at the column value with ordinal 0.
+          The length of the <paramref name="values" /> array does not need to match the number of columns in the record. If the array length is greater than the number of columns, all the column values are copied into the array; if it is less, only the array length number of column values are copied into the array, starting at the column value with ordinal 0.
         </para>
       </remarks>
       <exception cref="T:System.ArgumentNullException">

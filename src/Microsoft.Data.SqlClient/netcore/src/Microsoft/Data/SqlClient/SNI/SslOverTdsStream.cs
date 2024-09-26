@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient.SNI
         public override bool CanWrite => _stream.CanWrite;
 
         /// <summary>
-        /// Check if stream can be seeked
+        /// Check if stream can be sought
         /// </summary>
         public override bool CanSeek => false;
 

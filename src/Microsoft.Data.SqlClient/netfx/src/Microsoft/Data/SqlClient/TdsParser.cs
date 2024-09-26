@@ -810,7 +810,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_fMARS && marsCapable)
             {
-                // if user explictly disables mars or mars not supported, don't create the session pool
+                // if user explicitly disables mars or mars not supported, don't create the session pool
                 _sessionPool = new TdsParserSessionPool(this);
             }
             else
@@ -1955,7 +1955,7 @@ namespace Microsoft.Data.SqlClient
                     len -= iColon;
                     /*
                         The error message should come back in the following format: "TCP Provider: MESSAGE TEXT"
-                        Fix Bug 370686, if the message is recieved on a Win9x OS, the error message will not contain MESSAGE TEXT
+                        Fix Bug 370686, if the message is received on a Win9x OS, the error message will not contain MESSAGE TEXT
                         per Bug: 269574.  If we get a errormessage with no message text, just return the entire message otherwise
                         return just the message text.
                     */
@@ -3129,7 +3129,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // if we recieved an attention (but this thread didn't send it) then
+            // if we received an attention (but this thread didn't send it) then
             // we throw an Operation Cancelled error
             if (stateObj.HasReceivedAttention)
             {

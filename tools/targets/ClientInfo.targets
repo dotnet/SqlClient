@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+    <!-- Declare the custom task -->
+    <UsingTask TaskName="ReadClientSettingTask"
+        AssemblyFile="$(MSBuildProjectDirectory)\path\to\ReadAppConfigBoolTask.dll" />
+
+    <!-- Define a target that uses the custom task -->
+    <Target Name="CheckIsWamRequested" BeforeTargets="Build">
+        <!-- Check if app.config exists -->
+        <PropertyGroup>
+            <ConfigFilePath Condition="Exists('$(MSBuildProjectDirectory)\app.config')">
+                $(MSBuildProjectDirectory)\app.config</ConfigFilePath>
+        </PropertyGroup>
+
+        <Message Text="Checking for 'IsWamRequested' in app.config: $(ConfigFilePath)"
+            Importance="high" />
+
+        <!-- Call the custom task to read the IsWamRequested value -->
+        <ReadAppConfigBoolTask ConfigFilePath="$(ConfigFilePath)" Key="IsWamRequested">
+            <Output TaskParameter="Value" PropertyName="IsWamRequested" />
+        </ReadAppConfigBoolTask>
+
+        <Message Text="IsWamRequested is set to: $(IsWamRequested)" Importance="high" />
+
+        <!-- Conditionally define a constant if IsWamRequested is true -->
+        <PropertyGroup Condition="'$(IsWamRequested)' == 'true'">
+            <DefineConstants>$(DefineConstants);IS_WAM_REQUESTED</DefineConstants>
+        </PropertyGroup>
+
+    </Target>
+</Project>

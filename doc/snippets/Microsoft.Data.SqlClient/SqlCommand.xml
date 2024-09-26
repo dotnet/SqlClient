@@ -866,7 +866,7 @@
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
           </item>
           <item>
-            <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
+            <see cref="P:Microsoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
           </item>
         </list>
       </exception>
@@ -1380,7 +1380,7 @@
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
           </item>
           <item>
-            <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
+            <see cref="P:Microsoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
           </item>
         </list>
       </exception>
@@ -2723,7 +2723,7 @@
         Gets or sets a value indicating whether the command object should optimize parameter performance by disabling Output and InputOutput directions when submitting the command to the SQL Server. <br /> This option is only used when the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandType" /> is <see cref="F:System.Data.CommandType.Text"/> otherwise it is ignored.
       </summary>
       <value>
-        A value indicating whether the command object should optimize parameter performance by disabling Output and InputOuput parameter directions when submitting the command to the SQL Server. The default is <see langword="false" />.
+        A value indicating whether the command object should optimize parameter performance by disabling Output and InputOutput parameter directions when submitting the command to the SQL Server. The default is <see langword="false" />.
       </value>
       <remarks>
         <para>

@@ -1521,7 +1521,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
         [DisplayName(DbConnectionStringKeywords.ConnectRetryCount)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResiliency)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryCount)]
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectRetryCount
@@ -1540,7 +1540,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryInterval/*' />
         [DisplayName(DbConnectionStringKeywords.ConnectRetryInterval)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResiliency)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryInterval)]
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectRetryInterval

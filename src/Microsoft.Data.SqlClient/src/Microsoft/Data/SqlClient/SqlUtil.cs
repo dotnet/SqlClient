@@ -2691,7 +2691,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        ///  Escape a string to be used inside TSQL literal, such as N'somename' or 'somename'
+        ///  Escape a string to be used inside TSQL literal, such as N'some-name' or 'some-name'
         /// </summary>
         internal static string EscapeStringAsLiteral(string input)
         {

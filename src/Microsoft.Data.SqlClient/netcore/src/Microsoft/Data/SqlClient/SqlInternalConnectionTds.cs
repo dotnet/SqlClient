@@ -1916,7 +1916,7 @@ namespace Microsoft.Data.SqlClient
                                 TimeoutTimer timeout,
                                 bool withFailover = false)
         {
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information 
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
