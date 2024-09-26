@@ -492,6 +492,11 @@ namespace Microsoft.Data.SqlClient
 
                 interactiveAuthStateObject._taskCompletionSource.SetException(error);
             }
+            catch (Exception e)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenInteractiveDeviceFlowAsync | Operation failed while acquiring access token.");
+                interactiveAuthStateObject._taskCompletionSource.SetException(e);
+            }
         }
 
         private static Task DefaultDeviceFlowCallback(DeviceCodeResult result)
