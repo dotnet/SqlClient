@@ -387,7 +387,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Request (https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/a3035afa-c268-4699-b8fd-4f351e5c8e9e)
         /// Response (https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1) 
         /// </summary>
-        /// <returns>string contaning list of SVR_RESP(just RESP_DATA)</returns>
+        /// <returns>string containing list of SVR_RESP(just RESP_DATA)</returns>
         internal static string SendBroadcastUDPRequest()
         {
             StringBuilder response = new StringBuilder();
