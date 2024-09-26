@@ -7,7 +7,9 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.Permissions;
 using System.Threading;
 using Microsoft.Data.Common;
@@ -20,27 +22,28 @@ namespace Microsoft.Data.SqlTypes
     public sealed partial class SqlFileStream : System.IO.Stream
     {
         // NOTE: if we ever unseal this class, be sure to specify the Name, SafeFileHandle, and
-        // TransactionContext accessors as virtual methods. Doing so now on a sealed class
-        // generates a compiler error (CS0549)
+        //   TransactionContext accessors as virtual methods. Doing so now on a sealed class
+        //   generates a compiler error (CS0549)
 
-        private static int _objectTypeCount; // EventSource Counter
+	// For EventTrace output
+        private static int _objectTypeCount; // EventSource counter
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 
         // from System.IO.FileStream implementation
-        // DefaultBufferSize = 4096;
+        //  DefaultBufferSize = 4096;
         // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
-        // potential exceptions during Close/Finalization. Since System.IO.FileStream will
-        // not allow for a zero byte buffer, we'll create a one byte buffer which, in normal
-        // usage, will not be used and the user buffer will automatically flush directly to
-        // the disk cache. In pathological scenarios where the client is writing a single
-        // byte at a time, we'll explicitly call flush ourselves.
+        //   potential exceptions during Close/Finalization. Since System.IO.FileStream will
+        //   not allow for a zero byte buffer, we'll create a one byte buffer which, in normal
+        //   usage, will not be used and the user buffer will automatically flush directly to
+        //   the disk cache. In pathological scenarios where the client is writing a single
+        //   byte at a time, we'll explicitly call flush ourselves.
         internal const int DefaultBufferSize = 1;
 
         private const ushort IoControlCodeFunctionCode = 2392;
-        private const int ERROR_MR_MID_NOT_FOUND = 317;
-        #region Definitions from devioctl.h
-        private const ushort FILE_DEVICE_FILE_SYSTEM = 0x0009;
-        #endregion
+        // netcore private const int ERROR_MR_MID_NOT_FOUND = 317;
+        // netcore #region Definitions from devioctl.h
+        // netcore private const ushort FILE_DEVICE_FILE_SYSTEM = 0x0009;
+        // netcore #endregion
 
         private System.IO.FileStream _m_fs;
         private string _m_path;
@@ -61,16 +64,21 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor2/*' />
         public SqlFileStream(string path, byte[] transactionContext, FileAccess access, FileOptions options, long allocationSize)
         {
-            using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("SqlFileStream.ctor | API | Object Id {0} | Access {1} | Options {2} | Path '{3}'", ObjectID, (int)access, (int)options, path)))
+            // netcore using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("SqlFileStream.ctor | API | Object Id {0} | Access {1} | Options {2} | Path '{3}'", ObjectID, (int)access, (int)options, path)))
+            // netfx using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path)))
             {
                 //-----------------------------------------------------------------
                 // precondition validation
 
                 if (transactionContext == null)
+                {
                     throw ADP.ArgumentNull("transactionContext");
+                }
 
                 if (path == null)
+                {
                     throw ADP.ArgumentNull("path");
+                }
 
                 //-----------------------------------------------------------------
 
@@ -88,8 +96,8 @@ namespace Microsoft.Data.SqlTypes
         #region destructor/dispose code
 
         // NOTE: this destructor will only be called only if the Dispose
-        // method is not called by a client, giving the class a chance
-        // to finalize properly (i.e., free unmanaged resources)
+        //   method is not called by a client, giving the class a chance
+        //   to finalize properly (i.e., free unmanaged resources)
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/dtor/*' />
         ~SqlFileStream()
         {
@@ -132,11 +140,13 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                // assert that path has been properly processed via GetFullPathInternal
+                // Assert that path has been properly processed via GetFullPathInternal
                 // (e.g. m_path hasn't been set directly)
                 AssertPathFormat(_m_path);
                 return _m_path;
             }
+            // netfx [ResourceExposure(ResourceScope.None)] // SxS: the file name is not exposed
+            // netfx [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
             private set
             {
                 // should be validated by callers of this method
@@ -195,6 +205,7 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanTimeout/*' />
+        // netfx [ComVisible(false)]
         public override bool CanTimeout
         {
             get
@@ -250,6 +261,7 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadTimeout/*' />
+        // netfx [ComVisible(false)]
         public override int ReadTimeout
         {
             get
@@ -269,6 +281,7 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteTimeout/*' />
+        // netfx [ComVisible(false)]
         public override int WriteTimeout
         {
             get
@@ -329,11 +342,11 @@ namespace Microsoft.Data.SqlTypes
             IAsyncResult asyncResult = _m_fs.BeginWrite(buffer, offset, count, callback, state);
 
             // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
-            // potential exceptions during Close/Finalization. Since System.IO.FileStream will
-            // not allow for a zero byte buffer, we'll create a one byte buffer which, in normal
-            // usage, will not be used and the user buffer will automatically flush directly to
-            // the disk cache. In pathological scenarios where the client is writing a single
-            // byte at a time, we'll explicitly call flush ourselves.
+            //   potential exceptions during Close/Finalization. Since System.IO.FileStream will
+            //   not allow for a zero byte buffer, we'll create a one byte buffer which, in normal
+            //   usage, will not be used and the user buffer will automatically flush directly to
+            //   the disk cache. In pathological scenarios where the client is writing a single
+            //   byte at a time, we'll explicitly call flush ourselves.
             if (count == 1)
             {
                 // calling flush here will mimic the internal control flow of System.IO.FileStream
@@ -397,11 +410,11 @@ namespace Microsoft.Data.SqlTypes
             _m_fs.Write(buffer, offset, count);
 
             // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
-            // potential exceptions during Close/Finalization. Since System.IO.FileStream will
-            // not allow for a zero byte buffer, we'll create a one byte buffer which, in normal
-            // usage, will cause System.IO.FileStream to utilize the user-supplied buffer and
-            // automatically flush the data directly to the disk cache. In pathological scenarios
-            // where the user is writing a single byte at a time, we'll explicitly call flush ourselves.
+            //   potential exceptions during Close/Finalization. Since System.IO.FileStream will
+            //   not allow for a zero byte buffer, we'll create a one byte buffer which, in normal
+            //   usage, will cause System.IO.FileStream to utilize the user-supplied buffer and
+            //   automatically flush the data directly to the disk cache. In pathological scenarios
+            //   where the user is writing a single byte at a time, we'll explicitly call flush ourselves.
             if (count == 1)
             {
                 // calling flush here will mimic the internal control flow of System.IO.FileStream
@@ -418,15 +431,24 @@ namespace Microsoft.Data.SqlTypes
             _m_fs.WriteByte(value);
 
             // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
-            // potential exceptions during Close/Finalization. Since our internal buffer is
-            // only a single byte in length, the provided user data will always be cached.
-            // As a result, we need to be sure to flush the data to disk ourselves.
+            //   potential exceptions during Close/Finalization. Since our internal buffer is
+            //   only a single byte in length, the provided user data will always be cached.
+            //   As a result, we need to be sure to flush the data to disk ourselves.
 
             // calling flush here will mimic the internal control flow of System.IO.FileStream
             _m_fs.Flush();
         }
 
-#endregion
+        #endregion
+
+        // netfx static private readonly char[] InvalidPathChars = Path.GetInvalidPathChars();
+
+        // netfx // path length limitations:
+        // netfx // 1. path length storage (in bytes) in UNICODE_STRING is limited to UInt16.MaxValue bytes = Int16.MaxValue chars
+        // netfx // 2. GetFullPathName API of kernel32 does not accept paths with length (in chars) greater than 32766
+        // netfx //    (32766 is actually Int16.MaxValue - 1, while (-1) is for NULL termination)
+        // netfx // We must check for the lowest value between the the two
+        // netfx private const int MaxWin32PathLength = Int16.MaxValue - 1;
 
         [Conditional("DEBUG")]
         static private void AssertPathFormat(string path)
@@ -434,45 +456,155 @@ namespace Microsoft.Data.SqlTypes
             Debug.Assert(path != null);
             Debug.Assert(path == path.Trim());
             Debug.Assert(path.Length > 0);
+            // netfx Debug.Assert(path.Length <= MaxWin32PathLength);
+            // netfx Debug.Assert(path.IndexOfAny(InvalidPathChars) < 0);
             Debug.Assert(path.StartsWith(@"\\", StringComparison.OrdinalIgnoreCase));
+            // netfx Debug.Assert(!path.StartsWith(@"\\.\", StringComparison.Ordinal));
         }
 
+        // netfx // SQLBUVSTS01 bugs 192677 and 193221: we cannot use System.IO.Path.GetFullPath for two reasons:
+        // netfx // * it requires PathDiscovery permissions, which is unnecessary for SqlFileStream since we 
+        // netfx //   are dealing with network path
+        // netfx // * it is limited to 260 length while in our case file path can be much longer
+        // netfx // To overcome the above limitations we decided to use GetFullPathName function from kernel32.dll
+        // netfx [ResourceExposure(ResourceScope.Machine)]
+        // netfx [ResourceConsumption(ResourceScope.Machine)]
         static private string GetFullPathInternal(string path)
         {
             //-----------------------------------------------------------------
-            // precondition validation should be validated by callers of this method
+            // precondition validation
+
+            // should be validated by callers of this method
             // NOTE: if this method moves elsewhere, this assert should become an actual runtime check
-            // as the implicit assumptions here cannot be relied upon in an inter-class context
+            //   as the implicit assumptions here cannot be relied upon in an inter-class context
             Debug.Assert(path != null);
 
             // remove leading and trailing whitespace
             path = path.Trim();
             if (path.Length == 0)
             {
-                throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
+                // netcore throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
+                // netfx throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidPath), "path");
             }
 
-            // make sure path is not DOS device path
-            if (!path.StartsWith(@"\\", StringComparison.Ordinal) && !System.IO.PathInternal.IsDevice(path.AsSpan()))
-            {
-                throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
-            }
+            // netfx // check for the path length before we normalize it with GetFullPathName
+            // netfx if (path.Length > MaxWin32PathLength)
+            // netfx {
+            // netfx     // cannot use PathTooLongException here since our length limit is 32K while
+            // netfx     // PathTooLongException error message states that the path should be limited to 260
+            // netfx    throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidPath), "path");
+            // netfx }
+
+            // netfx // GetFullPathName does not check for invalid characters so we still have to validate them before
+            // netfx if (path.IndexOfAny(InvalidPathChars) >= 0)
+            // netfx {
+            // netfx     throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidPath), "path");
+            // netfx }
+
+            // netcore // make sure path is not DOS device path
+            // netcore if (!path.StartsWith(@"\\", StringComparison.Ordinal) && !System.IO.PathInternal.IsDevice(path.AsSpan()))
+            // netcore {
+            // netcore     throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
+            // netcore }
+            // netfx // make sure path is a UNC path
+            // netfx if (!path.StartsWith(@"\\", StringComparison.OrdinalIgnoreCase))
+            // netfx {
+            // netfx     throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidPath), "path");
+            // netfx }
+
+            //-----------------------------------------------------------------
 
             // normalize the path
-            path = System.IO.Path.GetFullPath(path);
+            // netcore path = System.IO.Path.GetFullPath(path);
+            // netfx path = UnsafeNativeMethods.SafeGetFullPathName(path);
 
-            // make sure path is a UNC path
-            if (System.IO.PathInternal.IsDeviceUNC(path.AsSpan()))
-            {
-                throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource), "path");
-            }
+            // netfx // we do not expect windows API to return invalid paths
+            // netfx Debug.Assert(path.Length <= MaxWin32PathLength, "GetFullPathName returns path longer than max expected!");
+
+            // netcore // make sure path is a UNC path
+            // netcore if (System.IO.PathInternal.IsDeviceUNC(path.AsSpan()))
+            // netcore {
+            // netcore     throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource), "path");
+            // netcore }
+
+            // netfx // CONSIDER: is this a precondition validation that can be done above? Or must the path be normalized first?
+            // netfx // after normalization, we have to ensure that the path does not attempt to refer to a root device, etc.
+            // netfx if (path.StartsWith(@"\\.\", StringComparison.Ordinal))
+            // netfx {
+            // netfx     throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_PathNotValidDiskResource), "path");
+            // netfx }
 
             return path;
         }
 
+        // netfx ---
+        static private void DemandAccessPermission
+            (
+                string path,
+                System.IO.FileAccess access
+            )
+        {
+            // ensure we demand on valid path
+            AssertPathFormat(path);
+
+            FileIOPermissionAccess demandPermissions;
+            switch (access)
+            {
+                case FileAccess.Read:
+                    demandPermissions = FileIOPermissionAccess.Read;
+                    break;
+
+                case FileAccess.Write:
+                    demandPermissions = FileIOPermissionAccess.Write;
+                    break;
+
+                case FileAccess.ReadWrite:
+                default:
+                    // the caller have to validate the value of 'access' parameter
+                    Debug.Assert(access == System.IO.FileAccess.ReadWrite);
+                    demandPermissions = FileIOPermissionAccess.Read | FileIOPermissionAccess.Write;
+                    break;
+            }
+
+            FileIOPermission filePerm;
+            bool pathTooLong = false;
+
+            // check for read and/or write permissions
+            try
+            {
+                filePerm = new FileIOPermission(demandPermissions, path);
+                filePerm.Demand();
+            }
+            catch (PathTooLongException e)
+            {
+                pathTooLong = true;
+                ADP.TraceExceptionWithoutRethrow(e);
+            }
+
+            if (pathTooLong)
+            {
+                // SQLBUVSTS bugs 192677 and 203422: currently, FileIOPermission does not support path longer than MAX_PATH (260)
+                // so we cannot demand permissions for long files. We are going to open bug for FileIOPermission to
+                // support this.
+
+                // In the meanwhile, we agreed to have try-catch block on the permission demand instead of checking the path length.
+                // This way, if/when the 260-chars limitation is fixed in FileIOPermission, we will not need to change our code
+
+                // since we do not want to relax security checks, we have to demand this permission for AllFiles in order to continue!
+                // Note: demand for AllFiles will fail in scenarios where the running code does not have this permission (such as ASP.Net)
+                // and the only workaround will be reducing the total path length, which means reducing the length of SqlFileStream path
+                // components, such as instance name, table name, etc.. to fit into 260 characters
+                filePerm = new FileIOPermission(PermissionState.Unrestricted);
+                filePerm.AllFiles = demandPermissions;
+
+                filePerm.Demand();
+            }
+        }
+        // --- netfx
+
         private unsafe void OpenSqlFileStream
             (
-                string sPath,
+                string path,
                 byte[] transactionContext,
                 System.IO.FileAccess access,
                 System.IO.FileOptions options,
@@ -481,16 +613,19 @@ namespace Microsoft.Data.SqlTypes
         {
             //-----------------------------------------------------------------
             // precondition validation
+
             // these should be checked by any caller of this method
             // ensure we have validated and normalized the path before
-            Debug.Assert(sPath != null);
+            Debug.Assert(path != null);
             Debug.Assert(transactionContext != null);
 
-            if (access != System.IO.FileAccess.Read && access != System.IO.FileAccess.Write && access != System.IO.FileAccess.ReadWrite)
+            // netcore if (access != System.IO.FileAccess.Read && access != System.IO.FileAccess.Write && access != System.IO.FileAccess.ReadWrite)
+            // netfx if (access != FileAccess.Read && access != FileAccess.Write && access != FileAccess.ReadWrite)
                 throw ADP.ArgumentOutOfRange("access");
 
             // FileOptions is a set of flags, so AND the given value against the set of values we do not support
-            if ((options & ~(System.IO.FileOptions.WriteThrough | System.IO.FileOptions.Asynchronous | System.IO.FileOptions.RandomAccess | System.IO.FileOptions.SequentialScan)) != 0)
+            // netcore if ((options & ~(System.IO.FileOptions.WriteThrough | System.IO.FileOptions.Asynchronous | System.IO.FileOptions.RandomAccess | System.IO.FileOptions.SequentialScan)) != 0)
+            // netfx if ((options & ~(FileOptions.WriteThrough | FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.SequentialScan)) != 0)
                 throw ADP.ArgumentOutOfRange("options");
 
             //-----------------------------------------------------------------
@@ -499,27 +634,41 @@ namespace Microsoft.Data.SqlTypes
             // * trim whitespace from the beginning and end of the path
             // * ensure that the path starts with '\\'
             // * ensure that the path does not start with '\\.\'
-            sPath = GetFullPathInternal(sPath);
+            // netfx // * ensure that the path is not longer than Int16.MaxValue
+            path = GetFullPathInternal(path);
+
+            // netfx // ensure the running code has permission to read/write the file
+            // netfx DemandAccessPermission(path, access);
+
+            // netfx FileFullEaInformation eaBuffer = null;
+            // netfx SecurityQualityOfService qos = null;
+            // netfx UnicodeString objectName = null;
 
             Microsoft.Win32.SafeHandles.SafeFileHandle hFile = null;
-            Interop.NtDll.DesiredAccess nDesiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES | Interop.NtDll.DesiredAccess.SYNCHRONIZE;
-            Interop.NtDll.CreateOptions dwCreateOptions = 0;
-            Interop.NtDll.CreateDisposition dwCreateDisposition = 0;
-            System.IO.FileShare nShareAccess = System.IO.FileShare.None;
+            // netcore Interop.NtDll.DesiredAccess nDesiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES | Interop.NtDll.DesiredAccess.SYNCHRONIZE;
+            // netfx int nDesiredAccess = UnsafeNativeMethods.FILE_READ_ATTRIBUTES | UnsafeNativeMethods.SYNCHRONIZE;
+            // netcore Interop.NtDll.CreateOptions dwCreateOptions = 0;
+            // netfx UInt32 dwCreateOptions = 0;
+            // netcore Interop.NtDll.CreateDisposition dwCreateDisposition = 0;
+            // netfx UInt32 dwCreateDisposition = 0;
+            System.IO.FileShare shareAccess = System.IO.FileShare.None;
 
             switch (access)
             {
                 case System.IO.FileAccess.Read:
-
-                    nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA;
-                    nShareAccess = System.IO.FileShare.Delete | System.IO.FileShare.ReadWrite;
-                    dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OPEN;
+                    // netcore nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA;
+                    // netfx nDesiredAccess |= UnsafeNativeMethods.FILE_READ_DATA;
+                    shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.ReadWrite;
+                    // netcore dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OPEN;
+                    // netfx dwCreateDisposition = (uint)UnsafeNativeMethods.CreationDisposition.FILE_OPEN;
                     break;
 
                 case System.IO.FileAccess.Write:
-                    nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
-                    nShareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
-                    dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    // netcore nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
+                    // netfx nDesiredAccess |= UnsafeNativeMethods.FILE_WRITE_DATA;
+                    shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
+                    // netcore dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    // netfx dwCreateDisposition = (uint)UnsafeNativeMethods.CreationDisposition.FILE_OVERWRITE;
                     break;
 
                 case System.IO.FileAccess.ReadWrite:
@@ -527,43 +676,73 @@ namespace Microsoft.Data.SqlTypes
                     // we validate the value of 'access' parameter in the beginning of this method
                     Debug.Assert(access == System.IO.FileAccess.ReadWrite);
 
-                    nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA | Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
-                    nShareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
-                    dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    // netcore nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA | Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
+                    // netfx nDesiredAccess |= UnsafeNativeMethods.FILE_READ_DATA | UnsafeNativeMethods.FILE_WRITE_DATA;
+                    shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
+                    // netcore dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    // netfx dwCreateDisposition = (uint)UnsafeNativeMethods.CreationDisposition.FILE_OVERWRITE;
                     break;
             }
 
             if ((options & System.IO.FileOptions.WriteThrough) != 0)
             {
-                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_WRITE_THROUGH;
+                // netcore dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_WRITE_THROUGH;
+                // netfx dwCreateOptions |= (uint)UnsafeNativeMethods.CreateOption.FILE_WRITE_THROUGH;
             }
 
             if ((options & System.IO.FileOptions.Asynchronous) == 0)
             {
-                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
+                // netcore dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
+                // netfx dwCreateOptions |= (uint)UnsafeNativeMethods.CreateOption.FILE_SYNCHRONOUS_IO_NONALERT;
             }
 
             if ((options & System.IO.FileOptions.SequentialScan) != 0)
             {
-                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SEQUENTIAL_ONLY;
+                // netcore dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SEQUENTIAL_ONLY;
+                // netfx dwCreateOptions |= (uint)UnsafeNativeMethods.CreateOption.FILE_SEQUENTIAL_ONLY;
             }
 
             if ((options & System.IO.FileOptions.RandomAccess) != 0)
             {
-                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_RANDOM_ACCESS;
+                // netcore dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_RANDOM_ACCESS;
+                // netfx dwCreateOptions |= (uint)UnsafeNativeMethods.CreateOption.FILE_RANDOM_ACCESS;
             }
 
             try
             {
+                // netfx ---
+                eaBuffer = new FileFullEaInformation(transactionContext);
+
+                qos = new SecurityQualityOfService(UnsafeNativeMethods.SecurityImpersonationLevel.SecurityAnonymous,
+                    false, false);
+                // --- netfx
+
                 // NOTE: the Name property is intended to reveal the publicly available moniker for the
-                // FILESTREAM attributed column data. We will not surface the internal processing that
-                // takes place to create the mappedPath.
+                //   FILESTREAM attributed column data. We will not surface the internal processing that
+                //   takes place to create the mappedPath.
                 string mappedPath = InitializeNtPath(sPath);
-                int retval = 0;
-                Interop.Kernel32.SetThreadErrorMode(Interop.Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
+                // netcore int retval = 0;
+                // netcore Interop.Kernel32.SetThreadErrorMode(Interop.Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
+                // netfx objectName = new UnicodeString(mappedPath);
+
+                // netfx ---
+                UnsafeNativeMethods.OBJECT_ATTRIBUTES oa;
+                oa.length = Marshal.SizeOf(typeof(UnsafeNativeMethods.OBJECT_ATTRIBUTES));
+                oa.rootDirectory = IntPtr.Zero;
+                oa.attributes = (int)UnsafeNativeMethods.Attributes.CaseInsensitive;
+                oa.securityDescriptor = IntPtr.Zero;
+                oa.securityQualityOfService = qos;
+                oa.objectName = objectName;
+
+                uint oldMode;
+                uint retval = 0;
+
+                UnsafeNativeMethods.SetErrorModeWrapper(UnsafeNativeMethods.SEM_FAILCRITICALERRORS, out oldMode);
+                // --- netfx
 
                 try
                 {
+                    // netcore ---
                     if (transactionContext.Length >= ushort.MaxValue)
                         throw ADP.ArgumentOutOfRange("transactionContext");
 
@@ -604,10 +783,21 @@ namespace Microsoft.Data.SqlTypes
                     }
 
                     ArrayPool<byte>.Shared.Return(buffer);
+                    // --- netcore
+                    // netfx ---
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, " +
+                       "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{6}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
+
+                    retval = UnsafeNativeMethods.NtCreateFile(out hFile, nDesiredAccess,
+                        ref oa, out UnsafeNativeMethods.IO_STATUS_BLOCK _, ref allocationSize,
+                        0, shareAccess, dwCreateDisposition, dwCreateOptions,
+                        eaBuffer, (uint)eaBuffer.Length);
+                    // --- netfx
                 }
                 finally
                 {
-                    Interop.Kernel32.SetThreadErrorMode(oldMode, out oldMode);
+                    // netcore Interop.Kernel32.SetThreadErrorMode(oldMode, out oldMode);
+                    // netfx UnsafeNativeMethods.SetErrorModeWrapper(oldMode, out oldMode);
                 }
 
                 switch (retval)
@@ -615,13 +805,18 @@ namespace Microsoft.Data.SqlTypes
                     case 0:
                         break;
 
-                    case Interop.Errors.ERROR_SHARING_VIOLATION:
-                        throw ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
+                    // netcore case Interop.Errors.ERROR_SHARING_VIOLATION:
+                    // netfx case UnsafeNativeMethods.STATUS_SHARING_VIOLATION:
+                        // netcore throw ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
+                        // netfx throw ADP.InvalidOperation(StringsHelper.GetString(StringsHelper.SqlFileStream_FileAlreadyInTransaction));
 
-                    case Interop.Errors.ERROR_INVALID_PARAMETER:
-                        throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
+                    // netcore case Interop.Errors.ERROR_INVALID_PARAMETER:
+                    // netfx case UnsafeNativeMethods.STATUS_INVALID_PARAMETER:
+                        // netcore throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
+                        // netfx throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidParameter));
 
-                    case Interop.Errors.ERROR_FILE_NOT_FOUND:
+                    // netcore case Interop.Errors.ERROR_FILE_NOT_FOUND:
+                    // netfx case UnsafeNativeMethods.STATUS_OBJECT_NAME_NOT_FOUND:
                         {
                             System.IO.DirectoryNotFoundException e = new System.IO.DirectoryNotFoundException();
                             ADP.TraceExceptionAsReturnValue(e);
@@ -629,8 +824,10 @@ namespace Microsoft.Data.SqlTypes
                         }
                     default:
                         {
-                            uint error = Interop.NtDll.RtlNtStatusToDosError(retval);
-                            if (error == ERROR_MR_MID_NOT_FOUND)
+                            // netcore uint error = Interop.NtDll.RtlNtStatusToDosError(retval);
+                            // netfx uint error = UnsafeNativeMethods.RtlNtStatusToDosError(retval);
+                            // netcore if (error == ERROR_MR_MID_NOT_FOUND)
+                            // netfx if (error == UnsafeNativeMethods.ERROR_MR_MID_NOT_FOUND)
                             {
                                 // status code could not be mapped to a Win32 error code
                                 error = (uint)retval;
@@ -644,15 +841,19 @@ namespace Microsoft.Data.SqlTypes
 
                 if (hFile.IsInvalid)
                 {
-                    System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
+                    // netcore System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
+                    // netfx System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(UnsafeNativeMethods.ERROR_INVALID_HANDLE);
                     ADP.TraceExceptionAsReturnValue(e);
                     throw e;
                 }
 
-                if (Interop.Kernel32.GetFileType(hFile) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
+                // netfx UnsafeNativeMethods.FileType fileType = UnsafeNativeMethods.GetFileType(hFile);
+                // netfx if (fileType != UnsafeNativeMethods.FileType.Disk)
+                // netcore if (Interop.Kernel32.GetFileType(hFile) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
                 {
                     hFile.Dispose();
-                    throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
+                    // netcore throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
+                    // netfx throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_PathNotValidDiskResource));
                 }
 
                 // if the user is opening the SQL FileStream in read/write mode, we assume that they want to scan
@@ -660,11 +861,20 @@ namespace Microsoft.Data.SqlTypes
                 // the existing file contents.
                 if (access == System.IO.FileAccess.ReadWrite)
                 {
+                    // netcore ---
                     uint ioControlCode = Interop.Kernel32.CTL_CODE(FILE_DEVICE_FILE_SYSTEM,
                         IoControlCodeFunctionCode, (byte)Interop.Kernel32.IoControlTransferType.METHOD_BUFFERED,
                         (byte)Interop.Kernel32.IoControlCodeAccess.FILE_ANY_ACCESS);
+                    // --- netcore
+                    // netfx ---
+                    uint ioControlCode = UnsafeNativeMethods.CTL_CODE(UnsafeNativeMethods.FILE_DEVICE_FILE_SYSTEM,
+                        IoControlCodeFunctionCode, (byte)UnsafeNativeMethods.Method.METHOD_BUFFERED,
+                        (byte)UnsafeNativeMethods.Access.FILE_ANY_ACCESS);
+                    uint cbBytesReturned = 0;
+                    // --- netfx
 
-                    if (!Interop.Kernel32.DeviceIoControl(hFile, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out uint cbBytesReturned, IntPtr.Zero))
+                    // netcore if (!Interop.Kernel32.DeviceIoControl(hFile, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out uint cbBytesReturned, IntPtr.Zero))
+                    // netfx if (!UnsafeNativeMethods.DeviceIoControl(hFile, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out cbBytesReturned, IntPtr.Zero))
                     {
                         System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
                         ADP.TraceExceptionAsReturnValue(e);
@@ -674,8 +884,31 @@ namespace Microsoft.Data.SqlTypes
 
                 // now that we've successfully opened a handle on the path and verified that it is a file,
                 // use the SafeFileHandle to initialize our internal System.IO.FileStream instance
+                // netcore ---
                 System.Diagnostics.Debug.Assert(_m_fs == null);
                 _m_fs = new System.IO.FileStream(hFile, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
+                // --- netcore
+                // netfx ---
+                // NOTE: need to assert UnmanagedCode permissions for this constructor. This is relatively benign
+                //   in that we've done much the same validation as in the FileStream(string path, ...) ctor case
+                //   most notably, validating that the handle type corresponds to an on-disk file.
+                bool bRevertAssert = false;
+                try
+                {
+                    SecurityPermission sp = new SecurityPermission(SecurityPermissionFlag.UnmanagedCode);
+                    sp.Assert();
+                    bRevertAssert = true;
+
+                    System.Diagnostics.Debug.Assert(m_fs == null);
+                    m_fs = new System.IO.FileStream(hFile, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
+                }
+                finally
+                {
+                    if (bRevertAssert)
+                        SecurityPermission.RevertAssert();
+                }
+
+                // --- netfx
             }
             catch
             {
@@ -684,7 +917,32 @@ namespace Microsoft.Data.SqlTypes
 
                 throw;
             }
+            // netfx ---
+            finally
+            {
+                if (eaBuffer != null)
+                {
+                    eaBuffer.Dispose();
+                    eaBuffer = null;
+                }
+
+                if (qos != null)
+                {
+                    qos.Dispose();
+                    qos = null;
+                }
+
+                if (objectName != null)
+                {
+                    objectName.Dispose();
+                    objectName = null;
+                }
+            }
+            // --- netfx
         }
+
+        #region private helper methods
+
         // This method exists to ensure that the requested path name is unique so that SMB/DNS is prevented
         // from collapsing a file open request to a file handle opened previously. In the SQL FILESTREAM case,
         // this would likely be a file open in another transaction, so this mechanism ensures isolation.
@@ -692,10 +950,282 @@ namespace Microsoft.Data.SqlTypes
         {
             // Ensure we have validated and normalized the path before
             AssertPathFormat(path);
+
+            // netcore string formatPath = @"\??\UNC\{0}\{1}";
+
             string uniqueId = Guid.NewGuid().ToString("N");
-            return System.IO.PathInternal.IsDeviceUNC(path)
-                ? string.Format(CultureInfo.InvariantCulture, @"{0}\{1}", path.Replace(@"\\.", @"\??"), uniqueId)
-                : string.Format(CultureInfo.InvariantCulture, @"\??\UNC\{0}\{1}", path.Trim('\\'), uniqueId);
+            // netcore return System.IO.PathInternal.IsDeviceUNC(path)
+            // netcore     ? string.Format(CultureInfo.InvariantCulture, @"{0}\{1}", path.Replace(@"\\.", @"\??"), uniqueId)
+            // netcore     : string.Format(CultureInfo.InvariantCulture, @"\??\UNC\{0}\{1}", path.Trim('\\'), uniqueId);
+            // netfx return String.Format(CultureInfo.InvariantCulture, formatPath, path.Trim('\\'), uniqueId);
         }
+        
+        #endregion
+
+        // netfx ---
+    //-------------------------------------------------------------------------
+    // UnicodeString
+    //
+    // Description: this class encapsulates the marshalling of data from a
+    //   managed representation of the UNICODE_STRING struct into native code.
+    //   As part of this task, it manages memory that is allocated in the
+    //   native heap into which the managed representation is blitted. The
+    //   class also implements a SafeHandle pattern to ensure that memory is
+    //   not leaked in "exceptional" circumstances such as Thread.Abort().
+    //
+    //-------------------------------------------------------------------------
+
+    internal class UnicodeString : SafeHandleZeroOrMinusOneIsInvalid
+    {
+        public UnicodeString(string path)
+            : base(true)
+        {
+            Initialize(path);
+        }
+
+        // NOTE: SafeHandle's critical finalizer will call ReleaseHandle for us
+        protected override bool ReleaseHandle()
+        {
+            if (base.handle == IntPtr.Zero)
+                return true;
+
+            Marshal.FreeHGlobal(base.handle);
+            base.handle = IntPtr.Zero;
+
+            return true;
+        }
+
+        private void Initialize(string path)
+        {
+            // pre-condition should be validated in public interface
+            System.Diagnostics.Debug.Assert(path.Length <= (UInt16.MaxValue / sizeof(char)));
+
+            UnsafeNativeMethods.UNICODE_STRING objectName;
+            objectName.length = (UInt16)(path.Length * sizeof(char));
+            objectName.maximumLength = (UInt16)(path.Length * sizeof(char));
+            objectName.buffer = path;
+
+            IntPtr pbBuffer = IntPtr.Zero;
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+            }
+            finally
+            {
+                pbBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(objectName));
+                if (pbBuffer != IntPtr.Zero)
+                    SetHandle(pbBuffer);
+            }
+
+            bool mustRelease = false;
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+                DangerousAddRef(ref mustRelease);
+                IntPtr ptr = DangerousGetHandle();
+
+                Marshal.StructureToPtr(objectName, ptr, false);
+            }
+            finally
+            {
+                if (mustRelease)
+                    DangerousRelease();
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    // SecurityQualityOfService
+    //
+    // Description: this class encapsulates the marshalling of data from a
+    //   managed representation of the SECURITY_QUALITY_OF_SERVICE struct into 
+    //   native code. As part of this task, it pins the struct in the managed
+    //   heap to ensure that it is not moved around (since the struct consists
+    //   of simple types, the type does not need to be blitted into native
+    //   memory). The class also implements a SafeHandle pattern to ensure that 
+    //   the struct is unpinned in "exceptional" circumstances such as 
+    //   Thread.Abort().
+    //
+    //-------------------------------------------------------------------------
+
+    internal class SecurityQualityOfService : SafeHandleZeroOrMinusOneIsInvalid
+    {
+        UnsafeNativeMethods.SECURITY_QUALITY_OF_SERVICE m_qos;
+        private GCHandle m_hQos;
+
+        public SecurityQualityOfService
+            (
+                UnsafeNativeMethods.SecurityImpersonationLevel impersonationLevel,
+                bool effectiveOnly,
+                bool dynamicTrackingMode
+            )
+            : base(true)
+        {
+            Initialize(impersonationLevel, effectiveOnly, dynamicTrackingMode);
+        }
+
+        protected override bool ReleaseHandle()
+        {
+            if (m_hQos.IsAllocated)
+                m_hQos.Free();
+
+            base.handle = IntPtr.Zero;
+
+            return true;
+        }
+
+        internal void Initialize
+            (
+                UnsafeNativeMethods.SecurityImpersonationLevel impersonationLevel,
+                bool effectiveOnly,
+                bool dynamicTrackingMode
+            )
+        {
+            m_qos.length = (uint)Marshal.SizeOf(typeof(UnsafeNativeMethods.SECURITY_QUALITY_OF_SERVICE));
+            // VSTFDevDiv # 547461 [Backport SqlFileStream fix on Win7 to QFE branch]
+            // Win7 enforces correct values for the _SECURITY_QUALITY_OF_SERVICE.qos member.
+            m_qos.impersonationLevel = (int)impersonationLevel;
+
+            m_qos.effectiveOnly = effectiveOnly ? (byte)1 : (byte)0;
+            m_qos.contextDynamicTrackingMode = dynamicTrackingMode ? (byte)1 : (byte)0;
+
+            IntPtr pbBuffer = IntPtr.Zero;
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+            }
+            finally
+            {
+                // pin managed objects
+                m_hQos = GCHandle.Alloc(m_qos, GCHandleType.Pinned);
+
+                pbBuffer = m_hQos.AddrOfPinnedObject();
+
+                if (pbBuffer != IntPtr.Zero)
+                    SetHandle(pbBuffer);
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    // FileFullEaInformation
+    //
+    // Description: this class encapsulates the marshalling of data from a
+    //   managed representation of the FILE_FULL_EA_INFORMATION struct into 
+    //   native code. As part of this task, it manages memory that is allocated 
+    //   in the native heap into which the managed representation is blitted. 
+    //   The class also implements a SafeHandle pattern to ensure that memory
+    //   is not leaked in "exceptional" circumstances such as Thread.Abort().
+    //
+    //-------------------------------------------------------------------------
+
+    internal class FileFullEaInformation : SafeHandleZeroOrMinusOneIsInvalid
+    {
+        private string EA_NAME_STRING = "Filestream_Transaction_Tag";
+        private int m_cbBuffer;
+
+        public FileFullEaInformation(byte[] transactionContext)
+            : base(true)
+        {
+            m_cbBuffer = 0;
+            InitializeEaBuffer(transactionContext);
+        }
+
+        protected override bool ReleaseHandle()
+        {
+            m_cbBuffer = 0;
+
+            if (base.handle == IntPtr.Zero)
+                return true;
+
+            Marshal.FreeHGlobal(base.handle);
+            base.handle = IntPtr.Zero;
+
+            return true;
+        }
+
+        public int Length
+        {
+            get
+            {
+                return m_cbBuffer;
+            }
+        }
+
+        private void InitializeEaBuffer(byte[] transactionContext)
+        {
+            if (transactionContext.Length >= UInt16.MaxValue)
+                throw ADP.ArgumentOutOfRange("transactionContext");
+
+            UnsafeNativeMethods.FILE_FULL_EA_INFORMATION eaBuffer;
+            eaBuffer.nextEntryOffset = 0;
+            eaBuffer.flags = 0;
+            eaBuffer.EaName = 0;
+
+            // string will be written as ANSI chars, so Length == ByteLength in this case
+            eaBuffer.EaNameLength = (byte)EA_NAME_STRING.Length;
+            eaBuffer.EaValueLength = (ushort)transactionContext.Length;
+
+            // allocate sufficient memory to contain the FILE_FULL_EA_INFORMATION struct and
+            //   the contiguous name/value pair in eaName (note: since the struct already
+            //   contains one byte for eaName, we don't need to allocate a byte for the 
+            //   null character separator).
+            m_cbBuffer = Marshal.SizeOf(eaBuffer) + eaBuffer.EaNameLength + eaBuffer.EaValueLength;
+
+            IntPtr pbBuffer = IntPtr.Zero;
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+            }
+            finally
+            {
+                pbBuffer = Marshal.AllocHGlobal(m_cbBuffer);
+                if (pbBuffer != IntPtr.Zero)
+                    SetHandle(pbBuffer);
+            }
+
+            bool mustRelease = false;
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+                DangerousAddRef(ref mustRelease);
+                IntPtr ptr = DangerousGetHandle();
+
+                // write struct into buffer
+                Marshal.StructureToPtr(eaBuffer, ptr, false);
+
+                // write property name into buffer
+                System.Text.ASCIIEncoding ascii = new System.Text.ASCIIEncoding();
+                byte[] asciiName = ascii.GetBytes(EA_NAME_STRING);
+
+                // calculate offset at which to write the name/value pair
+                System.Diagnostics.Debug.Assert(Marshal.OffsetOf(typeof(UnsafeNativeMethods.FILE_FULL_EA_INFORMATION), "EaName").ToInt64() <= (Int64)Int32.MaxValue);
+                int cbOffset = Marshal.OffsetOf(typeof(UnsafeNativeMethods.FILE_FULL_EA_INFORMATION), "EaName").ToInt32();
+                for (int i = 0; cbOffset < m_cbBuffer && i < eaBuffer.EaNameLength; i++, cbOffset++)
+                {
+                    Marshal.WriteByte(ptr, cbOffset, asciiName[i]);
+                }
+
+                System.Diagnostics.Debug.Assert(cbOffset < m_cbBuffer);
+
+                // write null character separator
+                Marshal.WriteByte(ptr, cbOffset, 0);
+                cbOffset++;
+
+                System.Diagnostics.Debug.Assert(cbOffset < m_cbBuffer || transactionContext.Length == 0 && cbOffset == m_cbBuffer);
+
+                // write transaction context ID
+                for (int i = 0; cbOffset < m_cbBuffer && i < eaBuffer.EaValueLength; i++, cbOffset++)
+                {
+                    Marshal.WriteByte(ptr, cbOffset, transactionContext[i]);
+                }
+            }
+            finally
+            {
+                if (mustRelease)
+                    DangerousRelease();
+            }
+        }
+        // --- netfx
     }
 }
