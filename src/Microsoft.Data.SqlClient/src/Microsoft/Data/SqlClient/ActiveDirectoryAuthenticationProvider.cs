@@ -305,26 +305,21 @@ namespace Microsoft.Data.SqlClient
                     // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
                     // or the user needs to perform two factor authentication.
 
-                    using (SemaphoreSlim waitHandle = new SemaphoreSlim(0))
+                    InteractiveAuthStateObject state = new InteractiveAuthStateObject()
                     {
-                        InteractiveAuthStateObject state = new InteractiveAuthStateObject()
-                        {
-                            app = app,
-                            scopes = scopes,
-                            connectionId = parameters.ConnectionId,
-                            userId = parameters.UserId,
-                            authenticationMethod = parameters.AuthenticationMethod,
-                            cts = cts,
-                            customWebUI = _customWebUI,
-                            deviceCodeFlowCallback = _deviceCodeFlowCallback,
-                            _waitHandle = waitHandle
-                        };
+                        app = app,
+                        scopes = scopes,
+                        connectionId = parameters.ConnectionId,
+                        userId = parameters.UserId,
+                        authenticationMethod = parameters.AuthenticationMethod,
+                        cts = cts,
+                        customWebUI = _customWebUI,
+                        deviceCodeFlowCallback = _deviceCodeFlowCallback,
+                        _taskCompletionSource = new TaskCompletionSource<AuthenticationResult>()
+                    };
 
-                        _synchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
-
-                        await waitHandle.WaitAsync().ConfigureAwait(false);
-                        result = state.result;
-                    }
+                    _synchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
+                    result = await state._taskCompletionSource.Task;
 
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                 }
@@ -332,27 +327,21 @@ namespace Microsoft.Data.SqlClient
                 if (result == null)
                 {
                     // If no existing 'account' is found, we request user to sign in interactively.
-                    using (SemaphoreSlim waitHandle = new SemaphoreSlim(0))
+                    InteractiveAuthStateObject state = new InteractiveAuthStateObject()
                     {
-                        InteractiveAuthStateObject state = new InteractiveAuthStateObject()
-                        {
-                            app = app,
-                            scopes = scopes,
-                            connectionId = parameters.ConnectionId,
-                            userId = parameters.UserId,
-                            authenticationMethod = parameters.AuthenticationMethod,
-                            cts = cts,
-                            customWebUI = _customWebUI,
-                            deviceCodeFlowCallback = _deviceCodeFlowCallback,
-                            _waitHandle = waitHandle
-                        };
+                        app = app,
+                        scopes = scopes,
+                        connectionId = parameters.ConnectionId,
+                        userId = parameters.UserId,
+                        authenticationMethod = parameters.AuthenticationMethod,
+                        cts = cts,
+                        customWebUI = _customWebUI,
+                        deviceCodeFlowCallback = _deviceCodeFlowCallback,
+                        _taskCompletionSource = new TaskCompletionSource<AuthenticationResult>()
+                    };
 
-                        _synchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
-
-                        await waitHandle.WaitAsync().ConfigureAwait(false);
-                        result = state.result;
-                    }
-
+                    _synchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
+                    result = await state._taskCompletionSource.Task;
 
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                 }
@@ -417,9 +406,7 @@ namespace Microsoft.Data.SqlClient
             internal CancellationTokenSource cts;
             internal ICustomWebUi customWebUI;
             internal Func<DeviceCodeResult, Task> deviceCodeFlowCallback;
-            internal AuthenticationResult result;
-            internal SemaphoreSlim _waitHandle;
-
+            internal TaskCompletionSource<AuthenticationResult> _taskCompletionSource;
         }
 
 
@@ -453,7 +440,7 @@ namespace Microsoft.Data.SqlClient
                             .WithLoginHint(interactiveAuthStateObject.userId)
                             .ExecuteAsync(ctsInteractive.Token)
                             .ConfigureAwait(false);
-                        interactiveAuthStateObject.result = result;
+                        interactiveAuthStateObject._taskCompletionSource.SetResult(result);
                         return;
                     }
                     else
@@ -475,14 +462,14 @@ namespace Microsoft.Data.SqlClient
                          *
                          * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
                          */
-                         var result = await interactiveAuthStateObject.app.AcquireTokenInteractive(interactiveAuthStateObject.scopes)
-                             .WithCorrelationId(interactiveAuthStateObject.connectionId)
-                             .WithLoginHint(interactiveAuthStateObject.userId)
-                             .ExecuteAsync(ctsInteractive.Token)
-                             .ConfigureAwait(false);
-                        interactiveAuthStateObject.result = result;
+                        var result = await interactiveAuthStateObject.app.AcquireTokenInteractive(interactiveAuthStateObject.scopes)
+                            .WithCorrelationId(interactiveAuthStateObject.connectionId)
+                            .WithLoginHint(interactiveAuthStateObject.userId)
+                            .ExecuteAsync(ctsInteractive.Token)
+                            .ConfigureAwait(false);
+                        interactiveAuthStateObject._taskCompletionSource.SetResult(result);
                         return;
-                     }
+                    }
                 }
                 else
                 {
@@ -491,20 +478,19 @@ namespace Microsoft.Data.SqlClient
                         .WithCorrelationId(interactiveAuthStateObject.connectionId)
                         .ExecuteAsync(cancellationToken: interactiveAuthStateObject.cts.Token)
                         .ConfigureAwait(false);
-                    interactiveAuthStateObject.result = result;
+                    interactiveAuthStateObject._taskCompletionSource.SetResult(result);
                     return;
                 }
             }
             catch (OperationCanceledException)
             {
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenInteractiveDeviceFlowAsync | Operation timed out while acquiring access token.");
-                throw (interactiveAuthStateObject.authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive) ?
+
+                var error = (interactiveAuthStateObject.authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive) ?
                     SQL.ActiveDirectoryInteractiveTimeout() :
                     SQL.ActiveDirectoryDeviceFlowTimeout();
-            }
-            finally
-            {
-                interactiveAuthStateObject._waitHandle.Release();
+
+                interactiveAuthStateObject._taskCompletionSource.SetException(error);
             }
         }
 
@@ -828,6 +814,5 @@ namespace Microsoft.Data.SqlClient
 
             public override int GetHashCode() => Tuple.Create(_tokenCredentialType, _authority, _scope, _audience, _clientId).GetHashCode();
         }
-
     }
 }
