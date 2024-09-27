@@ -16,35 +16,12 @@ parameters:
     default: $(NugetPackageVersion)
 
 steps:
-- powershell: |
-    # Get a list of package sources available
-    Get-PackageSource
-
-    #Current location
-    Get-Location
-
-    # Register the local nuget folder to be used by nuget.config
-    Register-PackageSource  -Name "Package Source" -Location ${{parameters.downloadedNugetPath }} -Force -ProviderName NuGet -Trusted
-
-    # Get a list of package sources available after the change
-    Get-PackageSource
-
-    #Set the NuGet.config file in the project to use extracted package
-    $rootFolder = Get-location
-    [Xml] $nugetConfig = Get-Content -Path "NuGet.config"
-    $Value = Resolve-Path ${{parameters.downloadedNugetPath }}
-    $newAdd = $nugetConfig.CreateElement("add")
-    $newAdd.SetAttribute("key","Package source")
-    $newAdd.SetAttribute("value", "$Value/" )
-    $nugetConfig.configuration.packageSources.AppendChild($newAdd)
-    $nugetConfig.Save("$rootFolder/NuGet.config")
-  displayName: 'Update NuGet config file to read from Nuget folder'
-
-- ${{ if parameters.debug }}:
-  - powershell: |
-      # Display the content of the NuGet.config file
-      Get-Content -Path "NuGet.config"
-    displayName: 'Read NuGet.config [debug]'
+- template: add-nuget-feed-step.yml@self
+  parameters:
+    debug: ${{ parameters.debug }}
+    key: 'Package Source'
+    value: ${{ parameters.downloadedNugetPath }}
+    feedType: Local
 
 - task: DotNetCoreCLI@2
   displayName: 'Restore NuGets'

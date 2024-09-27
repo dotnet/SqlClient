@@ -11,13 +11,17 @@ parameters:
   - name: artifactName
     type: string
     default: Artifacts
-  
+
   - name: buildType
     displayName: 'Build Type'
     default: Project
     values:
       - Project
       - Package
+
+  - name: internalSNIVersion
+    type: string
+    default: ''
 
 steps:
 - ${{if eq(parameters.debug, true)}}:
@@ -34,6 +38,14 @@ steps:
       patterns: '**/*.nupkg'
       targetPath: $(Pipeline.Workspace)/${{parameters.artifactName }}
 
+  # Update config and properties to use internal SNI feed
+  - ${{ if ne(parameters.internalSNIVersion, '') }}:
+    - template: ci-custom-sni-step.yml@self
+      parameters:
+        debug: ${{ parameters.debug }}
+        internalSNIVersion: ${{ parameters.internalSNIVersion }}
+
+  # Update projects to read from Nuget folder downloaded from the pipeline's artifact
   - template: update-nuget-config-local-feed-step.yml@self
     parameters:
       downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.artifactName }}
@@ -41,3 +53,6 @@ steps:
 
 - ${{ else }}: # project
   - template: ci-project-build-step.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+      internalSNIVersion: ${{ parameters.internalSNIVersion }}
