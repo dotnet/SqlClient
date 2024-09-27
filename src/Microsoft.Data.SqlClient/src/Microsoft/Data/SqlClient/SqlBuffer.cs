@@ -939,21 +939,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlJson SqlJson 
-        {
-            get
-            {
-                if (StorageType.Json == _type)
-                {
-                    if (IsNull)
-                    { 
-                        return SqlTypes.SqlJson.Null;
-                    }
-                    return new SqlJson((string)_object);
-                }
-                return (SqlJson)SqlValue;
-            }
-        }
+        internal SqlJson SqlJson => (StorageType.Json == _type) ? (IsNull ? SqlTypes.SqlJson.Null : new SqlJson((string)_object)) : (SqlJson)SqlValue;
 
         internal object SqlValue
         {

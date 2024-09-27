@@ -2546,11 +2546,7 @@ namespace Microsoft.Data.SqlClient
             return sx;
         }
 
-        /// <summary>
-        /// Retrieves the column at ordinal as a SqlJson.
-        /// </summary>
-        /// <param name="i"></param>
-        /// <returns></returns>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/GetSqlJson/*' />
         virtual public SqlJson GetSqlJson(int i)
         {
             ReadColumn(i);
