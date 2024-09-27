@@ -12,10 +12,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
-using Microsoft.Data.Common;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Identity.Client;
+
+#if INTERACTIVE_AUTH
 using Microsoft.Identity.Client.Broker;
+#endif
+
 using Microsoft.Identity.Client.Extensibility;
 
 namespace Microsoft.Data.SqlClient
@@ -234,31 +237,8 @@ namespace Microsoft.Data.SqlClient
             AuthenticationResult result = null;
             IPublicClientApplication app = await GetPublicClientAppInstanceAsync(pcaKey, cts.Token).ConfigureAwait(false);
 
-            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
-            {
-                result = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
 
-                if (result == null)
-                {
-                    if (!string.IsNullOrEmpty(parameters.UserId))
-                    {
-                        result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
-                            .WithCorrelationId(parameters.ConnectionId)
-                            .WithUsername(parameters.UserId)
-                            .ExecuteAsync(cancellationToken: cts.Token)
-                            .ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
-                            .WithCorrelationId(parameters.ConnectionId)
-                            .ExecuteAsync(cancellationToken: cts.Token)
-                            .ConfigureAwait(false);
-                    }
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result?.ExpiresOn);
-                }
-            }
-            else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
+            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             {
                 string pwCacheKey = GetAccountPwCacheKey(parameters);
                 object previousPw = s_accountPwCache.Get(pwCacheKey);
@@ -292,7 +272,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
-                parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+                parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow ||
+                parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 try
                 {

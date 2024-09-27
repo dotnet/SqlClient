@@ -28,6 +28,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
-    <PackageReference Include="Microsoft.Identity.Client.Broker" Version="4.64.0" />
+    <PackageReference Include="Microsoft.Identity.Client.Broker" Condition="$(DefineConstants.Contains('INTERACTIVE_AUTH'))">
+      <Version>$(MicrosoftIdentityClientBrokerVersion)</Version>
+    </PackageReference>
   </ItemGroup>
 </Project>
