@@ -1,7 +1,7 @@
 ﻿<docs>
   <members name="SqlAuthenticationToken">
     <SqlAuthenticationToken>
-      <summary>Represents an AD authentication token.</summary>
+      <summary>Represents an authentication token.</summary>
     </SqlAuthenticationToken>
     <ctor>
       <param name="accessToken">The access token.</param>

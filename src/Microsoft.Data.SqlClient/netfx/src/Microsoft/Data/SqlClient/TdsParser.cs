@@ -13179,7 +13179,8 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, null, IsBOMNeeded(type, value), stateObj, paramSize));
+                                Encoding encoding = type.NullableType == TdsEnums.SQLJSON ? new UTF8Encoding() : null;
+                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, encoding, IsBOMNeeded(type, value), stateObj, paramSize));
                             }
                         }
                         else
