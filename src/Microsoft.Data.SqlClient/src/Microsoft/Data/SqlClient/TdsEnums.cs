@@ -1185,7 +1185,7 @@ namespace Microsoft.Data.SqlClient
 #endif
     }
     // This enum indicates the state of TransparentNetworkIPResolution
-    // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.
+    // The first attempt when TNIR is on should be sequential. If the first attempt fails next attempts should be parallel.
     internal enum TransparentNetworkResolutionState
     {
         DisabledMode = 0,

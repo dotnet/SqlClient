@@ -119,7 +119,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Create TDS prelogin packet
             TDSPreLoginToken preLoginToken = new TDSPreLoginToken(Arguments.ServerVersion, serverResponse, false); // TDS server doesn't support MARS
 
-            // Cache the recieved Nonce into the session
+            // Cache the received Nonce into the session
             (session as GenericTDSServerSession).ClientNonce = preLoginRequest.Nonce;
 
             // Check if the server has been started up as requiring FedAuth when choosing between SSPI and FedAuth

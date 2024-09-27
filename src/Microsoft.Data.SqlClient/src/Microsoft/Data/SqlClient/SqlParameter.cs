@@ -1001,7 +1001,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Checks the parameter name for the @ prefix and appends it if it is missing, then apends the parameter name
+        /// Checks the parameter name for the @ prefix and appends it if it is missing, then appends the parameter name
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="rawParameterName"></param>

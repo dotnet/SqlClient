@@ -488,7 +488,7 @@
   <members name="SqlClientTransactionRollbackError">
     <SqlClientTransactionRollbackError>
       <summary>
-        Contains diagnostic information emitted after a transaction roll back failes with an exception.
+        Contains diagnostic information emitted after a transaction roll back fails with an exception.
       </summary>
     </SqlClientTransactionRollbackError>
     <Name>

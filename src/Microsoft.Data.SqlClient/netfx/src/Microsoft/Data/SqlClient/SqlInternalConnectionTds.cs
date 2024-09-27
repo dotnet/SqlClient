@@ -2301,7 +2301,7 @@ namespace Microsoft.Data.SqlClient
         // Common code path for making one attempt to establish a connection and log in to server.
         private void AttemptOneLogin(ServerInfo serverInfo, string newPassword, SecureString newSecurePassword, TimeoutTimer timeout, bool withFailover = false, bool isFirstTransparentAttempt = true, bool disableTnir = false)
         {
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
 
             _routingInfo = null; // forget routing information
 
