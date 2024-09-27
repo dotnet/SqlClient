@@ -255,6 +255,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (result == null)
                         {
+                            //TODO: need to use broker here too?
                             result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
                                .WithCorrelationId(parameters.ConnectionId)
                                .ExecuteAsync(cancellationToken: cts.Token)
@@ -274,6 +275,7 @@ namespace Microsoft.Data.SqlClient
 
                         return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
                     }
+#if INTERACTIVE_AUTH
                 case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                 case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                 case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
@@ -337,6 +339,7 @@ namespace Microsoft.Data.SqlClient
 
                         return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
                     }
+#endif
                 default:
                     {
                         SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | {0} authentication mode not supported by ActiveDirectoryAuthenticationProvider class.", parameters.AuthenticationMethod);
@@ -386,6 +389,7 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
+#if INTERACTIVE_AUTH
         private class InteractiveAuthStateObject
         {
             internal IPublicClientApplication app;
@@ -398,7 +402,6 @@ namespace Microsoft.Data.SqlClient
             internal Func<DeviceCodeResult, Task> deviceCodeFlowCallback;
             internal TaskCompletionSource<AuthenticationResult> _taskCompletionSource;
         }
-
 
         private static async void AcquireTokenInteractiveDeviceFlowAsync(object state)
         {
@@ -488,6 +491,7 @@ namespace Microsoft.Data.SqlClient
                 interactiveAuthStateObject._taskCompletionSource.SetException(e);
             }
         }
+#endif
 
         private static Task DefaultDeviceFlowCallback(DeviceCodeResult result)
         {
@@ -612,30 +616,16 @@ namespace Microsoft.Data.SqlClient
 
         private IPublicClientApplication CreateClientAppInstance(PublicClientAppKey publicClientAppKey)
         {
-            IPublicClientApplication publicClientApplication;
-
-            if (_parentActivityOrWindowFunc != null)
-            {
-                publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
-                .WithAuthority(publicClientAppKey._authority)
-                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
-                .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
-                .WithRedirectUri(publicClientAppKey._redirectUri)
-                .WithParentActivityOrWindow(_parentActivityOrWindowFunc)
-                .WithBroker(new BrokerOptions(BrokerOptions.OperatingSystems.Windows))
-                .Build();
-            }
-            else
-            {
-                publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
-                .WithAuthority(publicClientAppKey._authority)
-                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
-                .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
-                .WithRedirectUri(publicClientAppKey._redirectUri)
-                .Build();
-            }
-
-            return publicClientApplication;
+            return PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
+            .WithAuthority(publicClientAppKey._authority)
+            .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
+            .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
+            .WithRedirectUri(publicClientAppKey._redirectUri)
+#if INTERACTIVE_AUTH
+            .WithParentActivityOrWindow(_parentActivityOrWindowFunc)
+            .WithBroker(new BrokerOptions(BrokerOptions.OperatingSystems.Windows))
+#endif
+            .Build();
         }
 
 
