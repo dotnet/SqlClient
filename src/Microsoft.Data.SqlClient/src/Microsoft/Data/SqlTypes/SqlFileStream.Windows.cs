@@ -492,56 +492,35 @@ namespace Microsoft.Data.SqlTypes
             path = path.Trim();
             if (path.Length == 0)
             {
-                // netcore throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
-                // netfx throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidPath), "path");
+                throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
             }
 
-            // netfx // check for the path length before we normalize it with GetFullPathName
-            // netfx if (path.Length > MaxWin32PathLength)
-            // netfx {
-            // netfx     // cannot use PathTooLongException here since our length limit is 32K while
-            // netfx     // PathTooLongException error message states that the path should be limited to 260
-            // netfx    throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidPath), "path");
-            // netfx }
-
-            // netfx // GetFullPathName does not check for invalid characters so we still have to validate them before
-            // netfx if (path.IndexOfAny(InvalidPathChars) >= 0)
-            // netfx {
-            // netfx     throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidPath), "path");
-            // netfx }
-
-            // netcore // make sure path is not DOS device path
-            // netcore if (!path.StartsWith(@"\\", StringComparison.Ordinal) && !System.IO.PathInternal.IsDevice(path.AsSpan()))
-            // netcore {
-            // netcore     throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
-            // netcore }
-            // netfx // make sure path is a UNC path
-            // netfx if (!path.StartsWith(@"\\", StringComparison.OrdinalIgnoreCase))
-            // netfx {
-            // netfx     throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidPath), "path");
-            // netfx }
+            // make sure path is a UNC path and not a DOS device path
+            if (!path.StartsWith(@"\\", StringComparison.Ordinal) || IsDevicePath(path))
+            {
+                throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
+            }
 
             //-----------------------------------------------------------------
 
-            // normalize the path
-            // netcore path = System.IO.Path.GetFullPath(path);
-            // netfx path = UnsafeNativeMethods.SafeGetFullPathName(path);
+            // Normalize the path
+            #if NETFRAMEWORK
+            // In netfx, the System.IO.Path.GetFullPath requires PathDiscovery permission, which is
+            // not necessary since we are dealing with network paths. Thus, we are going directly
+            // to the GetFullPathName function in kernel32.dll (SQLBUVSTS01 192677, 193221)
+            path = NetfxGetFullPathName(path);
+            Debug.Assert(path.Length <= MaxWin32PathLength, "kernel32.dll GetFullPathName returned path longer than max");
+            #else
+            path = Path.GetFullPath(path);
+            #endif
 
-            // netfx // we do not expect windows API to return invalid paths
-            // netfx Debug.Assert(path.Length <= MaxWin32PathLength, "GetFullPathName returns path longer than max expected!");
+            // Validate after normalization
 
-            // netcore // make sure path is a UNC path
-            // netcore if (System.IO.PathInternal.IsDeviceUNC(path.AsSpan()))
-            // netcore {
-            // netcore     throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource), "path");
-            // netcore }
-
-            // netfx // CONSIDER: is this a precondition validation that can be done above? Or must the path be normalized first?
-            // netfx // after normalization, we have to ensure that the path does not attempt to refer to a root device, etc.
-            // netfx if (path.StartsWith(@"\\.\", StringComparison.Ordinal))
-            // netfx {
-            // netfx     throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_PathNotValidDiskResource), "path");
-            // netfx }
+            // Make sure path is a UNC path (not a device or device UNC path)
+            if (IsDevicePath(path) || IsDeviceUncPath(path))
+            {
+                throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource), "path");
+            }
 
             return path;
         }
