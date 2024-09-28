@@ -14,6 +14,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -2898,6 +2899,15 @@ namespace Microsoft.Data.SqlClient
             return sx;
         }
 
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/GetSqlJson/*' />
+        virtual public SqlJson GetSqlJson(int i)
+        {
+            ReadColumn(i);
+            SqlJson json = _data[i].IsNull ? SqlJson.Null : _data[i].SqlJson;
+
+            return json;
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*' />
         virtual public object GetSqlValue(int i)
         {
@@ -3344,6 +3354,16 @@ namespace Microsoft.Data.SqlClient
                     byte[] value = data.IsNull ? Array.Empty<byte>() : data.SqlBinary.Value;
                     return (T)(object)new MemoryStream(value, writable: false);
                 }
+            }
+            else if (typeof(T) == typeof(JsonDocument))
+            {
+                MetaType metaType = metaData.metaType;
+                if (metaType.SqlDbType != SqlDbTypeExtensions.Json)
+                {
+                    throw SQL.JsonDocumentNotSupportedOnColumnType(metaData.column);
+                }
+                JsonDocument document = JsonDocument.Parse(data.Value as string);
+                return (T)(object)document;
             }
             else
             {

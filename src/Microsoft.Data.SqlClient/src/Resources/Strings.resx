@@ -4740,4 +4740,7 @@
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>The certificate provided by the server does not match the certificate provided by the ServerCertificate option.</value>
   </data>
+  <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
+    <value>Invalid attempt to get JsonDocument on column '{0}'. JsonDocument is only supported for columns of type json.</value>
+  </data>
 </root>
