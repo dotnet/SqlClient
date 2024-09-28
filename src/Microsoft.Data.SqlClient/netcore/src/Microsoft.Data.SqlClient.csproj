@@ -778,7 +778,6 @@
     <Compile Include="Common\Interop\Windows\sspicli\SSPIWrapper.cs" />
     <Compile Include="Common\Microsoft\Win32\SafeHandles\SafeLibraryHandle.cs" />
     <Compile Include="Common\System\Collections\Generic\BidirectionalDictionary.cs" />
-    <Compile Include="Common\System\IO\PathInternal.Windows.cs" />
     <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Windows.cs" />
     <Compile Include="Common\System\Net\DebugCriticalHandleZeroOrMinusOneIsInvalid.cs" />
     <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Windows.cs" />

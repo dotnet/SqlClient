@@ -943,6 +943,82 @@ namespace Microsoft.Data.SqlTypes
 
         #region private helper methods
 
+        /// <summary>
+        /// Returns <see langword="true"/> if the path uses any of the DOS device path syntaxes
+        /// <list type='bullet'>
+        ///   <item><c>\\.\</c></item>
+        ///   <item><c>\\?\</c></item>
+        ///   <item><c>\??\</c></item>
+        /// </list>
+        /// </summary>
+        /// <remarks>
+        /// Implementation lifted from System.IO.PathInternal
+        /// https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/System/IO/PathInternal.Windows.cs
+        /// </remarks>
+        private static bool IsDevicePath(string path)
+        {
+            return IsExtendedPath(path)
+                   ||
+                   (
+                       path.Length >= 4
+                       && IsDirectorySeparator(path[0])
+                       && IsDirectorySeparator(path[1])
+                       && (path[2] == '.' || path[2] == '?')
+                       && IsDirectorySeparator(path[3])
+                   );
+        }
+
+        /// <summary>
+        /// Returns true if the path is a device UNC path:
+        /// <list type="bullet">
+        ///   <item><c>\\.\UNC\</c></item>
+        ///   <item><c>\\?\UNC\</c></item>
+        ///   <item><c>\??\UNC\</c></item>
+        /// </list>
+        /// </summary>
+        /// <remarks>
+        /// Implementation lifted from System.IO.PathInternal
+        /// https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/System/IO/PathInternal.Windows.cs
+        /// </remarks>
+        internal static bool IsDeviceUncPath(string path)
+        {
+            return path.Length >= 8
+                   && IsDevicePath(path)
+                   && IsDirectorySeparator(path[7])
+                   && path[4] == 'U'
+                   && path[5] == 'N'
+                   && path[6] == 'C';
+        }
+
+        /// <summary>
+        /// Returns <see langword='true' /> if the path uses the canonical form of extended syntax
+        /// (<c>\\?\</c> or <c>\??\</c>). If the path matches exactly (cannot use alternative
+        /// directory separators) Windows will skip normalization and path length checks.
+        /// </summary>
+        /// <remarks>
+        /// Implementation lifted from System.IO.PathInternal.
+        /// https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/System/IO/PathInternal.Windows.cs
+        /// </remarks>
+        internal static bool IsExtendedPath(string path)
+        {
+            return path.Length >= 4
+                   && path[0] == '\\'
+                   && (path[1] == '\\' || path[1] == '?')
+                   && path[2] == '?'
+                   && path[3] == '\\';
+        }
+
+        /// <summary>
+        /// Returns <see langword="true"/> if the given character is a directory separator.
+        /// </summary>
+        /// <remarks>
+        /// Implementation lifted from System.IO.PathInternal.
+        /// https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/System/IO/PathInternal.Windows.cs
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsDirectorySeparator(char c) =>
+            c == Path.DirectorySeparatorChar || c == Path.AltDirectorySeparatorChar;
+
         // This method exists to ensure that the requested path name is unique so that SMB/DNS is prevented
         // from collapsing a file open request to a file handle opened previously. In the SQL FILESTREAM case,
         // this would likely be a file open in another transaction, so this mechanism ensures isolation.
