@@ -168,6 +168,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         int rowsAffected3 = await command.ExecuteNonQueryAsync();
                         ValidateRowsAffected(rowsAffected3);
                     }
+
+                    DataTestUtility.DropTable(connection, tableName);
                 }
             }
         }
@@ -280,6 +282,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         await ValidateRowsAsync(reader2);
                         reader2.Close();
                     }
+
+                    DataTestUtility.DropTable(connection, tableName);
                 }
             }
         }
