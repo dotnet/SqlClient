@@ -500,7 +500,6 @@ namespace Microsoft.Data.SqlTypes
             {
                 throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
             }
-
             //-----------------------------------------------------------------
 
             // Normalize the path
@@ -607,56 +606,39 @@ namespace Microsoft.Data.SqlTypes
             Debug.Assert(path != null);
             Debug.Assert(transactionContext != null);
 
-            // netcore if (access != System.IO.FileAccess.Read && access != System.IO.FileAccess.Write && access != System.IO.FileAccess.ReadWrite)
-            // netfx if (access != FileAccess.Read && access != FileAccess.Write && access != FileAccess.ReadWrite)
+            if (access != FileAccess.Read && access != FileAccess.Write && access != FileAccess.ReadWrite)
                 throw ADP.ArgumentOutOfRange("access");
 
             // FileOptions is a set of flags, so AND the given value against the set of values we do not support
-            // netcore if ((options & ~(System.IO.FileOptions.WriteThrough | System.IO.FileOptions.Asynchronous | System.IO.FileOptions.RandomAccess | System.IO.FileOptions.SequentialScan)) != 0)
-            // netfx if ((options & ~(FileOptions.WriteThrough | FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.SequentialScan)) != 0)
+            if ((options & ~(FileOptions.WriteThrough | FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.SequentialScan)) != 0)
                 throw ADP.ArgumentOutOfRange("options");
 
-            //-----------------------------------------------------------------
             // normalize the provided path
-            // * compress path to remove any occurrences of '.' or '..'
-            // * trim whitespace from the beginning and end of the path
-            // * ensure that the path starts with '\\'
-            // * ensure that the path does not start with '\\.\'
-            // netfx // * ensure that the path is not longer than Int16.MaxValue
             path = GetFullPathInternal(path);
 
-            // netfx // ensure the running code has permission to read/write the file
-            // netfx DemandAccessPermission(path, access);
-
-            // netfx FileFullEaInformation eaBuffer = null;
-            // netfx SecurityQualityOfService qos = null;
-            // netfx UnicodeString objectName = null;
+            #if NETFRAMEWORK
+            // ensure the running code has permission to read/write the file
+            DemandAccessPermission(path, access);
+            #endif
 
             Microsoft.Win32.SafeHandles.SafeFileHandle hFile = null;
-            // netcore Interop.NtDll.DesiredAccess nDesiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES | Interop.NtDll.DesiredAccess.SYNCHRONIZE;
-            // netfx int nDesiredAccess = UnsafeNativeMethods.FILE_READ_ATTRIBUTES | UnsafeNativeMethods.SYNCHRONIZE;
-            // netcore Interop.NtDll.CreateOptions dwCreateOptions = 0;
-            // netfx UInt32 dwCreateOptions = 0;
-            // netcore Interop.NtDll.CreateDisposition dwCreateDisposition = 0;
-            // netfx UInt32 dwCreateDisposition = 0;
+            Interop.NtDll.DesiredAccess nDesiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES | Interop.NtDll.DesiredAccess.SYNCHRONIZE;
+            Interop.NtDll.CreateOptions dwCreateOptions = 0;
+            Interop.NtDll.CreateDisposition dwCreateDisposition = 0;
             System.IO.FileShare shareAccess = System.IO.FileShare.None;
 
             switch (access)
             {
                 case System.IO.FileAccess.Read:
-                    // netcore nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA;
-                    // netfx nDesiredAccess |= UnsafeNativeMethods.FILE_READ_DATA;
+                    nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA;
                     shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.ReadWrite;
-                    // netcore dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OPEN;
-                    // netfx dwCreateDisposition = (uint)UnsafeNativeMethods.CreationDisposition.FILE_OPEN;
+                    dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OPEN;
                     break;
 
                 case System.IO.FileAccess.Write:
-                    // netcore nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
-                    // netfx nDesiredAccess |= UnsafeNativeMethods.FILE_WRITE_DATA;
+                    nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
                     shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
-                    // netcore dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
-                    // netfx dwCreateDisposition = (uint)UnsafeNativeMethods.CreationDisposition.FILE_OVERWRITE;
+                    dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
                     break;
 
                 case System.IO.FileAccess.ReadWrite:
@@ -664,81 +646,56 @@ namespace Microsoft.Data.SqlTypes
                     // we validate the value of 'access' parameter in the beginning of this method
                     Debug.Assert(access == System.IO.FileAccess.ReadWrite);
 
-                    // netcore nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA | Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
-                    // netfx nDesiredAccess |= UnsafeNativeMethods.FILE_READ_DATA | UnsafeNativeMethods.FILE_WRITE_DATA;
+                    nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA | Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
                     shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
-                    // netcore dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
-                    // netfx dwCreateDisposition = (uint)UnsafeNativeMethods.CreationDisposition.FILE_OVERWRITE;
+                    dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
                     break;
             }
 
             if ((options & System.IO.FileOptions.WriteThrough) != 0)
             {
-                // netcore dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_WRITE_THROUGH;
-                // netfx dwCreateOptions |= (uint)UnsafeNativeMethods.CreateOption.FILE_WRITE_THROUGH;
+                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_WRITE_THROUGH;
             }
 
             if ((options & System.IO.FileOptions.Asynchronous) == 0)
             {
-                // netcore dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
-                // netfx dwCreateOptions |= (uint)UnsafeNativeMethods.CreateOption.FILE_SYNCHRONOUS_IO_NONALERT;
+                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
             }
 
             if ((options & System.IO.FileOptions.SequentialScan) != 0)
             {
-                // netcore dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SEQUENTIAL_ONLY;
-                // netfx dwCreateOptions |= (uint)UnsafeNativeMethods.CreateOption.FILE_SEQUENTIAL_ONLY;
+                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SEQUENTIAL_ONLY;
             }
 
             if ((options & System.IO.FileOptions.RandomAccess) != 0)
             {
-                // netcore dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_RANDOM_ACCESS;
-                // netfx dwCreateOptions |= (uint)UnsafeNativeMethods.CreateOption.FILE_RANDOM_ACCESS;
+                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_RANDOM_ACCESS;
             }
 
             try
             {
-                // netfx ---
-                eaBuffer = new FileFullEaInformation(transactionContext);
-
-                qos = new SecurityQualityOfService(UnsafeNativeMethods.SecurityImpersonationLevel.SecurityAnonymous,
-                    false, false);
-                // --- netfx
-
                 // NOTE: the Name property is intended to reveal the publicly available moniker for the
                 //   FILESTREAM attributed column data. We will not surface the internal processing that
                 //   takes place to create the mappedPath.
-                string mappedPath = InitializeNtPath(sPath);
-                // netcore int retval = 0;
-                // netcore Interop.Kernel32.SetThreadErrorMode(Interop.Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
-                // netfx objectName = new UnicodeString(mappedPath);
-
-                // netfx ---
-                UnsafeNativeMethods.OBJECT_ATTRIBUTES oa;
-                oa.length = Marshal.SizeOf(typeof(UnsafeNativeMethods.OBJECT_ATTRIBUTES));
-                oa.rootDirectory = IntPtr.Zero;
-                oa.attributes = (int)UnsafeNativeMethods.Attributes.CaseInsensitive;
-                oa.securityDescriptor = IntPtr.Zero;
-                oa.securityQualityOfService = qos;
-                oa.objectName = objectName;
-
-                uint oldMode;
-                uint retval = 0;
-
-                UnsafeNativeMethods.SetErrorModeWrapper(UnsafeNativeMethods.SEM_FAILCRITICALERRORS, out oldMode);
-                // --- netfx
+                string mappedPath = InitializeNtPath(path);
+                int retval = 0;
+                Interop.Kernel32.SetThreadErrorMode(Interop.Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
 
                 try
                 {
-                    // netcore ---
                     if (transactionContext.Length >= ushort.MaxValue)
                         throw ADP.ArgumentOutOfRange("transactionContext");
 
                     int headerSize = sizeof(Interop.NtDll.FILE_FULL_EA_INFORMATION);
                     int fullSize = headerSize + transactionContext.Length + s_eaNameString.Length;
 
-                    byte[] buffer = ArrayPool<byte>.Shared.Rent(fullSize);
+                    #if NETFRAMEWORK
+                    string traceEventMessage = "<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, fileAttributes=0x00, shareAccess=0x{3}, dwCreateDisposition=0x{4}, createOptions=0x{5}";
+                    #else
+                    string traceEventMessage = "SqlFileStream.OpenSqlFileStream | ADV | Object Id {0}, Desired Access 0x{1}, Allocation Size {2}, File Attributes 0, Share Access 0x{3}, Create Disposition 0x{4}, Create Options 0x{5}";
+                    #endif
 
+                    byte[] buffer = ArrayPool<byte>.Shared.Rent(fullSize);
                     fixed (byte* b = buffer)
                     {
                         Interop.NtDll.FILE_FULL_EA_INFORMATION* ea = (Interop.NtDll.FILE_FULL_EA_INFORMATION*)b;
@@ -754,38 +711,39 @@ namespace Microsoft.Data.SqlTypes
                         data = data.Slice(s_eaNameString.Length);
                         transactionContext.AsSpan().CopyTo(data);
 
+                        // Define a security QoS
+                        #if NETFRAMEWORK
+                        Interop.SecurityQualityOfService qos = new Interop.SecurityQualityOfService(
+                            Interop.ImpersonationLevel.SecurityAnonymous,
+                            isDynamicTracking: false,
+                            isEffectiveOnly: false);
+                        #else
+                        // This is not needed in netcore due to removal of CAS
+                        Interop.NtDll.SecurityQualityOfService qos = null;
+                        #endif
+
                         (int status, IntPtr handle) = Interop.NtDll.CreateFile(path: mappedPath.AsSpan(),
                                                                                 rootDirectory: IntPtr.Zero,
                                                                                 createDisposition: dwCreateDisposition,
+                                                                                securityQos: qos,
                                                                                 desiredAccess: nDesiredAccess,
-                                                                                shareAccess: nShareAccess,
+                                                                                shareAccess: shareAccess,
                                                                                 fileAttributes: 0,
                                                                                 createOptions: dwCreateOptions,
                                                                                 eaBuffer: b,
                                                                                 eaLength: (uint)fullSize);
 
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlFileStream.OpenSqlFileStream | ADV | Object Id {0}, Desired Access 0x{1}, Allocation Size {2}, File Attributes 0, Share Access 0x{3}, Create Disposition 0x{4}, Create Options 0x{5}", ObjectID, (int)nDesiredAccess, allocationSize, (int)nShareAccess, dwCreateDisposition, dwCreateOptions);
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(traceEventMessage, ObjectID, (int)nDesiredAccess, allocationSize, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
 
                         retval = status;
                         hFile = new SafeFileHandle(handle, true);
                     }
 
                     ArrayPool<byte>.Shared.Return(buffer);
-                    // --- netcore
-                    // netfx ---
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, " +
-                       "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{6}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
-
-                    retval = UnsafeNativeMethods.NtCreateFile(out hFile, nDesiredAccess,
-                        ref oa, out UnsafeNativeMethods.IO_STATUS_BLOCK _, ref allocationSize,
-                        0, shareAccess, dwCreateDisposition, dwCreateOptions,
-                        eaBuffer, (uint)eaBuffer.Length);
-                    // --- netfx
                 }
                 finally
                 {
-                    // netcore Interop.Kernel32.SetThreadErrorMode(oldMode, out oldMode);
-                    // netfx UnsafeNativeMethods.SetErrorModeWrapper(oldMode, out oldMode);
+                    Interop.Kernel32.SetThreadErrorMode(oldMode, out oldMode);
                 }
 
                 switch (retval)
@@ -793,18 +751,13 @@ namespace Microsoft.Data.SqlTypes
                     case 0:
                         break;
 
-                    // netcore case Interop.Errors.ERROR_SHARING_VIOLATION:
-                    // netfx case UnsafeNativeMethods.STATUS_SHARING_VIOLATION:
-                        // netcore throw ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
-                        // netfx throw ADP.InvalidOperation(StringsHelper.GetString(StringsHelper.SqlFileStream_FileAlreadyInTransaction));
+                    case Interop.Errors.ERROR_SHARING_VIOLATION:
+                        throw ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
 
-                    // netcore case Interop.Errors.ERROR_INVALID_PARAMETER:
-                    // netfx case UnsafeNativeMethods.STATUS_INVALID_PARAMETER:
-                        // netcore throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
-                        // netfx throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_InvalidParameter));
+                    case Interop.Errors.ERROR_INVALID_PARAMETER:
+                        throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
 
-                    // netcore case Interop.Errors.ERROR_FILE_NOT_FOUND:
-                    // netfx case UnsafeNativeMethods.STATUS_OBJECT_NAME_NOT_FOUND:
+                    case Interop.Errors.ERROR_FILE_NOT_FOUND:
                         {
                             System.IO.DirectoryNotFoundException e = new System.IO.DirectoryNotFoundException();
                             ADP.TraceExceptionAsReturnValue(e);
@@ -812,10 +765,8 @@ namespace Microsoft.Data.SqlTypes
                         }
                     default:
                         {
-                            // netcore uint error = Interop.NtDll.RtlNtStatusToDosError(retval);
-                            // netfx uint error = UnsafeNativeMethods.RtlNtStatusToDosError(retval);
-                            // netcore if (error == ERROR_MR_MID_NOT_FOUND)
-                            // netfx if (error == UnsafeNativeMethods.ERROR_MR_MID_NOT_FOUND)
+                            uint error = Interop.NtDll.RtlNtStatusToDosError(retval);
+                            if (error == Interop.NtDll.ERROR_MR_MID_NOT_FOUND)
                             {
                                 // status code could not be mapped to a Win32 error code
                                 error = (uint)retval;
@@ -829,19 +780,15 @@ namespace Microsoft.Data.SqlTypes
 
                 if (hFile.IsInvalid)
                 {
-                    // netcore System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
-                    // netfx System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(UnsafeNativeMethods.ERROR_INVALID_HANDLE);
+                    System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
                     ADP.TraceExceptionAsReturnValue(e);
                     throw e;
                 }
 
-                // netfx UnsafeNativeMethods.FileType fileType = UnsafeNativeMethods.GetFileType(hFile);
-                // netfx if (fileType != UnsafeNativeMethods.FileType.Disk)
-                // netcore if (Interop.Kernel32.GetFileType(hFile) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
+                if (Interop.Kernel32.GetFileType(hFile) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
                 {
                     hFile.Dispose();
-                    // netcore throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
-                    // netfx throw ADP.Argument(StringsHelper.GetString(StringsHelper.SqlFileStream_PathNotValidDiskResource));
+                    throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
                 }
 
                 // if the user is opening the SQL FileStream in read/write mode, we assume that they want to scan
@@ -849,20 +796,11 @@ namespace Microsoft.Data.SqlTypes
                 // the existing file contents.
                 if (access == System.IO.FileAccess.ReadWrite)
                 {
-                    // netcore ---
-                    uint ioControlCode = Interop.Kernel32.CTL_CODE(FILE_DEVICE_FILE_SYSTEM,
+                    uint ioControlCode = Interop.Kernel32.CTL_CODE(Interop.Kernel32.FILE_DEVICE_FILE_SYSTEM,
                         IoControlCodeFunctionCode, (byte)Interop.Kernel32.IoControlTransferType.METHOD_BUFFERED,
                         (byte)Interop.Kernel32.IoControlCodeAccess.FILE_ANY_ACCESS);
-                    // --- netcore
-                    // netfx ---
-                    uint ioControlCode = UnsafeNativeMethods.CTL_CODE(UnsafeNativeMethods.FILE_DEVICE_FILE_SYSTEM,
-                        IoControlCodeFunctionCode, (byte)UnsafeNativeMethods.Method.METHOD_BUFFERED,
-                        (byte)UnsafeNativeMethods.Access.FILE_ANY_ACCESS);
-                    uint cbBytesReturned = 0;
-                    // --- netfx
 
-                    // netcore if (!Interop.Kernel32.DeviceIoControl(hFile, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out uint cbBytesReturned, IntPtr.Zero))
-                    // netfx if (!UnsafeNativeMethods.DeviceIoControl(hFile, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out cbBytesReturned, IntPtr.Zero))
+                    if (!Interop.Kernel32.DeviceIoControl(hFile, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out uint cbBytesReturned, IntPtr.Zero))
                     {
                         System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
                         ADP.TraceExceptionAsReturnValue(e);
@@ -872,31 +810,8 @@ namespace Microsoft.Data.SqlTypes
 
                 // now that we've successfully opened a handle on the path and verified that it is a file,
                 // use the SafeFileHandle to initialize our internal System.IO.FileStream instance
-                // netcore ---
                 System.Diagnostics.Debug.Assert(_m_fs == null);
-                _m_fs = new System.IO.FileStream(hFile, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
-                // --- netcore
-                // netfx ---
-                // NOTE: need to assert UnmanagedCode permissions for this constructor. This is relatively benign
-                //   in that we've done much the same validation as in the FileStream(string path, ...) ctor case
-                //   most notably, validating that the handle type corresponds to an on-disk file.
-                bool bRevertAssert = false;
-                try
-                {
-                    SecurityPermission sp = new SecurityPermission(SecurityPermissionFlag.UnmanagedCode);
-                    sp.Assert();
-                    bRevertAssert = true;
-
-                    System.Diagnostics.Debug.Assert(m_fs == null);
-                    m_fs = new System.IO.FileStream(hFile, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
-                }
-                finally
-                {
-                    if (bRevertAssert)
-                        SecurityPermission.RevertAssert();
-                }
-
-                // --- netfx
+                _m_fs = OpenFileStream(hFile, access, options);
             }
             catch
             {
@@ -905,28 +820,6 @@ namespace Microsoft.Data.SqlTypes
 
                 throw;
             }
-            // netfx ---
-            finally
-            {
-                if (eaBuffer != null)
-                {
-                    eaBuffer.Dispose();
-                    eaBuffer = null;
-                }
-
-                if (qos != null)
-                {
-                    qos.Dispose();
-                    qos = null;
-                }
-
-                if (objectName != null)
-                {
-                    objectName.Dispose();
-                    objectName = null;
-                }
-            }
-            // --- netfx
         }
 
         #region private helper methods
@@ -1022,6 +915,33 @@ namespace Microsoft.Data.SqlTypes
             // netcore     ? string.Format(CultureInfo.InvariantCulture, @"{0}\{1}", path.Replace(@"\\.", @"\??"), uniqueId)
             // netcore     : string.Format(CultureInfo.InvariantCulture, @"\??\UNC\{0}\{1}", path.Trim('\\'), uniqueId);
             // netfx return String.Format(CultureInfo.InvariantCulture, formatPath, path.Trim('\\'), uniqueId);
+        }
+
+        private static FileStream OpenFileStream(SafeFileHandle fileHandle, FileAccess access, FileOptions options)
+        {
+            #if NETFRAMEWORK
+            // NOTE: need to assert UnmanagedCode permissions for this constructor. This is relatively benign
+            //   in that we've done much the same validation as in the FileStream(string path, ...) ctor case
+            //   most notably, validating that the handle type corresponds to an on-disk file.
+            // This likely only applies in partially trusted environments and is not required in
+            // netcore since CAS was removed.
+            bool bRevertAssert = false;
+            try
+            {
+                SecurityPermission sp = new SecurityPermission(SecurityPermissionFlag.UnmanagedCode);
+                sp.Assert();
+                bRevertAssert = true;
+
+                return new System.IO.FileStream(fileHandle, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
+            }
+            finally
+            {
+                if (bRevertAssert)
+                    SecurityPermission.RevertAssert();
+            }
+            #else
+            return new System.IO.FileStream(hFile, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
+            #endif
         }
         
         #endregion
