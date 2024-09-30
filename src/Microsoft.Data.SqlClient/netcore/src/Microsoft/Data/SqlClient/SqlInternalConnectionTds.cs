@@ -1365,9 +1365,7 @@ namespace Microsoft.Data.SqlClient
 
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
-#if DEBUG
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
-#endif
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 

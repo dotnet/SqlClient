@@ -232,14 +232,12 @@ namespace Microsoft.SqlServer.TDS.Servers
 
                                 break;
                             }
-#if DEBUG
                         case TDSFeatureID.JsonSupport:
                             {
                                 // Enable Json Support
                                 session.IsJsonSupportEnabled = true;
                                 break;
                             }
-#endif
                         default:
                             {
                                 // Do nothing
@@ -552,7 +550,6 @@ namespace Microsoft.SqlServer.TDS.Servers
                 responseMessage.Add(featureExtActToken);
             }
 
-#if DEBUG
             // Check if Json is supported
             if (session.IsJsonSupportEnabled)
             {
@@ -578,7 +575,6 @@ namespace Microsoft.SqlServer.TDS.Servers
                     featureExtAckToken.Options.Add(jsonSupportOption);
                 }
             }
-#endif
 
             // Create DONE token
             TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final);

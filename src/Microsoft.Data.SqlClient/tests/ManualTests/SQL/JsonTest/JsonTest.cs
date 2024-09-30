@@ -64,11 +64,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonWrite()
-        {       
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
-            string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_WriteTest");
-           
-            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
+        {
+            string tableName = "jsonWriteTest";
+            string spName = "spJsonWriteTest";
+
             string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
             string spCreate = "CREATE PROCEDURE " + spName + " (@jsonData json) AS " + tableInsert;
 
@@ -79,10 +78,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlCommand command = connection.CreateCommand())
                 {
                     //Create Table
-                    command.CommandText = tableCreate;
-                    command.ExecuteNonQuery();
+                    DataTestUtility.CreateTable(connection, tableName, "(data json)");
 
                     //Create SP for writing json values
+                    DataTestUtility.DropStoredProcedure(connection, spName);
                     command.CommandText = spCreate;
                     command.ExecuteNonQuery();
 
@@ -116,6 +115,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
 
                     DataTestUtility.DropTable(connection, tableName);
+                    DataTestUtility.DropStoredProcedure(connection, spName);
                 }
             }
         }
@@ -123,10 +123,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public async Task TestJsonWriteAsync()
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
-            string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_WriteTest");
+            string tableName = "jsonWriteTest";
+            string spName = "spJsonWriteTest";
 
-            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
             string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
             string spCreate = "CREATE PROCEDURE " + spName + " (@jsonData json) AS " + tableInsert;
 
@@ -137,10 +136,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlCommand command = connection.CreateCommand())
                 {
                     //Create Table
-                    command.CommandText = tableCreate;
-                    await command.ExecuteNonQueryAsync();
+                    DataTestUtility.CreateTable(connection, tableName, "(data json)");
 
                     //Create SP for writing json values
+                    DataTestUtility.DropStoredProcedure(connection, spName);
                     command.CommandText = spCreate;
                     await command.ExecuteNonQueryAsync();
 
@@ -172,6 +171,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         int rowsAffected3 = await command.ExecuteNonQueryAsync();
                         ValidateRowsAffected(rowsAffected3);
                     }
+
+                    DataTestUtility.DropTable(connection, tableName);
+                    DataTestUtility.DropStoredProcedure(connection, spName);
                 }
             }
         }
@@ -179,13 +181,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonRead()
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
-            string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_ReadTest");
+            string tableName = "jsonReadTest";
+            string spName = "spJsonReadTest";
 
-            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
             string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
             string tableRead = "SELECT * FROM " + tableName;
-            string spCreate = "CREATE PROCEDURE " + spName + "AS " + tableRead;
+            string spCreate = "CREATE PROCEDURE " + spName + " AS " + tableRead;
 
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -193,10 +194,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlCommand command = connection.CreateCommand())
                 {
                     //Create Table
-                    command.CommandText = tableCreate;
-                    command.ExecuteNonQuery();
+                    DataTestUtility.CreateTable(connection, tableName, "(data json)");
 
                     //Create SP for reading from json column
+                    DataTestUtility.DropStoredProcedure(connection, spName);
                     command.CommandText = spCreate;
                     command.ExecuteNonQuery();
 
@@ -231,6 +232,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
 
                     DataTestUtility.DropTable(connection, tableName);
+                    DataTestUtility.DropStoredProcedure(connection, spName);
                 }
             }
         }
@@ -238,13 +240,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public async Task TestJsonReadAsync()
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
-            string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_ReadTest");
+            string tableName = "jsonReadTest";
+            string spName = "spJsonReadTest";
 
-            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
             string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
             string tableRead = "SELECT * FROM " + tableName;
-            string spCreate = "CREATE PROCEDURE " + spName + "AS " + tableRead;
+            string spCreate = "CREATE PROCEDURE " + spName + " AS " + tableRead;
 
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -252,10 +253,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlCommand command = connection.CreateCommand())
                 {
                     //Create Table
-                    command.CommandText = tableCreate;
-                    await command.ExecuteNonQueryAsync();
+                    DataTestUtility.CreateTable(connection, tableName, "(data json)");
 
                     //Create SP for reading from json column
+                    DataTestUtility.DropStoredProcedure(connection, spName);
                     command.CommandText = spCreate;
                     await command.ExecuteNonQueryAsync();
 
@@ -288,6 +289,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         await ValidateRowsAsync(reader2);
                         reader2.Close();
                     }
+
+                    DataTestUtility.DropTable(connection, tableName);
+                    DataTestUtility.DropStoredProcedure(connection, spName);
                 }
             }
         }
