@@ -11,6 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security.Permissions;
+using System.Text;
 using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
@@ -507,8 +508,8 @@ namespace Microsoft.Data.SqlTypes
             // In netfx, the System.IO.Path.GetFullPath requires PathDiscovery permission, which is
             // not necessary since we are dealing with network paths. Thus, we are going directly
             // to the GetFullPathName function in kernel32.dll (SQLBUVSTS01 192677, 193221)
-            path = NetfxGetFullPathName(path);
-            Debug.Assert(path.Length <= MaxWin32PathLength, "kernel32.dll GetFullPathName returned path longer than max");
+            path = GetFullPathNameNetfx(path);
+            Debug.Assert(path.Length <= short.MaxValue, "kernel32.dll GetFullPathName returned path longer than max");
             #else
             path = Path.GetFullPath(path);
             #endif
@@ -524,7 +525,6 @@ namespace Microsoft.Data.SqlTypes
             return path;
         }
 
-        // netfx ---
         static private void DemandAccessPermission
             (
                 string path,
@@ -587,7 +587,6 @@ namespace Microsoft.Data.SqlTypes
                 filePerm.Demand();
             }
         }
-        // --- netfx
 
         private unsafe void OpenSqlFileStream
             (
@@ -824,6 +823,65 @@ namespace Microsoft.Data.SqlTypes
 
         #region private helper methods
 
+        #if NETFRAMEWORK
+        /// <summary>
+        /// Safe wrapper for <see cref="Interop.Kernel32.GetFullPathName" />
+        /// </summary>
+        [ResourceExposure(ResourceScope.Machine)]
+        [ResourceConsumption(ResourceScope.Machine)]
+        internal static string GetFullPathNameNetfx(string path)
+        {
+            Debug.Assert(path != null, "path is null?");
+            // make sure to test for Int16.MaxValue limit before calling this method
+            // see the below comment re GetLastWin32Error for the reason
+            Debug.Assert(path.Length < short.MaxValue);
+
+            // since we expect network paths, the 'full path' is expected to be the same size
+            // as the provided one. we still need to allocate +1 for null termination
+            StringBuilder buffer = new StringBuilder(path.Length + 1);
+
+            int cchRequiredSize = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
+
+            // if our buffer was smaller than required, GetFullPathName will succeed and return us the required buffer size with null
+            if (cchRequiredSize > buffer.Capacity)
+            {
+                // we have to reallocate and retry
+                buffer.Capacity = cchRequiredSize;
+                cchRequiredSize = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
+            }
+
+            if (cchRequiredSize == 0)
+            {
+                // GetFullPathName call failed
+                int lastError = Marshal.GetLastWin32Error();
+                if (lastError == 0)
+                {
+                    // we found that in some cases GetFullPathName fail but does not set the last error value
+                    // for example, it happens when the path provided to it is longer than 32K: return value is 0 (failure)
+                    // but GetLastError was zero too so we raised Win32Exception saying "The operation completed successfully".
+                    // To raise proper "path too long" failure, check the length before calling this API.
+                    // For other (yet unknown cases), we will throw InvalidPath message since we do not know what exactly happened
+                    throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
+                }
+                else
+                {
+                    System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(lastError);
+                    ADP.TraceExceptionAsReturnValue(e);
+                    throw e;
+                }
+            }
+
+            // this should not happen since we already reallocate
+            Debug.Assert(cchRequiredSize <= buffer.Capacity, string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "second call to GetFullPathName returned greater size: {0} > {1}",
+                cchRequiredSize,
+                buffer.Capacity));
+
+            return buffer.ToString();
+        }
+        #endif
+
         /// <summary>
         /// Returns <see langword="true"/> if the path uses any of the DOS device path syntaxes
         /// <list type='bullet'>
@@ -908,13 +966,10 @@ namespace Microsoft.Data.SqlTypes
             // Ensure we have validated and normalized the path before
             AssertPathFormat(path);
 
-            // netcore string formatPath = @"\??\UNC\{0}\{1}";
-
             string uniqueId = Guid.NewGuid().ToString("N");
-            // netcore return System.IO.PathInternal.IsDeviceUNC(path)
-            // netcore     ? string.Format(CultureInfo.InvariantCulture, @"{0}\{1}", path.Replace(@"\\.", @"\??"), uniqueId)
-            // netcore     : string.Format(CultureInfo.InvariantCulture, @"\??\UNC\{0}\{1}", path.Trim('\\'), uniqueId);
-            // netfx return String.Format(CultureInfo.InvariantCulture, formatPath, path.Trim('\\'), uniqueId);
+            return IsDeviceUncPath(path)
+                ? string.Format(CultureInfo.InvariantCulture, @"{0}\{1}", path.Replace(@"\\.", @"\??"), uniqueId)
+                : string.Format(CultureInfo.InvariantCulture, @"\??\UNC\{0}\{1}", path.Trim('\\'), uniqueId);
         }
 
         private static FileStream OpenFileStream(SafeFileHandle fileHandle, FileAccess access, FileOptions options)

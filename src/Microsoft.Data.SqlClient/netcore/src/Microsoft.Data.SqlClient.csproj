@@ -700,6 +700,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.FileTypes.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.FileTypes.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFullPathName.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.GetFullPathName.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs</Link>
     </Compile>
