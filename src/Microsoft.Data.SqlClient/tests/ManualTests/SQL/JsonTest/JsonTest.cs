@@ -67,8 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {       
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
             string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_WriteTest");
-           
-            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
+
             string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
             string spCreate = "CREATE PROCEDURE " + spName + " (@jsonData json) AS " + tableInsert;
 
@@ -79,8 +78,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlCommand command = connection.CreateCommand())
                 {
                     //Create Table
-                    command.CommandText = tableCreate;
-                    command.ExecuteNonQuery();
+                    DataTestUtility.CreateTable(connection, tableName, "(data json)");
 
                     //Create SP for writing json values
                     command.CommandText = spCreate;
@@ -126,7 +124,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
             string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_WriteTest");
 
-            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
             string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
             string spCreate = "CREATE PROCEDURE " + spName + " (@jsonData json) AS " + tableInsert;
 
@@ -137,8 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlCommand command = connection.CreateCommand())
                 {
                     //Create Table
-                    command.CommandText = tableCreate;
-                    await command.ExecuteNonQueryAsync();
+                    DataTestUtility.CreateTable(connection, tableName, "(data json)");
 
                     //Create SP for writing json values
                     command.CommandText = spCreate;
@@ -182,7 +178,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
             string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_ReadTest");
 
-            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
             string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
             string tableRead = "SELECT * FROM " + tableName;
             string spCreate = "CREATE PROCEDURE " + spName + "AS " + tableRead;
@@ -193,8 +188,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlCommand command = connection.CreateCommand())
                 {
                     //Create Table
-                    command.CommandText = tableCreate;
-                    command.ExecuteNonQuery();
+                    DataTestUtility.CreateTable(connection, tableName, "(data json)");
 
                     //Create SP for reading from json column
                     command.CommandText = spCreate;
@@ -241,7 +235,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
             string spName = DataTestUtility.GetUniqueNameForSqlServer("spJson_ReadTest");
 
-            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
             string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
             string tableRead = "SELECT * FROM " + tableName;
             string spCreate = "CREATE PROCEDURE " + spName + "AS " + tableRead;
@@ -252,8 +245,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlCommand command = connection.CreateCommand())
                 {
                     //Create Table
-                    command.CommandText = tableCreate;
-                    await command.ExecuteNonQueryAsync();
+                    DataTestUtility.CreateTable(connection, tableName, "(data json)");
 
                     //Create SP for reading from json column
                     command.CommandText = spCreate;
