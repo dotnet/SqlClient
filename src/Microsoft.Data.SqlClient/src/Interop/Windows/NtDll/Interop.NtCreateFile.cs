@@ -29,6 +29,7 @@ internal partial class Interop
             ReadOnlySpan<char> path,
             IntPtr rootDirectory,
             CreateDisposition createDisposition,
+            SecurityQualityOfService securityQos,
             DesiredAccess desiredAccess = DesiredAccess.FILE_GENERIC_READ | DesiredAccess.SYNCHRONIZE,
             System.IO.FileShare shareAccess = System.IO.FileShare.ReadWrite | System.IO.FileShare.Delete,
             System.IO.FileAttributes fileAttributes = 0,
@@ -49,7 +50,8 @@ internal partial class Interop
                 OBJECT_ATTRIBUTES attributes = new OBJECT_ATTRIBUTES(
                     &name,
                     objectAttributes,
-                    rootDirectory);
+                    rootDirectory,
+                    &securityQos);
 
                 int status = NtCreateFile(
                     out IntPtr handle,
@@ -100,19 +102,23 @@ internal partial class Interop
             /// Optional quality of service to be applied to the object. Used to indicate
             /// security impersonation level and context tracking mode (dynamic or static).
             /// </summary>
-            public void* SecurityQualityOfService;
+            public SecurityQualityOfService* SecurityQoS;
 
             /// <summary>
             /// Equivalent of InitializeObjectAttributes macro with the exception that you can directly set SQOS.
             /// </summary>
-            public unsafe OBJECT_ATTRIBUTES(UNICODE_STRING* objectName, ObjectAttributes attributes, IntPtr rootDirectory)
+            public unsafe OBJECT_ATTRIBUTES(
+                UNICODE_STRING* objectName,
+                ObjectAttributes attributes,
+                IntPtr rootDirectory,
+                SecurityQualityOfService* securityQos)
             {
                 Length = (uint)sizeof(OBJECT_ATTRIBUTES);
                 RootDirectory = rootDirectory;
                 ObjectName = objectName;
                 Attributes = attributes;
                 SecurityDescriptor = null;
-                SecurityQualityOfService = null;
+                SecurityQoS = securityQos;
             }
         }
 
