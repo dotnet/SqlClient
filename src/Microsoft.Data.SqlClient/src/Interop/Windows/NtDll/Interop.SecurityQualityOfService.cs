@@ -14,7 +14,7 @@ internal partial class Interop
             bool isDynamicTracking,
             bool isEffectiveOnly)
         {
-            Length = sizeof(SecurityQualityOfService);
+            Length = (uint)sizeof(SecurityQualityOfService);
             ImpersonationLevel = impersonationLevel;
             IsDynamicTracking = isDynamicTracking;
             IsEffectiveOnly = isEffectiveOnly;

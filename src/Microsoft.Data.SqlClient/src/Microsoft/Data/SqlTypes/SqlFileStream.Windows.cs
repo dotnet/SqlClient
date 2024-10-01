@@ -525,6 +525,7 @@ namespace Microsoft.Data.SqlTypes
             return path;
         }
 
+        #if NETFRAMEWORK
         static private void DemandAccessPermission
             (
                 string path,
@@ -587,6 +588,7 @@ namespace Microsoft.Data.SqlTypes
                 filePerm.Demand();
             }
         }
+        #endif
 
         private unsafe void OpenSqlFileStream
             (
@@ -712,13 +714,13 @@ namespace Microsoft.Data.SqlTypes
 
                         // Define a security QoS
                         #if NETFRAMEWORK
-                        Interop.SecurityQualityOfService qos = new Interop.SecurityQualityOfService(
+                        Interop.SecurityQualityOfService? qos = new Interop.SecurityQualityOfService(
                             Interop.ImpersonationLevel.SecurityAnonymous,
                             isDynamicTracking: false,
                             isEffectiveOnly: false);
                         #else
                         // This is not needed in netcore due to removal of CAS
-                        Interop.NtDll.SecurityQualityOfService qos = null;
+                        Interop.SecurityQualityOfService? qos = null;
                         #endif
 
                         (int status, IntPtr handle) = Interop.NtDll.CreateFile(path: mappedPath.AsSpan(),
@@ -730,7 +732,7 @@ namespace Microsoft.Data.SqlTypes
                                                                                 fileAttributes: 0,
                                                                                 createOptions: dwCreateOptions,
                                                                                 eaBuffer: b,
-                                                                                eaLength: (uint)fullSize);
+                                                                                eaLength: (uint)fullSize,);
 
                         SqlClientEventSource.Log.TryAdvancedTraceEvent(traceEventMessage, ObjectID, (int)nDesiredAccess, allocationSize, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
 
@@ -995,7 +997,7 @@ namespace Microsoft.Data.SqlTypes
                     SecurityPermission.RevertAssert();
             }
             #else
-            return new System.IO.FileStream(hFile, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
+            return new System.IO.FileStream(fileHandle, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
             #endif
         }
         
