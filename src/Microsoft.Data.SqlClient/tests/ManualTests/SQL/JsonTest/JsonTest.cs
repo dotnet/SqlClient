@@ -309,9 +309,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestNullJson()
         {
-            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Json_Test");
+            string tableName = "jsonTest";
 
-            string tableCreate = "CREATE TABLE " + tableName + " (Data json)";
             string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
             string tableRead = "SELECT * FROM " + tableName;
 
@@ -320,8 +319,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using SqlCommand command = connection.CreateCommand();
 
             //Create Table
-            command.CommandText = tableCreate;
-            command.ExecuteNonQuery();
+            DataTestUtility.CreateTable(connection, tableName, "(Data json)");
 
             //Insert Null value
             command.CommandText = tableInsert;
