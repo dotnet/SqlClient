@@ -680,6 +680,8 @@ namespace Microsoft.Data.SqlTypes
                 //   takes place to create the mappedPath.
                 string mappedPath = InitializeNtPath(path);
                 int retval = 0;
+                IntPtr handle;
+
                 Interop.Kernel32.SetThreadErrorMode(Interop.Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
 
                 try
@@ -687,60 +689,36 @@ namespace Microsoft.Data.SqlTypes
                     if (transactionContext.Length >= ushort.MaxValue)
                         throw ADP.ArgumentOutOfRange("transactionContext");
 
-                    int headerSize = sizeof(Interop.NtDll.FILE_FULL_EA_INFORMATION);
-                    int fullSize = headerSize + transactionContext.Length + s_eaNameString.Length;
-
                     #if NETFRAMEWORK
                     string traceEventMessage = "<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, fileAttributes=0x00, shareAccess=0x{3}, dwCreateDisposition=0x{4}, createOptions=0x{5}";
+                    (retval, handle) = Interop.NtDll.CreateFile(
+                        path: mappedPath,
+                        eaName: s_eaNameString,
+                        eaValue: transactionContext,
+                        desiredAccess: nDesiredAccess,
+                        fileAttributes: 0,
+                        shareAccess: FileShare.None,
+                        createDisposition: dwCreateDisposition,
+                        createOptions: dwCreateOptions,
+                        impersonationLevel: Interop.ImpersonationLevel.SecurityAnonymous,
+                        isDynamicTracking: false,
+                        isEffectiveOnly: false);
                     #else
                     string traceEventMessage = "SqlFileStream.OpenSqlFileStream | ADV | Object Id {0}, Desired Access 0x{1}, Allocation Size {2}, File Attributes 0, Share Access 0x{3}, Create Disposition 0x{4}, Create Options 0x{5}";
+                    (retval, handle) = Interop.NtDll.CreateFile(
+                        path: mappedPath,
+                        eaName: s_eaNameString,
+                        eaValue: transactionContext,
+                        desiredAccess: nDesiredAccess,
+                        fileAttributes: 0,
+                        shareAccess: FileShare.None,
+                        createDisposition: dwCreateDisposition,
+                        createOptions: dwCreateOptions);
                     #endif
 
-                    byte[] buffer = ArrayPool<byte>.Shared.Rent(fullSize);
-                    fixed (byte* b = buffer)
-                    {
-                        Interop.NtDll.FILE_FULL_EA_INFORMATION* ea = (Interop.NtDll.FILE_FULL_EA_INFORMATION*)b;
-                        ea->NextEntryOffset = 0;
-                        ea->Flags = 0;
-                        ea->EaNameLength = (byte)(s_eaNameString.Length - 1); // Length does not include terminating null character.
-                        ea->EaValueLength = (ushort)transactionContext.Length;
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(traceEventMessage, ObjectID, (int)nDesiredAccess, allocationSize, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
 
-                        // We could continue to do pointer math here, chose to use Span for convenience to
-                        // make sure we get the other members in the right place.
-                        Span<byte> data = buffer.AsSpan(headerSize);
-                        s_eaNameString.AsSpan().CopyTo(data);
-                        data = data.Slice(s_eaNameString.Length);
-                        transactionContext.AsSpan().CopyTo(data);
-
-                        // Define a security QoS
-                        #if NETFRAMEWORK
-                        Interop.SecurityQualityOfService? qos = new Interop.SecurityQualityOfService(
-                            Interop.ImpersonationLevel.SecurityAnonymous,
-                            isDynamicTracking: false,
-                            isEffectiveOnly: false);
-                        #else
-                        // This is not needed in netcore due to removal of CAS
-                        Interop.SecurityQualityOfService? qos = null;
-                        #endif
-
-                        (int status, IntPtr handle) = Interop.NtDll.CreateFile(path: mappedPath.AsSpan(),
-                                                                                rootDirectory: IntPtr.Zero,
-                                                                                createDisposition: dwCreateDisposition,
-                                                                                securityQos: qos,
-                                                                                desiredAccess: nDesiredAccess,
-                                                                                shareAccess: shareAccess,
-                                                                                fileAttributes: 0,
-                                                                                createOptions: dwCreateOptions,
-                                                                                eaBuffer: b,
-                                                                                eaLength: (uint)fullSize,);
-
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent(traceEventMessage, ObjectID, (int)nDesiredAccess, allocationSize, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
-
-                        retval = status;
-                        hFile = new SafeFileHandle(handle, true);
-                    }
-
-                    ArrayPool<byte>.Shared.Return(buffer);
+                    hFile = new SafeFileHandle(handle, true);
                 }
                 finally
                 {
