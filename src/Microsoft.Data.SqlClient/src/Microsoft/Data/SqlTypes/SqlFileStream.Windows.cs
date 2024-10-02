@@ -138,9 +138,7 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_isDisposed)
-                    throw ADP.ObjectDisposed(this);
-
+                ThrowIfDisposed();
                 return _fileStream.CanRead;
             }
         }
@@ -151,9 +149,7 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_isDisposed)
-                    throw ADP.ObjectDisposed(this);
-
+                ThrowIfDisposed();
                 return _fileStream.CanSeek;
             }
         }
@@ -166,9 +162,7 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_isDisposed)
-                    throw ADP.ObjectDisposed(this);
-
+                ThrowIfDisposed();
                 return _fileStream.CanTimeout;
             }
         }
@@ -178,9 +172,7 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_isDisposed)
-                    throw ADP.ObjectDisposed(this);
-
+                ThrowIfDisposed();
                 return _fileStream.CanWrite;
             }
         }
@@ -190,9 +182,7 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_isDisposed)
-                    throw ADP.ObjectDisposed(this);
-
+                ThrowIfDisposed();
                 return _fileStream.Length;
             }
         }
@@ -226,16 +216,12 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_isDisposed)
-                    throw ADP.ObjectDisposed(this);
-
+                ThrowIfDisposed();
                 return _fileStream.Position;
             }
             set
             {
-                if (_isDisposed)
-                    throw ADP.ObjectDisposed(this);
-
+                ThrowIfDisposed();
                 _fileStream.Position = value;
             }
         }
@@ -248,16 +234,12 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_isDisposed)
-                    throw ADP.ObjectDisposed(this);
-
+                ThrowIfDisposed();
                 return _fileStream.ReadTimeout;
             }
             set
             {
-                if (_isDisposed)
-                    throw ADP.ObjectDisposed(this);
-
+                ThrowIfDisposed();
                 _fileStream.ReadTimeout = value;
             }
         }
@@ -290,16 +272,12 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_isDisposed)
-                    throw ADP.ObjectDisposed(this);
-
+                ThrowIfDisposed();
                 return _fileStream.WriteTimeout;
             }
             set
             {
-                if (_isDisposed)
-                    throw ADP.ObjectDisposed(this);
-
+                ThrowIfDisposed();
                 _fileStream.WriteTimeout = value;
             }
         }
@@ -314,9 +292,7 @@ namespace Microsoft.Data.SqlTypes
         #endif
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
-            if (_isDisposed)
-                throw ADP.ObjectDisposed(this);
-
+            ThrowIfDisposed();
             return _fileStream.BeginRead(buffer, offset, count, callback, state);
         }
 
@@ -326,8 +302,7 @@ namespace Microsoft.Data.SqlTypes
         #endif
         public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
-            if (_isDisposed)
-                throw ADP.ObjectDisposed(this);
+            ThrowIfDisposed();
 
             IAsyncResult asyncResult = _fileStream.BeginWrite(buffer, offset, count, callback, state);
 
@@ -349,71 +324,56 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndRead/*' />
         public override int EndRead(IAsyncResult asyncResult)
         {
-            if (_isDisposed)
-                throw ADP.ObjectDisposed(this);
-
+            ThrowIfDisposed();
             return _fileStream.EndRead(asyncResult);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndWrite/*' />
         public override void EndWrite(IAsyncResult asyncResult)
         {
-            if (_isDisposed)
-                throw ADP.ObjectDisposed(this);
-
+            ThrowIfDisposed();
             _fileStream.EndWrite(asyncResult);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Flush/*' />
         public override void Flush()
         {
-            if (_isDisposed)
-                throw ADP.ObjectDisposed(this);
-
+            ThrowIfDisposed();
             _fileStream.Flush();
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Read/*' />
         public override int Read([In, Out] byte[] buffer, int offset, int count)
         {
-            if (_isDisposed)
-                throw ADP.ObjectDisposed(this);
-
+            ThrowIfDisposed();
             return _fileStream.Read(buffer, offset, count);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadByte/*' />
         public override int ReadByte()
         {
-            if (_isDisposed)
-                throw ADP.ObjectDisposed(this);
-
+            ThrowIfDisposed();
             return _fileStream.ReadByte();
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Seek/*' />
         public override long Seek(long offset, SeekOrigin origin)
         {
-            if (_isDisposed)
-                throw ADP.ObjectDisposed(this);
-
+            ThrowIfDisposed();
             return _fileStream.Seek(offset, origin);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SetLength/*' />
         public override void SetLength(long value)
         {
-            if (_isDisposed)
-                throw ADP.ObjectDisposed(this);
-
+            ThrowIfDisposed();
             _fileStream.SetLength(value);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Write/*' />
         public override void Write(byte[] buffer, int offset, int count)
         {
-            if (_isDisposed)
-                throw ADP.ObjectDisposed(this);
+            ThrowIfDisposed();
 
             _fileStream.Write(buffer, offset, count);
 
@@ -433,8 +393,7 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteByte/*' />
         public override void WriteByte(byte value)
         {
-            if (_isDisposed)
-                throw ADP.ObjectDisposed(this);
+            ThrowIfDisposed();
 
             _fileStream.WriteByte(value);
 
@@ -998,6 +957,14 @@ namespace Microsoft.Data.SqlTypes
                     hFile.Dispose();
 
                 throw;
+            }
+        }
+
+        private void ThrowIfDisposed()
+        {
+            if (_isDisposed)
+            {
+                throw ADP.ObjectDisposed(this);
             }
         }
 
