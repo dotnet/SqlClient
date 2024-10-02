@@ -262,6 +262,7 @@ internal partial class Interop
         /// <summary>
         /// Options for creating/opening files with NtCreateFile.
         /// </summary>
+        [Flags]
         public enum CreateOptions : uint
         {
             /// <summary>
