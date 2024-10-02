@@ -724,15 +724,15 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <summary>
-                /// Returns <see langword="true"/> if the given character is a directory separator.
-                /// </summary>
-                /// <remarks>
-                /// Implementation lifted from System.IO.PathInternal.
-                /// https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/System/IO/PathInternal.Windows.cs
-                /// </remarks>
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                private static bool IsDirectorySeparator(char c) =>
-                    c == Path.DirectorySeparatorChar || c == Path.AltDirectorySeparatorChar;
+        /// Returns <see langword="true"/> if the given character is a directory separator.
+        /// </summary>
+        /// <remarks>
+        /// Implementation lifted from System.IO.PathInternal.
+        /// https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/System/IO/PathInternal.Windows.cs
+        /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsDirectorySeparator(char c) =>
+            c == Path.DirectorySeparatorChar || c == Path.AltDirectorySeparatorChar;
 
         /// <summary>
         /// Returns <see langword='true' /> if the path uses the canonical form of extended syntax
@@ -787,208 +787,208 @@ namespace Microsoft.Data.SqlTypes
                         System.IO.FileOptions options,
                         long allocationSize
                     )
+        {
+            //-----------------------------------------------------------------
+            // precondition validation
+
+            // these should be checked by any caller of this method
+            // ensure we have validated and normalized the path before
+            Debug.Assert(path != null);
+            Debug.Assert(transactionContext != null);
+
+            if (access != FileAccess.Read && access != FileAccess.Write && access != FileAccess.ReadWrite)
+                throw ADP.ArgumentOutOfRange("access");
+
+            // FileOptions is a set of flags, so AND the given value against the set of values we do not support
+            if ((options & ~(FileOptions.WriteThrough | FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.SequentialScan)) != 0)
+                throw ADP.ArgumentOutOfRange("options");
+
+            // normalize the provided path
+            path = GetFullPathInternal(path);
+
+            #if NETFRAMEWORK
+            // ensure the running code has permission to read/write the file
+            DemandAccessPermission(path, access);
+            #endif
+
+            Microsoft.Win32.SafeHandles.SafeFileHandle hFile = null;
+            Interop.NtDll.DesiredAccess nDesiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES | Interop.NtDll.DesiredAccess.SYNCHRONIZE;
+            Interop.NtDll.CreateOptions dwCreateOptions = 0;
+            Interop.NtDll.CreateDisposition dwCreateDisposition = 0;
+            System.IO.FileShare shareAccess = System.IO.FileShare.None;
+
+            switch (access)
+            {
+                case System.IO.FileAccess.Read:
+                    nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA;
+                    shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.ReadWrite;
+                    dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OPEN;
+                    break;
+
+                case System.IO.FileAccess.Write:
+                    nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
+                    shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
+                    dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    break;
+
+                case System.IO.FileAccess.ReadWrite:
+                default:
+                    // we validate the value of 'access' parameter in the beginning of this method
+                    Debug.Assert(access == System.IO.FileAccess.ReadWrite);
+
+                    nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA | Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
+                    shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
+                    dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    break;
+            }
+
+            if ((options & System.IO.FileOptions.WriteThrough) != 0)
+            {
+                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_WRITE_THROUGH;
+            }
+
+            if ((options & System.IO.FileOptions.Asynchronous) == 0)
+            {
+                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
+            }
+
+            if ((options & System.IO.FileOptions.SequentialScan) != 0)
+            {
+                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SEQUENTIAL_ONLY;
+            }
+
+            if ((options & System.IO.FileOptions.RandomAccess) != 0)
+            {
+                dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_RANDOM_ACCESS;
+            }
+
+            try
+            {
+                // NOTE: the Name property is intended to reveal the publicly available moniker for the
+                //   FILESTREAM attributed column data. We will not surface the internal processing that
+                //   takes place to create the mappedPath.
+                string mappedPath = InitializeNtPath(path);
+                int retval = 0;
+                IntPtr handle;
+
+                Interop.Kernel32.SetThreadErrorMode(Interop.Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
+
+                try
                 {
-                    //-----------------------------------------------------------------
-                    // precondition validation
+                    if (transactionContext.Length >= ushort.MaxValue)
+                        throw ADP.ArgumentOutOfRange("transactionContext");
 
-                    // these should be checked by any caller of this method
-                    // ensure we have validated and normalized the path before
-                    Debug.Assert(path != null);
-                    Debug.Assert(transactionContext != null);
+                        #if NETFRAMEWORK
+                        string traceEventMessage = "<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, fileAttributes=0x00, shareAccess=0x{3}, dwCreateDisposition=0x{4}, createOptions=0x{5}";
+                        (retval, handle) = Interop.NtDll.CreateFile(
+                            path: mappedPath,
+                            eaName: s_eaNameString,
+                            eaValue: transactionContext,
+                            desiredAccess: nDesiredAccess,
+                            fileAttributes: 0,
+                            shareAccess: shareAccess,
+                            createDisposition: dwCreateDisposition,
+                            createOptions: dwCreateOptions,
+                            impersonationLevel: Interop.ImpersonationLevel.SecurityAnonymous,
+                            isDynamicTracking: false,
+                            isEffectiveOnly: false);
+                        #else
+                        string traceEventMessage = "SqlFileStream.OpenSqlFileStream | ADV | Object Id {0}, Desired Access 0x{1}, Allocation Size {2}, File Attributes 0, Share Access 0x{3}, Create Disposition 0x{4}, Create Options 0x{5}";
+                        (retval, handle) = Interop.NtDll.CreateFile(
+                            path: mappedPath,
+                            eaName: s_eaNameString,
+                            eaValue: transactionContext,
+                            desiredAccess: nDesiredAccess,
+                            fileAttributes: 0,
+                            shareAccess: shareAccess,
+                            createDisposition: dwCreateDisposition,
+                            createOptions: dwCreateOptions);
+                        #endif
 
-                    if (access != FileAccess.Read && access != FileAccess.Write && access != FileAccess.ReadWrite)
-                        throw ADP.ArgumentOutOfRange("access");
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(traceEventMessage, ObjectID, (int)nDesiredAccess, allocationSize, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
 
-                    // FileOptions is a set of flags, so AND the given value against the set of values we do not support
-                    if ((options & ~(FileOptions.WriteThrough | FileOptions.Asynchronous | FileOptions.RandomAccess | FileOptions.SequentialScan)) != 0)
-                        throw ADP.ArgumentOutOfRange("options");
+                    hFile = new SafeFileHandle(handle, true);
+                }
+                finally
+                {
+                    Interop.Kernel32.SetThreadErrorMode(oldMode, out oldMode);
+                }
 
-                    // normalize the provided path
-                    path = GetFullPathInternal(path);
+                switch (retval)
+                {
+                    case 0:
+                        break;
 
-                    #if NETFRAMEWORK
-                    // ensure the running code has permission to read/write the file
-                    DemandAccessPermission(path, access);
-                    #endif
+                    case Interop.Errors.ERROR_SHARING_VIOLATION:
+                        throw ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
 
-                    Microsoft.Win32.SafeHandles.SafeFileHandle hFile = null;
-                    Interop.NtDll.DesiredAccess nDesiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES | Interop.NtDll.DesiredAccess.SYNCHRONIZE;
-                    Interop.NtDll.CreateOptions dwCreateOptions = 0;
-                    Interop.NtDll.CreateDisposition dwCreateDisposition = 0;
-                    System.IO.FileShare shareAccess = System.IO.FileShare.None;
+                    case Interop.Errors.ERROR_INVALID_PARAMETER:
+                        throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
 
-                    switch (access)
-                    {
-                        case System.IO.FileAccess.Read:
-                            nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA;
-                            shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.ReadWrite;
-                            dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OPEN;
-                            break;
-
-                        case System.IO.FileAccess.Write:
-                            nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
-                            shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
-                            dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
-                            break;
-
-                        case System.IO.FileAccess.ReadWrite:
-                        default:
-                            // we validate the value of 'access' parameter in the beginning of this method
-                            Debug.Assert(access == System.IO.FileAccess.ReadWrite);
-
-                            nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA | Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
-                            shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
-                            dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
-                            break;
-                    }
-
-                    if ((options & System.IO.FileOptions.WriteThrough) != 0)
-                    {
-                        dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_WRITE_THROUGH;
-                    }
-
-                    if ((options & System.IO.FileOptions.Asynchronous) == 0)
-                    {
-                        dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
-                    }
-
-                    if ((options & System.IO.FileOptions.SequentialScan) != 0)
-                    {
-                        dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SEQUENTIAL_ONLY;
-                    }
-
-                    if ((options & System.IO.FileOptions.RandomAccess) != 0)
-                    {
-                        dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_RANDOM_ACCESS;
-                    }
-
-                    try
-                    {
-                        // NOTE: the Name property is intended to reveal the publicly available moniker for the
-                        //   FILESTREAM attributed column data. We will not surface the internal processing that
-                        //   takes place to create the mappedPath.
-                        string mappedPath = InitializeNtPath(path);
-                        int retval = 0;
-                        IntPtr handle;
-
-                        Interop.Kernel32.SetThreadErrorMode(Interop.Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
-
-                        try
+                    case Interop.Errors.ERROR_FILE_NOT_FOUND:
                         {
-                            if (transactionContext.Length >= ushort.MaxValue)
-                                throw ADP.ArgumentOutOfRange("transactionContext");
-
-                            #if NETFRAMEWORK
-                            string traceEventMessage = "<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, fileAttributes=0x00, shareAccess=0x{3}, dwCreateDisposition=0x{4}, createOptions=0x{5}";
-                            (retval, handle) = Interop.NtDll.CreateFile(
-                                path: mappedPath,
-                                eaName: s_eaNameString,
-                                eaValue: transactionContext,
-                                desiredAccess: nDesiredAccess,
-                                fileAttributes: 0,
-                                shareAccess: shareAccess,
-                                createDisposition: dwCreateDisposition,
-                                createOptions: dwCreateOptions,
-                                impersonationLevel: Interop.ImpersonationLevel.SecurityAnonymous,
-                                isDynamicTracking: false,
-                                isEffectiveOnly: false);
-                            #else
-                            string traceEventMessage = "SqlFileStream.OpenSqlFileStream | ADV | Object Id {0}, Desired Access 0x{1}, Allocation Size {2}, File Attributes 0, Share Access 0x{3}, Create Disposition 0x{4}, Create Options 0x{5}";
-                            (retval, handle) = Interop.NtDll.CreateFile(
-                                path: mappedPath,
-                                eaName: s_eaNameString,
-                                eaValue: transactionContext,
-                                desiredAccess: nDesiredAccess,
-                                fileAttributes: 0,
-                                shareAccess: shareAccess,
-                                createDisposition: dwCreateDisposition,
-                                createOptions: dwCreateOptions);
-                            #endif
-
-                            SqlClientEventSource.Log.TryAdvancedTraceEvent(traceEventMessage, ObjectID, (int)nDesiredAccess, allocationSize, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
-
-                            hFile = new SafeFileHandle(handle, true);
-                        }
-                        finally
-                        {
-                            Interop.Kernel32.SetThreadErrorMode(oldMode, out oldMode);
-                        }
-
-                        switch (retval)
-                        {
-                            case 0:
-                                break;
-
-                            case Interop.Errors.ERROR_SHARING_VIOLATION:
-                                throw ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
-
-                            case Interop.Errors.ERROR_INVALID_PARAMETER:
-                                throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
-
-                            case Interop.Errors.ERROR_FILE_NOT_FOUND:
-                                {
-                                    System.IO.DirectoryNotFoundException e = new System.IO.DirectoryNotFoundException();
-                                    ADP.TraceExceptionAsReturnValue(e);
-                                    throw e;
-                                }
-                            default:
-                                {
-                                    uint error = Interop.NtDll.RtlNtStatusToDosError(retval);
-                                    if (error == Interop.NtDll.ERROR_MR_MID_NOT_FOUND)
-                                    {
-                                        // status code could not be mapped to a Win32 error code
-                                        error = (uint)retval;
-                                    }
-
-                                    System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(unchecked((int)error));
-                                    ADP.TraceExceptionAsReturnValue(e);
-                                    throw e;
-                                }
-                        }
-
-                        if (hFile.IsInvalid)
-                        {
-                            System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
+                            System.IO.DirectoryNotFoundException e = new System.IO.DirectoryNotFoundException();
                             ADP.TraceExceptionAsReturnValue(e);
                             throw e;
                         }
-
-                        if (Interop.Kernel32.GetFileType(hFile) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
+                    default:
                         {
-                            hFile.Dispose();
-                            throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
-                        }
-
-                        // if the user is opening the SQL FileStream in read/write mode, we assume that they want to scan
-                        // through current data and then append new data to the end, so we need to tell SQL Server to preserve
-                        // the existing file contents.
-                        if (access == System.IO.FileAccess.ReadWrite)
-                        {
-                            uint ioControlCode = Interop.Kernel32.CTL_CODE(Interop.Kernel32.FILE_DEVICE_FILE_SYSTEM,
-                                IoControlCodeFunctionCode, (byte)Interop.Kernel32.IoControlTransferType.METHOD_BUFFERED,
-                                (byte)Interop.Kernel32.IoControlCodeAccess.FILE_ANY_ACCESS);
-
-                            if (!Interop.Kernel32.DeviceIoControl(hFile, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out uint cbBytesReturned, IntPtr.Zero))
+                            uint error = Interop.NtDll.RtlNtStatusToDosError(retval);
+                            if (error == Interop.NtDll.ERROR_MR_MID_NOT_FOUND)
                             {
-                                System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
-                                ADP.TraceExceptionAsReturnValue(e);
-                                throw e;
+                                // status code could not be mapped to a Win32 error code
+                                error = (uint)retval;
                             }
+
+                            System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(unchecked((int)error));
+                            ADP.TraceExceptionAsReturnValue(e);
+                            throw e;
                         }
+                }
 
-                        // now that we've successfully opened a handle on the path and verified that it is a file,
-                        // use the SafeFileHandle to initialize our internal System.IO.FileStream instance
-                        System.Diagnostics.Debug.Assert(_m_fs == null);
-                        _m_fs = OpenFileStream(hFile, access, options);
-                    }
-                    catch
+                if (hFile.IsInvalid)
+                {
+                    System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
+                    ADP.TraceExceptionAsReturnValue(e);
+                    throw e;
+                }
+
+                if (Interop.Kernel32.GetFileType(hFile) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
+                {
+                    hFile.Dispose();
+                    throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
+                }
+
+                // if the user is opening the SQL FileStream in read/write mode, we assume that they want to scan
+                // through current data and then append new data to the end, so we need to tell SQL Server to preserve
+                // the existing file contents.
+                if (access == System.IO.FileAccess.ReadWrite)
+                {
+                    uint ioControlCode = Interop.Kernel32.CTL_CODE(Interop.Kernel32.FILE_DEVICE_FILE_SYSTEM,
+                        IoControlCodeFunctionCode, (byte)Interop.Kernel32.IoControlTransferType.METHOD_BUFFERED,
+                        (byte)Interop.Kernel32.IoControlCodeAccess.FILE_ANY_ACCESS);
+
+                    if (!Interop.Kernel32.DeviceIoControl(hFile, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out uint cbBytesReturned, IntPtr.Zero))
                     {
-                        if (hFile != null && !hFile.IsInvalid)
-                            hFile.Dispose();
-
-                        throw;
+                        System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+                        ADP.TraceExceptionAsReturnValue(e);
+                        throw e;
                     }
                 }
+
+                // now that we've successfully opened a handle on the path and verified that it is a file,
+                // use the SafeFileHandle to initialize our internal System.IO.FileStream instance
+                System.Diagnostics.Debug.Assert(_m_fs == null);
+                _m_fs = OpenFileStream(hFile, access, options);
+            }
+            catch
+            {
+                if (hFile != null && !hFile.IsInvalid)
+                    hFile.Dispose();
+
+                throw;
+            }
+        }
 
         #endregion
     }
