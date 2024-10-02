@@ -64,13 +64,16 @@ namespace Microsoft.Data.SqlTypes
 
         #region Member Variables
 
-	    // For EventTrace output
-        private static int _objectTypeCount; // EventSource counter
+	    /// <summary>
+	    /// Counter for how many instances have been created, used in EventSource.
+	    /// </summary>
+        private static int _objectTypeCount;
 
-        private System.IO.FileStream _m_fs;
-        private string _m_path;
-        private byte[] _m_txn;
-        private bool _m_disposed;
+        private readonly string _path;
+        private readonly byte[] _transactionContext;
+
+        private FileStream _fileStream;
+        private bool _isDisposed;
 
         #endregion
 
@@ -105,8 +108,8 @@ namespace Microsoft.Data.SqlTypes
                 }
                 //-----------------------------------------------------------------
 
-                _m_disposed = false;
-                _m_fs = null;
+                _isDisposed = false;
+                _fileStream = null;
 
                 OpenSqlFileStream(path, transactionContext, access, options, allocationSize);
 
@@ -134,10 +137,10 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_isDisposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.CanRead;
+                return _fileStream.CanRead;
             }
         }
 
@@ -147,10 +150,10 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_isDisposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.CanSeek;
+                return _fileStream.CanSeek;
             }
         }
 
@@ -162,10 +165,10 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_isDisposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.CanTimeout;
+                return _fileStream.CanTimeout;
             }
         }
 
@@ -174,10 +177,10 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_isDisposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.CanWrite;
+                return _fileStream.CanWrite;
             }
         }
 
@@ -186,10 +189,10 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_isDisposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.Length;
+                return _fileStream.Length;
             }
         }
 
@@ -200,8 +203,8 @@ namespace Microsoft.Data.SqlTypes
             {
                 // Assert that path has been properly processed via GetFullPathInternal
                 // (e.g. m_path hasn't been set directly)
-                AssertPathFormat(_m_path);
-                return _m_path;
+                AssertPathFormat(_path);
+                return _path;
             }
             #if NETFRAMEWORK
             [ResourceExposure(ResourceScope.None)] // SxS: the file name is not exposed
@@ -211,9 +214,9 @@ namespace Microsoft.Data.SqlTypes
             {
                 // should be validated by callers of this method
                 Debug.Assert(value != null);
-                Debug.Assert(!_m_disposed);
+                Debug.Assert(!_isDisposed);
 
-                _m_path = GetFullPathInternal(value);
+                _path = GetFullPathInternal(value);
             }
         }
 
@@ -222,17 +225,17 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_isDisposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.Position;
+                return _fileStream.Position;
             }
             set
             {
-                if (_m_disposed)
+                if (_isDisposed)
                     throw ADP.ObjectDisposed(this);
 
-                _m_fs.Position = value;
+                _fileStream.Position = value;
             }
         }
 
@@ -244,17 +247,17 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_isDisposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.ReadTimeout;
+                return _fileStream.ReadTimeout;
             }
             set
             {
-                if (_m_disposed)
+                if (_isDisposed)
                     throw ADP.ObjectDisposed(this);
 
-                _m_fs.ReadTimeout = value;
+                _fileStream.ReadTimeout = value;
             }
         }
 
@@ -263,18 +266,18 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_txn == null)
+                if (_transactionContext == null)
                     return null;
 
-                return (byte[])_m_txn.Clone();
+                return (byte[])_transactionContext.Clone();
             }
             private set
             {
                 // should be validated by callers of this method
                 Debug.Assert(value != null);
-                Debug.Assert(!_m_disposed);
+                Debug.Assert(!_isDisposed);
 
-                _m_txn = (byte[])value.Clone();
+                _transactionContext = (byte[])value.Clone();
             }
         }
 
@@ -286,17 +289,17 @@ namespace Microsoft.Data.SqlTypes
         {
             get
             {
-                if (_m_disposed)
+                if (_isDisposed)
                     throw ADP.ObjectDisposed(this);
 
-                return _m_fs.WriteTimeout;
+                return _fileStream.WriteTimeout;
             }
             set
             {
-                if (_m_disposed)
+                if (_isDisposed)
                     throw ADP.ObjectDisposed(this);
 
-                _m_fs.WriteTimeout = value;
+                _fileStream.WriteTimeout = value;
             }
         }
 
@@ -312,10 +315,10 @@ namespace Microsoft.Data.SqlTypes
         #endif
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
-            if (_m_disposed)
+            if (_isDisposed)
                 throw ADP.ObjectDisposed(this);
 
-            return _m_fs.BeginRead(buffer, offset, count, callback, state);
+            return _fileStream.BeginRead(buffer, offset, count, callback, state);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginWrite/*' />
@@ -324,10 +327,10 @@ namespace Microsoft.Data.SqlTypes
         #endif
         public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
-            if (_m_disposed)
+            if (_isDisposed)
                 throw ADP.ObjectDisposed(this);
 
-            IAsyncResult asyncResult = _m_fs.BeginWrite(buffer, offset, count, callback, state);
+            IAsyncResult asyncResult = _fileStream.BeginWrite(buffer, offset, count, callback, state);
 
             // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
             //   potential exceptions during Close/Finalization. Since System.IO.FileStream will
@@ -338,7 +341,7 @@ namespace Microsoft.Data.SqlTypes
             if (count == 1)
             {
                 // calling flush here will mimic the internal control flow of System.IO.FileStream
-                _m_fs.Flush();
+                _fileStream.Flush();
             }
 
             return asyncResult;
@@ -347,73 +350,73 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndRead/*' />
         public override int EndRead(IAsyncResult asyncResult)
         {
-            if (_m_disposed)
+            if (_isDisposed)
                 throw ADP.ObjectDisposed(this);
 
-            return _m_fs.EndRead(asyncResult);
+            return _fileStream.EndRead(asyncResult);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndWrite/*' />
         public override void EndWrite(IAsyncResult asyncResult)
         {
-            if (_m_disposed)
+            if (_isDisposed)
                 throw ADP.ObjectDisposed(this);
 
-            _m_fs.EndWrite(asyncResult);
+            _fileStream.EndWrite(asyncResult);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Flush/*' />
         public override void Flush()
         {
-            if (_m_disposed)
+            if (_isDisposed)
                 throw ADP.ObjectDisposed(this);
 
-            _m_fs.Flush();
+            _fileStream.Flush();
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Read/*' />
         public override int Read([In, Out] byte[] buffer, int offset, int count)
         {
-            if (_m_disposed)
+            if (_isDisposed)
                 throw ADP.ObjectDisposed(this);
 
-            return _m_fs.Read(buffer, offset, count);
+            return _fileStream.Read(buffer, offset, count);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadByte/*' />
         public override int ReadByte()
         {
-            if (_m_disposed)
+            if (_isDisposed)
                 throw ADP.ObjectDisposed(this);
 
-            return _m_fs.ReadByte();
+            return _fileStream.ReadByte();
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Seek/*' />
         public override long Seek(long offset, SeekOrigin origin)
         {
-            if (_m_disposed)
+            if (_isDisposed)
                 throw ADP.ObjectDisposed(this);
 
-            return _m_fs.Seek(offset, origin);
+            return _fileStream.Seek(offset, origin);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SetLength/*' />
         public override void SetLength(long value)
         {
-            if (_m_disposed)
+            if (_isDisposed)
                 throw ADP.ObjectDisposed(this);
 
-            _m_fs.SetLength(value);
+            _fileStream.SetLength(value);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Write/*' />
         public override void Write(byte[] buffer, int offset, int count)
         {
-            if (_m_disposed)
+            if (_isDisposed)
                 throw ADP.ObjectDisposed(this);
 
-            _m_fs.Write(buffer, offset, count);
+            _fileStream.Write(buffer, offset, count);
 
             // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
             //   potential exceptions during Close/Finalization. Since System.IO.FileStream will
@@ -424,17 +427,17 @@ namespace Microsoft.Data.SqlTypes
             if (count == 1)
             {
                 // calling flush here will mimic the internal control flow of System.IO.FileStream
-                _m_fs.Flush();
+                _fileStream.Flush();
             }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteByte/*' />
         public override void WriteByte(byte value)
         {
-            if (_m_disposed)
+            if (_isDisposed)
                 throw ADP.ObjectDisposed(this);
 
-            _m_fs.WriteByte(value);
+            _fileStream.WriteByte(value);
 
             // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
             //   potential exceptions during Close/Finalization. Since our internal buffer is
@@ -442,7 +445,7 @@ namespace Microsoft.Data.SqlTypes
             //   As a result, we need to be sure to flush the data to disk ourselves.
 
             // calling flush here will mimic the internal control flow of System.IO.FileStream
-            _m_fs.Flush();
+            _fileStream.Flush();
         }
 
         #endregion
@@ -452,22 +455,22 @@ namespace Microsoft.Data.SqlTypes
         {
             try
             {
-                if (!_m_disposed)
+                if (!_isDisposed)
                 {
                     try
                     {
                         if (disposing)
                         {
-                            if (_m_fs != null)
+                            if (_fileStream != null)
                             {
-                                _m_fs.Close();
-                                _m_fs = null;
+                                _fileStream.Close();
+                                _fileStream = null;
                             }
                         }
                     }
                     finally
                     {
-                        _m_disposed = true;
+                        _isDisposed = true;
                     }
                 }
             }
@@ -987,8 +990,8 @@ namespace Microsoft.Data.SqlTypes
 
                 // now that we've successfully opened a handle on the path and verified that it is a file,
                 // use the SafeFileHandle to initialize our internal System.IO.FileStream instance
-                System.Diagnostics.Debug.Assert(_m_fs == null);
-                _m_fs = OpenFileStream(hFile, access, options);
+                System.Diagnostics.Debug.Assert(_fileStream == null);
+                _fileStream = OpenFileStream(hFile, access, options);
             }
             catch
             {
