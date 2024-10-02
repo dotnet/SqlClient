@@ -8,13 +8,17 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using System.Security.Permissions;
-using System.Text;
 using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Win32.SafeHandles;
+
+#if NETFRAMEWORK
+using System.Runtime.Versioning;
+using System.Security;
+using System.Security.Permissions;
+using System.Text;
+#endif
 
 namespace Microsoft.Data.SqlTypes
 {
@@ -27,23 +31,28 @@ namespace Microsoft.Data.SqlTypes
 
         #region Constants
 
-        // from System.IO.FileStream implementation
-        //  DefaultBufferSize = 4096;
-        // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
-        //   potential exceptions during Close/Finalization. Since System.IO.FileStream will
-        //   not allow for a zero byte buffer, we'll create a one byte buffer which, in normal
-        //   usage, will not be used and the user buffer will automatically flush directly to
-        //   the disk cache. In pathological scenarios where the client is writing a single
-        //   byte at a time, we'll explicitly call flush ourselves.
+        /// <remarks>
+        /// From System.IO.FileStream implementation: DefaultBufferSize = 4096;
+        /// SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent potential
+        /// exceptions during Close/Finalization. Since System.IO.FileStream will not allow for a
+        /// zero byte buffer, we'll create a one byte buffer which, in normal usage, will not be
+        /// used and the user buffer will automatically flush directly to the disk cache. In
+        /// pathological scenarios where the client is writing a single byte at a time, we'll
+        /// explicitly call flush ourselves.
+        /// </remarks>
         private const int DefaultBufferSize = 1;
 
         private const ushort IoControlCodeFunctionCode = 2392;
 
-        private static readonly byte[] s_eaNameString = new byte[]
+        /// <summary>
+        /// Used as the extended attribute name string. Preallocated as a byte array for ease of
+        /// copying into the EA struct. Value is "Filestream_Transaction_Tag"
+        /// </summary>
+        private static readonly byte[] EaNameString = new byte[]
         {
-            (byte)'F', (byte)'i', (byte)'l', (byte)'e', (byte)'s', (byte)'t', (byte)'r', (byte)'e', (byte)'a', (byte)'m', (byte)'_',
-            (byte)'T', (byte)'r', (byte)'a', (byte)'n', (byte)'s', (byte)'a', (byte)'c', (byte)'t', (byte)'i', (byte)'o', (byte)'n', (byte)'_',
-            (byte)'T', (byte)'a', (byte)'g', (byte) '\0'
+            (byte)'F', (byte)'i', (byte)'l', (byte)'e', (byte)'s', (byte)'t', (byte)'r', (byte)'e', (byte)'a',
+            (byte)'m', (byte)'_', (byte)'T', (byte)'r', (byte)'a', (byte)'n', (byte)'s', (byte)'a', (byte)'c',
+            (byte)'t', (byte)'i', (byte)'o', (byte)'n', (byte)'_', (byte)'T', (byte)'a', (byte)'g', (byte) '\0',
         };
 
         #if NETFRAMEWORK
@@ -878,32 +887,32 @@ namespace Microsoft.Data.SqlTypes
                     if (transactionContext.Length >= ushort.MaxValue)
                         throw ADP.ArgumentOutOfRange("transactionContext");
 
-                        #if NETFRAMEWORK
-                        string traceEventMessage = "<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, fileAttributes=0x00, shareAccess=0x{3}, dwCreateDisposition=0x{4}, createOptions=0x{5}";
-                        (retval, handle) = Interop.NtDll.CreateFile(
-                            path: mappedPath,
-                            eaName: s_eaNameString,
-                            eaValue: transactionContext,
-                            desiredAccess: nDesiredAccess,
-                            fileAttributes: 0,
-                            shareAccess: shareAccess,
-                            createDisposition: dwCreateDisposition,
-                            createOptions: dwCreateOptions,
-                            impersonationLevel: Interop.ImpersonationLevel.SecurityAnonymous,
-                            isDynamicTracking: false,
-                            isEffectiveOnly: false);
-                        #else
-                        string traceEventMessage = "SqlFileStream.OpenSqlFileStream | ADV | Object Id {0}, Desired Access 0x{1}, Allocation Size {2}, File Attributes 0, Share Access 0x{3}, Create Disposition 0x{4}, Create Options 0x{5}";
-                        (retval, handle) = Interop.NtDll.CreateFile(
-                            path: mappedPath,
-                            eaName: s_eaNameString,
-                            eaValue: transactionContext,
-                            desiredAccess: nDesiredAccess,
-                            fileAttributes: 0,
-                            shareAccess: shareAccess,
-                            createDisposition: dwCreateDisposition,
-                            createOptions: dwCreateOptions);
-                        #endif
+                    #if NETFRAMEWORK
+                    string traceEventMessage = "<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, fileAttributes=0x00, shareAccess=0x{3}, dwCreateDisposition=0x{4}, createOptions=0x{5}";
+                    (retval, handle) = Interop.NtDll.CreateFile(
+                        path: mappedPath,
+                        eaName: EaNameString,
+                        eaValue: transactionContext,
+                        desiredAccess: nDesiredAccess,
+                        fileAttributes: 0,
+                        shareAccess: shareAccess,
+                        createDisposition: dwCreateDisposition,
+                        createOptions: dwCreateOptions,
+                        impersonationLevel: Interop.ImpersonationLevel.SecurityAnonymous,
+                        isDynamicTracking: false,
+                        isEffectiveOnly: false);
+                    #else
+                    string traceEventMessage = "SqlFileStream.OpenSqlFileStream | ADV | Object Id {0}, Desired Access 0x{1}, Allocation Size {2}, File Attributes 0, Share Access 0x{3}, Create Disposition 0x{4}, Create Options 0x{5}";
+                    (retval, handle) = Interop.NtDll.CreateFile(
+                        path: mappedPath,
+                        eaName: EaNameString,
+                        eaValue: transactionContext,
+                        desiredAccess: nDesiredAccess,
+                        fileAttributes: 0,
+                        shareAccess: shareAccess,
+                        createDisposition: dwCreateDisposition,
+                        createOptions: dwCreateOptions);
+                    #endif
 
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(traceEventMessage, ObjectID, (int)nDesiredAccess, allocationSize, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
 
