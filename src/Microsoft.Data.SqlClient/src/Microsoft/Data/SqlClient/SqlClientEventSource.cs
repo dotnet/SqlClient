@@ -870,9 +870,9 @@ namespace Microsoft.Data.SqlClient
                 AdvancedTraceError(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr));
             }
         }
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
         #region Correlation Trace
         [NonEvent]
@@ -1026,7 +1026,7 @@ namespace Microsoft.Data.SqlClient
         }
         #endregion
 
-#endregion
+        #endregion
 
         #region Write Events
         // Do not change the first 4 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, 
