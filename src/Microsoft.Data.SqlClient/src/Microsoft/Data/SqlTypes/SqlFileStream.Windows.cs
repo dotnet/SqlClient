@@ -71,6 +71,7 @@ namespace Microsoft.Data.SqlTypes
 
         private readonly string _path;
         private readonly byte[] _transactionContext;
+        private readonly int _objectId = Interlocked.Increment(ref _objectTypeCount);
 
         private FileStream _fileStream;
         private bool _isDisposed;
@@ -93,7 +94,7 @@ namespace Microsoft.Data.SqlTypes
             const string scopeFormat = "SqlFileStream.ctor | API | Object Id {0} | Access {1} | Options {2} | Path '{3}'";
             #endif
 
-            using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent(scopeFormat, ObjectID, (int)access, (int)options, path)))
+            using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent(scopeFormat, _objectId, (int)access, (int)options, path)))
             {
                 //-----------------------------------------------------------------
                 // precondition validation
@@ -302,8 +303,6 @@ namespace Microsoft.Data.SqlTypes
                 _fileStream.WriteTimeout = value;
             }
         }
-
-        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 
         #endregion
 
@@ -917,7 +916,7 @@ namespace Microsoft.Data.SqlTypes
                         createOptions: dwCreateOptions);
                     #endif
 
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(traceEventMessage, ObjectID, (int)nDesiredAccess, allocationSize, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(traceEventMessage, _objectId, (int)nDesiredAccess, allocationSize, (int)shareAccess, dwCreateDisposition, dwCreateOptions);
 
                     hFile = new SafeFileHandle(handle, true);
                 }
