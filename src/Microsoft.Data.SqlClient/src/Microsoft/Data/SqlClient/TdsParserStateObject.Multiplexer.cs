@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
                 bool usedPartialPacket = false;
                 uint getDataError = 0;
 
-                if (usePartialPacket && _snapshot == null && _partialPacket != null && _partialPacket.IsComplete)
+                if (usePartialPacket && _partialPacket != null && _partialPacket.IsComplete)
                 {
                     SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength);
                     ClearPartialPacket();
