@@ -100,7 +100,8 @@ namespace Microsoft.Data.SqlTypes
             const string scopeFormat = "SqlFileStream.ctor | API | Object Id {0} | Access {1} | Options {2} | Path '{3}'";
             #endif
 
-            using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent(scopeFormat, _objectId, (int)access, (int)options, path)))
+            long scopeId = SqlClientEventSource.Log.TryScopeEnterEvent(scopeFormat, _objectId, (int)access, (int)options, path);
+            using (TryEventScope.Create(scopeId))
             {
                 //-----------------------------------------------------------------
                 // precondition validation
@@ -507,11 +508,6 @@ namespace Microsoft.Data.SqlTypes
             //-----------------------------------------------------------------
             // Precondition Validation
 
-            // should be validated by callers of this method
-            // NOTE: if this method moves elsewhere, this assert should become an actual runtime check
-            //   as the implicit assumptions here cannot be relied upon in an inter-class context
-            Debug.Assert(path != null);
-
             // Remove leading and trailing whitespace
             path = path.Trim();
             if (path.Length == 0)
@@ -532,7 +528,6 @@ namespace Microsoft.Data.SqlTypes
             // not necessary since we are dealing with network paths. Thus, we are going directly
             // to the GetFullPathName function in kernel32.dll (SQLBUVSTS01 192677, 193221)
             path = GetFullPathNameNetfx(path);
-            Debug.Assert(path.Length <= MaxWin32PathLengthChars, "kernel32.dll GetFullPathName returned path longer than max");
             #else
             path = Path.GetFullPath(path);
             #endif
