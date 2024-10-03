@@ -222,6 +222,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
         #endregion
 
+        #region Valid Configurations
+        [Theory]
+        [InlineData("-1,1,2,3")]
+        [InlineData("-1, 1, 2 , 3, -2")]
+        [InlineData("")]
+        public void ValidTransientError(string errors)
+        {
+            string[] transientErrorNumbers = errors.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
+            cnnCfg.TransientErrors = errors;
+            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
+
+            RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+
+            foreach(string errorString in transientErrorNumbers)
+            {
+                int errorNumber = int.Parse(errorString.Trim());
+                SqlException transientException = RetryLogicConfigHelper.CreateSqlException(errorNumber);
+
+                Assert.True(cnnProvider.RetryLogic.TransientPredicate(transientException), $"Error {errorNumber} is not considered transient by the predicate.");
+            }
+        }
+        #endregion
+
         #region private methods
         private void TestConnection(SqlRetryLogicBaseProvider provider, RetryLogicConfigs cnfig)
         {
