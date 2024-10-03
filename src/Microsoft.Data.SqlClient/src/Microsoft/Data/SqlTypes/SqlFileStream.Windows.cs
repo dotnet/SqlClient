@@ -697,7 +697,7 @@ namespace Microsoft.Data.SqlTypes
                         eaValue: transactionContext,
                         desiredAccess: nDesiredAccess,
                         fileAttributes: 0,
-                        shareAccess: FileShare.None,
+                        shareAccess: shareAccess,
                         createDisposition: dwCreateDisposition,
                         createOptions: dwCreateOptions,
                         impersonationLevel: Interop.ImpersonationLevel.SecurityAnonymous,
@@ -711,7 +711,7 @@ namespace Microsoft.Data.SqlTypes
                         eaValue: transactionContext,
                         desiredAccess: nDesiredAccess,
                         fileAttributes: 0,
-                        shareAccess: FileShare.None,
+                        shareAccess: shareAccess,
                         createDisposition: dwCreateDisposition,
                         createOptions: dwCreateOptions);
                     #endif
