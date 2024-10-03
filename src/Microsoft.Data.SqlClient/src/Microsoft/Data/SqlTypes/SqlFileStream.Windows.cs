@@ -555,52 +555,56 @@ namespace Microsoft.Data.SqlTypes
         [ResourceConsumption(ResourceScope.Machine)]
         private static string GetFullPathNameNetfx(string path)
         {
-            Debug.Assert(path != null, "path is null?");
-            // make sure to test for Int16.MaxValue limit before calling this method
-            // see the below comment re GetLastWin32Error for the reason
-            Debug.Assert(path.Length < short.MaxValue);
-
-            // since we expect network paths, the 'full path' is expected to be the same size
-            // as the provided one. we still need to allocate +1 for null termination
+            // In the most common case where (SqlFileStream),the 'full path' is expected to be the
+            // same size as the provided path. However, we still need to allocate one extra char
+            // for null termination.
+            // Note: StringBuilder has a magical capability to be compatible with char*, and also
+            //    provides wide-character support w/o messing around with encodings.
             StringBuilder buffer = new StringBuilder(path.Length + 1);
 
-            int cchRequiredSize = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
+            // If everything goes correctly, we only need to call this once
+            int fullPathLength = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
 
-            // if our buffer was smaller than required, GetFullPathName will succeed and return us the required buffer size with null
-            if (cchRequiredSize > buffer.Capacity)
+            // If our buffer was smaller than required, the buffer will be empty, but the full
+            // path size will be the size we should reallocate to.
+            if (fullPathLength > buffer.Capacity)
             {
-                // we have to reallocate and retry
-                buffer.Capacity = cchRequiredSize;
-                cchRequiredSize = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
+                // Reallocate the buffer and try again
+                buffer.Capacity = fullPathLength;
+                fullPathLength = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
             }
 
-            if (cchRequiredSize == 0)
+            // If the method tells us the full path length is 0, then we have an error condition.
+            if (fullPathLength == 0)
             {
                 // GetFullPathName call failed
                 int lastError = Marshal.GetLastWin32Error();
                 if (lastError == 0)
                 {
-                    // we found that in some cases GetFullPathName fail but does not set the last error value
-                    // for example, it happens when the path provided to it is longer than 32K: return value is 0 (failure)
-                    // but GetLastError was zero too so we raised Win32Exception saying "The operation completed successfully".
-                    // To raise proper "path too long" failure, check the length before calling this API.
-                    // For other (yet unknown cases), we will throw InvalidPath message since we do not know what exactly happened
+                    // We've found that in some cases, GetFullPathName will fail but does not set the
+                    // last error correctly. For example, when the path provided is longer than 32k,
+                    // the return value will be 0 (indicating failure), but GetLastWin32Error is also
+                    // zero (indicating success).
+                    // In this case, we will throw an invalid path exception.
                     throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
                 }
-                else
-                {
-                    System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(lastError);
-                    ADP.TraceExceptionAsReturnValue(e);
-                    throw e;
-                }
+
+                // In any other error condition, we will throw a Win32 exception.
+                Win32Exception e = new Win32Exception(lastError);
+                ADP.TraceExceptionAsReturnValue(e);
+                throw e;
             }
 
             // this should not happen since we already reallocate
-            Debug.Assert(cchRequiredSize <= buffer.Capacity, string.Format(
-                System.Globalization.CultureInfo.InvariantCulture,
+            Debug.Assert(fullPathLength <= buffer.Capacity,
+                string.Format(
+                CultureInfo.InvariantCulture,
                 "second call to GetFullPathName returned greater size: {0} > {1}",
-                cchRequiredSize,
+                fullPathLength,
                 buffer.Capacity));
+
+            Debug.Assert(buffer.Length <= MaxWin32PathLengthChars,
+                "kernel32.dll GetFullPathName returned path longer than max");
 
             return buffer.ToString();
         }
