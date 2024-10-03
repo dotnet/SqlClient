@@ -112,11 +112,12 @@ namespace Microsoft.Data.SqlTypes
                 _isDisposed = false;
                 _fileStream = null;
 
-                OpenSqlFileStream(path, transactionContext, access, options, allocationSize);
+                string normalizedPath = GetFullPathInternal(path);
+                OpenSqlFileStream(normalizedPath, transactionContext, access, options, allocationSize);
 
                 // only set internal state once the file has actually been successfully opened
-                Name = path;
-                TransactionContext = transactionContext;
+                _path = normalizedPath;
+                _transactionContext = (byte[])transactionContext.Clone();
             }
         }
 
@@ -197,18 +198,6 @@ namespace Microsoft.Data.SqlTypes
                 AssertPathFormat(_path);
                 return _path;
             }
-            #if NETFRAMEWORK
-            [ResourceExposure(ResourceScope.None)] // SxS: the file name is not exposed
-            [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-            #endif
-            private set
-            {
-                // should be validated by callers of this method
-                Debug.Assert(value != null);
-                Debug.Assert(!_isDisposed);
-
-                _path = GetFullPathInternal(value);
-            }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Position/*' />
@@ -245,24 +234,8 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/TransactionContext/*' />
-        public byte[] TransactionContext
-        {
-            get
-            {
-                if (_transactionContext == null)
-                    return null;
-
-                return (byte[])_transactionContext.Clone();
-            }
-            private set
-            {
-                // should be validated by callers of this method
-                Debug.Assert(value != null);
-                Debug.Assert(!_isDisposed);
-
-                _transactionContext = (byte[])value.Clone();
-            }
-        }
+        public byte[] TransactionContext =>
+            (byte[]) _transactionContext?.Clone();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteTimeout/*' />
         #if NETFRAMEWORK
