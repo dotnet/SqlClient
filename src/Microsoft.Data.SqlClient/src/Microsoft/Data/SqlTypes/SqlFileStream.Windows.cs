@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -86,7 +87,12 @@ namespace Microsoft.Data.SqlTypes
         { }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor2/*' />
-        public SqlFileStream(string path, byte[] transactionContext, FileAccess access, FileOptions options, long allocationSize)
+        public SqlFileStream(
+            string path,
+            byte[] transactionContext,
+            FileAccess access,
+            FileOptions options,
+            long allocationSize)
         {
             #if NETFRAMEWORK
             const string scopeFormat = "<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'";
@@ -145,7 +151,6 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanSeek/*' />
-        // If CanSeek is false, Position, Seek, Length, and SetLength should throw.
         public override bool CanSeek
         {
             get
@@ -414,7 +419,7 @@ namespace Microsoft.Data.SqlTypes
         #region Private Helper Methods
 
         [Conditional("DEBUG")]
-        static private void AssertPathFormat(string path)
+        private static void AssertPathFormat(string path)
         {
             Debug.Assert(path != null);
             Debug.Assert(path == path.Trim());
@@ -432,13 +437,9 @@ namespace Microsoft.Data.SqlTypes
         }
 
         #if NETFRAMEWORK
-        static private void DemandAccessPermission
-            (
-                string path,
-                System.IO.FileAccess access
-            )
+        private static void DemandAccessPermission (string path, FileAccess access)
         {
-            // ensure we demand on valid path
+            // Ensure we demand for a valid path
             AssertPathFormat(path);
 
             FileIOPermissionAccess demandPermissions;
@@ -455,7 +456,7 @@ namespace Microsoft.Data.SqlTypes
                 case FileAccess.ReadWrite:
                 default:
                     // the caller have to validate the value of 'access' parameter
-                    Debug.Assert(access == System.IO.FileAccess.ReadWrite);
+                    Debug.Assert(access is FileAccess.ReadWrite);
                     demandPermissions = FileIOPermissionAccess.Read | FileIOPermissionAccess.Write;
                     break;
             }
@@ -463,7 +464,7 @@ namespace Microsoft.Data.SqlTypes
             FileIOPermission filePerm;
             bool pathTooLong = false;
 
-            // check for read and/or write permissions
+            // Check for read and/or write permissions
             try
             {
                 filePerm = new FileIOPermission(demandPermissions, path);
@@ -477,20 +478,21 @@ namespace Microsoft.Data.SqlTypes
 
             if (pathTooLong)
             {
-                // SQLBUVSTS bugs 192677 and 203422: currently, FileIOPermission does not support path longer than MAX_PATH (260)
-                // so we cannot demand permissions for long files. We are going to open bug for FileIOPermission to
-                // support this.
+                // SQLBUVSTS bugs 192677 and 203422: currently, FileIOPermission does not support
+                // path longer than MAX_PATH (260) so we cannot demand permissions for long files.
+                // We are going to open bug for FileIOPermission to support this.
 
-                // In the meanwhile, we agreed to have try-catch block on the permission demand instead of checking the path length.
-                // This way, if/when the 260-chars limitation is fixed in FileIOPermission, we will not need to change our code
+                // In the meanwhile, we agreed to have try-catch block on the permission demand
+                // instead of checking the path length. This way, if/when the 260-chars limitation
+                // is fixed in FileIOPermission, we will not need to change our code
 
-                // since we do not want to relax security checks, we have to demand this permission for AllFiles in order to continue!
-                // Note: demand for AllFiles will fail in scenarios where the running code does not have this permission (such as ASP.Net)
-                // and the only workaround will be reducing the total path length, which means reducing the length of SqlFileStream path
-                // components, such as instance name, table name, etc.. to fit into 260 characters
-                filePerm = new FileIOPermission(PermissionState.Unrestricted);
-                filePerm.AllFiles = demandPermissions;
-
+                // since we do not want to relax security checks, we have to demand this permission
+                // for AllFiles in order to continue!
+                // Note: demand for AllFiles will fail in scenarios where the running code does not
+                // have this permission (such as ASP.Net) and the only workaround will be reducing
+                // the total path length, which means reducing the length of SqlFileStream path
+                // components, such as instance name, table name, etc. to fit into 260 characters.
+                filePerm = new FileIOPermission(PermissionState.Unrestricted) { AllFiles = demandPermissions };
                 filePerm.Demand();
             }
         }
@@ -500,24 +502,24 @@ namespace Microsoft.Data.SqlTypes
         [ResourceExposure(ResourceScope.Machine)]
         [ResourceConsumption(ResourceScope.Machine)]
         #endif
-        static private string GetFullPathInternal(string path)
+        private static string GetFullPathInternal(string path)
         {
             //-----------------------------------------------------------------
-            // precondition validation
+            // Precondition Validation
 
             // should be validated by callers of this method
             // NOTE: if this method moves elsewhere, this assert should become an actual runtime check
             //   as the implicit assumptions here cannot be relied upon in an inter-class context
             Debug.Assert(path != null);
 
-            // remove leading and trailing whitespace
+            // Remove leading and trailing whitespace
             path = path.Trim();
             if (path.Length == 0)
             {
                 throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
             }
 
-            // make sure path is a UNC path and not a DOS device path
+            // Make sure path is a UNC path and not a DOS device path
             if (!path.StartsWith(@"\\", StringComparison.Ordinal) || IsDevicePath(path))
             {
                 throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
@@ -536,7 +538,6 @@ namespace Microsoft.Data.SqlTypes
             #endif
 
             // Validate after normalization
-
             // Make sure path is a UNC path (not a device or device UNC path)
             if (IsDevicePath(path) || IsDeviceUncPath(path))
             {
@@ -548,11 +549,16 @@ namespace Microsoft.Data.SqlTypes
 
         #if NETFRAMEWORK
         /// <summary>
-        /// Safe wrapper for <see cref="Interop.Kernel32.GetFullPathName" />
+        /// Makes the call to GetFullPathName in kernel32.dll and handles special conditions that
+        /// may arise.
         /// </summary>
+        /// <remarks>
+        /// Do not use this in netcore - Path.GetFullPathName does not require additional
+        /// permissions like netfx does.
+        /// </remarks>
         [ResourceExposure(ResourceScope.Machine)]
         [ResourceConsumption(ResourceScope.Machine)]
-        internal static string GetFullPathNameNetfx(string path)
+        private static string GetFullPathNameNetfx(string path)
         {
             Debug.Assert(path != null, "path is null?");
             // make sure to test for Int16.MaxValue limit before calling this method
@@ -605,10 +611,13 @@ namespace Microsoft.Data.SqlTypes
         }
         #endif
 
-        // This method exists to ensure that the requested path name is unique so that SMB/DNS is prevented
-        // from collapsing a file open request to a file handle opened previously. In the SQL FILESTREAM case,
-        // this would likely be a file open in another transaction, so this mechanism ensures isolation.
-        static private string InitializeNtPath(string path)
+        /// <summary>
+        /// This method exists to ensure that the requested path name is unique so that SMB/DNS is
+        /// prevented from collapsing a file open request to a file handle opened previously. In
+        /// the SQL FILESTREAM case, this would likely be a file open in another transaction, so
+        /// this mechanism ensures isolation.
+        /// </summary>
+        private static string InitializeNtPath(string path)
         {
             // Ensure we have validated and normalized the path before
             AssertPathFormat(path);
@@ -656,7 +665,7 @@ namespace Microsoft.Data.SqlTypes
         /// Implementation lifted from System.IO.PathInternal
         /// https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/System/IO/PathInternal.Windows.cs
         /// </remarks>
-        internal static bool IsDeviceUncPath(string path)
+        private static bool IsDeviceUncPath(string path)
         {
             return path.Length >= 8
                    && IsDevicePath(path)
@@ -686,7 +695,7 @@ namespace Microsoft.Data.SqlTypes
         /// Implementation lifted from System.IO.PathInternal.
         /// https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/System/IO/PathInternal.Windows.cs
         /// </remarks>
-        internal static bool IsExtendedPath(string path)
+        private static bool IsExtendedPath(string path)
         {
             return path.Length >= 4
                    && path[0] == '\\'
@@ -698,9 +707,10 @@ namespace Microsoft.Data.SqlTypes
         private static FileStream OpenFileStream(SafeFileHandle fileHandle, FileAccess access, FileOptions options)
         {
             #if NETFRAMEWORK
-            // NOTE: need to assert UnmanagedCode permissions for this constructor. This is relatively benign
-            //   in that we've done much the same validation as in the FileStream(string path, ...) ctor case
-            //   most notably, validating that the handle type corresponds to an on-disk file.
+            // NOTE: We need to assert UnmanagedCode permissions for this constructor. This is
+            //   relatively benign in that we've done much the same validation as in the
+            //   FileStream(string path, ...) ctor case most notably, validating that the handle
+            //   type corresponds to an on-disk file.
             // This likely only applies in partially trusted environments and is not required in
             // netcore since CAS was removed.
             bool bRevertAssert = false;
@@ -710,7 +720,7 @@ namespace Microsoft.Data.SqlTypes
                 sp.Assert();
                 bRevertAssert = true;
 
-                return new System.IO.FileStream(fileHandle, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
+                return new FileStream(fileHandle, access, DefaultBufferSize, (options & FileOptions.Asynchronous) != 0);
             }
             finally
             {
@@ -718,18 +728,16 @@ namespace Microsoft.Data.SqlTypes
                     SecurityPermission.RevertAssert();
             }
             #else
-            return new System.IO.FileStream(fileHandle, access, DefaultBufferSize, ((options & System.IO.FileOptions.Asynchronous) != 0));
+            return new FileStream(fileHandle, access, DefaultBufferSize, (options & FileOptions.Asynchronous) != 0);
             #endif
         }
 
-        private unsafe void OpenSqlFileStream
-                    (
-                        string path,
-                        byte[] transactionContext,
-                        System.IO.FileAccess access,
-                        System.IO.FileOptions options,
-                        long allocationSize
-                    )
+        private void OpenSqlFileStream(
+            string path,
+            byte[] transactionContext,
+            FileAccess access,
+            FileOptions options,
+            long allocationSize)
         {
             //-----------------------------------------------------------------
             // precondition validation
@@ -750,57 +758,57 @@ namespace Microsoft.Data.SqlTypes
             path = GetFullPathInternal(path);
 
             #if NETFRAMEWORK
-            // ensure the running code has permission to read/write the file
+            // Ensure the running code has permission to read/write the file
             DemandAccessPermission(path, access);
             #endif
 
-            Microsoft.Win32.SafeHandles.SafeFileHandle hFile = null;
+            SafeFileHandle hFile = null;
             Interop.NtDll.DesiredAccess nDesiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES | Interop.NtDll.DesiredAccess.SYNCHRONIZE;
             Interop.NtDll.CreateOptions dwCreateOptions = 0;
             Interop.NtDll.CreateDisposition dwCreateDisposition = 0;
-            System.IO.FileShare shareAccess = System.IO.FileShare.None;
+            FileShare shareAccess = FileShare.None;
 
             switch (access)
             {
-                case System.IO.FileAccess.Read:
+                case FileAccess.Read:
                     nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA;
-                    shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.ReadWrite;
+                    shareAccess = FileShare.Delete | FileShare.ReadWrite;
                     dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OPEN;
                     break;
 
-                case System.IO.FileAccess.Write:
+                case FileAccess.Write:
                     nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
-                    shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
+                    shareAccess = FileShare.Delete | FileShare.Read;
                     dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
                     break;
 
-                case System.IO.FileAccess.ReadWrite:
+                case FileAccess.ReadWrite:
                 default:
                     // we validate the value of 'access' parameter in the beginning of this method
-                    Debug.Assert(access == System.IO.FileAccess.ReadWrite);
+                    Debug.Assert(access == FileAccess.ReadWrite);
 
                     nDesiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA | Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
-                    shareAccess = System.IO.FileShare.Delete | System.IO.FileShare.Read;
+                    shareAccess = FileShare.Delete | FileShare.Read;
                     dwCreateDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
                     break;
             }
 
-            if ((options & System.IO.FileOptions.WriteThrough) != 0)
+            if ((options & FileOptions.WriteThrough) != 0)
             {
                 dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_WRITE_THROUGH;
             }
 
-            if ((options & System.IO.FileOptions.Asynchronous) == 0)
+            if ((options & FileOptions.Asynchronous) == 0)
             {
                 dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
             }
 
-            if ((options & System.IO.FileOptions.SequentialScan) != 0)
+            if ((options & FileOptions.SequentialScan) != 0)
             {
                 dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_SEQUENTIAL_ONLY;
             }
 
-            if ((options & System.IO.FileOptions.RandomAccess) != 0)
+            if ((options & FileOptions.RandomAccess) != 0)
             {
                 dwCreateOptions |= Interop.NtDll.CreateOptions.FILE_RANDOM_ACCESS;
             }
@@ -870,7 +878,7 @@ namespace Microsoft.Data.SqlTypes
 
                     case Interop.Errors.ERROR_FILE_NOT_FOUND:
                         {
-                            System.IO.DirectoryNotFoundException e = new System.IO.DirectoryNotFoundException();
+                            DirectoryNotFoundException e = new DirectoryNotFoundException();
                             ADP.TraceExceptionAsReturnValue(e);
                             throw e;
                         }
@@ -883,7 +891,7 @@ namespace Microsoft.Data.SqlTypes
                                 error = (uint)retval;
                             }
 
-                            System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(unchecked((int)error));
+                            Win32Exception e = new Win32Exception(unchecked((int)error));
                             ADP.TraceExceptionAsReturnValue(e);
                             throw e;
                         }
@@ -891,7 +899,7 @@ namespace Microsoft.Data.SqlTypes
 
                 if (hFile.IsInvalid)
                 {
-                    System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
+                    Win32Exception e = new Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
                     ADP.TraceExceptionAsReturnValue(e);
                     throw e;
                 }
@@ -902,10 +910,10 @@ namespace Microsoft.Data.SqlTypes
                     throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
                 }
 
-                // if the user is opening the SQL FileStream in read/write mode, we assume that they want to scan
-                // through current data and then append new data to the end, so we need to tell SQL Server to preserve
-                // the existing file contents.
-                if (access == System.IO.FileAccess.ReadWrite)
+                // If the user is opening the SQL FileStream in read/write mode, we assume that
+                // they want to scan through current data and then append new data to the end, so
+                // we need to tell SQL Server to preserve the existing file contents.
+                if (access == FileAccess.ReadWrite)
                 {
                     uint ioControlCode = Interop.Kernel32.CTL_CODE(Interop.Kernel32.FILE_DEVICE_FILE_SYSTEM,
                         IoControlCodeFunctionCode, (byte)Interop.Kernel32.IoControlTransferType.METHOD_BUFFERED,
@@ -913,15 +921,15 @@ namespace Microsoft.Data.SqlTypes
 
                     if (!Interop.Kernel32.DeviceIoControl(hFile, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out uint cbBytesReturned, IntPtr.Zero))
                     {
-                        System.ComponentModel.Win32Exception e = new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+                        Win32Exception e = new Win32Exception(Marshal.GetLastWin32Error());
                         ADP.TraceExceptionAsReturnValue(e);
                         throw e;
                     }
                 }
 
                 // now that we've successfully opened a handle on the path and verified that it is a file,
-                // use the SafeFileHandle to initialize our internal System.IO.FileStream instance
-                System.Diagnostics.Debug.Assert(_fileStream == null);
+                // use the SafeFileHandle to initialize our internal FileStream instance
+                Debug.Assert(_fileStream == null);
                 _fileStream = OpenFileStream(hFile, access, options);
             }
             catch
