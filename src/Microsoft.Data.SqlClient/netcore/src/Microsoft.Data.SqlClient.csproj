@@ -737,13 +737,10 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
-    
-    <Compile Include="Common\Interop\Windows\Interop.BOOL.cs" />
     <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates.cs" />
     <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates_types.cs" />
     <Compile Include="Common\Interop\Windows\Kernel32\Interop.CloseHandle.cs" />
     <Compile Include="Common\Interop\Windows\Kernel32\Interop.FreeLibrary.cs" />
-    <Compile Include="Common\Interop\Windows\Kernel32\Interop.GetCurrentProcess_IntPtr.cs" />
     <Compile Include="Common\Interop\Windows\Kernel32\Interop.GetProcAddress.cs" />
     <Compile Include="Common\Interop\Windows\Kernel32\Interop.LoadLibraryEx.cs" />
     <Compile Include="Common\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.cs" />
@@ -800,7 +797,6 @@
     <Compile Include="Common\Interop\Unix\Interop.Libraries.cs" />
     <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.cs" />
     <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.cs" />
-    <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.Initialization.cs" />
     <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.cs" />
     <Compile Include="Common\Microsoft\Win32\SafeHandles\GssSafeHandles.cs" />
     <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Unix.cs" />
