@@ -609,8 +609,8 @@
     <Compile Include="Common\Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
     <Compile Include="Common\System\NotImplemented.cs" />
     <Compile Include="Common\System\Net\ContextFlagsPal.cs" />
-    <Compile Include="Common\System\Net\DebugSafeHandle.cs" />
     <Compile Include="Common\System\Net\DebugCriticalHandleMinusOneIsInvalid.cs" />
+    <Compile Include="Common\System\Net\DebugSafeHandle.cs" />
     <Compile Include="Common\System\Net\InternalException.cs" />
     <Compile Include="Common\System\Net\Logging\DebugThreadTracking.cs" />
     <Compile Include="Common\System\Net\Logging\NetEventSource.Common.cs" />
@@ -797,6 +797,11 @@
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
 
+    <Compile Include="Common\Interop\Unix\Interop.Libraries.cs" />
+    <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.cs" />
+    <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.cs" />
+    <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.Initialization.cs" />
+    <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.cs" />
     <Compile Include="Common\Microsoft\Win32\SafeHandles\GssSafeHandles.cs" />
     <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Unix.cs" />
     <Compile Include="Common\System\Net\Security\Unix\SafeDeleteContext.cs" />
@@ -805,11 +810,6 @@
     <Compile Include="Common\System\Net\Security\Unix\SafeFreeNegoCredentials.cs" />
     <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Unix.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
-    <Compile Include="Interop\Unix\Interop.Libraries.cs" />
-    <Compile Include="Interop\Unix\System.Net.Security.Native\Interop.GssApiException.cs" />
-    <Compile Include="Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.cs" />
-    <Compile Include="Interop\Unix\System.Net.Security.Native\Interop.Initialization.cs" />
-    <Compile Include="Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Unix.cs" />
