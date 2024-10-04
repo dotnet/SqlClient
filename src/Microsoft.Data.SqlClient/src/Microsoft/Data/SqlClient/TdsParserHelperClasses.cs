@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient
 
         internal DataTable schemaTable;
         private readonly _SqlMetaData[] _metaDataArray;
-#if NET
+#if !NETFRAMEWORK
         internal ReadOnlyCollection<DbColumn> dbColumnSchema;
 #endif
 
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient
             id = original.id;
             _hiddenColumnCount = original._hiddenColumnCount;
             _visibleColumnMap = original._visibleColumnMap;
-#if NET
+#if !NETFRAMEWORK
             dbColumnSchema = original.dbColumnSchema;
 #else
             schemaTable = original.schemaTable;
@@ -757,7 +757,6 @@ namespace Microsoft.Data.SqlClient
 
     internal static class SslProtocolsHelper
     {
-#if NET
         private static string ToFriendlyName(this SslProtocols protocol)
         {
             string name;
@@ -798,7 +797,11 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
+#if !NETFRAMEWORK
                 name = protocol.ToString();
+#else
+                throw new ArgumentException(StringsHelper.GetString(StringsHelper.net_invalid_enum, "NativeProtocols"), "NativeProtocols");
+#endif
             }
 
             return name;
@@ -822,90 +825,13 @@ namespace Microsoft.Data.SqlClient
 #pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
 #endif
             {
+#if !NETFRAMEWORK
                 message = StringsHelper.Format(Strings.SEC_ProtocolWarning, protocol.ToFriendlyName());
-            }
-            return message;
-        }
 #else
-        // protocol versions from native sni
-        [Flags]
-        private enum NativeProtocols
-        {
-            SP_PROT_SSL2_SERVER = 0x00000004,
-            SP_PROT_SSL2_CLIENT = 0x00000008,
-            SP_PROT_SSL3_SERVER = 0x00000010,
-            SP_PROT_SSL3_CLIENT = 0x00000020,
-            SP_PROT_TLS1_0_SERVER = 0x00000040,
-            SP_PROT_TLS1_0_CLIENT = 0x00000080,
-            SP_PROT_TLS1_1_SERVER = 0x00000100,
-            SP_PROT_TLS1_1_CLIENT = 0x00000200,
-            SP_PROT_TLS1_2_SERVER = 0x00000400,
-            SP_PROT_TLS1_2_CLIENT = 0x00000800,
-            SP_PROT_TLS1_3_SERVER = 0x00001000,
-            SP_PROT_TLS1_3_CLIENT = 0x00002000,
-            SP_PROT_SSL2 = SP_PROT_SSL2_SERVER | SP_PROT_SSL2_CLIENT,
-            SP_PROT_SSL3 = SP_PROT_SSL3_SERVER | SP_PROT_SSL3_CLIENT,
-            SP_PROT_TLS1_0 = SP_PROT_TLS1_0_SERVER | SP_PROT_TLS1_0_CLIENT,
-            SP_PROT_TLS1_1 = SP_PROT_TLS1_1_SERVER | SP_PROT_TLS1_1_CLIENT,
-            SP_PROT_TLS1_2 = SP_PROT_TLS1_2_SERVER | SP_PROT_TLS1_2_CLIENT,
-            SP_PROT_TLS1_3 = SP_PROT_TLS1_3_SERVER | SP_PROT_TLS1_3_CLIENT,
-            SP_PROT_NONE = 0x0
-        }
-
-        private static string ToFriendlyName(this NativeProtocols protocol)
-        {
-            string name;
-
-            if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
-            {
-                name = "TLS 1.3";
-            }
-            else if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
-            {
-                name = "TLS 1.2";
-            }
-            else if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_1_SERVER))
-            {
-                name = "TLS 1.1";
-            }
-            else if (protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_TLS1_0_SERVER))
-            {
-                name = "TLS 1.0";
-            }
-            else if (protocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
-            {
-                name = "SSL 3.0";
-            }
-            else if (protocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || protocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
-            {
-                name = "SSL 2.0";
-            }
-            else if (protocol.HasFlag(NativeProtocols.SP_PROT_NONE))
-            {
-                name = "None";
-            }
-            else
-            {
-                throw new ArgumentException(StringsHelper.GetString(StringsHelper.net_invalid_enum, nameof(NativeProtocols)), nameof(NativeProtocols));
-            }
-            return name;
-        }
-
-        /// <summary>
-        /// check the negotiated secure protocol if it's under TLS 1.2
-        /// </summary>
-        /// <param name="protocol"></param>
-        /// <returns>Localized warning message</returns>
-        public static string GetProtocolWarning(uint protocol)
-        {
-            var nativeProtocol = (NativeProtocols)protocol;
-            string message = string.Empty;
-            if ((nativeProtocol & (NativeProtocols.SP_PROT_SSL2 | NativeProtocols.SP_PROT_SSL3 | NativeProtocols.SP_PROT_TLS1_1)) != NativeProtocols.SP_PROT_NONE)
-            {
-                message = StringsHelper.GetString(Strings.SEC_ProtocolWarning, nativeProtocol.ToFriendlyName());
+                message = StringsHelper.GetString(Strings.SEC_ProtocolWarning, protocol.ToFriendlyName());
+#endif
             }
             return message;
         }
-#endif
     }
 }
